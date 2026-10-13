@@ -24,6 +24,7 @@ module AnthropicApi =
           if thinkingBudget > 0 then yield "anthropic-beta", "interleaved-thinking-2025-05-14" ]
 
 /// 一次喂一个流事件后的结果。
+[<RequireQualifiedAccess>]
 type AnthropicStep =
     /// 要交给下游的增量（可能为空）
     | Updates of ChatResponseUpdate list
@@ -74,7 +75,7 @@ type AnthropicStream() =
         let parsed =
             try (if String.IsNullOrWhiteSpace data then None else Some(JsonNode.Parse data)) with _ -> None
         match parsed with
-        | None | Some null -> Updates []
+        | None | Some null -> AnthropicStep.Updates []
         | Some node ->
             match str node "type" |> Option.defaultValue eventName with
             | "message_start" ->
@@ -87,14 +88,14 @@ type AnthropicStream() =
                         outputTokens <- int' usage "output_tokens" |> Option.defaultValue 0
                     | None -> ()
                 | None -> ()
-                Updates []
+                AnthropicStep.Updates []
             | "content_block_start" ->
                 let index = int' node "index" |> Option.defaultValue 0
                 match obj node "content_block" with
                 | Some block when str block "type" = Some "tool_use" ->
                     tools[index] <- (str block "id" |> Option.defaultValue "", str block "name" |> Option.defaultValue "", StringBuilder())
                 | _ -> ()
-                Updates []
+                AnthropicStep.Updates []
             | "content_block_delta" ->
                 let index = int' node "index" |> Option.defaultValue 0
                 match obj node "delta" with
@@ -102,22 +103,22 @@ type AnthropicStream() =
                     match str delta "type" with
                     | Some "text_delta" ->
                         match str delta "text" with
-                        | Some text when text.Length > 0 -> Updates [ update [ TextContent text :> AIContent ] ]
-                        | _ -> Updates []
+                        | Some text when text.Length > 0 -> AnthropicStep.Updates [ update [ TextContent text :> AIContent ] ]
+                        | _ -> AnthropicStep.Updates []
                     // 思维链走独立的内容类型：界面单独折叠展示，也不并入会话摘要预览
                     | Some "thinking_delta" ->
                         match str delta "thinking" with
                         | Some text when text.Length > 0 ->
-                            Updates [ update [ TextReasoningContent text :> AIContent
-                                               TextContent(text, RawRepresentation = box "thinking") :> AIContent ] ]
-                        | _ -> Updates []
+                            AnthropicStep.Updates [ update [ TextReasoningContent text :> AIContent
+                                                             TextContent(text, RawRepresentation = box "thinking") :> AIContent ] ]
+                        | _ -> AnthropicStep.Updates []
                     | Some "input_json_delta" ->
                         match tools.TryGetValue index, str delta "partial_json" with
                         | (true, (_, _, buffer)), Some fragment -> buffer.Append fragment |> ignore
                         | _ -> ()
-                        Updates []
-                    | _ -> Updates []
-                | None -> Updates []
+                        AnthropicStep.Updates []
+                    | _ -> AnthropicStep.Updates []
+                | None -> AnthropicStep.Updates []
             | "content_block_stop" ->
                 let index = int' node "index" |> Option.defaultValue 0
                 match tools.TryGetValue index with
@@ -133,8 +134,8 @@ type AnthropicStream() =
                             | _ -> parsedOk <- false
                         with _ -> parsedOk <- false
                     // 入参拼不成 JSON 对象时丢弃这次调用，而不是用残缺参数去执行工具
-                    if parsedOk then Updates [ update [ FunctionCallContent(id, name, arguments) :> AIContent ] ] else Updates []
-                | _ -> Updates []
+                    if parsedOk then AnthropicStep.Updates [ update [ FunctionCallContent(id, name, arguments) :> AIContent ] ] else AnthropicStep.Updates []
+                | _ -> AnthropicStep.Updates []
             | "message_delta" ->
                 match obj node "delta" with
                 | Some delta -> finish <- str delta "stop_reason" |> Option.defaultValue finish
@@ -142,11 +143,11 @@ type AnthropicStream() =
                 match obj node "usage" with
                 | Some usage -> outputTokens <- int' usage "output_tokens" |> Option.defaultValue outputTokens
                 | None -> ()
-                Updates []
+                AnthropicStep.Updates []
             | "error" ->
-                Failed(obj node "error" |> Option.bind (fun e -> str e "message") |> Option.defaultValue "anthropic stream error")
-            | "message_stop" -> Stopped
-            | _ -> Updates []
+                AnthropicStep.Failed(obj node "error" |> Option.bind (fun e -> str e "message") |> Option.defaultValue "anthropic stream error")
+            | "message_stop" -> AnthropicStep.Stopped
+            | _ -> AnthropicStep.Updates []
 
     /// 收尾更新：用量与结束原因。编排层按它记账。
     member _.Closing() : ChatResponseUpdate =

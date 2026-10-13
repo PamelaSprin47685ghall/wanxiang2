@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：聊天编排（排队、生成循环、工具执行与审批、记账、半截回复、自动标题、上下文构造）。
+       协作者：EventStore、ChatDomain、Wire、AppConfig、AgentRuntime、AgentContent、MessageSerde、AgentHistory、ToolRegistry、
+       ToolApproval、PartialReplies、HostLog、CommandId、PlainText、ContextTrim、TitleText。命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="GenerationContext.fs" />
+    <Compile Include="TitleGenerator.fs" />
+    <Compile Include="ChatOrchestrator.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Wanxiang2.EventStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AgentRuntime" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AgentContent" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageSerde" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaContent" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AgentHistory" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolRegistry" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolApproval" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PartialReplies" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostLog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandId" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PlainText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ContextTrim" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.TitleText" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

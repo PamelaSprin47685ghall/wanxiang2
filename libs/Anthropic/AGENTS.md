@@ -13,3 +13,6 @@ Anthropic Messages API 协议：请求正文（`AnthropicRequest.build`）、端
 # SPEC
 1. [LEMMA: 1] 请求正文、端点、请求头与旧实现逐字节相同：组合者 ProviderTransports 的 `GoldenTests`，通过。
 2. [LEMMA: 2, 3] 工具入参分片拼接、坏入参丢弃、按事件名兜底、error 和 stop、收尾用量与结束原因映射：`tests/Tests.fs`，通过。
+
+# 变更记录
+- 流事件结果联合类型加 `[<RequireQualifiedAccess>]`：它们与 AgentRuntime 的 `AgentCallResult`（Completed/Failed/Cancelled）同在命名空间 Wanxiang.Agent，作为包被引用时 `Failed` 会被解析错。调用方原本都已限定写法，无需改动。

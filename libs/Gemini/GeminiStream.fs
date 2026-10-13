@@ -21,6 +21,7 @@ module GeminiApi =
         | _ -> []
 
 /// 一次喂一个流事件后的结果。
+[<RequireQualifiedAccess>]
 type GeminiStep =
     | Updates of ChatResponseUpdate list
     /// 上游把错误放在 200 的流里时，body 里会有 error 对象
@@ -59,10 +60,10 @@ type GeminiStream() =
 
     member _.Feed(data: string) : GeminiStep =
         match JsonNode.Parse data with
-        | null -> Updates []
+        | null -> GeminiStep.Updates []
         | node ->
             match obj node "error" with
-            | Some error -> Failed(str error "message" |> Option.defaultValue "gemini stream error")
+            | Some error -> GeminiStep.Failed(str error "message" |> Option.defaultValue "gemini stream error")
             | None ->
                 match obj node "usageMetadata" with
                 | Some usage ->
@@ -100,7 +101,7 @@ type GeminiStream() =
                                         | None -> ()
                             | None -> ()
                 | None -> ()
-                Updates(List.ofSeq out)
+                GeminiStep.Updates(List.ofSeq out)
 
     member _.Closing() : ChatResponseUpdate =
         let usage = UsageDetails()

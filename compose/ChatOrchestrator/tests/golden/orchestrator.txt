@@ -1,0 +1,62 @@
+title 回声测试
+state idle runtimes 1
+event {"type":"generation.started","payload":{"threadId":"<g1>","runId":"<g2>","providerId":"p","model":"m1"}}
+event {"type":"command.committed","payload":{"invocationId":"<g3>","commandId":"H5Lu8NKCSWjTTKB5olMsJ2hDkMGYR7h32jEhI_C5uPs","commitId":2}}
+event {"type":"generation.delta","payload":{"threadId":"<g1>","runId":"<g2>","content":{"role":"assistant","contents":[{"$type":"functionCall","name":"builtin_echo","arguments":{"text":"回声"},"informationalOnly":false,"callId":"call1"}]}}}
+event {"type":"generation.delta","payload":{"threadId":"<g1>","runId":"<g2>","content":{"role":"assistant","contents":[{"$type":"text","text":"工具说"}]}}}
+event {"type":"generation.delta","payload":{"threadId":"<g1>","runId":"<g2>","content":{"role":"assistant","contents":[{"$type":"text","text":"工具说"},{"$type":"text","text":"：回声"}]}}}
+event {"type":"generation.finished","payload":{"threadId":"<g1>","runId":"<g2>","status":"completed","usage":{"promptTokens":30,"completionTokens":7,"totalTokens":37,"durationMs":<ms>}}}
+event {"type":"conversation.updated","payload":{"threadId":"<g1>","commitId":6,"change":{"title":"回声测试"}}}
+event {"type":"generation.started","payload":{"threadId":"<g1>","runId":"<g4>","providerId":"p","model":"m1"}}
+event {"type":"command.committed","payload":{"invocationId":"<g5>","commandId":"nQ_LC5n5IK3rkdpUoaB8XAzs5KD4kVGIiHTMtlvx8HQ","commitId":7}}
+event {"type":"generation.finished","payload":{"threadId":"<g1>","runId":"<g4>","status":"failed","error":{"code":"provider-rate-limited","message":"「假服务」限流了这次请求。","detail":"HTTP 429 · {\"error\":{\"message\":\"slow down\"}}","retryable":true},"usage":{"durationMs":<ms>}}}
+message {"role":"user","contents":[{"text":"\u8BF7\u56DE\u58F0"}]}
+message {"authorName":"p","createdAt":"1970-01-01T00:00:01\u002B00:00","role":"assistant","contents":[{"$type":"functionCall","name":"builtin_echo","arguments":{"text":"\u56DE\u58F0"},"informationalOnly":false,"callId":"call1"}],"messageId":"c"}
+message {"role":"tool","contents":[{"$type":"functionResult","result":"\u56DE\u58F0","callId":"call1"}]}
+message {"authorName":"p","createdAt":"1970-01-01T00:00:01\u002B00:00","role":"assistant","contents":[{"$type":"text","text":"\u5DE5\u5177\u8BF4\uFF1A\u56DE\u58F0"}],"messageId":"c"}
+message {"role":"user","contents":[{"text":"\u518D\u6765"}]}
+request {"messages":[{"role":"user","content":"请回声"}],"stream":true,"stream_options":{"include_usage":true},"tools":[{"type":"function","function":{"description":"把输入原样返回。用于验证工具调用链路是否通畅。","name":"builtin_echo","parameters":{
+  "type": "object",
+  "required": [
+    "text"
+  ],
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "\u8981\u539F\u6837\u8FD4\u56DE\u7684\u6587\u672C"
+    }
+  },
+  "additionalProperties": false
+}}}],"tool_choice":"auto","model":"m1"}
+request {"messages":[{"role":"user","content":"请回声"},{"role":"assistant","name":"p","tool_calls":[{"id":"call1","type":"function","function":{"name":"builtin_echo","arguments":"{\n  \"text\": \"回声\"\n}"}}]},{"role":"tool","tool_call_id":"call1","content":"\"回声\""}],"stream":true,"stream_options":{"include_usage":true},"tools":[{"type":"function","function":{"description":"把输入原样返回。用于验证工具调用链路是否通畅。","name":"builtin_echo","parameters":{
+  "type": "object",
+  "required": [
+    "text"
+  ],
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "\u8981\u539F\u6837\u8FD4\u56DE\u7684\u6587\u672C"
+    }
+  },
+  "additionalProperties": false
+}}}],"tool_choice":"auto","model":"m1"}
+request {"temperature":0.3,"messages":[{"role":"system","content":"用一句不超过 12 个字的短语概括这段对话的主题，作为对话标题。只输出标题本身，不要引号、句号、前后缀或解释。"},{"role":"user","content":"用户：请回声\n助手：\n助手：工具说：回声"}],"max_completion_tokens":48,"model":"m1"}
+request {"messages":[{"role":"user","content":"请回声"},{"role":"assistant","name":"p","tool_calls":[{"id":"call1","type":"function","function":{"name":"builtin_echo","arguments":"{\n  \"text\": \"回声\"\n}"}}]},{"role":"tool","tool_call_id":"call1","content":"\"回声\""},{"role":"assistant","content":"工具说：回声","name":"p"},{"role":"user","content":"再来"}],"stream":true,"stream_options":{"include_usage":true},"tools":[{"type":"function","function":{"description":"把输入原样返回。用于验证工具调用链路是否通畅。","name":"builtin_echo","parameters":{
+  "type": "object",
+  "required": [
+    "text"
+  ],
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "\u8981\u539F\u6837\u8FD4\u56DE\u7684\u6587\u672C"
+    }
+  },
+  "additionalProperties": false
+}}}],"tool_choice":"auto","model":"m1"}
+log agent failure for <g1>: HTTP 429 (: )
+
+slow down
+log generation <g4> failed [provider-rate-limited]: HTTP 429 · {"error":{"message":"slow down"}}
+

@@ -15,3 +15,6 @@ Gemini generateContent 协议：请求正文（`GeminiRequest.build`）、调用
 # SPEC
 1. [LEMMA: 1, 2] 请求正文、端点、请求头、解码后的增量与旧实现逐字节相同：组合者 ProviderTransports 的 `GoldenTests`，通过。
 2. [LEMMA: 2, 3] 调用 id 往返、思考片段、调用按到达顺序编号、error 对象、坏 data、用量兜底：`tests/Tests.fs`，通过。
+
+# 变更记录
+- 流事件结果联合类型加 `[<RequireQualifiedAccess>]`：它们与 AgentRuntime 的 `AgentCallResult`（Completed/Failed/Cancelled）同在命名空间 Wanxiang.Agent，作为包被引用时 `Failed` 会被解析错。调用方原本都已限定写法，无需改动。

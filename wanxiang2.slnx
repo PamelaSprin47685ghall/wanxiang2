@@ -47,6 +47,10 @@
     <Project Path="libs/CommandId/CommandId.fsproj" />
     <Project Path="libs/CommandId/tests/CommandId.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ContextTrim/">
+    <Project Path="libs/ContextTrim/ContextTrim.fsproj" />
+    <Project Path="libs/ContextTrim/tests/ContextTrim.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Conversations/">
     <Project Path="libs/Conversations/Conversations.fsproj" />
     <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
@@ -158,6 +162,10 @@
   <Folder Name="/TextMatch/">
     <Project Path="libs/TextMatch/TextMatch.fsproj" />
     <Project Path="libs/TextMatch/tests/TextMatch.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TitleText/">
+    <Project Path="libs/TitleText/TitleText.fsproj" />
+    <Project Path="libs/TitleText/tests/TitleText.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolNames/">
     <Project Path="libs/ToolNames/ToolNames.fsproj" />

@@ -8,7 +8,7 @@
   - `Propose(events, at, ?stamp) : Decision`（`Proposed commit | Duplicate(id, span) | StampConflict id | Rejected 'Err`）。
   - `Record(commit, span) : Result<unit, RecordProblem>`：事实「这条提交已持久化在 span」。刚才的提议和重放读出的提交走同一个入口。问题：`IdGap | SpanGap | RepeatedStamp | FoldRejected 'Err | Unsettled id`，各有 `Describe()`。
   - `Abandon()`：使用方确知提议没有写入。
-- 查询：`State`、`LastId`、`Tail`（下一条的起点）、`Checkpoint`（数组为副本）、`SpanOf id`、`SpansAfter(cursor, ?limit)`。
+- 查询：`State`、`LastId`、`Stamps`（不可变 Map）、`Tail`（下一条的起点）、`Checkpoint`（数组为副本）、`SpanOf id`、`SpansAfter(cursor, ?limit)`。
 - 值与编解码：`Commit`、`Stamp`、`Span`、`Commit.map`、`Checkpoint.map`、`Envelope.write/read`（`Commit<JsonNode>`）、`CheckpointJson.write/read`（`Checkpoint<JsonNode>`）。
 
 合作方式：由组合者 C 决定何时写、写到哪、失败怎么办（见 `compose/LedgerStore`）。本库的返回值只说自己的裁决和事实，不含「请某个对象做什么」。
@@ -44,7 +44,7 @@
     - 证明：`abandon keeps state and reuses the id`，通过。
 4. [LEMMA: 8] 折叠被拒给出 `Rejected 领域错误`，不留提议。
     - 证明：`rejection carries the domain error and leaves no proposal`，通过。
-5. [LEMMA: 7] 同戳给出 `Duplicate(原 id, 原区间)`，hash 不同给出 `StampConflict`；记入重放事实后仍成立。
+5. [LEMMA: 7] 同戳给出 `Duplicate(原 id, 原区间)`，hash 不同给出 `StampConflict`；记入重放事实后仍成立，`Stamps` 与之一致。
     - 证明：`same stamp is duplicate with span, different hash conflicts, survives replay`，通过。
 6. [LEMMA: 4, 6] `Record` 拒绝 `IdGap`、`SpanGap`（含空区间）、`RepeatedStamp`、`FoldRejected`、`Unsettled`，账本不变；被拒的提议之后仍能正确记入。
     - 证明：`record rejects every kind of inconsistency without change`，通过。

@@ -82,6 +82,8 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
     // —— 查询 ——
     member _.State : 'S = state
     member _.LastId : uint64 = lastId
+    /// 幂等索引：commandId -> (hash, commitId)。不可变值，调用方拿到的就是快照。
+    member _.Stamps : Map<string, string * uint64> = stamps
     /// 下一条提交的起点（上一条的末尾）。
     member _.Tail : int64 = tail ()
 

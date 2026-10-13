@@ -2,7 +2,7 @@
 # wanxiang2 构建入口。
 #   ./x test  <lib>   单独构建并测试 libs/<lib>（只凭本库与声明的外部包）
 #   ./x check         依赖检查：库不引用本库以外的源码；组合者只经交付包使用库
-#   ./x pack          把每个库打成包，放进 artifacts/feed
+#   ./x pack          把每个库和组合者打成包，放进 artifacts/feed
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
 #   ./x all           check + 逐库 test + pack + compose
 #   ./x sln           由 libs/ 重新生成 wanxiang2.slnx
@@ -58,6 +58,11 @@ check() {
 pack() {
   rm -rf artifacts/feed
   for lib in $(libs); do dotnet pack "libs/$lib/$lib.fsproj" -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo; done
+  # 组合者也是交付物；它自己从 feed 消费库包
+  rm -rf artifacts/packages/wanxiang2.* compose/*/obj
+  for c in $(composers); do
+    dotnet pack "compose/$c/$c.fsproj" -c Release -p:Version=0.0.0-local -p:RestorePackagesPath="$PWD/artifacts/packages" -o artifacts/feed -v q -nologo
+  done
 }
 
 compose() {

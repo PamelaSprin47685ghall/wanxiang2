@@ -60,6 +60,7 @@ let ``same stamp is duplicate with span, different hash conflicts, survives repl
     for id, s in l.SpansAfter 0UL do
         ok (r.Record((if id = c.id then c else { id = id; at = t0; stamp = None; events = [ Add 7 ] }), s))
     match r.Propose([ Add 1 ], t0, st) with Duplicate(2UL, x) when x = span -> () | d -> failwithf "%A" d
+    Assert.Equal<Map<string, string * uint64>>(Map [ "c1", ("h1", 2UL) ], r.Stamps)
 
 // SPEC 6：Record 拒绝断档、区间缺口、重复 commandId、折叠失败、与未落定提议不符；账本不变
 [<Fact>]

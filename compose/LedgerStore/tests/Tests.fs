@@ -8,83 +8,176 @@ open Xunit
 open Ledger
 open LedgerStore
 
-/// 计数器：事件是整数，结果不能为负。
-let apply (s: JsonNode) (c: Commit<JsonNode>) : Result<JsonNode, string> =
-    let n = c.events |> List.sumBy _.GetValue<int>()
-    let v = s.GetValue<int>() + n
-    if v < 0 then Error(sprintf "negative %d" v) else Ok(JsonValue.Create v)
+/// 计数器领域：事件是整数，状态是整数，结果不能为负。错误类型是领域自己的。
+type CounterError = Negative of int
+
+let apply (s: int) (c: Commit<int>) : Result<int, CounterError> =
+    let v = s + List.sum c.events
+    if v < 0 then Error(Negative v) else Ok v
+
+let codec : Codec<int, int> =
+    { encodeEvent = fun n -> JsonValue.Create n :> JsonNode
+      decodeEvent = fun j -> try Ok(j.GetValue<int>()) with e -> Error e.Message
+      encodeState = fun n -> JsonValue.Create n :> JsonNode
+      decodeState = fun j -> try Ok(j.GetValue<int>()) with e -> Error e.Message }
+
+type S = LedgerStore<int, int, CounterError>
 
 let t0 = DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
-let ev (n: int) = JsonValue.Create n :> JsonNode
 let tempDir () = Path.Combine(Path.GetTempPath(), "ledgerstore-" + Guid.NewGuid().ToString("N"))
-let openAt dir = new LedgerStore(dir, apply, JsonValue.Create 0)
-let value (s: LedgerStore) = s.State.GetValue<int>()
+let openWith policy dir = new S(dir, apply, 0, codec, policy)
+let openAt dir = openWith SnapshotPolicy.Manual dir
+let logOf dir = Path.Combine(dir, "log.jsonseq")
 let committed = function Committed c -> c | r -> failwithf "expected Committed, got %A" r
 
 [<Fact>]
-let ``commits survive reopen with and without snapshot`` () =
+let ``commits survive reopen with and without snapshot, startup says which`` () =
     let d = tempDir ()
     do
         use s = openAt d
-        for n in 1..3 do committed (s.Submit([ ev n ], t0)) |> ignore
-        s.SaveSnapshot()
-        committed (s.Submit([ ev 10 ], t0)) |> ignore
+        Assert.Equal({ snapshot = Absent; replayedCommits = 0 }, s.Startup)
+        for n in 1..3 do committed (s.Submit([ n ], t0)) |> ignore
+        Assert.Equal(Ok(), s.SaveSnapshot())
+        committed (s.Submit([ 10 ], t0)) |> ignore
     do
         use s = openAt d
-        Assert.Equal(Healthy, s.Health)
-        Assert.Equal((4UL, 16), (s.LastId, value s))
+        Assert.Equal({ snapshot = Used 3UL; replayedCommits = 1 }, s.Startup)
+        Assert.Equal((4UL, 16), (s.LastId, s.State))
+    File.WriteAllText(Path.Combine(d, "snapshot"), "garbage")
+    do
+        use s = openAt d
+        match s.Startup with { snapshot = Discarded _; replayedCommits = 4 } -> () | x -> failwithf "%A" x
+        Assert.Equal((4UL, 16), (s.LastId, s.State))
     File.Delete(Path.Combine(d, "snapshot"))
     use s = openAt d
-    Assert.Equal((4UL, 16), (s.LastId, value s))
+    Assert.Equal({ snapshot = Absent; replayedCommits = 4 }, s.Startup)
+    Assert.Equal(16, s.State)
 
 [<Fact>]
-let ``domain rejection writes nothing`` () =
+let ``domain rejection carries the typed error and writes nothing`` () =
     let d = tempDir ()
     use s = openAt d
-    match s.Submit([ ev -1 ], t0) with Rejected _ -> () | r -> failwithf "%A" r
-    Assert.Equal(0L, FileInfo(Path.Combine(d, "log.jsonseq")).Length)
+    match s.Submit([ -1 ], t0) with Rejected(Negative -1) -> () | r -> failwithf "%A" r
+    Assert.Equal(0L, FileInfo(logOf d).Length)
 
 [<Fact>]
-let ``duplicate returns the original commit read back from the log, also after reopen`` () =
+let ``duplicate returns the original commit read back from the log; stamps are visible`` () =
     let d = tempDir ()
     let st = { commandId = "cmd"; hash = "h" }
     let c =
         use s = openAt d
-        let c = committed (s.Submit([ ev 5 ], t0, st))
-        match s.Submit([ ev 5 ], t0, st) with Duplicate o -> Assert.Equal(c.id, o.id) | r -> failwithf "%A" r
-        match s.Submit([ ev 5 ], t0, { st with hash = "x" }) with Conflict 1UL -> () | r -> failwithf "%A" r
+        let c = committed (s.Submit([ 5 ], t0, st))
+        match s.Submit([ 5 ], t0, st) with Duplicate o -> Assert.Equal(c, o) | r -> failwithf "%A" r
+        match s.Submit([ 5 ], t0, { st with hash = "x" }) with Conflict 1UL -> () | r -> failwithf "%A" r
         c
     use s = openAt d
-    match s.Submit([ ev 5 ], t0, st) with Duplicate o -> Assert.Equal(c.id, o.id) | r -> failwithf "%A" r
-    Assert.Equal(5, value s)
+    match s.Submit([ 5 ], t0, st) with Duplicate o -> Assert.Equal(c, o) | r -> failwithf "%A" r
+    Assert.Equal<Map<string, string * uint64>>(Map [ "cmd", ("h", 1UL) ], s.Stamps)
+    Assert.Equal(1UL, s.Checkpoint.throughId)
+    Assert.Equal(5, s.State)
 
 [<Fact>]
-let ``torn tail after a crash makes the store read-only until the user repairs`` () =
+let ``commits after cursor page through the log`` () =
+    use s = openAt (tempDir ())
+    let all = [ for n in 1..150 -> committed (s.Submit([ n ], t0)) ]
+    let rec pages cursor acc =
+        match s.CommitsAfter(cursor, 64) with
+        | Ok [] -> List.rev acc
+        | Ok page -> Assert.True(page.Length <= 64); pages (List.last page).id (page :: acc)
+        | Error e -> failwith e
+    let got = pages 0UL []
+    Assert.Equal<int list>([ 64; 64; 22 ], got |> List.map List.length)
+    Assert.Equal<Commit<int> list>(all, List.concat got)
+    Assert.Equal(Ok [], s.CommitsAfter(150UL, 64))
+
+/// 崩溃矩阵的新形态：崩溃只会在追加的某个字节处中断。对新记录的每一个截断长度，
+/// 重开后：历史字节不变；id 无重复无空洞；截断为 0 则健康且停在旧位置，完整则新提交在，
+/// 其余为 Damaged（证据：偏移与原因），修复后从旧位置继续。
+[<Fact>]
+let ``crash at every byte of an append leaves the longest valid prefix`` () =
+    let src = tempDir ()
+    do
+        use s = openAt src
+        for n in 1..3 do committed (s.Submit([ n ], t0)) |> ignore
+    let history = File.ReadAllBytes(logOf src)
+    let full =
+        do
+            use s = openAt src
+            committed (s.Submit([ 4 ], t0)) |> ignore
+        File.ReadAllBytes(logOf src)
+    let record = full[history.Length ..]
+    for cut in 0 .. record.Length do
+        let d = tempDir ()
+        Directory.CreateDirectory d |> ignore
+        File.WriteAllBytes(logOf d, Array.append history record[.. cut - 1])
+        use s = openAt d
+        let bytes = File.ReadAllBytes(logOf d)
+        Assert.Equal<byte[]>(history, bytes[.. history.Length - 1])
+        if cut = 0 then
+            Assert.Equal((Healthy, 3UL), (s.Health, s.LastId))
+        elif cut = record.Length then
+            Assert.Equal((Healthy, 4UL, 10), (s.Health, s.LastId, s.State))
+        else
+            match s.Health with
+            | Damaged(o, why) -> Assert.Equal(int64 history.Length, o); Assert.False(String.IsNullOrWhiteSpace why)
+            | h -> failwithf "cut %d: %A" cut h
+            Assert.Equal(3UL, s.LastId)
+            Assert.Equal(Ok(int64 history.Length), s.Repair())
+            Assert.Equal(4UL, (committed (s.Submit([ 4 ], t0))).id)
+        match s.CommitsAfter(0UL, 100) with
+        | Ok cs -> Assert.Equal<uint64 list>([ 1UL .. s.LastId ], cs |> List.map _.id)
+        | Error e -> failwith e
+
+[<Fact>]
+let ``torn tail makes the store read-only and opening changes no bytes`` () =
     let d = tempDir ()
     do
         use s = openAt d
-        for n in 1..2 do committed (s.Submit([ ev n ], t0)) |> ignore
-    let log = Path.Combine(d, "log.jsonseq")
-    let good = FileInfo(log).Length
-    File.AppendAllText(log, "\u001e{\"v\":1,\"id\":\"3\"")   // 崩溃时半写的一条
+        for n in 1..2 do committed (s.Submit([ n ], t0)) |> ignore
+    File.AppendAllText(logOf d, "\u001e{\"v\":1,\"id\":\"3\"")
+    let before = File.ReadAllBytes(logOf d)
+    use s = openAt d
+    match s.Submit([ 1 ], t0) with ReadOnly _ -> () | r -> failwithf "%A" r
+    Assert.Equal<byte[]>(before, File.ReadAllBytes(logOf d))
+
+[<Fact>]
+let ``undecodable event is damage, not a crash`` () =
+    let d = tempDir ()
+    do
+        use s = openAt d
+        committed (s.Submit([ 1 ], t0)) |> ignore
+    let good = FileInfo(logOf d).Length
+    File.AppendAllText(logOf d, "\u001e{\"v\":1,\"id\":\"2\",\"at\":\"2026-01-01T00:00:00+00:00\",\"events\":[\"x\"]}\n")
     use s = openAt d
     match s.Health with Damaged(o, _) -> Assert.Equal(good, o) | h -> failwithf "%A" h
-    match s.Submit([ ev 1 ], t0) with ReadOnly _ -> () | r -> failwithf "%A" r
-    Assert.Equal(good + 16L, FileInfo(log).Length)        // 打开不改任何字节
-    Assert.Equal(Ok good, s.Repair())
-    Assert.Equal(3UL, (committed (s.Submit([ ev 1 ], t0))).id)
-    Assert.Equal(4, value s)
 
 [<Fact>]
-let ``stale snapshot from a truncated log is ignored`` () =
+let ``stale snapshot from a truncated log is discarded`` () =
     let d = tempDir ()
     do
         use s = openAt d
-        for n in 1..3 do committed (s.Submit([ ev n ], t0)) |> ignore
-        s.SaveSnapshot()
-    File.WriteAllBytes(Path.Combine(d, "log.jsonseq"), [||])
+        for n in 1..3 do committed (s.Submit([ n ], t0)) |> ignore
+        s.SaveSnapshot() |> ignore
+    File.WriteAllBytes(logOf d, [||])
     use s = openAt d
-    Assert.Equal((0UL, 0), (s.LastId, value s))
+    match s.Startup.snapshot with Discarded _ -> () | x -> failwithf "%A" x
+    Assert.Equal((0UL, 0), (s.LastId, s.State))
+
+[<Fact>]
+let ``snapshot policy saves every k commits and on close`` () =
+    let d = tempDir ()
+    do
+        use s = openWith { everyCommits = Some 2; onClose = false } d
+        for n in 1..5 do committed (s.Submit([ n ], t0)) |> ignore
+    do
+        use s = openAt d
+        Assert.Equal({ snapshot = Used 4UL; replayedCommits = 1 }, s.Startup)
+    do
+        use s = openWith { everyCommits = None; onClose = true } d
+        committed (s.Submit([ 1 ], t0)) |> ignore
+    use s = openAt d
+    Assert.Equal({ snapshot = Used 6UL; replayedCommits = 0 }, s.Startup)
+    Assert.Equal(16, s.State)
 
 [<Fact>]
 let ``unknown write outcome stays unknown and is never turned into a retry`` () =
@@ -92,12 +185,22 @@ let ``unknown write outcome stays unknown and is never turned into a retry`` () 
     if OperatingSystem.IsLinux() then
         let d = tempDir ()
         Directory.CreateDirectory d |> ignore
-        File.CreateSymbolicLink(Path.Combine(d, "log.jsonseq"), "/dev/full") |> ignore
-        use s = openAt d
-        match s.Submit([ ev 1 ], t0) with Unknown _ -> () | r -> failwithf "%A" r
+        File.CreateSymbolicLink(logOf d, "/dev/full") |> ignore
+        use s = openWith SnapshotPolicy.Default d
+        match s.Submit([ 1 ], t0) with Unknown _ -> () | r -> failwithf "%A" r
         match s.Health with OutcomeUnknown _ -> () | h -> failwithf "%A" h
-        match s.Submit([ ev 1 ], t0) with ReadOnly _ -> () | r -> failwithf "%A" r
+        match s.Submit([ 1 ], t0) with ReadOnly _ -> () | r -> failwithf "%A" r
         Assert.Equal(0UL, s.LastId)
+
+[<Fact>]
+let ``snapshot save failure does not affect commits`` () =
+    let d = tempDir ()
+    use s = openAt d
+    Directory.CreateDirectory(Path.Combine(d, "snapshot")) |> ignore   // 真实故障：目标是目录，改名失败
+    committed (s.Submit([ 1 ], t0)) |> ignore
+    Assert.True(s.SaveSnapshot().IsError)
+    Assert.True(s.LastSnapshotError.IsSome)
+    Assert.Equal(2UL, (committed (s.Submit([ 1 ], t0))).id)
 
 [<Fact>]
 let ``second store on the same directory is refused`` () =
@@ -106,23 +209,7 @@ let ``second store on the same directory is refused`` () =
     Assert.Throws<InvalidOperationException>(fun () -> openAt d |> ignore) |> ignore
 
 [<Fact>]
-let ``inputs and returned state are not aliased`` () =
-    let o = JsonObject()
-    o["k"] <- JsonValue.Create 1
-    let applyObj (st: JsonNode) (c: Commit<JsonNode>) : Result<JsonNode, string> =
-        let a = st.AsArray().DeepClone().AsArray()
-        for e in c.events do a.Add(e.DeepClone())
-        Ok a
-    let d = tempDir ()
-    use s = new LedgerStore(d, applyObj, JsonArray())
-    committed (s.Submit([ o ], t0)) |> ignore
-    o["k"] <- JsonValue.Create 99            // 调用方事后改输入
-    let st = s.State
-    st.AsArray().Clear()                     // 调用方改返回值
-    Assert.Equal("""[{"k":1}]""", s.State.ToJsonString())
-
-[<Fact>]
 let ``concurrent submits each commit exactly once`` () =
     use s = openAt (tempDir ())
-    Threading.Tasks.Parallel.For(0, 100, fun _ -> committed (s.Submit([ ev 1 ], t0)) |> ignore) |> ignore
-    Assert.Equal((100UL, 100), (s.LastId, value s))
+    Threading.Tasks.Parallel.For(0, 100, fun _ -> committed (s.Submit([ 1 ], t0)) |> ignore) |> ignore
+    Assert.Equal((100UL, 100), (s.LastId, s.State))

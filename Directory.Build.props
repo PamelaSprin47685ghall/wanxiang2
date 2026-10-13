@@ -14,7 +14,7 @@
   <PropertyGroup>
     <PackageId>Wanxiang2.$(MSBuildProjectName)</PackageId>
     <IsPackable>false</IsPackable>
-    <IsPackable Condition="$(MSBuildProjectDirectory.Contains('/libs/')) And !$(MSBuildProjectDirectory.Contains('/tests'))">true</IsPackable>
+    <IsPackable Condition="($(MSBuildProjectDirectory.Contains('/libs/')) Or $(MSBuildProjectDirectory.Contains('/compose/'))) And !$(MSBuildProjectDirectory.Contains('/tests'))">true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" />

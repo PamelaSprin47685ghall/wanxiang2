@@ -115,7 +115,7 @@
 
 | 事项 | 使用方 | 保留理由 | 可验证的解除条件 |
 | --- | --- | --- | --- |
-| `compose/LedgerStore` 与旧仓库 `Wanxiang.Store/Store.fs` 是同一组合的两份实现 | `./x compose`（真实组合证据）；旧仓库运行时 | 旧仓库尚未接入本轮的新 Ledger 接口，两份暂时并存 | 旧仓库 `Store.fs` 直接使用 `compose/LedgerStore`，或删掉本目录改由旧仓库测试承担同样的组合证据；二者只剩一份 |
+| `compose/LedgerStore` 与旧仓库 `Wanxiang.Store/Store.fs` 是同一组合的两份实现 | `./x compose`；旧仓库运行时 | 旧仓库还没改成消费 `Wanxiang2.LedgerStore` 包；包已具备旧系统要的能力（分页、类型化、诊断、快照策略） | 旧仓库 `Store.fs` 只剩对 `LedgerStore<_,_,_>` 的薄包装或被删掉，旧的 Replay/Coordinator/FaultInjector 一并删除 |
 | `compose/*.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本 | `./x compose` | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
 
 
@@ -148,9 +148,9 @@
 ## 证据现状（对应上文 SPEC）
 
 - SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。[TODO] 没有机器检查引用编号；靠评审。
-- SPEC 2 职责与交付独立：构建独立、协作独立由 `./x check` 与 `./x test <lib>` 给出，5 个库全部通过；交付独立由 `./x compose` 给出（干净包缓存、只用 `artifacts/feed` 中的包），通过。[TODO] 交付包还没有在本仓库之外的工作区消费过。
+- SPEC 2 职责与交付独立：构建独立、协作独立由 `./x check` 与 `./x test <lib>` 给出，5 个库全部通过；交付独立由 `./x compose` 给出（干净包缓存、只用 `artifacts/feed` 中的包），通过；`Wanxiang2.LedgerStore` 也已在仓库外的临时项目里消费过一次（手动）。[TODO] 仓库外消费没有自动化。
 - SPEC 3 状态确有主人：Ledger 与 compose/LedgerStore 测了输入、返回值别名、错误后的状态、实例隔离（见各自 AGENTS.md）。[TODO] JsonSeqFile、SnapshotFile、DirLock 的状态只有文件本身，没有单独的别名测试。
-- SPEC 4 协作由真实组合证明：`compose/LedgerStore/tests` 覆盖成功、领域拒绝、重复、半写尾与修复、过期快照、真实未知结果（`/dev/full`）、并发、同目录互斥。[TODO] 「写失败但确知未写」没有真实故障可触发。
+- SPEC 4 协作由真实组合证明：`compose/LedgerStore/tests` 覆盖成功、类型化拒绝、重复、游标分页、在每个字节处崩溃、半写尾与修复、解码失败、过期快照、快照策略与快照写失败、真实未知结果（`/dev/full`）、并发、同目录互斥。[TODO] 「写失败但确知未写」没有真实故障可触发。
 - SPEC 5 增强经得起拆除：目前没有增强层，不适用。
 - SPEC 6 每步形成真实闭环：见下表。
 
@@ -158,4 +158,4 @@
 
 | 职责 | 独立能力 | 接入旧仓库并退出旧实现 |
 | --- | --- | --- |
-| 事件账本（JsonSeq、Ledger、Snapshot、DirLock、Canonical） | 完成：5 个库各自测试通过；`compose/LedgerStore` 真实组合通过 | 未完成：旧仓库分支 `extract-ledger`（`34482f2`）接的是上一版 Actor 接口（`Post`/`Outbox`/`Ask`/`AppendRequested`），本轮接口改了，需要重新接；旧仓库 `main` 尚未采用 |
+| 事件账本（JsonSeq、Ledger、Snapshot、DirLock、Canonical，组合 LedgerStore） | 完成：5 个库各自测试通过；`Wanxiang2.LedgerStore` 交付包具备旧系统要的能力（游标分页、类型化的事件/状态/错误、Stamps/Checkpoint/Startup 诊断、快照策略），真实组合测试通过；仓库外消费手动验证过 | 未完成，目前没有已知的能力缺口：旧仓库分支 `extract-ledger`（`34482f2`）还接着上一版 Actor 接口，要改成消费 `Wanxiang2.LedgerStore` 包；旧仓库 `main` 尚未采用 |

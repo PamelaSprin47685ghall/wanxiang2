@@ -95,9 +95,17 @@
     <Project Path="libs/McpProtocol/McpProtocol.fsproj" />
     <Project Path="libs/McpProtocol/tests/McpProtocol.Tests.fsproj" />
   </Folder>
+  <Folder Name="/MediaContent/">
+    <Project Path="libs/MediaContent/MediaContent.fsproj" />
+    <Project Path="libs/MediaContent/tests/MediaContent.Tests.fsproj" />
+  </Folder>
   <Folder Name="/MediaSniff/">
     <Project Path="libs/MediaSniff/MediaSniff.fsproj" />
     <Project Path="libs/MediaSniff/tests/MediaSniff.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageSerde/">
+    <Project Path="libs/MessageSerde/MessageSerde.fsproj" />
+    <Project Path="libs/MessageSerde/tests/MessageSerde.Tests.fsproj" />
   </Folder>
   <Folder Name="/MessageText/">
     <Project Path="libs/MessageText/MessageText.fsproj" />
@@ -110,6 +118,14 @@
   <Folder Name="/PlainText/">
     <Project Path="libs/PlainText/PlainText.fsproj" />
     <Project Path="libs/PlainText/tests/PlainText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RefreshingPool/">
+    <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
+    <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SandboxFiles/">
+    <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
+    <Project Path="libs/SandboxFiles/tests/SandboxFiles.Tests.fsproj" />
   </Folder>
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />
@@ -126,6 +142,10 @@
   <Folder Name="/TextMatch/">
     <Project Path="libs/TextMatch/TextMatch.fsproj" />
     <Project Path="libs/TextMatch/tests/TextMatch.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolNames/">
+    <Project Path="libs/ToolNames/ToolNames.fsproj" />
+    <Project Path="libs/ToolNames/tests/ToolNames.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />

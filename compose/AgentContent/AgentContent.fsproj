@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：MessageSerde（附件引用）+ MediaContent（按传输能力解析内容）= 旧 AttachmentContent。命名空间沿用 Wanxiang.Agent。 -->
+  <ItemGroup>
+    <Compile Include="AttachmentContent.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+    <PackageReference Include="Wanxiang2.MessageSerde" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaContent" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

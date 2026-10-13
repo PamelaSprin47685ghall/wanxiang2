@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：工具注册表与 MCP 工具包装。协作者：BuiltinTools、McpClient、AppConfig、ChatDomain（SessionConfig）、
+       ToolNames（标识换算）、RefreshingPool（按配置指纹换新客户端）。命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="ToolRegistry.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+    <PackageReference Include="Wanxiang2.BuiltinTools" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.McpClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolNames" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RefreshingPool" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

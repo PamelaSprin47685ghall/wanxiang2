@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：内置工具（AIFunction）。协作者：SandboxFiles（沙箱文件读取）、ToolNames（稳定标识与函数名）、AppConfig（ToolsConfig）。命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="BuiltinTools.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+    <PackageReference Include="Wanxiang2.SandboxFiles" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolNames" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

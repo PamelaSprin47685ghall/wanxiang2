@@ -1,0 +1,93 @@
+{
+  "role": "assistant",
+  "contents": [
+    {
+      "$type": "text",
+      "text": "hi"
+    },
+    {
+      "$type": "functionCall",
+      "name": "builtin_time",
+      "informationalOnly": false,
+      "callId": "c1"
+    }
+  ]
+}
+{
+  "role": "tool",
+  "contents": [
+    {
+      "$type": "functionResult",
+      "result": "{\"ok\":1}",
+      "callId": "c1"
+    }
+  ]
+}
+{
+  "role": "system",
+  "contents": [
+    {
+      "$type": "text",
+      "text": "s"
+    }
+  ]
+}
+strict user [text a]
+lenient user [text a]
+refs [{ sha256 = "ab"
+   mediaType = "image/png"
+   fileName = "p.png"
+   size = 5L }]
+strict none
+lenient user []
+refs [{ sha256 = "ab"
+   mediaType = "application/octet-stream"
+   fileName = "ab"
+   size = 0L }]
+strict assistant [text t; text u; call x f]
+lenient assistant [text t; text u; call x f]
+refs []
+strict tool [result x r]
+lenient tool [result x r]
+refs []
+strict none
+lenient user []
+refs []
+strict none
+lenient none
+refs []
+roundtrip assistant [text hi; call c1 builtin_time] toolCall=true calls=1 text=hi
+bad true
+openai p.png text 【附件图片】p.png | data image/png 10
+openai b.jpg text 【附件】b.jpg（image/jpeg，8.0 MiB） — 超过 8.0 MiB 内联上限，未发送给模型。
+openai d.pdf text 【附件】d.pdf（application/pdf，4 B） — 当前模型服务的传输不接受该类型，模型只看到这条说明。
+openai s.ogg text 【附件】s.ogg（audio/x-custom，4 B） — 当前模型服务的传输不接受该类型，模型只看到这条说明。
+openai a.fs text 【附件】a.fs\n```fsharp\nlet x = 1\n```
+openai noext text 【附件】noext\n```\nlet x = 1\n```
+openai l.txt text 【附件】l.txt\n```\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n```\n…（已截断，原文件 128.0 KiB）
+openai e.txt text 【附件】e.txt（text/plain，0 B） — 空文件。
+openai g.png text 【附件】g.png（image/png，2.0 KiB） — 内容已丢失，无法读取。
+openai z.zip text 【附件】z.zip（application/zip，2.9 MiB） — 二进制内容不进上下文（会挤掉真正有用的历史），模型只看到这条说明。
+anthropic p.png text 【附件图片】p.png | data image/png 10
+anthropic b.jpg text 【附件】b.jpg（image/jpeg，8.0 MiB） — 超过 8.0 MiB 内联上限，未发送给模型。
+anthropic d.pdf text 【附件文档】d.pdf | data application/pdf 4
+anthropic s.ogg text 【附件】s.ogg（audio/x-custom，4 B） — 当前模型服务的传输不接受该类型，模型只看到这条说明。
+anthropic a.fs text 【附件】a.fs\n```fsharp\nlet x = 1\n```
+anthropic noext text 【附件】noext\n```\nlet x = 1\n```
+anthropic l.txt text 【附件】l.txt\n```\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n```\n…（已截断，原文件 128.0 KiB）
+anthropic e.txt text 【附件】e.txt（text/plain，0 B） — 空文件。
+anthropic g.png text 【附件】g.png（image/png，2.0 KiB） — 内容已丢失，无法读取。
+anthropic z.zip text 【附件】z.zip（application/zip，2.9 MiB） — 二进制内容不进上下文（会挤掉真正有用的历史），模型只看到这条说明。
+gemini p.png text 【附件图片】p.png | data image/png 10
+gemini b.jpg text 【附件】b.jpg（image/jpeg，8.0 MiB） — 超过 8.0 MiB 内联上限，未发送给模型。
+gemini d.pdf text 【附件文档】d.pdf | data application/pdf 4
+gemini s.ogg text 【附件音频】s.ogg | data audio/x-custom 4
+gemini a.fs text 【附件】a.fs\n```fsharp\nlet x = 1\n```
+gemini noext text 【附件】noext\n```\nlet x = 1\n```
+gemini l.txt text 【附件】l.txt\n```\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n```\n…（已截断，原文件 128.0 KiB）
+gemini e.txt text 【附件】e.txt（text/plain，0 B） — 空文件。
+gemini g.png text 【附件】g.png（image/png，2.0 KiB） — 内容已丢失，无法读取。
+gemini z.zip text 【附件】z.zip（application/zip，2.9 MiB） — 二进制内容不进上下文（会挤掉真正有用的历史），模型只看到这条说明。
+user [text see; text 【附件图片】x.gif; data image/gif 10]
+true true true true 131072 8388608 16777216
+

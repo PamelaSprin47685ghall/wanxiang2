@@ -1,0 +1,27 @@
+[{"id":"builtin:time","functionName":"builtin_time","label":"time","description":"\u8FD4\u56DE\u5F53\u524D UTC \u65F6\u95F4\uFF08ISO 8601\uFF09\u3002","source":"builtin"},{"id":"builtin:file.read","functionName":"builtin_file_read","label":"file.read","description":"\u8BFB\u53D6\u6C99\u7BB1\u5185\u7684\u6587\u672C\u6587\u4EF6\uFF08\u6700\u591A 1024 KiB\uFF09\u3002\u5141\u8BB8\u7684\u6839\u76EE\u5F55\uFF1A/tmp/wx-tools-golden\u3002path \u9700\u4E3A\u7EDD\u5BF9\u8DEF\u5F84\u3002","source":"builtin"},{"id":"builtin:file.list","functionName":"builtin_file_list","label":"file.list","description":"\u5217\u51FA\u6C99\u7BB1\u5185\u76EE\u5F55\u7684\u6761\u76EE\uFF08\u6700\u591A 500 \u9879\uFF09\u3002\u5141\u8BB8\u7684\u6839\u76EE\u5F55\uFF1A/tmp/wx-tools-golden\u3002","source":"builtin"},{"id":"mcp:s/a","functionName":"mcp_s_a","label":"a","description":"","source":"mcp","serverId":"s"},{"id":"mcp:s/b","functionName":"mcp_s_b","label":"b","description":"\u4E59","source":"mcp","serverId":"s"}]
+log [mcp:s] 对话请求的工具 zz 不存在，已跳过
+tool builtin_echo | builtin:echo | 把输入原样返回。用于验证工具调用链路是否通畅。 | {"type":"object","properties":{"text":{"type":"string","description":"要原样返回的文本"}},"required":["text"]}
+tool builtin_time | builtin:time | 返回当前 UTC 时间（ISO 8601）。 | {"type":"object","properties":{}}
+tool builtin_file_read | builtin:file.read | 读取沙箱内的文本文件（最多 1024 KiB）。允许的根目录：/tmp/wx-tools-golden。path 需为绝对路径。 | {"type":"object","properties":{"path":{"type":"string","description":"要读取的文件绝对路径"}},"required":["path"]}
+tool builtin_file_list | builtin:file.list | 列出沙箱内目录的条目（最多 500 项）。允许的根目录：/tmp/wx-tools-golden。 | {"type":"object","properties":{"path":{"type":"string","description":"要列出条目的目录绝对路径"}},"required":["path"]}
+tool mcp_s_b | mcp:s/b | 乙 | {"type":"object"}
+missing ["mcp:s/zz"; "mcp:off/a"; "mcp:bad"; "builtin:nope"]
+回声
+你好
+error: 文件超过 1024 KiB 上限
+error: 文件不存在：/tmp/wx-tools-golden/none.txt
+error: 路径超出沙箱范围：/etc/hostname
+sub/
+a.txt (6 B)
+big.bin (1048577 B)
+（空目录）
+{"content":[{"type":"text","text":"好"}]}
+builtin_file_read builtin:file.list
+Error "路径不能为空。"
+refreshed true
+same true
+[{"id":"builtin:echo","functionName":"builtin_echo","label":"echo","description":"\u628A\u8F93\u5165\u539F\u6837\u8FD4\u56DE\u3002\u7528\u4E8E\u9A8C\u8BC1\u5DE5\u5177\u8C03\u7528\u94FE\u8DEF\u662F\u5426\u901A\u7545\u3002","source":"builtin"},{"id":"builtin:time","functionName":"builtin_time","label":"time","description":"\u8FD4\u56DE\u5F53\u524D UTC \u65F6\u95F4\uFF08ISO 8601\uFF09\u3002","source":"builtin"},{"id":"mcp:s/a","functionName":"mcp_s_a","label":"a","description":"","source":"mcp","serverId":"s"},{"id":"mcp:s/b","functionName":"mcp_s_b","label":"b","description":"\u4E59","source":"mcp","serverId":"s"}]
+missing ["builtin:file.read"; "builtin:file.list"; "mcp:s/zz"; "mcp:off/a"; "mcp:bad";
+ "builtin:nope"]
+after prune true
+

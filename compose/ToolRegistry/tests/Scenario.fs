@@ -57,7 +57,8 @@ let all () =
     line (invoke (byName "builtin_file_read") [ "path", box (Path.Combine(root, "big.bin")) ])
     line (invoke (byName "builtin_file_read") [ "path", box (Path.Combine(root, "none.txt")) ])
     line (invoke (byName "builtin_file_read") [ "path", box "/etc/hostname" ])
-    line (invoke (byName "builtin_file_list") [ "dir", box root ])
+    // 目录枚举顺序取决于文件系统（旧实现也不排序），这里排序后再比较
+    line ((invoke (byName "builtin_file_list") [ "dir", box root ]).Split('\n') |> Array.sortWith (fun x y -> String.CompareOrdinal(x, y)) |> String.concat "\n")
     line (invoke (byName "builtin_file_list") [ "path", box (Path.Combine(root, "sub")) ])
     line (invoke (byName "mcp_s_b") [ "q", box "ok"; "n", box 3 ])
     line (sprintf "%s %s" (BuiltinTools.functionName "builtin:file.read") (BuiltinTools.stableId "builtin_file_list"))

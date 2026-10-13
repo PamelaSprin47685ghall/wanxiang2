@@ -11,9 +11,9 @@ missing ["mcp:s/zz"; "mcp:off/a"; "mcp:bad"; "builtin:nope"]
 error: 文件超过 1024 KiB 上限
 error: 文件不存在：/tmp/wx-tools-golden/none.txt
 error: 路径超出沙箱范围：/etc/hostname
-sub/
 a.txt (6 B)
 big.bin (1048577 B)
+sub/
 （空目录）
 {"content":[{"type":"text","text":"好"}]}
 builtin_file_read builtin:file.list

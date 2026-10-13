@@ -131,6 +131,49 @@ module ServerModel =
             items.Add o
         items, List.length msgs > limit
 
+    /// 导出固定可见性水位；分页边界只截取消息，不改变删除／分叉语义。
+    let exportPage (proj: Projection) (query: ConversationExportQuery) : Result<ConversationExportPageData, string> =
+        let at = query.atCommitId |> Option.defaultValue proj.latestCommitId
+        match Projection.tryConversation proj query.conversationId with
+        | None -> Error "对话不存在，无法导出。"
+        | Some conv when conv.deleted -> Error "对话已删除，导出已停止；没有保存不完整文件。"
+        | Some _ when at > proj.latestCommitId -> Error "导出水位已失效，请重新开始导出。"
+        | Some _ when query.atCommitId.IsNone && query.beforeCommitId <> 0UL -> Error "导出首页不能指定分页边界。"
+        | Some conv ->
+            let all = Projection.effectiveMessagesAt proj conv.conversationId at
+            if query.beforeCommitId <> 0UL && not (all |> List.exists (fun m -> m.commitId = query.beforeCommitId)) then
+                Error "导出分页边界不属于这份对话，请重新开始导出。"
+            else
+                let mutable rest =
+                    all |> List.rev
+                    |> List.skipWhile (fun m -> query.beforeCommitId <> 0UL && m.commitId >= query.beforeCommitId)
+                let mutable selected: JsonNode list = []
+                let mutable bytes, count = 0, 0
+                let mutable donePage = false
+                let mutable failure = None
+                while not donePage && not (List.isEmpty rest) && count < ConversationExportLimits.pageMessages do
+                    let m = rest.Head
+                    let node = JsonObject()
+                    node["commitId"] <- m.commitId
+                    node["committedAt"] <- m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+                    node["payload"] <- m.payloadJson.DeepClone()
+                    let size = System.Text.Encoding.UTF8.GetByteCount(node.ToJsonString())
+                    if size > ConversationExportLimits.maxMessageBytes then
+                        failure <- Some "单条消息超过 16 MiB 导出安全上限；导出已停止，没有截断内容。"
+                        donePage <- true
+                    elif count > 0 && bytes + size > ConversationExportLimits.pageBytes then donePage <- true
+                    else
+                        selected <- (node :> JsonNode) :: selected
+                        bytes <- bytes + size
+                        count <- count + 1
+                        rest <- rest.Tail
+                match failure with
+                | Some message -> Error message
+                | None ->
+                    Ok { exportId = query.exportId; conversationId = conv.conversationId
+                         atCommitId = at; beforeCommitId = query.beforeCommitId
+                         title = conv.title; totalMessages = all.Length
+                         items = JsonArray(List.toArray selected); hasMore = not (List.isEmpty rest) }
     /// 消息 JSON 里的附件引用（AttachmentRefs 库）。
     let attachmentRefsOf (payload: JsonNode) : (string * string * string * int64) list = AttachmentRefs.ofPayload payload
 

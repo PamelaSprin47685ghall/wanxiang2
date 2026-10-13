@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);FS0025;FS1182;FS0064</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AuthNoConfigWriteTests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Wanxiang2.ConfigStore" VersionOverride="0.0.0-local" />
+    <ProjectReference Include="../WsConnection.fsproj" />
+  </ItemGroup>
+</Project>

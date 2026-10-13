@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：单个 WebSocket 连接的握手、认证、配对、观察、命令、设备、配置写入，以及连接表 ConnectionRegistry。命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="WsConnection.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.EventStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatOrchestrator" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Attachments" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PairingDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostStatus" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ServerModel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConfigMutation" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Search" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostLog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AguiWire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ClientToken" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesktopClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DeviceSightings" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DeviceRules" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

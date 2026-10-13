@@ -46,6 +46,18 @@ let all () : string =
         line "## tail 2"; line (tail.ToJsonString()); line (sprintf "cursor=%A more=%b" cursor more)
         let page, more2 = ServerModel.historyPageItems proj ca cursor 2
         line "## page"; line (page.ToJsonString()); line (sprintf "more=%b" more2)
+        let exportLine (q: ConversationExportQuery) =
+            match ServerModel.exportPage proj q with
+            | Ok pg -> line (sprintf "ok at=%d before=%d total=%d more=%b title=%s items=%s" pg.atCommitId pg.beforeCommitId pg.totalMessages pg.hasMore pg.title (pg.items.ToJsonString()))
+            | Error e -> line ("error " + e)
+        let eid = Guid "eeeeeeee-0000-0000-0000-000000000005"
+        line "## export"
+        exportLine { exportId = eid; conversationId = a; atCommitId = None; beforeCommitId = 0UL }
+        exportLine { exportId = eid; conversationId = a; atCommitId = Some 7UL; beforeCommitId = 4UL }
+        exportLine { exportId = eid; conversationId = a; atCommitId = Some 7UL; beforeCommitId = 99UL }
+        exportLine { exportId = eid; conversationId = a; atCommitId = None; beforeCommitId = 3UL }
+        exportLine { exportId = eid; conversationId = a; atCommitId = Some 999UL; beforeCommitId = 0UL }
+        exportLine { exportId = eid; conversationId = Guid.Empty; atCommitId = None; beforeCommitId = 0UL }
         line "## refs"; line (sprintf "%A" (ServerModel.attachmentRefsOf (msg "user" att)))
         line "## referenced"; line (sprintf "%A" (ServerModel.referencedAttachments proj |> Set.toList))
         sb.ToString()

@@ -8,6 +8,13 @@ cursor=6UL more=true
 ## page
 [{"commitId":4,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE1"}]}},{"commitId":5,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE2"}]}}]
 more=true
+## export
+ok at=10 before=0 total=6 more=false title=甲 items=[{"commitId":2,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u770B\u56FE"},{"$type":"data","additionalProperties":{"wanxiang":{"type":"attachment","sha256":"abc123","mediaType":"image/png","fileName":"a.png","size":42}}}]}},{"commitId":3,"committedAt":"<t>","payload":{"role":"assistant","contents":[{"$type":"text","text":"\u4E00\u53EA\u732B\u3002\n\u7B2C\u4E8C\u884C"}]}},{"commitId":4,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE1"}]}},{"commitId":5,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE2"}]}},{"commitId":6,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE3"}]}},{"commitId":7,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE4"}]}}]
+ok at=7 before=4 total=6 more=false title=甲 items=[{"commitId":2,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u770B\u56FE"},{"$type":"data","additionalProperties":{"wanxiang":{"type":"attachment","sha256":"abc123","mediaType":"image/png","fileName":"a.png","size":42}}}]}},{"commitId":3,"committedAt":"<t>","payload":{"role":"assistant","contents":[{"$type":"text","text":"\u4E00\u53EA\u732B\u3002\n\u7B2C\u4E8C\u884C"}]}}]
+error 导出分页边界不属于这份对话，请重新开始导出。
+error 导出首页不能指定分页边界。
+error 导出水位已失效，请重新开始导出。
+error 对话不存在，无法导出。
 ## refs
 [("abc123", "image/png", "a.png", 42L)]
 ## referenced

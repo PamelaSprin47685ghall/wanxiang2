@@ -59,6 +59,10 @@
     <Project Path="libs/DesktopClient/DesktopClient.fsproj" />
     <Project Path="libs/DesktopClient/tests/DesktopClient.Tests.fsproj" />
   </Folder>
+  <Folder Name="/DeviceSightings/">
+    <Project Path="libs/DeviceSightings/DeviceSightings.fsproj" />
+    <Project Path="libs/DeviceSightings/tests/DeviceSightings.Tests.fsproj" />
+  </Folder>
   <Folder Name="/DirLock/">
     <Project Path="libs/DirLock/DirLock.fsproj" />
     <Project Path="libs/DirLock/tests/DirLock.Tests.fsproj" />

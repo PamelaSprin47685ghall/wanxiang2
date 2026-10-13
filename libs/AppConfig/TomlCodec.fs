@@ -991,9 +991,8 @@ module TomlCodec =
             ct.Add("tokenHash", c.tokenHash)
             ct.Add("name", c.name)
             ct.Add("createdAt", c.createdAtUtc.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture))
-            match c.lastSeenUtc with
-            | Some t -> ct.Add("lastSeen", t.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture))
-            | None -> ()
+            // lastSeen 是主机记账，不是用户配置（决策：主机只在用户明确改配置时写文件）。
+            // 仍读旧文件里的 lastSeen 供一次性迁移到主机自有状态（DeviceSightings），但不再写回。
             ct.Add("revoked", c.revoked)
             clients.Add ct
         auth.Add("clients", clients)

@@ -767,6 +767,8 @@ revoked = true
         Assert.Contains("X-Custom-Header", serialized)
         Assert.Contains("ENV_VAR_A", serialized)
         Assert.Contains("Remote MCP", serialized)
+        // lastSeen 只读不写：主机记账不进用户配置文件。
+        Assert.DoesNotContain("lastSeen", serialized)
         match TomlCodec.tryParse serialized with
         | Error errs -> failwith (String.concat "; " errs)
         | Ok cfg2 ->

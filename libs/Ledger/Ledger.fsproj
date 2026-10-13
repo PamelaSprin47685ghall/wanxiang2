@@ -2,7 +2,6 @@
   <ItemGroup>
     <Compile Include="Types.fs" />
     <Compile Include="Envelope.fs" />
-    <Compile Include="Replay.fs" />
     <Compile Include="Ledger.fs" />
   </ItemGroup>
 </Project>

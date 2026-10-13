@@ -4,17 +4,23 @@ open System
 open System.Globalization
 open System.Text.Json.Nodes
 
-/// 提交外壳的 JSON 形状：
-/// {"v":1,"id":1,"at":"2026-10-13T00:00:00.0000000+00:00","stamp":{"id":"..","hash":".."},"events":[..]}
-/// 本格式不承诺兼容任何旧格式（版本号从 1 起）。
+/// 提交外壳的 JSON 形状（版本 1，不兼容任何旧格式）：
+/// {"v":1,"id":"1","at":"…","stamp":{"id":"…","hash":"…"},"events":[…]}
+/// 外壳只承载 JSON 形式的事件 Commit<JsonNode>；领域事件与 JSON 之间的转换由调用方配合 Commit.map 完成。
+[<RequireQualifiedAccess>]
 module Envelope =
     [<Literal>]
     let Version = 1
 
-    let encode (codec: Codec<'E>) (c: Commit<'E>) : string =
+    type Parsed =
+        | Parsed of Commit<JsonNode>
+        | Invalid of string
+        | NewerVersion of int
+
+    let write (c: Commit<JsonNode>) : string =
         let o = JsonObject()
         o["v"] <- JsonValue.Create Version
-        // id 用字符串承载：uint64 超出 double 精确范围（见 Canonical LEMMA 2）
+        // id 用字符串承载：uint64 超出 double 精确范围
         o["id"] <- JsonValue.Create(c.id.ToString CultureInfo.InvariantCulture)
         o["at"] <- JsonValue.Create(c.at.ToString("o", CultureInfo.InvariantCulture))
         match c.stamp with
@@ -25,32 +31,27 @@ module Envelope =
             o["stamp"] <- so
         | None -> ()
         let arr = JsonArray()
-        for e in c.events do arr.Add(codec.encode e)
+        for e in c.events do arr.Add(e.DeepClone())
         o["events"] <- arr
         o.ToJsonString()
 
-    type Decoded<'E> =
-        | Ok of Commit<'E>
-        | Bad of string
-        | FutureVersion of int
-
-    let decode (codec: Codec<'E>) (text: string) : Decoded<'E> =
+    let read (text: string) : Parsed =
         try
             match JsonNode.Parse text with
             | :? JsonObject as o ->
                 let v = o["v"].GetValue<int>()
-                if v > Version then FutureVersion v
-                elif v <> Version then Bad(sprintf "unknown version %d" v)
+                if v > Version then NewerVersion v
+                elif v <> Version then Invalid(sprintf "unknown version %d" v)
                 else
-                    let id = UInt64.Parse(o["id"].GetValue<string>(), CultureInfo.InvariantCulture)
-                    let at = DateTimeOffset.Parse(o["at"].GetValue<string>(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
-                    let stamp =
-                        match o["stamp"] with
-                        | :? JsonObject as s -> Some { commandId = s["id"].GetValue<string>(); hash = s["hash"].GetValue<string>() }
-                        | _ -> None
-                    let evs = o["events"].AsArray() |> Seq.map (fun n -> codec.decode n) |> List.ofSeq
-                    match evs |> List.tryPick (function Error e -> Some e | _ -> None) with
-                    | Some e -> Bad("event decode: " + e)
-                    | None -> Ok { id = id; at = at; stamp = stamp; events = evs |> List.map (function Result.Ok e -> e | _ -> failwith "unreachable") }
-            | _ -> Bad "record is not a JSON object"
-        with e -> Bad(e.Message)
+                    let evs = o["events"].AsArray() |> List.ofSeq
+                    if evs |> List.exists isNull then Invalid "null event" else
+                    Parsed
+                            { id = UInt64.Parse(o["id"].GetValue<string>(), CultureInfo.InvariantCulture)
+                              at = DateTimeOffset.Parse(o["at"].GetValue<string>(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                              stamp =
+                                match o["stamp"] with
+                                | :? JsonObject as s -> Some { commandId = s["id"].GetValue<string>(); hash = s["hash"].GetValue<string>() }
+                                | _ -> None
+                              events = evs |> List.map _.DeepClone() }
+            | _ -> Invalid "record is not a JSON object"
+        with e -> Invalid e.Message

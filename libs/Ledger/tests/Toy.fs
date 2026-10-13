@@ -1,4 +1,4 @@
-/// 测试用玩具领域：计数器。证明 Ledger 不需要任何真实领域类型。
+/// 测试用玩具领域：计数器；位置用 int（玩具「存储」就是一个列表的下标）。
 module Toy
 
 open System
@@ -9,43 +9,38 @@ type Ev =
     | Add of int
     | Reset
 
-let codec : Codec<Ev> =
-    { encode = function
-        | Add n -> JsonObject([ Collections.Generic.KeyValuePair("add", JsonValue.Create n :> JsonNode) ]) :> JsonNode
-        | Reset -> JsonValue.Create "reset" :> JsonNode
-      decode = fun n ->
-        match n with
-        | :? JsonObject as o when o.ContainsKey "add" -> Ok(Add(o["add"].GetValue<int>()))
-        | :? JsonValue as v when v.GetValue<string>() = "reset" -> Ok Reset
-        | _ -> Error "bad toy event" }
+let writeEv = function
+    | Add n -> JsonValue.Create n :> JsonNode
+    | Reset -> JsonValue.Create "reset" :> JsonNode
+
+let readEv (n: JsonNode) =
+    match n.GetValueKind() with
+    | Text.Json.JsonValueKind.Number -> Ok(Add(n.GetValue<int>()))
+    | Text.Json.JsonValueKind.String when n.GetValue<string>() = "reset" -> Ok Reset
+    | _ -> Error "bad toy event"
 
 /// 计数器不允许为负：用来测试折叠拒绝。
 let apply (s: int) (c: Commit<Ev>) : Result<int, string> =
     let s' = c.events |> List.fold (fun acc e -> match e with Add n -> acc + n | Reset -> 0) s
     if s' < 0 then Error "negative" else Ok s'
 
-/// 内存日志：偏移 = 记录序号 * 1000 + 长度（只需单调且可回传）。
-/// failNextAppend：注入写失败（写一半后抛出）。
-type MemLog() =
-    let recs = ResizeArray<LogRecord>()
-    member val FailNextAppend = false with get, set
-    member _.Records = recs
-    member _.End = if recs.Count = 0 then 0L else recs[recs.Count - 1].endOffset
-    member this.Log : Log =
-        { readFrom = fun off -> recs |> Seq.filter (fun r -> r.startOffset >= off) |> List.ofSeq
-          append = fun text ->
-            let start = this.End
-            if this.FailNextAppend then
-                this.FailNextAppend <- false
-                recs.Add { payload = text.Substring(0, text.Length / 2); complete = false; startOffset = start; endOffset = start + 1L }
-                raise (IO.IOException "disk full")
-            let r = { payload = text; complete = true; startOffset = start; endOffset = start + int64 text.Length + 2L }
-            recs.Add r
-            r.endOffset
-          truncate = fun off -> recs.RemoveAll(fun r -> r.startOffset >= off) |> ignore }
+/// 把 JSON 形式的提交转回领域提交（任一事件读不懂即失败）。
+let ofJson (c: Commit<JsonNode>) : Result<Commit<Ev>, string> =
+    let evs = c.events |> List.map readEv
+    match evs |> List.tryPick (function Error e -> Some e | Ok _ -> None) with
+    | Some e -> Error e
+    | None -> Ok(c |> Commit.map (fun n -> match readEv n with Ok e -> e | Error e -> failwith e))
 
-let openReady (log: Log) (from: Checkpoint<int>) =
-    match Ledger.openLog log codec apply (from) with
-    | Ready l -> l
-    | Damaged d -> failwithf "unexpected damage: %s" d.reason
-    | Unsupported v -> failwithf "unexpected version %d" v
+let t0 = DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
+
+/// 玩具组装：账本 + 文本列表。这就是消费方要写的那几行。
+type Store() =
+    member val Lines = ResizeArray<string>()
+    member val Ledger = Ledger<int, Ev, int>(apply, 0)
+    member this.Submit(events, ?stamp) =
+        let d = match stamp with Some s -> this.Ledger.Decide(events, t0, s) | None -> this.Ledger.Decide(events, t0)
+        match d with
+        | Accept c ->
+            this.Lines.Add(Envelope.write (Commit.map writeEv c))
+            this.Ledger.Record(c, this.Lines.Count - 1) |> Result.map (fun () -> d)
+        | other -> Ok other

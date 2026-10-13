@@ -2,92 +2,79 @@ namespace Ledger
 
 open System
 
-/// 打开结果。
-type Opened<'S, 'E> =
-    | Ready of Ledger<'S, 'E>
-    | Damaged of Damage<'S>
-    | Unsupported of version: int
-
-/// 单写者事件账本：状态 'S、事件 'E 全由调用方定义。
-/// 内部可变状态（当前基线、偏移索引）只在 gate 锁内读写。
-and Ledger<'S, 'E> internal (log: Log, codec: Codec<'E>, apply: 'S -> Commit<'E> -> Result<'S, string>, now: unit -> DateTimeOffset, baseId: uint64, initial: Checkpoint<'S>, starts: int64 list) =
+/// 事件账本对象：拥有领域状态、id 序列、幂等索引和位置索引。
+/// 它不碰磁盘、不读时钟、不调用任何外部对象：
+/// 调用方拿 Decide 的裁决去持久化，再用 Record 把「已经持久化的事实」交回来。
+/// 重放就是把读出的提交逐条 Record。
+/// 内部可变状态只在 gate 锁内读写。
+type Ledger<'S, 'E, 'P>(apply: 'S -> Commit<'E> -> Result<'S, string>, from: Checkpoint<'S, 'P>) =
     let gate = obj ()
-    let mutable cp = initial
-    /// 基线 baseId 之后每条提交的起始偏移；索引 i 对应 id = baseId + 1 + i
-    let starts = ResizeArray<int64>(starts)
-    let committed = Event<Commit<'E>>()
+    let mutable state = from.state
+    let mutable lastId = from.throughId
+    let mutable stamps = from.stamps
+    let positions = ResizeArray<'P>(from.positions)
+    let committed = Event<Commit<'E> * 'P>()
+    do
+        if uint64 positions.Count <> from.throughId then
+            invalidArg (nameof from) (sprintf "checkpoint has %d positions for %d commits" positions.Count from.throughId)
 
-    let decodeAll (records: LogRecord list) =
-        records
-        |> List.choose (fun r ->
-            match Envelope.decode codec r.payload with
-            | Envelope.Ok c -> Some c
-            | _ -> None)
+    /// 空账本。
+    new(apply, initial: 'S) = Ledger<'S, 'E, 'P>(apply, { state = initial; throughId = 0UL; stamps = Map.empty; positions = [] })
 
-    /// 当前状态。
-    member _.State : 'S = lock gate (fun () -> cp.state)
+    member _.State : 'S = lock gate (fun () -> state)
+    member _.LastId : uint64 = lock gate (fun () -> lastId)
 
-    /// 当前基线（可交给快照保存，下次 Open 时作为 from）。
-    member _.Checkpoint : Checkpoint<'S> = lock gate (fun () -> cp)
+    /// 可保存的完整状态；以后用 Ledger(apply, checkpoint) 恢复。
+    member _.Checkpoint : Checkpoint<'S, 'P> =
+        lock gate (fun () -> { state = state; throughId = lastId; stamps = stamps; positions = List.ofSeq positions })
 
-    /// 最后一条提交的 id（空账本为 0）。
-    member _.LastId : uint64 = lock gate (fun () -> cp.throughId)
-
-    /// 每次提交成功后按提交顺序触发（在锁内同步触发；处理器不应回调 Submit）。
+    /// 每次 Record 成功后按 id 顺序触发（锁内同步触发；处理器不应回调本对象）。
     [<CLIEvent>]
     member _.Committed = committed.Publish
 
-    /// 提交一批事件。先折叠后写盘：折叠被拒则什么都不写。
-    member _.Submit(events: 'E list, ?stamp: Stamp) : SubmitResult<'E> =
+    /// 裁决一批事件能否成为下一条提交。不改变账本。
+    member _.Decide(events: 'E list, at: DateTimeOffset, ?stamp: Stamp) : Decision<'E, 'P> =
         lock gate (fun () ->
-            let existing = stamp |> Option.bind (fun s -> cp.stamps |> Map.tryFind s.commandId |> Option.map (fun v -> s, v))
-            match existing with
-            | Some(s, (h, id)) when h = s.hash -> Duplicate id
+            let seen = stamp |> Option.bind (fun s -> stamps |> Map.tryFind s.commandId |> Option.map (fun v -> s, v))
+            match seen with
+            | Some(s, (h, id)) when h = s.hash -> Duplicate(id, positions[int id - 1])
             | Some(_, (_, id)) -> StampConflict id
             | None ->
-                let c = { id = cp.throughId + 1UL; at = now (); stamp = stamp; events = events }
-                match apply cp.state c with
-                | Error msg -> Rejected msg
-                | Ok s ->
-                    let before = cp.offset
-                    try
-                        let after = log.append (Envelope.encode codec c)
-                        starts.Add before
-                        cp <- { state = s
-                                throughId = c.id
-                                offset = after
-                                stamps =
-                                    match stamp with
-                                    | Some st -> cp.stamps |> Map.add st.commandId (st.hash, c.id)
-                                    | None -> cp.stamps }
-                        committed.Trigger c
-                        Committed c
-                    with e ->
-                        (try log.truncate before with _ -> ())
-                        WriteFailed e)
+                let c = { id = lastId + 1UL; at = at; stamp = stamp; events = events }
+                match apply state c with
+                | Ok _ -> Accept c
+                | Error msg -> Rejected msg)
 
-    /// 读出 id 大于 cursor 的提交（按 id 升序）。在锁内读，避免与追加交错。
-    member _.ReadAfter(cursor: uint64) : Commit<'E> list =
+    /// 记入一条已持久化的提交及其位置。现场提交与重放走同一条路。
+    /// id 必须紧接 LastId，折叠必须成功，commandId 不能重复；否则返回 Error 且账本不变。
+    member _.Record(c: Commit<'E>, position: 'P) : Result<unit, string> =
         lock gate (fun () ->
-            if cursor >= cp.throughId then []
+            if c.id <> lastId + 1UL then Error(sprintf "id gap: expected %d, got %d" (lastId + 1UL) c.id)
+            elif c.stamp |> Option.exists (fun s -> stamps.ContainsKey s.commandId) then
+                Error(sprintf "commit %d repeats commandId %s" c.id c.stamp.Value.commandId)
             else
-                let first = baseId + 1UL
-                // 基线之前的提交没有偏移索引：慢路径，从头读
-                let off = if cursor + 1UL >= first then starts[int (cursor + 1UL - first)] else 0L
-                log.readFrom off |> decodeAll |> List.filter (fun c -> c.id > cursor))
+                match apply state c with
+                | Error msg -> Error(sprintf "commit %d rejected: %s" c.id msg)
+                | Ok s ->
+                    state <- s
+                    lastId <- c.id
+                    positions.Add position
+                    match c.stamp with
+                    | Some st -> stamps <- stamps |> Map.add st.commandId (st.hash, c.id)
+                    | None -> ()
+                    committed.Trigger(c, position)
+                    Ok())
 
-/// 打开与修复。
-[<RequireQualifiedAccess>]
-module Ledger =
-    /// 打开账本：从 from 续播。不改动日志；损坏时返回 Damaged，由调用方决定是否 repair。
-    let load (log: Log) (codec: Codec<'E>) (apply: 'S -> Commit<'E> -> Result<'S, string>) (from: Checkpoint<'S>) (now: unit -> DateTimeOffset) : Opened<'S, 'E> =
-        match Replay.run log codec apply from with
-        | Replayed.Clean(cp, starts) -> Ready(new Ledger<'S, 'E>(log, codec, apply, now, from.throughId, cp, starts))
-        | Replayed.Broken d -> Damaged d
-        | Replayed.TooNew v -> Unsupported v
+    /// id 的位置。
+    member _.PositionOf(id: uint64) : 'P option =
+        lock gate (fun () -> if id = 0UL || id > lastId then None else Some positions[int id - 1])
 
-    /// 用系统时钟打开。
-    let openLog log codec apply from = load log codec apply from (fun () -> DateTimeOffset.UtcNow)
-
-    /// 修复：丢弃损坏点及其之后的所有记录（不可撤销，调用方应先备份或征得用户确认）。
-    let repair (log: Log) (damage: Damage<'S>) : unit = log.truncate damage.validUntil
+    /// id 大于 cursor 的提交的位置，按 id 升序，至多 limit 条（缺省不限）。
+    member _.PositionsAfter(cursor: uint64, ?limit: int) : (uint64 * 'P) list =
+        lock gate (fun () ->
+            let limit = defaultArg limit Int32.MaxValue
+            if limit < 0 then invalidArg (nameof limit) "limit must be >= 0"
+            if cursor >= lastId then []
+            else
+                let n = int (min (uint64 limit) (lastId - cursor))
+                [ for i in 0 .. n - 1 -> let id = cursor + 1UL + uint64 i in id, positions[int id - 1] ])

@@ -5,120 +5,106 @@ open Xunit
 open Ledger
 open Toy
 
-let ok = function Committed c -> c | r -> failwithf "expected Committed, got %A" r
+let accepted = function Ok(Accept c) -> c | r -> failwithf "expected Accept, got %A" r
 
-// SPEC 1：id 从 1 起连续；重开后状态与提交一致
+let replay (lines: string seq) =
+    let l = Ledger<int, Ev, int>(apply, 0)
+    let errs =
+        lines |> Seq.mapi (fun i line ->
+            match Envelope.read line with
+            | Envelope.Parsed cj -> ofJson cj |> Result.bind (fun c -> l.Record(c, i))
+            | other -> Error(sprintf "%A" other))
+        |> Seq.tryPick (function Error e -> Some e | Ok() -> None)
+    l, errs
+
+// SPEC 1：id 从 1 起连续；重放得到同样的状态
 [<Fact>]
-let ``ids are contiguous from 1 and survive reopen`` () =
-    let m = MemLog()
-    let l = openReady m.Log (Checkpoint.empty 0)
-    let ids = [ for n in 1..5 -> (ok (l.Submit [ Add n ])).id ]
+let ``ids are contiguous and replay reproduces state`` () =
+    let s = Store()
+    let ids = [ for n in 1..5 -> (accepted (s.Submit [ Add n ])).id ]
     Assert.Equal<uint64 list>([ 1UL..5UL ], ids)
-    let l2 = openReady m.Log (Checkpoint.empty 0)
-    Assert.Equal(15, l2.State)
-    Assert.Equal(5UL, l2.LastId)
+    let l, err = replay s.Lines
+    Assert.Equal(None, err)
+    Assert.Equal(15, l.State)
+    Assert.Equal(s.Ledger.Checkpoint, l.Checkpoint)
 
-// SPEC 2：先折叠后写盘，被拒则不写
+// SPEC 2：Decide 不改变账本；被拒的不产生提交
 [<Fact>]
-let ``rejected fold writes nothing`` () =
-    let m = MemLog()
-    let l = openReady m.Log (Checkpoint.empty 0)
-    ok (l.Submit [ Add 1 ]) |> ignore
-    match l.Submit [ Add -5 ] with Rejected _ -> () | r -> failwithf "%A" r
-    Assert.Equal(1, m.Records.Count)
-    Assert.Equal(2UL, (ok (l.Submit [ Add 1 ])).id)
+let ``decide does not change the ledger and rejection is reported`` () =
+    let l = Ledger<int, Ev, int>(apply, 0)
+    let a = l.Decide([ Add 1 ], t0)
+    let b = l.Decide([ Add 1 ], t0)
+    Assert.Equal(a, b)
+    Assert.Equal(0UL, l.LastId)
+    match l.Decide([ Add -1 ], t0) with Rejected _ -> () | r -> failwithf "%A" r
 
-// SPEC 3：写失败回滚，状态与 id 不变
+// SPEC 3：Record 拒绝 id 断档、重复 commandId、折叠失败，且账本不变
 [<Fact>]
-let ``write failure rolls back and keeps id`` () =
-    let m = MemLog()
-    let l = openReady m.Log (Checkpoint.empty 0)
-    ok (l.Submit [ Add 1 ]) |> ignore
-    m.FailNextAppend <- true
-    match l.Submit [ Add 2 ] with WriteFailed _ -> () | r -> failwithf "%A" r
-    Assert.Equal(1, m.Records.Count)
-    Assert.Equal(1, l.State)
-    Assert.Equal(2UL, (ok (l.Submit [ Add 2 ])).id)
-    Assert.Equal(3, (openReady m.Log (Checkpoint.empty 0)).State)
+let ``record rejects gaps, repeated stamps and failing folds without change`` () =
+    let l = Ledger<int, Ev, int>(apply, 0)
+    let st = Some { commandId = "c"; hash = "h" }
+    Assert.True(l.Record({ id = 1UL; at = t0; stamp = st; events = [ Add 1 ] }, 0).IsOk)
+    let before = l.Checkpoint
+    for c in [ { id = 3UL; at = t0; stamp = None; events = [] }
+               { id = 2UL; at = t0; stamp = st; events = [] }
+               { id = 2UL; at = t0; stamp = None; events = [ Add -9 ] } ] do
+        Assert.True((l.Record(c, 1)).IsError)
+        Assert.Equal(before, l.Checkpoint)
 
-// SPEC 4：幂等
+// SPEC 4：幂等裁决给出原提交的位置
 [<Fact>]
-let ``same stamp is duplicate, same id different hash conflicts, survives reopen`` () =
-    let m = MemLog()
-    let l = openReady m.Log (Checkpoint.empty 0)
-    let s = { commandId = "c1"; hash = "h1" }
-    let c = ok (l.Submit([ Add 1 ], s))
-    Assert.Equal(Duplicate c.id, l.Submit([ Add 1 ], s))
-    Assert.Equal(StampConflict c.id, l.Submit([ Add 1 ], { s with hash = "h2" }))
-    let l2 = openReady m.Log (Checkpoint.empty 0)
-    Assert.Equal(Duplicate c.id, l2.Submit([ Add 1 ], s))
-    Assert.Equal(1, l2.State)
+let ``same stamp is duplicate with position, different hash conflicts`` () =
+    let s = Store()
+    s.Submit [ Add 7 ] |> ignore
+    let st = { commandId = "c1"; hash = "h1" }
+    let c = accepted (s.Submit([ Add 1 ], st))
+    Assert.Equal(Ok(Duplicate(c.id, 1)), s.Submit([ Add 1 ], st))
+    Assert.Equal(Ok(StampConflict c.id), s.Submit([ Add 1 ], { st with hash = "h2" }))
+    let l, _ = replay s.Lines
+    Assert.Equal(Duplicate(2UL, 1), l.Decide([ Add 1 ], t0, st))
 
-// SPEC 5：损坏只报告不修改；Repair 截到有效前缀
+// SPEC 5：Checkpoint 恢复与原账本等价；位置数不符时拒绝构造
 [<Fact>]
-let ``torn tail is reported without modification, repair truncates`` () =
-    let m = MemLog()
-    let l = openReady m.Log (Checkpoint.empty 0)
-    for n in 1..3 do ok (l.Submit [ Add n ]) |> ignore
-    m.Records.Add { payload = "{\"v\":1"; complete = false; startOffset = m.End; endOffset = m.End + 3L }
-    let before = List.ofSeq m.Records
-    match Ledger.openLog m.Log codec apply (Checkpoint.empty 0) with
-    | Damaged d ->
-        Assert.Equal<LogRecord list>(before, List.ofSeq m.Records)
-        Assert.Equal(6, d.prefix.state)
-        Assert.Equal(0, d.recordsAfter)
-        Ledger.repair m.Log d
-        Assert.Equal(6, (openReady m.Log (Checkpoint.empty 0)).State)
+let ``checkpoint restores an equivalent ledger and rejects inconsistent positions`` () =
+    let s = Store()
+    for n in 1..4 do s.Submit([ Add n ], { commandId = string n; hash = "h" }) |> ignore
+    let r = Ledger<int, Ev, int>(apply, s.Ledger.Checkpoint)
+    Assert.Equal(s.Ledger.Checkpoint, r.Checkpoint)
+    Assert.Equal(s.Ledger.Decide([ Add 1 ], t0), r.Decide([ Add 1 ], t0))
+    Assert.Throws<ArgumentException>(fun () ->
+        Ledger<int, Ev, int>(apply, { s.Ledger.Checkpoint with positions = [] }) |> ignore) |> ignore
+
+// SPEC 6：位置查询与分页
+[<Fact>]
+let ``positions after cursor honour limit`` () =
+    let s = Store()
+    for n in 1..7 do s.Submit [ Add n ] |> ignore
+    let l = s.Ledger
+    Assert.Equal<(uint64 * int) list>([ 3UL, 2; 4UL, 3 ], l.PositionsAfter(2UL, 2))
+    Assert.Equal<(uint64 * int) list>([ 7UL, 6 ], l.PositionsAfter(6UL, 10))
+    Assert.Empty(l.PositionsAfter(7UL))
+    Assert.Empty(l.PositionsAfter(0UL, 0))
+    Assert.Equal(Some 4, l.PositionOf 5UL)
+    Assert.Equal(None, l.PositionOf 8UL)
+    Assert.Equal(None, l.PositionOf 0UL)
+
+// SPEC 7：外壳往返（含 uint64 最大值）；版本更高时报告 NewerVersion；坏输入 Invalid
+[<Fact>]
+let ``envelope round-trips, newer version and garbage are distinguished`` () =
+    let c = { id = UInt64.MaxValue; at = t0; stamp = Some { commandId = "x"; hash = "y" }; events = [ Add 1; Reset ] }
+    let text = Envelope.write (Commit.map writeEv c)
+    match Envelope.read text with
+    | Envelope.Parsed cj -> Assert.Equal(Ok c, ofJson cj)
     | r -> failwithf "%A" r
+    Assert.Equal(Envelope.NewerVersion 2, Envelope.read """{"v":2}""")
+    for bad in [ "nope"; """{"v":1,"id":"1","at":"2026-01-01T00:00:00+00:00","events":[null]}"""; """{"v":0}""" ] do
+        match Envelope.read bad with Envelope.Invalid _ -> () | r -> failwithf "%s -> %A" bad r
 
-[<Theory>]
-[<InlineData("not json")>]
-[<InlineData("""{"v":1,"id":"9","at":"2026-01-01T00:00:00+00:00","events":[]}""")>]
-[<InlineData("""{"v":1,"id":"3","at":"2026-01-01T00:00:00+00:00","events":[{"add":-100}]}""")>]
-let ``corrupt middle record is damage and counts records after`` (bad: string) =
-    let m = MemLog()
-    let l = openReady m.Log (Checkpoint.empty 0)
-    for n in 1..2 do ok (l.Submit [ Add n ]) |> ignore
-    m.Records.Add { payload = bad; complete = true; startOffset = m.End; endOffset = m.End + 100L }
-    m.Records.Add { m.Records[0] with startOffset = m.End; endOffset = m.End + 100L }
-    match Ledger.openLog m.Log codec apply (Checkpoint.empty 0) with
-    | Damaged d ->
-        Assert.Equal(2UL, d.prefix.throughId)
-        Assert.Equal(1, d.recordsAfter)
-    | r -> failwithf "%A" r
-
-// SPEC 6：未来版本拒绝打开
+// SPEC 8：Committed 按 id 顺序触发，带位置
 [<Fact>]
-let ``future version is unsupported`` () =
-    let m = MemLog()
-    m.Records.Add { payload = """{"v":2}"""; complete = true; startOffset = 0L; endOffset = 9L }
-    match Ledger.openLog m.Log codec apply (Checkpoint.empty 0) with
-    | Unsupported 2 -> ()
-    | r -> failwithf "%A" r
-
-// SPEC 7：从基线续播等于完整重放；ReadAfter 跨基线正确
-[<Fact>]
-let ``resume from checkpoint equals full replay and ReadAfter spans checkpoint`` () =
-    let m = MemLog()
-    let l = openReady m.Log (Checkpoint.empty 0)
-    for n in 1..4 do ok (l.Submit([ Add n ], { commandId = string n; hash = "h" })) |> ignore
-    let cp = l.Checkpoint
-    for n in 5..7 do ok (l.Submit [ Add n ]) |> ignore
-    let full = openReady m.Log (Checkpoint.empty 0)
-    let resumed = openReady m.Log cp
-    Assert.Equal(full.Checkpoint, resumed.Checkpoint)
-    Assert.Equal(Duplicate 2UL, resumed.Submit([ Add 2 ], { commandId = "2"; hash = "h" }))
-    Assert.Equal<uint64 list>([ 3UL..7UL ], resumed.ReadAfter 2UL |> List.map _.id)
-    Assert.Equal<uint64 list>([ 6UL; 7UL ], resumed.ReadAfter 5UL |> List.map _.id)
-    Assert.Empty(resumed.ReadAfter 7UL)
-
-// SPEC 8：Committed 事件按顺序触发；并发提交 id 不重不漏
-[<Fact>]
-let ``concurrent submits get unique contiguous ids in event order`` () =
-    let m = MemLog()
-    let l = openReady m.Log (Checkpoint.empty 0)
-    let seen = Collections.Concurrent.ConcurrentQueue<uint64>()
-    l.Committed.Add(fun c -> seen.Enqueue c.id)
-    Threading.Tasks.Parallel.For(0, 200, fun _ -> ok (l.Submit [ Add 1 ]) |> ignore) |> ignore
-    Assert.Equal<uint64 list>([ 1UL..200UL ], List.ofSeq seen)
-    Assert.Equal(200, (openReady m.Log (Checkpoint.empty 0)).State)
+let ``committed fires in id order with position`` () =
+    let s = Store()
+    let seen = ResizeArray()
+    s.Ledger.Committed.Add(fun (c, p) -> seen.Add(c.id, p))
+    for n in 1..3 do s.Submit [ Add n ] |> ignore
+    Assert.Equal<(uint64 * int) list>([ 1UL, 0; 2UL, 1; 3UL, 2 ], List.ofSeq seen)

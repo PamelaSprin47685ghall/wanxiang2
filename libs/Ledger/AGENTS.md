@@ -1,40 +1,48 @@
 # Ledger
 
-泛型单写者事件账本：状态 `'S`、事件 `'E`、存储 `Log` 全部由调用方提供。不依赖任何其他库。AXIOM 见项目根目录 AGENTS.md。
+事件账本对象：拥有领域状态、提交 id 序列、幂等索引、提交位置索引。不碰磁盘、不读时钟、不调用任何外部对象。不依赖任何其他库。AXIOM 见项目根目录 AGENTS.md。
 
-公开接口：`Ledger.openLog / load / repair`，实例 `Submit / ReadAfter / State / Checkpoint / LastId / Committed`；类型 `Commit<'E> Codec<'E> Log LogRecord Stamp Checkpoint<'S> Damage<'S> SubmitResult<'E> Opened<'S,'E>`。
+公开接口：
+- `Ledger<'S,'E,'P>(apply, initial)` / `Ledger(apply, checkpoint)`
+- `Decide(events, at, ?stamp) : Decision<'E,'P>` = `Accept commit | Duplicate(id, position) | StampConflict id | Rejected reason`
+- `Record(commit, position) : Result<unit,string>`
+- `State`、`LastId`、`Checkpoint`、`PositionOf id`、`PositionsAfter(cursor, ?limit)`、事件 `Committed : (Commit<'E> * 'P)`
+- `Commit.map`、`Envelope.write : Commit<JsonNode> -> string`、`Envelope.read : string -> Parsed | Invalid | NewerVersion`
+
+消费方的组装（几行，见 tests/Toy.fs `Store`）：`Decide` → 若 `Accept c` 则 `Envelope.write (Commit.map toJson c)` 写入存储得到位置 `p` → `Record(c, p)`。重放：逐条读出 → `Envelope.read` → `Commit.map ofJson` → `Record(c, p)`，第一个 Error 即损坏点。
 
 # LEMMA
-1. [AXIOM: 1] 用户在乎的是「说过的话不会丢、不会乱、不会重复」：已确认的提交在重启后仍在，顺序不变；同一条命令重发不会产生第二条记录。
-    - 推理：这是聊天记录这类数据的全部可靠性诉求，其余（文件格式、轮转、快照）都是手段。
-2. [AXIOM: 7, 8; LEMMA: 1] 账本只依赖三样能力：事件编解码 `Codec<'E>`、折叠 `apply`、存储 `Log`。全部以参数传入，不引用其他库。
-    - 推理：LEMMA 1 不涉及领域与分帧；以函数记录传入，本库可以用玩具领域与内存日志单独证明，存储换成任何追加介质都不改契约。
-3. [AXIOM: 1, 7; LEMMA: 1] 先折叠、后写盘。折叠被拒就不写。
-    - 推理：反过来做（先写后折叠，失败再截尾复用 id）会出现「已落盘但无效」的中间态，必须有截尾和复用 id 的额外路径与额外证明。先折叠则这条路径不存在。代价：`apply` 必须是纯函数且与重放时一致，这本来就是事件溯源的前提。
-4. [AXIOM: 1, 10; LEMMA: 1] 打开时发现损坏，只报告不修改；修复是调用方显式调用的不可撤销操作。
-    - 推理：自动截尾会悄悄丢掉损坏点之后可能仍有效的记录，这是不可撤销的；按 AXIOM 10，只有不可撤销的操作才设防呆，这里的防呆就是「报告 + 显式修复」。
-5. [AXIOM: 7; LEMMA: 1] 幂等索引由账本自己持有，随提交与基线一起走。
-    - 推理：幂等是 LEMMA 1「不会重复」本身，交给领域状态就要求每个领域都实现一遍。
-6. [AXIOM: 7] 不兼容任何旧格式，外壳版本号从 1 起；更高版本拒绝打开。
-    - 推理：兼容层要有使用方和解除条件（根 LEMMA 5），当前没有旧数据需要读；拒绝打开新版本，避免旧程序把新数据误判为损坏后修掉。
+1. [AXIOM: 1] 用户在乎的是「说过的话不会丢、不会乱、不会重复」：已确认的提交重启后仍在、顺序不变；同一条命令重发不产生第二条提交。
+    - 推理：这是聊天记录这类数据的全部可靠性诉求；文件格式、分帧、快照都是手段。
+2. [AXIOM: 4, 7, 8; LEMMA: 1] 库与库之间只交换值，不互相调用；泛型只用在本库真正不关心的地方。
+    - 推理：把存储、时钟、编解码做成注入的函数记录（port），表面上解耦，实际是把另一个对象的行为塞进本对象内部调用，本库的语义要靠被注入者才完整，单独测试证明的只是「调用了端口」。诚实的边界是：每个对象拥有自己的状态与行为，只接收值、产出值，组装方在对象之间传递这些值。本库关心的只有「下一条提交能否成立、成立后状态是什么」，所以只对领域状态 `'S`、事件 `'E` 和「提交存在哪里」`'P` 泛型；折叠 `apply` 是事件溯源本身的语义（与 `List.fold` 的 folder 同类），不是端口。
+3. [AXIOM: 1, 7; LEMMA: 2] 裁决与记入分开：`Decide` 不改账本；`Record` 只接收已经持久化的事实。
+    - 推理：账本只在事实落定后才改变，所以写盘失败时账本无需回滚，不存在「已落盘但无效」或「已记入但未落盘」的中间态。现场提交与重放都是「把事实交给账本」，走同一个 `Record`，一条路径一份证明。
+4. [AXIOM: 1, 10; LEMMA: 3] `Record` 自己校验 id 连续、commandId 不重复、折叠成功，不符则返回 Error 且账本不变。
+    - 推理：这是防呆：组装方并发调用或重放到坏数据时，账本不会把矛盾的事实吞进去。重放时第一个 Error 就是损坏点，由组装方决定截断还是停下（不可撤销，交给用户）。
+5. [AXIOM: 7; LEMMA: 1] 幂等索引与位置索引由账本持有，随 `Checkpoint` 一起保存与恢复。
+    - 推理：幂等是 LEMMA 1「不会重复」本身；位置索引让组装方无需另建分页索引，只按位置读存储。
+6. [AXIOM: 7] 外壳只承载 JSON 形式的事件，版本从 1 起，不兼容任何旧格式；更高版本单独报告。
+    - 推理：领域事件与 JSON 的互转是领域知识，配合 `Commit.map` 由组装方完成，外壳不需要知道领域。旧格式没有使用方，不建兼容层（根 LEMMA 5）。单独报告更高版本，避免旧程序把新数据当损坏截掉。
+7. [AXIOM: 1; LEMMA: 3] 一次只能有一个 `Decide → 持久化 → Record` 在进行中（单写者）。
+    - 推理：两个并发的 `Decide` 会给出同一个 id，第二个持久化后 `Record` 必然失败，日志里就多一条无主记录。账本不拥有持久化，所以无法替组装方串行化；组装方用一个 actor（如 MailboxProcessor）包住这三步。LEMMA 4 保证违反时账本状态仍然正确。
 
 # SPEC
-1. [LEMMA: 1] 提交 id 从 1 起连续；重开后状态与 LastId 不变。
-    - 证明：tests/Tests.fs `ids are contiguous from 1 and survive reopen`。
-2. [LEMMA: 3] `apply` 返回 Error 时 `Submit` 返回 `Rejected`，日志无新增，下一个 id 不变。
-    - 证明：`rejected fold writes nothing`。
-3. [LEMMA: 1, 3] `log.append` 抛出时截断回写前偏移，返回 `WriteFailed`，状态与下一个 id 不变。
-    - 证明：`write failure rolls back and keeps id`（内存日志注入半写后抛出）。
-4. [LEMMA: 5] 同 commandId 同 hash 返回 `Duplicate 原id`；同 commandId 不同 hash 返回 `StampConflict`；重开后仍成立。
-    - 证明：`same stamp is duplicate ...`。
-5. [LEMMA: 4] 截断的尾记录、无法解码、id 不连续、重放折叠被拒，都返回 `Damaged`，带有效前缀与其后记录数，日志字节不变；`Ledger.repair` 截到有效前缀后可正常打开。
-    - 证明：`torn tail is reported ...`、`corrupt middle record ...`（三种损坏）。
-6. [LEMMA: 6] 外壳 `v` 大于 1 返回 `Unsupported`。
-    - 证明：`future version is unsupported`。
-7. [LEMMA: 1, 5] 从 `Checkpoint` 续播与完整重放得到相同基线（含幂等索引）；`ReadAfter` 在基线前后都返回正确区间。
-    - 证明：`resume from checkpoint equals full replay ...`。
-8. [LEMMA: 1] 并发 `Submit` 得到不重不漏的连续 id；`Committed` 事件按 id 顺序触发。
-    - 证明：`concurrent submits get unique contiguous ids in event order`。
+1. [LEMMA: 1, 3] 提交 id 从 1 起连续；按日志重放得到相同的 `Checkpoint`。
+    - 证明：tests/Tests.fs `ids are contiguous and replay reproduces state`。
+2. [LEMMA: 3] `Decide` 重复调用结果相同且不改变账本；折叠失败给 `Rejected`。
+    - 证明：`decide does not change the ledger and rejection is reported`。
+3. [LEMMA: 4] `Record` 拒绝 id 断档、重复 commandId、折叠失败，且 `Checkpoint` 不变。
+    - 证明：`record rejects gaps, repeated stamps and failing folds without change`。
+4. [LEMMA: 5] 同 commandId 同 hash 给 `Duplicate(原 id, 原位置)`；hash 不同给 `StampConflict`；重放后仍成立。
+    - 证明：`same stamp is duplicate with position, different hash conflicts`。
+5. [LEMMA: 5] `Ledger(apply, checkpoint)` 与原账本等价；位置数与 throughId 不符时构造抛出。
+    - 证明：`checkpoint restores an equivalent ledger and rejects inconsistent positions`。
+6. [LEMMA: 5] `PositionsAfter(cursor, limit)` 返回 id 大于 cursor 的至多 limit 个位置；`PositionOf` 越界给 None。
+    - 证明：`positions after cursor honour limit`。
+7. [LEMMA: 6] 外壳往返保持提交（含 `UInt64.MaxValue` id）；`v` 更高给 `NewerVersion`；其余坏输入给 `Invalid`。
+    - 证明：`envelope round-trips, newer version and garbage are distinguished`。
+8. [LEMMA: 1] `Committed` 按 id 顺序触发并带位置。
+    - 证明：`committed fires in id order with position`。
 9. [TODO] 幂等索引无界增长，需要保留策略（例如按时间窗淘汰）。
-10. [TODO] `ReadAfter` 读到基线之前的提交时从头扫描；如需高频调用，要建全量偏移索引。
-11. [TODO] `Ledger.repair` 会丢弃损坏点之后的记录；把这些记录导出备份尚未实现（交给调用方或单独的库）。
+10. [TODO] 位置索引每条提交占一个 `'P`，`Checkpoint` 随提交数线性增长；超大账本可改为分段索引。

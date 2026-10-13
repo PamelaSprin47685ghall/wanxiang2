@@ -21,3 +21,5 @@
 4. [LEMMA: 1] 写失败（真实故障：目标被占成非空目录）时原文件不变、临时文件被删：`failed write leaves the original intact`，通过。
 5. [LEMMA: 3] 文件不存在时读返回 Error，`ExternalEdit` 为 None：`missing file reads as error`，通过。
 6. [TODO] Windows 上不设权限；改名之后没有对所在目录 fsync。
+
+- `WriteIfUnchanged`：临时文件落盘后、改名前检查磁盘原文仍是最后已知原文，否则放弃，不覆盖别人的改动：`write-if-unchanged refuses to clobber...`，通过。

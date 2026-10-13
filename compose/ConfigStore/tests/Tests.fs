@@ -258,3 +258,24 @@ let ``every reload re-reads the file and reports an invalid file again`` () =
         File.WriteAllText(path, TomlCodec.serialize { before with pairingFreezeMinutes = 41 })
         store.TriggerReload()
         Assert.Equal(41, store.Current.pairingFreezeMinutes)
+
+// 根因复现（旧仓库满载时「无效外部编辑……文件监视」超时）：认证后主机更新 lastSeenUtc，
+// 读改写的「检查」在用户写入之前、「替换」在之后（中间是很慢的 fsync），用户写的无效配置被有效配置悄悄覆盖，
+// 监视器随后只读到有效文件，config.rejected 永远不来。这里让外部编辑恰好落在检查与替换之间（mutate 内），
+// 确定地复现这个窗口：写入必须放弃，文件保持用户的原文，重新加载照常报告无效。
+[<Fact>]
+let ``an external edit landing between check and replace is never clobbered`` () =
+    let dir = Path.Combine(Path.GetTempPath(), "cfgstore-" + Guid.NewGuid().ToString("N"))
+    let path = Path.Combine(dir, "config.toml")
+    let rejected = System.Collections.Concurrent.ConcurrentQueue<string>()
+    match ConfigStore.Open(path, ignore, rejected.Enqueue) with
+    | Error e -> failwith e
+    | Ok store ->
+        use store = store
+        let invalid = "this is = = not valid toml [[["
+        let result = store.Update(fun c -> File.WriteAllText(path, invalid); { c with listen = "127.0.0.1:9009" })
+        Assert.True(Result.isError result)
+        Assert.Equal(invalid, File.ReadAllText path)
+        Assert.True("127.0.0.1:9009" <> store.Current.listen)
+        store.TriggerReload()
+        Assert.NotEmpty rejected

@@ -64,7 +64,14 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
             with e -> Error(sprintf "read failed: %s" e.Message))
 
     /// 原子写入，并记为最后已知原文。失败时原文件不变，临时文件被删掉。
-    member _.Write(text: string) : Result<unit, string> =
+    member this.Write(text: string) : Result<unit, string> = this.WriteCore(text, false)
+
+    /// 同 Write，但磁盘原文自最后一次读写以来被别人改过时放弃写入（返回 Error），不覆盖别人的改动。
+    /// 临时文件写好并落盘之后、改名之前才检查，把「检查」到「替换」之间的窗口压到最小；
+    /// 落盘（fsync）可能很慢，在它之前检查会让别人在落盘期间的写入被悄悄覆盖。
+    member this.WriteIfUnchanged(text: string) : Result<unit, string> = this.WriteCore(text, true)
+
+    member private _.WriteCore(text: string, onlyIfUnchanged: bool) : Result<unit, string> =
         lock gate (fun () ->
             Directory.CreateDirectory dir |> ignore
             let tmp = Path.Combine(dir, sprintf ".%s.tmp.%d" (Path.GetFileName full) Environment.ProcessId)
@@ -75,6 +82,10 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
                     let bytes = utf8.GetBytes text
                     fs.Write(bytes, 0, bytes.Length)
                     fs.Flush true
+                let onDisk = try (if File.Exists full then Some(File.ReadAllText(full, utf8)) else None) with _ -> None
+                if onlyIfUnchanged && onDisk <> lastKnown then
+                    File.Delete tmp
+                    failwith "file changed on disk since it was last read; not overwriting"
                 File.Move(tmp, full, true)
                 lastKnown <- Some text
                 Ok()

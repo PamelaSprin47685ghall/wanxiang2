@@ -48,7 +48,9 @@ type ConfigStore private (file: AtomicTextFile, initial: AppConfig, onReloaded: 
 
     let rewrite (cfg: AppConfig) : Result<AppConfig, string> =
         let text = TomlCodec.serialize cfg
-        match file.Write text with
+        // 只在磁盘仍是最后读写的原文时替换：外部编辑如果落在「检查」与「替换」之间，
+        // 放弃这次写入，由监视器的重新加载去判定那份外部编辑（有效就采纳，无效就报告）。
+        match file.WriteIfUnchanged text with
         | Error e -> Error(sprintf "config rewrite failed: %s" e)
         | Ok() ->
             match TomlCodec.tryParse text with

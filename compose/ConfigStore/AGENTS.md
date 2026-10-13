@@ -26,3 +26,4 @@
 
 1–7 是从旧仓库 `ConfigTests.fs` 原样搬来的 ConfigStore 测试，8 是新加的。
 9. [LEMMA: 2] 每次重新加载都重读并重新判定，与旧实现一致；同一份无效原文再次触发时仍会报告：`every reload re-reads the file and reports an invalid file again`。
+10. [LEMMA: 3] 外部编辑落在读改写的「检查」与「替换」之间时，放弃写入，不覆盖用户的原文；随后的重新加载照常报告：`an external edit landing between check and replace is never clobbered`。这是旧仓库满载时「无效外部编辑……文件监视」超时的根因（认证后的 lastSeenUtc 写回在 fsync 期间覆盖了测试刚写的无效配置）。

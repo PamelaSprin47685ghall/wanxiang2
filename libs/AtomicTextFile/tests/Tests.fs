@@ -69,3 +69,19 @@ let ``missing file reads as error`` () =
     Assert.False f.Exists
     Assert.True((f.Read()).IsError)
     Assert.Equal(None, f.ExternalEdit())
+
+// WriteIfUnchanged：别人在最后一次读写之后改过文件，就不覆盖
+[<Fact>]
+let ``write-if-unchanged refuses to clobber an edit made after the last read or write`` () =
+    let dir = Path.Combine(Path.GetTempPath(), "atf-" + Guid.NewGuid().ToString("N"))
+    let path = Path.Combine(dir, "f.txt")
+    use f = new AtomicTextFile(path)
+    Assert.Equal(Ok(), f.WriteIfUnchanged "a")
+    Assert.Equal(Ok(), f.WriteIfUnchanged "b")
+    File.WriteAllText(path, "theirs")
+    Assert.True(Result.isError (f.WriteIfUnchanged "mine"))
+    Assert.Equal("theirs", File.ReadAllText path)
+    Assert.Empty(Directory.GetFiles(dir, ".*tmp*"))
+    f.Read() |> ignore
+    Assert.Equal(Ok(), f.WriteIfUnchanged "mine")
+    Assert.Equal("mine", File.ReadAllText path)

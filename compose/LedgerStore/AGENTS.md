@@ -9,6 +9,7 @@
 - 写：`Submit(events, at, ?stamp) : Submitted<'E,'Err>`，结果是 `Committed c | Duplicate 原提交 | Conflict id | Rejected 'Err | NotWritten | Unknown | ReadOnly` 之一。
 - 读：`CommitsAfter(cursor, limit) : Result<Commit<'E> list, string>`，`State : 'S`，`LastId`，`Stamps : Map<commandId, hash * id>`，`Checkpoint : Checkpoint<'S>`。
 - 诊断：`Startup = { snapshot = Used throughId | Absent | Discarded reason; replayedCommits }`，`Health = Healthy | Damaged(offset, reason) | OutcomeUnknown reason`，`LastSnapshotError`。
+- 只读检查：`LedgerStore.Inspect(dir, codec, apply, initial) : Inspection`，返回 `{ health; startup; lastId; tailMayBeInFlight }`。不持锁、不写字节，宿主持锁、正在写时也能用（给外部 doctor 或支持包）。
 - 维护：`SaveSnapshot() : Result<unit,string>`，`Repair() : Result<int64,string>`，`Dispose()`。
 
 # LEMMA
@@ -24,6 +25,10 @@
     - 推理：旧系统需要领域类型。每条提交只编一次事件，不把整个状态往返 JSON。状态归属靠不可变值：`'S`、`'E` 应是不可变的 F# 值，`State` 和返回的提交直接交出。这是对使用方的约束，C 无法替它检查。
 6. **游标分页只读已记入的提交。** [Ledger LEMMA 7]
     - 推理：区间来自账本，C 一次读出这一段字节，逐条核对 id。损坏点之后的内容不会被当成提交读出来。
+8. **外部检查不持锁、不写字节，只对它看到的东西负责。** [根 AXIOM: 5, 6; LEMMA: 3]
+    - 推理：宿主持锁时，doctor 或支持包也要能看。检查走与打开相同的读取和重放代码（`Opening`），所以两者的结论一致。先读快照、再读日志：日志只会增长，所以快照不会比读到的日志新。宿主正在写时，末尾可能有半条记录，这和崩溃留下的半写尾分不出来，所以如实标成 `tailMayBeInFlight`，以宿主自己的 `Health` 为准。
+9. **「结果未知」要说清是哪条提交、用户该做什么。** [根 AXIOM: 5]
+    - 推理：只说「未知」，用户不知道丢的可能是什么。现在带上 commitId，只读提示写明「提交 n 可能保存了，也可能没有；重新打开会从日志查明」。不带幂等戳的命令重发可能执行两次，所以不能把它说成「失败，可以重试」。
 7. **故障证据用真实故障，不建注入框架。** [根 SPEC 4; 根 LEMMA 7]
     - 推理：旧系统的 FaultInjector 是全局可变开关，要在生产代码里埋故障点。新结构里，崩溃对磁盘的影响只有一种：追加在某个字节处中断。所以测试直接写出每一种截断后的文件；写失败用 `/dev/full`；快照失败用「目标是目录」。
 
@@ -42,6 +47,8 @@
 11. [LEMMA: 2, 7] 真实写失败且截不回（`/dev/full`）→ `Unknown`，随后只读：`unknown write outcome stays unknown and is never turned into a retry`。
 12. [DirLock LEMMA 1] 同目录第二个存储被拒：`second store on the same directory is refused`。
 13. [LEMMA: 1] 100 个并发提交各恰好一次：`concurrent submits each commit exactly once`。
+14a. [LEMMA: 8] 不持锁检查：宿主持锁时能检查、文件字节不变、宿主仍可写：`inspect reads without the lock and writes nothing, also while the host holds it`；宿主并发写 400 条时反复检查，lastId 单调不减，只可能出现 `tailMayBeInFlight` 的损坏：`inspect while the host writes sees a consistent prefix`（连跑 5 次都通过）；损坏证据和半写尾标记：`inspect reports damage with evidence; torn tail is flagged as possibly in flight`。
+14b. [LEMMA: 9] 未知结果带 commitId，只读提示说明事实：`unknown outcome names the commit that may exist`（`/dev/full`）。
 14. [根 SPEC 2] 交付包可以在仓库外消费：在 /tmp 下新建项目，只引用 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`。2026-10-13 手动跑过；[TODO] 没有自动化。
 15. [TODO] `NotWritten` 分支（写失败但截回成功）没有真实故障触发。
 16. [TODO] 进程被真正杀掉（而不是由测试写出截断文件）的测试没有；按 LEMMA 7，二者对磁盘的效果相同。

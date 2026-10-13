@@ -115,8 +115,9 @@
 
 | 事项 | 使用方 | 保留理由 | 可验证的解除条件 |
 | --- | --- | --- | --- |
-| `compose/LedgerStore` 与旧仓库 `Wanxiang.Store/Store.fs` 是同一组合的两份实现 | `./x compose`；旧仓库运行时 | 旧仓库还没改成消费 `Wanxiang2.LedgerStore` 包；包已具备旧系统要的能力（分页、类型化、诊断、快照策略） | 旧仓库 `Store.fs` 只剩对 `LedgerStore<_,_,_>` 的薄包装或被删掉，旧的 Replay/Coordinator/FaultInjector 一并删除 |
-| `compose/*.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本 | `./x compose` | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
+| `compose/*.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本；包版本固定为 `0.0.0-local` | `./x compose`；旧仓库 `tools/wanxiang2-feed.sh` | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
+
+已解除：2026-10-13 删去「`compose/LedgerStore` 与旧仓库 `Store.fs` 双重实现」一项。旧仓库分支 `extract-ledger@84017ef` 改为消费 `Wanxiang2.LedgerStore` 包，`Store.fs` 只剩领域接线。
 
 
 # 落地起点
@@ -158,4 +159,4 @@
 
 | 职责 | 独立能力 | 接入旧仓库并退出旧实现 |
 | --- | --- | --- |
-| 事件账本（JsonSeq、Ledger、Snapshot、DirLock、Canonical，组合 LedgerStore） | 完成：5 个库各自测试通过；`Wanxiang2.LedgerStore` 交付包具备旧系统要的能力（游标分页、类型化的事件/状态/错误、Stamps/Checkpoint/Startup 诊断、快照策略），真实组合测试通过；仓库外消费手动验证过 | 未完成，目前没有已知的能力缺口：旧仓库分支 `extract-ledger`（`34482f2`）还接着上一版 Actor 接口，要改成消费 `Wanxiang2.LedgerStore` 包；旧仓库 `main` 尚未采用 |
+| 事件账本（JsonSeq、Ledger、Snapshot、DirLock、Canonical，组合 LedgerStore） | 完成：5 个库和 `Wanxiang2.LedgerStore` 交付包各自测试通过，真实组合测试通过 | 已接线：旧仓库分支 `extract-ledger@84017ef` 消费交付包，旧 Replay/Coordinator 已退出，旧仓库 Release 全量 1484 通过、0 失败、1 跳过。[TODO] 合入旧仓库 `main` |

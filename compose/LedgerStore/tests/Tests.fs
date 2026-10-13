@@ -213,3 +213,64 @@ let ``concurrent submits each commit exactly once`` () =
     use s = openAt (tempDir ())
     Threading.Tasks.Parallel.For(0, 100, fun _ -> committed (s.Submit([ 1 ], t0)) |> ignore) |> ignore
     Assert.Equal((100UL, 100), (s.LastId, s.State))
+
+let inspect d = S.Inspect(d, codec, apply, 0)
+
+[<Fact>]
+let ``inspect reads without the lock and writes nothing, also while the host holds it`` () =
+    let d = tempDir ()
+    Assert.Equal({ health = Healthy; startup = { snapshot = Absent; replayedCommits = 0 }; lastId = 0UL; tailMayBeInFlight = false }, inspect d)
+    use s = openAt d
+    for n in 1..3 do committed (s.Submit([ n ], t0)) |> ignore
+    s.SaveSnapshot() |> ignore
+    committed (s.Submit([ 1 ], t0)) |> ignore
+    let before = File.ReadAllBytes(logOf d)
+    let i = inspect d
+    Assert.Equal({ health = Healthy; startup = { snapshot = Used 3UL; replayedCommits = 1 }; lastId = 4UL; tailMayBeInFlight = false }, i)
+    Assert.Equal<byte[]>(before, File.ReadAllBytes(logOf d))
+    // 宿主仍持锁、仍可写
+    Assert.Equal(5UL, (committed (s.Submit([ 1 ], t0))).id)
+
+[<Fact>]
+let ``inspect while the host writes sees a consistent prefix`` () =
+    let d = tempDir ()
+    use s = openWith { everyCommits = Some 50; onClose = false } d
+    let writer = Threading.Tasks.Task.Run(fun () -> for _ in 1..400 do committed (s.Submit([ 1 ], t0)) |> ignore)
+    let mutable last = 0UL
+    while not writer.IsCompleted do
+        let i = inspect d
+        match i.health with
+        | Healthy -> ()
+        | Damaged _ when i.tailMayBeInFlight -> ()
+        | h -> failwithf "%A" h
+        Assert.True(i.lastId >= last)
+        last <- i.lastId
+    writer.Wait()
+    Assert.Equal(400UL, (inspect d).lastId)
+
+[<Fact>]
+let ``inspect reports damage with evidence; torn tail is flagged as possibly in flight`` () =
+    let d = tempDir ()
+    do
+        use s = openAt d
+        committed (s.Submit([ 1 ], t0)) |> ignore
+    let good = FileInfo(logOf d).Length
+    File.AppendAllText(logOf d, "\u001e{\"v\":1")
+    match inspect d with
+    | { health = Damaged(o, _); lastId = 1UL; tailMayBeInFlight = true } -> Assert.Equal(good, o)
+    | i -> failwithf "%A" i
+    File.AppendAllText(logOf d, "\u001e{}\n")
+    match inspect d with
+    | { health = Damaged(o, _); tailMayBeInFlight = false } -> Assert.Equal(good, o)
+    | i -> failwithf "%A" i
+
+[<Fact>]
+let ``unknown outcome names the commit that may exist`` () =
+    if OperatingSystem.IsLinux() then
+        let d = tempDir ()
+        Directory.CreateDirectory d |> ignore
+        File.CreateSymbolicLink(logOf d, "/dev/full") |> ignore
+        use s = openAt d
+        match s.Submit([ 1 ], t0) with Unknown(1UL, _) -> () | r -> failwithf "%A" r
+        match s.Health with OutcomeUnknown(1UL, _) -> () | h -> failwithf "%A" h
+        match s.Submit([ 1 ], t0) with ReadOnly why -> Assert.Contains("commit 1 may or may not have been saved", why) | r -> failwithf "%A" r

@@ -50,6 +50,8 @@ type Health =
     | Healthy
     /// 日志在 offset 处起不可信；Repair 会截掉它及之后的内容（不可撤销）。
     | Damaged of offset: int64 * reason: string
+    /// offset 处的记录由更新版本写入：不是损坏，不能修复（截掉会毁掉新版本的数据）。只读。
+    | NewerFormat of offset: int64 * reason: string
     /// 提交 commitId 是否已保存不确定（见 Submitted.Unknown）。重新打开后以日志为准。
     | OutcomeUnknown of commitId: uint64 * reason: string
 
@@ -122,7 +124,9 @@ module internal Opening =
                 match problem with
                 | None -> go rest
                 | Some why ->
-                    health <- Damaged(r.startOffset, why)
+                    let newer =
+                        r.fault.IsNone && (match Envelope.read r.payload with Envelope.NewerVersion _ -> true | _ -> false)
+                    health <- if newer then NewerFormat(r.startOffset, why) else Damaged(r.startOffset, why)
                     tornTail <- rest.IsEmpty && r.fault = Some Frame.TornTail
         go (if l.Tail >= length then [] else read (l.Tail, length))
         l, { snapshot = used; replayedCommits = n }, health, tornTail
@@ -200,7 +204,7 @@ type LedgerStore<'S, 'E, 'Err>
     member _.Submit(events: 'E list, at: DateTimeOffset, ?stamp: Stamp) : Submitted<'E, 'Err> =
         lock gate (fun () ->
             match health with
-            | Damaged(o, why) -> ReadOnly(sprintf "log damaged at %d: %s" o why)
+            | Damaged(o, why) | NewerFormat(o, why) -> ReadOnly(sprintf "log damaged at %d: %s" o why)
             | OutcomeUnknown(id, why) ->
                 ReadOnly(sprintf "commit %d may or may not have been saved (%s); reopen the store to find out from the log" id why)
             | Healthy ->

@@ -27,6 +27,10 @@
     <Project Path="libs/AtomicTextFile/AtomicTextFile.fsproj" />
     <Project Path="libs/AtomicTextFile/tests/AtomicTextFile.Tests.fsproj" />
   </Folder>
+  <Folder Name="/AttachmentAudit/">
+    <Project Path="libs/AttachmentAudit/AttachmentAudit.fsproj" />
+    <Project Path="libs/AttachmentAudit/tests/AttachmentAudit.Tests.fsproj" />
+  </Folder>
   <Folder Name="/AttachmentBlobs/">
     <Project Path="libs/AttachmentBlobs/AttachmentBlobs.fsproj" />
     <Project Path="libs/AttachmentBlobs/tests/AttachmentBlobs.Tests.fsproj" />
@@ -58,6 +62,10 @@
   <Folder Name="/DesktopClient/">
     <Project Path="libs/DesktopClient/DesktopClient.fsproj" />
     <Project Path="libs/DesktopClient/tests/DesktopClient.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DeviceListJson/">
+    <Project Path="libs/DeviceListJson/DeviceListJson.fsproj" />
+    <Project Path="libs/DeviceListJson/tests/DeviceListJson.Tests.fsproj" />
   </Folder>
   <Folder Name="/DeviceRules/">
     <Project Path="libs/DeviceRules/DeviceRules.fsproj" />
@@ -119,6 +127,10 @@
     <Project Path="libs/ListenAddress/ListenAddress.fsproj" />
     <Project Path="libs/ListenAddress/tests/ListenAddress.Tests.fsproj" />
   </Folder>
+  <Folder Name="/McpCheck/">
+    <Project Path="libs/McpCheck/McpCheck.fsproj" />
+    <Project Path="libs/McpCheck/tests/McpCheck.Tests.fsproj" />
+  </Folder>
   <Folder Name="/McpProtocol/">
     <Project Path="libs/McpProtocol/McpProtocol.fsproj" />
     <Project Path="libs/McpProtocol/tests/McpProtocol.Tests.fsproj" />
@@ -155,6 +167,10 @@
     <Project Path="libs/PlainText/PlainText.fsproj" />
     <Project Path="libs/PlainText/tests/PlainText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ProviderCheck/">
+    <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />
+    <Project Path="libs/ProviderCheck/tests/ProviderCheck.Tests.fsproj" />
+  </Folder>
   <Folder Name="/RefreshingPool/">
     <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
     <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />
@@ -163,6 +179,10 @@
     <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
     <Project Path="libs/SandboxFiles/tests/SandboxFiles.Tests.fsproj" />
   </Folder>
+  <Folder Name="/SecretText/">
+    <Project Path="libs/SecretText/SecretText.fsproj" />
+    <Project Path="libs/SecretText/tests/SecretText.Tests.fsproj" />
+  </Folder>
   <Folder Name="/SharedHttpClients/">
     <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />
     <Project Path="libs/SharedHttpClients/tests/SharedHttpClients.Tests.fsproj" />
@@ -170,6 +190,10 @@
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />
     <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SnapshotCheck/">
+    <Project Path="libs/SnapshotCheck/SnapshotCheck.fsproj" />
+    <Project Path="libs/SnapshotCheck/tests/SnapshotCheck.Tests.fsproj" />
   </Folder>
   <Folder Name="/Sse/">
     <Project Path="libs/Sse/Sse.fsproj" />
@@ -194,6 +218,10 @@
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
     <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/VerifiedCopy/">
+    <Project Path="libs/VerifiedCopy/VerifiedCopy.fsproj" />
+    <Project Path="libs/VerifiedCopy/tests/VerifiedCopy.Tests.fsproj" />
   </Folder>
   <Folder Name="/Wire/">
     <Project Path="libs/Wire/Wire.fsproj" />

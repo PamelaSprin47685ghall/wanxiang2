@@ -11,3 +11,10 @@
 
 # 迁入或覆盖的旧测试
 - EventLogTests.fs、StoreConsistencyTests.fs、ReplayTests.fs 整个文件（原样迁入 tests/）。
+
+# 拆分与复核（待拆项完成）
+- RecoveryBundle 的「复制 + SHA-256 核对」拆成库 VerifiedCopy；清单与诊断 JSON 的形状、写入顺序留在组合者，字节不变。
+- Store 的 Inspect/Repair ↔ LedgerStore 对应关系复核：对应是一层薄翻译，唯一的问题是靠错误文字前缀
+  （`why.StartsWith "written by a newer version"`）认出「更新版本写的日志」。已改为 LedgerStore 的类型化状态 `Health.NewerFormat`，
+  Inspect 直接映射为 UnsupportedFormat（文字不变）。其余对应（Damaged → RepairRequired，OutcomeUnknown → OutcomeUnknown，
+  Repair 只截 Damaged）保持不变。

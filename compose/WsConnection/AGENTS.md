@@ -21,3 +21,7 @@ ClientToken、DesktopClient、DeviceSightings、DeviceRules。命名空间沿用
 # 迁入或覆盖的旧测试
 - 旧仓库的 WsConnection 测试都经 ServerApp 起整台主机（TestServer），随 8.8 ServerApp 迁入并在那里逐条列名。
 - 新增（旧仓库无对应）：`auth produces zero config writes`，取代 extract-ledger 上 watcher 测试间歇失败的根因。
+
+# 拆分（待拆项完成）
+- 设备条目的 JSON 形状拆成库 DeviceListJson；查配置、在线表、当前设备、能否邀请留在组合者。
+- 目录快照没有可再拆的：它已经只调用 ProviderCatalog.providers / generation 加工具目录，形状归 ProviderCatalog 与 Wire。

@@ -87,19 +87,8 @@ module SupportBundle =
             |> Seq.choose (fun kv -> kv.Value.apiKey)
             |> Seq.filter (fun k -> not (String.IsNullOrWhiteSpace k))
             |> Seq.toList
-        let mutable s = text
-        for secret in secrets do
-            if s.Contains secret then s <- s.Replace(secret, "***")
-        // 兜底：任何形如 apiKey = "..." 的行直接打码（防止未注册的密钥泄漏）
-        s.Split('\n')
-        |> Array.map (fun line ->
-            let t = line.TrimStart()
-            if t.StartsWith("apiKey") || t.StartsWith("token") || t.StartsWith("secret") then
-                let idx = line.IndexOf '='
-                if idx >= 0 then line.Substring(0, idx + 1) + " \"***\""
-                else line
-            else line)
-        |> String.concat "\n"
+        // 兜底：任何形如 apiKey = "..." 的行直接打码（防止未注册的密钥泄漏）。规则在 SecretText 库。
+        text |> SecretText.replaceKnown secrets |> SecretText.maskAssignments [ "apiKey"; "token"; "secret" ]
 
     /// 创建 support bundle。`configPath` 不存在时 config.redacted.toml 写错误说明。
     /// 返回 bundle 目录完整路径。
@@ -132,6 +121,10 @@ module SupportBundle =
                     diag["lastCommitId"] <- i.lastId
                     match i.health with
                     | LedgerStore.Healthy -> "healthy"
+                    | LedgerStore.NewerFormat(offset, reason) ->
+                        // 更新版本写的日志：与 UnsupportedFormat 同一结论，不是 repair-required
+                        diag["message"] <- sprintf "event log %s at byte %d" reason offset
+                        "unsupported-format"
                     | LedgerStore.Damaged _ when i.tailMayBeInFlight ->
                         diag["tailMayBeInFlight"] <- true
                         "healthy"

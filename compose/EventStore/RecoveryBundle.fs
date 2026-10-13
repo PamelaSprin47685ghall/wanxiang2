@@ -2,7 +2,6 @@ namespace Wanxiang.Store
 
 open System
 open System.IO
-open System.Security.Cryptography
 open System.Text.Json
 open System.Text.Json.Nodes
 
@@ -16,18 +15,6 @@ open System.Text.Json.Nodes
 module RecoveryBundle =
 
     let private recoveryRoot (dataDir: string) = Path.Combine(dataDir, "recovery")
-
-    let private sha256OfFile (path: string) : string =
-        use fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)
-        use sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256)
-        let buf = Array.zeroCreate<byte> (64 * 1024)
-        let rec loop () =
-            let n = fs.Read(buf, 0, buf.Length)
-            if n > 0 then
-                sha.AppendData(buf, 0, n)
-                loop ()
-        loop ()
-        Convert.ToHexStringLower(sha.GetHashAndReset())
 
     /// 创建证据包。`plan.affectedFiles` 是修复会修改/删除的全部文件。
     /// 返回证据包目录完整路径；任一复制或哈希核对失败即返回 Error（不部分成功）。
@@ -48,18 +35,12 @@ module RecoveryBundle =
             let files = JsonArray()
             let plannedActions = JsonArray()
             for f in plan.affectedFiles do
-                let name = Path.GetFileName f
-                let copyPath = Path.Combine(originalDir, name)
-                // 复制原文件（损坏现场保留）
-                File.Copy(f, copyPath, false)
-                let origSha = sha256OfFile f
-                let copySha = sha256OfFile copyPath
-                if origSha <> copySha then
-                    failwithf "recovery bundle hash mismatch for %s (%s != %s)" f origSha copySha
+                // 复制原文件并核对哈希（损坏现场保留；VerifiedCopy 库）
+                let origSha, size = VerifiedCopy.copyInto originalDir f
                 let entry = JsonObject()
                 entry["path"] <- f
                 entry["sha256"] <- origSha
-                entry["size"] <- FileInfo(f).Length
+                entry["size"] <- size
                 files.Add entry
                 let action = JsonObject()
                 action["path"] <- f

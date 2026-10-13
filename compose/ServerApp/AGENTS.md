@@ -18,6 +18,8 @@
    - `e2e reobserve restores cancel identity and retrying the original send is idempotent`
    - `e2e wsclient sends command through agui custom carrier and server commits`
 
+4. 测试项目串行运行（xunit.runner.json）：Stderr 凭据表是进程级状态，`recent-errors.jsonl 收集 Stderr 错误且已脱敏` 曾因别的测试并发 `clearSecrets` 而间歇失败（旧仓库同样存在此竞态）。
+
 # 迁入或覆盖的旧测试（旧仓库 extract-ledger@e70932c，可在旧仓库删除；ServerE2eTests 除上面三条）
 - CatchUpSafetyTests.fs 整个文件：
   - `coordinator survives broadcast work in onCommitted callback`

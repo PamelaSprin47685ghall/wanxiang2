@@ -9,5 +9,6 @@
   <ItemGroup>
     <PackageReference Include="Wanxiang2.LedgerStore" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.VerifiedCopy" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

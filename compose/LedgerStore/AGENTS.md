@@ -62,3 +62,8 @@
 - `NoFault`、`FailOnce`：测的是注入器本身。
 
 所以这些测试都变得多余，可以连同 `FaultInjector` 一起删掉。
+
+# 更新版本的日志（待拆项「Store 对应复核」）
+- 新增 `Health.NewerFormat(offset, reason)`：记录由更新版本写入，不是损坏。只读（Submit 返回与 Damaged 相同文字的 ReadOnly），
+  `Repair` 拒绝截断。以前它落在 Damaged 里，`Repair` 会把新版本的数据截掉。
+- 测试：`a record written by a newer version is read-only and never repaired`。

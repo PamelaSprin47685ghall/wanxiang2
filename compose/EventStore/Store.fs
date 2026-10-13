@@ -163,7 +163,7 @@ module Inspect =
         let o = { projection = s.Projection; lastCommitId = s.LastCommitId; checkpoint = s.Checkpoint; startup = s.Startup; stamps = s.Stamps }
         match s.Health with
         | Health.Healthy -> Healthy o
-        | Health.Damaged(at, why) when why.StartsWith "written by a newer version" ->
+        | Health.NewerFormat(at, why) ->
             UnsupportedFormat(sprintf "event log %s at byte %d" why at)
         | Health.Damaged(at, why) ->
             let f = DataPaths.logFile s.DataDir

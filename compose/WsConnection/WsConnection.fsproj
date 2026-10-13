@@ -19,5 +19,6 @@
     <PackageReference Include="Wanxiang2.DesktopClient" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DeviceSightings" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DeviceRules" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DeviceListJson" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

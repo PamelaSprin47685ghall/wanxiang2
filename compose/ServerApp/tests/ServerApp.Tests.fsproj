@@ -25,6 +25,10 @@
     <Compile Include="ContractTests.fs" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Stderr 的已知凭据表与最近错误缓冲是进程级状态，迁入的测试会注册/清除它：串行跑，避免互相干扰。 -->
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../ServerApp.fsproj" />
   </ItemGroup>

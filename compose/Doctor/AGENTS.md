@@ -14,3 +14,10 @@
 
 # 迁入或覆盖的旧测试
 - DoctorInspectTests.fs 整个文件（原样迁入 tests/）。
+
+# 按检查项拆分（待拆项完成）
+- 检查项拆成库：ProviderCheck（provider-config）、McpCheck（mcp-config）、SnapshotCheck（snapshot）、AttachmentAudit（missing/orphan-attachments）。
+  库只拿基本类型，探测磁盘、读配置、映射存储类型留在组合者；检查顺序、名字与文字不变，`golden/doctor.txt` 照旧逐字节通过。
+- 支持包的配置脱敏拆成库 SecretText（已知凭据精确替换 + 键值兜底打码），替换顺序与旧实现相同。
+  stderr 的精确替换在 JsonLinesLog 里：库不能引用兄弟库，所以各持一份同样的规则，唯一差别是 stderr 按长度降序替换（一个密钥是另一个子串时才有区别）。
+- 有意改动：宿主运行中（HostOwned）看到更新版本写的日志时，以前报「damaged…请 doctor --fix」，现在报与 UnsupportedFormat 相同的文字，不再建议 --fix；支持包 diagnosis 同样记为 `unsupported-format`（以前是 `repair-required`）。

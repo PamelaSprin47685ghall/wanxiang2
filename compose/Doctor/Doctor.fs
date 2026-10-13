@@ -75,14 +75,14 @@ module Doctor =
             | Healthy o | RepairRequired(o, _) | OutcomeUnknown(o, _, _) -> Ok o.startup
             | HostOwned i -> Ok i.startup
             | UnsupportedFormat m | Unreadable m -> Error m
-        match startup with
-        | Ok { snapshot = LedgerStore.Absent } ->
-            { name = "snapshot"; ok = true; detail = "no snapshot (full replay on next start)" }
-        | Ok { snapshot = LedgerStore.Used through; replayedCommits = n } ->
-            { name = "snapshot"; ok = true; detail = sprintf "valid through commit %d (%d commits replayed after it)" through n }
-        | Ok { snapshot = LedgerStore.Discarded reason } ->
-            { name = "snapshot"; ok = true; detail = sprintf "discarded: %s (falls back to full replay)" reason }
-        | Error m -> { name = "snapshot"; ok = true; detail = sprintf "not checked: %s" m }
+        let state =
+            match startup with
+            | Ok { snapshot = LedgerStore.Absent } -> SnapshotState.Absent
+            | Ok { snapshot = LedgerStore.Used through; replayedCommits = n } -> SnapshotState.Used(through, n)
+            | Ok { snapshot = LedgerStore.Discarded reason } -> SnapshotState.Discarded reason
+            | Error m -> SnapshotState.NotChecked m
+        let ok, detail = SnapshotCheck.run state
+        { name = "snapshot"; ok = ok; detail = detail }
 
     /// recovery 证据包检查：存在 recovery 目录且至少一个 manifest.json。
     let private checkRecoveryBundle (dataDir: string) : CheckResult =
@@ -102,67 +102,39 @@ module Doctor =
 
     /// provider 配置结构检查：每个启用 provider 必须有模型且默认模型在列表中。
     let private checkProviders (cfg: AppConfig) : CheckResult =
-        let issues =
-            cfg.providers
-            |> Map.toList
-            |> List.collect (fun (_, p) ->
-                let problems =
-                    [ if p.enabled && p.apiKey.IsNone then
-                          Some "enabled but no apiKey"
-                      else None
-                      // 本地 kind 需要可解析 baseUrl（openai 兼容端点）
-                      if p.enabled && String.IsNullOrWhiteSpace p.baseUrl then
-                          Some "enabled but empty baseUrl"
-                      else None ]
-                    |> List.choose id
-                if List.isEmpty problems then [] else [ sprintf "%s: %s" p.id (String.concat "; " problems) ])
-        { name = "provider-config"
-          ok = List.isEmpty issues
-          detail = if List.isEmpty issues then "ok" else String.concat "; " issues }
+        let ok, detail =
+            cfg.providers |> Map.toList
+            |> List.map (fun (_, p) -> p.id, p.enabled, p.apiKey.IsSome, p.baseUrl)
+            |> ProviderCheck.run
+        { name = "provider-config"; ok = ok; detail = detail }
 
     /// MCP 配置结构检查：command/url 二选一，且至少一个存在。
     let private checkMcp (cfg: AppConfig) : CheckResult =
-        let issues =
-            cfg.mcpServers
-            |> Map.toList
-            |> List.collect (fun (_, m) ->
-                match m.command, m.url with
-                | Some cmd, None when m.enabled && not (File.Exists cmd) ->
-                    [ sprintf "%s: enabled command not found: %s" m.id cmd ]
-                | _ -> [])
-        { name = "mcp-config"
-          ok = List.isEmpty issues
-          detail = if List.isEmpty issues then "ok" else String.concat "; " issues }
+        let ok, detail =
+            cfg.mcpServers |> Map.toList
+            |> List.map (fun (_, m) -> m.id, m.enabled, m.command, m.url)
+            |> McpCheck.run File.Exists
+        { name = "mcp-config"; ok = ok; detail = detail }
 
     /// 附件检查：missing = 消息引用但 blob 缺失（Q179）；orphan = 存在 blob 但无任何引用。
     let private checkAttachments (dataDir: string) (outcome: ReplayOutcome) : (CheckResult * CheckResult) =
         let store = new AttachmentStore(dataDir, 1024L)
         try
-            let referenced = System.Collections.Generic.HashSet<string>()
-            let missing = System.Collections.Generic.HashSet<string>()
-            for conv in Projection.conversationList outcome.projection do
-                for m in Projection.effectiveMessages outcome.projection conv do
-                    for (sha, _, _, _) in AttachmentRefs.ofPayload m.payloadJson do
-                        referenced.Add sha |> ignore
-                        if not (store.Exists sha) then
-                            missing.Add sha |> ignore
-            // orphan = 附件目录中的 blob 未被任何消息引用
-            let orphan = System.Collections.Generic.List<string>()
-            if Directory.Exists(DataPaths.attachmentsDir dataDir) then
-                for dir in Directory.GetDirectories(DataPaths.attachmentsDir dataDir) do
-                    for sub in Directory.GetDirectories dir do
-                        for f in Directory.GetFiles sub do
-                            let name = Path.GetFileName f
-                            if not (name.EndsWith ".meta") && not (referenced.Contains name) then
-                                orphan.Add name
-            let missingList = missing |> Seq.toList
-            let orphanList = List.ofSeq orphan
-            { name = "missing-attachments"
-              ok = List.isEmpty missingList
-              detail = if List.isEmpty missingList then "ok" else sprintf "%d referenced blob(s) missing" missingList.Length },
-            { name = "orphan-attachments"
-              ok = List.isEmpty orphanList
-              detail = if List.isEmpty orphanList then "ok" else sprintf "%d unreferenced blob(s)" orphanList.Length }
+            // 引用按消息顺序收集，存在性逐条探测（与旧实现一致：同一 sha 每次出现都探测）
+            let refs =
+                [ for conv in Projection.conversationList outcome.projection do
+                    for m in Projection.effectiveMessages outcome.projection conv do
+                        for (sha, _, _, _) in AttachmentRefs.ofPayload m.payloadJson do
+                            yield sha, store.Exists sha ]
+            let blobs =
+                [ if Directory.Exists(DataPaths.attachmentsDir dataDir) then
+                    for dir in Directory.GetDirectories(DataPaths.attachmentsDir dataDir) do
+                        for sub in Directory.GetDirectories dir do
+                            for f in Directory.GetFiles sub do
+                                yield Path.GetFileName f ]
+            let (mOk, mDetail), (oOk, oDetail) = AttachmentAudit.run refs blobs
+            { name = "missing-attachments"; ok = mOk; detail = mDetail },
+            { name = "orphan-attachments"; ok = oOk; detail = oDetail }
         finally
             store.Dispose()
 
@@ -252,6 +224,10 @@ module Doctor =
                     match i.health with
                     | LedgerStore.Healthy ->
                         { name = "log-replay"; ok = true; detail = sprintf "healthy through commit %d (host running; checked without the lock)" i.lastId }
+                    | LedgerStore.NewerFormat(offset, reason) ->
+                        // 更新版本写的日志不是损坏：不建议 --fix（截掉会毁掉新版本的数据）；文字与 UnsupportedFormat 一致。
+                        d.replayError <- sprintf "event log %s at byte %d" reason offset
+                        { name = "log-replay"; ok = false; detail = d.replayError }
                     | LedgerStore.Damaged _ when i.tailMayBeInFlight ->
                         { name = "log-replay"; ok = true; detail = sprintf "healthy through commit %d; the last record may still be being written by the running host (use the host's own check for its health)" i.lastId }
                     | LedgerStore.Damaged(offset, reason) ->

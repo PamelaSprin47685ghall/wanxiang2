@@ -274,3 +274,19 @@ let ``unknown outcome names the commit that may exist`` () =
         match s.Submit([ 1 ], t0) with Unknown(1UL, _) -> () | r -> failwithf "%A" r
         match s.Health with OutcomeUnknown(1UL, _) -> () | h -> failwithf "%A" h
         match s.Submit([ 1 ], t0) with ReadOnly why -> Assert.Contains("commit 1 may or may not have been saved", why) | r -> failwithf "%A" r
+
+/// 更新版本写入的记录不是损坏：Health 是 NewerFormat，只读，Repair 拒绝截断（截掉会毁掉新版本的数据）。
+[<Fact>]
+let ``a record written by a newer version is read-only and never repaired`` () =
+    let d = tempDir ()
+    do
+        use s = openAt d
+        committed (s.Submit([ 1 ], t0)) |> ignore
+    let good = FileInfo(logOf d).Length
+    File.AppendAllText(logOf d, "\u001e{\"v\":99,\"id\":\"2\",\"at\":\"2026-01-01T00:00:00Z\",\"events\":[1]}\n")
+    let size = FileInfo(logOf d).Length
+    use s = openAt d
+    match s.Health with NewerFormat(o, why) -> Assert.Equal(good, o); Assert.Contains("newer version", why) | h -> failwithf "%A" h
+    Assert.True(Result.isError (s.Repair()))
+    match s.Submit([ 1 ], t0) with ReadOnly why -> Assert.Contains("newer version", why) | r -> failwithf "%A" r
+    Assert.Equal(size, FileInfo(logOf d).Length)

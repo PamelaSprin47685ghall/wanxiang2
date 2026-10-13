@@ -5,6 +5,8 @@ open System.IO
 open Xunit
 open JsonSeq
 
+let appended = function Appended e -> e | o -> failwithf "%A" o
+
 let tempFile () = Path.Combine(Path.GetTempPath(), "jsonseq-" + Guid.NewGuid().ToString("N"), "log.jsonseq")
 
 // SPEC 1：往返
@@ -39,8 +41,8 @@ let ``file append survives reopen and truncate rolls back`` () =
     let p = tempFile ()
     let mid =
         use f = new JsonSeqFile(p)
-        let m = f.Append """{"n":1}"""
-        f.Append """{"n":2}""" |> ignore
+        let m = appended (f.Append """{"n":1}""")
+        appended (f.Append """{"n":2}""") |> ignore
         m
     use f = new JsonSeqFile(p)
     Assert.Equal(2, f.ReadFrom(0L).Length)
@@ -69,7 +71,22 @@ let ``bytes before first RS are stray`` (s: string) =
 [<Fact>]
 let ``Read returns only records within range`` () =
     use f = new JsonSeqFile(tempFile ())
-    let a = f.Append "{\"n\":1}"
-    let b = f.Append "{\"n\":2}"
-    f.Append "{\"n\":3}" |> ignore
+    let a = appended (f.Append "{\"n\":1}")
+    let b = appended (f.Append "{\"n\":2}")
+    appended (f.Append "{\"n\":3}") |> ignore
     Assert.Equal<string list>([ "{\"n\":2}" ], f.Read(a, b) |> List.map _.payload)
+
+// SPEC 9：写之前就失败 → NotWritten；写失败且截不回 → Unknown，不冒称 NotWritten
+[<Fact>]
+let ``failure before writing is NotWritten`` () =
+    let f = new JsonSeqFile(tempFile ())
+    appended (f.Append "{}") |> ignore
+    (f :> IDisposable).Dispose()
+    match f.Append "{}" with NotWritten _ -> () | o -> failwithf "%A" o
+
+[<Fact>]
+let ``write failure without rollback evidence is Unknown`` () =
+    // /dev/full：真实的写失败（ENOSPC），且截断同样失败。仅 Linux。
+    if OperatingSystem.IsLinux() then
+        use f = new JsonSeqFile("/dev/full")
+        match f.Append "{}" with Unknown _ -> () | o -> failwithf "%A" o

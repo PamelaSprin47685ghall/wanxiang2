@@ -1,0 +1,24 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      libs: ${{ steps.libs.outputs.libs }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./x check
+      - id: libs
+        run: echo "libs=$(ls libs | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+  test:
+    needs: check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lib: ${{ fromJson(needs.check.outputs.libs) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - run: ./x test ${{ matrix.lib }}

@@ -1,0 +1,8 @@
+<Project>
+  <!-- 外部包版本只在此处登记一次。 -->
+  <ItemGroup>
+    <PackageVersion Include="FSharp.Core" Version="10.1.401" />
+    <PackageVersion Include="Jcs.Net" Version="0.1.1" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,16 @@
+<Project>
+  <!-- 全仓统一编译设置。每个库只写自己的 Compile 列表与 PackageReference。 -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarnOn>3390;1182</WarnOn>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <DebugType>portable</DebugType>
+    <!-- 中央包管理下显式引用 FSharp.Core，否则测试可执行文件拿不到它。 -->
+    <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+</Project>

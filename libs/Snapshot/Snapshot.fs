@@ -19,6 +19,9 @@ type Loaded =
 type SnapshotFile(path: string) =
     static let version = 1
 
+    /// 严格解码：头与正文都不接受非法 UTF-8。
+    static let strict = UTF8Encoding(false, true)
+
     static let magic = "wanxiang-snapshot"
 
     static let hashHex (bytes: byte[]) = SHA256.HashData bytes |> Convert.ToHexString |> _.ToLowerInvariant()
@@ -48,12 +51,14 @@ type SnapshotFile(path: string) =
                 let nl = Array.IndexOf(bytes, 0x0Auy)
                 if nl < 0 then Corrupt "missing header"
                 else
-                    let parts = Encoding.UTF8.GetString(bytes, 0, nl).Split ' '
+                    let parts = strict.GetString(bytes, 0, nl).Split ' '
                     let body = bytes[nl + 1 ..]
                     if parts.Length <> 3 || parts[0] <> magic then Corrupt "bad header"
                     elif parts[1] <> string version then Corrupt(sprintf "unsupported version %s" parts[1])
                     elif parts[2] <> hashHex body then Corrupt "checksum mismatch"
                     else
-                        try Loaded(UTF8Encoding(false, true).GetString body)
+                        try Loaded(strict.GetString body)
                         with :? DecoderFallbackException -> Corrupt "invalid UTF-8"
-            with e -> Corrupt e.Message
+            with
+            | :? DecoderFallbackException -> Corrupt "invalid UTF-8 in header"
+            | e -> Corrupt e.Message

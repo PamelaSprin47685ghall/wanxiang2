@@ -22,4 +22,6 @@
     - 证明：`any flipped or truncated byte is Corrupt`（逐字节穷举）。
 3. [LEMMA: 2] 崩溃遗留的 `.tmp` 不影响读取，下次保存直接覆盖。
     - 证明：`leftover tmp file does not affect existing snapshot`。
-4. [TODO] 改名后未对所在目录做 fsync，断电时改名本身可能丢失（此时读到旧快照，按 LEMMA 1 仍安全，只是慢）。
+4. [LEMMA: 3] 头与正文都严格按 UTF-8 解码；头里有非法字节判为 `Corrupt`，原因指明是头。
+    - 证明：`invalid utf8 in header is Corrupt`。
+5. [TODO] 改名后未对所在目录做 fsync，断电时改名本身可能丢失（此时读到旧快照，按 LEMMA 1 仍安全，只是慢）。

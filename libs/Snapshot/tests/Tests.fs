@@ -46,3 +46,15 @@ let ``leftover tmp file does not affect existing snapshot`` () =
     Assert.Equal(Loaded "1", SnapshotFile(p).Load())
     SnapshotFile(p).Save "2"
     Assert.Equal(Loaded "2", SnapshotFile(p).Load())
+
+// SPEC 4：头里有非法 UTF-8 判为 Corrupt，并指明是头
+[<Fact>]
+let ``invalid utf8 in header is Corrupt`` () =
+    let p = tempPath ()
+    SnapshotFile(p).Save "x"
+    let b = File.ReadAllBytes p
+    b[0] <- 0xFFuy
+    File.WriteAllBytes(p, b)
+    match SnapshotFile(p).Load() with
+    | Corrupt why -> Assert.Contains("header", why)
+    | r -> failwithf "%A" r

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Helpers.fs" />
+    <Compile Include="SessionConfigTests.fs" />
+    <Compile Include="WireCodecTests.fs" />
+    <Compile Include="WireGoldenTests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <ProjectReference Include="../Wire.fsproj" />
+  </ItemGroup>
+</Project>

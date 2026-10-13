@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="Types.fs" />
+    <Compile Include="RateLimit.fs" />
+    <Compile Include="SessionConfig.fs" />
+    <Compile Include="WireCommands.fs" />
+    <Compile Include="WireEvent.fs" />
+    <Compile Include="WireCodec.fs" />
+  </ItemGroup>
+</Project>

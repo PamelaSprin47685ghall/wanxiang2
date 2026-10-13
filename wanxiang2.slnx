@@ -43,6 +43,10 @@
     <Project Path="libs/Snapshot/Snapshot.fsproj" />
     <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />
   </Folder>
+  <Folder Name="/Wire/">
+    <Project Path="libs/Wire/Wire.fsproj" />
+    <Project Path="libs/Wire/tests/Wire.Tests.fsproj" />
+  </Folder>
   <Folder Name="/WsHandshake/">
     <Project Path="libs/WsHandshake/WsHandshake.fsproj" />
     <Project Path="libs/WsHandshake/tests/WsHandshake.Tests.fsproj" />

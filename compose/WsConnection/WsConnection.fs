@@ -14,8 +14,6 @@ open Wanxiang.Protocol
 open Wanxiang.Store
 
 /// 命令执行结果（由 ServerApp 注入的 executeCommand 产生）。
-type internal HostFeaturesMarker = class end
-
 type CommandExecutionResult =
     /// SendUserMessage：已入队（等待插入点提交）
     | CommandQueued
@@ -91,13 +89,11 @@ type WsConnection(
 
     /// 认证完成后补发主机当前的可见状态：断线期间发生的配置拒绝，重连后也要看得到。
     /// 决策 440：认证后紧随 AuthAccepted 声明主机版本与功能表。
+    /// 主机版本（由宿主 ServerApp 注入；包里的程序集版本不是产品版本）。
+    member val HostVersion: string = "" with get, set
+
     member private this.AnnounceCapabilities() : unit =
-        let version =
-            let asm = typeof<HostFeaturesMarker>.Assembly
-            match asm.GetName().Version with
-            | null -> ""
-            | v -> v.ToString()
-        this.TrySend(HostCapabilities {| hostVersion = version; features = HostFeatures.all |}) |> ignore
+        this.TrySend(HostCapabilities {| hostVersion = this.HostVersion; features = HostFeatures.all |}) |> ignore
 
     member private this.AnnounceHostStatus() : unit =
         match this.HostStatus |> Option.bind _.Current with

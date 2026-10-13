@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- 旧测试原样迁入（Helpers 去掉了 UI 用的 isIcon；ServerE2eTests 去掉了依赖 Wanxiang.Client/UI 的三条）。 -->
+    <NoWarn>$(NoWarn);FS0025;FS1182;FS0064;FS3370;FS0040</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Helpers.fs" />
+    <Compile Include="CatchUpSafetyTests.fs" />
+    <Compile Include="ServerE2eTests.fs" />
+    <Compile Include="N1CompatTests.fs" />
+    <Compile Include="W3ToolPolicyTests.fs" />
+    <Compile Include="AcceptanceScenarioTests.fs" />
+    <Compile Include="ServerAppTests.fs" />
+    <Compile Include="ServerConnectionsTests.fs" />
+    <Compile Include="DevicesTests.fs" />
+    <Compile Include="ProductizationTests.fs" />
+    <Compile Include="BugfixTests.fs" />
+    <Compile Include="AttachmentTests.fs" />
+    <Compile Include="ServerStoreMutationTests.fs" />
+    <Compile Include="McpTests.fs" />
+    <Compile Include="SessionAndForkTests.fs" />
+    <Compile Include="DoctorTests.fs" />
+    <Compile Include="SupportBundleTests.fs" />
+    <Compile Include="ContractTests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <ProjectReference Include="../ServerApp.fsproj" />
+  </ItemGroup>
+</Project>

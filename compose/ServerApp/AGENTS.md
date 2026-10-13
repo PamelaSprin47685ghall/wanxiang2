@@ -1,0 +1,196 @@
+# ServerApp（组合）
+
+旧 `ServerApp`（extract-ledger@e70932c）：万象主机实例，组装数据锁 → 只读检查 → 配置 → 协调器 → 编排 → 连接 → HTTP/WebSocket，以及优雅关闭。
+协作者：WsConnection（及其依赖）、ConfigStore、Doctor、BuiltinTools、WsHandshake、McpClient、ListenAddress、DeviceSightings。命名空间沿用 Wanxiang.Server。根规则见项目根目录 AGENTS.md。
+
+# LEMMA
+1. **主机行为与旧实现一致**，下列有意改动除外。 [根 AXIOM: 5]
+2. **主机版本由宿主注入**：构造参数多一个可选的 `?hostVersion`（放在最后），缺省取入口程序集版本，并设给每个连接的 `HostVersion`。
+    - 推理：打包后 ServerApp/WsConnection 的程序集版本是 0.0.0-local，不是产品版本。
+3. **监听地址是否只在回环上是纯规则，抽成库 ListenAddress**；告警文字与时机留在宿主。 [根 AXIOM: 3]
+4. 其余都是组装与生命周期，没有可再拆的独立语义；配对失败限流在 PairingDesk 里，设备记账在 DeviceSightings 里（启动时 Seed 一次性迁移旧配置里的 lastSeen）。
+
+# SPEC
+1. [LEMMA: 1] 迁入的旧测试 158 条全部通过（下列），连跑三次一致。
+2. 有意改动：未读的构造参数 `fix` 与 `replayOutcome` 用 `do ignore (...)` 消掉警告（警告即错误），求值次序不变。
+3. 迁入时对测试脚手架的改动：Helpers.fs 去掉 UI 用的 `isIcon`；ServerE2eTests.fs 去掉依赖 Wanxiang.Client/UI 的三条（留在旧仓库）：
+   - `e2e full export is read-only and stable while another client deletes and renames`
+   - `e2e reobserve restores cancel identity and retrying the original send is idempotent`
+   - `e2e wsclient sends command through agui custom carrier and server commits`
+
+# 迁入或覆盖的旧测试（旧仓库 extract-ledger@e70932c，可在旧仓库删除；ServerE2eTests 除上面三条）
+- CatchUpSafetyTests.fs 整个文件：
+  - `coordinator survives broadcast work in onCommitted callback`
+  - `CommitsAfter paging returns at most limit commits and advances cursor`
+  - `concurrent submits keep ids strictly contiguous`
+  - `CommitsAfter returns commits after cursor in ascending order`
+- ServerE2eTests.fs 整个文件（除下面三条）：
+  - `e2e write command succeeds after snapshot cursor advance`
+  - `e2e observe advance cursor then enqueue gets response and push`
+  - `e2e slow client (never reads) does not block other clients' commits`
+  - `e2e history paging slices by commit id`
+  - `e2e attachment upload and download round trip`
+  - `e2e stale client write command is rejected`
+  - `e2e empty session config is filled from toml default provider`
+  - `e2e deleting a conversation never sweeps attachment blobs`
+  - `e2e damaged log starts read-only degraded and rejects writes without touching files`
+- N1CompatTests.fs 整个文件：
+  - `旧式 auth.present 事件形态仍被当前解码器识别`
+  - `旧式 pairing.requested 事件形态仍被当前解码器识别`
+  - `Hello 事件仍可解码（兼容 reader，ADR-001 方案 B 保留）`
+  - `UpgradeRequired 事件仍可解码（兼容 reader）`
+  - `未来 AG-UI 事件类型被宽容识别为 Unrecognized 而非抛异常`
+  - `别家 CUSTOM 事件被识别为 Custom 而非拒绝`
+  - `已知类型但畸形载荷被识别为 Malformed（真协议错误）`
+  - `当前主机 + 旧式客户端（auth.present 无 Hello）正常认证`
+  - `未认证业务事件被明确拒绝（protocol error）而非半工作`
+- W3ToolPolicyTests.fs 整个文件：
+  - `[AC-1] 既有配置没写 policy：全自动、不需要审批（行为与升级前一致）`
+  - `[AC-1] 重写既有配置不会悄悄写入 policy（老用户不被改成询问）`
+  - `[AC-1] 全新安装写出的配置默认先询问（time 保持自动）`
+  - `[AC-2] tools.policy 可解析、可往返；非法取值被拒绝`
+  - `[AC-2] 设置页载荷：updateTools 与老的 updateGeneration 都不会冲掉 policy`
+  - `[AC-7] builtin_echo 默认不进目录；tools.exposeDebug 打开才可见；老对话照常可用`
+  - `[AC-4/6] 审批事件往返，并走 wanxiang.dev CUSTOM 命名空间（标准客户端合法忽略）`
+  - `[AC-1] e2e 默认配置：工具无需审批直接执行，旧客户端（无审批能力）照常工作`
+  - `[AC-2/7] e2e 每次询问：审批卡出现 → 批准 → 工具结果记账 → 模型继续；审批不进日志`
+  - `[AC-4] e2e 拒绝：日志里有一条含「用户拒绝」的完整工具结果，模型看到后继续`
+  - `[AC-6] e2e 旧客户端遇到需要审批的调用：主机立即拒绝，不会永远挂住`
+  - `[AC-6] e2e 审批超时：到点自动拒绝并继续`
+  - `[AC-3] e2e 两个客户端同时观察、同时决定：恰有一个被接受，另一个收到「已处理」`
+  - `[AC-2] e2e 断线重连后审批卡片仍在，可继续决定`
+  - `[AC-2] e2e 取消生成：等待中的审批作废，且不留工具结果`
+  - `[AC-5] e2e 重启：挂起的审批消失，对话不卡死（不再下发、不再等待）`
+  - `[AC-6] e2e 未认证连接发审批决定被拒绝（不能抢决定）`
+- AcceptanceScenarioTests.fs 整个文件：
+  - `场景A：10^4 历史快照启动投影与完整重放完全一致`
+  - `场景A：快照启动只重放快照之后的提交（不重复）`
+  - `场景H：provider 超时归类为结构化错误且不含原始异常细节泄漏`
+  - `场景H：provider HTTP 5xx 归类为 ProviderUnavailable`
+  - `场景H：stderr 脱敏——已知凭据值被精确替换`
+  - `场景H：stderr 事件字段名统一（关联 ID 契约）`
+  - `场景H：stderr 事件自动携带 instanceId（§18 关联 ID）`
+  - `场景C：损坏 → 修复 → bundle 哈希有效 → 复查 PASS 全链`
+- ServerAppTests.fs 整个文件：
+  - `数据目录锁：两个存储无法同时打开同一目录，释放后可重新打开`
+  - `ServerApp 两个实例无法同时在同一 dataDir 启动（严格单进程保护）`
+  - `ServerApp 正常启动与停止生命周期（Start 与 Stop 幂等释放）`
+  - `ServerApp 启动时正确处理截尾事件文件并恢复运行`
+  - `ServerApp 监听 0.0.0.0 且无 TLS 时正常启动并执行 WarnIfExposedWithoutTls 逻辑`
+  - `ServerApp 连续多次 Stop 与 Dispose 保持严格幂等不抛出异常`
+  - `ServerApp 启动时配置不存在安全回退到默认配置并正常启停`
+  - `ServerApp 优雅关闭写快照且能从快照续播`
+- ServerConnectionsTests.fs 整个文件：
+  - `ConnectionRegistry allocates placeholder IDs monotonically`
+  - `ConnectionRegistry remove non-existent connection is safe`
+  - `HandshakeState variants can be constructed and transitioned`
+  - `CommandExecutionResult variants structure check`
+  - `ConnectionRegistry 并发分配 ID 保证全局严格单调且互不冲突`
+  - `CommandExecutionResult 错误分支包含具体错误语义`
+  - `ServerModel conversationMessagesTail 在小消息集时不截断并返回 0UL 与 false`
+  - `ServerModel exportPage 参数与前置条件校验契约`
+  - `ServerModel conversationListItems 格式化有效对话摘要并过滤思维链`
+  - `TolerantReader 契约：识别 wanxiang 专属命名空间与标准事件，忽略外部自定义事件`
+  - `TolerantReader 扁平 value 与嵌套外壳归一化语义`
+  - `ConfigMutation 动态配置变更：非法 Provider 与 MCP 配置被明确拒绝并返回错误清单`
+  - `Stderr 凭据脱敏规则：按长度降序替换，短密钥不破坏长密钥的完整匹配`
+  - `Stderr 短密钥过滤与幂等注册契约：长度小于 8 的字符串或空白字符不予注册`
+  - `AuthorityCatchUp 事件载荷构建：保留范围边界并在客户端游标落后时正确打包`
+- DevicesTests.fs 整个文件：
+  - `config write failure during pairing sends no token`
+  - `desktop invite code pairs another connection and yields a working permanent token`
+  - `pairing request reuses a live invite instead of replacing the code`
+  - `wrong codes freeze the address after five failures even with a live invite`
+  - `issuing an invite does not touch the event log`
+  - `unauthenticated invite is rejected closes the connection and counts toward the rate limit`
+  - `authenticated non desktop device cannot invite and stays connected`
+  - `paired device cannot claim the reserved desktop name or gain invite rights`
+  - `legacy pairing flow and unknown events still work for clients unaware of invites`
+  - `new events round trip through the codec and the agui carrier`
+  - `device list shows names online state and only desktop may invite`
+  - `rename persists to toml and rejects empty reserved and desktop targets`
+  - `revoking a device disconnects it immediately and marks revoked in toml and list`
+  - `revoke refuses the current device the desktop device and already revoked devices`
+  - `unauthenticated device requests close the connection`
+  - `desktop token connects directly without any pairing event`
+  - `authenticated host ignores unknown wanxiang.dev custom events and keeps the connection`
+  - `unknown custom event type is not decoded as an error on either side`
+  - `auth produces zero config writes`
+- ProductizationTests.fs 整个文件：
+  - `session model wins when the provider offers it`
+  - `unknown session model falls back to the provider default`
+  - `timeouts classify as retryable provider timeouts`
+  - `context-length signals are detected from the message body`
+  - `every failure kind has an actionable hint and a stable code`
+  - `generation error survives a wire roundtrip`
+  - `a provider can be added over the protocol`
+  - `omitting the api key preserves the stored one`
+  - `an invalid provider is rejected with one reason per problem`
+  - `an mcp server needs exactly one transport`
+  - `generation defaults are validated before they are stored`
+  - `clearing an optional generation parameter is possible`
+  - `the catalog never exposes api keys`
+  - `regenerate targets the trailing model messages only`
+  - `regenerate is rejected when the last message is the user's`
+  - `pin and archive flags are projected and survive replay`
+  - `pinned conversations sort ahead of more recent ones`
+  - `session config reports every invalid field`
+  - `session config survives a commit-codec roundtrip including topP`
+- BugfixTests.fs 整个文件：
+  - `attachment chunk exceeds configured limit is rejected`
+  - `attachment fileName is sanitized`
+  - `attachment media type sniffed and metadata persisted`
+  - `snapshot tail caps long conversation`
+  - `history paging slices by commit id`
+  - `attachment refs are extracted from message payload`
+  - `stderr redacts registered secrets`
+  - `stderr redact replaces longer secrets first`
+  - `oversize attachment error names the MiB cap, actual size, and remedy`
+- AttachmentTests.fs 整个文件：
+  - `attachment upload verifies hash and stores content addressed blob`
+  - `attachment upload rejects oversized and mismatched payloads`
+  - `invalid attachment hash is rejected without throwing`
+  - `duplicate active attachment id is rejected`
+  - `断线清理：AbortByConnection 删除该连接未完成上传的临时文件`
+- ServerStoreMutationTests.fs 整个文件：
+  - `AttachmentStore upload chunk complete and read workflow`
+  - `AttachmentStore validates size limits and hashes strictly`
+  - `AttachmentStore abort cleans up temporary resources`
+  - `ConfigMutation upsertProvider validates inputs and preserves secrets`
+  - `ConfigMutation deleteProvider handles active provider deletion safely`
+  - `ConfigMutation upsertMcp and deleteMcp validates command and url exclusivity`
+  - `ConfigMutation updateGeneration validates numerical ranges and parameters`
+- McpTests.fs 整个文件：
+  - `McpFunction 无 inputSchema 或畸形 inputSchema 时回退到 PermissiveSchema 容错`
+  - `McpFunction 有效 inputSchema 正确提取并保留原始结构`
+  - `McpFunction 正确映射 Name、Description、Schema 并能 InvokeCoreAsync`
+- SessionAndForkTests.fs 整个文件：
+  - `conversation list summary includes last message and runtime state`
+  - `snapshot messages carry commitId per message`
+  - `fork plan requires fork point to be a message commit id`
+  - `command id idempotency and conversation id collision`
+  - `fork with empty config succeeds and is idempotent`
+- DoctorTests.fs 整个文件：
+  - `健康数据目录：全部检查通过`
+  - `format-version 检查报告当前权威版本`
+  - `provider-config 检查发现启用但无 apiKey`
+  - `mcp-config 检查发现启用的 command 文件不存在`
+  - `orphan-attachments 检查发现未被引用的 blob`
+  - `recovery-bundle 检查识别证据包存在`
+  - `损坏日志：log-replay FAIL 且附件检查跳过`
+  - `doctor 检查绝不修改任何文件`
+- SupportBundleTests.fs 整个文件：
+  - `bundle 生成全部必需文件且不含密钥`
+  - `bundle 的 diagnosis 反映损坏日志状态`
+  - `recent-errors.jsonl 收集 Stderr 错误且已脱敏`
+  - `storage-layout.json 列出事件文件但不含内容`
+- ContractTests.fs 整个文件：
+  - `提交外壳版本常量与生产编解码一致`
+  - `P-002：Ledger.Record 重复定义已删除，格式唯一权威是 CommitCodec + Constants`
+  - `配置版本常量唯一且 TomlCodec 拒绝未知版本`
+  - `AG-UI 版本常量`
+  - `MCP 协议版本常量（单一权威）`
+  - `协议版本常量（诊断展示用；线上版本 in-band）`
+  - `大整数必须以 JSON 字符串承载（RFC 8785 附录 D）`
+  - `事件级版本常量`
+  - `未来 formatVersion 触发 UnsupportedFormat 且不修改文件`

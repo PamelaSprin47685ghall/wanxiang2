@@ -115,6 +115,10 @@
     <Project Path="libs/LineProcess/LineProcess.fsproj" />
     <Project Path="libs/LineProcess/tests/LineProcess.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ListenAddress/">
+    <Project Path="libs/ListenAddress/ListenAddress.fsproj" />
+    <Project Path="libs/ListenAddress/tests/ListenAddress.Tests.fsproj" />
+  </Folder>
   <Folder Name="/McpProtocol/">
     <Project Path="libs/McpProtocol/McpProtocol.fsproj" />
     <Project Path="libs/McpProtocol/tests/McpProtocol.Tests.fsproj" />

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：万象主机实例（数据锁 → 检查 → 配置 → 协调器 → 编排 → 连接 → HTTP）。命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Compile Include="ServerApp.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.WsConnection" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConfigStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Doctor" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BuiltinTools" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WsHandshake" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.McpClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ListenAddress" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

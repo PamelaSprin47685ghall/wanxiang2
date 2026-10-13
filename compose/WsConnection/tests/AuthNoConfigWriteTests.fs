@@ -79,6 +79,7 @@ let ``auth produces zero config writes`` () =
                     WsConnection(nextId, wsCtx.WebSocket, "127.0.0.1", (fun () -> store.Projection), (fun () -> cs.Current), updateConfig,
                                  (fun _ _ -> CommandQueued), orch, attachments, (fun () -> System.Text.Json.Nodes.JsonArray()),
                                  (fun c n -> store.CommitsAfter(c, n)), desk, ignore, (fun () -> []), sightings, ignore)
+                conn.HostVersion <- "9.9.9-injected"
                 do! conn.Run(CancellationToken.None)
             }
         for _ in 1 .. 3 do
@@ -89,6 +90,8 @@ let ``auth produces zero config writes`` () =
             ws.SendAsync(ArraySegment msg, WebSocketMessageType.Text, true, CancellationToken.None).Wait()
             let first = receiveText ws (TimeSpan.FromSeconds 10.0)
             Assert.True(first |> Option.exists (fun s -> s.Contains "auth-accepted" || s.Contains "auth.accepted"), sprintf "expected auth.accepted, got %A" first)
+            let second = receiveText ws (TimeSpan.FromSeconds 10.0)
+            Assert.True(second |> Option.exists (fun s -> s.Contains "9.9.9-injected"), sprintf "expected injected hostVersion, got %A" second)
             ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None).Wait(TimeSpan.FromSeconds 5.0) |> ignore
             serverTask.Wait(TimeSpan.FromSeconds 10.0) |> ignore
             ws.Abort()

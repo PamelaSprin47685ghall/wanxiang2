@@ -20,5 +20,6 @@
 4. [LEMMA: 3] 只有本机桌面客户端能发邀请；有效邀请被沿用；扫码的设备不先请求也能直接用邀请码，且取不到保留名：`only the local desktop client can invite; ...`。
 5. 没请求也没邀请时，提交的码被忽略：`attempt without request or invite is ignored`。
 6. `Reconfigure` 让新的限额生效：`reconfigure applies new limits`。
+9. [LEMMA: 1] 配置重载（宿主每次重载都调 `Reconfigure`）不清空已记的失败与冻结：`a config reload between wrong codes does not erase the failures already counted`、`a reload that changes limits keeps an existing freeze and the counted failures`。这是旧仓库 DevicesTests「five failures」偶发失败的根因。
 7. [LEMMA: 1] 与码无关的失败（未认证的连接要求发邀请）通过 `RecordFailure` 计入同一个限额，与旧 WsConnection 一致：`unauthenticated invites count toward the same limit as wrong codes`。
 8. [TODO] 宿主侧「持久化失败时不发令牌」的证据要在旧仓库接线时补上。

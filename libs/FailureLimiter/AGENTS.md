@@ -16,3 +16,4 @@
 2. [LEMMA: 1] 窗口外的旧失败不累计：`old failures slide out of the window`，通过。
 3. [LEMMA: 2] 1000 个不同键、阈值 100 时，跟踪的键数不超过 161：`many distinct keys stay bounded`，通过。
 4. 非法参数拒绝构造：`max failures must be positive`，通过。
+5. [LEMMA: 1] `Retune` 换限额不丢已记的失败与已有冻结：`retune keeps counted failures and existing freezes`，通过。

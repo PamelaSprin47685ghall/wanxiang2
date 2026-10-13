@@ -28,10 +28,11 @@ type AttemptOutcome =
 type PairingDesk(limits: Limits, codeLifetime: TimeSpan) =
     let codes = PairingCodes()
     let gate = obj ()
-    let mutable limiter = FailureLimiter(limits.window, limits.maxFailures, limits.freeze)
+    let limiter = FailureLimiter(limits.window, limits.maxFailures, limits.freeze)
 
-    /// 按新配置重建计数器（旧的失败记录随之清空）。
-    member _.Reconfigure(l: Limits) = lock gate (fun () -> limiter <- FailureLimiter(l.window, l.maxFailures, l.freeze))
+    /// 换限额。宿主每次配置重载都会调用（包括与配对无关的写回），所以失败记录与冻结必须保留，
+    /// 否则一次重载就能让猜码者重新计数。
+    member _.Reconfigure(l: Limits) = lock gate (fun () -> limiter.Retune(l.window, l.maxFailures, l.freeze))
 
     /// 设备请求配对。
     member _.Request(now: DateTimeOffset, address: string) : RequestOutcome =

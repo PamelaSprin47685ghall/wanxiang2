@@ -91,3 +91,29 @@ let ``unauthenticated invites count toward the same limit as wrong codes`` () =
     | Refused("frozen", Some _) -> ()
     | o -> failwithf "%A" o
     Assert.Equal(None, d.RecordFailure(now, "10.0.0.10"))
+
+// 旧仓库 DevicesTests「wrong codes freeze the address after five failures even with a live invite」偶发失败的根因：
+// 宿主每次配置重载（包括桌面客户端认证后 UpdateLastSeen 的写回）都调用 Reconfigure，旧实现重建计数器，
+// 猜码途中的失败记录被清空，第五次错码不触发冻结。这里把那次重载确定地放在第四次与第五次之间。
+[<Fact>]
+let ``a config reload between wrong codes does not erase the failures already counted`` () =
+    let d = desk ()
+    let code = codeOf (d.Request(now, "a"))
+    let wrong = if code = "000000" then "000001" else "000000"
+    for _ in 1 .. limits.maxFailures - 1 do
+        match d.Attempt(now, "a", wrong, None, true) with Refused(_, None) -> () | o -> failwithf "%A" o
+    d.Reconfigure limits
+    match d.Attempt(now, "a", wrong, None, true) with
+    | Refused(_, Some u) -> Assert.Equal(now + limits.freeze, u)
+    | o -> failwithf "%A" o
+
+[<Fact>]
+let ``a reload that changes limits keeps an existing freeze and the counted failures`` () =
+    let d = desk ()
+    let code = codeOf (d.Request(now, "a"))
+    let wrong = if code = "000000" then "000001" else "000000"
+    for _ in 1 .. limits.maxFailures do d.Attempt(now, "a", wrong, None, true) |> ignore
+    d.Attempt(now, "b", wrong, None, true) |> ignore
+    d.Reconfigure { limits with maxFailures = 2 }
+    match d.Request(now, "a") with Frozen _ -> () | o -> failwithf "%A" o
+    match d.Attempt(now, "b", wrong, None, true) with Refused(_, Some _) -> () | o -> failwithf "%A" o

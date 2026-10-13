@@ -7,6 +7,9 @@ open System.Collections.Generic
 /// 私有状态：每键的失败时间与冻结期限。条目数超过阈值时清理过期条目，内存有界。线程安全。
 type FailureLimiter(window: TimeSpan, maxFailures: int, freeze: TimeSpan, ?pruneThreshold: int) =
     do if maxFailures < 1 then invalidArg (nameof maxFailures) "must be >= 1"
+    let mutable window = window
+    let mutable maxFailures = maxFailures
+    let mutable freeze = freeze
     let pruneThreshold = defaultArg pruneThreshold 1024
     let gate = obj ()
     let failures = Dictionary<string, Queue<DateTimeOffset>>()
@@ -22,9 +25,17 @@ type FailureLimiter(window: TimeSpan, maxFailures: int, freeze: TimeSpan, ?prune
         for kv in Seq.toArray frozenUntil do
             if now >= kv.Value then frozenUntil.Remove kv.Key |> ignore
 
-    member _.Window = window
-    member _.MaxFailures = maxFailures
-    member _.Freeze = freeze
+    member _.Window = lock gate (fun () -> window)
+    member _.MaxFailures = lock gate (fun () -> maxFailures)
+    member _.Freeze = lock gate (fun () -> freeze)
+
+    /// 换限额，不丢证据：已记的失败按新窗口与新阈值继续算（下一次失败时判定），已有的冻结保持原截止时间。
+    member _.Retune(newWindow: TimeSpan, newMaxFailures: int, newFreeze: TimeSpan) : unit =
+        if newMaxFailures < 1 then invalidArg (nameof newMaxFailures) "must be >= 1"
+        lock gate (fun () ->
+            window <- newWindow
+            maxFailures <- newMaxFailures
+            freeze <- newFreeze)
 
     /// 冻结到何时；未冻结为 None。
     member _.FrozenUntil(now: DateTimeOffset, key: string) : DateTimeOffset option =

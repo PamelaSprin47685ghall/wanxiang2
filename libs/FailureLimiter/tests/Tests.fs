@@ -42,3 +42,16 @@ let ``many distinct keys stay bounded`` () =
 [<Fact>]
 let ``max failures must be positive`` () =
     Assert.Throws<ArgumentException>(fun () -> FailureLimiter(TimeSpan.FromMinutes 1.0, 0, TimeSpan.Zero) |> ignore) |> ignore
+
+[<Fact>]
+let ``retune keeps counted failures and existing freezes`` () =
+    let t0 = System.DateTimeOffset.Parse "2026-01-01T00:00:00Z"
+    let l = FailureLimiter(System.TimeSpan.FromMinutes 1.0, 3, System.TimeSpan.FromMinutes 5.0)
+    l.RecordFailure(t0, "a") |> ignore
+    l.RecordFailure(t0, "a") |> ignore
+    for _ in 1 .. 3 do l.RecordFailure(t0, "f") |> ignore
+    l.Retune(System.TimeSpan.FromMinutes 1.0, 3, System.TimeSpan.FromMinutes 9.0)
+    Assert.Equal(Some(t0 + System.TimeSpan.FromMinutes 5.0), l.FrozenUntil(t0, "f"))
+    Assert.True(l.RecordFailure(t0, "a"))
+    Assert.Equal(Some(t0 + System.TimeSpan.FromMinutes 9.0), l.FrozenUntil(t0, "a"))
+    Assert.Equal(9.0, l.Freeze.TotalMinutes)

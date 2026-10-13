@@ -1,8 +1,8 @@
 # Snapshot
 
-原子快照文件：保存一段文本，带版本与完整性校验。不依赖任何其他库。AXIOM 见项目根目录 AGENTS.md。
+原子快照文件对象：保存一段文本，带版本与完整性校验。不依赖任何其他库。AXIOM 见项目根目录 AGENTS.md。
 
-公开接口：`Snapshot.save path text`、`Snapshot.load path : Loaded`（`Missing | Loaded of string | Corrupt of reason`）。
+公开接口：`SnapshotFile(path)`，消息 `Save(text)`、`Load() : Loaded`（`Missing | Loaded of string | Corrupt of reason`）。
 
 # LEMMA
 1. [AXIOM: 1, 7] 快照是可重建的缓存，不是事实来源。

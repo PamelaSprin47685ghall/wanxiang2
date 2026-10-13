@@ -13,23 +13,24 @@ type Loaded =
     /// 文件存在但不可用（校验失败、版本不对、非法 UTF-8）。快照是缓存，调用方应忽略它并完整重建。
     | Corrupt of reason: string
 
-/// 原子快照文件：保存一段文本。文本代表什么由调用方决定。
+/// 原子快照文件对象：私有状态是它管的那个路径；接收 Save(text)，回答 Load()。
+/// 文本代表什么由调用方决定。
 /// 文件格式：首行 `wanxiang-snapshot 1 <sha256-hex>`，其后是正文（UTF-8）。
-[<RequireQualifiedAccess>]
-module Snapshot =
-    [<Literal>]
-    let Version = 1
+type SnapshotFile(path: string) =
+    static let version = 1
 
-    let private magic = "wanxiang-snapshot"
+    static let magic = "wanxiang-snapshot"
 
-    let private hashHex (bytes: byte[]) = SHA256.HashData bytes |> Convert.ToHexString |> _.ToLowerInvariant()
+    static let hashHex (bytes: byte[]) = SHA256.HashData bytes |> Convert.ToHexString |> _.ToLowerInvariant()
+
+    member _.Path = path
 
     /// 原子保存：写临时文件、落盘、再改名覆盖。任何时刻读者看到的要么是旧快照，要么是新快照。
-    let save (path: string) (text: string) : unit =
+    member _.Save(text: string) : unit =
         let full = Path.GetFullPath path
         Directory.CreateDirectory(Path.GetDirectoryName full) |> ignore
         let body = Encoding.UTF8.GetBytes text
-        let header = Encoding.UTF8.GetBytes(sprintf "%s %d %s\n" magic Version (hashHex body))
+        let header = Encoding.UTF8.GetBytes(sprintf "%s %d %s\n" magic version (hashHex body))
         let tmp = full + ".tmp"
         do
             use fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None)
@@ -39,7 +40,7 @@ module Snapshot =
         File.Move(tmp, full, true)
 
     /// 读取并校验。
-    let load (path: string) : Loaded =
+    member _.Load() : Loaded =
         if not (File.Exists path) then Missing
         else
             try
@@ -50,7 +51,7 @@ module Snapshot =
                     let parts = Encoding.UTF8.GetString(bytes, 0, nl).Split ' '
                     let body = bytes[nl + 1 ..]
                     if parts.Length <> 3 || parts[0] <> magic then Corrupt "bad header"
-                    elif parts[1] <> string Version then Corrupt(sprintf "unsupported version %s" parts[1])
+                    elif parts[1] <> string version then Corrupt(sprintf "unsupported version %s" parts[1])
                     elif parts[2] <> hashHex body then Corrupt "checksum mismatch"
                     else
                         try Loaded(UTF8Encoding(false, true).GetString body)

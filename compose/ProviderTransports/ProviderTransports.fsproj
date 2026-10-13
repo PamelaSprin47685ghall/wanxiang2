@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：Anthropic、Gemini 两家原生传输。协作者：Sse、HttpRetry、JsonPick、Anthropic、Gemini、
+       AppConfig（ProviderConfig）、Wire（ProviderRateLimit）。命名空间沿用旧仓库 Wanxiang.Agent。 -->
+  <ItemGroup>
+    <Compile Include="ProviderSse.fs" />
+    <Compile Include="Transports.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.Sse" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HttpRetry" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.JsonPick" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Anthropic" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Gemini" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+  </ItemGroup>
+</Project>

@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Anthropic/">
+    <Project Path="libs/Anthropic/Anthropic.fsproj" />
+    <Project Path="libs/Anthropic/tests/Anthropic.Tests.fsproj" />
+  </Folder>
   <Folder Name="/AppConfig/">
     <Project Path="libs/AppConfig/AppConfig.fsproj" />
     <Project Path="libs/AppConfig/tests/AppConfig.Tests.fsproj" />
@@ -35,6 +39,18 @@
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
     <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
   </Folder>
+  <Folder Name="/Gemini/">
+    <Project Path="libs/Gemini/Gemini.fsproj" />
+    <Project Path="libs/Gemini/tests/Gemini.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HttpRetry/">
+    <Project Path="libs/HttpRetry/HttpRetry.fsproj" />
+    <Project Path="libs/HttpRetry/tests/HttpRetry.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/JsonPick/">
+    <Project Path="libs/JsonPick/JsonPick.fsproj" />
+    <Project Path="libs/JsonPick/tests/JsonPick.Tests.fsproj" />
+  </Folder>
   <Folder Name="/JsonSeq/">
     <Project Path="libs/JsonSeq/JsonSeq.fsproj" />
     <Project Path="libs/JsonSeq/tests/JsonSeq.Tests.fsproj" />
@@ -54,6 +70,10 @@
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />
     <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Sse/">
+    <Project Path="libs/Sse/Sse.fsproj" />
+    <Project Path="libs/Sse/tests/Sse.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />

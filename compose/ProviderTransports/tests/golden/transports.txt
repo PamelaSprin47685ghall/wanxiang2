@@ -1,0 +1,18 @@
+== anthropic request
+POST https://api.anthropic.com/v1/messages
+anthropic-beta=interleaved-thinking-2025-05-14;anthropic-version=2023-06-01;x-api-key=KEY
+{"model":"claude-x","stream":true,"max_tokens":5120,"thinking":{"type":"enabled","budget_tokens":1024},"system":[{"type":"text","text":"\u4F60\u662F\u52A9\u624B","cache_control":{"type":"ephemeral"}}],"temperature":0.5,"service_tier":"auto","messages":[{"role":"user","content":[{"type":"text","text":"\u770B\u56FE"},{"type":"image","source":{"type":"base64","media_type":"image/png","data":"AAECAw=="}}]},{"role":"assistant","content":[{"type":"text","text":"\u67E5\u4E00\u4E0B"},{"type":"tool_use","id":"call1","name":"search","input":{"q":"\u5929\u6C14"}}]},{"role":"user","content":[{"type":"tool_result","tool_use_id":"call1","content":"{\u0022ok\u0022:true}"},{"type":"text","text":"\u7EE7\u7EED"}]}]}
+== anthropic updates
+[reasoning:想 | text(thinking):想] id=msg_1 finish=
+[text:你好] id=msg_1 finish=
+[call:tu_1:search(q=雨)] id=msg_1 finish=
+[usage:11L/42L/53L] id=msg_1 finish=tool_calls
+== gemini request
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-x:streamGenerateContent?alt=sse
+x-goog-api-key=KEY
+{"systemInstruction":{"parts":[{"text":"\u4F60\u662F\u52A9\u624B"}]},"contents":[{"role":"user","parts":[{"text":"\u770B\u56FE"},{"inlineData":{"mimeType":"image/png","data":"AAECAw=="}}]},{"role":"model","parts":[{"text":"\u67E5\u4E00\u4E0B"},{"functionCall":{"name":"search","args":{"q":"\u5929\u6C14"}}}]},{"role":"user","parts":[{"functionResponse":{"name":"call1","response":{"result":"{\u0022ok\u0022:true}"}}},{"text":"\u7EE7\u7EED"}]}],"generationConfig":{"temperature":0.5,"maxOutputTokens":300,"thinkingConfig":{"thinkingBudget":512,"includeThoughts":true},"service_tier":"auto"}}
+== gemini updates
+[reasoning:想] id= finish=
+[text:你好] id= finish=
+[call:search@0:search(q=雨)] id= finish=
+[usage:7L/3L/12L] id= finish=STOP

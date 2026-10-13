@@ -25,12 +25,11 @@ module WireAgui =
     let private aguiOptions = AGUIJsonSerializerContext.Default.Options
 
     /// 无法映射到 AG-UI 标准面的增量：走 CUSTOM wanxiang.dev/generation-delta。
-    /// 匿名记录不能跨程序集标注类型，所以按字段传入。
-    let private customDelta (conversationId: Guid, generationId: Guid, payload: JsonNode) : BaseEvent =
+    let private customDelta (d: GenerationDeltaData) : BaseEvent =
         let o = JsonObject()
-        o["conversationId"] <- conversationId.ToString("D")
-        o["generationId"] <- generationId.ToString("D")
-        o["payload"] <- payload.DeepClone()
+        o["conversationId"] <- d.conversationId.ToString("D")
+        o["generationId"] <- d.generationId.ToString("D")
+        o["payload"] <- d.payload.DeepClone()
         let ce = CustomEvent()
         ce.Name <- sprintf "%sgeneration-delta" Capabilities.Namespace
         ce.Value <- Nullable(o.ToJsonString() |> JsonDocument.Parse |> fun doc -> doc.RootElement.Clone())
@@ -109,8 +108,8 @@ module WireAgui =
                     (match c["result"] with null -> () | t -> e.Content <- AGUIContent.op_Implicit (t.ToString()))
                     e.MessageId <- messageId
                     e :> BaseEvent
-                | _ -> customDelta (d.conversationId, d.generationId, d.payload)
-            | _ -> customDelta (d.conversationId, d.generationId, d.payload)
+                | _ -> customDelta d
+            | _ -> customDelta d
         | other ->
             // 其余语义面 → CUSTOM（wanxiang.dev/<type>）。
             // value 按 AG-UI 事件风格承载：**扁平字段**。
@@ -183,15 +182,15 @@ module WireAgui =
                 Ok(
                     Some(
                         GenerationDelta
-                            {| conversationId = Guid.Empty
+                            {  conversationId = Guid.Empty
                                generationId = (match Guid.TryParse e.MessageId with true, g -> g | _ -> Guid.Empty)
-                               payload = (let p = JsonObject() in p["text"] <- e.Delta; p) |}))
+                               payload = (let p = JsonObject() in p["text"] <- e.Delta; p) }))
             | :? ReasoningMessageChunkEvent as e ->
                 // 推理增量：以 MAF 内容形状承载（text 内容项）
                 Ok(
                     Some(
                         GenerationDelta
-                            {| conversationId = Guid.Empty
+                            {  conversationId = Guid.Empty
                                generationId = (match Guid.TryParse e.MessageId with true, g -> g | _ -> Guid.Empty)
                                payload =
                                    (let p = JsonObject()
@@ -202,12 +201,12 @@ module WireAgui =
                                     c["text"] <- e.Delta
                                     cs.Add c
                                     p["contents"] <- cs
-                                    p) |}))
+                                    p) }))
             | :? ToolCallStartEvent as e ->
                 Ok(
                     Some(
                         GenerationDelta
-                            {| conversationId = Guid.Empty
+                            {  conversationId = Guid.Empty
                                generationId = Guid.Empty
                                payload =
                                    (let p = JsonObject()
@@ -219,12 +218,12 @@ module WireAgui =
                                     c["name"] <- e.ToolCallName
                                     cs.Add c
                                     p["contents"] <- cs
-                                    p) |}))
+                                    p) }))
             | :? ToolCallResultEvent as e ->
                 Ok(
                     Some(
                         GenerationDelta
-                            {| conversationId = Guid.Empty
+                            {  conversationId = Guid.Empty
                                generationId = (match Guid.TryParse e.MessageId with true, g -> g | _ -> Guid.Empty)
                                payload =
                                    (let p = JsonObject()
@@ -236,7 +235,7 @@ module WireAgui =
                                     c["result"] <- (match box e.Content with null -> null | c -> (string c))
                                     cs.Add c
                                     p["contents"] <- cs
-                                    p) |}))
+                                    p) }))
             | :? RunFinishedEvent as e ->
                 // Outcome 派生类判 cancelled；其余按 completed。
                 let status =

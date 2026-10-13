@@ -42,7 +42,7 @@ module WireAguiTests =
 
     [<Fact>]
     let ``text delta maps to TEXT_MESSAGE_CHUNK`` () =
-        let json = WireAgui.encode (GenerationDelta {| conversationId = convId; generationId = genId; payload = mafText "你好" |})
+        let json = WireAgui.encode (GenerationDelta { conversationId = convId; generationId = genId; payload = mafText "你好" })
         Assert.Contains("\"type\":\"TEXT_MESSAGE_CHUNK\"", json)
 
     [<Fact>]
@@ -56,7 +56,7 @@ module WireAguiTests =
         c["dataUri"] <- "data:image/png;base64,AAAA"
         cs.Add c
         payload["contents"] <- cs
-        let json = WireAgui.encode (GenerationDelta {| conversationId = convId; generationId = genId; payload = payload |})
+        let json = WireAgui.encode (GenerationDelta { conversationId = convId; generationId = genId; payload = payload })
         Assert.Contains("\"type\":\"CUSTOM\"", json)
         Assert.Contains("wanxiang.dev/generation-delta", json)
         // AG-UI 序列化对非 ASCII 做 \uXXXX 转义（实测），断言用转义形式。
@@ -485,7 +485,7 @@ module WireAguiCommandTests =
         csStart.Add cStart
         payloadStart["contents"] <- csStart
 
-        let jsonStart = WireAgui.encode (GenerationDelta {| conversationId = convId; generationId = genId; payload = payloadStart |})
+        let jsonStart = WireAgui.encode (GenerationDelta { conversationId = convId; generationId = genId; payload = payloadStart })
         Assert.Contains("\"type\":\"TOOL_CALL_START\"", jsonStart)
         Assert.Contains("\"toolCallId\":\"call-123\"", jsonStart)
         Assert.Contains("\"toolCallName\":\"calc_sum\"", jsonStart)
@@ -502,7 +502,7 @@ module WireAguiCommandTests =
         cs.Add c
         payloadResult["contents"] <- cs
 
-        let jsonResult = WireAgui.encode (GenerationDelta {| conversationId = convId; generationId = genId; payload = payloadResult |})
+        let jsonResult = WireAgui.encode (GenerationDelta { conversationId = convId; generationId = genId; payload = payloadResult })
         Assert.Contains("\"type\":\"TOOL_CALL_RESULT\"", jsonResult)
         Assert.Contains("\"toolCallId\":\"call-123\"", jsonResult)
         Assert.Contains("success result", jsonResult)
@@ -518,7 +518,7 @@ module WireAguiCommandTests =
         cs.Add c
         payload["contents"] <- cs
 
-        let json = WireAgui.encode (GenerationDelta {| conversationId = convId; generationId = genId; payload = payload |})
+        let json = WireAgui.encode (GenerationDelta { conversationId = convId; generationId = genId; payload = payload })
         Assert.Contains("\"type\":\"CUSTOM\"", json)
         Assert.Contains("wanxiang.dev/generation-delta", json)
 

@@ -20,6 +20,7 @@ let golden : (WireEvent * string) list =
         CommandRejected {| invocationId = g; code = "x"; message = "y"; requiredCommitId = Some 7UL |}, """{"type":"command.rejected","payload":{"invocationId":"11111111-2222-3333-4444-555555555555","code":"x","message":"y","requiredCommitId":7}}"""
         CursorAdvanced {| id = 42UL |}, """{"type":"cursor.advanced","payload":{"id":42}}"""
         GenerationFinished {| conversationId = g; generationId = g; status = "failed"; error = Some { kind = GenerationErrorKind.ProviderTimeout; message = "slow"; detail = None; retryable = true; retryAfterSeconds = Some 3 }; usage = None |}, """{"type":"generation.finished","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"11111111-2222-3333-4444-555555555555","status":"failed","error":{"code":"provider-timeout","message":"slow","retryable":true,"retryAfterSeconds":3}}}"""
+        GenerationDelta { conversationId = g; generationId = g; payload = Text.Json.Nodes.JsonNode.Parse """{"text":"好"}""" }, """{"type":"generation.delta","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"11111111-2222-3333-4444-555555555555","content":{"text":"好"}}}"""
         AttachmentChunk {| attachmentId = g; index = 2; dataBase64 = "AA==" |}, """{"type":"attachment.chunk","payload":{"attachmentId":"11111111-2222-3333-4444-555555555555","index":2,"data":"AA=="}}"""
     ]
 

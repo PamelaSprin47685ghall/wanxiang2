@@ -24,11 +24,11 @@ let s (x: string) = JsonValue.Create x :> JsonNode
 
 let events : WireEvent list =
     [ GenerationStarted {| conversationId = g; generationId = h; providerId = "p"; model = "m" |}
-      GenerationDelta {| conversationId = g; generationId = h; payload = content "assistant" [ "$type", s "text"; "text", s "你好 \"x\"" ] |}
-      GenerationDelta {| conversationId = g; generationId = h; payload = content "assistant" [ "$type", s "functionCall"; "callId", s "c1"; "name", s "search"; "arguments", JsonNode.Parse """{"q":1}""" ] |}
-      GenerationDelta {| conversationId = g; generationId = h; payload = content "tool" [ "$type", s "functionResult"; "callId", s "c1"; "result", JsonNode.Parse """{"r":"好"}""" ] |}
-      GenerationDelta {| conversationId = g; generationId = h; payload = content "assistant" [ "$type", s "reasoning"; "text", s "想" ] |}
-      GenerationDelta {| conversationId = g; generationId = h; payload = JsonArray() |}
+      GenerationDelta { conversationId = g; generationId = h; payload = content "assistant" [ "$type", s "text"; "text", s "你好 \"x\"" ] }
+      GenerationDelta { conversationId = g; generationId = h; payload = content "assistant" [ "$type", s "functionCall"; "callId", s "c1"; "name", s "search"; "arguments", JsonNode.Parse """{"q":1}""" ] }
+      GenerationDelta { conversationId = g; generationId = h; payload = content "tool" [ "$type", s "functionResult"; "callId", s "c1"; "result", JsonNode.Parse """{"r":"好"}""" ] }
+      GenerationDelta { conversationId = g; generationId = h; payload = content "assistant" [ "$type", s "reasoning"; "text", s "想" ] }
+      GenerationDelta { conversationId = g; generationId = h; payload = JsonArray() }
       GenerationFinished {| conversationId = g; generationId = h; status = "completed"; error = None; usage = Some { promptTokens = Some 1; completionTokens = Some 2; cachedTokens = None; totalTokens = Some 3; durationMs = Some 9L } |}
       GenerationFinished {| conversationId = g; generationId = h; status = "completed"; error = None; usage = None |}
       GenerationFinished {| conversationId = g; generationId = h; status = "cancelled"; error = None; usage = None |}

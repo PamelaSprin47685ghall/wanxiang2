@@ -762,7 +762,7 @@ module WireCodec =
                     match tryGuid p "threadId", tryGuid p "runId" with
                     | Some cid, Some gid ->
                         match tryGet p "content" with
-                        | Some payload -> Ok(GenerationDelta {| conversationId = cid; generationId = gid; payload = payload |})
+                        | Some payload -> Ok(GenerationDelta { conversationId = cid; generationId = gid; payload = payload })
                         | None -> Error "generation.delta: missing payload"
                     | _ -> Error "generation.delta: missing threadId/runId"
                 | Some "generation.started" ->

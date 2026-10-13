@@ -6,6 +6,14 @@ open Wanxiang.Core
 
 /// 导出是独立的只读视图，不推进 observe 游标，也不填充聊天窗口的历史缓存。
 /// 首页由服务端选定 atCommitId；后续按同一水位、稳定消息 ID 反向分页。
+/// generation.delta 的载荷。用具名记录而不是匿名记录：匿名记录不能跨程序集写类型标注（FS0001），
+/// 组合者（如 AguiWire）没法把它当参数传。字段和线上字节不变。
+type GenerationDeltaData = {
+    conversationId: Guid
+    generationId: Guid
+    payload: JsonNode
+}
+
 type ConversationExportQuery = {
     exportId: Guid
     conversationId: Guid
@@ -118,7 +126,7 @@ type WireEvent =
     | CursorAdvanced of {| id: CommitId |}
     | AuthorityCatchUp of {| fromCursor: CommitId; toCommitId: CommitId; items: JsonArray |}
     // ---- 生成 ----
-    | GenerationDelta of {| conversationId: Guid; generationId: Guid; payload: JsonNode |}
+    | GenerationDelta of GenerationDeltaData
     | GenerationStarted of {| conversationId: Guid; generationId: Guid; providerId: string; model: string |}
     | GenerationFinished of {| conversationId: Guid; generationId: Guid; status: string; error: GenerationError option; usage: GenerationUsage option |}
     | GenerationCancel of {| conversationId: Guid; generationId: Guid |}

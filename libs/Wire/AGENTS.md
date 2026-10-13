@@ -15,7 +15,8 @@
     - 推理：这是现有格式的已知缺陷，不能单方面改成字符串（见 LEMMA 1）。实际上提交序号到 2^53 不可达，风险只在理论上。[TODO] 如果出现 JS 客户端，随下一次 `protocolVersion` 提升改为字符串。
 
 # SPEC
-1. [LEMMA: 1] 8 类代表事件、一条命令的编码等于金样字节，金样能解码回同一事件：`tests/WireGoldenTests.fs`，通过。
+1. [LEMMA: 1] 9 类代表事件（含 generation.delta）、一条命令的编码等于金样字节，金样能解码回同一事件：`tests/WireGoldenTests.fs`，通过。
 2. [LEMMA: 1] 旧仓库 `WireCodecTests.fs`（27 个）、`SessionConfigTests.fs`（6 个）原样搬来，通过。旧 `CodecTests.fs` 测的是领域事件和 commandId，不搬，留在旧仓库。
 3. [LEMMA: 2] `SessionConfig.toJson/fromJson` 往返相等，空对象读出默认值：`session config json round trip`，通过。
 4. [LEMMA: 3] `businessPayload` 字节等于金样：`business payload golden bytes`，通过。旧仓库对它做 JCS 后的 commandId 不变，由旧仓库 `CodecTests` 验证。[TODO] 旧仓库接线时确认。
+5. [LEMMA: 1] `GenerationDelta` 的载荷是具名记录 `GenerationDeltaData`，组合者可以跨程序集写类型标注；字节不变，见 SPEC 1 和 `compose/AguiWire` 金样。

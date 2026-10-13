@@ -583,7 +583,7 @@ module WireCodecTests =
         // GenerationDelta
         let deltaPayload = JsonObject()
         deltaPayload["text"] <- "流式增量"
-        let genDelta = GenerationDelta {| conversationId = convId; generationId = genId; payload = deltaPayload |}
+        let genDelta = GenerationDelta { conversationId = convId; generationId = genId; payload = deltaPayload }
         match WireCodec.tryDecode (WireCodec.encode genDelta) with
         | Ok (GenerationDelta d) ->
             Assert.Equal(convId, d.conversationId)

@@ -15,4 +15,8 @@
     <Project Path="libs/Ledger/Ledger.fsproj" />
     <Project Path="libs/Ledger/tests/Ledger.Tests.fsproj" />
   </Folder>
+  <Folder Name="/Snapshot/">
+    <Project Path="libs/Snapshot/Snapshot.fsproj" />
+    <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />
+  </Folder>
 </Solution>

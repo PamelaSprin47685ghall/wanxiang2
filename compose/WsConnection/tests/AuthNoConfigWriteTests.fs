@@ -78,7 +78,7 @@ let ``auth produces zero config writes`` () =
                 let conn =
                     WsConnection(nextId, wsCtx.WebSocket, "127.0.0.1", (fun () -> store.Projection), (fun () -> cs.Current), updateConfig,
                                  (fun _ _ -> CommandQueued), orch, attachments, (fun () -> System.Text.Json.Nodes.JsonArray()),
-                                 (fun c n -> store.CommitsAfter(c, n)), desk, ignore, (fun () -> []), ignore, sightings)
+                                 (fun c n -> store.CommitsAfter(c, n)), desk, ignore, (fun () -> []), sightings, ignore)
                 do! conn.Run(CancellationToken.None)
             }
         for _ in 1 .. 3 do

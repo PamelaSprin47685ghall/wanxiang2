@@ -56,9 +56,9 @@ type WsConnection(
     logPairingCode: string -> unit,
     /// 当前已认证连接的令牌哈希（设备列表的“在线”状态；运行时状态，不落盘）。
     onlineTokenHashes: unit -> string list,
-    logInfo: string -> unit,
     /// 设备最近认证时间（主机自有状态；认证绝不写用户配置文件）。
-    sightings: DeviceSightings) =
+    sightings: DeviceSightings,
+    logInfo: string -> unit) =
 
     let channelOptions = BoundedChannelOptions(2048, FullMode = BoundedChannelFullMode.Wait)
     let sendChannel = Channel.CreateBounded<WireEvent>(channelOptions)

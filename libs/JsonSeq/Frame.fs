@@ -22,6 +22,8 @@ module Frame =
     [<Literal>]
     let InvalidUtf8 = "invalid UTF-8"
     [<Literal>]
+    let EmptyRecord = "RS with no record body"
+    [<Literal>]
     let StrayBytes = "bytes outside any record"
 
     /// 严格解码：非法字节抛出，不替换为 U+FFFD。
@@ -38,7 +40,8 @@ module Frame =
         buf
 
     /// 按 RS 切分。baseOffset 是 data[0] 在整个流中的偏移，且须位于记录边界。
-    /// 相邻 RS 之间的空段忽略；第一个 RS 之前的字节成为一条 StrayBytes 记录。
+    /// 第一个 RS 之前的字节成为一条 StrayBytes 记录。没有正文的 RS 也是一条有 fault 的记录：
+    /// 末尾的单个 RS 是半写（TornTail），中间的是 EmptyRecord。不忽略它们，否则偏移会对不上。
     let split (baseOffset: int64) (data: ReadOnlySpan<byte>) : Record list =
         let result = ResizeArray<Record>()
         let first = data.IndexOf RS
@@ -50,7 +53,10 @@ module Frame =
             let mutable j = i + 1
             while j < data.Length && data[j] <> RS do j <- j + 1
             let len = j - i - 1
-            if len > 0 then
+            if len = 0 then
+                let f = if j = data.Length then TornTail else EmptyRecord
+                result.Add { payload = ""; fault = Some f; startOffset = baseOffset + int64 i; endOffset = baseOffset + int64 j }
+            else
                 let seg = data.Slice(i + 1, len)
                 let complete = seg[seg.Length - 1] = LF
                 let body = if complete then seg.Slice(0, seg.Length - 1) else seg

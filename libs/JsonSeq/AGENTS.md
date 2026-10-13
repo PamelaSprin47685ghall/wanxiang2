@@ -34,4 +34,6 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 8. [LEMMA: 4] 写之前就失败给出 `NotWritten`；真实的写失败（ENOSPC）且截不回时给出 `Unknown`。
     - 证明：`failure before writing is NotWritten`；`write failure without rollback evidence is Unknown`（真实设备 `/dev/full`，仅 Linux）。都通过。
     - 剩余边界：[TODO]「写失败但截回成功 → NotWritten」这条分支没有真实故障能触发它的测试。
-9. [TODO] `ReadFrom` 一次读入到末尾的全部字节；超大日志需要流式读取。
+9. [LEMMA: 1, 3] 没有正文的 RS 不被忽略：在末尾算 `TornTail`，在中间算 `EmptyRecord`；记录的偏移首尾相接，覆盖全部字节。
+    - 证明：`bare RS is a faulted record, never skipped`，通过。缺陷由 compose 的逐字节崩溃测试发现。
+10. [TODO] `ReadFrom` 一次读入到末尾的全部字节；超大日志需要流式读取。

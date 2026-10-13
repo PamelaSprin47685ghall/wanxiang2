@@ -90,3 +90,12 @@ let ``write failure without rollback evidence is Unknown`` () =
     if OperatingSystem.IsLinux() then
         use f = new JsonSeqFile("/dev/full")
         match f.Append "{}" with Unknown _ -> () | o -> failwithf "%A" o
+
+// SPEC 10：没有正文的 RS 不被忽略：末尾是 TornTail，中间是 EmptyRecord；偏移连续覆盖全部字节
+[<Fact>]
+let ``bare RS is a faulted record, never skipped`` () =
+    let bytes = Array.concat [ Frame.encode "{}"; [| Frame.RS |]; Frame.encode "{}"; [| Frame.RS |] ]
+    let rs = Frame.split 0L (ReadOnlySpan bytes)
+    Assert.Equal<string option list>([ None; Some Frame.EmptyRecord; None; Some Frame.TornTail ], rs |> List.map _.fault)
+    for a, b in List.pairwise rs do Assert.Equal(a.endOffset, b.startOffset)
+    Assert.Equal(int64 bytes.Length, (List.last rs).endOffset)

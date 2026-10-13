@@ -161,6 +161,7 @@
 | --- | --- | --- |
 | 事件账本（JsonSeq、Ledger、Snapshot、DirLock、Canonical，组合 LedgerStore） | 完成：5 个库和 `Wanxiang2.LedgerStore` 交付包各自测试通过，真实组合测试通过 | 已接线：旧仓库分支 `extract-ledger@84017ef` 消费交付包，旧 Replay/Coordinator 已退出，旧仓库 Release 全量 1484 通过、0 失败、1 跳过。[TODO] 合入旧仓库 `main` |
 | 配置（AtomicTextFile、AppConfig，组合 ConfigStore） | 完成：两个库和 `Wanxiang2.ConfigStore` 交付包测试通过；旧 `ConfigTests.fs` 中 ConfigStore 和格式部分（34 个）已搬来并通过 | 未开始：旧仓库删掉 `src/Wanxiang.Config/{ConfigModel,TomlCodec,ConfigStore}.fs`，改为引用 `Wanxiang2.ConfigStore` 包；命名空间与 API 不变 |
+| 认证与配对（ClientToken、DesktopClient、PairingCode、FailureLimiter、WsHandshake，组合 PairingDesk） | 完成：5 个库和 `Wanxiang2.PairingDesk` 交付包测试通过，令牌哈希有金标准向量 | 未开始：旧仓库删掉 `src/Wanxiang.Config/Auth.fs` 后，整个 `Wanxiang.Config` 工程可以删除 |
 
 ## 抽取路线（按顺序，可修订）
 
@@ -168,7 +169,7 @@
 
 1. 账本：已接线，待合入旧 `main`。
 2. 配置：本轮完成独立能力。
-3. 认证与配对（旧 `Config/Auth.fs`）：令牌、配对码会话、失败冻结计数器，拆成独立对象。
+3. 认证与配对：本轮完成独立能力。
 4. 线协议（旧 `Protocol/WireEvent.fs`、`WireCodec.fs`，约 1.5k 行）：纯编解码库。
 5. 领域状态与命令（旧 `Core/Types.fs`、`CommandEngine.fs` 以及投影）：账本的 `apply` 和领域事件类型，成为具体的领域库。
 6. 模型提供方传输（旧 `Agent/*Transport.fs`、`*Request.fs`）：每家一个库，加一个流式解析的公共部分（等第二个实例出现再抽）。

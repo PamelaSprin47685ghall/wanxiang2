@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者 C：依赖 PairingCode、FailureLimiter、ClientToken、DesktopClient 的交付包。 -->
+  <ItemGroup>
+    <Compile Include="PairingDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.PairingCode" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.FailureLimiter" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ClientToken" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesktopClient" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

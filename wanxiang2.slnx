@@ -11,9 +11,21 @@
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ClientToken/">
+    <Project Path="libs/ClientToken/ClientToken.fsproj" />
+    <Project Path="libs/ClientToken/tests/ClientToken.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DesktopClient/">
+    <Project Path="libs/DesktopClient/DesktopClient.fsproj" />
+    <Project Path="libs/DesktopClient/tests/DesktopClient.Tests.fsproj" />
+  </Folder>
   <Folder Name="/DirLock/">
     <Project Path="libs/DirLock/DirLock.fsproj" />
     <Project Path="libs/DirLock/tests/DirLock.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/FailureLimiter/">
+    <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
+    <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
   </Folder>
   <Folder Name="/JsonSeq/">
     <Project Path="libs/JsonSeq/JsonSeq.fsproj" />
@@ -23,8 +35,16 @@
     <Project Path="libs/Ledger/Ledger.fsproj" />
     <Project Path="libs/Ledger/tests/Ledger.Tests.fsproj" />
   </Folder>
+  <Folder Name="/PairingCode/">
+    <Project Path="libs/PairingCode/PairingCode.fsproj" />
+    <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />
     <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/WsHandshake/">
+    <Project Path="libs/WsHandshake/WsHandshake.fsproj" />
+    <Project Path="libs/WsHandshake/tests/WsHandshake.Tests.fsproj" />
   </Folder>
 </Solution>

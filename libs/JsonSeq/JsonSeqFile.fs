@@ -15,14 +15,17 @@ type JsonSeqFile(path: string) =
     member _.Path = path
     member _.Length = stream.Length
 
-    /// 从 offset 起读出全部记录。
-    member _.ReadFrom(offset: int64) : Record list =
-        if offset < 0L || offset > stream.Length then invalidArg (nameof offset) "offset out of range"
-        let len = int (stream.Length - offset)
+    /// 读出 [from, until) 区间内的记录。两端须位于记录边界（通常来自之前返回的偏移）。
+    member _.Read(from: int64, until: int64) : Record list =
+        if from < 0L || until < from || until > stream.Length then invalidArg (nameof from) "range out of bounds"
+        let len = int (until - from)
         let buf = Array.zeroCreate<byte> len
-        stream.Position <- offset
+        stream.Position <- from
         stream.ReadExactly(buf, 0, len)
-        Frame.split offset (ReadOnlySpan buf)
+        Frame.split from (ReadOnlySpan buf)
+
+    /// 从 offset 读到文件末尾。
+    member this.ReadFrom(offset: int64) : Record list = this.Read(offset, stream.Length)
 
     /// 追加一帧并落盘。
     member _.Append(text: string) : int64 =

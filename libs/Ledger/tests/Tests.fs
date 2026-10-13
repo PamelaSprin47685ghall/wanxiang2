@@ -160,3 +160,30 @@ let ``concurrent asks commit every submit exactly once in id order`` () =
     let ids = s.Out |> Seq.choose (function Committed(_, c, _) -> Some c.id | _ -> None) |> List.ofSeq
     Assert.Equal<uint64 list>([ 1UL..200UL ], ids)
     Assert.Equal(200, s.Ledger.State)
+
+// SPEC 13：ReplayProblem 有可读描述
+[<Fact>]
+let ``replay problems describe themselves`` () =
+    let ps : ReplayProblem<ToyError> list =
+        [ IdGap(2UL, 5UL); SpanGap(5L, sp 6L 9L); RepeatedStamp "c"; FoldRejected(Negative -1); Busy ]
+    let texts = ps |> List.map string
+    Assert.All(texts, fun t -> Assert.False(String.IsNullOrWhiteSpace t))
+    Assert.Equal(texts.Length, (List.distinct texts).Length)
+    Assert.Contains("expected 2, got 5", texts[0])
+    Assert.Contains("Negative -1", texts[3])
+
+// SPEC 14：Checkpoint JSON 往返（只有状态由调用方编码）；坏输入报错
+[<Fact>]
+let ``checkpoint json round-trips with caller-encoded state`` () =
+    let s = Store()
+    for n in 1..3 do s.Submit([ Add n ], { commandId = sprintf "c%d" n; hash = "h" }) |> ignore
+    let cp = s.Ledger.Checkpoint
+    let text = CheckpointJson.write (cp |> Checkpoint.map (fun (n: int) -> Text.Json.Nodes.JsonValue.Create n :> Text.Json.Nodes.JsonNode))
+    match CheckpointJson.read text with
+    | Ok j ->
+        let back = j |> Checkpoint.map _.GetValue<int>()
+        Assert.Equal(cp, back)
+        Assert.Equal(cp, (L(apply, back)).Checkpoint)
+    | Error e -> failwith e
+    for bad in [ "nope"; """{"v":2}"""; """{"v":1,"throughId":"0","origin":-1,"ends":[],"stamps":{},"state":0}""" ] do
+        Assert.True((CheckpointJson.read bad).IsError, bad)

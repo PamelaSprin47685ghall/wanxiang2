@@ -15,7 +15,7 @@
   - `Refused(ticket, Duplicate(id, span) | StampConflict id | Rejected 'Err | WriteFailed reason)`。
   - `ReplayRejected(commit, span, IdGap | SpanGap | RepeatedStamp | FoldRejected 'Err | Busy)`：损坏点。
 - 查询（只读，立即回答）：`State`、`LastId`、`Checkpoint`、`SpanOf id`、`SpansAfter(cursor, ?limit)`。
-- 值：`Span = { start; end }`、`Commit.map`、`Envelope.write : Commit<JsonNode> -> string`、`Envelope.read`。
+- 值：`Span = { start; end }`、`Commit.map`、`Envelope.write : Commit<JsonNode> -> string`、`Envelope.read`、`Checkpoint.map`、`CheckpointJson.write : Checkpoint<JsonNode> -> string`、`CheckpointJson.read`、`ReplayProblem.Describe()`（`ToString` 同）。
 
 组装方只做路由：`AppendRequested(t, c, start)` → 编码并交给存储对象写入 → 投回 `Appended(c.id, end)` 或 `AppendFailed`。重放：存储对象读出的记录 → `Envelope.read` → `Commit.map` → `Replay(c, span)`。最小示例见 tests/Toy.fs `Store`。
 
@@ -44,6 +44,11 @@
 11. [AXIOM: 10; LEMMA: 4] 在 Outbox 处理器里同步等待回复（`Ask`）必然永远等不到，直接抛出。
     - 推理：回复要等当前线程处理完手头这条消息才会产生；静默死锁是最难查的手滑，抛出能在开发期立刻暴露。
 
+12. [AXIOM: 1, 7; LEMMA: 10] `Duplicate` 只回原提交的 id 与区间，不回提交本身。
+    - 推理：账本不在内存里保存提交内容，只保存每条 8 字节的末尾偏移；要回提交本身，就得常驻全部事件，内存随历史无界增长（旧系统的内存基线问题正出在这里）。提交内容在介质里，介质归存储对象；组装方拿区间向存储对象读一条即可。这是两个对象各管自己的状态，不是缺口。
+13. [AXIOM: 7; LEMMA: 8] `Checkpoint` 的公共部分（throughId、origin、ends、stamps）由本库编码为 JSON；领域状态 `'S` 由调用方配合 `Checkpoint.map` 编成 JsonNode 放进来。
+    - 推理：公共部分的形状是账本自己的事实，每个消费方各写一遍就是同一事实多处手写；领域状态的形状是领域知识。与 `Envelope` 的分法一致：传值（JsonNode），不传编码函数。
+
 # SPEC
 1. [LEMMA: 1, 3] id 从 1 起连续；重放得到相同 `Checkpoint`。证明：tests/Tests.fs `ids are contiguous and replay reproduces checkpoint`。
 2. [LEMMA: 4] 同一时刻只有一条 `AppendRequested`；在途期间的请求等落定后才裁决。证明：`one append in flight ...`。
@@ -57,6 +62,8 @@
 10. [LEMMA: 7, 10] `SpansAfter(cursor, limit)` 与 `SpanOf` 分页、越界正确，相邻区间首尾相接。证明：`spans after cursor honour limit and are contiguous`。
 11. [LEMMA: 8] 外壳往返（含 `UInt64.MaxValue`）；`NewerVersion`、`Invalid` 区分清楚。证明：`envelope round-trips ...`。
 12. [LEMMA: 4] 并发 `Ask` 时每个请求恰好提交一次，`Committed` 按 id 顺序发出。证明：`concurrent asks commit every submit exactly once in id order`。
-13. [TODO] 幂等索引无界增长，需要保留策略。
-14. [TODO] `Checkpoint` 仍随提交数线性增长（每条 8 字节）；若要有界，可只存每 K 条一个锚点，其余由组装方从介质扫描补齐。
-15. [TODO] `Outbox` 处理器在排空邮箱的线程上同步执行；处理器若阻塞，会拖住投递方。
+13. [LEMMA: 2] `ReplayProblem` 每种情形都有不同的可读描述，折叠错误以 `%A` 呈现。证明：`replay problems describe themselves`。
+14. [LEMMA: 13] `CheckpointJson` 往返保持 `Checkpoint`（状态由调用方编码），恢复出的账本等价；版本不符、偏移越界、坏输入报错。证明：`checkpoint json round-trips with caller-encoded state`。
+15. [TODO] 幂等索引无界增长，需要保留策略。
+16. [TODO] `Checkpoint` 仍随提交数线性增长（每条 8 字节）；若要有界，可只存每 K 条一个锚点，其余由组装方从介质扫描补齐。
+17. [TODO] `Outbox` 处理器在排空邮箱的线程上同步执行；处理器若阻塞，会拖住投递方。

@@ -40,6 +40,17 @@ type ReplayProblem<'Err> =
     /// 账本有在途或等待中的提交请求。
     | Busy
 
+    /// 人能读懂的一句话。折叠错误用 %A 呈现。
+    member p.Describe() : string =
+        match p with
+        | IdGap(e, g) -> sprintf "commit id gap: expected %d, got %d" e g
+        | SpanGap(e, g) -> sprintf "commit span [%d, %d) does not start at %d (gap or overlap in the medium)" g.start g.``end`` e
+        | RepeatedStamp id -> sprintf "commandId %s appears twice" id
+        | FoldRejected err -> sprintf "fold rejected the commit: %A" err
+        | Busy -> "ledger has live submits in progress; replay must finish first"
+
+    override p.ToString() = p.Describe()
+
 /// 账本接收的消息。
 type LedgerIn<'E> =
     /// 请求提交。ticket 是调用方的关联标识，原样出现在回复里。
@@ -72,3 +83,8 @@ type Checkpoint<'S> =
       /// 第一条提交的起点
       origin: int64
       ends: int64[] }
+
+module Checkpoint =
+    /// 换领域状态的表示（例如 'S <-> JSON），其余不变。
+    let map (f: 'A -> 'B) (cp: Checkpoint<'A>) : Checkpoint<'B> =
+        { state = f cp.state; throughId = cp.throughId; stamps = cp.stamps; origin = cp.origin; ends = cp.ends }

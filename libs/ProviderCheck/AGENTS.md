@@ -12,4 +12,9 @@
 1. [LEMMA: 1] `provider 检查文字与旧实现一致` 通过；端到端由 compose/Doctor 金样与 compose/ServerApp 迁入的 DoctorTests钉住。
 
 # 迁入或覆盖的旧测试
-- 见 compose/Doctor 金样与 compose/ServerApp 迁入的 DoctorTests。
+以下旧测试已原文迁入 wanxiang2，端到端经过本库：
+- `provider-config 检查发现启用但无 apiKey`（compose/ServerApp/tests/DoctorTests.fs）
+- `健康数据目录：全部检查通过`（同上）
+- `doctor reports and recovery bundle equal the old implementation`（compose/Doctor/tests/GoldenTests.fs，金样由旧代码生成）
+
+本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。

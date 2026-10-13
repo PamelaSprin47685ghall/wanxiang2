@@ -12,4 +12,8 @@
 1. [LEMMA: 1] `凭据替换与键值兜底打码` 通过；端到端由 compose/Doctor 金样与 compose/ServerApp 迁入的 SupportBundleTests钉住。
 
 # 迁入或覆盖的旧测试
-- 见 compose/Doctor 金样与 compose/ServerApp 迁入的 SupportBundleTests。
+以下旧测试已原文迁入 wanxiang2，端到端经过本库：
+- `bundle 生成全部必需文件且不含密钥`（compose/ServerApp/tests/SupportBundleTests.fs）
+- `doctor reports and recovery bundle equal the old implementation`（compose/Doctor/tests/GoldenTests.fs，金样由旧代码生成）
+
+本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。

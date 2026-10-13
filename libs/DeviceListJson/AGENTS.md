@@ -12,4 +12,9 @@
 1. [LEMMA: 1] `设备条目形状与旧实现一致` 通过；端到端由 compose/ServerApp 迁入的 DevicesTests钉住。
 
 # 迁入或覆盖的旧测试
-- 见 compose/ServerApp 迁入的 DevicesTests。
+以下旧测试已原文迁入 wanxiang2，端到端经过本库：
+- `device list shows names online state and only desktop may invite`（compose/ServerApp/tests/DevicesTests.fs）
+- `revoking a device disconnects it immediately and marks revoked in toml and list`（同上）
+- `rename persists to toml and rejects empty reserved and desktop targets`（同上，列表中的名字）
+
+本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。

@@ -12,4 +12,9 @@
 1. [LEMMA: 1] `复制并核对哈希，不覆盖已有副本` 通过；端到端由 compose/EventStore 的修复测试与 compose/ServerApp 迁入的 DoctorTests钉住。
 
 # 迁入或覆盖的旧测试
-- 见 compose/EventStore 的修复测试与 compose/ServerApp 迁入的 DoctorTests。
+以下旧测试已原文迁入 wanxiang2，端到端经过本库：
+- `recovery bundle 建立后修复才执行（算法 B）`（compose/EventStore/tests/ReplayTests.fs）
+- `recovery-bundle 检查识别证据包存在`（compose/ServerApp/tests/DoctorTests.fs）
+- `doctor reports and recovery bundle equal the old implementation`（compose/Doctor/tests/GoldenTests.fs，金样由旧代码生成）
+
+本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。

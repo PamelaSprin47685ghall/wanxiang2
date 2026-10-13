@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：全文搜索。协作者：Conversations（投影）、Wire（查询与结果的线上类型、预算）、TextMatch（分词与片段）、MessageText（消息正文）。
+       命名空间沿用旧仓库 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="SearchService.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Conversations" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.TextMatch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageText" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

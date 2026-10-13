@@ -1,0 +1,41 @@
+ok ()
+ok ()
+error validation-error | attachment chunk index 0 out of order; expected 1
+ok ()
+ok { sha256 = "482ef2683847617cce8e4eb9f22eef9a14b7f5c03bb81beda6dffbf085945046"
+  size = 15L
+  mediaType = "image/png"
+  fileName = "pic.png" }
+{"mediaType":"image/png","declaredMediaType":"application/octet-stream","sniffedMediaType":"image/png","fileName":"pic.png","size":15}
+Some ("image/png", "pic.png", 15L)
+exists true false
+read 15
+{"sha256":"482ef2683847617cce8e4eb9f22eef9a14b7f5c03bb81beda6dffbf085945046","size":15,"mediaType":"image/png","fileName":"p.png"}
+ok ()
+ok ()
+ok ()
+ok { sha256 = "ce35a39a2a655255e78dce0ad3b89016d91e30e58a5d1fc9d403d13628684d95"
+  size = 12L
+  mediaType = "text/plain"
+  fileName = "a.txt" }
+ok ()
+error validation-error | attachment size mismatch: expected 3 got 0
+error attachment-incomplete | attachment 00000000-0000-0000-0000-000000000003 is incomplete
+ok ()
+ok ()
+error attachment-hash-mismatch | attachment hash mismatch: expected ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad actual a52d159f262b2c6ddb724a61840befc36eb30c88877a4030b65cbe86298449c9
+ok ()
+ok ()
+error attachment-hash-mismatch | attachment hash mismatch: expected ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad actual a52d159f262b2c6ddb724a61840befc36eb30c88877a4030b65cbe86298449c9
+error attachment-too-large | 附件过大：上限 1000 B，本次 2.0 KiB。请压缩文件后重试，或调大 network.maxAttachmentBytes。
+error validation-error | attachment size must not be negative
+error validation-error | attachment sha256 must be 64 hexadecimal characters
+error attachment-incomplete | attachment 00000000-0000-0000-0000-000000000007 is incomplete
+ok ()
+error validation-error | attachment chunk decode failed: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.
+error attachment-incomplete | attachment 00000000-0000-0000-0000-000000000008 is incomplete
+tmp 0
+Some ("text/plain", "a.txt", 12L)
+{"level":"error","event":"e","utc":"<utc>","s":"has ***","i":1,"l":2,"f":1.5,"x":"InvalidOperationException: boom ***","x.stack":"<stack>"}
+{"level":"error","event":"jsonseq-replay-truncated","utc":"<utc>","phase":"startup-replay","file":"f.jsonseq","reason":"bad"}
+a *** b

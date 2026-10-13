@@ -19,6 +19,10 @@
     <Project Path="libs/AtomicTextFile/AtomicTextFile.fsproj" />
     <Project Path="libs/AtomicTextFile/tests/AtomicTextFile.Tests.fsproj" />
   </Folder>
+  <Folder Name="/AttachmentBlobs/">
+    <Project Path="libs/AttachmentBlobs/AttachmentBlobs.fsproj" />
+    <Project Path="libs/AttachmentBlobs/tests/AttachmentBlobs.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Canonical/">
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
@@ -55,6 +59,10 @@
     <Project Path="libs/HttpRetry/HttpRetry.fsproj" />
     <Project Path="libs/HttpRetry/tests/HttpRetry.Tests.fsproj" />
   </Folder>
+  <Folder Name="/JsonLinesLog/">
+    <Project Path="libs/JsonLinesLog/JsonLinesLog.fsproj" />
+    <Project Path="libs/JsonLinesLog/tests/JsonLinesLog.Tests.fsproj" />
+  </Folder>
   <Folder Name="/JsonPick/">
     <Project Path="libs/JsonPick/JsonPick.fsproj" />
     <Project Path="libs/JsonPick/tests/JsonPick.Tests.fsproj" />
@@ -79,6 +87,14 @@
     <Project Path="libs/McpProtocol/McpProtocol.fsproj" />
     <Project Path="libs/McpProtocol/tests/McpProtocol.Tests.fsproj" />
   </Folder>
+  <Folder Name="/MediaSniff/">
+    <Project Path="libs/MediaSniff/MediaSniff.fsproj" />
+    <Project Path="libs/MediaSniff/tests/MediaSniff.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageText/">
+    <Project Path="libs/MessageText/MessageText.fsproj" />
+    <Project Path="libs/MessageText/tests/MessageText.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PairingCode/">
     <Project Path="libs/PairingCode/PairingCode.fsproj" />
     <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
@@ -98,6 +114,10 @@
   <Folder Name="/StreamableHttp/">
     <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
     <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TextMatch/">
+    <Project Path="libs/TextMatch/TextMatch.fsproj" />
+    <Project Path="libs/TextMatch/tests/TextMatch.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：附件存储。协作者：AttachmentBlobs（内容寻址分块上传）、MediaSniff（嗅探与文件名）、
+       HostLog（元数据写失败的证据）、ChatDomain（错误类型）。命名空间沿用旧仓库 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="AttachmentStore.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.AttachmentBlobs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaSniff" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostLog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

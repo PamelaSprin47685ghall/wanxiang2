@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：主机的 stderr 日志。协作者：JsonLinesLog（行格式、脱敏、最近错误）、ChatDomain（截尾记录里的提交与错误）。
+       命名空间沿用旧仓库 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="Stderr.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.JsonLinesLog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

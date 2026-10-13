@@ -166,6 +166,7 @@
 | 模型提供方传输（Sse、HttpRetry、JsonPick、Anthropic、Gemini，组合 ProviderTransports） | 完成：5 个库和 `Wanxiang2.ProviderTransports` 交付包测试通过；请求和解码结果与旧实现生成的金样逐字节相同 | 未开始：需要先完成配置和线协议接线 |
 | MCP 客户端（JsonRpc、McpProtocol、LineProcess、StreamableHttp，组合 McpClient） | 完成：4 个库和 `Wanxiang2.McpClient` 交付包测试通过；发出的行、HTTP 请求和结果文本与旧实现生成的金样逐字节相同 | 未开始：旧仓库删除 McpTransport.fs、McpClient.fs，改引用包 |
 | 服务端编排的独立部分（Agui、Approvals，组合 AguiWire、ToolApproval、PartialReplies） | 完成：AG-UI 承载与工具审批的线上字节与旧实现生成的金样逐字节相同 | 未开始：旧仓库删除 Agui 工程、WireAgui.fs、ToolApproval.fs、PartialReplyStore.fs，改引用包 |
+| 搜索、附件、主机日志（TextMatch、MessageText、MediaSniff、AttachmentBlobs、JsonLinesLog，组合 Search、HostLog、Attachments） | 完成：结果页、附件元数据、错误文字、stderr 行格式与旧实现生成的金样逐字节相同 | 未开始：旧仓库删除 SearchService.fs、AttachmentStore.fs、Stderr.fs，改引用包 |
 | 线协议（Wire） | 完成：`Wanxiang2.Wire` 交付包，线格式字节兼容并有金样，旧编解码测试 33 个搬来通过 | 未开始：见 `libs/Wire/AGENTS.md` 与本轮报告的接线步骤；AG-UI 映射（旧 `WireAgui.fs`）暂留旧仓库 |
 
 ## 抽取路线（按顺序，可修订）
@@ -179,6 +180,6 @@
 5. 领域状态与命令：本轮完成独立能力（`libs/Conversations`、`CommandId`、`PlainText`、`ToolSummary`，组合 `compose/ChatDomain`）。
 6. 模型提供方传输：本轮完成独立能力（`libs/Sse`、`HttpRetry`、`JsonPick`、`Anthropic`、`Gemini`，组合 `compose/ProviderTransports`）。OpenAI 兼容传输用的是外部包，留在旧仓库。
 7. MCP 客户端：本轮完成独立能力（`libs/JsonRpc`、`McpProtocol`、`LineProcess`、`StreamableHttp`，组合 `compose/McpClient`）。McpFunction 和 ToolRegistry 依赖工具注册，留在旧仓库。
-8. 服务端编排：本轮完成可独立的部分（`libs/Agui`、`Approvals`，组合 `compose/AguiWire`、`ToolApproval`、`PartialReplies`）。`ChatOrchestrator`、`WsConnection`、`ServerApp` 的协作者（AgentRuntime、ToolRegistry、Store、Doctor、附件、搜索）还在旧仓库，暂不能以包组合；等这些协作者抽出后再拆。
+8. 服务端编排：本轮完成可独立的部分（`libs/Agui`、`Approvals`，组合 `compose/AguiWire`、`ToolApproval`、`PartialReplies`）。`ChatOrchestrator`、`WsConnection`、`ServerApp` 的协作者（AgentRuntime、ToolRegistry、Store、Doctor、附件、搜索）还在旧仓库，暂不能以包组合；等这些协作者抽出后再拆。第 8.1 步完成搜索、附件、主机日志（`compose/Search`、`Attachments`、`HostLog`）。
 9. 客户端（旧 `Client/WsClient.fs`）。
 10. UI（约 26k 行）：先抽纯模型（`DraftStore`、`Catalog`、`ConversationSummary`），视图最后处理。

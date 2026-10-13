@@ -60,8 +60,22 @@ pack() {
   for lib in $(libs); do dotnet pack "libs/$lib/$lib.fsproj" -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo; done
   # 组合者也是交付物；它自己从 feed 消费库包
   rm -rf artifacts/packages/wanxiang2.* compose/*/obj
-  for c in $(composers); do
-    dotnet pack "compose/$c/$c.fsproj" -c Release -p:Version=0.0.0-local -p:RestorePackagesPath="$PWD/artifacts/packages" -o artifacts/feed -v q -nologo
+  # 组合者可以消费别的组合者的包：按依赖顺序打包（依赖的包还不在 feed 里就留到下一轮）
+  local todo; todo="$(composers)"
+  while [[ -n "$todo" ]]; do
+    local next="" progressed=0
+    for c in $todo; do
+      local missing=0
+      for dep in $(grep -oE 'Include="Wanxiang2\.[A-Za-z0-9]+"' "compose/$c/$c.fsproj" | sed -E 's/.*Wanxiang2\.([A-Za-z0-9]+)"/\1/'); do
+        [[ -f "artifacts/feed/Wanxiang2.$dep.0.0.0-local.nupkg" ]] || missing=1
+      done
+      if [[ $missing == 1 ]]; then next="$next $c"; continue; fi
+      rm -rf "compose/$c/obj"
+      dotnet pack "compose/$c/$c.fsproj" -c Release -p:Version=0.0.0-local -p:RestorePackagesPath="$PWD/artifacts/packages" -o artifacts/feed -v q -nologo
+      progressed=1
+    done
+    [[ $progressed == 1 ]] || { echo "composer dependency cycle or missing package:$next" >&2; return 1; }
+    todo="$next"
   done
 }
 

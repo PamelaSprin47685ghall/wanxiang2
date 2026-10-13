@@ -29,11 +29,11 @@ type AttachmentStore(dataDir: string, maxBytes: int64, ?chunkSizeBytes: int) =
 
     let toError (e: BlobError) : WanxiangError =
         match e with
-        | Invalid m -> ValidationError m
-        | TooLarge(limit, actual) -> AttachmentTooLarge(limit, actual)
-        | HashMismatch(expected, actual) -> AttachmentHashMismatch(expected = expected, actual = actual)
-        | NotActive id -> AttachmentIncomplete id
-        | Failed m -> Poisoned m
+        | BlobError.Invalid m -> ValidationError m
+        | BlobError.TooLarge(limit, actual) -> AttachmentTooLarge(limit, actual)
+        | BlobError.HashMismatch(expected, actual) -> AttachmentHashMismatch(expected = expected, actual = actual)
+        | BlobError.NotActive id -> AttachmentIncomplete id
+        | BlobError.Failed m -> Poisoned m
 
     let metaPath (sha256: string) = blobs.PathOf sha256 |> Option.map (fun p -> p + ".meta")
 
@@ -72,7 +72,7 @@ type AttachmentStore(dataDir: string, maxBytes: int64, ?chunkSizeBytes: int) =
         let mediaType, fileName = match declared.TryGetValue attachmentId with | true, v -> v | _ -> ("", "")
         match blobs.Complete(attachmentId, declaredSha256) with
         | Error e ->
-            (match e with Invalid _ | HashMismatch _ -> declared.TryRemove attachmentId |> ignore | _ -> ())
+            (match e with BlobError.Invalid _ | BlobError.HashMismatch _ -> declared.TryRemove attachmentId |> ignore | _ -> ())
             Error(toError e)
         | Ok(sha, size, finalPath) ->
             declared.TryRemove attachmentId |> ignore

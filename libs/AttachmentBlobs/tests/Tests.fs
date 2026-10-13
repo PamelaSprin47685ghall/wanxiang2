@@ -33,17 +33,17 @@ let ``bad input is refused with the old texts`` () =
     let b = AttachmentBlobs(root (), 10L, 4)
     let id = Guid.NewGuid()
     let h = hex "abc"B
-    Assert.Equal(Error(Invalid "attachment size must not be negative"), b.Begin(1, id, -1L, h))
-    Assert.Equal(Error(Invalid "attachment sha256 must be 64 hexadecimal characters"), b.Begin(1, id, 1L, "x"))
-    Assert.Equal(Error(TooLarge(10L, 11L)), b.Begin(1, id, 11L, h))
+    Assert.Equal(Error(BlobError.Invalid "attachment size must not be negative"), b.Begin(1, id, -1L, h))
+    Assert.Equal(Error(BlobError.Invalid "attachment sha256 must be 64 hexadecimal characters"), b.Begin(1, id, 1L, "x"))
+    Assert.Equal(Error(BlobError.TooLarge(10L, 11L)), b.Begin(1, id, 11L, h))
     Assert.Equal(Ok(), b.Begin(1, id, 3L, h))
-    Assert.Equal(Error(Invalid "attachment id is already active"), b.Begin(1, id, 3L, h))
-    Assert.Equal(Error(Invalid "attachment chunk index 1 out of order; expected 0"), b.Append(id, 1, "YQ=="))
-    Assert.Equal(Error(Invalid "attachment chunk exceeds 4 bytes limit"), b.Append(id, 0, Convert.ToBase64String "abcde"B))
-    Assert.Equal(Error(Invalid "attachment chunk exceeds declared size"), b.Append(id, 0, Convert.ToBase64String "abcd"B))
+    Assert.Equal(Error(BlobError.Invalid "attachment id is already active"), b.Begin(1, id, 3L, h))
+    Assert.Equal(Error(BlobError.Invalid "attachment chunk index 1 out of order; expected 0"), b.Append(id, 1, "YQ=="))
+    Assert.Equal(Error(BlobError.Invalid "attachment chunk exceeds 4 bytes limit"), b.Append(id, 0, Convert.ToBase64String "abcde"B))
+    Assert.Equal(Error(BlobError.Invalid "attachment chunk exceeds declared size"), b.Append(id, 0, Convert.ToBase64String "abcd"B))
     Assert.Equal(Ok(), b.Append(id, 0, "YWI="))
-    Assert.Equal(Error(Invalid "attachment size mismatch: expected 3 got 2"), b.Complete(id, h))
-    Assert.Equal(Error(NotActive id), b.Complete(id, h))
+    Assert.Equal(Error(BlobError.Invalid "attachment size mismatch: expected 3 got 2"), b.Complete(id, h))
+    Assert.Equal(Error(BlobError.NotActive id), b.Complete(id, h))
 
 [<Fact>]
 let ``wrong content or wrong declared hash fails and leaves nothing`` () =
@@ -53,11 +53,11 @@ let ``wrong content or wrong declared hash fails and leaves nothing`` () =
     let id = Guid.NewGuid()
     b.Begin(1, id, 3L, h) |> ignore
     b.Append(id, 0, Convert.ToBase64String "abd"B) |> ignore
-    Assert.Equal(Error(HashMismatch(h, hex "abd"B)), b.Complete(id, h))
+    Assert.Equal(Error(BlobError.HashMismatch(h, hex "abd"B)), b.Complete(id, h))
     let id2 = Guid.NewGuid()
     b.Begin(1, id2, 3L, h) |> ignore
     b.Append(id2, 0, Convert.ToBase64String "abc"B) |> ignore
-    Assert.Equal(Error(HashMismatch(h, "f" + h[1..])), b.Complete(id2, "f" + h[1..]))
+    Assert.Equal(Error(BlobError.HashMismatch(h, "f" + h[1..])), b.Complete(id2, "f" + h[1..]))
     Assert.False(b.Exists h)
     Assert.Empty(Directory.GetFiles(Path.Combine(r, ".tmp")))
 
@@ -69,6 +69,6 @@ let ``abort by owner removes only that owner's uploads`` () =
     b.Begin(1, a, 1L, hex "a"B) |> ignore
     b.Begin(2, c, 1L, hex "a"B) |> ignore
     b.AbortByOwner 1
-    Assert.Equal(Error(NotActive a), b.Append(a, 0, "YQ=="))
+    Assert.Equal(Error(BlobError.NotActive a), b.Append(a, 0, "YQ=="))
     Assert.Equal(Ok(), b.Append(c, 0, "YQ=="))
     Assert.Single(Directory.GetFiles(Path.Combine(r, ".tmp"))) |> ignore

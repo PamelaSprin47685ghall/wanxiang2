@@ -15,3 +15,6 @@
 1. [LEMMA: 1, 3] `bad input is refused with the old texts`，通过。
 2. [LEMMA: 2] `wrong content or wrong declared hash...`、`abort by owner...`，通过。
 3. 内容寻址、只存一份：`chunks in order complete...`，通过。
+
+# 变更记录
+- `BlobError` 加 `[<RequireQualifiedAccess>]`：`Failed`、`Invalid` 等通用名不再泄漏进同时打开 Wanxiang.Server 与 Wanxiang.Agent 的组合者。

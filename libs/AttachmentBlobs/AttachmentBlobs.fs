@@ -6,6 +6,7 @@ open System.IO
 open System.Security.Cryptography
 
 /// 上传失败的原因。文字与旧实现相同，组合者直接转成自己的错误类型。
+[<RequireQualifiedAccess>]
 type BlobError =
     | Invalid of string
     | TooLarge of limitBytes: int64 * actualBytes: int64
@@ -44,10 +45,10 @@ type AttachmentBlobs(root: string, maxBytes: int64, maxChunkBytes: int) =
             Some(Path.Combine(root, h.Substring(0, 2), h.Substring(2, 2), h))
 
     member _.Begin(owner: int, uploadId: Guid, totalBytes: int64, sha256: string) : Result<unit, BlobError> =
-        if totalBytes < 0L then Error(Invalid "attachment size must not be negative")
-        elif not (AttachmentBlobs.IsSha256 sha256) then Error(Invalid "attachment sha256 must be 64 hexadecimal characters")
-        elif totalBytes > maxBytes then Error(TooLarge(maxBytes, totalBytes))
-        elif uploads.ContainsKey uploadId then Error(Invalid "attachment id is already active")
+        if totalBytes < 0L then Error(BlobError.Invalid "attachment size must not be negative")
+        elif not (AttachmentBlobs.IsSha256 sha256) then Error(BlobError.Invalid "attachment sha256 must be 64 hexadecimal characters")
+        elif totalBytes > maxBytes then Error(BlobError.TooLarge(maxBytes, totalBytes))
+        elif uploads.ContainsKey uploadId then Error(BlobError.Invalid "attachment id is already active")
         else
             let tempPath = Path.Combine(tempDir, uploadId.ToString("N"))
             try
@@ -60,32 +61,32 @@ type AttachmentBlobs(root: string, maxBytes: int64, maxChunkBytes: int) =
                 else
                     stream.Dispose()
                     File.Delete tempPath
-                    Error(Invalid "attachment id is already active")
-            with e -> Error(Failed(sprintf "attachment begin failed: %s" e.Message))
+                    Error(BlobError.Invalid "attachment id is already active")
+            with e -> Error(BlobError.Failed(sprintf "attachment begin failed: %s" e.Message))
 
     member _.Append(uploadId: Guid, index: int, dataBase64: string) : Result<unit, BlobError> =
         match uploads.TryGetValue uploadId with
-        | false, _ -> Error(NotActive uploadId)
+        | false, _ -> Error(BlobError.NotActive uploadId)
         | true, s ->
             try
                 if index <> s.chunkCount then
-                    Error(Invalid(sprintf "attachment chunk index %d out of order; expected %d" index s.chunkCount))
+                    Error(BlobError.Invalid(sprintf "attachment chunk index %d out of order; expected %d" index s.chunkCount))
                 else
                     let bytes = Convert.FromBase64String dataBase64
-                    if bytes.Length > maxChunkBytes then Error(Invalid(sprintf "attachment chunk exceeds %d bytes limit" maxChunkBytes))
-                    elif s.receivedBytes + int64 bytes.Length > s.expectedBytes then Error(Invalid "attachment chunk exceeds declared size")
+                    if bytes.Length > maxChunkBytes then Error(BlobError.Invalid(sprintf "attachment chunk exceeds %d bytes limit" maxChunkBytes))
+                    elif s.receivedBytes + int64 bytes.Length > s.expectedBytes then Error(BlobError.Invalid "attachment chunk exceeds declared size")
                     else
                         s.stream.Write(bytes, 0, bytes.Length)
                         s.sha.AppendData(bytes, 0, bytes.Length)
                         s.receivedBytes <- s.receivedBytes + int64 bytes.Length
                         s.chunkCount <- s.chunkCount + 1
                         Ok()
-            with e -> Error(Invalid(sprintf "attachment chunk decode failed: %s" e.Message))
+            with e -> Error(BlobError.Invalid(sprintf "attachment chunk decode failed: %s" e.Message))
 
     /// 校验并落位。成功返回 (小写哈希, 字节数, 存储路径)。失败时临时文件被删除，上传结束。
     member _.Complete(uploadId: Guid, declaredSha256: string) : Result<string * int64 * string, BlobError> =
         match uploads.TryGetValue uploadId with
-        | false, _ -> Error(NotActive uploadId)
+        | false, _ -> Error(BlobError.NotActive uploadId)
         | true, s ->
             try
                 s.stream.Flush()
@@ -96,12 +97,12 @@ type AttachmentBlobs(root: string, maxBytes: int64, maxChunkBytes: int) =
                     uploads.TryRemove uploadId |> ignore
                     Error err
                 if s.receivedBytes <> s.expectedBytes then
-                    fail (Invalid(sprintf "attachment size mismatch: expected %d got %d" s.expectedBytes s.receivedBytes))
+                    fail (BlobError.Invalid(sprintf "attachment size mismatch: expected %d got %d" s.expectedBytes s.receivedBytes))
                 elif not (String.Equals(actual, s.expectedSha256, StringComparison.OrdinalIgnoreCase)) then
-                    fail (HashMismatch(s.expectedSha256, actual))
+                    fail (BlobError.HashMismatch(s.expectedSha256, actual))
                 elif not (String.Equals(declaredSha256, s.expectedSha256, StringComparison.OrdinalIgnoreCase)) then
                     // 内容无损，是 complete 传错了声明值：把这个值点名放进错误
-                    fail (HashMismatch(s.expectedSha256, declaredSha256))
+                    fail (BlobError.HashMismatch(s.expectedSha256, declaredSha256))
                 else
                     let dir = Path.Combine(root, actual.Substring(0, 2), actual.Substring(2, 2))
                     Directory.CreateDirectory dir |> ignore
@@ -109,7 +110,7 @@ type AttachmentBlobs(root: string, maxBytes: int64, maxChunkBytes: int) =
                     if not (File.Exists finalPath) then File.Move(s.tempPath, finalPath) else File.Delete s.tempPath
                     uploads.TryRemove uploadId |> ignore
                     Ok(actual, s.receivedBytes, finalPath)
-            with e -> Error(Failed(sprintf "attachment complete failed: %s" e.Message))
+            with e -> Error(BlobError.Failed(sprintf "attachment complete failed: %s" e.Message))
 
     member _.Abort(uploadId: Guid) : unit =
         match uploads.TryGetValue uploadId with

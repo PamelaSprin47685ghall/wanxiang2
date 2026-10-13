@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="Canonical.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Jcs.Net" />
+  </ItemGroup>
+</Project>

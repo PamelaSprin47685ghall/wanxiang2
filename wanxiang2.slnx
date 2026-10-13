@@ -1,4 +1,12 @@
 <Solution>
+  <Folder Name="/Canonical/">
+    <Project Path="libs/Canonical/Canonical.fsproj" />
+    <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DirLock/">
+    <Project Path="libs/DirLock/DirLock.fsproj" />
+    <Project Path="libs/DirLock/tests/DirLock.Tests.fsproj" />
+  </Folder>
   <Folder Name="/JsonSeq/">
     <Project Path="libs/JsonSeq/JsonSeq.fsproj" />
     <Project Path="libs/JsonSeq/tests/JsonSeq.Tests.fsproj" />

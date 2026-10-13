@@ -51,6 +51,14 @@
     <Project Path="libs/CommandId/CommandId.fsproj" />
     <Project Path="libs/CommandId/tests/CommandId.Tests.fsproj" />
   </Folder>
+  <Folder Name="/CommitTimeline/">
+    <Project Path="libs/CommitTimeline/CommitTimeline.fsproj" />
+    <Project Path="libs/CommitTimeline/tests/CommitTimeline.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConnectionIssue/">
+    <Project Path="libs/ConnectionIssue/ConnectionIssue.fsproj" />
+    <Project Path="libs/ConnectionIssue/tests/ConnectionIssue.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ContextTrim/">
     <Project Path="libs/ContextTrim/ContextTrim.fsproj" />
     <Project Path="libs/ContextTrim/tests/ContextTrim.Tests.fsproj" />
@@ -171,6 +179,10 @@
     <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />
     <Project Path="libs/ProviderCheck/tests/ProviderCheck.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ReconnectBackoff/">
+    <Project Path="libs/ReconnectBackoff/ReconnectBackoff.fsproj" />
+    <Project Path="libs/ReconnectBackoff/tests/ReconnectBackoff.Tests.fsproj" />
+  </Folder>
   <Folder Name="/RefreshingPool/">
     <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
     <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />
@@ -206,6 +218,10 @@
   <Folder Name="/TextMatch/">
     <Project Path="libs/TextMatch/TextMatch.fsproj" />
     <Project Path="libs/TextMatch/tests/TextMatch.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TextSocket/">
+    <Project Path="libs/TextSocket/TextSocket.fsproj" />
+    <Project Path="libs/TextSocket/tests/TextSocket.Tests.fsproj" />
   </Folder>
   <Folder Name="/TitleText/">
     <Project Path="libs/TitleText/TitleText.fsproj" />

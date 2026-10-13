@@ -42,6 +42,11 @@ check() {
       fi
     done < <(find "libs/$lib" -name '*.fsproj' -not -path '*/obj/*' -not -path '*/bin/*')
   done
+  # 端口启发式：库源码（非测试）里不能出现函数类型的记录字段，如 `append: string -> int64`
+  local ports
+  ports="$(find libs -name '*.fs' -not -path '*/tests/*' -not -path '*/obj/*' -not -path '*/bin/*' -print0 \
+    | xargs -0 -r grep -nE '(^\s*|\{\s*|;\s*)[a-z][A-Za-z0-9_]*\s*:[^:?][^=]*->' | grep -vE '^[^:]+:[0-9]+:\s*(let|member|static|new|fun|match|with|try|if|elif|else|when|and|\||//)\b' || true)"
+  if [[ -n "$ports" ]]; then echo "FAIL function-typed record fields (ports):"; echo "$ports"; bad=1; fi
   # slnx 必须与 libs/ 一致
   if ! diff -q <(gen_sln) wanxiang2.slnx >/dev/null 2>&1; then echo "FAIL wanxiang2.slnx out of date (run ./x sln)"; bad=1; fi
   [[ $bad == 0 ]] && echo "check ok: $(libs | wc -l) libs, zero cross references"

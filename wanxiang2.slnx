@@ -11,4 +11,8 @@
     <Project Path="libs/JsonSeq/JsonSeq.fsproj" />
     <Project Path="libs/JsonSeq/tests/JsonSeq.Tests.fsproj" />
   </Folder>
+  <Folder Name="/Ledger/">
+    <Project Path="libs/Ledger/Ledger.fsproj" />
+    <Project Path="libs/Ledger/tests/Ledger.Tests.fsproj" />
+  </Folder>
 </Solution>

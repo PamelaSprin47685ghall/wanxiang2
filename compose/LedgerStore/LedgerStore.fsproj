@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者 C：依赖 JsonSeq、Ledger、Snapshot、DirLock 的交付包（./x pack 产出），不引用其源码。 -->
+  <ItemGroup>
+    <Compile Include="LedgerStore.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.JsonSeq" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Ledger" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Snapshot" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DirLock" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

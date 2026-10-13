@@ -10,6 +10,12 @@
     <!-- 中央包管理下显式引用 FSharp.Core，否则测试可执行文件拿不到它。 -->
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
   </PropertyGroup>
+  <!-- 交付物：每个库打成一个包，供组合者以干净消费方式使用（./x pack）。 -->
+  <PropertyGroup>
+    <PackageId>Wanxiang2.$(MSBuildProjectName)</PackageId>
+    <IsPackable>false</IsPackable>
+    <IsPackable Condition="$(MSBuildProjectDirectory.Contains('/libs/')) And !$(MSBuildProjectDirectory.Contains('/tests'))">true</IsPackable>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" />
   </ItemGroup>

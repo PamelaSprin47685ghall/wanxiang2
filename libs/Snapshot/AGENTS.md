@@ -1,8 +1,8 @@
 # Snapshot
 
-原子快照文件：保存任意值 `'T`（调用方提供文本编解码），带完整性校验。不依赖任何其他库。AXIOM 见项目根目录 AGENTS.md。
+原子快照文件：保存一段文本，带版本与完整性校验。不依赖任何其他库。AXIOM 见项目根目录 AGENTS.md。
 
-公开接口：`Snapshot.save path encode value`、`Snapshot.load path decode : Loaded<'T>`（`Missing | Loaded | Corrupt`）。
+公开接口：`Snapshot.save path text`、`Snapshot.load path : Loaded`（`Missing | Loaded of string | Corrupt of reason`）。
 
 # LEMMA
 1. [AXIOM: 1, 7] 快照是可重建的缓存，不是事实来源。
@@ -11,6 +11,9 @@
     - 推理：半写的快照若被当作有效值读入，会让状态与日志分叉，且没有任何迹象。临时文件加改名（同目录 rename 原子）把半写排除在可见状态之外。
 3. [LEMMA: 1, 2] 文件带版本与正文哈希；任何不符都判为 Corrupt，交给调用方重建。
     - 推理：rename 只防半写，防不了磁盘位翻转或人为改动；校验和使「不可信」可被检测，LEMMA 1 使检测到之后的处理平凡。
+
+4. [AXIOM: 7, 8] 本库只收发文本，不接收编解码函数。
+    - 推理：「把值变成文本」是值所属领域的事；本库拥有的语义是「这段文本被原子地、可校验地保存了」。接收编解码函数就是把别人的行为塞进来调用，文本才是诚实的边界（见 Ledger LEMMA 2）。
 
 # SPEC
 1. [LEMMA: 2] 保存后读出等于原值；再次保存覆盖旧值；不残留 `.tmp`。

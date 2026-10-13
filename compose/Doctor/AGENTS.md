@@ -11,3 +11,6 @@
 # SPEC
 1. [LEMMA: 1] `golden/doctor.txt` 由旧 Doctor 跑同一 Scenario 生成（端口、provider/MCP 配置、快照、日志重放、缺失与孤立附件），通过。
 2. [LEMMA: 1] 旧 DoctorInspectTests 原样迁入，通过。
+
+# 迁入或覆盖的旧测试
+- DoctorInspectTests.fs 整个文件（原样迁入 tests/）。

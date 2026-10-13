@@ -169,6 +169,7 @@
 | 搜索、附件、主机日志（TextMatch、MessageText、MediaSniff、AttachmentBlobs、JsonLinesLog，组合 Search、HostLog、Attachments） | 完成：结果页、附件元数据、错误文字、stderr 行格式与旧实现生成的金样逐字节相同 | 未开始：旧仓库删除 SearchService.fs、AttachmentStore.fs、Stderr.fs，改引用包 |
 | 存储与诊断（HostProbe、AttachmentRefs，组合 EventStore、Doctor） | 完成：旧存储测试原样通过；doctor 金样与旧实现逐字节相同 | 未开始：旧仓库删除 src/Wanxiang.Store、Doctor.fs、SupportBundle.fs，改引用包；ServerModel.attachmentRefsOf 转发 AttachmentRefs.ofPayload |
 | 消息与工具（MessageSerde、MediaContent、SandboxFiles、ToolNames、RefreshingPool，组合 AgentContent、BuiltinTools、ToolRegistry） | 完成：消息 JSON、附件内容、工具目录与调用结果与旧实现生成的金样逐字节相同 | 未开始：旧仓库删除 Agent/MessageSerde.fs、AttachmentContent.fs、Server/BuiltinTools.fs、ToolRegistry.fs，改引用包 |
+| Agent 运行时（HttpFailureFacts、SharedHttpClients、AgentHistory、AguiMessageMap，组合 ProviderFailure、AgentRuntime） | 完成：请求体、流式增量、错误归类与旧实现生成的金样逐字节相同 | 未开始：旧仓库删除 Wanxiang.Agent 工程里 HistoryProvider.fs、MessageMap.fs、AgentRuntime.fs（连同 8.3 的两个文件，整个工程可删），改引用包 |
 | 线协议（Wire） | 完成：`Wanxiang2.Wire` 交付包，线格式字节兼容并有金样，旧编解码测试 33 个搬来通过 | 未开始：见 `libs/Wire/AGENTS.md` 与本轮报告的接线步骤；AG-UI 映射（旧 `WireAgui.fs`）暂留旧仓库 |
 
 ## 抽取路线（按顺序，可修订）
@@ -182,7 +183,7 @@
 5. 领域状态与命令：本轮完成独立能力（`libs/Conversations`、`CommandId`、`PlainText`、`ToolSummary`，组合 `compose/ChatDomain`）。
 6. 模型提供方传输：本轮完成独立能力（`libs/Sse`、`HttpRetry`、`JsonPick`、`Anthropic`、`Gemini`，组合 `compose/ProviderTransports`）。OpenAI 兼容传输用的是外部包，留在旧仓库。
 7. MCP 客户端：本轮完成独立能力（`libs/JsonRpc`、`McpProtocol`、`LineProcess`、`StreamableHttp`，组合 `compose/McpClient`）。McpFunction 和 ToolRegistry 依赖工具注册，留在旧仓库。
-8. 服务端编排：本轮完成可独立的部分（`libs/Agui`、`Approvals`，组合 `compose/AguiWire`、`ToolApproval`、`PartialReplies`）。`ChatOrchestrator`、`WsConnection`、`ServerApp` 的协作者（AgentRuntime、ToolRegistry、Store、Doctor、附件、搜索）还在旧仓库，暂不能以包组合；等这些协作者抽出后再拆。第 8.1 步完成搜索、附件、主机日志（`compose/Search`、`Attachments`、`HostLog`）。第 8.2 步完成存储与诊断（`compose/EventStore`、`Doctor`）。第 8.3 步完成消息与工具（`compose/AgentContent`、`BuiltinTools`、`ToolRegistry`）。
+8. 服务端编排：本轮完成可独立的部分（`libs/Agui`、`Approvals`，组合 `compose/AguiWire`、`ToolApproval`、`PartialReplies`）。`ChatOrchestrator`、`WsConnection`、`ServerApp` 的协作者（AgentRuntime、ToolRegistry、Store、Doctor、附件、搜索）还在旧仓库，暂不能以包组合；等这些协作者抽出后再拆。第 8.1 步完成搜索、附件、主机日志（`compose/Search`、`Attachments`、`HostLog`）。第 8.2 步完成存储与诊断（`compose/EventStore`、`Doctor`）。第 8.3 步完成消息与工具（`compose/AgentContent`、`BuiltinTools`、`ToolRegistry`）。从 8.2 起，每个库/组合的 AGENTS.md 逐条列出它迁入或覆盖的旧测试，旧仓库按名单删除。第 8.4 步完成 Agent 运行时（`compose/ProviderFailure`、`AgentRuntime`）；编排三件（ChatOrchestrator、WsConnection、ServerApp）的协作者至此都已是包。
    - 待拆（EventStore、Doctor 原样迁入，仍含独立语义）：RecoveryBundle 的「复制文件 + sha256 清单」→ 库；SupportBundle 的配置脱敏 → 库（与 Stderr.redact 同一规则）；Doctor 各项检查（provider、MCP、快照、附件）的判断 → 按检查拆成库，Doctor 只编排；Store 的 Inspect/Repair 结论类型与 Ledger 的映射复核。
 9. 客户端（旧 `Client/WsClient.fs`）。
 10. UI（约 26k 行）：先抽纯模型（`DraftStore`、`Catalog`、`ConversationSummary`），视图最后处理。

@@ -8,3 +8,6 @@ ChatMessage 与 JSON 互转（Microsoft.Extensions.AI 的 JSON 配置），宽�
 
 # SPEC
 1. [LEMMA: 1] 测试覆盖宽松解析、附件引用、往返；完整字节由 AgentContent 金样钉住。
+
+# 迁入或覆盖的旧测试
+- 旧测试迁在 compose/AgentContent/tests（逐条列在 AgentContent AGENTS.md）。

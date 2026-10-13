@@ -1,0 +1,58 @@
+timeout ProviderTimeout|等待「假服务」响应超时。|Some "slow"|None|true
+taskcancel ProviderTimeout|等待「假服务」响应超时。|Some "gone"|None|true
+http400 ProviderBadRequest|「假服务」认为这次请求参数不合法。|Some "bad"|None|false
+http401 ProviderAuthFailed|「假服务」拒绝了当前凭据。|Some "no"|None|false
+http404 ModelNotFound|「假服务」上找不到模型 m1。|Some "missing"|None|false
+http408 ProviderTimeout|等待「假服务」响应超时。|Some "late"|None|true
+http429 ProviderRateLimited|「假服务」限流了这次请求。|Some "limit"|Some 9|true
+http503 ProviderUnavailable|「假服务」服务暂时不可用（HTTP 503）。|Some "down"|None|true
+http418 UnknownFailure|调用「假服务」时发生未预期的错误。|Some "teapot"|None|true
+http400ctx ContextTooLong|本次上下文超出模型能接受的长度。|Some "maximum context exceeded"|None|false
+httpnet ProviderUnavailable|无法连接「假服务」，请检查网络或地址。|Some "refused"|None|true
+socket ProviderUnavailable|无法连接「假服务」，请检查网络或地址。|Some "Connection refused"|None|true
+wrapped ProviderUnavailable|无法连接「假服务」，请检查网络或地址。|Some "outer"|None|true
+refusedtext ProviderUnavailable|无法连接「假服务」，请检查网络或地址。|Some "Connection refused (127.0.0.1)"|None|true
+filter ContentFiltered|内容被模型服务安全策略拦截。|Some "blocked by content_filter"|None|false
+badgateway ProviderUnavailable|「假服务」服务暂时不可用（HTTP 502）。|Some "upstream said Bad Gateway"|None|true
+unknown UnknownFailure|调用「假服务」时发生未预期的错误。|Some
+  "weird thing xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…"|None|true
+retryAfter Some 12 None
+rateLimitOf Some (Some 0) None
+model m1 provider p
+completed 3L/2L/5L
+delta 你
+delta 你,好
+delta 你,好,call:builtin_time
+failed ProviderRateLimited|「假服务」限流了这次请求。|Some "HTTP 429 · {"error":{"message":"slow down","type":"rate_limit"}}"|Some 7|true
+rateLimit Some (Some 0, Some 7)
+failed ProviderUnavailable|「假服务」服务暂时不可用（HTTP 500）。|Some "HTTP 500 · Internal Server Error"|None|true
+Ok "标题"
+Error
+  "ContextTooLong|本次上下文超出模型能接受的长度。|Some
+  "HTTP 400 · {"error":{"code":"context_length_exceeded","message":"too long"}}"|None|false"
+cancelled
+response 1 你好
+failure ClientResultException
+failure ClientResultException
+failure TaskCanceledException
+request POST /v1/chat/completions {"temperature":0.5,"top_p":0.9,"messages":[{"role":"system","content":"做个好助手"},{"role":"user","content":"旧的"},{"role":"assistant","content":"旧答"},{"role":"user","content":"你好吗"}],"max_completion_tokens":100,"stream":true,"stream_options":{"include_usage":true},"tools":[{"type":"function","function":{"description":"时间","name":"builtin_time","parameters":{
+  "type": "object",
+  "required": [],
+  "properties": {},
+  "additionalProperties": false
+}}}],"tool_choice":"auto","model":"m1"}
+request POST /v1/chat/completions {"temperature":0.5,"top_p":0.9,"messages":[{"role":"system","content":"做个好助手"},{"role":"user","content":"旧的"},{"role":"assistant","content":"旧答"},{"role":"user","content":"再来"}],"max_completion_tokens":100,"stream":true,"stream_options":{"include_usage":true},"tools":[{"type":"function","function":{"description":"时间","name":"builtin_time","parameters":{
+  "type": "object",
+  "required": [],
+  "properties": {},
+  "additionalProperties": false
+}}}],"tool_choice":"auto","model":"m1"}
+request POST /v1/chat/completions {"temperature":0.5,"top_p":0.9,"messages":[{"role":"system","content":"做个好助手"},{"role":"user","content":"旧的"},{"role":"assistant","content":"旧答"},{"role":"user","content":"三"}],"max_completion_tokens":100,"tools":[{"type":"function","function":{"description":"时间","name":"builtin_time","parameters":{
+  "type": "object",
+  "required": [],
+  "properties": {},
+  "additionalProperties": false
+}}}],"tool_choice":"auto","model":"m1"}
+request POST /v1/chat/completions {"temperature":0.3,"messages":[{"role":"user","content":"起个标题"}],"max_completion_tokens":20,"model":"m1"}
+request POST /v1/chat/completions {"temperature":0.3,"messages":[{"role":"user","content":"太长"}],"max_completion_tokens":20,"model":"m1"}
+

@@ -8,3 +8,6 @@
 
 # SPEC
 1. [LEMMA: 1] 由 ToolRegistry 金样钉住；本地测试钉目录组成。
+
+# 迁入或覆盖的旧测试
+- 旧 ProductizationTests.fs「内建工具沙箱」4 条迁在 ToolRegistry/tests/ProductizationToolTests.fs（见 ToolRegistry AGENTS.md）。

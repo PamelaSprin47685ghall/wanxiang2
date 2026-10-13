@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：把 Provider 调用异常归类成 GenerationError。协作者：HttpFailureFacts（异常里的事实）、
+       Wire（错误与限流类型）、System.ClientModel（OpenAI SDK 的异常）。命名空间沿用 Wanxiang.Agent。 -->
+  <ItemGroup>
+    <Compile Include="ProviderFailure.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.ClientModel" />
+    <PackageReference Include="Wanxiang2.HttpFailureFacts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

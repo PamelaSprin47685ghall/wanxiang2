@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：Agent 运行时（构建 IChatClient 与 agent、流式/非流式执行、一次性补全）。协作者：ProviderTransports（原生传输）、
+       ProviderFailure（失败归类）、SharedHttpClients（连接池）、AgentHistory（会话 id 键）、AppConfig（ProviderConfig）、Wire（SessionConfig、错误类型）、
+       Microsoft.Agents.AI 与 OpenAI SDK。命名空间沿用 Wanxiang.Agent。 -->
+  <ItemGroup>
+    <Compile Include="AgentRuntime.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
+    <PackageReference Include="Wanxiang2.ProviderTransports" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderFailure" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SharedHttpClients" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AgentHistory" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -18,3 +18,11 @@ let ``missing blobs and text files`` () =
     Assert.Contains("内容已丢失", (gone.Head :?> TextContent).Text)
     let txt = MediaContent.resolve MediaSupport.gemini (fun _ -> Some "x"B) ("h", "text/plain", "a.md", 1L)
     Assert.Equal("【附件】a.md\n```markdown\nx\n```", (txt.Head :?> TextContent).Text)
+
+[<Fact>]
+let ``ofProviderKind maps each transport to its capabilities`` () =
+    Assert.Equal(MediaSupport.anthropic, MediaSupport.ofProviderKind "anthropic")
+    Assert.Equal(MediaSupport.gemini, MediaSupport.ofProviderKind "gemini")
+    Assert.Equal(MediaSupport.openAiCompatible, MediaSupport.ofProviderKind "openai")
+    Assert.Equal({ image = true; pdf = true; audio = true }, MediaSupport.gemini)
+    Assert.Equal({ image = true; pdf = false; audio = false }, MediaSupport.ofProviderKind "anything")

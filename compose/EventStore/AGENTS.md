@@ -8,3 +8,6 @@
 
 # SPEC
 1. [LEMMA: 1] 旧仓库的 EventLogTests、StoreConsistencyTests、ReplayTests 原样迁入，42 个测试通过。
+
+# 迁入或覆盖的旧测试
+- EventLogTests.fs、StoreConsistencyTests.fs、ReplayTests.fs 整个文件（原样迁入 tests/）。

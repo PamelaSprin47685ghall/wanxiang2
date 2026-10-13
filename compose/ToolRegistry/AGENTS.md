@@ -9,3 +9,13 @@
 
 # SPEC
 1. [LEMMA: 1] `golden/tools.txt` 由旧 BuiltinTools.fs、ToolRegistry.fs 跑同一 Scenario（真实 /bin/sh MCP 服务）生成，覆盖目录、工具 schema、调用结果、配置热更新、Prune，通过。
+
+# 迁入或覆盖的旧测试（旧仓库 d9651ed，可在旧仓库删除）
+- ProductizationTests.fs「内建工具沙箱」：
+  - `file tools are unavailable without a configured sandbox`
+  - `file tools appear once a sandbox root is configured`
+  - `sandbox rejects paths outside every configured root`
+  - `stable tool ids round-trip to function names`
+- McpTests.fs「ToolRegistry 契约与配置联动测试」：
+  - `ToolRegistry 支持 MCP 客户端缓存、指纹更新与失效剪裁`
+  - `ToolRegistry 组装 Descriptors 与 DescriptorsJson 包含内置与有效 MCP 工具`

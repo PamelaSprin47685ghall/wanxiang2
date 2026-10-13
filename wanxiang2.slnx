@@ -1,7 +1,15 @@
 <Solution>
+  <Folder Name="/AgentHistory/">
+    <Project Path="libs/AgentHistory/AgentHistory.fsproj" />
+    <Project Path="libs/AgentHistory/tests/AgentHistory.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Agui/">
     <Project Path="libs/Agui/Agui.fsproj" />
     <Project Path="libs/Agui/tests/Agui.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AguiMessageMap/">
+    <Project Path="libs/AguiMessageMap/AguiMessageMap.fsproj" />
+    <Project Path="libs/AguiMessageMap/tests/AguiMessageMap.Tests.fsproj" />
   </Folder>
   <Folder Name="/Anthropic/">
     <Project Path="libs/Anthropic/Anthropic.fsproj" />
@@ -62,6 +70,10 @@
   <Folder Name="/HostProbe/">
     <Project Path="libs/HostProbe/HostProbe.fsproj" />
     <Project Path="libs/HostProbe/tests/HostProbe.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HttpFailureFacts/">
+    <Project Path="libs/HttpFailureFacts/HttpFailureFacts.fsproj" />
+    <Project Path="libs/HttpFailureFacts/tests/HttpFailureFacts.Tests.fsproj" />
   </Folder>
   <Folder Name="/HttpRetry/">
     <Project Path="libs/HttpRetry/HttpRetry.fsproj" />
@@ -126,6 +138,10 @@
   <Folder Name="/SandboxFiles/">
     <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
     <Project Path="libs/SandboxFiles/tests/SandboxFiles.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SharedHttpClients/">
+    <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />
+    <Project Path="libs/SharedHttpClients/tests/SharedHttpClients.Tests.fsproj" />
   </Folder>
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />

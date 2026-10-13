@@ -8,3 +8,6 @@
 
 # SPEC
 1. [LEMMA: 1] 测试覆盖读、列、越界、未配置、空路径。
+
+# 迁入或覆盖的旧测试
+- 旧测试迁在 compose/ToolRegistry/tests（逐条列在 ToolRegistry AGENTS.md）。

@@ -8,3 +8,6 @@
 
 # SPEC
 1. [LEMMA: 1] 测试覆盖能力拒收、丢失、文本内联；完整输出由 AgentContent 金样钉住。
+
+# 迁入或覆盖的旧测试
+- 旧测试迁在 compose/AgentContent/tests（逐条列在 AgentContent AGENTS.md）。

@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Agui/">
+    <Project Path="libs/Agui/Agui.fsproj" />
+    <Project Path="libs/Agui/tests/Agui.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Anthropic/">
     <Project Path="libs/Anthropic/Anthropic.fsproj" />
     <Project Path="libs/Anthropic/tests/Anthropic.Tests.fsproj" />
@@ -6,6 +10,10 @@
   <Folder Name="/AppConfig/">
     <Project Path="libs/AppConfig/AppConfig.fsproj" />
     <Project Path="libs/AppConfig/tests/AppConfig.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Approvals/">
+    <Project Path="libs/Approvals/Approvals.fsproj" />
+    <Project Path="libs/Approvals/tests/Approvals.Tests.fsproj" />
   </Folder>
   <Folder Name="/AtomicTextFile/">
     <Project Path="libs/AtomicTextFile/AtomicTextFile.fsproj" />

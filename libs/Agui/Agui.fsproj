@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="Capabilities.fs" />
+    <Compile Include="TolerantReader.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AGUI.Abstractions" />
+  </ItemGroup>
+</Project>

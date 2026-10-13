@@ -1,0 +1,64 @@
+== encode
+{"type":"RUN_STARTED","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000"}
+{"type":"TEXT_MESSAGE_CHUNK","messageId":"66666666-7777-8888-9999-000000000000","delta":"\u4F60\u597D \u0022x\u0022"}
+{"type":"TOOL_CALL_START","toolCallId":"c1","toolCallName":"search"}
+{"type":"TOOL_CALL_RESULT","messageId":"66666666-7777-8888-9999-000000000000","toolCallId":"c1","content":"{\n  \u0022r\u0022: \u0022\\u597D\u0022\n}"}
+{"type":"CUSTOM","name":"wanxiang.dev/generation-delta","value":{"conversationId":"11111111-2222-3333-4444-555555555555","generationId":"66666666-7777-8888-9999-000000000000","payload":{"role":"assistant","contents":[{"$type":"reasoning","text":"\u60F3"}]}}}
+{"type":"CUSTOM","name":"wanxiang.dev/generation-delta","value":{"conversationId":"11111111-2222-3333-4444-555555555555","generationId":"66666666-7777-8888-9999-000000000000","payload":[]}}
+{"type":"RUN_FINISHED","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","usage":[{"inputTokens":1,"outputTokens":2,"totalTokens":3}]}
+{"type":"RUN_FINISHED","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000"}
+{"type":"RUN_FINISHED","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","outcome":{"type":"cancelled"}}
+{"type":"CUSTOM","name":"wanxiang.dev/generation.finished","value":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","status":"failed","error":{"code":"provider-timeout","message":"\u6162","retryable":true,"retryAfterSeconds":3}}}
+{"type":"CUSTOM","name":"wanxiang.dev/cursor.advanced","value":{"id":18446744073709551615}}
+{"type":"CUSTOM","name":"wanxiang.dev/protocol.hello","value":{"protocol":"wanxiang","version":1}}
+{"type":"CUSTOM","name":"wanxiang.dev/protocol.ping","value":{}}
+{"type":"CUSTOM","name":"wanxiang.dev/auth.present","value":{"token":"tok"}}
+{"type":"CUSTOM","name":"wanxiang.dev/conversation.observe","value":{"threadId":"11111111-2222-3333-4444-555555555555"}}
+{"type":"CUSTOM","name":"wanxiang.dev/command.committed","value":{"invocationId":"11111111-2222-3333-4444-555555555555","commandId":"c","commitId":7}}
+{"type":"CUSTOM","name":"wanxiang.dev/command.rejected","value":{"invocationId":"11111111-2222-3333-4444-555555555555","code":"x","message":"y","requiredCommitId":7}}
+{"type":"CUSTOM","name":"wanxiang.dev/attachment.chunk","value":{"attachmentId":"11111111-2222-3333-4444-555555555555","index":2,"data":"AA=="}}
+{"type":"CUSTOM","name":"wanxiang.dev/tool.approval-resolved","value":{"approvalId":"11111111-2222-3333-4444-555555555555","threadId":"66666666-7777-8888-9999-000000000000","status":"denied","reason":"\u4E0D","alreadyHandled":false}}
+== encodeCommand
+{"type":"CUSTOM","name":"wanxiang.dev/conversation.create","value":{"type":"conversation.create","payload":{"invocationId":"11111111-2222-3333-4444-555555555555","threadId":"66666666-7777-8888-9999-000000000000","title":"\u6807\u9898","config":{"provider":"p","model":"m","instructions":"i","tools":["t"],"temperature":0.5,"maxTokens":10}}}}
+{"type":"CUSTOM","name":"wanxiang.dev/conversation.fork","value":{"type":"conversation.fork","payload":{"invocationId":"11111111-2222-3333-4444-555555555555","threadId":"66666666-7777-8888-9999-000000000000","parentConversationId":"11111111-2222-3333-4444-555555555555","forkAfterId":10,"config":{"provider":"","model":""},"message":{}}}}
+== round trip
+event {"type":"generation.started","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","providerId":"","model":""}}
+event {"type":"generation.delta","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"66666666-7777-8888-9999-000000000000","content":{"text":"你好 \"x\""}}}
+event {"type":"generation.delta","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"00000000-0000-0000-0000-000000000000","content":{"role":"assistant","contents":[{"$type":"functionCall","callId":"c1","name":"search"}]}}}
+event {"type":"generation.delta","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"66666666-7777-8888-9999-000000000000","content":{"role":"tool","contents":[{"$type":"functionResult","callId":"c1","result":"{\n  \"r\": \"\\u597D\"\n}"}]}}}
+ignored
+ignored
+event {"type":"generation.finished","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","status":"completed"}}
+event {"type":"generation.finished","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","status":"completed"}}
+event {"type":"generation.finished","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","status":"cancelled"}}
+event {"type":"generation.finished","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","status":"failed","error":{"code":"provider-timeout","message":"慢","retryable":true,"retryAfterSeconds":3}}}
+event {"type":"cursor.advanced","payload":{"id":18446744073709551615}}
+event {"type":"protocol.hello","payload":{"protocol":"wanxiang","version":1}}
+event {"type":"protocol.ping"}
+event {"type":"auth.present","payload":{"token":"tok"}}
+event {"type":"conversation.observe","payload":{"threadId":"11111111-2222-3333-4444-555555555555"}}
+event {"type":"command.committed","payload":{"invocationId":"11111111-2222-3333-4444-555555555555","commandId":"c","commitId":7}}
+event {"type":"command.rejected","payload":{"invocationId":"11111111-2222-3333-4444-555555555555","code":"x","message":"y","requiredCommitId":7}}
+event {"type":"attachment.chunk","payload":{"attachmentId":"11111111-2222-3333-4444-555555555555","index":2,"data":"AA=="}}
+event {"type":"tool.approval-resolved","payload":{"approvalId":"11111111-2222-3333-4444-555555555555","threadId":"66666666-7777-8888-9999-000000000000","status":"denied","reason":"不","alreadyHandled":false}}
+== decode
+{"type":"RUN_STARTED","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000"} => event {"type":"generation.started","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","providerId":"","model":""}}
+{"type":"RUN_STARTED","threadId":"bad","runId":""} => event {"type":"generation.started","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"00000000-0000-0000-0000-000000000000","providerId":"","model":""}}
+{"type":"TEXT_MESSAGE_CHUNK","messageId":"66666666-7777-8888-9999-000000000000","delta":"嗨"} => event {"type":"generation.delta","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"66666666-7777-8888-9999-000000000000","content":{"text":"嗨"}}}
+{"type":"REASONING_MESSAGE_CHUNK","messageId":"66666666-7777-8888-9999-000000000000","delta":"想"} => event {"type":"generation.delta","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"66666666-7777-8888-9999-000000000000","content":{"role":"assistant","contents":[{"$type":"text","text":"想"}]}}}
+{"type":"TOOL_CALL_START","toolCallId":"c1","toolCallName":"search"} => event {"type":"generation.delta","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"00000000-0000-0000-0000-000000000000","content":{"role":"assistant","contents":[{"$type":"functionCall","callId":"c1","name":"search"}]}}}
+{"type":"TOOL_CALL_RESULT","messageId":"66666666-7777-8888-9999-000000000000","toolCallId":"c1","content":"ok"} => event {"type":"generation.delta","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"66666666-7777-8888-9999-000000000000","content":{"role":"tool","contents":[{"$type":"functionResult","callId":"c1","result":"ok"}]}}}
+{"type":"RUN_FINISHED","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000"} => event {"type":"generation.finished","payload":{"threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","status":"completed"}}
+{"type":"RUN_ERROR","message":"boom"} => event {"type":"generation.finished","payload":{"threadId":"00000000-0000-0000-0000-000000000000","runId":"00000000-0000-0000-0000-000000000000","status":"failed","error":{"code":"unknown-failure","message":"boom","retryable":true}}}
+{"type":"STATE_DELTA","delta":[]} => ignored
+{"type":"SOME_FUTURE_EVENT","x":1} => ignored
+{"type":"CUSTOM","name":"someone.else/thing","value":{}} => ignored
+{"type":"CUSTOM","name":"wanxiang.dev/cursor.advanced","value":{"id":42}} => event {"type":"cursor.advanced","payload":{"id":42}}
+{"type":"CUSTOM","name":"wanxiang.dev/cursor.advanced","value":{"type":"cursor.advanced","payload":{"id":43}}} => event {"type":"cursor.advanced","payload":{"id":43}}
+{"type":"CUSTOM","name":"wanxiang.dev/no.such","value":{"a":1}} => ignored
+{"type":"CUSTOM","name":"wanxiang.dev/cursor.advanced","value":[1]} => ignored
+{"type":"CUSTOM","name":"wanxiang.dev/cursor.advanced","value":{"id":"x"}} => event {"type":"cursor.advanced","payload":{"id":0}}
+{"type":"CUSTOM","value":{}} => error CUSTOM event without a string 'name'
+{"type":"TEXT_MESSAGE_CHUNK","messageId":5} => error known type 'TEXT_MESSAGE_CHUNK' failed to deserialize: The JSON value could not be converted to System.String. Path: $.messageId | LineNumber: 0 | BytePositionInLine: 42.
+[1] => error event is not a JSON object
+not json => error invalid JSON: 'not json' is an invalid JSON literal. Expected the literal 'null'. LineNumber: 0 | BytePositionInLine: 1.

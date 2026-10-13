@@ -1,0 +1,22 @@
+needs true
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-requested","payload":{"approvalId":"<id0>","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","callId":"call-1","toolName":"builtin_time","summary":"查看当前时间","arguments":{"q":"好"},"policy":"first","expiresInSeconds":300}}
+pending {"type":"tool.approval-requested","payload":{"approvalId":"<id0>","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","callId":"call-1","toolName":"builtin_time","summary":"查看当前时间","arguments":{"q":"好"},"policy":"first","expiresInSeconds":<left>}}
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-resolved","payload":{"approvalId":"<id0>","threadId":"11111111-2222-3333-4444-555555555555","status":"approved","reason":"","alreadyHandled":false}}
+outcome Approved
+reply {"type":"tool.approval-resolved","payload":{"approvalId":"<id0>","threadId":"00000000-0000-0000-0000-000000000000","status":"approved","reason":"","alreadyHandled":true}}
+needs false
+reply {"type":"tool.approval-resolved","payload":{"approvalId":"00000000-0000-0000-0000-000000000000","threadId":"00000000-0000-0000-0000-000000000000","status":"expired","reason":"这个审批已经失效（可能因为主机已重启）。","alreadyHandled":true}}
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-requested","payload":{"approvalId":"<id1>","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","callId":"call-2","toolName":"search","summary":"调用 search（展开看参数）","arguments":{"query":"x"},"policy":"always","expiresInSeconds":300}}
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-resolved","payload":{"approvalId":"<id1>","threadId":"11111111-2222-3333-4444-555555555555","status":"denied","reason":"用户拒绝了此次工具调用。","alreadyHandled":false}}
+outcome Denied ("用户拒绝了此次工具调用。", true)
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-requested","payload":{"approvalId":"<id2>","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","callId":"call-3","toolName":"search","summary":"调用 search（展开看参数）","arguments":null,"policy":"always","expiresInSeconds":300}}
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-resolved","payload":{"approvalId":"<id2>","threadId":"11111111-2222-3333-4444-555555555555","status":"cancelled","reason":"生成已取消，审批作废。","alreadyHandled":false}}
+outcome ApprovalCancelled
+reply {"type":"tool.approval-resolved","payload":{"approvalId":"<id2>","threadId":"00000000-0000-0000-0000-000000000000","status":"cancelled","reason":"生成已取消，审批作废。","alreadyHandled":true}}
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-requested","payload":{"approvalId":"<id3>","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","callId":"call-4","toolName":"x","summary":"调用 x（展开看参数）","arguments":{},"policy":"always","expiresInSeconds":300}}
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-resolved","payload":{"approvalId":"<id3>","threadId":"11111111-2222-3333-4444-555555555555","status":"cancelled","reason":"生成已取消，审批作废。","alreadyHandled":false}}
+outcome ApprovalCancelled
+outcome Denied ("这个工具需要先经用户批准，但此刻没有支持审批的客户端在线，所以调用被拒绝。请在支持审批的客户端里打开这个对话后重试。", false)
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-requested","payload":{"approvalId":"<id4>","threadId":"11111111-2222-3333-4444-555555555555","runId":"66666666-7777-8888-9999-000000000000","callId":"call-6","toolName":"x","summary":"调用 x（展开看参数）","arguments":{},"policy":"always","expiresInSeconds":1}}
+broadcast 11111111-2222-3333-4444-555555555555 {"type":"tool.approval-resolved","payload":{"approvalId":"<id4>","threadId":"11111111-2222-3333-4444-555555555555","status":"expired","reason":"审批超时：1 秒内没有人处理，工具调用已自动拒绝。","alreadyHandled":false}}
+outcome Denied ("审批超时：1 秒内没有人处理，工具调用已自动拒绝。", false)

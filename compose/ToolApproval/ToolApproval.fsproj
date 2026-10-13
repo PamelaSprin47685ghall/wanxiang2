@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：工具审批代理。协作者：Approvals（先到者胜的等待表）、Wire（审批事件）、AppConfig（工具策略）、ToolSummary（人话摘要）。
+       命名空间沿用旧仓库 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="ToolApproval.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.Approvals" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolSummary" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

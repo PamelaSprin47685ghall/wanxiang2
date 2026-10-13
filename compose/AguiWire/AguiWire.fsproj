@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：WireEvent ⇄ AG-UI 承载映射。协作者：Wire（语义事件与编解码）、Agui（版本常量与宽容读取）、AGUI.Abstractions。
+       命名空间沿用旧仓库 Wanxiang.Protocol。 -->
+  <ItemGroup>
+    <Compile Include="WireAgui.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AGUI.Abstractions" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Agui" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

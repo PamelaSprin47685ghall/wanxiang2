@@ -1,0 +1,15 @@
+# AguiWire（组合）
+
+把 Wire（语义事件和编解码）与 Agui（版本常量和宽容读取）组合成旧 `Wanxiang.Protocol.WireAgui`：`toAguiEvent`、`encode`、`encodeCommand`、`tryDecode`。命名空间和公开面与旧代码相同。库只以包的形式引用。根规则见项目根目录 AGENTS.md。
+
+# LEMMA
+1. **AG-UI 文本是客户端看到的字节，必须与旧实现一致。** [根 AXIOM: 5]
+    - 推理：PWA 和其他设备的旧版本只认这些字节。
+2. **已知的信息丢失原样保留，改不改等协议升级再定。** [根 AXIOM: 2]
+    - 推理：RUN_FINISHED 不带 durationMs 和 cachedTokens；标准事件解回时缺少对话 id，或用全零 id 补位；畸形错误文本里带 .NET 异常原文。客户端已经适应了这些行为。
+3. **唯一的源码改动是 customDelta 改成按字段传参。** [根 AXIOM: 3]
+    - 推理：匿名记录不能跨程序集标注类型（FS0001），行为不变，金样可以证明。
+
+# SPEC
+1. [LEMMA: 1, 2, 3] `golden/agui.txt` 由旧 WireAgui.fs、Agui/*.fs 跑同一 Scenario 生成，覆盖出站事件、命令、往返和 20 种入站文本，通过。
+2. 迁自旧仓库 WireAguiTests（去掉对客户端工程的引用）：通过，共 35 项。

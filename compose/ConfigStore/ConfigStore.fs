@@ -18,18 +18,17 @@ type ConfigStore private (file: AtomicTextFile, initial: AppConfig, onReloaded: 
         | Ok cfg -> current <- cfg; Ok cfg
         | Error errs -> Error(String.concat "; " errs)
 
-    /// 文件可能变了：采纳有效的外部编辑，报告无效的或被删除的。
+    /// 文件可能变了：重读并采纳有效的配置，报告无效的或被删除的。
     let reload () =
         let outcome =
             lock gate (fun () ->
                 if not file.Exists then Some(Error "config file is missing; keeping the last valid configuration")
                 else
-                    match file.ExternalEdit() with
-                    | None -> None
-                    | Some _ ->
-                        match file.Read() with
-                        | Error e -> Some(Error e)
-                        | Ok text -> Some(adopt text))
+                    // 与旧实现一致：每次通知都重读并重新判定，不因原文与最后已知原文相同而跳过。
+                    // 跳过会漏报：同一份无效原文再次触发时不再报告，监视器读到半截文件后也可能错过最终内容。
+                    match file.Read() with
+                    | Error e -> Some(Error e)
+                    | Ok text -> Some(adopt text))
         match outcome with
         | Some(Ok cfg) -> onReloaded cfg
         | Some(Error e) -> onRejected e

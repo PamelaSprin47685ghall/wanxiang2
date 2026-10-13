@@ -235,3 +235,26 @@ let ``watcher adopts a valid external edit and reports deletion`` () =
         File.Delete path
         Assert.True(rejected.Wait(TimeSpan.FromSeconds 5.0), "deletion not reported")
         Assert.Equal(3, store.Current.generation.maxToolRounds)
+
+// 与旧实现一致：每次重新加载都重读、重判。同一份无效原文再触发一次也要再报告，
+// 不能因为「原文没变」就静默（旧 ConfigStore.reloadFromDisk 无条件读文件）。
+[<Fact>]
+let ``every reload re-reads the file and reports an invalid file again`` () =
+    let dir = Path.Combine(Path.GetTempPath(), "cfgstore-" + Guid.NewGuid().ToString("N"))
+    let path = Path.Combine(dir, "config.toml")
+    let rejected = System.Collections.Concurrent.ConcurrentQueue<string>()
+    match ConfigStore.Open(path, ignore, rejected.Enqueue) with
+    | Error e -> failwith e
+    | Ok store ->
+        use store = store
+        let before = store.Current
+        File.WriteAllText(path, "configVersion = 2\ninvalid = true\n")
+        let n0 = (store.TriggerReload(); rejected.Count)
+        Assert.True(n0 >= 1)
+        store.TriggerReload()
+        Assert.True(rejected.Count > n0, "same invalid text must be reported again")
+        Assert.Equal(before.instanceId, store.Current.instanceId)
+        // 有效原文恢复后照常采纳
+        File.WriteAllText(path, TomlCodec.serialize { before with pairingFreezeMinutes = 41 })
+        store.TriggerReload()
+        Assert.Equal(41, store.Current.pairingFreezeMinutes)

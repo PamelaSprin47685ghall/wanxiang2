@@ -25,3 +25,4 @@
 8. [LEMMA: 2, 4] 监视器采纳有效的外部编辑；文件被删时报告并保留：`watcher adopts a valid external edit and reports deletion`。
 
 1–7 是从旧仓库 `ConfigTests.fs` 原样搬来的 ConfigStore 测试，8 是新加的。
+9. [LEMMA: 2] 每次重新加载都重读并重新判定，与旧实现一致；同一份无效原文再次触发时仍会报告：`every reload re-reads the file and reports an invalid file again`。

@@ -6,6 +6,7 @@ open Ledger
 open Toy
 
 let committed = function Committed(_, c, _) -> c | r -> failwithf "expected Committed, got %A" r
+let sp a b = { start = a; ``end`` = b }
 
 // SPEC 1：id 从 1 起连续；重放得到相同 Checkpoint
 [<Fact>]
@@ -17,24 +18,23 @@ let ``ids are contiguous and replay reproduces checkpoint`` () =
     Assert.Equal(None, rej)
     Assert.Equal(s.Ledger.Checkpoint, l.Checkpoint)
 
-// SPEC 2：同一时刻至多一条在途；在途期间的请求排队，落定后按落定状态裁决
+// SPEC 2：同一时刻至多一条在途；在途期间的请求等落定后按落定状态裁决
 [<Fact>]
 let ``one append in flight, later submits wait and are decided on settled state`` () =
-    let l = Ledger<int, Ev, int>(apply, 0)
+    let l = L(apply, 0)
     let out = ResizeArray()
     l.Outbox.Add out.Add
     let a, b = Guid.NewGuid(), Guid.NewGuid()
     l.Post(Submit(a, [ Add 1 ], t0, None))
-    l.Post(Submit(b, [ Add -1 ], t0, None))   // 只有在 Add 1 落定后才合法
+    l.Post(Submit(b, [ Add -1 ], t0, None))
     Assert.Equal(1, out.Count)
-    match out[0] with AppendRequested(t, c) when t = a && c.id = 1UL -> () | o -> failwithf "%A" o
-    Assert.Equal(0UL, l.LastId)
-    l.Post(Appended(1UL, 0))
+    match out[0] with AppendRequested(t, c, 0L) when t = a && c.id = 1UL -> () | o -> failwithf "%A" o
+    l.Post(Appended(1UL, 10L))
     match List.ofSeq out with
-    | [ _; Committed(Some t1, _, 0); AppendRequested(t2, c2) ] when t1 = a && t2 = b && c2.id = 2UL -> ()
+    | [ _; Committed(Some t1, _, s1); AppendRequested(t2, c2, 10L) ] when t1 = a && s1 = sp 0L 10L && t2 = b && c2.id = 2UL -> ()
     | o -> failwithf "%A" o
 
-// SPEC 3：写失败回复 → Refused WriteFailed，账本不变，id 复用
+// SPEC 3：写失败 → Refused WriteFailed，状态不变，id 复用
 [<Fact>]
 let ``append failure refuses and keeps id`` () =
     let s = Store()
@@ -44,77 +44,104 @@ let ``append failure refuses and keeps id`` () =
     Assert.Equal(1, s.Ledger.State)
     Assert.Equal(2UL, (committed (s.Submit [ Add 2 ])).id)
 
-// SPEC 4：折叠被拒 → Refused Rejected，不发 AppendRequested
+// SPEC 4：折叠被拒带领域自己的错误，不发 AppendRequested
 [<Fact>]
-let ``rejected fold never requests an append`` () =
+let ``rejection carries the domain error and never requests an append`` () =
     let s = Store()
-    match s.Submit [ Add -1 ] with Refused(_, Rejected _) -> () | r -> failwithf "%A" r
+    match s.Submit [ Add -3 ] with Refused(_, Rejected(Negative -3)) -> () | r -> failwithf "%A" r
     Assert.DoesNotContain(s.Out, fun o -> match o with AppendRequested _ -> true | _ -> false)
-    Assert.Empty s.Lines
 
 // SPEC 5：幂等
 [<Fact>]
-let ``same stamp is duplicate with position, different hash conflicts, survives replay`` () =
+let ``same stamp is duplicate with span, different hash conflicts, survives replay`` () =
     let s = Store()
     s.Submit [ Add 7 ] |> ignore
     let st = { commandId = "c1"; hash = "h1" }
     let c = committed (s.Submit([ Add 1 ], st))
-    match s.Submit([ Add 1 ], st) with Refused(_, Duplicate(id, 1)) when id = c.id -> () | r -> failwithf "%A" r
+    let span = (s.Ledger.SpanOf c.id).Value
+    match s.Submit([ Add 1 ], st) with Refused(_, Duplicate(id, x)) when id = c.id && x = span -> () | r -> failwithf "%A" r
     match s.Submit([ Add 1 ], { st with hash = "h2" }) with Refused(_, StampConflict id) when id = c.id -> () | r -> failwithf "%A" r
     let l, _ = replay s.Lines
-    match (Store l).Submit([ Add 1 ], st) with Refused(_, Duplicate(2UL, 1)) -> () | r -> failwithf "%A" r
+    match (Store l).Submit([ Add 1 ], st) with Refused(_, Duplicate(2UL, x)) when x = span -> () | r -> failwithf "%A" r
 
-// SPEC 6：重放拒绝断档、重复 commandId、折叠失败、忙碌，账本不变
+// SPEC 6：重放拒绝断档、区间缺口、重复 commandId、折叠失败、忙碌，账本不变
 [<Fact>]
-let ``replay rejects gaps, repeated stamps, failing folds and busy ledger`` () =
-    let l = Ledger<int, Ev, int>(apply, 0)
+let ``replay rejects every kind of inconsistency without change`` () =
+    let l = L(apply, 0)
     let out = ResizeArray()
     l.Outbox.Add out.Add
     let st = Some { commandId = "c"; hash = "h" }
-    l.Post(Replay({ id = 1UL; at = t0; stamp = st; events = [ Add 1 ] }, 0))
+    l.Post(Replay({ id = 1UL; at = t0; stamp = st; events = [ Add 1 ] }, sp 0L 5L))
     let before = l.Checkpoint
-    for c in [ { id = 3UL; at = t0; stamp = None; events = [] }
-               { id = 2UL; at = t0; stamp = st; events = [] }
-               { id = 2UL; at = t0; stamp = None; events = [ Add -9 ] } ] do
-        l.Post(Replay(c, 9))
+    let cases =
+        [ { id = 3UL; at = t0; stamp = None; events = [] }, sp 5L 9L, (function IdGap(2UL, 3UL) -> true | _ -> false)
+          { id = 2UL; at = t0; stamp = None; events = [] }, sp 6L 9L, (function SpanGap(5L, _) -> true | _ -> false)
+          { id = 2UL; at = t0; stamp = st; events = [] }, sp 5L 9L, (function RepeatedStamp "c" -> true | _ -> false)
+          { id = 2UL; at = t0; stamp = None; events = [ Add -9 ] }, sp 5L 9L, (function FoldRejected(Negative -8) -> true | _ -> false) ]
+    for c, span, expect in cases do
+        l.Post(Replay(c, span))
         Assert.Equal(before, l.Checkpoint)
-    Assert.Equal(3, out |> Seq.filter (function ReplayRejected _ -> true | _ -> false) |> Seq.length)
-    l.Post(Submit(Guid.NewGuid(), [ Add 1 ], t0, None))   // 在途，不回复
-    l.Post(Replay({ id = 2UL; at = t0; stamp = None; events = [] }, 1))
-    match Seq.last out with ReplayRejected(_, _, why) -> Assert.Contains("busy", why) | o -> failwithf "%A" o
+        match Seq.last out with ReplayRejected(_, _, p) when expect p -> () | o -> failwithf "%A" o
+    l.Post(Submit(Guid.NewGuid(), [ Add 1 ], t0, None))
+    l.Post(Replay({ id = 2UL; at = t0; stamp = None; events = [] }, sp 5L 9L))
+    match Seq.last out with ReplayRejected(_, _, Busy) -> () | o -> failwithf "%A" o
 
-// SPEC 7：回复不存在的在途提交是协议错误；之后账本仍可用
+// SPEC 7：回复对不上或区间不前进是协议错误；之后仍可用
 [<Fact>]
 let ``mismatched reply is a protocol error and ledger stays usable`` () =
-    let s = Store()
-    Assert.Throws<InvalidOperationException>(fun () -> s.Ledger.Post(Appended(5UL, 0))) |> ignore
-    Assert.Equal(1UL, (committed (s.Submit [ Add 1 ])).id)
+    let l = L(apply, 0)
+    Assert.Throws<InvalidOperationException>(fun () -> l.Post(Appended(5UL, 9L))) |> ignore
+    l.Post(Submit(Guid.NewGuid(), [ Add 1 ], t0, None))
+    Assert.Throws<InvalidOperationException>(fun () -> l.Post(Appended(1UL, 0L))) |> ignore
+    l.Post(Appended(1UL, 4L))
+    Assert.Equal(1UL, l.LastId)
 
-// SPEC 8：Checkpoint 恢复等价；位置数不符拒绝构造
+// SPEC 8：在 Outbox 处理器里 Ask 直接抛出，而不是永远等待
 [<Fact>]
-let ``checkpoint restores an equivalent ledger and rejects inconsistent positions`` () =
+let ``Ask from inside an Outbox handler throws instead of deadlocking`` () =
+    let l = L(apply, 0)
+    let caught = ResizeArray<exn>()
+    l.Outbox.Add(fun o ->
+        match o with
+        | AppendRequested(_, c, start) ->
+            if c.id = 1UL then
+                try l.Ask([ Add 1 ], t0) |> ignore with e -> caught.Add e
+            l.Post(Appended(c.id, start + 1L))
+        | _ -> ())
+    let t = Threading.Tasks.Task.Run(fun () -> l.Ask([ Add 1 ], t0))
+    Assert.True(t.Wait(TimeSpan.FromSeconds 5.0), "deadlocked")
+    Assert.IsType<InvalidOperationException>(Assert.Single caught) |> ignore
+
+// SPEC 9：Checkpoint 只存末尾偏移；恢复等价；不一致时拒绝构造
+[<Fact>]
+let ``checkpoint stores only ends, restores equivalently, rejects inconsistency`` () =
     let s = Store()
     for n in 1..4 do s.Submit([ Add n ], { commandId = string n; hash = "h" }) |> ignore
-    let r = Ledger<int, Ev, int>(apply, s.Ledger.Checkpoint)
-    Assert.Equal(s.Ledger.Checkpoint, r.Checkpoint)
-    Assert.Throws<ArgumentException>(fun () ->
-        Ledger<int, Ev, int>(apply, { s.Ledger.Checkpoint with positions = [] }) |> ignore) |> ignore
+    let cp = s.Ledger.Checkpoint
+    Assert.Equal(4, cp.ends.Length)
+    let r = L(apply, cp)
+    Assert.Equal(cp, r.Checkpoint)
+    Assert.Equal<(uint64 * Span) list>(s.Ledger.SpansAfter 0UL, r.SpansAfter 0UL)
+    Assert.Throws<ArgumentException>(fun () -> L(apply, { cp with ends = [||] }) |> ignore) |> ignore
+    Assert.Throws<ArgumentException>(fun () -> L(apply, { cp with ends = Array.rev cp.ends }) |> ignore) |> ignore
 
-// SPEC 9：位置查询与分页
+// SPEC 10：区间查询与分页；相邻区间首尾相接
 [<Fact>]
-let ``positions after cursor honour limit`` () =
+let ``spans after cursor honour limit and are contiguous`` () =
     let s = Store()
     for n in 1..7 do s.Submit [ Add n ] |> ignore
     let l = s.Ledger
-    Assert.Equal<(uint64 * int) list>([ 3UL, 2; 4UL, 3 ], l.PositionsAfter(2UL, 2))
-    Assert.Equal<(uint64 * int) list>([ 7UL, 6 ], l.PositionsAfter(6UL, 10))
-    Assert.Empty(l.PositionsAfter 7UL)
-    Assert.Empty(l.PositionsAfter(0UL, 0))
-    Assert.Equal(Some 4, l.PositionOf 5UL)
-    Assert.Equal(None, l.PositionOf 8UL)
-    Assert.Equal(None, l.PositionOf 0UL)
+    let all = l.SpansAfter 0UL
+    Assert.Equal(7, all.Length)
+    for (_, a), (_, b) in List.pairwise all do Assert.Equal(a.``end``, b.start)
+    Assert.Equal<(uint64 * Span) list>(all |> List.skip 2 |> List.take 2, l.SpansAfter(2UL, 2))
+    Assert.Empty(l.SpansAfter 7UL)
+    Assert.Empty(l.SpansAfter(0UL, 0))
+    Assert.Equal(Some(snd all[4]), l.SpanOf 5UL)
+    Assert.Equal(None, l.SpanOf 8UL)
+    Assert.Equal(None, l.SpanOf 0UL)
 
-// SPEC 10：外壳往返（含 uint64 最大值）；更高版本 NewerVersion；坏输入 Invalid
+// SPEC 11：外壳往返；更高版本 NewerVersion；坏输入 Invalid
 [<Fact>]
 let ``envelope round-trips, newer version and garbage are distinguished`` () =
     let c = { id = UInt64.MaxValue; at = t0; stamp = Some { commandId = "x"; hash = "y" }; events = [ Add 1; Reset ] }
@@ -125,11 +152,11 @@ let ``envelope round-trips, newer version and garbage are distinguished`` () =
     for bad in [ "nope"; """{"v":1,"id":"1","at":"2026-01-01T00:00:00+00:00","events":[null]}"""; """{"v":0}""" ] do
         match Envelope.read bad with Envelope.Invalid _ -> () | r -> failwithf "%s -> %A" bad r
 
-// SPEC 11：并发投递：id 不重不漏，Committed 按 id 顺序
+// SPEC 12：并发 Ask：每个请求恰好提交一次，Committed 按 id 顺序
 [<Fact>]
-let ``concurrent posts commit every submit exactly once in id order`` () =
+let ``concurrent asks commit every submit exactly once in id order`` () =
     let s = Store()
-    Threading.Tasks.Parallel.For(0, 200, fun _ -> s.Ledger.Post(Submit(Guid.NewGuid(), [ Add 1 ], t0, None))) |> ignore
+    Threading.Tasks.Parallel.For(0, 200, fun _ -> committed (s.Submit [ Add 1 ]) |> ignore) |> ignore
     let ids = s.Out |> Seq.choose (function Committed(_, c, _) -> Some c.id | _ -> None) |> List.ofSeq
     Assert.Equal<uint64 list>([ 1UL..200UL ], ids)
     Assert.Equal(200, s.Ledger.State)

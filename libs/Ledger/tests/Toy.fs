@@ -24,53 +24,57 @@ let ofJson (c: Commit<JsonNode>) : Result<Commit<Ev>, string> =
     | Some e -> Error e
     | None -> Ok(c |> Commit.map (fun n -> match readEv n with Ok e -> e | Error e -> failwith e))
 
-/// 计数器不允许为负：用来测试折叠拒绝。
-let apply (s: int) (c: Commit<Ev>) : Result<int, string> =
+/// 计数器不允许为负：用来测试折叠拒绝。错误类型是领域自己的。
+type ToyError = Negative of int
+
+let apply (s: int) (c: Commit<Ev>) : Result<int, ToyError> =
     let s' = c.events |> List.fold (fun acc e -> match e with Add n -> acc + n | Reset -> 0) s
-    if s' < 0 then Error "negative" else Ok s'
+    if s' < 0 then Error(Negative s') else Ok s'
 
 let t0 = DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
 
-/// 玩具组装：只做消息路由。账本要求写入 -> 写进列表 -> 回复 Appended。
-/// failNext：让下一次写入回复 AppendFailed。
-type Store(?ledger: Ledger<int, Ev, int>) =
-    let ledger = defaultArg ledger (Ledger<int, Ev, int>(apply, 0))
-    let lines = ResizeArray<string>()
-    let out = ResizeArray<LedgerOut<Ev, int>>()
+type L = Ledger<int, Ev, ToyError>
+
+/// 玩具组装：只做消息路由。介质是一串 (起点, 文本)，偏移按文本长度累加。
+type Store(?ledger: L) =
+    let ledger = defaultArg ledger (L(apply, 0))
+    let lines = ResizeArray<int64 * string>()
+    let out = ResizeArray<LedgerOut<Ev, ToyError>>()
     let mutable failNext = false
     do
         ledger.Outbox.Add(fun o ->
-            out.Add o
+            lock out (fun () -> out.Add o)
             match o with
-            | AppendRequested(_, c) ->
+            | AppendRequested(_, c, start) ->
                 if failNext then
                     failNext <- false
                     ledger.Post(AppendFailed(c.id, "disk full"))
                 else
-                    lines.Add(Envelope.write (Commit.map writeEv c))
-                    ledger.Post(Appended(c.id, lines.Count - 1))
+                    let text = Envelope.write (Commit.map writeEv c)
+                    lines.Add(start, text)
+                    ledger.Post(Appended(c.id, start + int64 text.Length))
             | _ -> ())
     member _.Ledger = ledger
     member _.Lines = lines
     member _.Out = out
     member _.FailNext() = failNext <- true
-    /// 提交并返回本 ticket 的最终回复（Committed 或 Refused）。
     member _.Submit(events, ?stamp) =
-        let t = Guid.NewGuid()
-        ledger.Post(Submit(t, events, t0, stamp))
-        out |> Seq.find (function Committed(Some x, _, _) | Refused(x, _) when x = t -> true | _ -> false)
+        match stamp with
+        | Some s -> ledger.Ask(events, t0, s)
+        | None -> ledger.Ask(events, t0)
 
-/// 把文本行重放进一个新账本，返回账本与第一个 ReplayRejected（若有）。
-let replay (lines: string seq) =
-    let l = Ledger<int, Ev, int>(apply, 0)
+/// 把介质重放进一个新账本，返回账本与第一个 ReplayRejected（若有）。
+let replay (lines: (int64 * string) seq) =
+    let l = L(apply, 0)
     let rejected = ResizeArray()
-    l.Outbox.Add(function ReplayRejected(_, p, why) -> rejected.Add(p, why) | _ -> ())
-    lines |> Seq.iteri (fun i line ->
+    l.Outbox.Add(function ReplayRejected(_, sp, p) -> rejected.Add(sp, sprintf "%A" p) | _ -> ())
+    for start, line in lines do
         if rejected.Count = 0 then
+            let sp = { start = start; ``end`` = start + int64 line.Length }
             match Envelope.read line with
             | Envelope.Parsed cj ->
                 match ofJson cj with
-                | Ok c -> l.Post(Replay(c, i))
-                | Error e -> rejected.Add(i, e)
-            | other -> rejected.Add(i, sprintf "%A" other))
+                | Ok c -> l.Post(Replay(c, sp))
+                | Error e -> rejected.Add(sp, e)
+            | other -> rejected.Add(sp, sprintf "%A" other)
     l, Seq.tryHead rejected

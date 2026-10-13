@@ -1,0 +1,89 @@
+== healthy
+listen-port|true|free
+provider-config|false|x: enabled but no apiKey
+mcp-config|false|s: enabled command not found: /no/such/cmd
+format-version|true|event shell formatVersion=1 (single authority)
+disk-free-space|true|<n> MiB free
+data-permissions|true|0700
+data-lock|true|free
+snapshot|true|no snapshot (full replay on next start)
+recovery-bundle|true|none (no repair has been run)
+log-replay|true|healthy through commit 3
+missing-attachments|false|1 referenced blob(s) missing
+orphan-attachments|false|1 unreferenced blob(s)
+config|true|ok
+healthy false
+snapshot no snapshot (full replay on next start)
+replayError 
+configErrors []
+[{"name":"listen-port","ok":true,"detail":"free"},{"name":"provider-config","ok":false,"detail":"x: enabled but no apiKey"},{"name":"mcp-config","ok":false,"detail":"s: enabled command not found: ***"},{"name":"format-version","ok":true,"detail":"event shell formatVersion=1 (single authority)"},{"name":"disk-free-space","ok":true,"detail":"<n> MiB free"},{"name":"data-permissions","ok":true,"detail":"0700"},{"name":"data-lock","ok":true,"detail":"free"},{"name":"snapshot","ok":true,"detail":"no snapshot (full replay on next start)"},{"name":"recovery-bundle","ok":true,"detail":"none (no repair has been run)"},{"name":"log-replay","ok":true,"detail":"healthy through commit 3"},{"name":"missing-attachments","ok":false,"detail":"1 referenced blob(s) missing"},{"name":"orphan-attachments","ok":false,"detail":"1 unreferenced blob(s)"},{"name":"config","ok":true,"detail":"ok"}]
+== live
+listen-port|true|listening on 127.0.0.1:1 (this host)
+provider-config|false|x: enabled but no apiKey
+mcp-config|false|s: enabled command not found: /no/such/cmd
+format-version|true|event shell formatVersion=1 (single authority)
+disk-free-space|true|<n> MiB free
+data-permissions|true|0700
+data-lock|true|held by this host
+snapshot|true|no snapshot (full replay on next start)
+recovery-bundle|true|none (no repair has been run)
+log-replay|true|healthy through commit 3
+missing-attachments|false|1 referenced blob(s) missing
+orphan-attachments|false|1 unreferenced blob(s)
+config|true|ok
+healthy false
+snapshot no snapshot (full replay on next start)
+replayError 
+configErrors []
+== damaged
+listen-port|true|free
+provider-config|false|x: enabled but no apiKey
+mcp-config|false|s: enabled command not found: /no/such/cmd
+format-version|true|event shell formatVersion=1 (single authority)
+disk-free-space|true|<n> MiB free
+data-permissions|true|0700
+data-lock|true|free
+snapshot|true|no snapshot (full replay on next start)
+recovery-bundle|true|none (no repair has been run)
+log-replay|false|damaged log at <dir>/ledger/log.jsonseq (torn record (no trailing LF)); valid prefix through commit 3. Run `wanxiang doctor --fix` to repair (a recovery bundle will be created first).
+missing-attachments|true|skipped (log damaged)
+orphan-attachments|true|skipped (log damaged)
+config|true|ok
+healthy false
+snapshot no snapshot (full replay on next start)
+replayError damaged log at <dir>/ledger/log.jsonseq (torn record (no trailing LF)); valid prefix through commit 3. Run `wanxiang doctor --fix` to repair (a recovery bundle will be created first).
+configErrors []
+{"applicationVersion":"wanxiang","formatVersion":1,"createdAt":"\u003Ctime\u003E","damageFile":"<dir>/ledger/log.jsonseq","damageOffset":986,"reason":"torn record (no trailing LF)","files":[{"path":"<dir>/ledger/log.jsonseq","sha256":"f54421eb0f85a0cf07d26f36ea221528d47310697240aeb12d943dc33c3eb9ab","size":995}],"plannedActions":[{"path":"<dir>/ledger/log.jsonseq","action":"truncate","offset":986}]}
+{"damage":{"file":"<dir>/ledger/log.jsonseq","offset":986,"reason":"torn record (no trailing LF)"},"affectedFiles":[{"path":"<dir>/ledger/log.jsonseq","sha256":"f54421eb0f85a0cf07d26f36ea221528d47310697240aeb12d943dc33c3eb9ab","size":995}]}
+Ok ["<dir>/ledger/log.jsonseq"]
+== repaired
+listen-port|true|free
+provider-config|false|x: enabled but no apiKey
+mcp-config|false|s: enabled command not found: /no/such/cmd
+format-version|true|event shell formatVersion=1 (single authority)
+disk-free-space|true|<n> MiB free
+data-permissions|true|0700
+data-lock|true|free
+snapshot|true|no snapshot (full replay on next start)
+recovery-bundle|true|evidence bundle(s) present
+log-replay|true|healthy through commit 3
+missing-attachments|false|1 referenced blob(s) missing
+orphan-attachments|false|1 unreferenced blob(s)
+config|true|ok
+healthy false
+snapshot no snapshot (full replay on next start)
+replayError 
+configErrors []
+== legacy + no config
+format-version|true|event shell formatVersion=1 (single authority)
+disk-free-space|true|<n> MiB free
+data-permissions|true|0700
+data-lock|true|free
+snapshot|true|no snapshot (full replay on next start)
+recovery-bundle|true|evidence bundle(s) present
+log-replay|false|found 1 legacy event log(s) in events/ that this version does not read (the ledger is ledger/log.jsonseq). Archive or remove: 2025-01-01.jsonseq
+config|false|config file not found: <dir>/config.toml
+healthy false
+snapshot no snapshot (full replay on next start)
+replayError found 1 legacy event log(s) in events/ that this version does not read (the ledger is ledger/log.jsonseq). Archive or remove: 2025-01-01.jsonseq
+configErrors ["config file not found: <dir>/config.toml"]

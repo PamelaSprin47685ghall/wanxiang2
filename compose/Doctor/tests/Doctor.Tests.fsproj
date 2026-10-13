@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- 原样迁自旧仓库的测试保持原文以便对照。 -->
+    <NoWarn>$(NoWarn);FS0025;FS1182</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Scenario.fs" />
+    <Compile Include="GoldenTests.fs" />
+    <Compile Include="Helpers.fs" />
+    <Compile Include="DoctorInspectTests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <ProjectReference Include="../Doctor.fsproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：只读诊断 doctor。协作者：EventStore（日志检查结论）、Attachments（附件是否存在）、AppConfig（配置）、
+       ChatDomain（投影、格式版本）、DirLock（数据锁）、HostProbe（端口、磁盘、权限）、AttachmentRefs（消息里的附件引用）；SupportBundle 另用 Agui（协议版本）、HostLog（最近错误）。
+       命名空间沿用旧仓库 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="Doctor.fs" />
+    <Compile Include="SupportBundle.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.EventStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Attachments" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DirLock" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostProbe" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AttachmentRefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Agui" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostLog" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

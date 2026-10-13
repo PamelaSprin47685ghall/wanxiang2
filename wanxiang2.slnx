@@ -23,6 +23,10 @@
     <Project Path="libs/AttachmentBlobs/AttachmentBlobs.fsproj" />
     <Project Path="libs/AttachmentBlobs/tests/AttachmentBlobs.Tests.fsproj" />
   </Folder>
+  <Folder Name="/AttachmentRefs/">
+    <Project Path="libs/AttachmentRefs/AttachmentRefs.fsproj" />
+    <Project Path="libs/AttachmentRefs/tests/AttachmentRefs.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Canonical/">
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
@@ -54,6 +58,10 @@
   <Folder Name="/Gemini/">
     <Project Path="libs/Gemini/Gemini.fsproj" />
     <Project Path="libs/Gemini/tests/Gemini.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostProbe/">
+    <Project Path="libs/HostProbe/HostProbe.fsproj" />
+    <Project Path="libs/HostProbe/tests/HostProbe.Tests.fsproj" />
   </Folder>
   <Folder Name="/HttpRetry/">
     <Project Path="libs/HttpRetry/HttpRetry.fsproj" />

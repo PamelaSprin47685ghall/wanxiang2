@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：对话事件存储。协作者：LedgerStore（写序、健康、快照、锁、修复）、ChatDomain（事件、投影、错误）。
+       这里只有类型映射、目录布局和修复证据包。命名空间沿用旧仓库 Wanxiang.Store。 -->
+  <ItemGroup>
+    <Compile Include="DataPaths.fs" />
+    <Compile Include="Store.fs" />
+    <Compile Include="RecoveryBundle.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.LedgerStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

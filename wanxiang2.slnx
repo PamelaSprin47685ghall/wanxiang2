@@ -1,4 +1,12 @@
 <Solution>
+  <Folder Name="/AppConfig/">
+    <Project Path="libs/AppConfig/AppConfig.fsproj" />
+    <Project Path="libs/AppConfig/tests/AppConfig.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AtomicTextFile/">
+    <Project Path="libs/AtomicTextFile/AtomicTextFile.fsproj" />
+    <Project Path="libs/AtomicTextFile/tests/AtomicTextFile.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Canonical/">
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />

@@ -149,7 +149,7 @@
 ## 证据现状（对应上文 SPEC）
 
 - SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。[TODO] 没有机器检查引用编号；靠评审。
-- SPEC 2 职责与交付独立：构建独立、协作独立由 `./x check` 与 `./x test <lib>` 给出，5 个库全部通过；交付独立由 `./x compose` 给出（干净包缓存、只用 `artifacts/feed` 中的包），通过；`Wanxiang2.LedgerStore` 也已在仓库外的临时项目里消费过一次（手动）。[TODO] 仓库外消费没有自动化。
+- SPEC 2 职责与交付独立：构建独立、协作独立由 `./x check` 与 `./x test <lib>` 给出，每个库都通过；交付独立由 `./x compose` 给出（干净包缓存、只用 `artifacts/feed` 中的包），通过；`Wanxiang2.LedgerStore` 也已在仓库外的临时项目里消费过一次（手动）。[TODO] 仓库外消费没有自动化。
 - SPEC 3 状态确有主人：Ledger 与 compose/LedgerStore 测了输入、返回值别名、错误后的状态、实例隔离（见各自 AGENTS.md）。[TODO] JsonSeqFile、SnapshotFile、DirLock 的状态只有文件本身，没有单独的别名测试。
 - SPEC 4 协作由真实组合证明：`compose/LedgerStore/tests` 覆盖成功、类型化拒绝、重复、游标分页、在每个字节处崩溃、半写尾与修复、解码失败、过期快照、快照策略与快照写失败、真实未知结果（`/dev/full`）、并发、同目录互斥。[TODO] 「写失败但确知未写」没有真实故障可触发。
 - SPEC 5 增强经得起拆除：目前没有增强层，不适用。
@@ -160,3 +160,19 @@
 | 职责 | 独立能力 | 接入旧仓库并退出旧实现 |
 | --- | --- | --- |
 | 事件账本（JsonSeq、Ledger、Snapshot、DirLock、Canonical，组合 LedgerStore） | 完成：5 个库和 `Wanxiang2.LedgerStore` 交付包各自测试通过，真实组合测试通过 | 已接线：旧仓库分支 `extract-ledger@84017ef` 消费交付包，旧 Replay/Coordinator 已退出，旧仓库 Release 全量 1484 通过、0 失败、1 跳过。[TODO] 合入旧仓库 `main` |
+| 配置（AtomicTextFile、AppConfig，组合 ConfigStore） | 完成：两个库和 `Wanxiang2.ConfigStore` 交付包测试通过；旧 `ConfigTests.fs` 中 ConfigStore 和格式部分（34 个）已搬来并通过 | 未开始：旧仓库删掉 `src/Wanxiang.Config/{ConfigModel,TomlCodec,ConfigStore}.fs`，改为引用 `Wanxiang2.ConfigStore` 包；命名空间与 API 不变 |
+
+## 抽取路线（按顺序，可修订）
+
+按「独立、价值大、调用面小」排序。每一项都要同时完成独立能力、接线、旧实现退出三步。
+
+1. 账本：已接线，待合入旧 `main`。
+2. 配置：本轮完成独立能力。
+3. 认证与配对（旧 `Config/Auth.fs`）：令牌、配对码会话、失败冻结计数器，拆成独立对象。
+4. 线协议（旧 `Protocol/WireEvent.fs`、`WireCodec.fs`，约 1.5k 行）：纯编解码库。
+5. 领域状态与命令（旧 `Core/Types.fs`、`CommandEngine.fs` 以及投影）：账本的 `apply` 和领域事件类型，成为具体的领域库。
+6. 模型提供方传输（旧 `Agent/*Transport.fs`、`*Request.fs`）：每家一个库，加一个流式解析的公共部分（等第二个实例出现再抽）。
+7. MCP 客户端与传输（旧 `Server/McpTransport.fs`、`McpClient.fs`）。
+8. 服务端编排（旧 `ChatOrchestrator`、`ToolApproval`、`WsConnection`、`ServerApp`）：拆成组合者，参与者是前面各库。
+9. 客户端（旧 `Client/WsClient.fs`）。
+10. UI（约 26k 行）：先抽纯模型（`DraftStore`、`Catalog`、`ConversationSummary`），视图最后处理。

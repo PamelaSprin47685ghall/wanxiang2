@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者 C：依赖 AtomicTextFile、AppConfig 的交付包（./x pack 产出），不引用其源码。 -->
+  <ItemGroup>
+    <Compile Include="ConfigStore.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.AtomicTextFile" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

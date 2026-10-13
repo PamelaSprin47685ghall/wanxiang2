@@ -2,7 +2,7 @@
 
 组合者 C：配对柜台。用 `PairingCodes`、`FailureLimiter`、`ClientToken`、`DesktopClient` 组成「设备凭码换令牌」这一段合作。只经交付包使用这四个库，本目录打成包 `Wanxiang2.PairingDesk`。根规则见项目根目录 AGENTS.md。
 
-公开面：`PairingDesk(limits, codeLifetime)`：`Request(now, address) : RequestOutcome`、`Invite(now, deviceName, revoked, address, lifetime)`、`ActiveInvite now`、`Attempt(now, address, code, requestedName, requested) : AttemptOutcome`、`Paired address`、`Reconfigure limits`。
+公开面：`PairingDesk(limits, codeLifetime)`：`Request(now, address) : RequestOutcome`、`Invite(now, deviceName, revoked, address, lifetime)`、`ActiveInvite now`、`Attempt(now, address, code, requestedName, requested) : AttemptOutcome`、`RecordFailure(now, address)`、`Paired address`、`Reconfigure limits`。
 
 # LEMMA
 1. **C 拥有顺序。** [根 LEMMA: 4]
@@ -20,4 +20,5 @@
 4. [LEMMA: 3] 只有本机桌面客户端能发邀请；有效邀请被沿用；扫码的设备不先请求也能直接用邀请码，且取不到保留名：`only the local desktop client can invite; ...`。
 5. 没请求也没邀请时，提交的码被忽略：`attempt without request or invite is ignored`。
 6. `Reconfigure` 让新的限额生效：`reconfigure applies new limits`。
-7. [TODO] 宿主侧「持久化失败时不发令牌」的证据要在旧仓库接线时补上。
+7. [LEMMA: 1] 与码无关的失败（未认证的连接要求发邀请）通过 `RecordFailure` 计入同一个限额，与旧 WsConnection 一致：`unauthenticated invites count toward the same limit as wrong codes`。
+8. [TODO] 宿主侧「持久化失败时不发令牌」的证据要在旧仓库接线时补上。

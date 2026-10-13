@@ -68,5 +68,12 @@ type PairingDesk(limits: Limits, codeLifetime: TimeSpan) =
                         let froze = limiter.RecordFailure(now, address)
                         Refused(e.Describe(), (if froze then limiter.FrozenUntil(now, address) else None)))
 
+    /// 记一次与配对码无关的失败（例如未认证的连接要求发邀请），与错码共用同一个限额。
+    /// 返回这个地址此刻的冻结截止时间；没被冻结时为 None。
+    member _.RecordFailure(now: DateTimeOffset, address: string) : DateTimeOffset option =
+        lock gate (fun () ->
+            limiter.RecordFailure(now, address) |> ignore
+            limiter.FrozenUntil(now, address))
+
     /// 宿主已持久化 Accepted 的令牌哈希：清掉这个地址的失败记录。
     member _.Paired(address: string) = lock gate (fun () -> limiter.Clear address)

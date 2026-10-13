@@ -72,3 +72,22 @@ let ``reconfigure applies new limits`` () =
     let code = codeOf (d.Request(now, "a"))
     let wrong = if code = "000000" then "000001" else "000000"
     match d.Attempt(now, "a", wrong, None, true) with Refused(_, Some _) -> () | o -> failwithf "%A" o
+
+// 旧 WsConnection：未认证的连接要求发邀请时记一次失败，并且与错码共用同一个限额。
+[<Fact>]
+let ``unauthenticated invites count toward the same limit as wrong codes`` () =
+    let d = desk ()
+    let code = codeOf (d.Request(now, "10.0.0.9"))
+    Assert.Equal(None, d.RecordFailure(now, "10.0.0.9"))
+    match d.Attempt(now, "10.0.0.9", "000000", None, true) with
+    | Refused(_, None) -> ()
+    | o -> failwithf "%A" o
+    let until = d.RecordFailure(now, "10.0.0.9")
+    Assert.Equal(Some(now + limits.freeze), until)
+    match d.Request(now, "10.0.0.9") with
+    | Frozen _ -> ()
+    | o -> failwithf "%A" o
+    match d.Attempt(now, "10.0.0.9", code, None, true) with
+    | Refused("frozen", Some _) -> ()
+    | o -> failwithf "%A" o
+    Assert.Equal(None, d.RecordFailure(now, "10.0.0.10"))

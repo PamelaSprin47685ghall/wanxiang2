@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="Frame.fs" />
+    <Compile Include="JsonSeqFile.fs" />
+  </ItemGroup>
+</Project>

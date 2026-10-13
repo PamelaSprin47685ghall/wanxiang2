@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/JsonSeq/">
+    <Project Path="libs/JsonSeq/JsonSeq.fsproj" />
+    <Project Path="libs/JsonSeq/tests/JsonSeq.Tests.fsproj" />
+  </Folder>
+</Solution>

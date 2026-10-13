@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Helpers.fs" />
+    <Compile Include="CodecTests.fs" />
+    <Compile Include="CoreTests.fs" />
+    <Compile Include="ForkTests.fs" />
+    <Compile Include="ProjectionInvariantsTests.fs" />
+    <Compile Include="CompositionTests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <ProjectReference Include="../ChatDomain.fsproj" />
+  </ItemGroup>
+</Project>

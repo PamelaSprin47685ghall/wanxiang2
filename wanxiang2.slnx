@@ -15,6 +15,14 @@
     <Project Path="libs/ClientToken/ClientToken.fsproj" />
     <Project Path="libs/ClientToken/tests/ClientToken.Tests.fsproj" />
   </Folder>
+  <Folder Name="/CommandId/">
+    <Project Path="libs/CommandId/CommandId.fsproj" />
+    <Project Path="libs/CommandId/tests/CommandId.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Conversations/">
+    <Project Path="libs/Conversations/Conversations.fsproj" />
+    <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
+  </Folder>
   <Folder Name="/DesktopClient/">
     <Project Path="libs/DesktopClient/DesktopClient.fsproj" />
     <Project Path="libs/DesktopClient/tests/DesktopClient.Tests.fsproj" />
@@ -39,9 +47,17 @@
     <Project Path="libs/PairingCode/PairingCode.fsproj" />
     <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
   </Folder>
+  <Folder Name="/PlainText/">
+    <Project Path="libs/PlainText/PlainText.fsproj" />
+    <Project Path="libs/PlainText/tests/PlainText.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />
     <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolSummary/">
+    <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
+    <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
   </Folder>
   <Folder Name="/Wire/">
     <Project Path="libs/Wire/Wire.fsproj" />

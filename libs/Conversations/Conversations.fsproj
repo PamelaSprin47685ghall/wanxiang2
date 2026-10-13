@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="Events.fs" />
+    <Compile Include="Conversations.fs" />
+    <Compile Include="EventJson.fs" />
+    <Compile Include="ProjectionJson.fs" />
+  </ItemGroup>
+</Project>

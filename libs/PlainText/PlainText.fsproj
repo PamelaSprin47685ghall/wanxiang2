@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="PlainText.fs" />
+  </ItemGroup>
+</Project>

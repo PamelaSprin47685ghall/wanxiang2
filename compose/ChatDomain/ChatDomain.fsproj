@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：会话领域（Conversations）+ 线协议（Wire）+ 幂等标识（CommandId）+ 规范化（Canonical）。
+       命名空间沿用旧仓库 Wanxiang.Core，旧调用点不用改。 -->
+  <ItemGroup>
+    <Compile Include="Domain.fs" />
+    <Compile Include="Events.fs" />
+    <Compile Include="CommitCodec.fs" />
+    <Compile Include="Projection.fs" />
+    <Compile Include="CommandEngine.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Conversations" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandId" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Canonical" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

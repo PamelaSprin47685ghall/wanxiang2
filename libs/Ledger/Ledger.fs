@@ -1,28 +1,21 @@
 namespace Ledger
 
 open System
-open System.Collections.Generic
-open System.Threading
-open System.Threading.Tasks
 
-/// 事件账本 actor：私有状态为领域状态、id 序列、幂等索引、区间索引、在途提交与等待队列。
-/// 只通过 Post / Ask 接收 LedgerIn，只通过 Outbox 发出 LedgerOut；不碰磁盘、不读时钟、不调用任何外部对象。
-/// 消息逐条处理（邮箱 + 蹦床）：在 Outbox 处理器里再 Post 只是入队，不会重入。
+/// 事件账本。私有状态：领域状态、id 序列、幂等索引、区间索引、至多一条未落定的提议。
+/// 普通同步对象：不碰磁盘、不读时钟、不知道谁来持久化。不是线程安全的；并发由持有它的组合者串行化。
+///
+/// 协议（组合者 C 安排顺序）：
+///   Propose → Proposed c → C 持久化 c → Record(c, span)  —— 成立
+///                                     → Abandon()        —— C 确知没写入
+///   重放：对介质里的每条提交 Record(c, span)。
+/// 结果未知（不知道写没写进去）时 C 既不 Record 也不 Abandon：丢弃本实例，从介质重建。
 type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Checkpoint<'S>) =
-    let gate = obj ()
-    let mailbox = Queue<LedgerIn<'E>>()
-    /// 正在排空邮箱的线程 id；0 = 无
-    let mutable drainer = 0
-    let outbox = Event<LedgerOut<'E, 'Err>>()
-    /// Ask 的等待者：ticket -> 回复
-    let askers = Dictionary<Guid, TaskCompletionSource<LedgerOut<'E, 'Err>>>()
-
     let mutable state = from.state
     let mutable lastId = from.throughId
     let mutable stamps = from.stamps
     let ends = ResizeArray<int64>(from.ends)
-    let mutable inFlight : (Guid * Commit<'E> * 'S) option = None
-    let waiting = Queue<Guid * 'E list * DateTimeOffset * Stamp option>()
+    let mutable pending : (Commit<'E> * 'S) option = None
 
     do
         if uint64 ends.Count <> from.throughId then
@@ -36,145 +29,74 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
         let i = int id - 1
         { start = (if i = 0 then from.origin else ends[i - 1]); ``end`` = ends[i] }
 
-    let record (c: Commit<'E>) (s: 'S) (endOffset: int64) =
-        state <- s
-        lastId <- c.id
-        ends.Add endOffset
-        match c.stamp with
-        | Some st -> stamps <- stamps |> Map.add st.commandId (st.hash, c.id)
-        | None -> ()
-
-    let rec decideNext (emit: LedgerOut<'E, 'Err> -> unit) =
-        if inFlight.IsNone && waiting.Count > 0 then
-            let ticket, events, at, stamp = waiting.Dequeue()
-            let seen = stamp |> Option.bind (fun s -> stamps |> Map.tryFind s.commandId |> Option.map (fun v -> s, v))
-            match seen with
-            | Some(s, (h, id)) when h = s.hash -> emit (Refused(ticket, Duplicate(id, spanOf id))); decideNext emit
-            | Some(_, (_, id)) -> emit (Refused(ticket, StampConflict id)); decideNext emit
-            | None ->
-                let c = { id = lastId + 1UL; at = at; stamp = stamp; events = events }
-                match apply state c with
-                | Error e -> emit (Refused(ticket, Rejected e)); decideNext emit
-                | Ok s ->
-                    inFlight <- Some(ticket, c, s)
-                    emit (AppendRequested(ticket, c, tail ()))
-
-    let handle (msg: LedgerIn<'E>) (emit: LedgerOut<'E, 'Err> -> unit) =
-        match msg with
-        | Submit(t, evs, at, st) ->
-            waiting.Enqueue(t, evs, at, st)
-            decideNext emit
-        | Appended(id, endOffset) ->
-            match inFlight with
-            | Some(t, c, s) when c.id = id ->
-                let start = tail ()
-                if endOffset <= start then invalidOp (sprintf "Appended %d ends at %d, not after %d" id endOffset start)
-                inFlight <- None
-                record c s endOffset
-                emit (Committed(Some t, c, { start = start; ``end`` = endOffset }))
-                decideNext emit
-            | _ -> invalidOp (sprintf "Appended %d does not match the commit in flight" id)
-        | AppendFailed(id, reason) ->
-            match inFlight with
-            | Some(t, c, _) when c.id = id ->
-                inFlight <- None
-                emit (Refused(t, WriteFailed reason))
-                decideNext emit
-            | _ -> invalidOp (sprintf "AppendFailed %d does not match the commit in flight" id)
-        | Replay(c, span) ->
-            let refuse p = emit (ReplayRejected(c, span, p))
-            if inFlight.IsSome || waiting.Count > 0 then refuse Busy
-            elif c.id <> lastId + 1UL then refuse (IdGap(lastId + 1UL, c.id))
-            elif span.start <> tail () || span.``end`` <= span.start then refuse (SpanGap(tail (), span))
-            elif c.stamp |> Option.exists (fun s -> stamps.ContainsKey s.commandId) then refuse (RepeatedStamp c.stamp.Value.commandId)
-            else
-                match apply state c with
-                | Error e -> refuse (FoldRejected e)
-                | Ok s ->
-                    record c s span.``end``
-                    emit (Committed(None, c, span))
-
-    let deliver (o: LedgerOut<'E, 'Err>) =
-        outbox.Trigger o
-        let ticket =
-            match o with
-            | Committed(Some t, _, _) | Refused(t, _) -> Some t
-            | _ -> None
-        match ticket with
-        | Some t ->
-            let waiter =
-                lock gate (fun () ->
-                    match askers.TryGetValue t with
-                    | true, w -> askers.Remove t |> ignore; Some w
-                    | _ -> None)
-            waiter |> Option.iter (fun (w: TaskCompletionSource<LedgerOut<'E, 'Err>>) -> w.SetResult o)
-        | None -> ()
-
     /// 空账本，介质从偏移 origin 开始（通常为 0）。
     new(apply, initial: 'S, ?origin: int64) =
         Ledger<'S, 'E, 'Err>(apply, { state = initial; throughId = 0UL; stamps = Map.empty; origin = defaultArg origin 0L; ends = [||] })
 
-    /// 发出的消息。处理器在排空邮箱的线程上同步执行。
-    [<CLIEvent>]
-    member _.Outbox = outbox.Publish
+    /// 裁决下一条提交。Proposed 之后，在 Record 或 Abandon 之前再次 Propose 是组合者的程序错误，抛出。
+    member _.Propose(events: 'E list, at: DateTimeOffset, ?stamp: Stamp) : Decision<'E, 'Err> =
+        match pending with
+        | Some(c, _) -> invalidOp (sprintf "proposal %d is not settled; record or abandon it first" c.id)
+        | None ->
+        match stamp |> Option.bind (fun s -> stamps |> Map.tryFind s.commandId |> Option.map (fun v -> s, v)) with
+        | Some(s, (h, id)) when h = s.hash -> Duplicate(id, spanOf id)
+        | Some(_, (_, id)) -> StampConflict id
+        | None ->
+            let c = { id = lastId + 1UL; at = at; stamp = stamp; events = events }
+            match apply state c with
+            | Error e -> Rejected e
+            | Ok s ->
+                pending <- Some(c, s)
+                Proposed c
 
-    /// 投递一条消息，不等回复。
-    member _.Post(msg: LedgerIn<'E>) : unit =
-        let me = Environment.CurrentManagedThreadId
-        let run =
-            lock gate (fun () ->
-                mailbox.Enqueue msg
-                if drainer <> 0 then false
-                else
-                    drainer <- me
-                    true)
-        let pending = ResizeArray<LedgerOut<'E, 'Err>>()
-        let more () =
-            lock gate (fun () ->
-                if mailbox.Count = 0 then
-                    drainer <- 0
-                    false
-                else true)
-        while run && more () do
-            lock gate (fun () ->
-                try handle (mailbox.Dequeue()) pending.Add
-                with _ ->
-                    // 协议错误：丢弃本条，交还邮箱，再抛出
-                    pending.Clear()
-                    drainer <- 0
-                    reraise ())
-            for o in pending do deliver o
-            pending.Clear()
+    /// 组合者确知提议没有写入介质：丢弃它。没有提议时什么也不做。
+    member _.Abandon() : unit = pending <- None
 
-    /// 投递 Submit 并等待它的回复（Committed 或 Refused）。
-    /// 在 Outbox 处理器里调用会永远等不到（回复要等本线程处理完当前消息），所以直接抛出。
-    member this.Ask(events: 'E list, at: DateTimeOffset, ?stamp: Stamp) : LedgerOut<'E, 'Err> =
-        if lock gate (fun () -> drainer = Environment.CurrentManagedThreadId) then
-            invalidOp "Ask called from inside an Outbox handler: the reply can never arrive; use Post instead"
-        let t = Guid.NewGuid()
-        let w = TaskCompletionSource<LedgerOut<'E, 'Err>>(TaskCreationOptions.RunContinuationsAsynchronously)
-        lock gate (fun () -> askers[t] <- w)
-        this.Post(Submit(t, events, at, stamp))
-        w.Task.Result
+    /// 事实：提交 c 已持久化在 span。可以是刚才的提议，也可以是重放读出的一条。
+    /// 不成立时返回问题，账本不变。
+    member _.Record(c: Commit<'E>, span: Span) : Result<unit, RecordProblem<'Err>> =
+        let check () =
+            if c.id <> lastId + 1UL then Error(IdGap(lastId + 1UL, c.id))
+            elif span.start <> tail () || span.``end`` <= span.start then Error(SpanGap(tail (), span))
+            else Ok()
+        let folded =
+            match pending with
+            | Some(p, s) when p.id = c.id -> check () |> Result.map (fun () -> s)
+            | Some(p, _) -> Error(Unsettled p.id)
+            | None ->
+                check ()
+                |> Result.bind (fun () ->
+                    match c.stamp with
+                    | Some st when stamps.ContainsKey st.commandId -> Error(RepeatedStamp st.commandId)
+                    | _ -> apply state c |> Result.mapError FoldRejected)
+        folded
+        |> Result.map (fun s ->
+            pending <- None
+            state <- s
+            lastId <- c.id
+            ends.Add span.``end``
+            match c.stamp with
+            | Some st -> stamps <- stamps |> Map.add st.commandId (st.hash, c.id)
+            | None -> ())
 
-    // —— 查询（只读，立即回答）——
-    member _.State : 'S = lock gate (fun () -> state)
-    member _.LastId : uint64 = lock gate (fun () -> lastId)
+    // —— 查询 ——
+    member _.State : 'S = state
+    member _.LastId : uint64 = lastId
+    /// 下一条提交的起点（上一条的末尾）。
+    member _.Tail : int64 = tail ()
 
-    /// 可保存的完整状态；以后用 Ledger(apply, checkpoint) 恢复。不含在途与等待中的请求。
+    /// 可保存的完整状态（数组是副本）；以后用 Ledger(apply, checkpoint) 恢复。不含未落定的提议。
     member _.Checkpoint : Checkpoint<'S> =
-        lock gate (fun () -> { state = state; throughId = lastId; stamps = stamps; origin = from.origin; ends = ends.ToArray() })
+        { state = state; throughId = lastId; stamps = stamps; origin = from.origin; ends = ends.ToArray() }
 
-    /// id 的区间。
     member _.SpanOf(id: uint64) : Span option =
-        lock gate (fun () -> if id = 0UL || id > lastId then None else Some(spanOf id))
+        if id = 0UL || id > lastId then None else Some(spanOf id)
 
     /// id 大于 cursor 的提交的 (id, 区间)，按 id 升序，至多 limit 条（缺省不限）。
     member _.SpansAfter(cursor: uint64, ?limit: int) : (uint64 * Span) list =
-        lock gate (fun () ->
-            let limit = defaultArg limit Int32.MaxValue
-            if limit < 0 then invalidArg (nameof limit) "limit must be >= 0"
-            if cursor >= lastId then []
-            else
-                let n = int (min (uint64 limit) (lastId - cursor))
-                [ for i in 0 .. n - 1 -> let id = cursor + 1UL + uint64 i in id, spanOf id ])
+        let limit = defaultArg limit Int32.MaxValue
+        if limit < 0 then invalidArg (nameof limit) "limit must be >= 0"
+        if cursor >= lastId then []
+        else
+            let n = int (min (uint64 limit) (lastId - cursor))
+            [ for i in 0 .. n - 1 -> let id = cursor + 1UL + uint64 i in id, spanOf id ]

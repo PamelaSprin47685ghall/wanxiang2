@@ -1,4 +1,4 @@
-/// 测试用玩具领域：计数器；位置用 int（玩具「存储」就是一个文本列表的下标）。
+/// 测试用玩具领域：计数器。区间是测试直接给出的事实输入，不模拟任何存储对象的流程。
 module Toy
 
 open System
@@ -35,46 +35,13 @@ let t0 = DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
 
 type L = Ledger<int, Ev, ToyError>
 
-/// 玩具组装：只做消息路由。介质是一串 (起点, 文本)，偏移按文本长度累加。
-type Store(?ledger: L) =
-    let ledger = defaultArg ledger (L(apply, 0))
-    let lines = ResizeArray<int64 * string>()
-    let out = ResizeArray<LedgerOut<Ev, ToyError>>()
-    let mutable failNext = false
-    do
-        ledger.Outbox.Add(fun o ->
-            lock out (fun () -> out.Add o)
-            match o with
-            | AppendRequested(_, c, start) ->
-                if failNext then
-                    failNext <- false
-                    ledger.Post(AppendFailed(c.id, "disk full"))
-                else
-                    let text = Envelope.write (Commit.map writeEv c)
-                    lines.Add(start, text)
-                    ledger.Post(Appended(c.id, start + int64 text.Length))
-            | _ -> ())
-    member _.Ledger = ledger
-    member _.Lines = lines
-    member _.Out = out
-    member _.FailNext() = failNext <- true
-    member _.Submit(events, ?stamp) =
-        match stamp with
-        | Some s -> ledger.Ask(events, t0, s)
-        | None -> ledger.Ask(events, t0)
+let sp a b = { start = a; ``end`` = b }
 
-/// 把介质重放进一个新账本，返回账本与第一个 ReplayRejected（若有）。
-let replay (lines: (int64 * string) seq) =
-    let l = L(apply, 0)
-    let rejected = ResizeArray()
-    l.Outbox.Add(function ReplayRejected(_, sp, p) -> rejected.Add(sp, sprintf "%A" p) | _ -> ())
-    for start, line in lines do
-        if rejected.Count = 0 then
-            let sp = { start = start; ``end`` = start + int64 line.Length }
-            match Envelope.read line with
-            | Envelope.Parsed cj ->
-                match ofJson cj with
-                | Ok c -> l.Post(Replay(c, sp))
-                | Error e -> rejected.Add(sp, e)
-            | other -> rejected.Add(sp, sprintf "%A" other)
-    l, Seq.tryHead rejected
+/// 提议并以「已持久化在 [tail, tail+len)」这一事实记入；返回提交。
+let commit (l: L) (len: int64) (events: Ev list) (stamp: Stamp option) =
+    match (match stamp with Some s -> l.Propose(events, t0, s) | None -> l.Propose(events, t0)) with
+    | Proposed c ->
+        match l.Record(c, sp l.Tail (l.Tail + len)) with
+        | Ok() -> c
+        | Error p -> failwithf "%O" p
+    | d -> failwithf "expected Proposed, got %A" d

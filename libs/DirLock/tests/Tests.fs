@@ -48,3 +48,18 @@ let ``lock held by another process is released when it dies`` () =
         | Ok l -> (l :> IDisposable).Dispose(); got <- true
         | Error _ -> Threading.Thread.Sleep 50
     Assert.True(got, "lock not released after holder died")
+
+// SPEC 3：写 pid 失败不报「被占用」，且释放锁
+[<Fact>]
+let ``pid write failure is reported distinctly and releases the lock`` () =
+    let d = tempDir ()
+    Directory.CreateDirectory(Path.Combine(d, ".lock.pid")) |> ignore   // 让写 pid 必然失败
+    match DirLock.TryAcquire d with
+    | Ok _ -> failwith "expected pid write failure"
+    | Error msg ->
+        Assert.Contains("writing", msg)
+        Assert.DoesNotContain("is locked", msg)
+    Directory.Delete(Path.Combine(d, ".lock.pid"))
+    match DirLock.TryAcquire d with
+    | Ok l -> (l :> IDisposable).Dispose()
+    | Error e -> failwith e

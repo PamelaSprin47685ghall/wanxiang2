@@ -13,4 +13,6 @@
     - 证明：tests/Tests.fs `second acquire fails until first is disposed`。
 2. [LEMMA: 1, 2] 其他进程持锁时获取失败；该进程被杀后无需清理即可获取。
     - 证明：`lock held by another process is released when it dies`（Linux/macOS 上用 `flock` 子进程）。
-3. [TODO] Windows 上的跨进程行为（FileShare.None 是强制锁）尚无测试。
+3. [LEMMA: 1, 2] 已打开锁文件但写 `.lock.pid` 失败时，释放句柄并返回不同于「被占用」的错误。
+    - 证明：`pid write failure is reported distinctly and releases the lock`。
+4. [TODO] Windows 上的跨进程行为（FileShare.None 是强制锁）尚无测试。

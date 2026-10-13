@@ -17,16 +17,23 @@ type DirLock private (stream: FileStream, path: string) =
     static member TryAcquire(dir: string) : Result<DirLock, string> =
         Directory.CreateDirectory dir |> ignore
         let path = Path.Combine(dir, ".lock")
-        try
-            let s = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)
-            File.WriteAllText(path + ".pid", string Environment.ProcessId, Encoding.UTF8)
-            Ok(new DirLock(s, path))
-        with :? IOException as e ->
+        let opened =
+            try Ok(new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+            with :? IOException as e -> Error e
+        match opened with
+        | Error e ->
             let holder =
-                try
-                    " (held by pid " + File.ReadAllText(path + ".pid").Trim() + ")"
+                try " (held by pid " + File.ReadAllText(path + ".pid").Trim() + ")"
                 with _ -> ""
             Error(sprintf "directory %s is locked%s: %s" dir holder e.Message)
+        | Ok s ->
+            // 已持锁；写 pid 失败不是「被占用」，要释放句柄并如实报告
+            try
+                File.WriteAllText(path + ".pid", string Environment.ProcessId, Encoding.UTF8)
+                Ok(new DirLock(s, path))
+            with e ->
+                s.Dispose()
+                Error(sprintf "lock acquired on %s but writing %s.pid failed: %s" dir path e.Message)
 
     interface IDisposable with
         member _.Dispose() = stream.Dispose()

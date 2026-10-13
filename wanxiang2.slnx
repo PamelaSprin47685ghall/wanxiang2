@@ -51,6 +51,10 @@
     <Project Path="libs/JsonPick/JsonPick.fsproj" />
     <Project Path="libs/JsonPick/tests/JsonPick.Tests.fsproj" />
   </Folder>
+  <Folder Name="/JsonRpc/">
+    <Project Path="libs/JsonRpc/JsonRpc.fsproj" />
+    <Project Path="libs/JsonRpc/tests/JsonRpc.Tests.fsproj" />
+  </Folder>
   <Folder Name="/JsonSeq/">
     <Project Path="libs/JsonSeq/JsonSeq.fsproj" />
     <Project Path="libs/JsonSeq/tests/JsonSeq.Tests.fsproj" />
@@ -58,6 +62,14 @@
   <Folder Name="/Ledger/">
     <Project Path="libs/Ledger/Ledger.fsproj" />
     <Project Path="libs/Ledger/tests/Ledger.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LineProcess/">
+    <Project Path="libs/LineProcess/LineProcess.fsproj" />
+    <Project Path="libs/LineProcess/tests/LineProcess.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/McpProtocol/">
+    <Project Path="libs/McpProtocol/McpProtocol.fsproj" />
+    <Project Path="libs/McpProtocol/tests/McpProtocol.Tests.fsproj" />
   </Folder>
   <Folder Name="/PairingCode/">
     <Project Path="libs/PairingCode/PairingCode.fsproj" />
@@ -74,6 +86,10 @@
   <Folder Name="/Sse/">
     <Project Path="libs/Sse/Sse.fsproj" />
     <Project Path="libs/Sse/tests/Sse.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StreamableHttp/">
+    <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
+    <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />

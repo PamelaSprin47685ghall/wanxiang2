@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：MCP 客户端。协作者：JsonRpc、McpProtocol、LineProcess、StreamableHttp、AppConfig（McpServerConfig）。
+       命名空间沿用旧仓库 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="McpClient.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.JsonRpc" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.McpProtocol" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LineProcess" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.StreamableHttp" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

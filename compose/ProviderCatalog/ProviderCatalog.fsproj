@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：模型能力缓存（落盘）、目录快照、模型列表探活。协作者：AppConfig、ModelListing。 命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="ProviderCatalog.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelListing" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

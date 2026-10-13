@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：把客户端配置片段合并进 AppConfig 并校验。协作者：AppConfig、PayloadFields。 命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="ConfigMutation.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PayloadFields" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);FS0025;FS1182;FS0064</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Scenario.fs" />
+    <Compile Include="GoldenTests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <ProjectReference Include="../ConfigMutation.fsproj" />
+  </ItemGroup>
+</Project>

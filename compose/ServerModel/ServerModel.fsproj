@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：投影 → 线上视图（列表、消息、历史页、导出、附件引用）。协作者：ChatDomain、Wire、AttachmentRefs、PlainText。 命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="ServerModel.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AttachmentRefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PlainText" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -127,9 +127,17 @@
     <Project Path="libs/MessageText/MessageText.fsproj" />
     <Project Path="libs/MessageText/tests/MessageText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ModelListing/">
+    <Project Path="libs/ModelListing/ModelListing.fsproj" />
+    <Project Path="libs/ModelListing/tests/ModelListing.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PairingCode/">
     <Project Path="libs/PairingCode/PairingCode.fsproj" />
     <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PayloadFields/">
+    <Project Path="libs/PayloadFields/PayloadFields.fsproj" />
+    <Project Path="libs/PayloadFields/tests/PayloadFields.Tests.fsproj" />
   </Folder>
   <Folder Name="/PlainText/">
     <Project Path="libs/PlainText/PlainText.fsproj" />

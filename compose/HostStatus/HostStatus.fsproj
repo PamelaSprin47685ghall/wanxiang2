@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：主机状态（配置被拒）与在线诊断。协作者：Wire、Doctor。 命名空间沿用 Wanxiang.Server。 -->
+  <ItemGroup>
+    <Compile Include="HostStatus.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Doctor" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

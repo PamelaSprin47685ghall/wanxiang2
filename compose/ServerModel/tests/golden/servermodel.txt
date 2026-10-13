@@ -1,0 +1,15 @@
+## list
+[{"conversationId":"bbbbbbbb-0000-0000-0000-000000000002","title":"\u4E59","lastCommitId":9,"deleted":false,"pinned":true,"archived":false,"createdAt":"<t>","updatedAt":"<t>","messageCount":0,"isFork":false,"lastMessage":"","runtimeState":"idle","config":{"provider":"openai","model":"m"}},{"conversationId":"cccccccc-0000-0000-0000-000000000003","title":"\u7532\uFF08\u5206\u53C9\uFF09","lastCommitId":10,"deleted":false,"pinned":false,"archived":false,"createdAt":"<t>","updatedAt":"<t>","messageCount":1,"isFork":true,"parentId":"aaaaaaaa-0000-0000-0000-000000000001","forkBaseMessageId":2,"parentTitle":"\u7532","parentDeleted":false,"forkOrdinal":2,"lastMessage":"\u770B\u56FE","runtimeState":"idle","config":{"provider":"openai","model":"m"}},{"conversationId":"aaaaaaaa-0000-0000-0000-000000000001","title":"\u7532","lastCommitId":7,"deleted":false,"pinned":false,"archived":false,"createdAt":"<t>","updatedAt":"<t>","messageCount":6,"isFork":false,"lastMessage":"\u95EE4","runtimeState":"running","config":{"provider":"openai","model":"m"}}]
+## messages
+[{"commitId":2,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u770B\u56FE"},{"$type":"data","additionalProperties":{"wanxiang":{"type":"attachment","sha256":"abc123","mediaType":"image/png","fileName":"a.png","size":42}}}]}},{"commitId":3,"committedAt":"<t>","payload":{"role":"assistant","contents":[{"$type":"text","text":"\u4E00\u53EA\u732B\u3002\n\u7B2C\u4E8C\u884C"}]}},{"commitId":4,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE1"}]}},{"commitId":5,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE2"}]}},{"commitId":6,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE3"}]}},{"commitId":7,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE4"}]}}]
+## tail 2
+[{"commitId":6,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE3"}]}},{"commitId":7,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE4"}]}}]
+cursor=6UL more=true
+## page
+[{"commitId":4,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE1"}]}},{"commitId":5,"committedAt":"<t>","payload":{"role":"user","contents":[{"$type":"text","text":"\u95EE2"}]}}]
+more=true
+## refs
+[("abc123", "image/png", "a.png", 42L)]
+## referenced
+["abc123"]
+

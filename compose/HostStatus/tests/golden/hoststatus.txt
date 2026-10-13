@@ -1,0 +1,8 @@
+initial=false
+{"type":"config.rejected","payload":{"summary":"配置有误，仍在使用上一份有效配置：bad key ***","errors":["bad key ***","xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…","e3","e4","e5"]}}
+{"type":"config.rejected","payload":{"summary":"配置有误，仍在使用上一份有效配置：bad key ***","errors":["bad key ***","xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…","e3","e4","e5"]}}
+a | ***
+cleared=false
+{"type":"doctor.report","payload":{"requestId":"dddddddd-0000-0000-0000-000000000004","ok":false,"checks":[{"name":"doctor","ok":false,"detail":"主机尚未就绪"}]}}
+{"type":"doctor.report","payload":{"requestId":"dddddddd-0000-0000-0000-000000000004","ok":false,"checks":[{"name":"doctor","ok":false,"detail":"boom ***"}]}}
+

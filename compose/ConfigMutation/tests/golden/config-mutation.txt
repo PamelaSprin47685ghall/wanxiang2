@@ -1,0 +1,677 @@
+## provider ok
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+maxContextMessages = 200
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.oa]
+kind = "openai"
+baseUrl = "https://x/v1"
+apiKey = "k"
+models = ["m1", "m2"]
+defaultModel = "m1"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[auth]
+
+## provider bad id
+ERROR provider.id: 只允许字母、数字、- _ . 且不超过 48 字符
+## provider bad kind
+ERROR provider.kind: 暂不支持 nope | provider.baseUrl: 需为完整 URL，例如 https://api.openai.com/v1 | provider.models: 至少填一个模型
+## provider keep key
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+maxContextMessages = 200
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.oa]
+kind = "openai"
+baseUrl = "https://y/v1"
+apiKey = "k"
+models = ["m3"]
+defaultModel = "m3"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[auth]
+
+## provider gemini
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+maxContextMessages = 200
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[providers.oa]
+kind = "openai"
+baseUrl = "https://y/v1"
+apiKey = "k"
+models = ["m3"]
+defaultModel = "m3"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[auth]
+
+## mcp stdio
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+maxContextMessages = 200
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[providers.oa]
+kind = "openai"
+baseUrl = "https://y/v1"
+apiKey = "k"
+models = ["m3"]
+defaultModel = "m3"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[auth]
+
+## mcp http
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+maxContextMessages = 200
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[providers.oa]
+kind = "openai"
+baseUrl = "https://y/v1"
+apiKey = "k"
+models = ["m3"]
+defaultModel = "m3"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[mcp.web]
+url = "http://h/mcp"
+callTimeoutSeconds = 60
+enabled = true
+[auth]
+
+## mcp bad
+ERROR mcp: command 与 url 至少填一个
+## mcp no command
+ERROR mcp: command 与 url 至少填一个
+## tools
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+maxContextMessages = 200
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[providers.oa]
+kind = "openai"
+baseUrl = "https://y/v1"
+apiKey = "k"
+models = ["m3"]
+defaultModel = "m3"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[mcp.web]
+url = "http://h/mcp"
+callTimeoutSeconds = 60
+enabled = true
+[auth]
+
+## tools empty
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+maxContextMessages = 200
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[providers.oa]
+kind = "openai"
+baseUrl = "https://y/v1"
+apiKey = "k"
+models = ["m3"]
+defaultModel = "m3"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[mcp.web]
+url = "http://h/mcp"
+callTimeoutSeconds = 60
+enabled = true
+[auth]
+
+## generation
+configVersion = 3
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+temperature = 0.7
+maxContextMessages = 40
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+defaultProvider = "oa"
+defaultModel = "m3"
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[providers.oa]
+kind = "openai"
+baseUrl = "https://y/v1"
+apiKey = "k"
+models = ["m3"]
+defaultModel = "m3"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[mcp.web]
+url = "http://h/mcp"
+callTimeoutSeconds = 60
+enabled = true
+[auth]
+
+## generation bad provider
+ERROR generation.defaultProvider: 模型服务 ghost 不存在
+## preset
+configVersion = 4
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+temperature = 0.7
+maxContextMessages = 40
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+defaultProvider = "oa"
+defaultModel = "m3"
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[providers.oa]
+kind = "openai"
+baseUrl = "https://y/v1"
+apiKey = "k"
+models = ["m3"]
+defaultModel = "m3"
+timeoutSeconds = 30
+maxRetries = 0
+enabled = true
+[providers.oa.headers]
+X-A = "1"
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[mcp.web]
+url = "http://h/mcp"
+callTimeoutSeconds = 60
+enabled = true
+[presets]
+[presets.p1]
+name = "Coder"
+model = "m3"
+tools = ["fs.read"]
+[auth]
+
+## preset bad
+ERROR 预设名称不能为空
+## delete provider in use
+configVersion = 4
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+temperature = 0.7
+maxContextMessages = 40
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[mcp.web]
+url = "http://h/mcp"
+callTimeoutSeconds = 60
+enabled = true
+[presets]
+[presets.p1]
+name = "Coder"
+model = "m3"
+tools = ["fs.read"]
+[auth]
+
+## delete preset
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+temperature = 0.7
+maxContextMessages = 40
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[mcp.web]
+url = "http://h/mcp"
+callTimeoutSeconds = 60
+enabled = true
+[auth]
+
+## delete missing preset
+ERROR 这个预设已经不存在
+## delete mcp
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+temperature = 0.7
+maxContextMessages = 40
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[providers.gm]
+kind = "gemini"
+baseUrl = "https://g"
+apiKey = "g"
+models = ["gemini-2"]
+defaultModel = "gemini-2"
+timeoutSeconds = 120
+maxRetries = 0
+enabled = true
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[auth]
+
+## delete missing mcp
+ERROR MCP 服务 nope 不存在
+## delete provider gm
+configVersion = 2
+instanceId = "11111111-2222-3333-4444-555555555555"
+[runtime]
+server = true
+client = true
+pwa = true
+fix = false
+[network]
+listen = "127.0.0.1:8765"
+maxAttachmentBytes = 67108864
+chunkSizeBytes = 262144
+[pairing]
+failureWindowMinutes = 1
+maxFailures = 5
+freezeMinutes = 5
+[generation]
+temperature = 0.7
+maxContextMessages = 40
+maxContextTokens = 128000
+autoTitle = true
+maxToolRounds = 12
+[tools]
+callTimeoutSeconds = 30
+[providers]
+[mcp]
+[mcp.fs]
+command = "/bin/sh"
+args = ["-c", "x"]
+callTimeoutSeconds = 60
+enabled = true
+[mcp.fs.env]
+A = "b"
+[auth]
+
+## delete missing provider
+ERROR provider nope 不存在
+

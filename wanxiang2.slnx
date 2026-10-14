@@ -323,6 +323,10 @@
     <Project Path="libs/Gemini/Gemini.fsproj" />
     <Project Path="libs/Gemini/tests/Gemini.Tests.fsproj" />
   </Folder>
+  <Folder Name="/GeneralPane/">
+    <Project Path="libs/GeneralPane/GeneralPane.fsproj" />
+    <Project Path="libs/GeneralPane/tests/GeneralPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/GenerationDraft/">
     <Project Path="libs/GenerationDraft/GenerationDraft.fsproj" />
     <Project Path="libs/GenerationDraft/tests/GenerationDraft.Tests.fsproj" />

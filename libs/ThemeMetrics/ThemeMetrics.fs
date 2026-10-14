@@ -31,6 +31,8 @@ type Metric =
     | ReadingWidth
     | BarHeight
     | IconButton
+    /// 紧凑 / 触控命中面下限（旧 LayoutPolicy.compactActionTarget）
+    | CompactActionTarget
     | IconGlyph
     | IconStroke
     | ShellInset
@@ -123,6 +125,10 @@ type Metric =
     | ToastMaxWidth
     /// 说明文字行高（旧 ReadingRhythm.captionLineHeight）
     | CaptionLineHeight
+    /// 界面正文行高（旧 ReadingRhythm.uiBodyLineHeight）
+    | UiBodyLineHeight
+    /// 快捷键帮助的键位块最小宽（旧 Dialogs.shortcuts 的 136）
+    | ShortcutKeyMinWidth
     /// 触控命中下限（旧 Spacing.Hit.touch）
     | TouchTarget
     /// 审批卡按钮行最大宽（旧 ToolApprovalCard.buttonRowMaxWidth）
@@ -157,6 +163,12 @@ type Metric =
     | SettingsDialogWidth
     /// 设置页小对话层宽（旧添加文件夹的 480）
     | SettingsSmallDialogWidth
+    /// 确认 / 单行提示对话框宽（旧 Dialogs confirm/prompt 的 420）
+    | ConfirmDialogWidth
+    /// 连接 / 快捷键对话框宽（旧 Dialogs connect/shortcuts 的 460）
+    | ConnectDialogWidth
+    /// 长文本 / 对话设置对话框宽（旧 Dialogs editText/sessionSettings 的 520）
+    | SessionDialogWidth
 
 /// 度量的初始值：照抄旧代码，间距引用已换成 SpacingRamp 的数值。只有数据；活的可变值归主题管理者。
 module ThemeMetrics =
@@ -190,6 +202,7 @@ module ThemeMetrics =
           Metric.ReadingWidth
           Metric.BarHeight
           Metric.IconButton
+          Metric.CompactActionTarget
           Metric.IconGlyph
           Metric.IconStroke
           Metric.ShellInset
@@ -279,6 +292,8 @@ module ThemeMetrics =
           Metric.EmptyStateMaxWidth
           Metric.ToastMaxWidth
           Metric.CaptionLineHeight
+          Metric.UiBodyLineHeight
+          Metric.ShortcutKeyMinWidth
           Metric.TouchTarget
           Metric.ApprovalButtonRowMaxWidth
           Metric.LogoGlyphRatio
@@ -295,7 +310,10 @@ module ThemeMetrics =
           Metric.QrModuleSize
           Metric.SelectCaptionMaxWidth
           Metric.SettingsDialogWidth
-          Metric.SettingsSmallDialogWidth ]
+          Metric.SettingsSmallDialogWidth
+          Metric.ConfirmDialogWidth
+          Metric.ConnectDialogWidth
+          Metric.SessionDialogWidth ]
 
     /// 某项度量的初始值
     let initial (metric: Metric) : float =
@@ -327,6 +345,7 @@ module ThemeMetrics =
         | Metric.ReadingWidth -> 748.0
         | Metric.BarHeight -> 52.0
         | Metric.IconButton -> 30.0
+        | Metric.CompactActionTarget -> 44.0
         | Metric.IconGlyph -> 16.0
         | Metric.IconStroke -> 1.6
         | Metric.ShellInset -> 16.0
@@ -416,6 +435,8 @@ module ThemeMetrics =
         | Metric.EmptyStateMaxWidth -> 480.0
         | Metric.ToastMaxWidth -> 560.0
         | Metric.CaptionLineHeight -> 17.0
+        | Metric.UiBodyLineHeight -> 20.0
+        | Metric.ShortcutKeyMinWidth -> 136.0
         | Metric.TouchTarget -> 44.0
         | Metric.ApprovalButtonRowMaxWidth -> 360.0
         | Metric.LogoGlyphRatio -> 0.42
@@ -433,4 +454,7 @@ module ThemeMetrics =
         | Metric.SelectCaptionMaxWidth -> 260.0
         | Metric.SettingsDialogWidth -> 520.0
         | Metric.SettingsSmallDialogWidth -> 480.0
+        | Metric.ConfirmDialogWidth -> 420.0
+        | Metric.ConnectDialogWidth -> 460.0
+        | Metric.SessionDialogWidth -> 520.0
 

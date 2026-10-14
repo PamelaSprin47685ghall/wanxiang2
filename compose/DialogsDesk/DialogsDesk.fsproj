@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：旧 Views/Dialogs.fs 的协作部分。界面在 ConfirmPane、PromptPane、TextEditPane、ConnectPane、SessionPrefsPane、ShortcutHelpPane。 -->
+  <ItemGroup>
+    <Compile Include="Looks.fs" />
+    <Compile Include="DialogsDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConfirmPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PromptPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.TextEditPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConnectPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SessionPrefsPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShortcutHelpPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.FieldCheck" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConnectionIssue" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConnectIssueText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PairingCodeInput" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PairingHint" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolSummary" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

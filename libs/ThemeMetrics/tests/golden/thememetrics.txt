@@ -25,6 +25,7 @@ SidebarMaxWidth 420
 ReadingWidth 748
 BarHeight 52
 IconButton 30
+CompactActionTarget 44
 IconGlyph 16
 IconStroke 1.6
 ShellInset 16
@@ -114,6 +115,8 @@ ScrollBottomRevealThreshold 120
 EmptyStateMaxWidth 480
 ToastMaxWidth 560
 CaptionLineHeight 17
+UiBodyLineHeight 20
+ShortcutKeyMinWidth 136
 TouchTarget 44
 ApprovalButtonRowMaxWidth 360
 LogoGlyphRatio 0.42
@@ -131,3 +134,6 @@ QrModuleSize 6
 SelectCaptionMaxWidth 260
 SettingsDialogWidth 520
 SettingsSmallDialogWidth 480
+ConfirmDialogWidth 420
+ConnectDialogWidth 460
+SessionDialogWidth 520

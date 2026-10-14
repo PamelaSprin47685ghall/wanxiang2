@@ -411,6 +411,7 @@ module Adapter =
           "ReadingWidth", Tokens.readingWidth
           "BarHeight", Tokens.barHeight
           "IconButton", Tokens.iconButton
+          "CompactActionTarget", 44.0
           "IconGlyph", Tokens.iconGlyph
           "IconStroke", Tokens.iconStroke
           "ShellInset", Tokens.shellInset
@@ -501,6 +502,8 @@ module Adapter =
           "ToastMaxWidth", ContentMetrics.toastMaxWidth
           // 旧 ReadingRhythm.captionLineHeight
           "CaptionLineHeight", 17.0
+          "UiBodyLineHeight", 20.0
+          "ShortcutKeyMinWidth", 136.0
           // 旧 Spacing.Hit.touch
           "TouchTarget", 44.0
           // 旧 ToolApprovalCard.buttonRowMaxWidth
@@ -527,4 +530,7 @@ module Adapter =
           "QrModuleSize", 6.0
           "SelectCaptionMaxWidth", 260.0
           "SettingsDialogWidth", 520.0
-          "SettingsSmallDialogWidth", 480.0 ]
+          "SettingsSmallDialogWidth", 480.0
+          "ConfirmDialogWidth", 420.0
+          "ConnectDialogWidth", 460.0
+          "SessionDialogWidth", 520.0 ]

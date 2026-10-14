@@ -443,6 +443,10 @@
     <Project Path="libs/OlderPageLoad/OlderPageLoad.fsproj" />
     <Project Path="libs/OlderPageLoad/tests/OlderPageLoad.Tests.fsproj" />
   </Folder>
+  <Folder Name="/OnboardingFlow/">
+    <Project Path="libs/OnboardingFlow/OnboardingFlow.fsproj" />
+    <Project Path="libs/OnboardingFlow/tests/OnboardingFlow.Tests.fsproj" />
+  </Folder>
   <Folder Name="/OnboardingRules/">
     <Project Path="libs/OnboardingRules/OnboardingRules.fsproj" />
     <Project Path="libs/OnboardingRules/tests/OnboardingRules.Tests.fsproj" />

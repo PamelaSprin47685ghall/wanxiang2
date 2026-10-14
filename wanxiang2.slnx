@@ -311,6 +311,10 @@
     <Project Path="libs/SnapshotCheck/SnapshotCheck.fsproj" />
     <Project Path="libs/SnapshotCheck/tests/SnapshotCheck.Tests.fsproj" />
   </Folder>
+  <Folder Name="/SpacingRamp/">
+    <Project Path="libs/SpacingRamp/SpacingRamp.fsproj" />
+    <Project Path="libs/SpacingRamp/tests/SpacingRamp.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Sse/">
     <Project Path="libs/Sse/Sse.fsproj" />
     <Project Path="libs/Sse/tests/Sse.Tests.fsproj" />

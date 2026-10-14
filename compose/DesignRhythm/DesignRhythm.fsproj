@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：布局断点与阅读节奏。协作者：SpacingRamp。 -->
+  <ItemGroup>
+    <Compile Include="LayoutPolicy.fs" />
+    <Compile Include="ReadingRhythm.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.SpacingRamp" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

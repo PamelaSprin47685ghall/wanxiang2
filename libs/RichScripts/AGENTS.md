@@ -19,3 +19,6 @@
 
 另由以下覆盖：
 - compose/RichJint 的 `着色与排版金样与旧实现逐字节相同`（golden/rich.txt 由旧 RichBackend.fs、Highlight.fs、KatexHtml.fs、RichJint.fs 原样编译生成）
+
+# 资源生成
+`js/` 由 `tools/build_scripts.js` 生成：用 `node libs/RichScripts/tools/build_scripts.js` 运行，或设置 `RICHSCRIPTS_OUT=<目录>` 输出到别处。脚本迁自旧仓库 `tools/build_webassets.js`，去掉了字体部分，字体仍由旧仓库生成。依赖锁定为 katex@0.18.4 和 highlight.js@11.12.0（cdn-release 打包体）。已验证生成结果与仓库里的 `js/` 逐字节相同（`diff -r` 无差异）。

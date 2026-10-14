@@ -1,0 +1,19 @@
+      /// 当前 / 已选行的底，悬停底，已选行上的悬停底，命中词底
+      Selected: IBrush
+      Hover: IBrush
+      SelectedHover: IBrush
+      AccentSoft: IBrush
+      RowMinHeight: IObservable<float>
+      RowPaddingY: IObservable<float>
+      StateSlotWidth: IObservable<float>
+      StateGlyphSize: IObservable<float>
+      RunningDotSize: IObservable<float>
+      SelectedEdgeWidth: IObservable<float>
+      RowContentSpacing: IObservable<float>
+      /// 行内「更多操作」命中面：桌面 / 紧凑
+      IconButtonSize: IObservable<float>
+      CompactTarget: IObservable<float>
+      /// 常驻淡显的不透明度
+      OpacitySubtle: IObservable<float>
+      /// 行底色补间（参数：是否连描边一起补间）
+      Transitions: bool -> Avalonia.Animation.Transitions

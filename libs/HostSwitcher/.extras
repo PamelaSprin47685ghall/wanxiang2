@@ -1,0 +1,10 @@
+      /// 状态圆点尺寸、页脚高、分隔线
+      DotSize: IObservable<float>
+      BarHeight: IObservable<float>
+      DividerWidth: IObservable<float>
+      IconButtonSize: IObservable<float>
+      CompactTarget: IObservable<float>
+      TextButtonMinHeight: IObservable<float>
+      /// 页脚分隔线色
+      Hairline: IBrush
+      RadiusSm: IObservable<float>

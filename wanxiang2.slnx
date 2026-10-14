@@ -59,6 +59,10 @@
     <Project Path="libs/AttachmentTray/AttachmentTray.fsproj" />
     <Project Path="libs/AttachmentTray/tests/AttachmentTray.Tests.fsproj" />
   </Folder>
+  <Folder Name="/BatchBar/">
+    <Project Path="libs/BatchBar/BatchBar.fsproj" />
+    <Project Path="libs/BatchBar/tests/BatchBar.Tests.fsproj" />
+  </Folder>
   <Folder Name="/BlockDiff/">
     <Project Path="libs/BlockDiff/BlockDiff.fsproj" />
     <Project Path="libs/BlockDiff/tests/BlockDiff.Tests.fsproj" />
@@ -202,6 +206,10 @@
   <Folder Name="/ContinuableReply/">
     <Project Path="libs/ContinuableReply/ContinuableReply.fsproj" />
     <Project Path="libs/ContinuableReply/tests/ContinuableReply.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConversationRows/">
+    <Project Path="libs/ConversationRows/ConversationRows.fsproj" />
+    <Project Path="libs/ConversationRows/tests/ConversationRows.Tests.fsproj" />
   </Folder>
   <Folder Name="/ConversationSummary/">
     <Project Path="libs/ConversationSummary/ConversationSummary.fsproj" />
@@ -386,6 +394,10 @@
   <Folder Name="/HostRequests/">
     <Project Path="libs/HostRequests/HostRequests.fsproj" />
     <Project Path="libs/HostRequests/tests/HostRequests.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostSwitcher/">
+    <Project Path="libs/HostSwitcher/HostSwitcher.fsproj" />
+    <Project Path="libs/HostSwitcher/tests/HostSwitcher.Tests.fsproj" />
   </Folder>
   <Folder Name="/HttpFailureFacts/">
     <Project Path="libs/HttpFailureFacts/HttpFailureFacts.fsproj" />
@@ -782,6 +794,10 @@
   <Folder Name="/SidebarRowState/">
     <Project Path="libs/SidebarRowState/SidebarRowState.fsproj" />
     <Project Path="libs/SidebarRowState/tests/SidebarRowState.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarSearch/">
+    <Project Path="libs/SidebarSearch/SidebarSearch.fsproj" />
+    <Project Path="libs/SidebarSearch/tests/SidebarSearch.Tests.fsproj" />
   </Folder>
   <Folder Name="/SidebarSelection/">
     <Project Path="libs/SidebarSelection/SidebarSelection.fsproj" />

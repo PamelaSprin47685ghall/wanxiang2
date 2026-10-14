@@ -295,10 +295,6 @@
     <Project Path="libs/ImportView/ImportView.fsproj" />
     <Project Path="libs/ImportView/tests/ImportView.Tests.fsproj" />
   </Folder>
-  <Folder Name="/InstanceSwitch/">
-    <Project Path="libs/InstanceSwitch/InstanceSwitch.fsproj" />
-    <Project Path="libs/InstanceSwitch/tests/InstanceSwitch.Tests.fsproj" />
-  </Folder>
   <Folder Name="/JintScriptHost/">
     <Project Path="libs/JintScriptHost/JintScriptHost.fsproj" />
     <Project Path="libs/JintScriptHost/tests/JintScriptHost.Tests.fsproj" />

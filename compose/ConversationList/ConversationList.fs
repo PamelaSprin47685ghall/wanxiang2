@@ -1,6 +1,7 @@
 namespace Wanxiang.UI
 
 open System
+open Wanxiang.Core
 
 // 组合者：对话列表行（ConversationSummary）与其它只读事实的关联。
 // 分叉谱系的解析归 ForkLineage，待删批次的状态归 PendingDeletion；这里只做「拿列表行去对照」的那一步。
@@ -75,3 +76,32 @@ module PendingDeletion =
     let visible (summaries: ConversationSummary list) (state: PendingDeletions) : ConversationSummary list =
         if List.isEmpty state.batches then summaries
         else summaries |> List.filter (fun s -> not (PendingDeletion.isPending s.id state))
+
+/// 导出谱系与导入上限：ConversationTransfer 管文件格式，这里接上列表行与协议上限（决策 312/313）。
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ConversationTransfer =
+
+    /// 解析导入文件，单次导入上限取协议的 ImportLimits.maxMessages。
+    let parseImport (byteCount: int64) (text: string) =
+        ConversationTransfer.parseImportWithin ImportLimits.maxMessages byteCount text
+
+    /// 从对话列表派生导出谱系。
+    let lineageOf
+        (summaries: ConversationSummary list)
+        (lineage: Map<Guid, ForkLineage>)
+        (conversationId: Guid)
+        : ExportLineage =
+        let own = lineage.TryFind conversationId
+        let titleOf id = summaries |> List.tryFind (fun s -> s.id = id) |> Option.map _.title
+        let forks =
+            lineage
+            |> Map.toList
+            |> List.filter (fun (_, l) -> l.parentId = conversationId)
+            |> List.choose (fun (id, l) -> titleOf id |> Option.map (fun t -> id, t, l.forkBaseMessageId))
+        { parentId = own |> Option.map _.parentId
+          parentTitle = own |> Option.bind (fun l -> titleOf l.parentId |> Option.orElse l.parentTitle)
+          parentDeleted = own |> Option.exists (fun l -> l.parentDeleted || (titleOf l.parentId).IsNone)
+          forkOrdinal = own |> Option.bind _.forkOrdinal
+          forkBaseMessageId = own |> Option.bind _.forkBaseMessageId
+          forks = forks }
+

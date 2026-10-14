@@ -200,3 +200,34 @@ let ``visible hides rows pending deletion until undo`` () =
     Assert.Equal<Guid list>([ s ], PendingDeletion.visible summaries state |> List.map _.id)
     let state2, _ = PendingDeletion.undo batch.Value.token state
     Assert.Equal(2, (PendingDeletion.visible summaries state2).Length)
+
+// 迁自旧 R14TransferTests。
+[<Fact>]
+let ``312 谱系从对话列表派生：分叉、原对话已删除、子分叉`` () =
+    let root, fork, child = Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()
+    let summary id title : ConversationSummary =
+        { id = id; title = title; preview = ""; running = false; pinned = false; archived = false
+          createdAt = DateTimeOffset.UtcNow; updatedAt = DateTimeOffset.UtcNow; messageCount = 1
+          isFork = false; providerId = ""; model = ""; lastCommitId = 1UL }
+    let l parent : ForkLineage =
+        { parentId = parent; forkBaseMessageId = Some 2UL; forkFirstMessageId = Some 7UL; parentTitle = None; parentDeleted = false; forkOrdinal = Some 2 }
+    let lineage = Map [ fork, l root; child, l fork ]
+    let summaries = [ summary root "根"; summary fork "分叉一"; summary child "分叉二" ]
+    let lf = ConversationTransfer.lineageOf summaries lineage fork
+    Assert.Equal(Some root, lf.parentId)
+    Assert.Equal(Some "根", lf.parentTitle)
+    Assert.False lf.parentDeleted
+    Assert.Equal<string list>([ "分叉二" ], lf.forks |> List.map (fun (_, t, _) -> t))
+    let gone = ConversationTransfer.lineageOf [ summary fork "分叉一" ] lineage fork
+    Assert.True gone.parentDeleted
+    Assert.Contains("原对话已删除", ConversationTransfer.lineageLines gone |> String.concat "")
+    Assert.True((ConversationTransfer.lineageOf summaries lineage root).parentId.IsNone)
+
+[<Fact>]
+let ``313 导入上限取协议的 ImportLimits`` () =
+    let lineage : ExportLineage = { parentId = None; parentTitle = None; parentDeleted = false; forkOrdinal = None; forkBaseMessageId = None; forks = [] }
+    let raw n = JsonNode.Parse(sprintf """{"commitId":%d,"payload":{"role":"user","contents":[{"type":"text","text":"m"}]}}""" n).AsObject()
+    let text = ConversationTransfer.toJson (Guid.NewGuid()) "t" 1UL now lineage [ for n in 0..ImportLimits.maxMessages -> raw n ]
+    match ConversationTransfer.parseImport (int64 text.Length) text with
+    | Error e -> Assert.Contains(string ImportLimits.maxMessages, e)
+    | Ok _ -> failwith "should exceed"

@@ -257,7 +257,9 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
         overlay.ShowDialog(
             pane.View, width Metric.SessionDialogWidth,
             onClosed = (fun () -> active <- false),
-            canDismiss = (fun () -> not pane.IsPending))
+            canDismiss = (fun () -> not pane.IsPending),
+            // 内容自带滚动区与固定页脚：卡片按视口封顶，矮窗口里「保存」不被挤出（旧 scrollWholeContent = false）。
+            scrollWholeContent = false)
         pane
 
     /// 快捷键帮助：唯一停留点是关闭键。

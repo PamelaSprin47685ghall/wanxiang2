@@ -82,6 +82,19 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
     let spansOf (query: string) (text: string) =
         SidebarText.segments query text |> List.map (fun s -> { Text = s.text; IsMatch = s.isMatch })
 
+    // 每次重建前按标题键分组一次：同名判断只看同组，不再每行扫全表（2 万行时由平方降为线性）。
+    let sameTitle = Dictionary<string, ConversationSummary list>()
+    let titleKey (t: string) = (if isNull t then "" else t.TrimEnd('…').Trim())
+    let indexTitles () =
+        sameTitle.Clear()
+        for s in summaries do
+            let k = titleKey s.title
+            sameTitle[k] <- s :: (match sameTitle.TryGetValue k with | true, l -> l | _ -> [])
+    let disambiguate (s: ConversationSummary) =
+        match sameTitle.TryGetValue(titleKey s.title) with
+        | true, group -> ConversationSummary.disambiguator group DateTimeOffset.Now s
+        | _ -> None
+
     /// 预览去掉与标题重复的前缀；分叉加前缀；同名对话加区分时间
     let previewFor (s: ConversationSummary) =
         let withoutTitle =
@@ -95,19 +108,21 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             elif s.messageCount > 0 then sprintf "%d 条消息" s.messageCount
             else "还没有消息"
         let body =
-            match ConversationSummary.disambiguator summaries DateTimeOffset.Now s with
+            match disambiguate s with
             | Some stamp -> stamp + " · " + body
             | None -> body
         if s.isFork || lineage.ContainsKey s.id then "分叉 · " + body else body
 
     let accessibleName (s: ConversationSummary) =
-        match ConversationSummary.disambiguator summaries DateTimeOffset.Now s with
+        match disambiguate s with
         | Some stamp -> sprintf "%s（%s）" s.title stamp
         | None -> s.title
 
     let tooltipFor (s: ConversationSummary) =
         let provenance =
-            match ForkLineage.breadcrumb summaries lineage s.id with
+            // 父对话经 id 索引取，只把它交给 breadcrumb（它只在表里找父对话）。
+            let parent = lineage.TryFind s.id |> Option.bind (fun l -> match summaryById.TryGetValue l.parentId with | true, p -> Some p | _ -> None)
+            match ForkLineage.breadcrumb (Option.toList parent) lineage s.id with
             | Some crumb -> "\n" + crumb.text
             | None -> if s.isFork then " · 分叉" else ""
         sprintf "%s\n%d 条消息%s" s.title s.messageCount provenance
@@ -134,6 +149,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         let restore = rows.FocusedRow
         summaryById.Clear()
         for s in summaries do summaryById[s.id] <- s
+        indexTitles ()
         let query = search.Text
         let visible =
             summaries

@@ -187,3 +187,17 @@ let ``look values stay live in the editor`` () =
         body.Set 18.0
         gap.Set 9.0
         Assert.Equal(18.0, e.LabelBox.FontSize))
+
+// 旧 Menu.selectButton：Down / Up 都能展开预设菜单（UiStabilityTests `preset dropdown marks exactly the current preset` 的展开路径）。
+[<Fact>]
+let ``预设选择器按 Down 或 Up 展开`` () =
+    Headless.run (fun () ->
+        let _, _, l = look ()
+        let e = ProviderEditor(l, true, (fun _ -> None))
+        let _ = host e.View
+        let anchors = ResizeArray<Control>()
+        e.PresetClicked.Add anchors.Add
+        let selector = (named e.View "预设").Value
+        for k in [ Avalonia.Input.Key.Down; Avalonia.Input.Key.Up ] do
+            selector.RaiseEvent(Avalonia.Input.KeyEventArgs(RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = k))
+        Assert.Equal(2, anchors.Count))

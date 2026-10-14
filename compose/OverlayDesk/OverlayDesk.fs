@@ -74,8 +74,9 @@ type OverlayDesk(root: Grid, look: OverlayDeskLook) =
     member _.Layer = layer
     member _.Toasts = strip
 
-    member _.ShowDialog(content: Control, width: float, ?onClosed: unit -> unit, ?canDismiss: unit -> bool, ?initialFocus: Control) =
-        layer.ShowDialog(content, width, ?onClosed = onClosed, ?canDismiss = canDismiss, ?initialFocus = initialFocus)
+    /// scrollWholeContent = false：内容自带滚动区与固定页脚（会话参数），卡片按视口封顶、页脚不被挤出。
+    member _.ShowDialog(content: Control, width: float, ?onClosed: unit -> unit, ?canDismiss: unit -> bool, ?initialFocus: Control, ?scrollWholeContent: bool) =
+        layer.ShowDialog(content, width, ?onClosed = onClosed, ?canDismiss = canDismiss, ?initialFocus = initialFocus, ?scrollWholeContent = scrollWholeContent)
     member _.CloseDialog() = layer.CloseDialog()
     member _.ClosePopup() = layer.ClosePopup()
     member _.TrapTab(content, e) = layer.TrapTab(content, e)

@@ -200,6 +200,11 @@ type ProviderEditor(look: ProvidersPaneLook, isNew: bool, validationFor: TextBox
         chevron.VerticalAlignment <- VerticalAlignment.Center
         presetButton <- Tap(kit.HStack(look.SpaceMd, [ presetCaption :> Control; chevron ]), "预设", [ "surface"; "select-button"; "hover-bordered" ], (fun () -> presetClicked.Trigger(presetButton :> Control)))
         AutomationProperties.SetControlTypeOverride(presetButton, Nullable AutomationControlType.ComboBox)
+        // Down / Up 也能展开（旧 Menu.selectButton 的约定，与菜单内 Up/Down 对称）。
+        presetButton.KeyDown.Add(fun e ->
+            if presetButton.IsEnabled && (e.Key = Key.Down || e.Key = Key.Up) then
+                e.Handled <- true
+                presetClicked.Trigger(presetButton :> Control))
         kit.Live(look.BorderWidth, fun v -> presetButton.BorderThickness <- Thickness v)
         kit.Live(look.RadiusLg, fun v -> presetButton.CornerRadius <- CornerRadius v)
         kit.Live(Kit.Pair(look.SpaceXl, look.SelectPaddingY), fun (x, y) -> presetButton.Padding <- Thickness(x, y))

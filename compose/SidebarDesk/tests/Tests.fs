@@ -464,3 +464,19 @@ let ``recycled rows keep their highlight after a snapshot refresh`` () =
         pump ()
         r.window.UpdateLayout()
         Assert.NotEmpty(highlighted (row r a)))
+
+// 两万行重建须是线性的：同名区分与分叉面包屑按索引取，不再每行扫全表。
+[<Fact>]
+let ``两万行带分叉与同名对话的重建在一秒内完成`` () =
+    Headless.run (fun () ->
+        let r = setup ()
+        let items = [ for i in 0 .. 19999 -> conv (sprintf "对话 %d" (i % 5000)) ]
+        let lineage =
+            items |> List.chunkBySize 2 |> List.choose (function
+                | [ p; c ] -> Some(c.id, { parentId = p.id; forkBaseMessageId = None; forkFirstMessageId = None; parentTitle = None; parentDeleted = false; forkOrdinal = Some 1 })
+                | _ -> None) |> Map.ofList
+        r.desk.SetLineage lineage
+        let sw = Diagnostics.Stopwatch.StartNew()
+        load r items
+        sw.Stop()
+        Assert.True(sw.ElapsedMilliseconds < 1000L, sprintf "重建用了 %d ms" sw.ElapsedMilliseconds))

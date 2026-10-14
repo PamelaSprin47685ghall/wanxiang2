@@ -216,3 +216,33 @@ let ``shortcuts dialog displays sections and closes on button click`` () =
         Assert.Contains("新建对话", Desk.texts r.root)
         invoke pane.CloseButton
         Assert.False(isOpen r))
+
+// 迁自旧 ConversationWorkspaceTests（375×520 一组）：展开生成参数后「保存」仍在视口内、在滚动区之外。
+[<Fact>]
+let ``session parameters reveal validation errors and leave save outside the scroll area`` () =
+    Headless.run (fun () ->
+        let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
+        let root = Grid()
+        let overlay = OverlayDesk(root, Desk.look ())
+        let window = Desk.show root 375.0 520.0
+        let desk = DialogsDesk(theme, overlay)
+        let catalog =
+            { Catalog.empty with
+                providers =
+                  [ { id = "openai"; label = "OpenAI"; kind = "openai"; baseUrl = "https://api.openai.com"; hasApiKey = true
+                      models = [ "gpt-4o" ]; defaultModel = "gpt-4o"; timeoutSeconds = 60; maxRetries = 2
+                      enabled = true; visionOverrides = Map.empty; visionDetected = Map.empty } ]
+                tools = [ for i in 1..6 -> { id = sprintf "builtin:t%d" i; label = "工具"; description = "说明"; source = "builtin"; serverId = None } ] }
+        let current = { SessionConfig.empty with provider = "openai"; model = "gpt-4o" }
+        let pane = desk.SessionSettings(catalog, current, fun _ ok -> ok true)
+        pane.TemperatureBox.Text <- "9"
+        Dispatcher.UIThread.RunJobs()
+        invoke pane.SaveButton
+        window.UpdateLayout()
+        Dispatcher.UIThread.RunJobs()
+        window.UpdateLayout()
+        Assert.True(pane.TemperatureBox.IsEffectivelyVisible, "校验失败应展开生成参数")
+        let save = pane.SaveButton
+        let bottom = save.TranslatePoint(Point(0.0, save.Bounds.Height), root)
+        Assert.True(bottom.HasValue && bottom.Value.Y <= 520.0, sprintf "保存键被挤出视口：%A" bottom)
+        Assert.False(save.GetVisualAncestors() |> Seq.exists (fun a -> a :? ScrollViewer), "保存键不得在滚动区内"))

@@ -143,6 +143,10 @@
     <Project Path="libs/ChatEmptyText/ChatEmptyText.fsproj" />
     <Project Path="libs/ChatEmptyText/tests/ChatEmptyText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ChatHeader/">
+    <Project Path="libs/ChatHeader/ChatHeader.fsproj" />
+    <Project Path="libs/ChatHeader/tests/ChatHeader.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ChatScroller/">
     <Project Path="libs/ChatScroller/ChatScroller.fsproj" />
     <Project Path="libs/ChatScroller/tests/ChatScroller.Tests.fsproj" />

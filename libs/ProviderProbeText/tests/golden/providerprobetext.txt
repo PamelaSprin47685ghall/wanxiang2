@@ -1,0 +1,82 @@
+gpt-4o：能看图（你的指定）
+gpt-4o：能看图（模型服务提供）
+gpt-4o：能看图（按名字推断）
+gpt-4o：只吃文字（你的指定）
+gpt-4o：只吃文字（模型服务提供）
+gpt-4o：只吃文字（按名字推断）
+gpt-4o：未知（放行，由模型服务决定）（你的指定）
+gpt-4o：未知（放行，由模型服务决定）（模型服务提供）
+gpt-4o：未知（放行，由模型服务决定）（按名字推断）
+m1：未知（放行，由模型服务决定）（模型服务提供）
+m2：未知（放行，由模型服务决定）（按名字推断）
+m3：未知（放行，由模型服务决定）（你的指定）
+m4：未知（放行，由模型服务决定）（模型服务提供）
+m5：未知（放行，由模型服务决定）（按名字推断）
+m6：未知（放行，由模型服务决定）（你的指定）
+m7：未知（放行，由模型服务决定）（模型服务提供）
+m8：未知（放行，由模型服务决定）（按名字推断）
+m9：未知（放行，由模型服务决定）（你的指定）
+m10：能看图（你的指定）
+m11：能看图（模型服务提供）
+m12：能看图（按名字推断）
+|
+false false 0 -> { editorStatus = None
+  fillModels = false
+  cacheModels = false
+  toast = "密钥无效"
+  tone = Failure }
+false false 1 -> { editorStatus = None
+  fillModels = false
+  cacheModels = false
+  toast = "密钥无效"
+  tone = Failure }
+false false 7 -> { editorStatus = None
+  fillModels = false
+  cacheModels = false
+  toast = "密钥无效"
+  tone = Failure }
+false true 0 -> { editorStatus = None
+  fillModels = false
+  cacheModels = true
+  toast = "模型服务返回了空模型列表。"
+  tone = Warning }
+false true 1 -> { editorStatus = None
+  fillModels = false
+  cacheModels = true
+  toast = "已获取 1 个模型。可在编辑模型服务中确认后保存。"
+  tone = Info }
+false true 7 -> { editorStatus = None
+  fillModels = false
+  cacheModels = true
+  toast = "已获取 7 个模型。可在编辑模型服务中确认后保存。"
+  tone = Info }
+true false 0 -> { editorStatus = Some "密钥无效"
+  fillModels = false
+  cacheModels = false
+  toast = "密钥无效"
+  tone = Failure }
+true false 1 -> { editorStatus = Some "密钥无效"
+  fillModels = false
+  cacheModels = false
+  toast = "密钥无效"
+  tone = Failure }
+true false 7 -> { editorStatus = Some "密钥无效"
+  fillModels = false
+  cacheModels = false
+  toast = "密钥无效"
+  tone = Failure }
+true true 0 -> { editorStatus = Some "模型服务返回了空模型列表，模型框未改动。"
+  fillModels = false
+  cacheModels = false
+  toast = "模型服务返回了空模型列表。"
+  tone = Warning }
+true true 1 -> { editorStatus = Some ""
+  fillModels = true
+  cacheModels = false
+  toast = "已获取 1 个模型，已填入草稿，请确认后保存。"
+  tone = Info }
+true true 7 -> { editorStatus = Some ""
+  fillModels = true
+  cacheModels = false
+  toast = "已获取 7 个模型，已填入草稿，请确认后保存。"
+  tone = Info }

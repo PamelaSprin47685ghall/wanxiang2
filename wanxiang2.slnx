@@ -199,6 +199,10 @@
     <Project Path="libs/ExportFileName/ExportFileName.fsproj" />
     <Project Path="libs/ExportFileName/tests/ExportFileName.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ExportView/">
+    <Project Path="libs/ExportView/ExportView.fsproj" />
+    <Project Path="libs/ExportView/tests/ExportView.Tests.fsproj" />
+  </Folder>
   <Folder Name="/FailureLimiter/">
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
     <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
@@ -258,6 +262,10 @@
   <Folder Name="/IdleSurface/">
     <Project Path="libs/IdleSurface/IdleSurface.fsproj" />
     <Project Path="libs/IdleSurface/tests/IdleSurface.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ImportView/">
+    <Project Path="libs/ImportView/ImportView.fsproj" />
+    <Project Path="libs/ImportView/tests/ImportView.Tests.fsproj" />
   </Folder>
   <Folder Name="/JintScriptHost/">
     <Project Path="libs/JintScriptHost/JintScriptHost.fsproj" />
@@ -338,6 +346,10 @@
   <Folder Name="/MessageLink/">
     <Project Path="libs/MessageLink/MessageLink.fsproj" />
     <Project Path="libs/MessageLink/tests/MessageLink.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageMenu/">
+    <Project Path="libs/MessageMenu/MessageMenu.fsproj" />
+    <Project Path="libs/MessageMenu/tests/MessageMenu.Tests.fsproj" />
   </Folder>
   <Folder Name="/MessageSerde/">
     <Project Path="libs/MessageSerde/MessageSerde.fsproj" />
@@ -423,6 +435,10 @@
     <Project Path="libs/ProviderPresets/ProviderPresets.fsproj" />
     <Project Path="libs/ProviderPresets/tests/ProviderPresets.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ProviderProbeText/">
+    <Project Path="libs/ProviderProbeText/ProviderProbeText.fsproj" />
+    <Project Path="libs/ProviderProbeText/tests/ProviderProbeText.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PwaAssets/">
     <Project Path="libs/PwaAssets/PwaAssets.fsproj" />
     <Project Path="libs/PwaAssets/tests/PwaAssets.Tests.fsproj" />
@@ -482,6 +498,10 @@
   <Folder Name="/SidebarEmpty/">
     <Project Path="libs/SidebarEmpty/SidebarEmpty.fsproj" />
     <Project Path="libs/SidebarEmpty/tests/SidebarEmpty.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarSelection/">
+    <Project Path="libs/SidebarSelection/SidebarSelection.fsproj" />
+    <Project Path="libs/SidebarSelection/tests/SidebarSelection.Tests.fsproj" />
   </Folder>
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />

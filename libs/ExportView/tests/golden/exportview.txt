@@ -1,0 +1,3712 @@
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true false -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Idle { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true true -> { statusText = "正在准备导出…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true false -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = true
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (0, None) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true true -> { statusText = "正在读取完整历史…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true false -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (3, Some 10) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true true -> { statusText = "已读取 3 / 10 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 30.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true false -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Reading (5, Some 0) { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true true -> { statusText = "已读取 5 / 0 条消息…"
+  tone = Muted
+  progressVisible = true
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "取消导出" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true false -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 0 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true true -> { statusText = "当前对话没有已保存的消息，无需导出"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "已完整读取 12 条消息，可以保存。"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "已完整读取 12 条消息，可以保存。"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "已完整读取 12 条消息，可以保存。"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "已完整读取 12 条消息，可以保存。"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "已完整读取 12 条消息，可以保存。"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = true
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "已完整读取 12 条消息，可以保存。"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = true
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "已完整读取 12 条消息，可以保存。"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = true
+  saveJsonEnabled = true
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "已完整读取 12 条消息，可以保存。"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = true
+  saveJsonEnabled = true
+  closeText = "关闭" }
+Ready 12 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "正在保存…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "正在保存…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "正在保存…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "正在保存…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "正在保存…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "正在保存…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "正在保存…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "正在保存…"
+  tone = Text
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false false -> { statusText = "已保存完整记录（12 条消息，JSON）。可以再保存另一种格式。"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false true -> { statusText = "已保存完整记录（12 条消息，JSON）。可以再保存另一种格式。"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true false -> { statusText = "已保存完整记录（12 条消息，JSON）。可以再保存另一种格式。"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true true -> { statusText = "已保存完整记录（12 条消息，JSON）。可以再保存另一种格式。"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false false -> { statusText = "已保存完整记录（12 条消息，JSON）。可以再保存另一种格式。"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = true
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false true -> { statusText = "已保存完整记录（12 条消息，JSON）。可以再保存另一种格式。"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = true
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true false -> { statusText = "已保存完整记录（12 条消息，JSON）。可以再保存另一种格式。"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = true
+  saveJsonEnabled = true
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true true -> { statusText = "已保存完整记录（12 条消息，JSON）。可以再保存另一种格式。"
+  tone = Success
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = true
+  saveJsonEnabled = true
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false false -> { statusText = "保存失败：磁盘满。完整内容仍保留，可以再次保存。"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false true -> { statusText = "保存失败：磁盘满。完整内容仍保留，可以再次保存。"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true false -> { statusText = "保存失败：磁盘满。完整内容仍保留，可以再次保存。"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true true -> { statusText = "保存失败：磁盘满。完整内容仍保留，可以再次保存。"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false false -> { statusText = "保存失败：磁盘满。完整内容仍保留，可以再次保存。"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = true
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false true -> { statusText = "保存失败：磁盘满。完整内容仍保留，可以再次保存。"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = false
+  saveEnabled = true
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true false -> { statusText = "保存失败：磁盘满。完整内容仍保留，可以再次保存。"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = true
+  saveJsonEnabled = true
+  closeText = "关闭" }
+Ready 12 { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true true -> { statusText = "保存失败：磁盘满。完整内容仍保留，可以再次保存。"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = false
+  saveVisible = true
+  saveJsonVisible = true
+  saveEnabled = true
+  saveJsonEnabled = true
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true false -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Failed "读取失败：断开" { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true true -> { statusText = "读取失败：断开"
+  tone = Danger
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false false true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = true
+  saved = false
+  savedKind = ""
+  error = None } false true true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true false true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = true
+  saved = false
+  savedKind = ""
+  error = None } true true true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false false true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } false true true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true false true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = true
+  savedKind = "JSON"
+  error = None } true true true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false false true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } false true true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true false true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true false -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+Cancelled { saving = false
+  saved = false
+  savedKind = ""
+  error = Some "保存失败：磁盘满。完整内容仍保留，可以再次保存。" } true true true -> { statusText = "导出已取消。"
+  tone = Muted
+  progressVisible = false
+  indeterminate = false
+  progressValue = 0.0
+  retryVisible = true
+  saveVisible = false
+  saveJsonVisible = false
+  saveEnabled = false
+  saveJsonEnabled = false
+  closeText = "关闭" }
+refresh false Idle 0 false -> Now
+refresh false Idle 0 true -> Now
+refresh false Idle 40 false -> Now
+refresh false Idle 40 true -> Now
+refresh false Idle 120 false -> Now
+refresh false Idle 120 true -> Now
+refresh false Idle 500 false -> Now
+refresh false Idle 500 true -> Now
+refresh false Reading (0, None) 0 false -> Schedule 120.0
+refresh false Reading (0, None) 0 true -> Skip
+refresh false Reading (0, None) 40 false -> Schedule 80.0
+refresh false Reading (0, None) 40 true -> Skip
+refresh false Reading (0, None) 120 false -> Now
+refresh false Reading (0, None) 120 true -> Now
+refresh false Reading (0, None) 500 false -> Now
+refresh false Reading (0, None) 500 true -> Now
+refresh false Reading (3, Some 10) 0 false -> Schedule 120.0
+refresh false Reading (3, Some 10) 0 true -> Skip
+refresh false Reading (3, Some 10) 40 false -> Schedule 80.0
+refresh false Reading (3, Some 10) 40 true -> Skip
+refresh false Reading (3, Some 10) 120 false -> Now
+refresh false Reading (3, Some 10) 120 true -> Now
+refresh false Reading (3, Some 10) 500 false -> Now
+refresh false Reading (3, Some 10) 500 true -> Now
+refresh false Reading (5, Some 0) 0 false -> Schedule 120.0
+refresh false Reading (5, Some 0) 0 true -> Skip
+refresh false Reading (5, Some 0) 40 false -> Schedule 80.0
+refresh false Reading (5, Some 0) 40 true -> Skip
+refresh false Reading (5, Some 0) 120 false -> Now
+refresh false Reading (5, Some 0) 120 true -> Now
+refresh false Reading (5, Some 0) 500 false -> Now
+refresh false Reading (5, Some 0) 500 true -> Now
+refresh false Ready 0 0 false -> Now
+refresh false Ready 0 0 true -> Now
+refresh false Ready 0 40 false -> Now
+refresh false Ready 0 40 true -> Now
+refresh false Ready 0 120 false -> Now
+refresh false Ready 0 120 true -> Now
+refresh false Ready 0 500 false -> Now
+refresh false Ready 0 500 true -> Now
+refresh false Ready 12 0 false -> Now
+refresh false Ready 12 0 true -> Now
+refresh false Ready 12 40 false -> Now
+refresh false Ready 12 40 true -> Now
+refresh false Ready 12 120 false -> Now
+refresh false Ready 12 120 true -> Now
+refresh false Ready 12 500 false -> Now
+refresh false Ready 12 500 true -> Now
+refresh false Failed "读取失败：断开" 0 false -> Now
+refresh false Failed "读取失败：断开" 0 true -> Now
+refresh false Failed "读取失败：断开" 40 false -> Now
+refresh false Failed "读取失败：断开" 40 true -> Now
+refresh false Failed "读取失败：断开" 120 false -> Now
+refresh false Failed "读取失败：断开" 120 true -> Now
+refresh false Failed "读取失败：断开" 500 false -> Now
+refresh false Failed "读取失败：断开" 500 true -> Now
+refresh false Cancelled 0 false -> Now
+refresh false Cancelled 0 true -> Now
+refresh false Cancelled 40 false -> Now
+refresh false Cancelled 40 true -> Now
+refresh false Cancelled 120 false -> Now
+refresh false Cancelled 120 true -> Now
+refresh false Cancelled 500 false -> Now
+refresh false Cancelled 500 true -> Now
+refresh true Idle 0 false -> Now
+refresh true Idle 0 true -> Now
+refresh true Idle 40 false -> Now
+refresh true Idle 40 true -> Now
+refresh true Idle 120 false -> Now
+refresh true Idle 120 true -> Now
+refresh true Idle 500 false -> Now
+refresh true Idle 500 true -> Now
+refresh true Reading (0, None) 0 false -> Now
+refresh true Reading (0, None) 0 true -> Now
+refresh true Reading (0, None) 40 false -> Now
+refresh true Reading (0, None) 40 true -> Now
+refresh true Reading (0, None) 120 false -> Now
+refresh true Reading (0, None) 120 true -> Now
+refresh true Reading (0, None) 500 false -> Now
+refresh true Reading (0, None) 500 true -> Now
+refresh true Reading (3, Some 10) 0 false -> Now
+refresh true Reading (3, Some 10) 0 true -> Now
+refresh true Reading (3, Some 10) 40 false -> Now
+refresh true Reading (3, Some 10) 40 true -> Now
+refresh true Reading (3, Some 10) 120 false -> Now
+refresh true Reading (3, Some 10) 120 true -> Now
+refresh true Reading (3, Some 10) 500 false -> Now
+refresh true Reading (3, Some 10) 500 true -> Now
+refresh true Reading (5, Some 0) 0 false -> Now
+refresh true Reading (5, Some 0) 0 true -> Now
+refresh true Reading (5, Some 0) 40 false -> Now
+refresh true Reading (5, Some 0) 40 true -> Now
+refresh true Reading (5, Some 0) 120 false -> Now
+refresh true Reading (5, Some 0) 120 true -> Now
+refresh true Reading (5, Some 0) 500 false -> Now
+refresh true Reading (5, Some 0) 500 true -> Now
+refresh true Ready 0 0 false -> Now
+refresh true Ready 0 0 true -> Now
+refresh true Ready 0 40 false -> Now
+refresh true Ready 0 40 true -> Now
+refresh true Ready 0 120 false -> Now
+refresh true Ready 0 120 true -> Now
+refresh true Ready 0 500 false -> Now
+refresh true Ready 0 500 true -> Now
+refresh true Ready 12 0 false -> Now
+refresh true Ready 12 0 true -> Now
+refresh true Ready 12 40 false -> Now
+refresh true Ready 12 40 true -> Now
+refresh true Ready 12 120 false -> Now
+refresh true Ready 12 120 true -> Now
+refresh true Ready 12 500 false -> Now
+refresh true Ready 12 500 true -> Now
+refresh true Failed "读取失败：断开" 0 false -> Now
+refresh true Failed "读取失败：断开" 0 true -> Now
+refresh true Failed "读取失败：断开" 40 false -> Now
+refresh true Failed "读取失败：断开" 40 true -> Now
+refresh true Failed "读取失败：断开" 120 false -> Now
+refresh true Failed "读取失败：断开" 120 true -> Now
+refresh true Failed "读取失败：断开" 500 false -> Now
+refresh true Failed "读取失败：断开" 500 true -> Now
+refresh true Cancelled 0 false -> Now
+refresh true Cancelled 0 true -> Now
+refresh true Cancelled 40 false -> Now
+refresh true Cancelled 40 true -> Now
+refresh true Cancelled 120 false -> Now
+refresh true Cancelled 120 true -> Now
+refresh true Cancelled 500 false -> Now
+refresh true Cancelled 500 true -> Now

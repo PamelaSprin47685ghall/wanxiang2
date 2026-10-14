@@ -1,0 +1,36 @@
+false false -> { importVisible = false
+  importEnabled = false
+  pickEnabled = true
+  pickText = "选择 JSON 文件…" }
+false true -> { importVisible = false
+  importEnabled = false
+  pickEnabled = false
+  pickText = "选择 JSON 文件…" }
+true false -> { importVisible = true
+  importEnabled = true
+  pickEnabled = true
+  pickText = "换一个文件…" }
+true true -> { importVisible = true
+  importEnabled = false
+  pickEnabled = false
+  pickText = "换一个文件…" }
+f1 -> false busy=false
+b -> Some 1 busy=true
+b -> None busy=true
+f2 -> false busy=true
+f1 -> true busy=false
+f1 -> false busy=false
+b -> Some 2 busy=true
+r -> - busy=false
+b -> Some 3 busy=true
+f2 -> false busy=true
+f3 -> true busy=false
+f3 -> false busy=false
+还没有选择文件。
+正在导入…
+主机没有回应导入请求，可能是主机版本过旧。升级主机后再试。
+导入没有完成，主机拒绝了这份内容或连接已断开。可以再试一次。
+读取文件失败：x
+无法打开文件选择窗口：y
+「标题」· 3 条消息
+None Some "有 2 条无法识别的记录会被跳过。"

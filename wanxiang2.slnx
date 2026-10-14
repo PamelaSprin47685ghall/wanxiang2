@@ -99,6 +99,10 @@
     <Project Path="libs/BrowserRich/BrowserRich.csproj" />
     <Project Path="libs/BrowserRich/tests/BrowserRich.Tests.fsproj" />
   </Folder>
+  <Folder Name="/BusyRing/">
+    <Project Path="libs/BusyRing/BusyRing.fsproj" />
+    <Project Path="libs/BusyRing/tests/BusyRing.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Canonical/">
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
@@ -282,6 +286,10 @@
   <Folder Name="/FocusOrigin/">
     <Project Path="libs/FocusOrigin/FocusOrigin.fsproj" />
     <Project Path="libs/FocusOrigin/tests/FocusOrigin.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/FoldHeader/">
+    <Project Path="libs/FoldHeader/FoldHeader.fsproj" />
+    <Project Path="libs/FoldHeader/tests/FoldHeader.Tests.fsproj" />
   </Folder>
   <Folder Name="/ForkAnchor/">
     <Project Path="libs/ForkAnchor/ForkAnchor.fsproj" />
@@ -627,6 +635,10 @@
     <Project Path="libs/RevealFlash/RevealFlash.fsproj" />
     <Project Path="libs/RevealFlash/tests/RevealFlash.Tests.fsproj" />
   </Folder>
+  <Folder Name="/RevealPane/">
+    <Project Path="libs/RevealPane/RevealPane.fsproj" />
+    <Project Path="libs/RevealPane/tests/RevealPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/RevealTarget/">
     <Project Path="libs/RevealTarget/RevealTarget.fsproj" />
     <Project Path="libs/RevealTarget/tests/RevealTarget.Tests.fsproj" />
@@ -774,6 +786,10 @@
   <Folder Name="/ThemeTween/">
     <Project Path="libs/ThemeTween/ThemeTween.fsproj" />
     <Project Path="libs/ThemeTween/tests/ThemeTween.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThinkingBlock/">
+    <Project Path="libs/ThinkingBlock/ThinkingBlock.fsproj" />
+    <Project Path="libs/ThinkingBlock/tests/ThinkingBlock.Tests.fsproj" />
   </Folder>
   <Folder Name="/TitleText/">
     <Project Path="libs/TitleText/TitleText.fsproj" />

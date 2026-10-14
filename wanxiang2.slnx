@@ -227,6 +227,10 @@
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
     <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ForkAnchor/">
+    <Project Path="libs/ForkAnchor/ForkAnchor.fsproj" />
+    <Project Path="libs/ForkAnchor/tests/ForkAnchor.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ForkLineage/">
     <Project Path="libs/ForkLineage/ForkLineage.fsproj" />
     <Project Path="libs/ForkLineage/tests/ForkLineage.Tests.fsproj" />

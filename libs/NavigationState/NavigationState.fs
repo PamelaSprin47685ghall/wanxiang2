@@ -57,3 +57,13 @@ type NavigationController(initialSidebarCollapsed: bool, compactBreakpoint: floa
             elif state.sidebarCollapsed then { state with sidebarCollapsed = false }
             else state
         state
+
+module NavigationSnapshot =
+
+    /// 窄屏抽屉是否刚从「未开」翻到「窄屏下打开」（迁自旧 AppShell.ApplyResponsiveLayout / SetCompactNavigation 的同口径条件）。
+    let drawerJustOpened (before: NavigationSnapshot) (after: NavigationSnapshot) =
+        after.compactMode && after.compactNavigationOpen && not (before.compactMode && before.compactNavigationOpen)
+
+    /// 视口变化后是否把焦点送进抽屉（搜索框）：抽屉刚打开，且不是触屏优先（触屏聚焦会弹出软键盘）。
+    let autofocusDrawer (before: NavigationSnapshot) (after: NavigationSnapshot) (prefersTouch: bool) =
+        drawerJustOpened before after && not prefersTouch

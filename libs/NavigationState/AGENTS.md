@@ -10,3 +10,4 @@
 
 # 迁入或覆盖的旧测试
 - UiStabilityTests：`navigation controller owns compact and collapsed state transitions`
+- NavigationSnapshot.drawerJustOpened / autofocusDrawer 迁自旧 AppShell.ApplyResponsiveLayout（测试内与旧代码原样摘录逐例比对）。

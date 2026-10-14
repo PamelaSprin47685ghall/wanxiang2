@@ -26,3 +26,20 @@ let ``navigation controller owns compact and collapsed state transitions`` () =
     let closed = navigation.SetCompactNavigation(false)
     Assert.False closed.compactNavigationOpen
 
+
+// 迁自旧 AppShell.ApplyResponsiveLayout 的聚焦条件：与原样摘录在全部状态组合上逐例比对。
+[<Fact>]
+let ``drawer autofocus matches old ApplyResponsiveLayout`` () =
+    let old (before: NavigationSnapshot) (state: NavigationSnapshot) (prefersTouch: bool) =
+        state.compactMode && state.compactNavigationOpen
+        && not (before.compactMode && before.compactNavigationOpen)
+        && not prefersTouch
+    let all =
+        [ for c in [ false; true ] do
+            for o in [ false; true ] do
+                for s in [ false; true ] do
+                    { compactMode = c; compactNavigationOpen = o; sidebarCollapsed = s } ]
+    for b in all do
+        for a in all do
+            for t in [ false; true ] do
+                Assert.Equal(old b a t, NavigationSnapshot.autofocusDrawer b a t)

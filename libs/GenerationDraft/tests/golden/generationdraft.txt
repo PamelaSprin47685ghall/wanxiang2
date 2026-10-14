@@ -1,0 +1,31 @@
+scope:A ->  fills=0 dirty=false saving=false canSave=true baseline=0 | 修改后保存，仅用于新对话。
+cat:1 ->  fills=1 dirty=false saving=false canSave=true baseline=1 | 修改后保存，仅用于新对话。
+edit ->  fills=0 dirty=true saving=false canSave=true baseline=1 | 有未保存的修改。离开设置后，草稿仍留在当前窗口。
+cat:2 ->  fills=0 dirty=true saving=false canSave=true baseline=1 | 主机默认值已变化。草稿已保留；请核对后保存，或放弃修改。
+cat:1 ->  fills=0 dirty=true saving=false canSave=true baseline=1 | 主机默认值已变化。草稿已保留；请核对后保存，或放弃修改。
+begin:5 -> began fills=0 dirty=true saving=true canSave=false baseline=1 | 正在保存到主机…
+edit ->  fills=0 dirty=true saving=true canSave=false baseline=1 | 有未保存的修改。离开设置后，草稿仍留在当前窗口。
+ok -> False fills=0 dirty=true saving=false canSave=true baseline=5 | 上一版已保存，后续修改尚未保存。
+begin:6 -> began fills=0 dirty=true saving=true canSave=false baseline=5 | 正在保存到主机…
+fail -> True fills=0 dirty=true saving=false canSave=true baseline=5 | 保存失败。修改仍在当前窗口，可以重试。
+begin:6 -> began fills=0 dirty=true saving=true canSave=false baseline=5 | 正在保存到主机…
+ok -> False fills=0 dirty=false saving=false canSave=true baseline=6 | 已保存。之后新建的对话将使用这些默认值。
+edit ->  fills=0 dirty=true saving=false canSave=true baseline=6 | 有未保存的修改。离开设置后，草稿仍留在当前窗口。
+scope:B ->  fills=0 dirty=true saving=false canSave=false baseline=6 | 主机已切换。旧草稿仍在，但不能保存到另一台主机。请返回原主机，或放弃修改。
+edit ->  fills=0 dirty=true saving=false canSave=false baseline=6 | 主机已切换。旧草稿仍在，但不能保存到另一台主机。请返回原主机，或放弃修改。
+begin:7 -> blocked fills=0 dirty=true saving=false canSave=false baseline=6 | 主机已切换。旧草稿仍在，但不能保存到另一台主机。请返回原主机，或放弃修改。
+scope:A ->  fills=0 dirty=true saving=false canSave=true baseline=6 | 已回到草稿所属的主机。修改尚未保存。
+begin:7 -> began fills=0 dirty=true saving=true canSave=false baseline=6 | 正在保存到主机…
+scope:B ->  fills=0 dirty=true saving=false canSave=false baseline=6 | 主机已切换。旧草稿仍在，但不能保存到另一台主机。请返回原主机，或放弃修改。
+okstale -> False fills=0 dirty=true saving=false canSave=false baseline=6 | 主机已切换。旧草稿仍在，但不能保存到另一台主机。请返回原主机，或放弃修改。
+scope:A ->  fills=0 dirty=true saving=false canSave=true baseline=6 | 已回到草稿所属的主机。修改尚未保存。
+discard:3 -> True fills=1 dirty=false saving=false canSave=true baseline=3 | 已恢复当前主机的默认值。
+cat:4 ->  fills=1 dirty=false saving=false canSave=true baseline=4 | 已恢复当前主机的默认值。
+edit ->  fills=0 dirty=true saving=false canSave=true baseline=4 | 有未保存的修改。离开设置后，草稿仍留在当前窗口。
+begin:8 -> began fills=0 dirty=true saving=true canSave=false baseline=4 | 正在保存到主机…
+discard:9 -> False fills=0 dirty=true saving=true canSave=false baseline=4 | 正在保存到主机…
+edit ->  fills=0 dirty=true saving=true canSave=false baseline=4 | 有未保存的修改。离开设置后，草稿仍留在当前窗口。
+ok -> False fills=0 dirty=true saving=false canSave=true baseline=8 | 上一版已保存，后续修改尚未保存。
+cat:10 ->  fills=0 dirty=true saving=false canSave=true baseline=8 | 主机默认值已变化。草稿已保留；请核对后保存，或放弃修改。
+discard:10 -> True fills=1 dirty=false saving=false canSave=true baseline=10 | 已恢复当前主机的默认值。
+cat:11 ->  fills=1 dirty=false saving=false canSave=true baseline=11 | 已恢复当前主机的默认值。

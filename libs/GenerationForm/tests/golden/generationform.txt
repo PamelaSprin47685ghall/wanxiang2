@@ -1,0 +1,19 @@
+floatText None -> 
+floatText Some 0.0 -> 0
+floatText Some 0.7 -> 0.7
+floatText Some 0.125 -> 0.13
+floatText Some 1.005 -> 1.01
+floatText Some 2.0 -> 2
+floatText Some 1234.5678 -> 1234.57
+form "" "" "" "200" "12" "" true -> errors [] payload {"temperature":null,"topP":null,"maxTokens":null,"instructions":null,"maxContextMessages":200,"maxToolRounds":12,"autoTitle":true}
+form null null null null null null false -> errors [("ContextMessages", "请输入 0 或正整数。"); ("ToolRounds", "请输入大于 0 的整数。")] payload 
+form " 0.7 " "0.95" "4096" "0" "1" "  \u4F60\u662F\u52A9\u624B  " false -> errors [] payload {"temperature":0.7,"topP":0.95,"maxTokens":4096,"instructions":"\u4F60\u662F\u52A9\u624B","maxContextMessages":0,"maxToolRounds":1,"autoTitle":false}
+form "2" "1" "1" "50" "3" "x" true -> errors [] payload {"temperature":2,"topP":1,"maxTokens":1,"instructions":"x","maxContextMessages":50,"maxToolRounds":3,"autoTitle":true}
+form "2.01" "-0.1" "0" "-1" "0" "" true -> errors [("Temperature", "请输入 0–2 之间的数字，或留空。"); ("TopP", "请输入 0 到 1 之间的数字，或留空。");
+ ("MaxTokens", "请输入大于 0 的整数，或留空。"); ("ContextMessages", "请输入 0 或正整数。");
+ ("ToolRounds", "请输入大于 0 的整数。")] payload 
+form "abc" "1e-1" "1.5" "1.5" "abc" "" true -> errors [("Temperature", "请输入 0–2 之间的数字，或留空。"); ("MaxTokens", "请输入大于 0 的整数，或留空。");
+ ("ContextMessages", "请输入 0 或正整数。"); ("ToolRounds", "请输入大于 0 的整数。")] payload 
+form "1,5" "0.5" " 12 " " 7 " " 8 " "\n" true -> errors [("Temperature", "请输入 0–2 之间的数字，或留空。")] payload 
+form "NaN" "Infinity" "2147483648" "2147483647" "2147483647" "\u591A\u884C\n\u6307\u4EE4" false -> errors [("Temperature", "请输入 0–2 之间的数字，或留空。"); ("TopP", "请输入 0 到 1 之间的数字，或留空。");
+ ("MaxTokens", "请输入大于 0 的整数，或留空。")] payload 

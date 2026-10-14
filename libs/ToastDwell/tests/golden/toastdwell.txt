@@ -1,0 +1,5 @@
+dwell 9000 action=false -> t:8800 t:8600 in:8600p t:8600p out0:8600 t:8400 f:8400p in:8400p out1:8400p t:8400p u:8400 t:8200 | expired at step 52
+dwell 6500 action=true -> t:7800 t:7600 in:7600p t:7600p out0:7600 t:7400 f:7400p in:7400p out1:7400p t:7400p u:7400 t:7200 | expired at step 47
+dwell 4000 action=false -> t:3800 t:3600 in:3600p t:3600p out0:3600 t:3400 f:3400p in:3400p out1:3400p t:3400p u:3400 t:3200 | expired at step 27
+dwell 4000 action=true -> t:7800 t:7600 in:7600p t:7600p out0:7600 t:7400 f:7400p in:7400p out1:7400p t:7400p u:7400 t:7200 | expired at step 47
+dwell 9000 action=true -> t:8800 t:8600 in:8600p t:8600p out0:8600 t:8400 f:8400p in:8400p out1:8400p t:8400p u:8400 t:8200 | expired at step 52

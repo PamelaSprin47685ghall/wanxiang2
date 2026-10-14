@@ -171,6 +171,10 @@
     <Project Path="libs/DraftStore/DraftStore.fsproj" />
     <Project Path="libs/DraftStore/tests/DraftStore.Tests.fsproj" />
   </Folder>
+  <Folder Name="/DraftSummaryText/">
+    <Project Path="libs/DraftSummaryText/DraftSummaryText.fsproj" />
+    <Project Path="libs/DraftSummaryText/tests/DraftSummaryText.Tests.fsproj" />
+  </Folder>
   <Folder Name="/DurationText/">
     <Project Path="libs/DurationText/DurationText.fsproj" />
     <Project Path="libs/DurationText/tests/DurationText.Tests.fsproj" />
@@ -195,9 +199,17 @@
     <Project Path="libs/Gemini/Gemini.fsproj" />
     <Project Path="libs/Gemini/tests/Gemini.Tests.fsproj" />
   </Folder>
+  <Folder Name="/GenerationDraft/">
+    <Project Path="libs/GenerationDraft/GenerationDraft.fsproj" />
+    <Project Path="libs/GenerationDraft/tests/GenerationDraft.Tests.fsproj" />
+  </Folder>
   <Folder Name="/GenerationErrorTitle/">
     <Project Path="libs/GenerationErrorTitle/GenerationErrorTitle.fsproj" />
     <Project Path="libs/GenerationErrorTitle/tests/GenerationErrorTitle.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/GenerationForm/">
+    <Project Path="libs/GenerationForm/GenerationForm.fsproj" />
+    <Project Path="libs/GenerationForm/tests/GenerationForm.Tests.fsproj" />
   </Folder>
   <Folder Name="/HljsCatalog/">
     <Project Path="libs/HljsCatalog/HljsCatalog.fsproj" />
@@ -226,6 +238,10 @@
   <Folder Name="/HttpRetry/">
     <Project Path="libs/HttpRetry/HttpRetry.fsproj" />
     <Project Path="libs/HttpRetry/tests/HttpRetry.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/IdleSurface/">
+    <Project Path="libs/IdleSurface/IdleSurface.fsproj" />
+    <Project Path="libs/IdleSurface/tests/IdleSurface.Tests.fsproj" />
   </Folder>
   <Folder Name="/JintScriptHost/">
     <Project Path="libs/JintScriptHost/JintScriptHost.fsproj" />
@@ -455,6 +471,10 @@
     <Project Path="libs/Sse/Sse.fsproj" />
     <Project Path="libs/Sse/tests/Sse.Tests.fsproj" />
   </Folder>
+  <Folder Name="/StartReady/">
+    <Project Path="libs/StartReady/StartReady.fsproj" />
+    <Project Path="libs/StartReady/tests/StartReady.Tests.fsproj" />
+  </Folder>
   <Folder Name="/StreamableHttp/">
     <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
     <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
@@ -470,6 +490,14 @@
   <Folder Name="/TitleText/">
     <Project Path="libs/TitleText/TitleText.fsproj" />
     <Project Path="libs/TitleText/tests/TitleText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToastDwell/">
+    <Project Path="libs/ToastDwell/ToastDwell.fsproj" />
+    <Project Path="libs/ToastDwell/tests/ToastDwell.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToastQueue/">
+    <Project Path="libs/ToastQueue/ToastQueue.fsproj" />
+    <Project Path="libs/ToastQueue/tests/ToastQueue.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolArgsPreview/">
     <Project Path="libs/ToolArgsPreview/ToolArgsPreview.fsproj" />

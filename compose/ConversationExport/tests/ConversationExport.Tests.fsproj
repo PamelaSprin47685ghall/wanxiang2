@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Tests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- 真实上游：分页由主机的 ServerModel 从 ChatDomain 投影读出，不手写线上页。 -->
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ServerModel" VersionOverride="0.0.0-local" />
+    <ProjectReference Include="../ConversationExport.fsproj" />
+  </ItemGroup>
+</Project>

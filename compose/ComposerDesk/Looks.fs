@@ -12,6 +12,7 @@ open Wanxiang2.IconSet
 open Wanxiang2.ComposerBox
 open Wanxiang2.AttachmentTray
 open Wanxiang2.ModelChip
+open Wanxiang2.BusyRing
 
 /// 输入区三件的外观，都由主题管理者的活实例填
 type ComposerLooks =
@@ -34,6 +35,11 @@ module ComposerLooks =
             let v = LiveValue(manager.Motion.IsReduced)
             manager.Motion.Changed.Add(fun _ -> v.Set manager.Motion.IsReduced)
             v :> IObservable<bool>
+        let busy: BusyRingLook =
+            { Ink = (function BusyInk.Track -> brush PaletteKey.Border | BusyInk.Arc -> brush PaletteKey.Accent)
+              StrokeWidth = metric Metric.SpinnerStrokeWidth
+              Frame = Live.map (fun (v: float) -> TimeSpan.FromMilliseconds v) (manager.Timing Timing.BusySpinnerFrame)
+              Reduced = reduced }
         { Box =
             { Ink =
                 function
@@ -120,7 +126,7 @@ module ComposerLooks =
                     | TrayGlyph.File -> icon Glyph.File b
                     | TrayGlyph.Alert -> icon Glyph.Alert b
                     | TrayGlyph.Close -> icon Glyph.Close b
-                    | TrayGlyph.Spinner -> icon Glyph.Info b
+                    | TrayGlyph.Spinner -> BusyRing(busy, (manager.Metric Metric.IconGlyph).Value).Host
               DressChip = (fun b -> b.Classes.Add StyleClass.groupingCard)
               DressRemove = (fun b -> surface StyleClass.hoverPlain b; b.Classes.Add StyleClass.iconButton)
               Reduced = reduced }

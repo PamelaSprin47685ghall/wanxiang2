@@ -1,6 +1,6 @@
 # ComposerDesk（组合者）
 
-ComposerBox + AttachmentTray + ModelChip + ComposerSendState + ModelVision + ComposerDrafts（PendingAttachment、RestoredAttachments）+ MediaTypes + MessageView（AttachmentRef.formatSize）+ Theme = 旧 `Views/Composer.fs`。根规则见项目根目录 AGENTS.md。
+ComposerBox + AttachmentTray + ModelChip + BusyRing（上传中转圈，旧 Ui.spinner）+ ComposerSendState + ModelVision + ComposerDrafts（PendingAttachment、RestoredAttachments）+ MediaTypes + MessageView（AttachmentRef.formatSize）+ Theme = 旧 `Views/Composer.fs`。根规则见项目根目录 AGENTS.md。
 
 - 宿主入口：`ComposerDesk(ComposerLooks.ofTheme manager styles, actions: ComposerDeskActions)`；`ComposerDeskActions = { Submit: string -> bool; StopGeneration; PickAttachment; RemoveAttachment: Guid -> unit; OpenModelPicker: Control -> unit; DropFiles; PasteFromClipboard: unit -> bool; OpenSessionSettings }`。
 - 成员：`Host`、`Box`、`Tray`、`Chip`、`Text`、`IsGenerating`、`ModelAnchor()`；`SetAttachments`、`SetThumbnail(id, IImage)`、`HasThumbnail`、`SetShrinkNote`、`ShrinkNote`、`SetModelVision(support, label)`、`SetCanStop`、`SetGenerating`、`SetEnabled(value, reason)`、`SetModelLabel`、`SetEnterSends`、`SetCompactMode`、`SetContext((label, detail) option, canEdit)`、`SetAccessory`、`SetText`、`Focus`、`SetImeProbe`、`SetKeyHook`。
@@ -13,5 +13,4 @@ ComposerBox + AttachmentTray + ModelChip + ComposerSendState + ModelVision + Com
 
 ## 与旧实现的差异
 - 待发送消息面板（SetPendingMessages）、SessionConfig 摘要文案的拼装、发送历史回溯（PromptHistory）、IME 守护（ImeShield）还在宿主侧，经 SetContext / SetKeyHook / SetImeProbe 接入。
-- 上传中转圈图标暂用 Glyph.Info（旧 Ui.spinner 未迁）。
 - 尚无旧 Composer 整棵控件树金样（树结构已重排为三个库）。

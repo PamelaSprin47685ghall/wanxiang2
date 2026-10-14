@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：壳层命令（旧 AppShell.HandleShortcut / RunPaletteItem / ShowCommandPalette / CycleTheme）。协作者：ShortcutKeys、EscapeChain、CommandPalette（ShellPalette）、UiPrefs（ThemePreference）。命名空间沿用 Wanxiang.UI。 -->
+  <ItemGroup>
+    <Compile Include="ShellCommands.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.ShortcutKeys" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.EscapeChain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandPalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

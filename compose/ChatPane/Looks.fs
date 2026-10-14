@@ -18,7 +18,11 @@ type ChatPaneLooks =
     { Scroller: ChatScrollerLook
       Nav: ExchangeNavLook
       Empty: ChatEmptyLook
-      Skeleton: SkeletonListLook }
+      Skeleton: SkeletonListLook
+      /// 滚动区顶部留白（旧 Spacing.space3xl）
+      Space3xl: IObservable<float>
+      /// 空态品牌标边长（旧 Tokens.logoEmpty；构造参数，取当前值）
+      LogoEmpty: LiveValue<float> }
 
 module ChatPaneLooks =
 
@@ -136,4 +140,6 @@ module ChatPaneLooks =
                 | SkeletonGauge.OpacityBreathMin -> metric Metric.SkeletonOpacityBreathMin
                 | SkeletonGauge.OpacityReduced -> metric Metric.SkeletonOpacityReduced
               Frame = span Timing.SkeletonBreathFrame
-              Reduced = reduced } }
+              Reduced = reduced }
+          Space3xl = space Space.X3l
+          LogoEmpty = manager.Metric Metric.LogoEmpty }

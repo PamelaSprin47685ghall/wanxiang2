@@ -58,6 +58,7 @@ type ExchangeNav(look: ExchangeNavLook) =
         let b = TextSpot "重试"
         b.Focusable <- true
         b.Cursor <- new Cursor(StandardCursorType.Hand)
+        b.VerticalAlignment <- VerticalAlignment.Center
         look.DressRetry b
         Follow.live2 b (gauge NavGauge.Space2xl) (gauge NavGauge.TextButtonPadY) (fun x y -> b.Padding <- Thickness(x, y))
         Follow.live b (gauge NavGauge.TextButtonMinHeight) (fun h -> b.MinHeight <- h)

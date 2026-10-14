@@ -1,6 +1,7 @@
 namespace Wanxiang2.ChatPane
 
 open System
+open Avalonia
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
 open Avalonia.Layout
@@ -13,7 +14,7 @@ open Wanxiang2.SkeletonList
 /// 组合者：对话区的滚动、空态、历史骨架与问答跳转（旧 Views/ChatView.fs 的对应部分）。
 /// 贴底与未读走 ScrollFollow，平滑滚动曲线走 ScrollTween，骨架呼吸走 BreathPhase，空态文案走 ChatEmptyText，问答跳转走 ExchangeJump。
 /// 消息卡片本身由宿主放进 Messages 插槽（卡片组合者 MessageCardView）；'K 是消息键。
-type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks) =
+type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Control) =
     let follow = ScrollFollow()
     let tween = ScrollTween()
     let phase = BreathPhase()
@@ -33,8 +34,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks) =
     let empty = ChatEmpty(looks.Empty)
     let skeleton =
         SkeletonList(looks.Skeleton, { Begin = (fun () -> phase.Start(false, true) |> ignore); Step = phase.Step })
-    let messages = StackPanel(Orientation = Orientation.Vertical)
-    let column = StackPanel(Orientation = Orientation.Vertical)
+    let messages = StackPanel(Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Stretch)
     let emptyScroller =
         ScrollViewer(
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
@@ -45,6 +45,12 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks) =
     let mutable compact = false
     let mutable overflows = false
     let returnedFocus = Event<unit>()
+
+    let hideSkeleton () =
+        if skeleton.IsShown then
+            skeleton.Hide()
+            scroller.Content <- messages
+            messages.IsVisible <- true
 
     let refreshButton () =
         let v = follow.Button(overflows, compact)
@@ -58,14 +64,30 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks) =
             follow.Arrived()
         refreshButton ()
 
+    /// 水平留白按自身宽度取档（旧 ChatView.ApplyHorizontalInsets 的滚动区部分）
+    let mutable top = 0.0
+    let applyInsets () =
+        let inset = LayoutPolicy.horizontalInset body.Bounds.Width
+        scroller.Viewer.Padding <- Thickness(inset, top, inset, 0.0)
+
     do
-        column.Children.Add skeleton.Host
-        column.Children.Add messages
-        scroller.Content <- column
-        body.Children.Add scroller.Host
+        empty.SetStarters ChatStarters.items
+        // 旧主体的子项序：滚动区、空态滚动区、「回到最新」、更早一页失败横幅。ChatScroller 的叠放层拆开放进主体
+        let layer = scroller.Host :?> Panel
+        layer.Children.Clear()
+        let g = looks.Skeleton.Gauge
+        g SkeletonGauge.Gap |> Observable.add (fun v -> messages.Spacing <- v)
+        g SkeletonGauge.EndBreathing |> Observable.add (fun v -> messages.Margin <- Thickness(0.0, 0.0, 0.0, v))
+        g SkeletonGauge.ReadingWidth |> Observable.add (fun v -> messages.MaxWidth <- v)
+        scroller.Content <- messages
+        body.Children.Add scroller.Viewer
         body.Children.Add emptyScroller
-        nav.FailureBanner.VerticalAlignment <- VerticalAlignment.Top
+        body.Children.Add scroller.LatestButton
         body.Children.Add nav.FailureBanner
+        looks.Space3xl |> Observable.add (fun v -> top <- v; applyInsets ())
+        body.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty then applyInsets ())
+        empty.Host.PropertyChanged.Add(fun e ->
+            if e.Property = Visual.IsVisibleProperty then emptyScroller.IsVisible <- empty.Host.IsVisible)
         scroller.Scrolled.Add(fun note ->
             overflows <- note.Overflows
             if follow.Scrolled(note.UserUp, note.AtBottom) then scroller.StopSmooth()
@@ -107,13 +129,16 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks) =
     member _.PinReveal() = follow.Pin()
 
     /// 空态：文案取 ChatEmptyText；需要品牌标的状态用 logo
-    member _.ShowEmpty(state: ChatEmptyState, logo: Control, primary: (string * (unit -> unit)) option) =
+    member _.ShowEmpty(state: ChatEmptyState, primary: (string * (unit -> unit)) option) =
         let title, hint = ChatEmptyText.text state
-        if ChatEmptyState.showsBrand state then empty.ShowBrand(logo, title, hint, primary)
+        if ChatEmptyState.showsBrand state then
+            let logo = brandLogo looks.LogoEmpty.Value
+            logo.HorizontalAlignment <- HorizontalAlignment.Center
+            empty.ShowBrand(logo, title, hint, primary)
         else empty.ShowPrompt(title, hint, primary)
-        emptyScroller.IsVisible <- true
-        scroller.Host.IsVisible <- false
-        skeleton.Hide()
+        scroller.Viewer.IsVisible <- false
+        hideSkeleton ()
+        messages.IsVisible <- false
         if not follow.RevealPinned then
             follow.Reset()
             jump.Reset()
@@ -123,24 +148,38 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks) =
     /// 嵌入式空态（如首次引导卡）
     member _.ShowEmbedded(content: Control) =
         empty.ShowEmbedded content
-        emptyScroller.IsVisible <- true
-        scroller.Host.IsVisible <- false
+        scroller.Viewer.IsVisible <- false
+        hideSkeleton ()
+        messages.IsVisible <- false
 
-    member _.HideEmpty() =
+    member this.HideEmpty() =
         empty.Hide()
-        emptyScroller.IsVisible <- false
-        scroller.Host.IsVisible <- true
+        // 定位钉住时不复位（旧 HideEmpty）；换对话由宿主显式 Reset
+        if not follow.RevealPinned then this.Reset()
+        scroller.Viewer.IsVisible <- true
+        messages.IsVisible <- true
+
+    /// 空态的开场白芯片：点选回调（None 时不出这一行）
+    member _.SetStarterPick(pick: (string -> unit) option) = empty.SetStarterPick pick
+    /// 空态的预设芯片（名称, 说明, 套用）
+    member _.SetPresets(items: (string * string * (unit -> unit)) list) = empty.SetPresets items
 
     member _.IsEmptyShown = emptyScroller.IsVisible
 
-    member _.ShowSkeleton() = skeleton.Show()
-    member _.HideSkeleton() = skeleton.Hide()
+    /// 历史骨架：滚动区内容换成骨架（旧 ShowSkeletonLoading）
+    member _.ShowSkeleton() =
+        messages.IsVisible <- false
+        skeleton.Show()
+        scroller.Content <- skeleton.Host
+    member _.HideSkeleton() = hideSkeleton ()
+    member _.IsSkeletonShown = skeleton.IsShown
 
     /// 换对话
     member _.Reset() =
         follow.Reset()
         jump.Reset()
         nav.Reset()
+        nav.HideOlderFailure()
         scroller.StopSmooth()
         refreshButton ()
 

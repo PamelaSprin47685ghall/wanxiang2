@@ -13,7 +13,7 @@ type TestApp() =
 
 type TestAppBuilder =
     static member BuildAvaloniaApp() =
-        AppBuilder.Configure<TestApp>().UseHeadless(AvaloniaHeadlessPlatformOptions(UseHeadlessDrawing = true))
+        AppBuilder.Configure<TestApp>().UseSkia().UseHeadless(AvaloniaHeadlessPlatformOptions(UseHeadlessDrawing = false))
 
 module Headless =
     let private session =

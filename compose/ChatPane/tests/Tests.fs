@@ -14,7 +14,7 @@ open Wanxiang2.ChatPaneTests
 let private rig () =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
     let styles = ThemeStyles(theme)
-    let pane = ChatPane<string>(ChatPaneLooks.ofTheme theme styles)
+    let pane = ChatPane<string>(ChatPaneLooks.ofTheme theme styles, fun s -> Border(Width = s, Height = s) :> Control)
     let w = Window(Width = 800.0, Height = 600.0, Content = pane.Host)
     w.Show()
     Dispatcher.UIThread.RunJobs()
@@ -25,17 +25,16 @@ let private rig () =
 let ``空态文案与品牌态`` () =
     Headless.run (fun () ->
         let pane, w = rig ()
-        let logo = Border(Width = 24.0, Height = 24.0)
-        pane.ShowEmpty(ChatEmptyState.NotConnected, logo, Some("连接主机", ignore))
+        pane.ShowEmpty(ChatEmptyState.NotConnected, Some("连接主机", ignore))
         Assert.True pane.IsEmptyShown
         Assert.True pane.Empty.IsShown
-        Assert.False pane.Scroller.Host.IsVisible
+        Assert.False pane.Scroller.Viewer.IsVisible
         let title, hint = ChatEmptyText.text ChatEmptyState.NotConnected
         Assert.Equal("先连接一台万象主机", title)
         Assert.True(hint.Contains "主机")
         pane.HideEmpty()
         Assert.False pane.IsEmptyShown
-        Assert.True pane.Scroller.Host.IsVisible
+        Assert.True pane.Scroller.Viewer.IsVisible
         w.Close())
 
 // 迁自 ChatViewTests：贴底跟随在渲染后滚到底；向上滚后露「回到最新」。

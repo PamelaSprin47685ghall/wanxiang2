@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：设置界面 = 旧 SettingsView + SettingsProviders + SettingsTools + SettingsGeneral + SettingsDevices 的协作部分，另含首次运行卡片 = 旧 OnboardingCard 的协作部分。界面在 SettingsFrame、ProvidersPane、ToolsPane、GeneralPane、DevicesPane、OnboardingPane。 -->
+  <ItemGroup>
+    <Compile Include="Looks.fs" />
+    <Compile Include="Hooks.fs" />
+    <Compile Include="DevicesDesk.fs" />
+    <Compile Include="ProvidersDesk.fs" />
+    <Compile Include="ToolsDesk.fs" />
+    <Compile Include="GeneralDesk.fs" />
+    <Compile Include="OnboardingDesk.fs" />
+    <Compile Include="SettingsScreen.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShellDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Catalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SettingsFrame" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProvidersPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolsPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.GeneralPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DevicesPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OnboardingPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.FieldCheck" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelVision" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SectionMemory" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProbeSlot" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BoundedWait" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DevicesModel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OnboardingFlow" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OnboardingRules" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderPresets" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderForm" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderProbeText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProbeFailureKind" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.McpForm" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolsPolicy" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.GenerationForm" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.GenerationDraft" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostHealth" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LocalDraftControls" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

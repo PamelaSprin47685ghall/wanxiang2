@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：把 KaTeX HTML 盒模型排成与界面框架无关的图元。协作者：KatexHtml、调用方给的字形量尺。 -->
+  <ItemGroup>
+    <Compile Include="MathTypeset.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.KatexHtml" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -86,3 +86,18 @@ module CommandPalette =
     let fullTextId = "act:search-messages"
     let fullTextTitle (query: string) = sprintf "在全部消息中搜索「%s」" (query.Trim())
 
+
+/// 命令面板「最近使用」的落盘格式（旧 `Model/CommandPalette.fs` 的 PaletteRecent）。读写文件 / localStorage 归宿主（LocalText），这里只管字节。
+module PaletteRecent =
+
+    /// 与 ui.json 同目录的文件名。
+    let fileName = "palette-recent.json"
+
+    /// 解析；坏文件、非字符串数组一律当作没有记录，超过 maxRecent 截断。
+    let decode (text: string) : string list =
+        try
+            Text.Json.JsonSerializer.Deserialize<string[]>(text)
+            |> Option.ofObj |> Option.map (List.ofArray >> List.truncate CommandPalette.maxRecent) |> Option.defaultValue []
+        with _ -> []
+
+    let encode (recent: string list) : string = Text.Json.JsonSerializer.Serialize(Array.ofList recent)

@@ -43,3 +43,11 @@ let ``recent use outranks equal score and keys are compacted`` () =
     Assert.Equal("b", (CommandPalette.rank "报告" [ "b" ] two).Head.id)
     Assert.Equal("Ctrl+Shift+E", CommandPalette.compactKeys "Ctrl / ⌘ + Shift + E")
     Assert.Equal("在全部消息中搜索「x」", CommandPalette.fullTextTitle " x ")
+
+// 落盘字节：期望值由旧程序集的 saveRecent / loadRecent 实际读写得到。
+[<Fact>]
+let ``palette recent file bytes match old load and save`` () =
+    Assert.Equal("""["new","\u8BBE\u7F6E\u0022x\u0022","a"]""", PaletteRecent.encode [ "new"; "设置\"x\""; "a" ])
+    Assert.Equal<string list>([ "a"; "b"; "c"; "d"; "e"; "f"; "g"; "h" ], PaletteRecent.decode """["a","b","c","d","e","f","g","h","i","j"]""")
+    for bad in [ "null"; "{bad"; "[]"; """["x",1]""" ] do
+        Assert.Empty(PaletteRecent.decode bad)

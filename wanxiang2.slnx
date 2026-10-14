@@ -191,6 +191,10 @@
     <Project Path="libs/DurationText/DurationText.fsproj" />
     <Project Path="libs/DurationText/tests/DurationText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ErrorRecovery/">
+    <Project Path="libs/ErrorRecovery/ErrorRecovery.fsproj" />
+    <Project Path="libs/ErrorRecovery/tests/ErrorRecovery.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ExportFileName/">
     <Project Path="libs/ExportFileName/ExportFileName.fsproj" />
     <Project Path="libs/ExportFileName/tests/ExportFileName.Tests.fsproj" />
@@ -554,6 +558,10 @@
   <Folder Name="/UiPrefs/">
     <Project Path="libs/UiPrefs/UiPrefs.fsproj" />
     <Project Path="libs/UiPrefs/tests/UiPrefs.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UrlSchemeRegistration/">
+    <Project Path="libs/UrlSchemeRegistration/UrlSchemeRegistration.fsproj" />
+    <Project Path="libs/UrlSchemeRegistration/tests/UrlSchemeRegistration.Tests.fsproj" />
   </Folder>
   <Folder Name="/UsageTally/">
     <Project Path="libs/UsageTally/UsageTally.fsproj" />

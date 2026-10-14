@@ -1,0 +1,323 @@
+== idle
+Border* @0,0 600x2000 bg=Transparent pad=24,16,24,12
+  StackPanel @24,16 552x1972 orient=Vertical spacing=8
+    StackPanel @0,0 552x0 orient=Vertical spacing=8
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff4e4c46 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Center
+        text: 
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ff8a5a18 bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff141413 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Start
+        text: 
+    Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
+      ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 orient=Vertical spacing=8
+    Border @0,8 552x90 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+      Grid @13,9 526x72 cols= rows=
+        StackPanel @0,0 526x72 cell=0,0 orient=Vertical spacing=8
+          ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Disabled vbar=Auto
+            WrapPanel @0,0 0x0 focusable name=附件列表 orient=Horizontal
+          TextBox @0,0 526x30 minw=64 minh=30 maxh=240 focusable clip help=Enter 发送 / Shift + Enter 换行 tip=Enter 发送 / Shift + Enter 换行
+          Grid @0,38 526x34 cols=1*/0;Auto/0 rows=Auto;Auto
+            StackPanel @0,4 450x22 va=Center cell=0,0 orient=Horizontal spacing=8
+              Border* @0,0 70x22 va=Center focusable cursor name=切换本对话使用的模型 tip=切换本对话使用的模型 bg=Transparent bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 52x16 va=Center cursor orient=Horizontal spacing=4
+                  TextBlock @0,0 32x16 va=Center clip cursor size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: gpt-x
+                  Image @36,3 16x9.12 ha=Center va=Center w=16 h=16 cursor role=Image glyph=209.375, -665.859375, 581.25, 331.484375:#ff6e6b62
+              Border* @0,0 0x0 hidden va=Center minh=34 focusable cursor name=对话上下文 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 上下文
+            StackPanel @458,0 68x30 ha=Right va=Bottom cell=0,1 orient=Horizontal spacing=8
+              Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=添加附件 help=添加附件，也可以将文件拖入输入区 tip=添加附件，也可以将文件拖入输入区 bg=Transparent cr=8,8,8,8
+                Image @7,7 15.03x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.5270767211914, -957.9891967773438, 860.3297729492188, 916.072509765625:#ff4e4c46
+              Border* @0,0 0x0 hidden op=0.5 ha=Center va=Center w=30 h=30 minw=30 minh=30 cursor name=排队发送 tip=排队发送 bg=Transparent cr=8,8,8,8
+                Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#ff4e4c46
+              Border* @38,0 30x30 op=0.5 va=Center w=30 h=30 minw=30 minh=30 cursor name=发送 help=请输入消息或添加附件 tip=请输入消息或添加附件 bg=#ff1b365d cr=999,999,999,999
+                Image @9,7 12.81x16 ha=Center va=Center w=16 h=16 cursor name=发送 role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#fffbfaf7
+        Border @0,0 0x0 hidden cell=0,0 bg=#ffeff3f8 cr=12,12,12,12
+          Border @0,0 0x0 ha=Center va=Center bg=#ffe2eaf4 cr=8,8,8,8 pad=12,8,12,8
+            TextBlock @0,0 0x0 ha=Center va=Center clip size=12.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 释放文件以添加到当前对话附件
+== text
+Border* @0,0 600x2000 bg=Transparent pad=24,16,24,12
+  StackPanel @24,16 552x1972 orient=Vertical spacing=8
+    StackPanel @0,0 552x0 orient=Vertical spacing=8
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff4e4c46 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Center
+        text: 
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ff8a5a18 bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff141413 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Start
+        text: 
+    Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
+      ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 orient=Vertical spacing=8
+    Border @0,8 552x90 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+      Grid @13,9 526x72 cols= rows=
+        StackPanel @0,0 526x72 cell=0,0 orient=Vertical spacing=8
+          ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Disabled vbar=Auto
+            WrapPanel @0,0 0x0 focusable name=附件列表 orient=Horizontal
+          TextBox @0,0 526x30 minw=64 minh=30 maxh=240 focusable clip help=Enter 发送 / Shift + Enter 换行 tip=Enter 发送 / Shift + Enter 换行
+          Grid @0,38 526x34 cols=1*/0;Auto/0 rows=Auto;Auto
+            StackPanel @0,4 450x22 va=Center cell=0,0 orient=Horizontal spacing=8
+              Border* @0,0 70x22 va=Center focusable cursor name=切换本对话使用的模型 tip=切换本对话使用的模型 bg=Transparent bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 52x16 va=Center cursor orient=Horizontal spacing=4
+                  TextBlock @0,0 32x16 va=Center clip cursor size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: gpt-x
+                  Image @36,3 16x9.12 ha=Center va=Center w=16 h=16 cursor role=Image glyph=209.375, -665.859375, 581.25, 331.484375:#ff6e6b62
+              Border* @0,0 0x0 hidden va=Center minh=34 focusable cursor name=对话上下文 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 上下文
+            StackPanel @458,0 68x30 ha=Right va=Bottom cell=0,1 orient=Horizontal spacing=8
+              Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=添加附件 help=添加附件，也可以将文件拖入输入区 tip=添加附件，也可以将文件拖入输入区 bg=Transparent cr=8,8,8,8
+                Image @7,7 15.03x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.5270767211914, -957.9891967773438, 860.3297729492188, 916.072509765625:#ff4e4c46
+              Border* @0,0 0x0 hidden ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=排队发送 tip=排队发送 bg=Transparent cr=8,8,8,8
+                Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#ff4e4c46
+              Border* @38,0 30x30 va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=发送 help=发送（Enter） tip=发送（Enter） bg=#ff1b365d cr=999,999,999,999
+                Image @9,7 12.81x16 ha=Center va=Center w=16 h=16 cursor name=发送 role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#fffbfaf7
+        Border @0,0 0x0 hidden cell=0,0 bg=#ffeff3f8 cr=12,12,12,12
+          Border @0,0 0x0 ha=Center va=Center bg=#ffe2eaf4 cr=8,8,8,8 pad=12,8,12,8
+            TextBlock @0,0 0x0 ha=Center va=Center clip size=12.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 释放文件以添加到当前对话附件
+== attachments
+Border* @0,0 600x2000 bg=Transparent pad=24,16,24,12
+  StackPanel @24,16 552x1972 orient=Vertical spacing=8
+    StackPanel @0,0 552x0 orient=Vertical spacing=8
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff4e4c46 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Center
+        text: 
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ff8a5a18 bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff141413 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Start
+        text: 
+    Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
+      ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 orient=Vertical spacing=8
+    Border @0,8 552x142 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+      Grid @13,9 526x124 cols= rows=
+        StackPanel @0,0 526x124 cell=0,0 orient=Vertical spacing=8
+          ScrollViewer @0,0 518x36 m=0,0,8,8 maxh=104 clip hbar=Disabled vbar=Auto
+            WrapPanel @0,0 518x36 focusable name=附件列表 orient=Horizontal
+              Border @0,0 160x36 op=0 name=附件：a.png（2.0 KiB） tip=附件：a.png（2.0 KiB） bg=#fff5f4ee bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 142x30 va=Center orient=Horizontal spacing=4
+                  Border @0,7 16x16 va=Center w=16 h=16 bg=null
+                    Viewbox @0,0 16x16 ha=Center va=Center w=16 h=16 clip
+                      Canvas @0,0 16x16 w=16 h=16
+                        Path @0,0 0x0 hidden
+                        Path @0,0 15x9
+                  TextBlock @20,8 28x13 va=Center clip size=10.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: a.png
+                  TextBlock @52,8 56x13 va=Center w=56 clip tip=文件大小：上传中 size=10.5 weight=Normal fg=#ff6e6b62 lh=nan wrap=NoWrap font=Sarasa Gothic SC
+                    text: 上传中
+                  Border* @112,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=移除附件 a.png tip=移除附件 a.png bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor name=移除 role=Image glyph=209.375, -790.859375, 581.25, 581.484375:#ff4e4c46
+              Border @168,0 155x36 op=0 name=附件：b.txt（4.0 KiB） tip=附件：b.txt（4.0 KiB） bg=#fff5f4ee bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 137x30 va=Center orient=Horizontal spacing=4
+                  Border @0,7 16x16 va=Center w=16 h=16 bg=null
+                    Image @1,0 13.1x16 ha=Center va=Center w=16 h=16 role=Image glyph=124.77050018310547, -958.5885620117188, 750.4801025390625, 916.7135620117188:#ff4e4c46
+                  TextBlock @20,8 23x13 va=Center clip size=10.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: b.txt
+                  TextBlock @47,8 56x13 va=Center w=56 clip tip=文件大小：4.0 KiB size=10.5 weight=Normal fg=#ff6e6b62 lh=nan wrap=NoWrap font=Sarasa Gothic SC
+                    text: 4.0 KiB
+                  Border* @107,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=移除附件 b.txt tip=移除附件 b.txt bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor name=移除 role=Image glyph=209.375, -790.859375, 581.25, 581.484375:#ff4e4c46
+              Border @331,0 154x36 op=0 name=附件上传失败：c.txt（6.0 KiB），可移除或重新添加 tip=附件上传失败：c.txt（6.0 KiB），可移除或重新添加 bg=#fff5f4ee bd=#ffddd9ca bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 136x30 va=Center orient=Horizontal spacing=4
+                  Border @0,7 16x16 va=Center w=16 h=16 bg=null
+                    Image @0,0 16x15.99 ha=Center va=Center w=16 h=16 role=Image glyph=42.11457443237305, -957.7713623046875, 916.195556640625, 915.6046752929688:#ff8e3b2f
+                  TextBlock @20,8 22x13 va=Center clip size=10.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: c.txt
+                  TextBlock @46,8 56x13 va=Center w=56 clip tip=上传失败：6.0 KiB，可移除或重新添加 size=10.5 weight=Normal fg=#ff8e3b2f lh=nan wrap=NoWrap font=Sarasa Gothic SC
+                    text: 6.0 KiB
+                  Border* @106,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=移除附件 c.txt tip=移除附件 c.txt bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor name=移除 role=Image glyph=209.375, -790.859375, 581.25, 581.484375:#ff4e4c46
+          TextBox @0,52 526x30 minw=64 minh=30 maxh=240 focusable clip help=Enter 发送 / Shift + Enter 换行 tip=Enter 发送 / Shift + Enter 换行
+          Grid @0,90 526x34 cols=1*/0;Auto/0 rows=Auto;Auto
+            StackPanel @0,4 450x22 va=Center cell=0,0 orient=Horizontal spacing=8
+              Border* @0,0 70x22 va=Center focusable cursor name=切换本对话使用的模型 tip=切换本对话使用的模型 bg=Transparent bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 52x16 va=Center cursor orient=Horizontal spacing=4
+                  TextBlock @0,0 32x16 va=Center clip cursor size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: gpt-x
+                  Image @36,3 16x9.12 ha=Center va=Center w=16 h=16 cursor role=Image glyph=209.375, -665.859375, 581.25, 331.484375:#ff6e6b62
+              Border* @0,0 0x0 hidden va=Center minh=34 focusable cursor name=对话上下文 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 上下文
+            StackPanel @458,0 68x30 ha=Right va=Bottom cell=0,1 orient=Horizontal spacing=8
+              Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=添加附件 help=添加附件，也可以将文件拖入输入区 tip=添加附件，也可以将文件拖入输入区 bg=Transparent cr=8,8,8,8
+                Image @7,7 15.03x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.5270767211914, -957.9891967773438, 860.3297729492188, 916.072509765625:#ff4e4c46
+              Border* @0,0 0x0 hidden op=0.5 ha=Center va=Center w=30 h=30 minw=30 minh=30 cursor name=排队发送 tip=排队发送 bg=Transparent cr=8,8,8,8
+                Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#ff4e4c46
+              Border* @38,0 30x30 op=0.5 va=Center w=30 h=30 minw=30 minh=30 cursor name=发送 help=附件上传中，请稍候… tip=附件上传中，请稍候… bg=#ff1b365d cr=999,999,999,999
+                Image @9,7 12.81x16 ha=Center va=Center w=16 h=16 cursor name=发送 role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#fffbfaf7
+        Border @0,0 0x0 hidden cell=0,0 bg=#ffeff3f8 cr=12,12,12,12
+          Border @0,0 0x0 ha=Center va=Center bg=#ffe2eaf4 cr=8,8,8,8 pad=12,8,12,8
+            TextBlock @0,0 0x0 ha=Center va=Center clip size=12.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 释放文件以添加到当前对话附件
+== generating
+Border* @0,0 600x2000 bg=Transparent pad=24,16,24,12
+  StackPanel @24,16 552x1972 orient=Vertical spacing=8
+    StackPanel @0,0 552x0 orient=Vertical spacing=8
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff4e4c46 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Center
+        text: 
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ff8a5a18 bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff141413 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Start
+        text: 
+    Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
+      ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 orient=Vertical spacing=8
+    Border @0,8 552x90 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+      Grid @13,9 526x72 cols= rows=
+        StackPanel @0,0 526x72 cell=0,0 orient=Vertical spacing=8
+          ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Disabled vbar=Auto
+            WrapPanel @0,0 0x0 focusable name=附件列表 orient=Horizontal
+          TextBox @0,0 526x30 minw=64 minh=30 maxh=240 focusable clip help=正在回复 · Enter 排队 / Esc 停止 tip=正在回复 · Enter 排队 / Esc 停止
+          Grid @0,38 526x34 cols=1*/0;Auto/0 rows=Auto;Auto
+            StackPanel @0,4 412x22 va=Center cell=0,0 orient=Horizontal spacing=8
+              Border* @0,0 70x22 va=Center focusable cursor name=切换本对话使用的模型 tip=切换本对话使用的模型 bg=Transparent bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 52x16 va=Center cursor orient=Horizontal spacing=4
+                  TextBlock @0,0 32x16 va=Center clip cursor size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: gpt-x
+                  Image @36,3 16x9.12 ha=Center va=Center w=16 h=16 cursor role=Image glyph=209.375, -665.859375, 581.25, 331.484375:#ff6e6b62
+              Border* @0,0 0x0 hidden va=Center minh=34 focusable cursor name=对话上下文 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 上下文
+            StackPanel @420,0 106x30 ha=Right va=Bottom cell=0,1 orient=Horizontal spacing=8
+              Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=添加附件 help=添加附件，也可以将文件拖入输入区 tip=添加附件，也可以将文件拖入输入区 bg=Transparent cr=8,8,8,8
+                Image @7,7 15.03x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.5270767211914, -957.9891967773438, 860.3297729492188, 916.072509765625:#ff4e4c46
+              Border* @38,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=排队发送 help=排队发送（Enter） tip=排队发送（Enter） bg=Transparent cr=8,8,8,8
+                Image @9,7 12.81x16 ha=Center va=Center w=16 h=16 cursor name=排队发送 role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#ff4e4c46
+              Border* @76,0 30x30 va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=停止生成 help=停止生成 (Escape) tip=停止生成 (Escape) bg=#ff1b365d cr=999,999,999,999
+                Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor name=停止生成 role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#fffbfaf7
+        Border @0,0 0x0 hidden cell=0,0 bg=#ffeff3f8 cr=12,12,12,12
+          Border @0,0 0x0 ha=Center va=Center bg=#ffe2eaf4 cr=8,8,8,8 pad=12,8,12,8
+            TextBlock @0,0 0x0 ha=Center va=Center clip size=12.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 释放文件以添加到当前对话附件
+== disabled
+Border* @0,0 600x2000 bg=Transparent pad=24,16,24,12
+  StackPanel @24,16 552x1972 orient=Vertical spacing=8
+    StackPanel @0,0 552x0 orient=Vertical spacing=8
+    Border @0,8 552x35 bg=#fff5f4ee bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @13,9 526x17 clip size=11.5 weight=Normal fg=#ff4e4c46 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Center
+        text: 连接已断开
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ff8a5a18 bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff141413 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Start
+        text: 
+    Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
+      ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 orient=Vertical spacing=8
+    Border @0,51 552x90 op=0.72 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+      Grid @13,9 526x72 cols= rows=
+        StackPanel @0,0 526x72 cell=0,0 orient=Vertical spacing=8
+          ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Disabled vbar=Auto
+            WrapPanel @0,0 0x0 focusable name=附件列表 orient=Horizontal
+          TextBox @0,0 526x30 minw=64 minh=30 maxh=240 focusable clip help=Enter 发送 / Shift + Enter 换行 tip=Enter 发送 / Shift + Enter 换行
+          Grid @0,38 526x34 cols=1*/0;Auto/0 rows=Auto;Auto
+            StackPanel @0,4 450x22 va=Center cell=0,0 orient=Horizontal spacing=8
+              Border* @0,0 70x22 op=0.5 va=Center cursor name=切换本对话使用的模型 tip=切换本对话使用的模型 bg=Transparent bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 52x16 va=Center cursor orient=Horizontal spacing=4
+                  TextBlock @0,0 32x16 va=Center clip cursor size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: gpt-x
+                  Image @36,3 16x9.12 ha=Center va=Center w=16 h=16 cursor role=Image glyph=209.375, -665.859375, 581.25, 331.484375:#ff6e6b62
+              Border* @0,0 0x0 hidden va=Center minh=34 focusable cursor name=对话上下文 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 上下文
+            StackPanel @458,0 68x30 ha=Right va=Bottom cell=0,1 orient=Horizontal spacing=8
+              Border* @0,0 30x30 op=0.5 ha=Center va=Center w=30 h=30 minw=30 minh=30 cursor name=添加附件 help=添加附件，也可以将文件拖入输入区 tip=添加附件，也可以将文件拖入输入区 bg=Transparent cr=8,8,8,8
+                Image @7,7 15.03x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.5270767211914, -957.9891967773438, 860.3297729492188, 916.072509765625:#ff4e4c46
+              Border* @0,0 0x0 hidden op=0.5 ha=Center va=Center w=30 h=30 minw=30 minh=30 cursor name=排队发送 tip=排队发送 bg=Transparent cr=8,8,8,8
+                Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#ff4e4c46
+              Border* @38,0 30x30 op=0.5 va=Center w=30 h=30 minw=30 minh=30 cursor name=发送 help=连接已断开 tip=连接已断开 bg=#ff1b365d cr=999,999,999,999
+                Image @9,7 12.81x16 ha=Center va=Center w=16 h=16 cursor name=发送 role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#fffbfaf7
+        Border @0,0 0x0 hidden cell=0,0 bg=#ffeff3f8 cr=12,12,12,12
+          Border @0,0 0x0 ha=Center va=Center bg=#ffe2eaf4 cr=8,8,8,8 pad=12,8,12,8
+            TextBlock @0,0 0x0 ha=Center va=Center clip size=12.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 释放文件以添加到当前对话附件
+== vision-blocked
+Border* @0,0 600x2000 bg=Transparent pad=24,16,24,12
+  StackPanel @24,16 552x1972 orient=Vertical spacing=8
+    StackPanel @0,0 552x0 orient=Vertical spacing=8
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff4e4c46 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Center
+        text: 
+    Border @0,8 552x35 name=当前模型「X」不能识别图片，图片不会发出去。请换一个能看图的模型，或移除图片后再发送。 bg=#fff5f4ee bd=#ff8a5a18 bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @13,9 526x17 clip size=11.5 weight=Normal fg=#ff141413 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Start
+        text: 当前模型「X」不能识别图片，图片不会发出去。请换一个能看图的模型，或移除图片后再发送。
+    Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
+      ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 orient=Vertical spacing=8
+    Border @0,51 552x142 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+      Grid @13,9 526x124 cols= rows=
+        StackPanel @0,0 526x124 cell=0,0 orient=Vertical spacing=8
+          ScrollViewer @0,0 518x36 m=0,0,8,8 maxh=104 clip hbar=Disabled vbar=Auto
+            WrapPanel @0,0 518x36 focusable name=附件列表 orient=Horizontal
+              Border @0,0 161x36 op=0 name=附件：d.png（8.0 KiB） tip=附件：d.png（8.0 KiB） bg=#fff5f4ee bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 143x30 va=Center orient=Horizontal spacing=4
+                  Border @0,7 16x16 va=Center w=16 h=16 bg=null
+                    Image @0,0 16x16 ha=Center va=Center w=16 h=16 role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+                  TextBlock @20,8 29x13 va=Center clip size=10.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: d.png
+                  TextBlock @53,8 56x13 va=Center w=56 clip tip=文件大小：8.0 KiB size=10.5 weight=Normal fg=#ff6e6b62 lh=nan wrap=NoWrap font=Sarasa Gothic SC
+                    text: 8.0 KiB
+                  Border* @113,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=移除附件 d.png tip=移除附件 d.png bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor name=移除 role=Image glyph=209.375, -790.859375, 581.25, 581.484375:#ff4e4c46
+          TextBox @0,52 526x30 minw=64 minh=30 maxh=240 focusable clip help=Enter 发送 / Shift + Enter 换行 tip=Enter 发送 / Shift + Enter 换行
+          Grid @0,90 526x34 cols=1*/0;Auto/0 rows=Auto;Auto
+            StackPanel @0,4 450x22 va=Center cell=0,0 orient=Horizontal spacing=8
+              Border* @0,0 70x22 va=Center focusable cursor name=切换本对话使用的模型 tip=切换本对话使用的模型 bg=Transparent bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,3 52x16 va=Center cursor orient=Horizontal spacing=4
+                  TextBlock @0,0 32x16 va=Center clip cursor size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: gpt-x
+                  Image @36,3 16x9.12 ha=Center va=Center w=16 h=16 cursor role=Image glyph=209.375, -665.859375, 581.25, 331.484375:#ff6e6b62
+              Border* @0,0 0x0 hidden va=Center minh=34 focusable cursor name=对话上下文 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 上下文
+            StackPanel @458,0 68x30 ha=Right va=Bottom cell=0,1 orient=Horizontal spacing=8
+              Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=添加附件 help=添加附件，也可以将文件拖入输入区 tip=添加附件，也可以将文件拖入输入区 bg=Transparent cr=8,8,8,8
+                Image @7,7 15.03x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.5270767211914, -957.9891967773438, 860.3297729492188, 916.072509765625:#ff4e4c46
+              Border* @0,0 0x0 hidden op=0.5 ha=Center va=Center w=30 h=30 minw=30 minh=30 cursor name=排队发送 tip=排队发送 bg=Transparent cr=8,8,8,8
+                Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#ff4e4c46
+              Border* @38,0 30x30 op=0.5 va=Center w=30 h=30 minw=30 minh=30 cursor name=发送 help=当前模型「X」不能识别图片，图片不会发出去。请换一个能看图的模型，或移除图片后再发送。 tip=当前模型「X」不能识别图片，图片不会发出去。请换一个能看图的模型，或移除图片后再发送。 bg=#ff1b365d cr=999,999,999,999
+                Image @9,7 12.81x16 ha=Center va=Center w=16 h=16 cursor name=发送 role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#fffbfaf7
+        Border @0,0 0x0 hidden cell=0,0 bg=#ffeff3f8 cr=12,12,12,12
+          Border @0,0 0x0 ha=Center va=Center bg=#ffe2eaf4 cr=8,8,8,8 pad=12,8,12,8
+            TextBlock @0,0 0x0 ha=Center va=Center clip size=12.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 释放文件以添加到当前对话附件
+== compact
+Border* @0,0 600x2000 bg=Transparent pad=12,12,12,8
+  StackPanel @12,12 576x1980 orient=Vertical spacing=8
+    StackPanel @0,0 576x0 orient=Vertical spacing=8
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff4e4c46 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Center
+        text: 
+    Border @0,0 0x0 hidden bg=#fff5f4ee bd=#ff8a5a18 bt=1,1,1,1 cr=8,8,8,8 pad=12,8,12,8
+      TextBlock @0,0 0x0 clip size=11.5 weight=Normal fg=#ff141413 lh=17 wrap=Wrap font=Sarasa Gothic SC align=Start
+        text: 
+    Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
+      ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 orient=Vertical spacing=8
+    Border @0,8 576x104 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+      Grid @13,9 550x86 cols= rows=
+        StackPanel @0,0 550x86 cell=0,0 orient=Vertical spacing=8
+          ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Auto vbar=Disabled
+            WrapPanel @0,0 0x0 m=0,0,0,8 focusable name=附件列表 orient=Horizontal
+          TextBox @0,0 550x30 minw=64 minh=30 maxh=240 focusable clip help=Enter 发送 / Shift + Enter 换行 tip=Enter 发送 / Shift + Enter 换行
+          Grid @0,38 550x48 cols=1*/0;Auto/0 rows=Auto;Auto
+            StackPanel @0,0 446x44 va=Center cell=0,0 orient=Horizontal spacing=8
+              Border* @0,0 70x44 va=Center minh=44 focusable cursor name=切换本对话使用的模型 tip=切换本对话使用的模型 bg=Transparent bd=#ffece9de bt=1,1,1,1 cr=6,6,6,6 pad=8,2,8,2
+                StackPanel @9,14 52x16 va=Center cursor orient=Horizontal spacing=4
+                  TextBlock @0,0 32x16 va=Center clip cursor size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: gpt-x
+                  Image @36,3 16x9.12 ha=Center va=Center w=16 h=16 cursor role=Image glyph=209.375, -665.859375, 581.25, 331.484375:#ff6e6b62
+              Border* @0,0 0x0 hidden va=Center minh=44 focusable cursor name=对话上下文 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 上下文
+            StackPanel @454,0 96x44 ha=Right va=Bottom cell=0,1 orient=Horizontal spacing=8
+              Border* @0,0 44x44 ha=Center va=Center w=44 h=44 minw=44 minh=44 focusable cursor name=添加附件 help=添加附件，也可以将文件拖入输入区 tip=添加附件，也可以将文件拖入输入区 bg=Transparent cr=8,8,8,8
+                Image @14,14 15.03x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.5270767211914, -957.9891967773438, 860.3297729492188, 916.072509765625:#ff4e4c46
+              Border* @0,0 0x0 hidden op=0.5 ha=Center va=Center w=44 h=44 minw=44 minh=44 cursor name=排队发送 tip=排队发送 bg=Transparent cr=8,8,8,8
+                Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#ff4e4c46
+              Border* @52,0 44x44 op=0.5 va=Center w=44 h=44 minw=44 minh=44 cursor name=发送 help=请输入消息或添加附件 tip=请输入消息或添加附件 bg=#ff1b365d cr=999,999,999,999
+                Image @16,14 12.81x16 ha=Center va=Center w=16 h=16 cursor name=发送 role=Image glyph=166.80470275878906, -916.079833984375, 666.3516235351562, 832.329833984375:#fffbfaf7
+        Border @0,0 0x0 hidden cell=0,0 bg=#ffeff3f8 cr=12,12,12,12
+          Border @0,0 0x0 ha=Center va=Center bg=#ffe2eaf4 cr=8,8,8,8 pad=12,8,12,8
+            TextBlock @0,0 0x0 ha=Center va=Center clip size=12.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 释放文件以添加到当前对话附件

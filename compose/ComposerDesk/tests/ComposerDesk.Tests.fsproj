@@ -2,13 +2,16 @@
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
     <Compile Include="Headless.fs" />
+    <Compile Include="Dump.fs" />
     <Compile Include="Tests.fs" />
+    <Compile Include="GoldenTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Wanxiang2.ThemeFonts" VersionOverride="0.0.0-local" />
     <ProjectReference Include="../ComposerDesk.fsproj" />
   </ItemGroup>
 </Project>

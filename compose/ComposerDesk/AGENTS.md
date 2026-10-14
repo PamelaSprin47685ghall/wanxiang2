@@ -13,4 +13,6 @@ ComposerBox + AttachmentTray + ModelChip + BusyRing（上传中转圈，旧 Ui.s
 
 ## 与旧实现的差异
 - 待发送消息面板（SetPendingMessages）、SessionConfig 摘要文案的拼装、发送历史回溯（PromptHistory）、IME 守护（ImeShield）还在宿主侧，经 SetContext / SetKeyHook / SetImeProbe 接入。
-- 尚无旧 Composer 整棵控件树金样（树结构已重排为三个库）。
+- 整棵控件树金样：tests/golden/composer.txt 由 tools/composergold 从旧 Composer（extract-ledger 533b85b）以内嵌字体渲染生成，七态（闲置、有字、附件、生成中、禁用、视觉受阻、窄屏）逐行一致。
+- 未确认消息区（旧 SetPendingMessages）在 Pending.fs；根留白随自身宽度取档、窄屏固定收紧（旧 ApplyComposerPadding）。
+- 门控在 Text 属性变化时同步重算；Submit() 为同步提交，宿主异常照常抛出。

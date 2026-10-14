@@ -18,7 +18,10 @@ open Wanxiang2.BusyRing
 type ComposerLooks =
     { Box: ComposerBoxLook
       Tray: AttachmentTrayLook
-      Chip: ModelChipLook }
+      Chip: ModelChipLook
+      Pending: PendingLook
+      /// 输入区四周留白（旧 Spacing.space2xl / spaceXl / spaceMd，水平随宽度取档）
+      Space: Space -> IObservable<float> }
 
 module ComposerLooks =
 
@@ -101,6 +104,7 @@ module ComposerLooks =
                 | TrayInk.Accent -> brush PaletteKey.Accent
                 | TrayInk.SurfaceContainer -> brush PaletteKey.SurfaceContainer
                 | TrayInk.Hairline -> brush PaletteKey.Hairline
+                | TrayInk.HairlineStrong -> brush PaletteKey.HairlineStrong
               Gauge =
                 function
                 | TrayGauge.SpaceXs -> space Space.Xs
@@ -118,6 +122,7 @@ module ComposerLooks =
                 | TrayGauge.MaxHeight -> fixedValue LayoutPolicy.attachmentDraftMaxHeight
                 | TrayGauge.ScrollGutter -> fixedValue LayoutPolicy.nestedScrollGutter
                 | TrayGauge.CompactPadBottom -> space Space.Md
+                | TrayGauge.FadeMs -> manager.Timing Timing.ControlRowFade
               BodyFont = font
               Glyph =
                 fun g b ->
@@ -150,4 +155,11 @@ module ComposerLooks =
                 | ChipGauge.SpaceXs -> space Space.Xs
               BodyFont = font
               Chevron = icon Glyph.ChevronDown
-              Dress = surface StyleClass.hoverBordered } }
+              Dress = surface StyleClass.hoverBordered }
+          Pending =
+            { Brush = brush
+              Metric = metric
+              Space = space
+              BodyFont = font
+              DressSecondary = (fun b -> surface StyleClass.hoverBordered b; b.Classes.Add StyleClass.buttonSecondary) }
+          Space = space }

@@ -20,6 +20,8 @@ type TrayInk =
     | Accent
     | SurfaceContainer
     | Hairline
+    /// 失败芯片高一档描边
+    | HairlineStrong
 
 /// 用到的活度量
 [<RequireQualifiedAccess>]
@@ -39,6 +41,8 @@ type TrayGauge =
     | MaxHeight
     | ScrollGutter
     | CompactPadBottom
+    /// 新芯片淡入时长（毫秒，旧 MotionLedger.controlRowFade）
+    | FadeMs
 
 /// 用到的图标
 [<RequireQualifiedAccess>]
@@ -81,6 +85,7 @@ type AttachmentTray(look: AttachmentTrayLook) =
     let ink = look.Ink
     let gauge = look.Gauge
     let strip = WrapPanel(Orientation = Orientation.Horizontal, Focusable = true)
+    do AutomationProperties.SetName(strip, "附件列表")
     let scroller =
         ScrollViewer(
             Content = strip,
@@ -94,12 +99,16 @@ type AttachmentTray(look: AttachmentTrayLook) =
     let mutable onRemove: Guid -> unit = ignore
     let mutable pendingFocus: Guid option = None
     let removed = Event<Guid>()
+    let mutable reduced = false
+    let mutable rendered: Set<Guid> = Set.empty
 
     let removeSpot (label: string) =
         let b = Spot(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true)
         look.DressRemove b
         AutomationProperties.SetName(b, label)
         ToolTip.SetTip(b, label)
+        b.HorizontalAlignment <- HorizontalAlignment.Center
+        b.VerticalAlignment <- VerticalAlignment.Center
         b
 
     let build (item: TrayItem) =
@@ -200,10 +209,20 @@ type AttachmentTray(look: AttachmentTrayLook) =
         let chip = Border(Tag = item.Id, Child = row)
         look.DressChip chip
         Follow.live2 chip (gauge TrayGauge.PadX) (gauge TrayGauge.PadY) (fun x y -> chip.Padding <- Thickness(x, y))
-        Follow.live chip (gauge TrayGauge.RadiusMd) (fun r -> chip.CornerRadius <- CornerRadius r)
+        Follow.live chip (gauge TrayGauge.RadiusSm) (fun r -> chip.CornerRadius <- CornerRadius r)
         Follow.live chip (gauge TrayGauge.BorderWidth) (fun w -> chip.BorderThickness <- Thickness w)
         chip.Background <- ink TrayInk.SurfaceContainer
-        chip.BorderBrush <- ink TrayInk.Hairline
+        chip.BorderBrush <- ink (if item.Failed then TrayInk.HairlineStrong else TrayInk.Hairline)
+        // 只补间 Opacity：新出现的芯片从 0 淡入；减弱动效瞬时到位
+        let fade = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty)
+        fade.Duration <- if reduced then TimeSpan.Zero else TimeSpan.FromMilliseconds(Follow.now (gauge TrayGauge.FadeMs))
+        let ts = Avalonia.Animation.Transitions()
+        ts.Add fade
+        chip.Transitions <- ts
+        if not reduced && not (Set.contains item.Id rendered) then
+            chip.Opacity <- 0.0
+            chip.AttachedToVisualTree.Add(fun _ -> chip.Opacity <- 1.0)
+        ToolTip.SetTip(chip, item.Name)
         AutomationProperties.SetName(chip, item.Name)
         chip :> Control
 
@@ -228,6 +247,7 @@ type AttachmentTray(look: AttachmentTrayLook) =
         removes.Clear()
         strip.Children.Clear()
         for item in items do strip.Children.Add(build item)
+        rendered <- items |> List.map _.Id |> Set.ofList
         scroller.IsVisible <- not (List.isEmpty items)
         pendingFocus
         |> Option.iter (fun id ->
@@ -247,7 +267,7 @@ type AttachmentTray(look: AttachmentTrayLook) =
         Follow.live scroller (gauge TrayGauge.MaxHeight) (fun h ->
             if List.isEmpty items then scroller.MaxHeight <- h else snap ())
         Follow.live scroller (gauge TrayGauge.CompactPadBottom) (fun _ -> applyCompact ())
-        strip.LayoutUpdated.Add(fun _ -> snap ())
+        look.Reduced |> Observable.add (fun r -> reduced <- r)
 
     /// 放进布局的根（内部是滚动区）
     member _.Host: Control = scroller

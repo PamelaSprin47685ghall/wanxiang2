@@ -93,3 +93,42 @@ let ``禁用时说明条可见、附件键不可用；看图受阻挂提示`` ()
         b.SetEnabled(true, "")
         Assert.True b.AttachButton.IsEnabled
         Assert.Equal("输入消息…", b.Input.PlaceholderText))
+
+[<Fact>]
+let ``Enter 发送档 Ctrl+Enter 不发送；钩子先于发送判定；排队键直达提交；异常照常抛出`` () =
+    Headless.run (fun () ->
+        let b = ComposerBox(look ())
+        let log = ResizeArray<string>()
+        b.Submitted.Add(fun t -> log.Add t)
+        b.SetEnabled(true, "")
+        let w = Window(Content = b.Host)
+        w.Show()
+        b.Input.Text <- "x"
+        key b.Input Key.Enter KeyModifiers.Control
+        Assert.Empty log
+        b.Input.Text <- "x"
+        // 门控尚未写入也照样交给宿主（宿主同步判定）
+        key b.Input Key.Enter KeyModifiers.None
+        Assert.Equal<string list>([ "x" ], List.ofSeq log)
+        b.SetKeyHook(fun e -> e.Key = Key.Enter)
+        key b.Input Key.Enter KeyModifiers.None
+        Assert.Equal(1, log.Count)
+        b.SetKeyHook(fun _ -> false)
+        b.SetGenerating true
+        b.ApplySend { ready with QueueVisible = true }
+        invoke b.QueueButton
+        Assert.Equal(2, log.Count)
+        b.Submitted.Add(fun _ -> failwith "boom")
+        Assert.ThrowsAny<exn>(fun () -> b.Submit()) |> ignore
+        w.Close())
+
+[<Fact>]
+let ``窄屏收起对话上下文按钮，回到宽屏恢复`` () =
+    Headless.run (fun () ->
+        let b = ComposerBox(look ())
+        b.ShowContext("系统指令", "详情", true)
+        b.SetCompact true
+        Assert.False b.ContextButton.IsVisible
+        b.SetCompact false
+        Assert.True b.ContextButton.IsVisible
+        Assert.True(DragDrop.GetAllowDrop b.Host))

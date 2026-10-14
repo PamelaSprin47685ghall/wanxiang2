@@ -72,6 +72,10 @@ type SendView =
       SendLabel: string
       QueueTip: string option }
 
+/// 输入区根（旧 Composer 自身就是 Border 子类）
+type ComposerRoot() =
+    inherit Border()
+
 /// 外观
 type ComposerBoxLook =
     { Ink: BoxInk -> IBrush
@@ -105,14 +109,20 @@ type ComposerBox(look: ComposerBoxLook) =
     let send =
         Spot(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center)
     let queue =
-        Spot(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, IsVisible = false)
+        Spot(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, IsVisible = false)
     let attach =
-        Spot(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center)
+        Spot(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
     let context =
         Spot(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, IsVisible = false)
     let contextLabel = TextBlock(Text = "上下文", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
-    let traySlot = ContentControl()
-    let modelSlot = ContentControl()
+    /// 托盘与模型芯片直接插进各自的面板（旧树里没有中间容器）
+    let mutable trayCtl: Control option = None
+    let mutable modelCtl: Control option = None
+    /// 未确认消息区（插在提示条与输入壳之间）
+    let mutable pendingCtl: Control option = None
+    let outer = StackPanel(Orientation = Orientation.Vertical)
+    let column = StackPanel(Orientation = Orientation.Vertical)
+    let request = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
     let accessory = StackPanel(Orientation = Orientation.Vertical)
     let disabledText =
         TextBlock(Foreground = ink BoxInk.TextMuted, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap)
@@ -142,7 +152,7 @@ type ComposerBox(look: ComposerBoxLook) =
             Foreground = ink BoxInk.Accent,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center)
-    let host = Border(Background = Brushes.Transparent)
+    let host = ComposerRoot(Background = Brushes.Transparent)
     let submitted = Event<string>()
     let stopped = Event<unit>()
     let attachAsked = Event<unit>()
@@ -154,6 +164,7 @@ type ComposerBox(look: ComposerBoxLook) =
     let mutable disabledReason = ""
     let mutable enterSends = true
     let mutable compact = false
+    let mutable contextShown = false
     let mutable dragging = false
     let mutable wasActive = false
     let mutable canSubmit = false
@@ -161,6 +172,8 @@ type ComposerBox(look: ComposerBoxLook) =
     let mutable composing: TextBox -> bool = fun _ -> false
     /// 宿主先看一眼按键（历史召回、Escape 链）；返回 true 表示已处理
     let mutable keyHook: KeyEventArgs -> bool = fun _ -> false
+
+    let submitText () = submitted.Trigger(if isNull input.Text then "" else input.Text)
 
     let tryFocus () =
         let act () =
@@ -221,6 +234,10 @@ type ComposerBox(look: ComposerBoxLook) =
         setSquare attach size
         setSquare send size
         setSquare queue size
+        // 窄屏上下文按钮也抬到触控目标高度（旧 SetCompactMode）
+        if compact then context.MinHeight <- size else context.ClearValue Layoutable.MinHeightProperty
+        // 决策 364：窄屏底栏只留模型芯片、回形针、发送
+        context.IsVisible <- contextShown && not compact
 
     do
         // TextBox 透明底资源，避免 Fluent 聚焦白底
@@ -256,6 +273,7 @@ type ComposerBox(look: ComposerBoxLook) =
         Follow.live contextLabel look.BodyFont (fun f -> contextLabel.FontFamily <- f)
         AutomationProperties.SetName(send, "发送")
         AutomationProperties.SetName(queue, "排队发送")
+        ToolTip.SetTip(queue, "排队发送")
         AutomationProperties.SetName(attach, "添加附件")
         AutomationProperties.SetName(context, "对话上下文")
         ToolTip.SetTip(attach, "添加附件，也可以将文件拖入输入区")
@@ -264,8 +282,9 @@ type ComposerBox(look: ComposerBoxLook) =
             if generating then
                 stopped.Trigger()
                 tryFocus ()
-            elif canSubmit then submitted.Trigger(if isNull input.Text then "" else input.Text))
-        queue.OnInvoke(fun () -> if canSubmit then submitted.Trigger(if isNull input.Text then "" else input.Text))
+            else submitText ())
+        // 门控由宿主的提交动作同步判定（旧 Composer.Submit），这里不读可能过期的门控缓存
+        queue.OnInvoke(fun () -> submitText ())
         attach.OnInvoke(fun () -> attachAsked.Trigger())
         context.OnInvoke(fun () -> contextOpened.Trigger())
         Follow.live2 accessory (gauge BoxGauge.SpaceMd) (gauge BoxGauge.SpaceMd) (fun s _ -> accessory.Spacing <- s)
@@ -297,9 +316,7 @@ type ComposerBox(look: ComposerBoxLook) =
         actionRow.Children.Add attach
         actionRow.Children.Add queue
         actionRow.Children.Add send
-        let request = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
         Follow.live request (gauge BoxGauge.SpaceMd) (fun s -> request.Spacing <- s)
-        request.Children.Add modelSlot
         request.Children.Add context
         let toolbar = Grid()
         Follow.live toolbar (gauge BoxGauge.SpaceMd) (fun s -> toolbar.ColumnSpacing <- s)
@@ -314,16 +331,13 @@ type ComposerBox(look: ComposerBoxLook) =
         Grid.SetRow(request, 0)
         Grid.SetColumn(actionRow, 1)
         Grid.SetRow(actionRow, 0)
-        let column = StackPanel(Orientation = Orientation.Vertical)
         Follow.live column (gauge BoxGauge.SpaceMd) (fun s -> column.Spacing <- s)
-        column.Children.Add traySlot
         column.Children.Add input
         column.Children.Add toolbar
         let shellGrid = Grid()
         shellGrid.Children.Add column
         shellGrid.Children.Add dropHint
         shell.Child <- shellGrid
-        let outer = StackPanel(Orientation = Orientation.Vertical)
         Follow.live outer (gauge BoxGauge.SpaceMd) (fun s -> outer.Spacing <- s)
         Follow.live outer (gauge BoxGauge.ReadingWidth) (fun w -> outer.MaxWidth <- w)
         outer.Children.Add accessory
@@ -344,22 +358,24 @@ type ComposerBox(look: ComposerBoxLook) =
             InputElement.KeyDownEvent,
             EventHandler<KeyEventArgs>(fun _ e ->
                 if composing input && (e.Key = Key.Enter || e.Key = Key.Up || e.Key = Key.Down) then ()
+                // 宿主钩子先于本库的发送判定
+                elif keyHook e then e.Handled <- true
                 elif e.Key = Key.Escape && generating then
                     e.Handled <- true
                     stopped.Trigger()
                 elif e.Key = Key.Enter then
                     let shift = e.KeyModifiers.HasFlag KeyModifiers.Shift
                     let ctrl = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
-                    let sends = if enterSends then not shift else ctrl
+                    // Enter 发送档里 Ctrl+Enter 交给输入框换行（旧 SendKey.sends）
+                    let sends = if enterSends then not shift && not ctrl else ctrl
                     if sends then
                         e.Handled <- true
-                        if canSubmit then submitted.Trigger(if isNull input.Text then "" else input.Text)
+                        submitText ()
                 elif e.Key = Key.V then
                     let ctrl = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
-                    if ctrl && paste () then e.Handled <- true
-                elif keyHook e then e.Handled <- true),
+                    if ctrl && paste () then e.Handled <- true),
             RoutingStrategies.Tunnel)
-        DragDrop.SetAllowDrop(shell, true)
+        // 整个输入区（含留白、未确认区、附件条）都接受拖放
         DragDrop.SetAllowDrop(host, true)
         let onOver (e: DragEventArgs) =
             let has =
@@ -394,7 +410,7 @@ type ComposerBox(look: ComposerBoxLook) =
                     e.Handled <- true
                     dropped.Trigger files
                     tryFocus ()
-        for target in [ shell :> Interactive; host :> Interactive ] do
+        for target in [ host :> Interactive ] do
             target.AddHandler(DragDrop.DragOverEvent, EventHandler<DragEventArgs>(fun _ e -> onOver e))
             target.AddHandler(DragDrop.DragLeaveEvent, EventHandler<DragEventArgs>(fun _ e -> onLeave e))
             target.AddHandler(DragDrop.DropEvent, EventHandler<DragEventArgs>(fun _ e -> onDrop e))
@@ -407,6 +423,7 @@ type ComposerBox(look: ComposerBoxLook) =
     member _.Input = input
     member _.SendButton: Border = send
     member _.QueueButton: Border = queue
+    member _.ContextButton: Border = context
     member _.AttachButton: Border = attach
     member _.Text = if isNull input.Text then "" else input.Text
     member _.IsGenerating = generating
@@ -418,8 +435,19 @@ type ComposerBox(look: ComposerBoxLook) =
     member _.SetPaste(f: unit -> bool) = paste <- f
     member _.ContextOpened = contextOpened.Publish
 
-    member _.SetTray(c: Control) = traySlot.Content <- c
-    member _.SetModel(c: Control) = modelSlot.Content <- c
+    member _.SetTray(c: Control) =
+        trayCtl |> Option.iter (column.Children.Remove >> ignore)
+        column.Children.Insert(0, c)
+        trayCtl <- Some c
+    member _.SetModel(c: Control) =
+        modelCtl |> Option.iter (request.Children.Remove >> ignore)
+        request.Children.Insert(0, c)
+        modelCtl <- Some c
+    /// 未确认消息区：放在看图提示与输入壳之间
+    member _.SetPending(c: Control) =
+        pendingCtl |> Option.iter (outer.Children.Remove >> ignore)
+        outer.Children.Insert(outer.Children.IndexOf shell, c)
+        pendingCtl <- Some c
     member _.SetAccessory(c: Control) =
         accessory.Children.Clear()
         accessory.Children.Add c
@@ -457,11 +485,13 @@ type ComposerBox(look: ComposerBoxLook) =
         ToolTip.SetTip(send, view.SendTip)
         AutomationProperties.SetName(send, view.SendLabel)
         AutomationProperties.SetHelpText(send, view.SendTip)
+        if not (isNull send.Child) then AutomationProperties.SetName(send.Child, view.SendLabel)
         match view.QueueTip with
         | Some tip ->
             ToolTip.SetTip(queue, tip)
             AutomationProperties.SetName(queue, "排队发送")
             AutomationProperties.SetHelpText(queue, tip)
+            if not (isNull queue.Child) then AutomationProperties.SetName(queue.Child, "排队发送")
         | None -> ()
         let hint =
             if generating then
@@ -502,9 +532,15 @@ type ComposerBox(look: ComposerBoxLook) =
 
     member _.ShowContext(label: string, detail: string, canEdit: bool) =
         contextLabel.Text <- label
-        context.IsVisible <- true
+        contextShown <- true
+        context.IsVisible <- not compact
         setEnabledBtn context canEdit
         ToolTip.SetTip(context, detail)
         AutomationProperties.SetHelpText(context, detail)
 
-    member _.HideContext() = context.IsVisible <- false
+    member _.HideContext() =
+        contextShown <- false
+        context.IsVisible <- false
+
+    /// 与发送键同一路径的同步提交（宿主快捷键用）；宿主提交动作的异常照常抛出
+    member _.Submit() = submitText ()

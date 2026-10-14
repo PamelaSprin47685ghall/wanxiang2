@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- 组合者：ComposerBox + AttachmentTray + ModelChip + ComposerSendState + ModelVision + Theme = 旧 Views/Composer.fs。协作者见 PackageReference。 -->
   <ItemGroup>
+    <Compile Include="Pending.fs" />
     <Compile Include="Looks.fs" />
     <Compile Include="ComposerDesk.fs" />
   </ItemGroup>
@@ -14,6 +15,8 @@
     <PackageReference Include="Wanxiang2.ModelVision" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerDrafts" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SpacingRamp" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />

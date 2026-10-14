@@ -9,3 +9,5 @@
 ## 证据与旧测试
 
 覆盖旧 `ComposerAttachmentTests` 类用例中移除后焦点归宿、失败态与缩小提示的呈现。本库无头行为用例覆盖读屏 Invoke、焦点迁移、显隐。
+
+- 新芯片从 0 淡入（旧 controlRowFade，减弱动效瞬时）；圆角 RadiusSm，失败芯片 HairlineStrong 描边；滚动窗整行取高只在渲染后投递一次（同旧）。

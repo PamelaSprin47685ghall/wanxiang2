@@ -9,6 +9,7 @@ open Wanxiang.UI
 open Wanxiang2.ComposerBox
 open Wanxiang2.AttachmentTray
 open Wanxiang2.ModelChip
+open Wanxiang2.Theme
 
 /// 输入区对外的动作（旧 ComposerActions）
 type ComposerDeskActions =
@@ -27,6 +28,7 @@ type ComposerDesk(looks: ComposerLooks, actions: ComposerDeskActions) =
     let box = ComposerBox(looks.Box)
     let tray = AttachmentTray(looks.Tray)
     let chip = ModelChip(looks.Chip)
+    let pending = PendingPanel(looks.Pending)
     let thumbs = Collections.Generic.Dictionary<Guid, IImage>()
     let notes = Collections.Generic.Dictionary<Guid, string>()
     let mutable attachments: PendingAttachment list = []
@@ -37,6 +39,17 @@ type ComposerDesk(looks: ComposerLooks, actions: ComposerDeskActions) =
     let mutable enterSends = true
     let mutable vision = VisionUnknown
     let mutable visionLabel = ""
+    let mutable compactMode = false
+    let mutable top = 0.0
+    let mutable bottom = 0.0
+    let mutable md = 0.0
+    /// 旧 SetCompactMode / ApplyComposerPadding：窄屏固定收紧，桌面按自身宽度取水平档
+    let applyPadding () =
+        (box.Host :?> Border).Padding <-
+            if compactMode then Thickness(bottom, bottom, bottom, md)
+            else
+                let inset = LayoutPolicy.horizontalInset box.Host.Bounds.Width
+                Thickness(inset, top, inset, bottom)
 
     let facts (a: PendingAttachment) : ComposerAttachment =
         { ready = a.ready; failed = a.failed; isImage = MediaTypes.isImage a.mediaType }
@@ -95,6 +108,11 @@ type ComposerDesk(looks: ComposerLooks, actions: ComposerDeskActions) =
                 refresh ()
 
     do
+        box.SetPending pending.Host
+        looks.Space Space.X2l |> Observable.add (fun v -> top <- v; applyPadding ())
+        looks.Space Space.Xl |> Observable.add (fun v -> bottom <- v; applyPadding ())
+        looks.Space Space.Md |> Observable.add (fun v -> md <- v; applyPadding ())
+        box.Host.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty && not compactMode then applyPadding ())
         box.SetTray tray.Host
         box.SetModel chip.Host
         chip.OnOpen actions.OpenModelPicker
@@ -108,6 +126,8 @@ type ComposerDesk(looks: ComposerLooks, actions: ComposerDeskActions) =
         box.ContextOpened.Add(fun () -> actions.OpenSessionSettings())
         box.SetPaste actions.PasteFromClipboard
         box.Input.TextChanged.Add(fun _ -> refresh ())
+        // TextChanged 晚于 Text 属性派发：属性一变就同步重算门控，写字后立即回车不读旧门控
+        box.Input.PropertyChanged.Add(fun e -> if e.Property = TextBox.TextProperty then refresh ())
         refresh ()
 
     member _.Host: Control = box.Host
@@ -164,6 +184,8 @@ type ComposerDesk(looks: ComposerLooks, actions: ComposerDeskActions) =
         reason <- why
         box.SetEnabled(value, why)
         chip.Host.IsEnabled <- value
+        chip.Host.Focusable <- value
+        chip.Host.IsHitTestVisible <- value
         refresh ()
 
     member _.SetModelLabel(text: string) =
@@ -178,6 +200,8 @@ type ComposerDesk(looks: ComposerLooks, actions: ComposerDeskActions) =
         refresh ()
 
     member _.SetCompactMode(value: bool) =
+        compactMode <- value
+        applyPadding ()
         box.SetCompact value
         tray.SetCompact value
         chip.SetCompact value
@@ -188,8 +212,19 @@ type ComposerDesk(looks: ComposerLooks, actions: ComposerDeskActions) =
         | Some(text, detail) -> box.ShowContext(text, detail, canEdit)
         | None -> box.HideContext()
 
+    /// 未确认消息（旧 SetPendingMessages）
+    member _.SetPendingMessages(items: PendingMessage list, activeConversationId: Guid option, canRetry: bool, retry: Guid -> unit, openConversation: Guid -> unit) =
+        pending.Set(items, activeConversationId, canRetry, retry, openConversation)
+
+    member _.Pending = pending
+
     member _.SetAccessory(c: Control) = box.SetAccessory c
-    member _.SetText(text: string) = box.SetText text
+    /// 同步提交（旧 Composer.Submit）：门控通过才交宿主，宿主接管才清空；宿主异常照常抛出
+    member _.Submit() = box.Submit()
+
+    member _.SetText(text: string) =
+        box.SetText text
+        refresh ()
     member _.Focus() = box.Focus()
     member _.SetImeProbe(f) = box.SetImeProbe f
     member _.SetKeyHook(f) = box.SetKeyHook f

@@ -195,9 +195,17 @@
     <Project Path="libs/LineProcess/LineProcess.fsproj" />
     <Project Path="libs/LineProcess/tests/LineProcess.Tests.fsproj" />
   </Folder>
+  <Folder Name="/LinkChunks/">
+    <Project Path="libs/LinkChunks/LinkChunks.fsproj" />
+    <Project Path="libs/LinkChunks/tests/LinkChunks.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ListenAddress/">
     <Project Path="libs/ListenAddress/ListenAddress.fsproj" />
     <Project Path="libs/ListenAddress/tests/ListenAddress.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MarkdownBlocks/">
+    <Project Path="libs/MarkdownBlocks/MarkdownBlocks.fsproj" />
+    <Project Path="libs/MarkdownBlocks/tests/MarkdownBlocks.Tests.fsproj" />
   </Folder>
   <Folder Name="/McpCheck/">
     <Project Path="libs/McpCheck/McpCheck.fsproj" />

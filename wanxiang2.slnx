@@ -19,6 +19,10 @@
     <Project Path="libs/AppConfig/AppConfig.fsproj" />
     <Project Path="libs/AppConfig/tests/AppConfig.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ApprovalCardText/">
+    <Project Path="libs/ApprovalCardText/ApprovalCardText.fsproj" />
+    <Project Path="libs/ApprovalCardText/tests/ApprovalCardText.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Approvals/">
     <Project Path="libs/Approvals/Approvals.fsproj" />
     <Project Path="libs/Approvals/tests/Approvals.Tests.fsproj" />
@@ -126,6 +130,10 @@
   <Folder Name="/DeviceSightings/">
     <Project Path="libs/DeviceSightings/DeviceSightings.fsproj" />
     <Project Path="libs/DeviceSightings/tests/DeviceSightings.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DevicesModel/">
+    <Project Path="libs/DevicesModel/DevicesModel.fsproj" />
+    <Project Path="libs/DevicesModel/tests/DevicesModel.Tests.fsproj" />
   </Folder>
   <Folder Name="/DirLock/">
     <Project Path="libs/DirLock/DirLock.fsproj" />
@@ -290,6 +298,10 @@
   <Folder Name="/SandboxFiles/">
     <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
     <Project Path="libs/SandboxFiles/tests/SandboxFiles.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SearchSegments/">
+    <Project Path="libs/SearchSegments/SearchSegments.fsproj" />
+    <Project Path="libs/SearchSegments/tests/SearchSegments.Tests.fsproj" />
   </Folder>
   <Folder Name="/SecretText/">
     <Project Path="libs/SecretText/SecretText.fsproj" />

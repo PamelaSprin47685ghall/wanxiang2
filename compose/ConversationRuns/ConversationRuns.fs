@@ -183,3 +183,37 @@ module ErrorRecovery =
         | ConfigInvalid | ProviderBadRequest -> Some OpenConversationSettings
         | ContextTooLong -> Some StartNewConversation
         | ProviderTimeout | ProviderUnavailable | ContentFiltered | ToolFailed | UnknownFailure -> None
+
+/// generation.finished 到达后给用户的一句话（旧 AppShell.HandleEvent 的 GenerationFinished 分支）。
+[<RequireQualifiedAccess>]
+type FinishNotice =
+    /// 当前对话被停止：toast「已停止」。
+    | Stopped
+    /// 非当前对话失败：卡片看不见，只 toast。
+    | FailureToast of text: string
+    /// 其余（含当前对话的失败——只进卡片，不叠 toast）。
+    | Quiet
+
+/// 决策 D2：生成结束的结果判定，Fail-closed。
+module GenerationOutcome =
+
+    /// 结束状态 → 错误。未知状态与无错误详情的失败一律落成可重试的通用失败，绝不静默。
+    let errorOf (status: string) (error: GenerationError option) : GenerationError option =
+        match status with
+        | "completed" | "cancelled" -> None
+        | "failed" ->
+            match error with
+            | Some _ as error -> error
+            | None ->
+                Some(GenerationError.create GenerationErrorKind.UnknownFailure "生成失败，主机没有说明原因。可以重试；反复出现时请在设置里「检查主机」。")
+        | unknown ->
+            Some(
+                GenerationError.create GenerationErrorKind.UnknownFailure "生成结束状态未知，已按失败处理。"
+                |> GenerationError.withDetail (sprintf "未知状态：%s" unknown))
+
+    /// 判定后的错误（errorOf 的结果）与是否当前对话 → 提示。
+    let notice (status: string) (error: GenerationError option) (isActive: bool) : FinishNotice =
+        match status, error with
+        | "cancelled", _ when isActive -> FinishNotice.Stopped
+        | _, Some err when not isActive -> FinishNotice.FailureToast(GenerationError.display err)
+        | _ -> FinishNotice.Quiet

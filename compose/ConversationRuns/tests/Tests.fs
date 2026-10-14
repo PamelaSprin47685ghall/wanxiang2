@@ -239,3 +239,16 @@ let ``366 限流只给「换个模型」并直达切换器`` () =
     Assert.Equal(Some SwitchModel, ErrorRecovery.forKind ProviderRateLimited)
     Assert.Equal("换个模型", ErrorRecovery.label SwitchModel)
     Assert.Equal(Some OpenConversationSettings, ErrorRecovery.forKind ConfigInvalid)
+
+// 金标准：golden/expected.txt 由旧 AppShell GenerationFinished 分支的原样摘录跑同一份 Render.fs 生成。
+[<Fact>]
+let ``golden: generation finished outcome matches old AppShell`` () =
+    Assert.Equal(IO.File.ReadAllText(IO.Path.Combine(AppContext.BaseDirectory, "golden", "expected.txt")), Render.all ())
+
+[<Fact>]
+let ``D2 无错误详情的失败与未知状态都落成可重试的通用失败`` () =
+    let e = (GenerationOutcome.errorOf "weird" None).Value
+    Assert.Equal(GenerationErrorKind.UnknownFailure, e.kind)
+    Assert.Equal(Some "未知状态：weird", e.detail)
+    Assert.True((GenerationOutcome.errorOf "failed" None).IsSome)
+    Assert.Equal(FinishNotice.Quiet, GenerationOutcome.notice "failed" (GenerationOutcome.errorOf "failed" None) true)

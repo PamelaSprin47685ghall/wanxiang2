@@ -13,3 +13,4 @@
 - ModelChipRateLimitTests：`retry countdown deadline is fixed at finish time and survives re-reads`、`non retryable errors never get a countdown`
 - LibraryUndoTests：`§215 每类不可自愈的错误都有恢复动作`（`ErrorRecovery.forKind` 在本组合者，动作与文案在 ErrorRecovery 库）
 - R19SimplifyTests：`366 限流只给「换个模型」并直达切换器`
+- 另：`GenerationOutcome.errorOf` / `notice` 与 `FinishNotice`，迁自旧 AppShell HandleEvent 的 GenerationFinished 分支（D2 Fail-closed）。`tests/golden/expected.txt` 由 `tools/OldGenerationOutcome.fs`（原样摘录）经 `tools/gen-golden.fsx` 生成；新增 `D2 无错误详情的失败与未知状态都落成可重试的通用失败`。

@@ -87,6 +87,10 @@
     <Project Path="libs/CaretBreath/CaretBreath.fsproj" />
     <Project Path="libs/CaretBreath/tests/CaretBreath.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ChangeWatch/">
+    <Project Path="libs/ChangeWatch/ChangeWatch.fsproj" />
+    <Project Path="libs/ChangeWatch/tests/ChangeWatch.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ChatEmptyText/">
     <Project Path="libs/ChatEmptyText/ChatEmptyText.fsproj" />
     <Project Path="libs/ChatEmptyText/tests/ChatEmptyText.Tests.fsproj" />
@@ -162,6 +166,10 @@
   <Folder Name="/Conversations/">
     <Project Path="libs/Conversations/Conversations.fsproj" />
     <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DeferredReveal/">
+    <Project Path="libs/DeferredReveal/DeferredReveal.fsproj" />
+    <Project Path="libs/DeferredReveal/tests/DeferredReveal.Tests.fsproj" />
   </Folder>
   <Folder Name="/DesktopClient/">
     <Project Path="libs/DesktopClient/DesktopClient.fsproj" />
@@ -334,6 +342,10 @@
   <Folder Name="/LinkChunks/">
     <Project Path="libs/LinkChunks/LinkChunks.fsproj" />
     <Project Path="libs/LinkChunks/tests/LinkChunks.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LinkInbox/">
+    <Project Path="libs/LinkInbox/LinkInbox.fsproj" />
+    <Project Path="libs/LinkInbox/tests/LinkInbox.Tests.fsproj" />
   </Folder>
   <Folder Name="/ListenAddress/">
     <Project Path="libs/ListenAddress/ListenAddress.fsproj" />

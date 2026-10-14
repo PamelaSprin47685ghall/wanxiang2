@@ -1,0 +1,22 @@
+dark 0 -> tween running=true | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+frame 17 -> finished=false n=3 running=true | bg=255,230,230,230 scrim=131,0,0,0 text=255,38,38,39
+frame 100 -> finished=false n=3 running=true | bg=255,134,134,135 scrim=144,0,0,0 text=255,128,128,130
+light 120 -> tween running=true | bg=255,134,134,135 scrim=144,0,0,0 text=255,128,128,130
+frame 140 -> finished=false n=3 running=true | bg=255,125,125,126 scrim=145,0,0,0 text=255,136,136,139
+frame 250 -> finished=false n=3 running=true | bg=255,201,201,202 scrim=135,0,0,0 text=255,65,65,66
+frame 320 -> finished=true n=3 running=false | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+frame 330 -> finished=false n=0 running=false | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+dark 400 -> tween running=true | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+frameReduced 410 -> finished=true n=3 running=false | bg=255,18,18,20 scrim=160,0,0,0 text=255,235,235,240
+frame 420 -> finished=false n=0 running=false | bg=255,18,18,20 scrim=160,0,0,0 text=255,235,235,240
+light 500 -> tween running=true | bg=255,18,18,20 scrim=160,0,0,0 text=255,235,235,240
+complete 510 -> complete running=false | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+frame 520 -> finished=false n=0 running=false | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+same 600 -> snap running=false | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+dark 700 -> tween running=true | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+reduced 750 -> snap running=false | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+frame 760 -> finished=false n=0 running=false | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+light 800 -> snap running=false | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+dark 1100 -> tween running=true | bg=255,250,250,250 scrim=128,0,0,0 text=255,20,20,20
+frame 1300 -> finished=true n=3 running=false | bg=255,18,18,20 scrim=160,0,0,0 text=255,235,235,240
+200 166666

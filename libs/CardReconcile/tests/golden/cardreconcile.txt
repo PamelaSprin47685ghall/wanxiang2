@@ -1,0 +1,10 @@
+[Some "a"; Some "b"; Some "c"] -> keep=0 append=["a#1"; "b#2"; "c#3"] cached=3 mounted=[|Some "a"; Some "b"; Some "c"|]
+[Some "a"; Some "b"; Some "c"; Some "d"] -> keep=3 append=["d#4"] cached=4 mounted=[|Some "a"; Some "b"; Some "c"; Some "d"|]
+[Some "a"; Some "b"; Some "c"; Some "d"; None] -> keep=4 append=["_#5"] cached=4 mounted=[|Some "a"; Some "b"; Some "c"; Some "d"; None|]
+[Some "a"; Some "b"; Some "c"; Some "d"; None] -> keep=4 append=["_#6"] cached=4 mounted=[|Some "a"; Some "b"; Some "c"; Some "d"; None|]
+[Some "a"; Some "x"; Some "c"; Some "d"] -> keep=1 append=["x#7"; "c#3"; "d#4"] cached=4 mounted=[|Some "a"; Some "x"; Some "c"; Some "d"|]
+[Some "c"; Some "a"] -> keep=0 append=["c#3"; "a#1"] cached=2 mounted=[|Some "c"; Some "a"|]
+[None; Some "c"] -> keep=0 append=["_#8"; "c#3"] cached=1 mounted=[|None; Some "c"|]
+clear
+[Some "a"] -> keep=0 append=["a#9"] cached=1 mounted=[|Some "a"|]
+[] -> keep=0 append=[] cached=0 mounted=[||]

@@ -43,6 +43,10 @@
     <Project Path="libs/AttachmentRefs/AttachmentRefs.fsproj" />
     <Project Path="libs/AttachmentRefs/tests/AttachmentRefs.Tests.fsproj" />
   </Folder>
+  <Folder Name="/BlockDiff/">
+    <Project Path="libs/BlockDiff/BlockDiff.fsproj" />
+    <Project Path="libs/BlockDiff/tests/BlockDiff.Tests.fsproj" />
+  </Folder>
   <Folder Name="/BoundedCache/">
     <Project Path="libs/BoundedCache/BoundedCache.fsproj" />
     <Project Path="libs/BoundedCache/tests/BoundedCache.Tests.fsproj" />
@@ -54,6 +58,10 @@
   <Folder Name="/BreadcrumbAction/">
     <Project Path="libs/BreadcrumbAction/BreadcrumbAction.fsproj" />
     <Project Path="libs/BreadcrumbAction/tests/BreadcrumbAction.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BreathPhase/">
+    <Project Path="libs/BreathPhase/BreathPhase.fsproj" />
+    <Project Path="libs/BreathPhase/tests/BreathPhase.Tests.fsproj" />
   </Folder>
   <Folder Name="/BrowserCredentials/">
     <Project Path="libs/BrowserCredentials/BrowserCredentials.csproj" />
@@ -86,6 +94,10 @@
   <Folder Name="/Canonical/">
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CardReconcile/">
+    <Project Path="libs/CardReconcile/CardReconcile.fsproj" />
+    <Project Path="libs/CardReconcile/tests/CardReconcile.Tests.fsproj" />
   </Folder>
   <Folder Name="/CaretBreath/">
     <Project Path="libs/CaretBreath/CaretBreath.fsproj" />
@@ -170,6 +182,14 @@
   <Folder Name="/Conversations/">
     <Project Path="libs/Conversations/Conversations.fsproj" />
     <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CopyConfirm/">
+    <Project Path="libs/CopyConfirm/CopyConfirm.fsproj" />
+    <Project Path="libs/CopyConfirm/tests/CopyConfirm.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CountdownTicker/">
+    <Project Path="libs/CountdownTicker/CountdownTicker.fsproj" />
+    <Project Path="libs/CountdownTicker/tests/CountdownTicker.Tests.fsproj" />
   </Folder>
   <Folder Name="/DeferredReveal/">
     <Project Path="libs/DeferredReveal/DeferredReveal.fsproj" />
@@ -266,6 +286,10 @@
   <Folder Name="/GenerationForm/">
     <Project Path="libs/GenerationForm/GenerationForm.fsproj" />
     <Project Path="libs/GenerationForm/tests/GenerationForm.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HighlightQueue/">
+    <Project Path="libs/HighlightQueue/HighlightQueue.fsproj" />
+    <Project Path="libs/HighlightQueue/tests/HighlightQueue.Tests.fsproj" />
   </Folder>
   <Folder Name="/HljsCatalog/">
     <Project Path="libs/HljsCatalog/HljsCatalog.fsproj" />
@@ -495,6 +519,10 @@
     <Project Path="libs/ProbeSlot/ProbeSlot.fsproj" />
     <Project Path="libs/ProbeSlot/tests/ProbeSlot.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ProgressThrottle/">
+    <Project Path="libs/ProgressThrottle/ProgressThrottle.fsproj" />
+    <Project Path="libs/ProgressThrottle/tests/ProgressThrottle.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PromptHistory/">
     <Project Path="libs/PromptHistory/PromptHistory.fsproj" />
     <Project Path="libs/PromptHistory/tests/PromptHistory.Tests.fsproj" />
@@ -562,6 +590,10 @@
   <Folder Name="/ScrollFollow/">
     <Project Path="libs/ScrollFollow/ScrollFollow.fsproj" />
     <Project Path="libs/ScrollFollow/tests/ScrollFollow.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ScrollTween/">
+    <Project Path="libs/ScrollTween/ScrollTween.fsproj" />
+    <Project Path="libs/ScrollTween/tests/ScrollTween.Tests.fsproj" />
   </Folder>
   <Folder Name="/SearchHit/">
     <Project Path="libs/SearchHit/SearchHit.fsproj" />
@@ -658,6 +690,10 @@
   <Folder Name="/TextSocket/">
     <Project Path="libs/TextSocket/TextSocket.fsproj" />
     <Project Path="libs/TextSocket/tests/TextSocket.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThemeTween/">
+    <Project Path="libs/ThemeTween/ThemeTween.fsproj" />
+    <Project Path="libs/ThemeTween/tests/ThemeTween.Tests.fsproj" />
   </Folder>
   <Folder Name="/TitleText/">
     <Project Path="libs/TitleText/TitleText.fsproj" />

@@ -1,0 +1,5 @@
+// 金标准生成器：tools/OldEscapeChain.fs 是从旧仓库 extract-ledger a5a1afc 的 src/Wanxiang.UI/AppShell.fs 原样摘出的代码（MainView 的私有成员，无法从程序集直接调用；
+// 只把它读写的 MainView 字段换成参数或同名字段），用它跑测试共用的 Render.fs：
+//   dotnet fsi libs/EscapeChain/tools/gen-golden.fsx
+#load "OldEscapeChain.fs" "../tests/Render.fs"
+System.IO.File.WriteAllText(__SOURCE_DIRECTORY__ + "/../tests/golden/expected.txt", Render.all ())

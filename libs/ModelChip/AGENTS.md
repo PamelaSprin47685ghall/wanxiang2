@@ -2,6 +2,8 @@
 
 输入区模型芯片（迁自旧 `Views/Composer.fs` 的 `modelChip` / `SetModelLabel`）：显示当前模型名，点开切换；未选时用 muted 色。芯片是本库 Spot，带读屏 Invoke。根规则见项目根目录 AGENTS.md。
 
+- 右侧下拉箭头经 `Chevron: IBrush -> Control`（旧 Icons.chevronDown，ChipInk.TextFaint）；无障碍名由组合者固定为「切换本对话使用的模型」。
+
 ## 外观
 
 - `ModelChipLook`：`Ink`、`Gauge`（字号、最大宽、内边距、圆角、窄屏最小高）、`BodyFont`、`Dress`。

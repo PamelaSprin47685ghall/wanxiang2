@@ -14,6 +14,8 @@ type ChipInk =
     | Text
     | TextMuted
     | Hairline
+    /// 下拉箭头（旧 Tokens.textFaint）
+    | TextFaint
 
 /// 用到的活度量
 [<RequireQualifiedAccess>]
@@ -26,12 +28,15 @@ type ChipGauge =
     | RadiusSm
     | BorderWidth
     | CompactMinHeight
+    | SpaceXs
 
 /// 外观
 type ModelChipLook =
     { Ink: ChipInk -> IBrush
       Gauge: ChipGauge -> IObservable<float>
       BodyFont: IObservable<FontFamily>
+      /// 下拉箭头图标（旧 Icons.chevronDown）
+      Chevron: IBrush -> Control
       /// 描边表面反馈（旧 Ui.surfaceBorderedTransitions / Interaction.HoverVariant.bordered）
       Dress: Border -> unit }
 
@@ -51,8 +56,7 @@ type ModelChip(look: ModelChipLook) =
             BorderBrush = ink ChipInk.Hairline,
             Cursor = new Cursor(StandardCursorType.Hand),
             Focusable = true,
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = caption)
+            VerticalAlignment = VerticalAlignment.Center)
     let mutable compact = false
     let mutable onOpen: Control -> unit = ignore
     let applyWidth () =
@@ -60,6 +64,13 @@ type ModelChip(look: ModelChipLook) =
         host.MinHeight <- if compact then Follow.now (gauge ChipGauge.CompactMinHeight) else 0.0
 
     do
+        let row = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
+        Follow.live row (gauge ChipGauge.SpaceXs) (fun s -> row.Spacing <- s)
+        row.Children.Add caption
+        let chevron = look.Chevron(ink ChipInk.TextFaint)
+        chevron.VerticalAlignment <- VerticalAlignment.Center
+        row.Children.Add chevron
+        host.Child <- row
         look.Dress host
         Follow.live caption (gauge ChipGauge.FontSmall) (fun s -> caption.FontSize <- s)
         Follow.live caption look.BodyFont (fun f -> caption.FontFamily <- f)

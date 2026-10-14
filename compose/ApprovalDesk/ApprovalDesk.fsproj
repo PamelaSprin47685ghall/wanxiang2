@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：工具审批卡宿主 = 旧 ToolApprovalPanel 在 AppShell 里的接线。协作者：ApprovalPanel、ApprovalCardText、Wire、Theme、IconSet、OverlayDesk、DesignRhythm。 -->
+  <ItemGroup>
+    <Compile Include="ApprovalDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.ApprovalPanel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ApprovalCardText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

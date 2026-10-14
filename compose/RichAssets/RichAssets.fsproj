@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：内嵌脚本 + 语言目录。协作者：RichScripts、HljsCatalog。命名空间沿用 Wanxiang.UI。 -->
+  <ItemGroup>
+    <Compile Include="RichAssets.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.RichScripts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HljsCatalog" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

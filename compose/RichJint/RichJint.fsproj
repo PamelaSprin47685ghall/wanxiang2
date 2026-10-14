@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：桌面富文本脚本后端。协作者：JintScriptHost、RichAssets。命名空间沿用 Wanxiang.App。 -->
+  <ItemGroup>
+    <Compile Include="RichJint.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.JintScriptHost" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RichAssets" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

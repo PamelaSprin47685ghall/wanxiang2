@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Scenario.fs" />
+    <Compile Include="Api.fs" />
+    <Compile Include="Golden.fs" />
+    <Compile Include="Tests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="xunit.v3" />
+    <!-- 金样同时钉住 HTML 的解析结果：测试直接用两个解析库的包。 -->
+    <PackageReference Include="Wanxiang2.HljsHtml" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.KatexHtml" VersionOverride="0.0.0-local" />
+    <ProjectReference Include="../RichJint.fsproj" />
+  </ItemGroup>
+</Project>

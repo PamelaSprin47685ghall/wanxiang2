@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：PWA 富文本脚本后端。协作者：BrowserRich、RichAssets。命名空间沿用 Wanxiang.Pwa。 -->
+  <ItemGroup>
+    <Compile Include="RichBrowser.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.BrowserRich" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RichAssets" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

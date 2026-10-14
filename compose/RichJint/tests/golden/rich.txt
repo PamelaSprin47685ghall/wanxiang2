@@ -1,0 +1,1431 @@
+== code "fsharp"
+resolve: fsharp requiresLoad: true
+html: <span class="hljs-keyword">let</span> <span class="hljs-keyword">rec</span> fib n <span class="hljs-operator">=</span>
+    <span class="hljs-keyword">if</span> n <span class="hljs-operator">&lt;</span> <span class="hljs-number">2</span> <span class="hljs-keyword">then</span> n <span class="hljs-keyword">else</span> fib (n <span class="hljs-operator">-</span> <span class="hljs-number">1</span>) <span class="hljs-operator">+</span> fib (n <span class="hljs-operator">-</span> <span class="hljs-number">2</span>)
+<span class="hljs-comment">// 注释 &quot;引号&quot; &#x27;c&#x27; &lt;T&gt;</span>
+token: CodeKeyword "let"
+token: CodePlain " "
+token: CodeKeyword "rec"
+token: CodePlain " fib n "
+token: CodeOperator "="
+token: CodePlain "\n    "
+token: CodeKeyword "if"
+token: CodePlain " n "
+token: CodeOperator "\u003C"
+token: CodePlain " "
+token: CodeNumber "2"
+token: CodePlain " "
+token: CodeKeyword "then"
+token: CodePlain " n "
+token: CodeKeyword "else"
+token: CodePlain " fib (n "
+token: CodeOperator "-"
+token: CodePlain " "
+token: CodeNumber "1"
+token: CodePlain ") "
+token: CodeOperator "\u002B"
+token: CodePlain " fib (n "
+token: CodeOperator "-"
+token: CodePlain " "
+token: CodeNumber "2"
+token: CodePlain ")\n"
+token: CodeComment "// \u6CE8\u91CA \u0022\u5F15\u53F7\u0022 \u0027c\u0027 \u003CT\u003E"
+== code "F#"
+resolve: fsharp requiresLoad: true
+html: <span class="hljs-keyword">type</span> <span class="hljs-title class_">R</span> <span class="hljs-operator">=</span> { a<span class="hljs-operator">:</span> <span class="hljs-type">int</span>; b<span class="hljs-operator">:</span> <span class="hljs-type">string</span> }
+<span class="hljs-keyword">let</span> f (x<span class="hljs-operator">:</span> R) <span class="hljs-operator">=</span> <span class="hljs-string">$&quot;<span class="hljs-subst">{x.a}</span> -&gt; <span class="hljs-subst">{x.b}</span>&quot;</span>
+token: CodeKeyword "type"
+token: CodePlain " "
+token: CodeType "R"
+token: CodePlain " "
+token: CodeOperator "="
+token: CodePlain " { a"
+token: CodeOperator ":"
+token: CodePlain " "
+token: CodeType "int"
+token: CodePlain "; b"
+token: CodeOperator ":"
+token: CodePlain " "
+token: CodeType "string"
+token: CodePlain " }\n"
+token: CodeKeyword "let"
+token: CodePlain " f (x"
+token: CodeOperator ":"
+token: CodePlain " R) "
+token: CodeOperator "="
+token: CodePlain " "
+token: CodeString "$\u0022"
+token: CodeVariable "{x.a}"
+token: CodeString " -\u003E "
+token: CodeVariable "{x.b}"
+token: CodeString "\u0022"
+== code "python"
+resolve: python requiresLoad: false
+html: <span class="hljs-keyword">def</span> <span class="hljs-title function_">f</span>(<span class="hljs-params">x: <span class="hljs-built_in">int</span></span>) -&gt; <span class="hljs-built_in">str</span>:
+    <span class="hljs-string">&quot;&quot;&quot;doc&quot;&quot;&quot;</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-string">f&quot;<span class="hljs-subst">{x!r}</span> &amp; &lt;tag&gt;&quot;</span>
+<span class="hljs-meta">@decorator</span>
+<span class="hljs-keyword">class</span> <span class="hljs-title class_">A</span>(<span class="hljs-title class_ inherited__">B</span>): <span class="hljs-keyword">pass</span>
+token: CodeKeyword "def"
+token: CodePlain " "
+token: CodeFunction "f"
+token: CodePlain "("
+token: CodeVariable "x: "
+token: CodeType "int"
+token: CodePlain ") -\u003E "
+token: CodeType "str"
+token: CodePlain ":\n    "
+token: CodeString "\u0022\u0022\u0022doc\u0022\u0022\u0022"
+token: CodePlain "\n    "
+token: CodeKeyword "return"
+token: CodePlain " "
+token: CodeString "f\u0022"
+token: CodeVariable "{x!r}"
+token: CodeString " \u0026 \u003Ctag\u003E\u0022"
+token: CodePlain "\n"
+token: CodeMeta "@decorator"
+token: CodePlain "\n"
+token: CodeKeyword "class"
+token: CodePlain " "
+token: CodeType "A"
+token: CodePlain "("
+token: CodeType "B"
+token: CodePlain "): "
+token: CodeKeyword "pass"
+== code "ts"
+resolve: typescript requiresLoad: false
+html: <span class="hljs-keyword">interface</span> I&lt;T&gt; { <span class="hljs-attr">x</span>?: T }
+<span class="hljs-keyword">const</span> f = <span class="hljs-title function_">async</span> (<span class="hljs-attr">a</span>: <span class="hljs-built_in">number</span>): <span class="hljs-title class_">Promise</span>&lt;<span class="hljs-built_in">void</span>&gt; =&gt; { <span class="hljs-keyword">await</span> <span class="hljs-title function_">g</span>(<span class="hljs-string">`t<span class="hljs-subst">${a}</span>`</span>) }
+token: CodeKeyword "interface"
+token: CodePlain " I\u003CT\u003E { "
+token: CodeVariable "x"
+token: CodePlain "?: T }\n"
+token: CodeKeyword "const"
+token: CodePlain " f = "
+token: CodeFunction "async"
+token: CodePlain " ("
+token: CodeVariable "a"
+token: CodePlain ": "
+token: CodeType "number"
+token: CodePlain "): "
+token: CodeType "Promise"
+token: CodePlain "\u003C"
+token: CodeType "void"
+token: CodePlain "\u003E =\u003E { "
+token: CodeKeyword "await"
+token: CodePlain " "
+token: CodeFunction "g"
+token: CodePlain "("
+token: CodeString "\u0060t"
+token: CodeVariable "${a}"
+token: CodeString "\u0060"
+token: CodePlain ") }"
+== code "rust"
+resolve: rust requiresLoad: false
+html: <span class="hljs-keyword">fn</span> <span class="hljs-title function_">main</span>() <span class="hljs-punctuation">-&gt;</span> <span class="hljs-type">Result</span>&lt;(), <span class="hljs-type">Box</span>&lt;<span class="hljs-keyword">dyn</span> Error&gt;&gt; {
+    <span class="hljs-keyword">let</span> <span class="hljs-variable">v</span>: <span class="hljs-type">Vec</span>&lt;<span class="hljs-type">u8</span>&gt; = <span class="hljs-built_in">vec!</span>[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>];
+    <span class="hljs-built_in">println!</span>(<span class="hljs-string">&quot;{:?}&quot;</span>, v);
+    <span class="hljs-title function_ invoke__">Ok</span>(())
+}
+token: CodeKeyword "fn"
+token: CodePlain " "
+token: CodeFunction "main"
+token: CodePlain "() "
+token: CodeOperator "-\u003E"
+token: CodePlain " "
+token: CodeType "Result"
+token: CodePlain "\u003C(), "
+token: CodeType "Box"
+token: CodePlain "\u003C"
+token: CodeKeyword "dyn"
+token: CodePlain " Error\u003E\u003E {\n    "
+token: CodeKeyword "let"
+token: CodePlain " "
+token: CodeVariable "v"
+token: CodePlain ": "
+token: CodeType "Vec"
+token: CodePlain "\u003C"
+token: CodeType "u8"
+token: CodePlain "\u003E = "
+token: CodeType "vec!"
+token: CodePlain "["
+token: CodeNumber "1"
+token: CodePlain ", "
+token: CodeNumber "2"
+token: CodePlain "];\n    "
+token: CodeType "println!"
+token: CodePlain "("
+token: CodeString "\u0022{:?}\u0022"
+token: CodePlain ", v);\n    "
+token: CodeFunction "Ok"
+token: CodePlain "(())\n}"
+== code "sh"
+resolve: bash requiresLoad: false
+html: <span class="hljs-meta">#!/bin/bash</span>
+<span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> *.txt; <span class="hljs-keyword">do</span> <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;<span class="hljs-variable">$f</span>&quot;</span> | grep -E <span class="hljs-string">&#x27;^a&#x27;</span> &amp;&amp; <span class="hljs-built_in">exit</span> 1; <span class="hljs-keyword">done</span>
+token: CodeMeta "#!/bin/bash"
+token: CodePlain "\n"
+token: CodeKeyword "for"
+token: CodePlain " f "
+token: CodeKeyword "in"
+token: CodePlain " *.txt; "
+token: CodeKeyword "do"
+token: CodePlain " "
+token: CodeType "echo"
+token: CodePlain " "
+token: CodeString "\u0022"
+token: CodeVariable "$f"
+token: CodeString "\u0022"
+token: CodePlain " | grep -E "
+token: CodeString "\u0027^a\u0027"
+token: CodePlain " \u0026\u0026 "
+token: CodeType "exit"
+token: CodePlain " 1; "
+token: CodeKeyword "done"
+== code "sql"
+resolve: sql requiresLoad: false
+html: <span class="hljs-keyword">SELECT</span> a, <span class="hljs-built_in">COUNT</span>(<span class="hljs-operator">*</span>) <span class="hljs-keyword">FROM</span> t <span class="hljs-keyword">WHERE</span> b <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;x&#x27;</span> <span class="hljs-keyword">GROUP</span> <span class="hljs-keyword">BY</span> a <span class="hljs-keyword">HAVING</span> <span class="hljs-built_in">COUNT</span>(<span class="hljs-operator">*</span>) <span class="hljs-operator">&gt;</span> <span class="hljs-number">1</span>; <span class="hljs-comment">-- c</span>
+token: CodeKeyword "SELECT"
+token: CodePlain " a, "
+token: CodeType "COUNT"
+token: CodePlain "("
+token: CodeOperator "*"
+token: CodePlain ") "
+token: CodeKeyword "FROM"
+token: CodePlain " t "
+token: CodeKeyword "WHERE"
+token: CodePlain " b "
+token: CodeOperator "="
+token: CodePlain " "
+token: CodeString "\u0027x\u0027"
+token: CodePlain " "
+token: CodeKeyword "GROUP"
+token: CodePlain " "
+token: CodeKeyword "BY"
+token: CodePlain " a "
+token: CodeKeyword "HAVING"
+token: CodePlain " "
+token: CodeType "COUNT"
+token: CodePlain "("
+token: CodeOperator "*"
+token: CodePlain ") "
+token: CodeOperator "\u003E"
+token: CodePlain " "
+token: CodeNumber "1"
+token: CodePlain "; "
+token: CodeComment "-- c"
+== code "json"
+resolve: json requiresLoad: false
+html: <span class="hljs-punctuation">{</span><span class="hljs-attr">&quot;a&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-number">1</span><span class="hljs-punctuation">,</span> <span class="hljs-number">2.5</span><span class="hljs-punctuation">,</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;b&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span><span class="hljs-attr">&quot;c&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;d&quot;</span><span class="hljs-punctuation">}</span><span class="hljs-punctuation">}</span>
+token: CodeOperator "{"
+token: CodeVariable "\u0022a\u0022"
+token: CodeOperator ":"
+token: CodePlain " "
+token: CodeOperator "["
+token: CodeNumber "1"
+token: CodeOperator ","
+token: CodePlain " "
+token: CodeNumber "2.5"
+token: CodeOperator ","
+token: CodePlain " "
+token: CodeKeyword "true"
+token: CodeOperator ","
+token: CodePlain " "
+token: CodeKeyword "null"
+token: CodeOperator "],"
+token: CodePlain " "
+token: CodeVariable "\u0022b\u0022"
+token: CodeOperator ":"
+token: CodePlain " "
+token: CodeOperator "{"
+token: CodeVariable "\u0022c\u0022"
+token: CodeOperator ":"
+token: CodePlain " "
+token: CodeString "\u0022d\u0022"
+token: CodeOperator "}}"
+== code "dockerfile"
+resolve: dockerfile requiresLoad: true
+html: <span class="hljs-keyword">FROM</span> alpine:<span class="hljs-number">3</span>
+<span class="hljs-keyword">RUN</span><span class="language-bash"> apk add --no-cache curl</span>
+<span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;sh&quot;</span>]</span>
+token: CodeKeyword "FROM"
+token: CodePlain " alpine:"
+token: CodeNumber "3"
+token: CodePlain "\n"
+token: CodeKeyword "RUN"
+token: CodePlain " apk add --no-cache curl\n"
+token: CodeKeyword "CMD"
+token: CodePlain " ["
+token: CodeString "\u0022sh\u0022"
+token: CodePlain "]"
+== code "haskell"
+resolve: haskell requiresLoad: true
+html: <span class="hljs-title">main</span> :: <span class="hljs-type">IO</span> ()
+<span class="hljs-title">main</span> = mapM_ print [x * <span class="hljs-number">2</span> | x &lt;- [<span class="hljs-number">1</span>..<span class="hljs-number">10</span>], odd x]
+token: CodeFunction "main"
+token: CodePlain " :: "
+token: CodeType "IO"
+token: CodePlain " ()\n"
+token: CodeFunction "main"
+token: CodePlain " = mapM_ print [x * "
+token: CodeNumber "2"
+token: CodePlain " | x \u003C- ["
+token: CodeNumber "1"
+token: CodePlain ".."
+token: CodeNumber "10"
+token: CodePlain "], odd x]"
+== code "diff"
+resolve: diff requiresLoad: false
+html: <span class="hljs-comment">--- a</span>
+<span class="hljs-comment">+++ b</span>
+<span class="hljs-meta">@@ -1 +1 @@</span>
+<span class="hljs-deletion">-old</span>
+<span class="hljs-addition">+new</span>
+token: CodeComment "--- a"
+token: CodePlain "\n"
+token: CodeComment "\u002B\u002B\u002B b"
+token: CodePlain "\n"
+token: CodeMeta "@@ -1 \u002B1 @@"
+token: CodePlain "\n"
+token: CodeDeletion "-old"
+token: CodePlain "\n"
+token: CodeAddition "\u002Bnew"
+== code "yaml"
+resolve: yaml requiresLoad: false
+html: <span class="hljs-attr">a:</span> <span class="hljs-number">1</span>
+<span class="hljs-attr">b:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">x</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">&#x27;y&#x27;</span>
+<span class="hljs-comment"># c</span>
+token: CodeVariable "a:"
+token: CodePlain " "
+token: CodeNumber "1"
+token: CodePlain "\n"
+token: CodeVariable "b:"
+token: CodePlain "\n  "
+token: CodeVariable "-"
+token: CodePlain " "
+token: CodeString "x"
+token: CodePlain "\n  "
+token: CodeVariable "-"
+token: CodePlain " "
+token: CodeString "\u0027y\u0027"
+token: CodePlain "\n"
+token: CodeComment "# c"
+== code "csharp"
+resolve: csharp requiresLoad: false
+html: <span class="hljs-keyword">public</span> <span class="hljs-keyword">sealed</span> <span class="hljs-keyword">class</span> <span class="hljs-title">C</span> : <span class="hljs-title">I</span> { <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">async</span> Task&lt;<span class="hljs-built_in">int</span>&gt; <span class="hljs-title">M</span>()</span> =&gt; <span class="hljs-keyword">await</span> Task.FromResult(<span class="hljs-number">1</span>); }
+token: CodeKeyword "public"
+token: CodePlain " "
+token: CodeKeyword "sealed"
+token: CodePlain " "
+token: CodeKeyword "class"
+token: CodePlain " "
+token: CodeFunction "C"
+token: CodePlain " : "
+token: CodeFunction "I"
+token: CodePlain " { "
+token: CodeKeyword "public"
+token: CodePlain " "
+token: CodeKeyword "async"
+token: CodePlain " Task\u003C"
+token: CodeType "int"
+token: CodePlain "\u003E "
+token: CodeFunction "M"
+token: CodePlain "() =\u003E "
+token: CodeKeyword "await"
+token: CodePlain " Task.FromResult("
+token: CodeNumber "1"
+token: CodePlain "); }"
+== code "tex"
+resolve: latex requiresLoad: true
+html: <span class="hljs-keyword">\begin</span>{equation} E = mc<span class="hljs-built_in">^</span>2 <span class="hljs-keyword">\end</span>{equation}
+token: CodeKeyword "\\begin"
+token: CodePlain "{equation} E = mc"
+token: CodeType "^"
+token: CodePlain "2 "
+token: CodeKeyword "\\end"
+token: CodePlain "{equation}"
+== code "xml"
+resolve: xml requiresLoad: false
+html: <span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;x&quot;</span>&gt;</span>t <span class="hljs-symbol">&amp;amp;</span> u<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span><span class="hljs-comment">&lt;!-- c --&gt;</span>
+token: CodeType "\u003Ca "
+token: CodeVariable "href"
+token: CodeType "="
+token: CodeString "\u0022x\u0022"
+token: CodeType "\u003E"
+token: CodePlain "t "
+token: CodeVariable "\u0026amp;"
+token: CodePlain " u"
+token: CodeType "\u003C/a\u003E"
+token: CodeComment "\u003C!-- c --\u003E"
+== code "unknownlang"
+resolve: none
+== code ""
+resolve: none
+== math "x^2" display=false
+html: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">x^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span>
+visual: true display: false
+tree: [KElement
+   ("span", ["katex"], map [],
+    [KElement
+       ("span", ["katex-mathml"], map [],
+        [KElement
+           ("math", [], map [],
+            [KElement
+               ("semantics", [], map [],
+                [KElement
+                   ("mrow", [], map [],
+                    [KElement
+                       ("msup", [], map [],
+                        [KElement ("mi", [], map [], [KText "x"]);
+                         KElement ("mn", [], map [], [KText "2"])])]);
+                 KElement ("annotation", [], map [], [KText "x^2"])])])]);
+     KElement
+       ("span", ["katex-html"], map [],
+        [KElement
+           ("span", ["katex-base"], map [],
+            [KElement
+               ("span", ["katex-strut"], map [("height", "0.8141em")], []);
+             KElement
+               ("span", ["mord"], map [],
+                [KElement ("span", ["mord"; "mathnormal"], map [], [KText "x"]);
+                 KElement
+                   ("span", ["msupsub"], map [],
+                    [KElement
+                       ("span", ["vlist-t"], map [],
+                        [KElement
+                           ("span", ["vlist-r"], map [],
+                            [KElement
+                               ("span", ["vlist"], map [("height", "0.8141em")],
+                                [KElement
+                                   ("span", [],
+                                    map
+                                      [("margin-right", "0.05em");
+                                       ("top", "-3.063em")],
+                                    [KElement
+                                       ("span", ["pstrut"],
+                                        map [("height", "2.7em")], []);
+                                     KElement
+                                       ("span",
+                                        ["katex-sizing"; "reset-size6"; "size3";
+                                         "mtight"], map [],
+                                        [KElement
+                                           ("span", ["mord"; "mtight"], map [],
+                                            [KText "2"])])])])])])])])])])])]
+== math "\\frac{a}{b}" display=false
+html: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mi>a</mi><mi>b</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{a}{b}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0404em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6954em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">a</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>
+visual: true display: false
+tree: [KElement
+   ("span", ["katex"], map [],
+    [KElement
+       ("span", ["katex-mathml"], map [],
+        [KElement
+           ("math", [], map [],
+            [KElement
+               ("semantics", [], map [],
+                [KElement
+                   ("mrow", [], map [],
+                    [KElement
+                       ("mfrac", [], map [],
+                        [KElement ("mi", [], map [], [KText "a"]);
+                         KElement ("mi", [], map [], [KText "b"])])]);
+                 KElement ("annotation", [], map [], [KText "\frac{a}{b}"])])])]);
+     KElement
+       ("span", ["katex-html"], map [],
+        [KElement
+           ("span", ["katex-base"], map [],
+            [KElement
+               ("span", ["katex-strut"],
+                map [("height", "1.0404em"); ("vertical-align", "-0.345em")], []);
+             KElement
+               ("span", ["mord"], map [],
+                [KElement ("span", ["mopen"; "nulldelimiter"], map [], []);
+                 KElement
+                   ("span", ["mfrac"], map [],
+                    [KElement
+                       ("span", ["vlist-t"; "vlist-t2"], map [],
+                        [KElement
+                           ("span", ["vlist-r"], map [],
+                            [KElement
+                               ("span", ["vlist"], map [("height", "0.6954em")],
+                                [KElement
+                                   ("span", [], map [("top", "-2.655em")],
+                                    [KElement
+                                       ("span", ["pstrut"],
+                                        map [("height", "3em")], []);
+                                     KElement
+                                       ("span",
+                                        ["katex-sizing"; "reset-size6"; "size3";
+                                         "mtight"], map [],
+                                        [KElement
+                                           ("span", ["mord"; "mtight"], map [],
+                                            [KElement
+                                               ("span",
+                                                ["mord"; "mathnormal"; "mtight"],
+                                                map [], [KText "b"])])])]);
+                                 KElement
+                                   ("span", [], map [("top", "-3.23em")],
+                                    [KElement
+                                       ("span", ["pstrut"],
+                                        map [("height", "3em")], []);
+                                     KElement
+                                       ("span", ["frac-line"],
+                                        map [("border-bottom-width", "0.04em")],
+                                        [])]);
+                                 KElement
+                                   ("span", [], map [("top", "-3.394em")],
+                                    [KElement
+                                       ("span", ["pstrut"],
+                                        map [("height", "3em")], []);
+                                     KElement
+                                       ("span",
+                                        ["katex-sizing"; "reset-size6"; "size3";
+                                         "mtight"], map [],
+                                        [KElement
+                                           ("span", ["mord"; "mtight"], map [],
+                                            [KElement
+                                               ("span",
+                                                ["mord"; "mathnormal"; "mtight"],
+                                                map [], [KText "a"])])])])]);
+                             KElement ("span", ["vlist-s"], map [], [KText "​"])]);
+                         KElement
+                           ("span", ["vlist-r"], map [],
+                            [KElement
+                               ("span", ["vlist"], map [("height", "0.345em")],
+                                [KElement ("span", [], map [], [])])])])]);
+                 KElement ("span", ["mclose"; "nulldelimiter"], map [], [])])])])])]
+== math "\\sqrt{x^2\u002By^2}" display=false
+html: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup></mrow></msqrt></mrow><annotation encoding="application/x-tex">\sqrt{x^2+y^2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.24em;vertical-align:-0.2822em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9578em;"><span class="svg-align" style="top:-3.2em;"><span class="pstrut" style="height:3.2em;"></span><span class="mord" style="padding-left:1em;"><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7401em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7401em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span><span style="top:-2.9178em;"><span class="pstrut" style="height:3.2em;"></span><span class="hide-tail" style="min-width:1.02em;height:1.28em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2822em;"><span></span></span></span></span></span></span></span></span>
+visual: true display: false
+tree: [KElement
+   ("span", ["katex"], map [],
+    [KElement
+       ("span", ["katex-mathml"], map [],
+        [KElement
+           ("math", [], map [],
+            [KElement
+               ("semantics", [], map [],
+                [KElement
+                   ("mrow", [], map [],
+                    [KElement
+                       ("msqrt", [], map [],
+                        [KElement
+                           ("mrow", [], map [],
+                            [KElement
+                               ("msup", [], map [],
+                                [KElement ("mi", [], map [], [KText "x"]);
+                                 KElement ("mn", [], map [], [KText "2"])]);
+                             KElement ("mo", [], map [], [KText "+"]);
+                             KElement
+                               ("msup", [], map [],
+                                [KElement ("mi", [], map [], [KText "y"]);
+                                 KElement ("mn", [], map [], [KText "2"])])])])]);
+                 KElement ("annotation", [], map [], [KText "\sqrt{x^2+y^2}"])])])]);
+     KElement
+       ("span", ["katex-html"], map [],
+        [KElement
+           ("span", ["katex-base"], map [],
+            [KElement
+               ("span", ["katex-strut"],
+                map [("height", "1.24em"); ("vertical-align", "-0.2822em")], []);
+             KElement
+               ("span", ["mord"; "sqrt"], map [],
+                [KElement
+                   ("span", ["vlist-t"; "vlist-t2"], map [],
+                    [KElement
+                       ("span", ["vlist-r"], map [],
+                        [KElement
+                           ("span", ["vlist"], map [("height", "0.9578em")],
+                            [KElement
+                               ("span", ["svg-align"], map [("top", "-3.2em")],
+                                [KElement
+                                   ("span", ["pstrut"],
+                                    map [("height", "3.2em")], []);
+                                 KElement
+                                   ("span", ["mord"],
+                                    map [("padding-left", "1em")],
+                                    [KElement
+                                       ("span", ["mord"], map [],
+                                        [KElement
+                                           ("span", ["mord"; "mathnormal"],
+                                            map [], [KText "x"]);
+                                         KElement
+                                           ("span", ["msupsub"], map [],
+                                            [KElement
+                                               ("span", ["vlist-t"], map [],
+                                                [KElement
+                                                   ("span", ["vlist-r"], map [],
+                                                    [KElement
+                                                       ("span", ["vlist"],
+                                                        map
+                                                          [("height", "0.7401em")],
+                                                        [KElement
+                                                           ("span", [],
+                                                            map
+                                                              [("margin-right",
+                                                                "0.05em");
+                                                               ("top",
+                                                                "-2.989em")],
+                                                            [KElement
+                                                               ("span",
+                                                                ["pstrut"],
+                                                                map
+                                                                  [("height",
+                                                                    "2.7em")],
+                                                                []);
+                                                             KElement
+                                                               ("span",
+                                                                ["katex-sizing";
+                                                                 "reset-size6";
+                                                                 "size3";
+                                                                 "mtight"],
+                                                                map [],
+                                                                [KElement
+                                                                   ("span",
+                                                                    ["mord";
+                                                                     "mtight"],
+                                                                    map [],
+                                                                    [KText "2"])])])])])])])]);
+                                     KElement
+                                       ("span", ["mspace"],
+                                        map [("margin-right", "0.2222em")], []);
+                                     KElement
+                                       ("span", ["mbin"], map [], [KText "+"]);
+                                     KElement
+                                       ("span", ["mspace"],
+                                        map [("margin-right", "0.2222em")], []);
+                                     KElement
+                                       ("span", ["mord"], map [],
+                                        [KElement
+                                           ("span", ["mord"; "mathnormal"],
+                                            map [("margin-right", "0.0359em")],
+                                            [KText "y"]);
+                                         KElement
+                                           ("span", ["msupsub"], map [],
+                                            [KElement
+                                               ("span", ["vlist-t"], map [],
+                                                [KElement
+                                                   ("span", ["vlist-r"], map [],
+                                                    [KElement
+                                                       ("span", ["vlist"],
+                                                        map
+                                                          [("height", "0.7401em")],
+                                                        [KElement
+                                                           ("span", [],
+                                                            map
+                                                              [("margin-right",
+                                                                "0.05em");
+                                                               ("top",
+                                                                "-2.989em")],
+                                                            [KElement
+                                                               ("span",
+                                                                ["pstrut"],
+                                                                map
+                                                                  [("height",
+                                                                    "2.7em")],
+                                                                []);
+                                                             KElement
+                                                               ("span",
+                                                                ["katex-sizing";
+                                                                 "reset-size6";
+                                                                 "size3";
+                                                                 "mtight"],
+                                                                map [],
+                                                                [KElement
+                                                                   ("span",
+                                                                    ["mord";
+                                                                     "mtight"],
+                                                                    map [],
+                                                                    [KText "2"])])])])])])])])])]);
+                             KElement
+                               ("span", [], map [("top", "-2.9178em")],
+                                [KElement
+                                   ("span", ["pstrut"],
+                                    map [("height", "3.2em")], []);
+                                 KElement
+                                   ("span", ["hide-tail"],
+                                    map
+                                      [("height", "1.28em");
+                                       ("min-width", "1.02em")],
+                                    [KElement
+                                       ("svg", [],
+                                        map
+                                          [("-viewbox", "0 0 400000 1296");
+                                           ("height", "1.28em");
+                                           ("width", "400em")],
+                                        [KElement
+                                           ("path", [],
+                                            map
+                                              [("-d",
+                                                "M263,681c0.7,0,18,39.7,52,119
+c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
+c340,-704.7,510.7,-1060.3,512,-1067
+l0 -0
+c4.7,-7.3,11,-11,19,-11
+H40000v40H1012.3
+s-271.3,567,-271.3,567c-38.7,80.7,-84,175,-136,283c-52,108,-89.167,185.3,-111.5,232
+c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
+s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
+c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
+M1001 80h400000v40h-400000z")],
+                                            [])])])])]);
+                         KElement ("span", ["vlist-s"], map [], [KText "​"])]);
+                     KElement
+                       ("span", ["vlist-r"], map [],
+                        [KElement
+                           ("span", ["vlist"], map [("height", "0.2822em")],
+                            [KElement ("span", [], map [], [])])])])])])])])]
+== math "\\sum_{i=1}^{n} i = \\frac{n(n\u002B1)}{2}" display=true
+html: <span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>i</mi><mo>=</mo><mfrac><mrow><mi>n</mi><mo stretchy="false">(</mo><mi>n</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><mn>2</mn></mfrac></mrow><annotation encoding="application/x-tex">\sum_{i=1}^{n} i = \frac{n(n+1)}{2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:2.9291em;vertical-align:-1.2777em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6514em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:2.113em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">n</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span>
+visual: true display: true
+tree: [KElement
+   ("span", ["katex-display"], map [],
+    [KElement
+       ("span", ["katex"], map [],
+        [KElement
+           ("span", ["katex-mathml"], map [],
+            [KElement
+               ("math", [], map [],
+                [KElement
+                   ("semantics", [], map [],
+                    [KElement
+                       ("mrow", [], map [],
+                        [KElement
+                           ("munderover", [], map [],
+                            [KElement ("mo", [], map [], [KText "∑"]);
+                             KElement
+                               ("mrow", [], map [],
+                                [KElement ("mi", [], map [], [KText "i"]);
+                                 KElement ("mo", [], map [], [KText "="]);
+                                 KElement ("mn", [], map [], [KText "1"])]);
+                             KElement ("mi", [], map [], [KText "n"])]);
+                         KElement ("mi", [], map [], [KText "i"]);
+                         KElement ("mo", [], map [], [KText "="]);
+                         KElement
+                           ("mfrac", [], map [],
+                            [KElement
+                               ("mrow", [], map [],
+                                [KElement ("mi", [], map [], [KText "n"]);
+                                 KElement ("mo", [], map [], [KText "("]);
+                                 KElement ("mi", [], map [], [KText "n"]);
+                                 KElement ("mo", [], map [], [KText "+"]);
+                                 KElement ("mn", [], map [], [KText "1"]);
+                                 KElement ("mo", [], map [], [KText ")"])]);
+                             KElement ("mn", [], map [], [KText "2"])])]);
+                     KElement
+                       ("annotation", [], map [],
+                        [KText "\sum_{i=1}^{n} i = \frac{n(n+1)}{2}"])])])]);
+         KElement
+           ("span", ["katex-html"], map [],
+            [KElement
+               ("span", ["katex-base"], map [],
+                [KElement
+                   ("span", ["katex-strut"],
+                    map
+                      [("height", "2.9291em"); ("vertical-align", "-1.2777em")],
+                    []);
+                 KElement
+                   ("span", ["mop"; "op-limits"], map [],
+                    [KElement
+                       ("span", ["vlist-t"; "vlist-t2"], map [],
+                        [KElement
+                           ("span", ["vlist-r"], map [],
+                            [KElement
+                               ("span", ["vlist"], map [("height", "1.6514em")],
+                                [KElement
+                                   ("span", [],
+                                    map
+                                      [("margin-left", "0em");
+                                       ("top", "-1.8723em")],
+                                    [KElement
+                                       ("span", ["pstrut"],
+                                        map [("height", "3.05em")], []);
+                                     KElement
+                                       ("span",
+                                        ["katex-sizing"; "reset-size6"; "size3";
+                                         "mtight"], map [],
+                                        [KElement
+                                           ("span", ["mord"; "mtight"], map [],
+                                            [KElement
+                                               ("span",
+                                                ["mord"; "mathnormal"; "mtight"],
+                                                map [], [KText "i"]);
+                                             KElement
+                                               ("span", ["mrel"; "mtight"],
+                                                map [], [KText "="]);
+                                             KElement
+                                               ("span", ["mord"; "mtight"],
+                                                map [], [KText "1"])])])]);
+                                 KElement
+                                   ("span", [], map [("top", "-3.05em")],
+                                    [KElement
+                                       ("span", ["pstrut"],
+                                        map [("height", "3.05em")], []);
+                                     KElement
+                                       ("span", [], map [],
+                                        [KElement
+                                           ("span",
+                                            ["mop"; "op-symbol"; "large-op"],
+                                            map [], [KText "∑"])])]);
+                                 KElement
+                                   ("span", [],
+                                    map
+                                      [("margin-left", "0em"); ("top", "-4.3em")],
+                                    [KElement
+                                       ("span", ["pstrut"],
+                                        map [("height", "3.05em")], []);
+                                     KElement
+                                       ("span",
+                                        ["katex-sizing"; "reset-size6"; "size3";
+                                         "mtight"], map [],
+                                        [KElement
+                                           ("span", ["mord"; "mtight"], map [],
+                                            [KElement
+                                               ("span",
+                                                ["mord"; "mathnormal"; "mtight"],
+                                                map [], [KText "n"])])])])]);
+                             KElement ("span", ["vlist-s"], map [], [KText "​"])]);
+                         KElement
+                           ("span", ["vlist-r"], map [],
+                            [KElement
+                               ("span", ["vlist"], map [("height", "1.2777em")],
+                                [KElement ("span", [], map [], [])])])])]);
+                 KElement
+                   ("span", ["mspace"], map [("margin-right", "0.1667em")], []);
+                 KElement ("span", ["mord"; "mathnormal"], map [], [KText "i"]);
+                 KElement
+                   ("span", ["mspace"], map [("margin-right", "0.2778em")], []);
+                 KElement ("span", ["mrel"], map [], [KText "="]);
+                 KElement
+                   ("span", ["mspace"], map [("margin-right", "0.2778em")], [])]);
+             KElement
+               ("span", ["katex-base"], map [],
+                [KElement
+                   ("span", ["katex-strut"],
+                    map [("height", "2.113em"); ("vertical-align", "-0.686em")],
+                    []);
+                 KElement
+                   ("span", ["mord"], map [],
+                    [KElement ("span", ["mopen"; "nulldelimiter"], map [], []);
+                     KElement
+                       ("span", ["mfrac"], map [],
+                        [KElement
+                           ("span", ["vlist-t"; "vlist-t2"], map [],
+                            [KElement
+                               ("span", ["vlist-r"], map [],
+                                [KElement
+                                   ("span", ["vlist"],
+                                    map [("height", "1.427em")],
+                                    [KElement
+                                       ("span", [], map [("top", "-2.314em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "3em")], []);
+                                         KElement
+                                           ("span", ["mord"], map [],
+                                            [KElement
+                                               ("span", ["mord"], map [],
+                                                [KText "2"])])]);
+                                     KElement
+                                       ("span", [], map [("top", "-3.23em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "3em")], []);
+                                         KElement
+                                           ("span", ["frac-line"],
+                                            map
+                                              [("border-bottom-width", "0.04em")],
+                                            [])]);
+                                     KElement
+                                       ("span", [], map [("top", "-3.677em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "3em")], []);
+                                         KElement
+                                           ("span", ["mord"], map [],
+                                            [KElement
+                                               ("span", ["mord"; "mathnormal"],
+                                                map [], [KText "n"]);
+                                             KElement
+                                               ("span", ["mopen"], map [],
+                                                [KText "("]);
+                                             KElement
+                                               ("span", ["mord"; "mathnormal"],
+                                                map [], [KText "n"]);
+                                             KElement
+                                               ("span", ["mspace"],
+                                                map
+                                                  [("margin-right", "0.2222em")],
+                                                []);
+                                             KElement
+                                               ("span", ["mbin"], map [],
+                                                [KText "+"]);
+                                             KElement
+                                               ("span", ["mspace"],
+                                                map
+                                                  [("margin-right", "0.2222em")],
+                                                []);
+                                             KElement
+                                               ("span", ["mord"], map [],
+                                                [KText "1"]);
+                                             KElement
+                                               ("span", ["mclose"], map [],
+                                                [KText ")"])])])]);
+                                 KElement
+                                   ("span", ["vlist-s"], map [], [KText "​"])]);
+                             KElement
+                               ("span", ["vlist-r"], map [],
+                                [KElement
+                                   ("span", ["vlist"],
+                                    map [("height", "0.686em")],
+                                    [KElement ("span", [], map [], [])])])])]);
+                     KElement ("span", ["mclose"; "nulldelimiter"], map [], [])])])])])])]
+== math "\\left( \\frac{1}{2} \\right)" display=false
+html: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo fence="true">(</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mo fence="true">)</mo></mrow><annotation encoding="application/x-tex">\left( \frac{1}{2} \right)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.2em;vertical-align:-0.35em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size1">)</span></span></span></span></span></span>
+visual: true display: false
+tree: [KElement
+   ("span", ["katex"], map [],
+    [KElement
+       ("span", ["katex-mathml"], map [],
+        [KElement
+           ("math", [], map [],
+            [KElement
+               ("semantics", [], map [],
+                [KElement
+                   ("mrow", [], map [],
+                    [KElement ("mo", [], map [], [KText "("]);
+                     KElement
+                       ("mfrac", [], map [],
+                        [KElement ("mn", [], map [], [KText "1"]);
+                         KElement ("mn", [], map [], [KText "2"])]);
+                     KElement ("mo", [], map [], [KText ")"])]);
+                 KElement
+                   ("annotation", [], map [],
+                    [KText "\left( \frac{1}{2} \right)"])])])]);
+     KElement
+       ("span", ["katex-html"], map [],
+        [KElement
+           ("span", ["katex-base"], map [],
+            [KElement
+               ("span", ["katex-strut"],
+                map [("height", "1.2em"); ("vertical-align", "-0.35em")], []);
+             KElement
+               ("span", ["minner"], map [],
+                [KElement
+                   ("span", ["mopen"; "delimcenter"], map [("top", "0em")],
+                    [KElement
+                       ("span", ["delimsizing"; "size1"], map [], [KText "("])]);
+                 KElement
+                   ("span", ["mord"], map [],
+                    [KElement ("span", ["mopen"; "nulldelimiter"], map [], []);
+                     KElement
+                       ("span", ["mfrac"], map [],
+                        [KElement
+                           ("span", ["vlist-t"; "vlist-t2"], map [],
+                            [KElement
+                               ("span", ["vlist-r"], map [],
+                                [KElement
+                                   ("span", ["vlist"],
+                                    map [("height", "0.8451em")],
+                                    [KElement
+                                       ("span", [], map [("top", "-2.655em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "3em")], []);
+                                         KElement
+                                           ("span",
+                                            ["katex-sizing"; "reset-size6";
+                                             "size3"; "mtight"], map [],
+                                            [KElement
+                                               ("span", ["mord"; "mtight"],
+                                                map [],
+                                                [KElement
+                                                   ("span", ["mord"; "mtight"],
+                                                    map [], [KText "2"])])])]);
+                                     KElement
+                                       ("span", [], map [("top", "-3.23em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "3em")], []);
+                                         KElement
+                                           ("span", ["frac-line"],
+                                            map
+                                              [("border-bottom-width", "0.04em")],
+                                            [])]);
+                                     KElement
+                                       ("span", [], map [("top", "-3.394em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "3em")], []);
+                                         KElement
+                                           ("span",
+                                            ["katex-sizing"; "reset-size6";
+                                             "size3"; "mtight"], map [],
+                                            [KElement
+                                               ("span", ["mord"; "mtight"],
+                                                map [],
+                                                [KElement
+                                                   ("span", ["mord"; "mtight"],
+                                                    map [], [KText "1"])])])])]);
+                                 KElement
+                                   ("span", ["vlist-s"], map [], [KText "​"])]);
+                             KElement
+                               ("span", ["vlist-r"], map [],
+                                [KElement
+                                   ("span", ["vlist"],
+                                    map [("height", "0.345em")],
+                                    [KElement ("span", [], map [], [])])])])]);
+                     KElement ("span", ["mclose"; "nulldelimiter"], map [], [])]);
+                 KElement
+                   ("span", ["mclose"; "delimcenter"], map [("top", "0em")],
+                    [KElement
+                       ("span", ["delimsizing"; "size1"], map [], [KText ")"])])])])])])]
+== math "\\begin{pmatrix} a \u0026 b \\\\ c \u0026 d \\end{pmatrix}" display=true
+html: <span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mo fence="true">(</mo><mtable rowspacing="0.16em" columnalign="center center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>a</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>b</mi></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>c</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mi>d</mi></mstyle></mtd></mtr></mtable><mo fence="true">)</mo></mrow><annotation encoding="application/x-tex">\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:2.4em;vertical-align:-0.95em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">a</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.95em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">b</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.95em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span></span></span></span></span>
+visual: true display: true
+tree: [KElement
+   ("span", ["katex-display"], map [],
+    [KElement
+       ("span", ["katex"], map [],
+        [KElement
+           ("span", ["katex-mathml"], map [],
+            [KElement
+               ("math", [], map [],
+                [KElement
+                   ("semantics", [], map [],
+                    [KElement
+                       ("mrow", [], map [],
+                        [KElement ("mo", [], map [], [KText "("]);
+                         KElement
+                           ("mtable", [], map [],
+                            [KElement
+                               ("mtr", [], map [],
+                                [KElement
+                                   ("mtd", [], map [],
+                                    [KElement
+                                       ("mstyle", [], map [],
+                                        [KElement
+                                           ("mi", [], map [], [KText "a"])])]);
+                                 KElement
+                                   ("mtd", [], map [],
+                                    [KElement
+                                       ("mstyle", [], map [],
+                                        [KElement
+                                           ("mi", [], map [], [KText "b"])])])]);
+                             KElement
+                               ("mtr", [], map [],
+                                [KElement
+                                   ("mtd", [], map [],
+                                    [KElement
+                                       ("mstyle", [], map [],
+                                        [KElement
+                                           ("mi", [], map [], [KText "c"])])]);
+                                 KElement
+                                   ("mtd", [], map [],
+                                    [KElement
+                                       ("mstyle", [], map [],
+                                        [KElement
+                                           ("mi", [], map [], [KText "d"])])])])]);
+                         KElement ("mo", [], map [], [KText ")"])]);
+                     KElement
+                       ("annotation", [], map [],
+                        [KText "\begin{pmatrix} a & b \\ c & d \end{pmatrix}"])])])]);
+         KElement
+           ("span", ["katex-html"], map [],
+            [KElement
+               ("span", ["katex-base"], map [],
+                [KElement
+                   ("span", ["katex-strut"],
+                    map [("height", "2.4em"); ("vertical-align", "-0.95em")], []);
+                 KElement
+                   ("span", ["minner"], map [],
+                    [KElement
+                       ("span", ["mopen"; "delimcenter"], map [("top", "0em")],
+                        [KElement
+                           ("span", ["delimsizing"; "size3"], map [],
+                            [KText "("])]);
+                     KElement
+                       ("span", ["mord"], map [],
+                        [KElement
+                           ("span", ["mtable"], map [],
+                            [KElement
+                               ("span", ["col-align-c"], map [],
+                                [KElement
+                                   ("span", ["vlist-t"; "vlist-t2"], map [],
+                                    [KElement
+                                       ("span", ["vlist-r"], map [],
+                                        [KElement
+                                           ("span", ["vlist"],
+                                            map [("height", "1.45em")],
+                                            [KElement
+                                               ("span", [],
+                                                map [("top", "-3.61em")],
+                                                [KElement
+                                                   ("span", ["pstrut"],
+                                                    map [("height", "3em")], []);
+                                                 KElement
+                                                   ("span", ["mord"], map [],
+                                                    [KElement
+                                                       ("span",
+                                                        ["mord"; "mathnormal"],
+                                                        map [], [KText "a"])])]);
+                                             KElement
+                                               ("span", [],
+                                                map [("top", "-2.41em")],
+                                                [KElement
+                                                   ("span", ["pstrut"],
+                                                    map [("height", "3em")], []);
+                                                 KElement
+                                                   ("span", ["mord"], map [],
+                                                    [KElement
+                                                       ("span",
+                                                        ["mord"; "mathnormal"],
+                                                        map [], [KText "c"])])])]);
+                                         KElement
+                                           ("span", ["vlist-s"], map [],
+                                            [KText "​"])]);
+                                     KElement
+                                       ("span", ["vlist-r"], map [],
+                                        [KElement
+                                           ("span", ["vlist"],
+                                            map [("height", "0.95em")],
+                                            [KElement ("span", [], map [], [])])])])]);
+                             KElement
+                               ("span", ["arraycolsep"],
+                                map [("width", "0.5em")], []);
+                             KElement
+                               ("span", ["arraycolsep"],
+                                map [("width", "0.5em")], []);
+                             KElement
+                               ("span", ["col-align-c"], map [],
+                                [KElement
+                                   ("span", ["vlist-t"; "vlist-t2"], map [],
+                                    [KElement
+                                       ("span", ["vlist-r"], map [],
+                                        [KElement
+                                           ("span", ["vlist"],
+                                            map [("height", "1.45em")],
+                                            [KElement
+                                               ("span", [],
+                                                map [("top", "-3.61em")],
+                                                [KElement
+                                                   ("span", ["pstrut"],
+                                                    map [("height", "3em")], []);
+                                                 KElement
+                                                   ("span", ["mord"], map [],
+                                                    [KElement
+                                                       ("span",
+                                                        ["mord"; "mathnormal"],
+                                                        map [], [KText "b"])])]);
+                                             KElement
+                                               ("span", [],
+                                                map [("top", "-2.41em")],
+                                                [KElement
+                                                   ("span", ["pstrut"],
+                                                    map [("height", "3em")], []);
+                                                 KElement
+                                                   ("span", ["mord"], map [],
+                                                    [KElement
+                                                       ("span",
+                                                        ["mord"; "mathnormal"],
+                                                        map [], [KText "d"])])])]);
+                                         KElement
+                                           ("span", ["vlist-s"], map [],
+                                            [KText "​"])]);
+                                     KElement
+                                       ("span", ["vlist-r"], map [],
+                                        [KElement
+                                           ("span", ["vlist"],
+                                            map [("height", "0.95em")],
+                                            [KElement ("span", [], map [], [])])])])])])]);
+                     KElement
+                       ("span", ["mclose"; "delimcenter"], map [("top", "0em")],
+                        [KElement
+                           ("span", ["delimsizing"; "size3"], map [],
+                            [KText ")"])])])])])])])]
+== math "\\int_0^\\infty e^{-x}\\,dx" display=true
+html: <span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msubsup><mo>∫</mo><mn>0</mn><mi mathvariant="normal">∞</mi></msubsup><msup><mi>e</mi><mrow><mo>−</mo><mi>x</mi></mrow></msup><mtext> </mtext><mi>d</mi><mi>x</mi></mrow><annotation encoding="application/x-tex">\int_0^\infty e^{-x}\,dx</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:2.3262em;vertical-align:-0.9119em;"></span><span class="mop"><span class="mop op-symbol large-op" style="margin-right:0.4445em;position:relative;top:-0.0011em;">∫</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.4143em;"><span style="top:-1.7881em;margin-left:-0.4445em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span><span style="top:-3.8129em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">∞</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9119em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8213em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathnormal mtight">x</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">x</span></span></span></span></span>
+visual: true display: true
+tree: [KElement
+   ("span", ["katex-display"], map [],
+    [KElement
+       ("span", ["katex"], map [],
+        [KElement
+           ("span", ["katex-mathml"], map [],
+            [KElement
+               ("math", [], map [],
+                [KElement
+                   ("semantics", [], map [],
+                    [KElement
+                       ("mrow", [], map [],
+                        [KElement
+                           ("msubsup", [], map [],
+                            [KElement ("mo", [], map [], [KText "∫"]);
+                             KElement ("mn", [], map [], [KText "0"]);
+                             KElement ("mi", [], map [], [KText "∞"])]);
+                         KElement
+                           ("msup", [], map [],
+                            [KElement ("mi", [], map [], [KText "e"]);
+                             KElement
+                               ("mrow", [], map [],
+                                [KElement ("mo", [], map [], [KText "−"]);
+                                 KElement ("mi", [], map [], [KText "x"])])]);
+                         KElement ("mtext", [], map [], [KText " "]);
+                         KElement ("mi", [], map [], [KText "d"]);
+                         KElement ("mi", [], map [], [KText "x"])]);
+                     KElement
+                       ("annotation", [], map [],
+                        [KText "\int_0^\infty e^{-x}\,dx"])])])]);
+         KElement
+           ("span", ["katex-html"], map [],
+            [KElement
+               ("span", ["katex-base"], map [],
+                [KElement
+                   ("span", ["katex-strut"],
+                    map
+                      [("height", "2.3262em"); ("vertical-align", "-0.9119em")],
+                    []);
+                 KElement
+                   ("span", ["mop"], map [],
+                    [KElement
+                       ("span", ["mop"; "op-symbol"; "large-op"],
+                        map
+                          [("margin-right", "0.4445em");
+                           ("position", "relative"); ("top", "-0.0011em")],
+                        [KText "∫"]);
+                     KElement
+                       ("span", ["msupsub"], map [],
+                        [KElement
+                           ("span", ["vlist-t"; "vlist-t2"], map [],
+                            [KElement
+                               ("span", ["vlist-r"], map [],
+                                [KElement
+                                   ("span", ["vlist"],
+                                    map [("height", "1.4143em")],
+                                    [KElement
+                                       ("span", [],
+                                        map
+                                          [("margin-left", "-0.4445em");
+                                           ("margin-right", "0.05em");
+                                           ("top", "-1.7881em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "2.7em")], []);
+                                         KElement
+                                           ("span",
+                                            ["katex-sizing"; "reset-size6";
+                                             "size3"; "mtight"], map [],
+                                            [KElement
+                                               ("span", ["mord"; "mtight"],
+                                                map [], [KText "0"])])]);
+                                     KElement
+                                       ("span", [],
+                                        map
+                                          [("margin-right", "0.05em");
+                                           ("top", "-3.8129em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "2.7em")], []);
+                                         KElement
+                                           ("span",
+                                            ["katex-sizing"; "reset-size6";
+                                             "size3"; "mtight"], map [],
+                                            [KElement
+                                               ("span", ["mord"; "mtight"],
+                                                map [], [KText "∞"])])])]);
+                                 KElement
+                                   ("span", ["vlist-s"], map [], [KText "​"])]);
+                             KElement
+                               ("span", ["vlist-r"], map [],
+                                [KElement
+                                   ("span", ["vlist"],
+                                    map [("height", "0.9119em")],
+                                    [KElement ("span", [], map [], [])])])])])]);
+                 KElement
+                   ("span", ["mspace"], map [("margin-right", "0.1667em")], []);
+                 KElement
+                   ("span", ["mord"], map [],
+                    [KElement
+                       ("span", ["mord"; "mathnormal"], map [], [KText "e"]);
+                     KElement
+                       ("span", ["msupsub"], map [],
+                        [KElement
+                           ("span", ["vlist-t"], map [],
+                            [KElement
+                               ("span", ["vlist-r"], map [],
+                                [KElement
+                                   ("span", ["vlist"],
+                                    map [("height", "0.8213em")],
+                                    [KElement
+                                       ("span", [],
+                                        map
+                                          [("margin-right", "0.05em");
+                                           ("top", "-3.113em")],
+                                        [KElement
+                                           ("span", ["pstrut"],
+                                            map [("height", "2.7em")], []);
+                                         KElement
+                                           ("span",
+                                            ["katex-sizing"; "reset-size6";
+                                             "size3"; "mtight"], map [],
+                                            [KElement
+                                               ("span", ["mord"; "mtight"],
+                                                map [],
+                                                [KElement
+                                                   ("span", ["mord"; "mtight"],
+                                                    map [], [KText "−"]);
+                                                 KElement
+                                                   ("span",
+                                                    ["mord"; "mathnormal";
+                                                     "mtight"], map [],
+                                                    [KText "x"])])])])])])])])]);
+                 KElement
+                   ("span", ["mspace"], map [("margin-right", "0.1667em")], []);
+                 KElement ("span", ["mord"; "mathnormal"], map [], [KText "d"]);
+                 KElement ("span", ["mord"; "mathnormal"], map [], [KText "x"])])])])])]
+== math "\\alpha\\beta\\gamma \\mathbb{R} \\mathcal{F}" display=false
+html: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mi>β</mi><mi>γ</mi><mi mathvariant="double-struck">R</mi><mi mathvariant="script">F</mi></mrow><annotation encoding="application/x-tex">\alpha\beta\gamma \mathbb{R} \mathcal{F}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mord mathnormal" style="margin-right:0.0528em;">β</span><span class="mord mathnormal" style="margin-right:0.0556em;">γ</span><span class="mord mathbb">R</span><span class="mord mathcal" style="margin-right:0.0993em;">F</span></span></span></span>
+visual: true display: false
+tree: [KElement
+   ("span", ["katex"], map [],
+    [KElement
+       ("span", ["katex-mathml"], map [],
+        [KElement
+           ("math", [], map [],
+            [KElement
+               ("semantics", [], map [],
+                [KElement
+                   ("mrow", [], map [],
+                    [KElement ("mi", [], map [], [KText "α"]);
+                     KElement ("mi", [], map [], [KText "β"]);
+                     KElement ("mi", [], map [], [KText "γ"]);
+                     KElement ("mi", [], map [], [KText "R"]);
+                     KElement ("mi", [], map [], [KText "F"])]);
+                 KElement
+                   ("annotation", [], map [],
+                    [KText "\alpha\beta\gamma \mathbb{R} \mathcal{F}"])])])]);
+     KElement
+       ("span", ["katex-html"], map [],
+        [KElement
+           ("span", ["katex-base"], map [],
+            [KElement
+               ("span", ["katex-strut"],
+                map [("height", "0.8889em"); ("vertical-align", "-0.1944em")],
+                []);
+             KElement
+               ("span", ["mord"; "mathnormal"],
+                map [("margin-right", "0.0037em")], [KText "α"]);
+             KElement
+               ("span", ["mord"; "mathnormal"],
+                map [("margin-right", "0.0528em")], [KText "β"]);
+             KElement
+               ("span", ["mord"; "mathnormal"],
+                map [("margin-right", "0.0556em")], [KText "γ"]);
+             KElement ("span", ["mord"; "mathbb"], map [], [KText "R"]);
+             KElement
+               ("span", ["mord"; "mathcal"], map [("margin-right", "0.0993em")],
+                [KText "F"])])])])]
+== math "\\text{\u4E2D\u6587} \u002B 1" display=false
+html: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>中文</mtext><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\text{中文} + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord text"><span class="mord cjk_fallback">中文</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>
+visual: true display: false
+tree: [KElement
+   ("span", ["katex"], map [],
+    [KElement
+       ("span", ["katex-mathml"], map [],
+        [KElement
+           ("math", [], map [],
+            [KElement
+               ("semantics", [], map [],
+                [KElement
+                   ("mrow", [], map [],
+                    [KElement ("mtext", [], map [], [KText "中文"]);
+                     KElement ("mo", [], map [], [KText "+"]);
+                     KElement ("mn", [], map [], [KText "1"])]);
+                 KElement ("annotation", [], map [], [KText "\text{中文} + 1"])])])]);
+     KElement
+       ("span", ["katex-html"], map [],
+        [KElement
+           ("span", ["katex-base"], map [],
+            [KElement
+               ("span", ["katex-strut"],
+                map [("height", "0.7667em"); ("vertical-align", "-0.0833em")],
+                []);
+             KElement
+               ("span", ["mord"; "text"], map [],
+                [KElement
+                   ("span", ["mord"; "cjk_fallback"], map [], [KText "中文"])]);
+             KElement
+               ("span", ["mspace"], map [("margin-right", "0.2222em")], []);
+             KElement ("span", ["mbin"], map [], [KText "+"]);
+             KElement
+               ("span", ["mspace"], map [("margin-right", "0.2222em")], [])]);
+         KElement
+           ("span", ["katex-base"], map [],
+            [KElement
+               ("span", ["katex-strut"], map [("height", "0.6444em")], []);
+             KElement ("span", ["mord"], map [], [KText "1"])])])])]
+== math "\\frac{" display=false
+html: <span class="katex-error" title="ParseError: KaTeX parse error: Unexpected end of input in a macro argument, expected &#x27;}&#x27; at end of input: \frac{" style="color:#cc0000">\frac{</span>
+visual: false display: false
+tree: [KElement
+   ("span", ["katex-error"], map [("color", "#cc0000")], [KText "\frac{"])]
+== math "\\undefinedmacro{x}" display=false
+html: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathcolor="#cc0000"><mtext>\undefinedmacro</mtext></mstyle><mi>x</mi></mrow><annotation encoding="application/x-tex">\undefinedmacro{x}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text" style="color:#cc0000;"><span class="mord" style="color:#cc0000;">\undefinedmacro</span></span><span class="mord"><span class="mord mathnormal">x</span></span></span></span></span>
+visual: true display: false
+tree: [KElement
+   ("span", ["katex"], map [],
+    [KElement
+       ("span", ["katex-mathml"], map [],
+        [KElement
+           ("math", [], map [],
+            [KElement
+               ("semantics", [], map [],
+                [KElement
+                   ("mrow", [], map [],
+                    [KElement
+                       ("mstyle", [], map [],
+                        [KElement
+                           ("mtext", [], map [], [KText "\undefinedmacro"])]);
+                     KElement ("mi", [], map [], [KText "x"])]);
+                 KElement
+                   ("annotation", [], map [], [KText "\undefinedmacro{x}"])])])]);
+     KElement
+       ("span", ["katex-html"], map [],
+        [KElement
+           ("span", ["katex-base"], map [],
+            [KElement
+               ("span", ["katex-strut"],
+                map [("height", "1em"); ("vertical-align", "-0.25em")], []);
+             KElement
+               ("span", ["mord"; "text"], map [("color", "#cc0000")],
+                [KElement
+                   ("span", ["mord"], map [("color", "#cc0000")],
+                    [KText "\undefinedmacro"])]);
+             KElement
+               ("span", ["mord"], map [],
+                [KElement ("span", ["mord"; "mathnormal"], map [], [KText "x"])])])])])]
+== math "" display=false
+html: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow></mrow><annotation encoding="application/x-tex"></annotation></semantics></math></span><span class="katex-html" aria-hidden="true"></span></span>
+visual: true display: false
+tree: [KElement
+   ("span", ["katex"], map [],
+    [KElement
+       ("span", ["katex-mathml"], map [],
+        [KElement
+           ("math", [], map [],
+            [KElement
+               ("semantics", [], map [],
+                [KElement ("mrow", [], map [], []);
+                 KElement ("annotation", [], map [], [])])])]);
+     KElement ("span", ["katex-html"], map [], [])])]

@@ -47,3 +47,19 @@ module PendingDeletion =
 
     let isPending (id: Guid) (state: PendingDeletions) : bool =
         state.batches |> List.exists (fun b -> List.contains id b.ids)
+
+    /// 删掉当前对话时落到哪一行：侧栏当前可见顺序里第一个没被删的对话；
+    /// 当前对话不在被删之列时返回 None（不碰主视图）。迁自旧 AppShell.NeighborExcluding。
+    let neighborAfter (active: Guid option) (removedIds: Guid list) (visibleOrder: string list) : Guid option =
+        match active with
+        | Some currentId when List.contains currentId removedIds ->
+            let removed = Set.ofList removedIds
+            visibleOrder
+            |> List.tryPick (fun id ->
+                match Guid.TryParse id with
+                | true, g when not (removed.Contains g) -> Some g
+                | _ -> None)
+        | _ -> None
+
+    /// 撤销成功的提示。迁自旧 AppShell.ScheduleDelete 的撤销回调。
+    let restoredText (count: int) = if count = 1 then "已恢复对话" else sprintf "已恢复 %d 个对话" count

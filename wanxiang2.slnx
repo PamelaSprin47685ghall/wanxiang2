@@ -547,6 +547,10 @@
     <Project Path="libs/OnboardingFlow/OnboardingFlow.fsproj" />
     <Project Path="libs/OnboardingFlow/tests/OnboardingFlow.Tests.fsproj" />
   </Folder>
+  <Folder Name="/OnboardingPane/">
+    <Project Path="libs/OnboardingPane/OnboardingPane.fsproj" />
+    <Project Path="libs/OnboardingPane/tests/OnboardingPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/OnboardingRules/">
     <Project Path="libs/OnboardingRules/OnboardingRules.fsproj" />
     <Project Path="libs/OnboardingRules/tests/OnboardingRules.Tests.fsproj" />

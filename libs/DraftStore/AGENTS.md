@@ -8,6 +8,7 @@
 
 # SPEC
 1. [LEMMA: 1, 2] `tests/golden/expected.txt` 由旧 DraftCodec、DraftStore(MemoryDraftBackend)、DraftPolicy 跑 `tests/Render.fs` 生成；金标准用例通过。
+2. 金标准生成器 `tools/gen-golden.fsx`（跑旧仓库构建出的程序集）；重跑后 `tests/golden` 逐字节不变。
 
 # 迁入或覆盖的旧测试
 - ComposerReliabilityTests：`a recycled page restores drafts from the browser backend`（后端换成宿主保存的文本）、`conversations that vanish from the list count as deleted unless a send is in flight`

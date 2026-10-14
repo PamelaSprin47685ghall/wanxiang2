@@ -7,6 +7,7 @@
 
 # SPEC
 1. [LEMMA: 1] `tests/golden/expected.txt` 由旧 Wanxiang.UI 程序集跑 `tests/Render.fs` 生成；金标准用例通过。
+2. 金标准生成器 `tools/gen-golden.fsx`（跑旧仓库构建出的程序集）；重跑后 `tests/golden` 逐字节不变。
 
 # 迁入或覆盖的旧测试
 - UiPureLogicTests：`empty catalog defaults`、`parse and query catalog properties`

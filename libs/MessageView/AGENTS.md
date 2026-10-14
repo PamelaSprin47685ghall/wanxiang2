@@ -7,6 +7,7 @@
 
 # SPEC
 1. [LEMMA: 1] `tests/golden/expected.txt` 由旧 Wanxiang.UI 程序集跑 `tests/Render.fs` 生成；`tests/Tests.fs` 的金标准用例通过。
+2. 金标准生成器 `tools/gen-golden.fsx`（跑旧仓库构建出的程序集）；重跑后 `tests/golden` 逐字节不变。
 
 # 迁入或覆盖的旧测试
 - UiModelTests：`AttachmentRef detects image mime types and formats file sizes`、`MessageView ofJson parses user and assistant roles, reasoning, and tools`、`MessageView mergeToolResults correctly associates results and removes tool messages`

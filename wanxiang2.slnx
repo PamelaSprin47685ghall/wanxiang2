@@ -239,6 +239,10 @@
     <Project Path="libs/DevicesModel/DevicesModel.fsproj" />
     <Project Path="libs/DevicesModel/tests/DevicesModel.Tests.fsproj" />
   </Folder>
+  <Folder Name="/DevicesPane/">
+    <Project Path="libs/DevicesPane/DevicesPane.fsproj" />
+    <Project Path="libs/DevicesPane/tests/DevicesPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/DirLock/">
     <Project Path="libs/DirLock/DirLock.fsproj" />
     <Project Path="libs/DirLock/tests/DirLock.Tests.fsproj" />

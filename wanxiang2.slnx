@@ -143,6 +143,10 @@
     <Project Path="libs/ConversationSummary/ConversationSummary.fsproj" />
     <Project Path="libs/ConversationSummary/tests/ConversationSummary.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ConversationSurface/">
+    <Project Path="libs/ConversationSurface/ConversationSurface.fsproj" />
+    <Project Path="libs/ConversationSurface/tests/ConversationSurface.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ConversationTransfer/">
     <Project Path="libs/ConversationTransfer/ConversationTransfer.fsproj" />
     <Project Path="libs/ConversationTransfer/tests/ConversationTransfer.Tests.fsproj" />
@@ -459,6 +463,10 @@
     <Project Path="libs/RichScripts/RichScripts.fsproj" />
     <Project Path="libs/RichScripts/tests/RichScripts.Tests.fsproj" />
   </Folder>
+  <Folder Name="/RovingIndex/">
+    <Project Path="libs/RovingIndex/RovingIndex.fsproj" />
+    <Project Path="libs/RovingIndex/tests/RovingIndex.Tests.fsproj" />
+  </Folder>
   <Folder Name="/RunModes/">
     <Project Path="libs/RunModes/RunModes.fsproj" />
     <Project Path="libs/RunModes/tests/RunModes.Tests.fsproj" />
@@ -518,6 +526,10 @@
   <Folder Name="/Sse/">
     <Project Path="libs/Sse/Sse.fsproj" />
     <Project Path="libs/Sse/tests/Sse.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StartLayout/">
+    <Project Path="libs/StartLayout/StartLayout.fsproj" />
+    <Project Path="libs/StartLayout/tests/StartLayout.Tests.fsproj" />
   </Folder>
   <Folder Name="/StartReady/">
     <Project Path="libs/StartReady/StartReady.fsproj" />

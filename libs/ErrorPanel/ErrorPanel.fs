@@ -116,6 +116,7 @@ type ErrorPanel(look: ErrorPanelLook, parts: ErrorPanelParts, title: string, hin
         b.Focusable <- true
         b.Cursor <- new Cursor(StandardCursorType.Hand)
         b.Margin <- Thickness 0.0
+        b.VerticalAlignment <- VerticalAlignment.Center
         look.Dress secondary b
         Follow.live2 b (gauge ErrorGauge.Space2xl) (gauge ErrorGauge.TextButtonPadY) (fun x y -> b.Padding <- Thickness(x, y))
         AutomationProperties.SetName(b, name)
@@ -289,6 +290,7 @@ type ErrorPanel(look: ErrorPanelLook, parts: ErrorPanelParts, title: string, hin
                 toggle.CornerRadius <- CornerRadius r)
             Follow.live toggle (gauge ErrorGauge.BorderWidth) (fun w -> toggle.BorderThickness <- Thickness w)
             look.DressFold toggle
+            AutomationProperties.SetControlTypeOverride(toggle, Nullable Avalonia.Automation.Peers.AutomationControlType.Button)
             let mutable open' = false
             let sync () =
                 rotate.Angle <- (if open' then 90.0 else 0.0)

@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：把 MessageView 折成各消息卡控件库的数据并拼成一张卡，外观由主题管理者的活实例填。协作者：RevealPane、FoldHeader、BusyRing、ThinkingBlock、ToolCallCard、AttachmentChip、ActionStrip、ErrorPanel、UserBubble、StreamCaret、UsageFoot、MarkdownView、ReadingLook、CopyButton、CountdownTicker、CardReconcile、CaretBreath、MessageMenu、MessageView、ToolCallState、ToolOverview、ToolSummary、ToolArgsPreview、ToolErrorSummary、DurationText、MessageTimestamp、GenerationErrorTitle、ErrorRecovery、ConversationRuns、Wire、Theme、IconSet、DesignRhythm。 -->
+  <ItemGroup>
+    <Compile Include="Looks.fs" />
+    <Compile Include="Card.fs" />
+    <Compile Include="Deck.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.RevealPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.FoldHeader" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BusyRing" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThinkingBlock" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolCallCard" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AttachmentChip" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ActionStrip" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ErrorPanel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UserBubble" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.StreamCaret" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UsageFoot" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ReadingLook" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CopyButton" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CountdownTicker" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CardReconcile" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CaretBreath" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageMenu" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolCallState" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolOverview" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolSummary" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolArgsPreview" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolErrorSummary" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DurationText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageTimestamp" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.GenerationErrorTitle" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ErrorRecovery" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationRuns" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -12,4 +12,4 @@
 
 ## 与旧实现的差异
 
-Avalonia 12 没有 `AutomationProperties.SetExpanded / SetRole`：角色由可点 Border 的自动化层报为按钮，展开状态改报 ItemStatus「已展开 / 已折叠」（与 MarkdownView 的展开按钮相同）。读屏名与提示由使用方在 `Toggled` 里按旧文案设置。
+旧代码的 `SetRole / SetExpanded` 是旧 Primitives 里的扩展：角色写控件类型覆盖（按钮），展开状态写 ItemStatus「已展开 / 已折叠」；本库照做。旧工具活动头不报展开状态，用 `ReportState <- false` 关掉。读屏名与提示由使用方在 `Toggled` 里按旧文案设置。

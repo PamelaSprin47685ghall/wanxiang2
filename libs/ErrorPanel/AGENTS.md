@@ -14,4 +14,4 @@
 
 ## 与旧实现的差异
 
-旧代码在卡里直接读 `RetryCountdown` 与模块级 `recoverySink`；现在倒计时由 `SetSeconds` 推、恢复动作由 `AddRecovery label action` 加，是否出某个按钮由组合者按 `GenerationError.retryable`、`ErrorRecovery.forKind` 决定。Avalonia 12 没有 `SetExpanded / SetRole`，披露头改报 ItemStatus。
+旧代码在卡里直接读 `RetryCountdown` 与模块级 `recoverySink`；现在倒计时由 `SetSeconds` 推、恢复动作由 `AddRecovery label action` 加，是否出某个按钮由组合者按 `GenerationError.retryable`、`ErrorRecovery.forKind` 决定。披露头照旧写控件类型覆盖（按钮）与 ItemStatus（旧 `SetRole / SetExpanded` 扩展的实际效果）。

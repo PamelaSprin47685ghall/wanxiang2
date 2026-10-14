@@ -37,6 +37,7 @@ type RevealPane(look: RevealPaneLook, content: Control, maxHeight: float, initia
     let button =
         Spot(
             HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center,
             Cursor = new Cursor(StandardCursorType.Hand),
             Focusable = true,
             IsVisible = false,

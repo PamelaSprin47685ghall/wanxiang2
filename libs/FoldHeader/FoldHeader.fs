@@ -46,6 +46,7 @@ type FoldHeaderLook =
 type FoldHeader(look: FoldHeaderLook, expanded: bool) =
     let toggled = Event<bool>()
     let mutable open' = expanded
+    let mutable reportState = true
     let rotate = RotateTransform(if expanded then 90.0 else 0.0)
     let rotation = DoubleTransition(Property = RotateTransform.AngleProperty, Easing = CubicEaseOut())
     let chevronHost = Border(VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center)
@@ -63,7 +64,7 @@ type FoldHeader(look: FoldHeaderLook, expanded: bool) =
     let flip () =
         open' <- not open'
         rotate.Angle <- (if open' then 90.0 else 0.0)
-        AutomationProperties.SetItemStatus(header, (if open' then "已展开" else "已折叠"))
+        if reportState then AutomationProperties.SetItemStatus(header, (if open' then "已展开" else "已折叠"))
         toggled.Trigger open'
     do
         let transitions = Transitions()
@@ -93,7 +94,8 @@ type FoldHeader(look: FoldHeaderLook, expanded: bool) =
             header.CornerRadius <- CornerRadius r)
         Follow.live header (look.Gauge FoldGauge.BorderWidth) (fun w -> header.BorderThickness <- Thickness w)
         look.Dress header
-        // 旧 SetRole Button 由 Spot 的自动化层报；旧 SetExpanded 改报 ItemStatus（同 MarkdownView 的展开按钮）
+        // 旧 SetRole Button = 控件类型覆盖为按钮；旧 SetExpanded = ItemStatus「已展开 / 已折叠」
+        AutomationProperties.SetControlTypeOverride(header, Nullable Avalonia.Automation.Peers.AutomationControlType.Button)
         AutomationProperties.SetItemStatus(header, (if expanded then "已展开" else "已折叠"))
         header.OnInvoke flip
 
@@ -106,6 +108,12 @@ type FoldHeader(look: FoldHeaderLook, expanded: bool) =
     /// 箭头的旋转（测试读角度）
     member _.Rotation = rotate
     member _.Expanded = open'
+    /// 是否经 ItemStatus 报展开状态（旧工具活动头不报，默认报）
+    member _.ReportState
+        with get () = reportState
+        and set (v: bool) =
+            reportState <- v
+            AutomationProperties.SetItemStatus(header, (if v then (if open' then "已展开" else "已折叠") else null))
     /// 开合之后触发，参数是新的展开状态
     member _.Toggled = toggled.Publish
     /// 在箭头之后、标题之前插一个件（旧工具活动头的状态图标）

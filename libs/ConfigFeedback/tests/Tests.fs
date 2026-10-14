@@ -19,3 +19,13 @@ let ``config tracker expires silent requests and resolves only once`` () =
     Assert.True((tracker.Resolve id).IsNone)
     Assert.Equal(0, tracker.Count)
 
+
+// 金标准：golden/expected.txt 由旧 AppShell ConfigApplied 分支的原样摘录跑同一份 Render.fs 生成。
+[<Fact>]
+let ``golden: config applied notice matches old AppShell`` () =
+    Assert.Equal(System.IO.File.ReadAllText(System.IO.Path.Combine(System.AppContext.BaseDirectory, "golden", "expected.txt")), Render.all ())
+
+[<Fact>]
+let ``首次运行卡片登记空文案：成功时不叠 toast 但仍拉目录`` () =
+    Assert.Equal((ConfigAppliedNotice.Silent, true), ConfigApplied.notice (Some "") true [])
+    Assert.Equal((ConfigAppliedNotice.Failure "a；b", false), ConfigApplied.notice None false [ "a"; "b" ])

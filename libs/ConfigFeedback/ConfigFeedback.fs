@@ -46,3 +46,26 @@ type ConfigFeedbackTracker() =
         sentAt.Clear()
         pending.Clear()
         callbacks |> Array.iter (fun callback -> callback false)
+
+/// config.applied 到达后的提示（旧 AppShell.HandleEvent 的 ConfigApplied 分支）。
+[<RequireQualifiedAccess>]
+type ConfigAppliedNotice =
+    | Success of text: string
+    | Failure of text: string
+    /// 调用方（首次运行卡片）自己会说话，这里不叠 toast。
+    | Silent
+
+module ConfigApplied =
+
+    /// tracked：这次回执对上了一个登记过的请求时，是它登记的成功文案；没对上为 None。
+    /// 返回提示与是否重新拉取目录（成功才拉）。
+    let notice (tracked: string option) (ok: bool) (errors: string list) : ConfigAppliedNotice * bool =
+        let failure () = ConfigAppliedNotice.Failure(String.Join("；", errors))
+        match tracked with
+        | Some successMessage ->
+            if ok then
+                (if String.IsNullOrEmpty successMessage then ConfigAppliedNotice.Silent else ConfigAppliedNotice.Success successMessage), true
+            else failure (), false
+        | None ->
+            if ok then ConfigAppliedNotice.Success "配置已保存", true
+            else failure (), false

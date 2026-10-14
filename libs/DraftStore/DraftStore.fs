@@ -210,3 +210,49 @@ module DraftPolicy =
     /// 已被删除的对话：曾经存在（known）而最新列表里没有，且没有在途发送。返回应清理的对话 id。
     let deletedConversations (listed: Set<Guid>) (known: Set<Guid>) (inFlight: Set<Guid>) : Set<Guid> =
         known |> Set.filter (fun id -> not (listed.Contains id) && not (inFlight.Contains id))
+
+/// 连上主机后把本机保存的草稿放回、列表变化后清理已删对话、设置页摘要，迁自旧 AppShell 的
+/// RestoreLocalDrafts / PruneDeletedConversationDrafts / UpdateDraftSummary / ClearLocalDrafts 里不碰界面的部分。
+module DraftRestore =
+
+    let private hasContent (d: StoredDraft) = not (String.IsNullOrWhiteSpace d.text) || not (List.isEmpty d.attachments)
+
+    /// 已存内容里这台主机出现过的对话（用来判断以后哪些对话被删了）。
+    let knownConversations (stored: DraftSnapshot) (instanceId: string) : Set<Guid> =
+        set [ for d in stored.drafts do
+                  if d.instanceId = instanceId then
+                      match d.conversationId with
+                      | Some id -> yield id
+                      | None -> ()
+              for u in stored.unsent do
+                  if u.instanceId = instanceId then yield u.conversationId ]
+
+    /// 放回后给用户的一句话；什么都没放回时为 None。unsentRestored 是这次放回发件箱的未确认条数。
+    let restoreNotice (stored: DraftSnapshot) (instanceId: string) (unsentRestored: int) : string option =
+        let hasDrafts = stored.drafts |> List.exists (fun d -> d.instanceId = instanceId && hasContent d)
+        if hasDrafts || unsentRestored > 0 then
+            let needsReselect =
+                stored.drafts |> List.exists (fun d -> d.instanceId = instanceId && not (List.isEmpty d.attachments))
+            let message =
+                if unsentRestored > 0 then "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+                else "已恢复上次未发送的草稿。"
+            Some(if needsReselect then message + "附件需要重新选择。" else message)
+        else None
+
+    /// 输入框文字为空、而这次放回的草稿有字时才填进输入框，不覆盖用户这次已经输入的文字。
+    let fillComposer (composerText: string) (restoredText: string) =
+        String.IsNullOrWhiteSpace composerText && not (String.IsNullOrWhiteSpace restoredText)
+
+    /// 设置页摘要用的两个数：有内容的草稿条数、未确认消息条数。
+    let summaryCounts (snapshot: DraftSnapshot) : int * int =
+        (snapshot.drafts |> List.filter hasContent |> List.length), List.length snapshot.unsent
+
+    /// 已删对话（DraftPolicy.deletedConversations 的结果）从已存内容里去掉。
+    let pruneStored (stored: DraftSnapshot) (instanceId: string) (gone: Set<Guid>) : DraftSnapshot =
+        { drafts = stored.drafts |> List.filter (fun d -> not (d.instanceId = instanceId && d.conversationId |> Option.exists gone.Contains))
+          unsent = stored.unsent |> List.filter (fun u -> not (u.instanceId = instanceId && gone.Contains u.conversationId)) }
+
+    /// 清理后仍认得的对话：去掉已删的，加上这次列表里的。
+    let knownAfterPrune (known: Set<Guid>) (gone: Set<Guid>) (listed: Set<Guid>) = Set.union (Set.difference known gone) listed
+
+    let clearedText = "本地草稿已清除。"

@@ -13,3 +13,8 @@
 # 迁入或覆盖的旧测试
 - ComposerReliabilityTests：`a recycled page restores drafts from the browser backend`（后端换成宿主保存的文本）、`conversations that vanish from the list count as deleted unless a send is in flight`
 - 未迁：`when turned off nothing is written and what was stored is deleted` 测的是启用开关，开关归宿主，留在旧仓库随宿主改写。
+
+## DraftRestore（迁自旧 AppShell）
+- 来源：旧 AppShell.RestoreLocalDrafts / UpdateDraftSummary / PruneDeletedConversationDrafts / ClearLocalDrafts 中不碰界面的判断。
+- 金标准：tests/golden/restore.txt，由 tools/gen-restore-golden.fsx 跑 tools/OldDraftRestore.fs（旧代码原样摘录；私有成员无法从旧程序集调用）生成。
+- 覆盖的旧测试：旧仓库没有直接测这些私有成员的测试；这里的金标准与行为测试是新增覆盖。

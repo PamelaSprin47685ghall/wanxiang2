@@ -2,6 +2,7 @@
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
     <Compile Include="Render.fs" />
+    <Compile Include="RestoreRender.fs" />
     <Compile Include="Tests.fs" />
     <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

@@ -55,3 +55,19 @@ let ``conversations that vanish from the list count as deleted unless a send is 
     let deleted = DraftPolicy.deletedConversations (Set.ofList [ kept ]) (Set.ofList [ kept; gone; sending ]) (Set.ofList [ sending ])
     Assert.Equal<Guid list>([ gone ], Set.toList deleted)
 
+
+// 金标准：golden/restore.txt 由 tools/OldDraftRestore.fs（旧 AppShell 原样摘录）跑 RestoreRender 生成。
+[<Fact>]
+let ``golden: restore notice, prune and summary match old AppShell`` () =
+    let expected = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "restore.txt"))
+    let actual =
+        RestoreRender.render DraftRestore.knownConversations DraftRestore.restoreNotice DraftRestore.fillComposer
+            DraftRestore.summaryCounts DraftRestore.pruneStored DraftRestore.knownAfterPrune DraftRestore.clearedText
+    Assert.Equal(expected, actual)
+
+[<Fact>]
+let ``restore notice: unsent wins, attachments ask for reselect, nothing restored is silent`` () =
+    let s = { drafts = [ RestoreRender.dr "h" None "" [ RestoreRender.att ] ]; unsent = [] }
+    Assert.Equal(Some "已恢复上次未发送的草稿。附件需要重新选择。", DraftRestore.restoreNotice s "h" 0)
+    Assert.Equal(Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。", DraftRestore.restoreNotice s "h" 1)
+    Assert.Equal(None, DraftRestore.restoreNotice s "other" 0)

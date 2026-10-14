@@ -1,0 +1,146 @@
+empty h1 known=
+empty h1 unsent=0 notice=None
+empty h1 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+empty h1 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+empty h1 prune  -> drafts=[] unsent=[]
+empty h1 prune 1 -> drafts=[] unsent=[]
+empty h1 prune 2,3 -> drafts=[] unsent=[]
+empty h1 prune 4,5 -> drafts=[] unsent=[]
+empty h2 known=
+empty h2 unsent=0 notice=None
+empty h2 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+empty h2 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+empty h2 prune  -> drafts=[] unsent=[]
+empty h2 prune 1 -> drafts=[] unsent=[]
+empty h2 prune 2,3 -> drafts=[] unsent=[]
+empty h2 prune 4,5 -> drafts=[] unsent=[]
+empty h3 known=
+empty h3 unsent=0 notice=None
+empty h3 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+empty h3 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+empty h3 prune  -> drafts=[] unsent=[]
+empty h3 prune 1 -> drafts=[] unsent=[]
+empty h3 prune 2,3 -> drafts=[] unsent=[]
+empty h3 prune 4,5 -> drafts=[] unsent=[]
+empty counts=(0, 0)
+blank h1 known=
+blank h1 unsent=0 notice=None
+blank h1 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+blank h1 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+blank h1 prune  -> drafts=[h1/None/  /0] unsent=[]
+blank h1 prune 1 -> drafts=[h1/None/  /0] unsent=[]
+blank h1 prune 2,3 -> drafts=[h1/None/  /0] unsent=[]
+blank h1 prune 4,5 -> drafts=[h1/None/  /0] unsent=[]
+blank h2 known=
+blank h2 unsent=0 notice=None
+blank h2 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+blank h2 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+blank h2 prune  -> drafts=[h1/None/  /0] unsent=[]
+blank h2 prune 1 -> drafts=[h1/None/  /0] unsent=[]
+blank h2 prune 2,3 -> drafts=[h1/None/  /0] unsent=[]
+blank h2 prune 4,5 -> drafts=[h1/None/  /0] unsent=[]
+blank h3 known=
+blank h3 unsent=0 notice=None
+blank h3 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+blank h3 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+blank h3 prune  -> drafts=[h1/None/  /0] unsent=[]
+blank h3 prune 1 -> drafts=[h1/None/  /0] unsent=[]
+blank h3 prune 2,3 -> drafts=[h1/None/  /0] unsent=[]
+blank h3 prune 4,5 -> drafts=[h1/None/  /0] unsent=[]
+blank counts=(0, 0)
+text h1 known=1
+text h1 unsent=0 notice=Some "已恢复上次未发送的草稿。"
+text h1 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+text h1 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+text h1 prune  -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h1 prune 1 -> drafts=[h2/Some "2"/x/1] unsent=[]
+text h1 prune 2,3 -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h1 prune 4,5 -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h2 known=2
+text h2 unsent=0 notice=Some "已恢复上次未发送的草稿。附件需要重新选择。"
+text h2 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。"
+text h2 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。"
+text h2 prune  -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h2 prune 1 -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h2 prune 2,3 -> drafts=[h1/Some "1"/hi/0] unsent=[]
+text h2 prune 4,5 -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h3 known=
+text h3 unsent=0 notice=None
+text h3 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+text h3 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+text h3 prune  -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h3 prune 1 -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h3 prune 2,3 -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text h3 prune 4,5 -> drafts=[h1/Some "1"/hi/0;h2/Some "2"/x/1] unsent=[]
+text counts=(2, 0)
+att h1 known=1,3
+att h1 unsent=0 notice=Some "已恢复上次未发送的草稿。附件需要重新选择。"
+att h1 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。"
+att h1 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。"
+att h1 prune  -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att h1 prune 1 -> drafts=[h1/None/s/0] unsent=[h1/3;h2/4]
+att h1 prune 2,3 -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h2/4]
+att h1 prune 4,5 -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att h2 known=4
+att h2 unsent=0 notice=None
+att h2 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+att h2 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+att h2 prune  -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att h2 prune 1 -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att h2 prune 2,3 -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att h2 prune 4,5 -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3]
+att h3 known=
+att h3 unsent=0 notice=None
+att h3 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+att h3 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+att h3 prune  -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att h3 prune 1 -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att h3 prune 2,3 -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att h3 prune 4,5 -> drafts=[h1/Some "1"//1;h1/None/s/0] unsent=[h1/3;h2/4]
+att counts=(2, 2)
+mixed h1 known=1,2,5
+mixed h1 unsent=0 notice=Some "已恢复上次未发送的草稿。附件需要重新选择。"
+mixed h1 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。"
+mixed h1 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。"
+mixed h1 prune  -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed h1 prune 1 -> drafts=[h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed h1 prune 2,3 -> drafts=[h1/Some "1"/a/0;h2/Some "1"/b/0] unsent=[h1/5]
+mixed h1 prune 4,5 -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2]
+mixed h2 known=1
+mixed h2 unsent=0 notice=Some "已恢复上次未发送的草稿。"
+mixed h2 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+mixed h2 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+mixed h2 prune  -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed h2 prune 1 -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1] unsent=[h1/2;h1/5]
+mixed h2 prune 2,3 -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed h2 prune 4,5 -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed h3 known=
+mixed h3 unsent=0 notice=None
+mixed h3 unsent=1 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+mixed h3 unsent=2 notice=Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。"
+mixed h3 prune  -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed h3 prune 1 -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed h3 prune 2,3 -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed h3 prune 4,5 -> drafts=[h1/Some "1"/a/0;h1/Some "2"//1;h2/Some "1"/b/0] unsent=[h1/2;h1/5]
+mixed counts=(3, 2)
+fill "" "" = false
+fill "" "
+" = false
+fill "" "y" = true
+fill " " "" = false
+fill " " "
+" = false
+fill " " "y" = true
+fill "x" "" = false
+fill "x" "
+" = false
+fill "x" "y" = false
+knownAfter  -  +  = 
+knownAfter  -  + 2,7 = 2,7
+knownAfter  - 2 +  = 
+knownAfter  - 2 + 2,7 = 2,7
+knownAfter 1,2 -  +  = 1,2
+knownAfter 1,2 -  + 2,7 = 1,2,7
+knownAfter 1,2 - 2 +  = 1
+knownAfter 1,2 - 2 + 2,7 = 1,2,7
+cleared 本地草稿已清除。

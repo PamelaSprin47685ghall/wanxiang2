@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：ShellDesk + SidebarDesk + ChatScreen + ComposerDesk + OverlayDesk = 旧 AppShell.Build 的布局段与 ApplyResponsiveLayout。协作者见 PackageReference。 -->
+  <ItemGroup>
+    <Compile Include="Workspace.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.ShellDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

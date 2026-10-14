@@ -1,0 +1,2874 @@
+true false false "" false [] false true 当前模型不支持图片 | false false false false false 请输入消息或添加附件 发送 None
+true false false "" false [] false false 当前模型不支持图片 | false false false false false 请输入消息或添加附件 发送 None
+true false false "主机忙" false [] false true 当前模型不支持图片 | false false false false false 请输入消息或添加附件 发送 None
+true false false "主机忙" false [] false false 当前模型不支持图片 | false false false false false 请输入消息或添加附件 发送 None
+true false false "" false [] true true 当前模型不支持图片 | false false false false false 请输入消息或添加附件 发送 None
+true false false "" false [] true false 当前模型不支持图片 | false false false false false 请输入消息或添加附件 发送 None
+true false false "主机忙" false [] true true 当前模型不支持图片 | false false false false false 请输入消息或添加附件 发送 None
+true false false "主机忙" false [] true false 当前模型不支持图片 | false false false false false 请输入消息或添加附件 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "" true [] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" true [] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" true [] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" true [] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" true [] true true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" true [] true false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" true [] true true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" true [] true false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 附件上传中，请稍候… 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 有附件上传失败，移除或重新添加后发送 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true true true false 发送（Enter） 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true true true false 发送（Ctrl / ⌘ + Enter） 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false false 当前模型不支持图片 发送 None
+true true true "" false [] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "请输入消息或添加附件"
+true true true "" false [] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "请输入消息或添加附件"
+true true true "主机忙" false [] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "请输入消息或添加附件"
+true true true "主机忙" false [] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "请输入消息或添加附件"
+true true true "" false [] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "请输入消息或添加附件"
+true true true "" false [] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "请输入消息或添加附件"
+true true true "主机忙" false [] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "请输入消息或添加附件"
+true true true "主机忙" false [] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "请输入消息或添加附件"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" true [] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" true [] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" true [] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" true [] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" true [] true true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" true [] true false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" true [] true true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" true [] true false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "附件上传中，请稍候…"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true true true true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Enter）"
+true true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" false [] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "请输入消息或添加附件"
+true true false "" false [] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "请输入消息或添加附件"
+true true false "主机忙" false [] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "请输入消息或添加附件"
+true true false "主机忙" false [] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "请输入消息或添加附件"
+true true false "" false [] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "请输入消息或添加附件"
+true true false "" false [] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "请输入消息或添加附件"
+true true false "主机忙" false [] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "请输入消息或添加附件"
+true true false "主机忙" false [] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "请输入消息或添加附件"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" true [] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" true [] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" true [] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" true [] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" true [] true true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" true [] true false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" true [] true true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" true [] true false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "附件上传中，请稍候…"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "有附件上传失败，移除或重新添加后发送"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false true false true true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Enter）"
+true true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "排队发送（Ctrl / ⌘ + Enter）"
+false false false "" false [] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false false 连接已断开 发送 None
+false false false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false false 连接已断开 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false false 主机忙 发送 None
+false false false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false false 主机忙 发送 None
+false false false "" true [] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false false false false 主机忙 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false false 连接已断开 发送 None
+false false false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false false 连接已断开 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false false 主机忙 发送 None
+false false false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false false 主机忙 发送 None
+false true true "" false [] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "连接已断开"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true true "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false true false true 停止生成 (Escape) 停止生成 Some "主机忙"
+false true false "" false [] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" false [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = false
+   failed = false
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = false
+   failed = true
+   isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] true false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false true 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] false false 当前模型不支持图片 | false false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "连接已断开"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true true 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "主机忙"
+false true false "主机忙" true [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] true false 当前模型不支持图片 | true false false false true 等待主机确认… 停止生成 Some "主机忙"
+submit true "" [] -> false
+submit true "" [{ ready = true
+   failed = false
+   isImage = false }] -> true
+submit true "" [{ ready = false
+   failed = false
+   isImage = false }] -> false
+submit true "" [{ ready = false
+   failed = true
+   isImage = false }] -> false
+submit true "" [{ ready = true
+   failed = false
+   isImage = true }] -> true
+submit true "" [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] -> false
+submit true "" [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] -> false
+submit true "" [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] -> true
+submit true "  " [] -> false
+submit true "  " [{ ready = true
+   failed = false
+   isImage = false }] -> true
+submit true "  " [{ ready = false
+   failed = false
+   isImage = false }] -> false
+submit true "  " [{ ready = false
+   failed = true
+   isImage = false }] -> false
+submit true "  " [{ ready = true
+   failed = false
+   isImage = true }] -> true
+submit true "  " [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] -> false
+submit true "  " [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] -> false
+submit true "  " [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] -> true
+submit true "hi" [] -> true
+submit true "hi" [{ ready = true
+   failed = false
+   isImage = false }] -> true
+submit true "hi" [{ ready = false
+   failed = false
+   isImage = false }] -> false
+submit true "hi" [{ ready = false
+   failed = true
+   isImage = false }] -> false
+submit true "hi" [{ ready = true
+   failed = false
+   isImage = true }] -> true
+submit true "hi" [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] -> false
+submit true "hi" [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] -> false
+submit true "hi" [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] -> true
+submit false "" [] -> false
+submit false "" [{ ready = true
+   failed = false
+   isImage = false }] -> false
+submit false "" [{ ready = false
+   failed = false
+   isImage = false }] -> false
+submit false "" [{ ready = false
+   failed = true
+   isImage = false }] -> false
+submit false "" [{ ready = true
+   failed = false
+   isImage = true }] -> false
+submit false "" [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] -> false
+submit false "" [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] -> false
+submit false "" [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] -> false
+submit false "  " [] -> false
+submit false "  " [{ ready = true
+   failed = false
+   isImage = false }] -> false
+submit false "  " [{ ready = false
+   failed = false
+   isImage = false }] -> false
+submit false "  " [{ ready = false
+   failed = true
+   isImage = false }] -> false
+submit false "  " [{ ready = true
+   failed = false
+   isImage = true }] -> false
+submit false "  " [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] -> false
+submit false "  " [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] -> false
+submit false "  " [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] -> false
+submit false "hi" [] -> false
+submit false "hi" [{ ready = true
+   failed = false
+   isImage = false }] -> false
+submit false "hi" [{ ready = false
+   failed = false
+   isImage = false }] -> false
+submit false "hi" [{ ready = false
+   failed = true
+   isImage = false }] -> false
+submit false "hi" [{ ready = true
+   failed = false
+   isImage = true }] -> false
+submit false "hi" [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = false
+                        isImage = false }] -> false
+submit false "hi" [{ ready = true
+   failed = false
+   isImage = false }; { ready = false
+                        failed = true
+                        isImage = false }] -> false
+submit false "hi" [{ ready = true
+   failed = false
+   isImage = true }; { ready = true
+                       failed = false
+                       isImage = false }] -> false
+chip false { ready = false
+  failed = false
+  isImage = false } -> 上传中 / 文件大小：上传中
+chip false { ready = true
+  failed = false
+  isImage = false } -> 1.2 KB / 文件大小：1.2 KB
+chip false { ready = false
+  failed = true
+  isImage = false } -> 1.2 KB / 上传失败：1.2 KB，可移除或重新添加
+chip true { ready = false
+  failed = false
+  isImage = false } -> 需重选 / 附件需重新选择：重新打开后无法确认文件还在。可移除，或重新添加这个文件。
+chip true { ready = true
+  failed = false
+  isImage = false } -> 需重选 / 附件需重新选择：重新打开后无法确认文件还在。可移除，或重新添加这个文件。
+chip true { ready = false
+  failed = true
+  isImage = false } -> 需重选 / 附件需重新选择：重新打开后无法确认文件还在。可移除，或重新添加这个文件。

@@ -79,6 +79,10 @@
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
   </Folder>
+  <Folder Name="/CaretBreath/">
+    <Project Path="libs/CaretBreath/CaretBreath.fsproj" />
+    <Project Path="libs/CaretBreath/tests/CaretBreath.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ChatEmptyText/">
     <Project Path="libs/ChatEmptyText/ChatEmptyText.fsproj" />
     <Project Path="libs/ChatEmptyText/tests/ChatEmptyText.Tests.fsproj" />
@@ -114,6 +118,10 @@
   <Folder Name="/ComposerDrafts/">
     <Project Path="libs/ComposerDrafts/ComposerDrafts.fsproj" />
     <Project Path="libs/ComposerDrafts/tests/ComposerDrafts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ComposerSendState/">
+    <Project Path="libs/ComposerSendState/ComposerSendState.fsproj" />
+    <Project Path="libs/ComposerSendState/tests/ComposerSendState.Tests.fsproj" />
   </Folder>
   <Folder Name="/ConfigFeedback/">
     <Project Path="libs/ConfigFeedback/ConfigFeedback.fsproj" />
@@ -455,6 +463,10 @@
     <Project Path="libs/ShutdownSignals/ShutdownSignals.fsproj" />
     <Project Path="libs/ShutdownSignals/tests/ShutdownSignals.Tests.fsproj" />
   </Folder>
+  <Folder Name="/SidebarEmpty/">
+    <Project Path="libs/SidebarEmpty/SidebarEmpty.fsproj" />
+    <Project Path="libs/SidebarEmpty/tests/SidebarEmpty.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />
     <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />
@@ -502,6 +514,10 @@
   <Folder Name="/ToolArgsPreview/">
     <Project Path="libs/ToolArgsPreview/ToolArgsPreview.fsproj" />
     <Project Path="libs/ToolArgsPreview/tests/ToolArgsPreview.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolCallState/">
+    <Project Path="libs/ToolCallState/ToolCallState.fsproj" />
+    <Project Path="libs/ToolCallState/tests/ToolCallState.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolErrorSummary/">
     <Project Path="libs/ToolErrorSummary/ToolErrorSummary.fsproj" />

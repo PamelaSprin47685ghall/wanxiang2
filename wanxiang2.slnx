@@ -487,6 +487,10 @@
     <Project Path="libs/LinkInbox/LinkInbox.fsproj" />
     <Project Path="libs/LinkInbox/tests/LinkInbox.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ListEmptyCard/">
+    <Project Path="libs/ListEmptyCard/ListEmptyCard.fsproj" />
+    <Project Path="libs/ListEmptyCard/tests/ListEmptyCard.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ListenAddress/">
     <Project Path="libs/ListenAddress/ListenAddress.fsproj" />
     <Project Path="libs/ListenAddress/tests/ListenAddress.Tests.fsproj" />
@@ -806,6 +810,10 @@
   <Folder Name="/ShutdownSignals/">
     <Project Path="libs/ShutdownSignals/ShutdownSignals.fsproj" />
     <Project Path="libs/ShutdownSignals/tests/ShutdownSignals.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarBrand/">
+    <Project Path="libs/SidebarBrand/SidebarBrand.fsproj" />
+    <Project Path="libs/SidebarBrand/tests/SidebarBrand.Tests.fsproj" />
   </Folder>
   <Folder Name="/SidebarEmpty/">
     <Project Path="libs/SidebarEmpty/SidebarEmpty.fsproj" />

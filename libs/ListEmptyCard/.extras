@@ -1,0 +1,10 @@
+      /// 品牌标（宿主给图形；参数是尺寸）
+      Logo: float -> Control
+      LogoSize: IObservable<float>
+      /// 骨架条：底、透明度、高、圆角
+      SkeletonFill: IBrush
+      SkeletonOpacity: IObservable<float>
+      SkeletonBarHeight: IObservable<float>
+      RadiusSm: IObservable<float>
+      Space3xl: IObservable<float>
+      Space6xl: IObservable<float>

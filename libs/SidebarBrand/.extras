@@ -1,0 +1,10 @@
+      /// 品牌标（宿主给图形；参数是尺寸）
+      Logo: float -> Control
+      LogoSize: IObservable<float>
+      /// 字标字距、品牌行高
+      DisplayTracking: IObservable<float>
+      BarHeight: IObservable<float>
+      /// 图标键命中面（桌面 / 紧凑）、文字键最小高
+      IconButtonSize: IObservable<float>
+      CompactTarget: IObservable<float>
+      TextButtonMinHeight: IObservable<float>

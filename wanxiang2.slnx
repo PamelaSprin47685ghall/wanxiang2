@@ -47,6 +47,10 @@
     <Project Path="libs/BoundedCache/BoundedCache.fsproj" />
     <Project Path="libs/BoundedCache/tests/BoundedCache.Tests.fsproj" />
   </Folder>
+  <Folder Name="/BreadcrumbAction/">
+    <Project Path="libs/BreadcrumbAction/BreadcrumbAction.fsproj" />
+    <Project Path="libs/BreadcrumbAction/tests/BreadcrumbAction.Tests.fsproj" />
+  </Folder>
   <Folder Name="/BrowserCredentials/">
     <Project Path="libs/BrowserCredentials/BrowserCredentials.csproj" />
     <Project Path="libs/BrowserCredentials/tests/BrowserCredentials.Tests.fsproj" />
@@ -198,6 +202,10 @@
   <Folder Name="/ErrorRecovery/">
     <Project Path="libs/ErrorRecovery/ErrorRecovery.fsproj" />
     <Project Path="libs/ErrorRecovery/tests/ErrorRecovery.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExchangeJump/">
+    <Project Path="libs/ExchangeJump/ExchangeJump.fsproj" />
+    <Project Path="libs/ExchangeJump/tests/ExchangeJump.Tests.fsproj" />
   </Folder>
   <Folder Name="/ExportFileName/">
     <Project Path="libs/ExportFileName/ExportFileName.fsproj" />
@@ -375,6 +383,10 @@
     <Project Path="libs/ModelListing/ModelListing.fsproj" />
     <Project Path="libs/ModelListing/tests/ModelListing.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ModelPickerList/">
+    <Project Path="libs/ModelPickerList/ModelPickerList.fsproj" />
+    <Project Path="libs/ModelPickerList/tests/ModelPickerList.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ModelSwitcher/">
     <Project Path="libs/ModelSwitcher/ModelSwitcher.fsproj" />
     <Project Path="libs/ModelSwitcher/tests/ModelSwitcher.Tests.fsproj" />
@@ -454,6 +466,10 @@
   <Folder Name="/RefreshingPool/">
     <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
     <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RevealFlash/">
+    <Project Path="libs/RevealFlash/RevealFlash.fsproj" />
+    <Project Path="libs/RevealFlash/tests/RevealFlash.Tests.fsproj" />
   </Folder>
   <Folder Name="/RevealTarget/">
     <Project Path="libs/RevealTarget/RevealTarget.fsproj" />

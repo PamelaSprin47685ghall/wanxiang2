@@ -1,0 +1,11 @@
+end 0 -> None | None None
+reveal 1 -> - | Some 1UL None
+begin 1 -> None | Some 1UL Some 1UL
+reveal 2 -> - | Some 2UL Some 1UL
+begin 2 -> Some 1UL | Some 2UL Some 2UL
+end 0 -> Some 2UL | Some 2UL None
+end 0 -> None | Some 2UL None
+reveal 3 -> - | Some 3UL None
+begin 3 -> None | Some 3UL Some 3UL
+begin 3 -> Some 3UL | Some 3UL Some 3UL
+1600

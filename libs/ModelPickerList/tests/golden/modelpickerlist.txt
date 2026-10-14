@@ -1,0 +1,33 @@
+[] "" -> [] first=None
+[] "  " -> [] first=None
+[] "q" -> [] first=None
+[("openai", "gpt-4o"); ("openai", "gpt-4.1")] "" -> [(None, [("openai", "gpt-4o"); ("openai", "gpt-4.1")])] first=Some ("openai", "gpt-4o")
+[("openai", "gpt-4o"); ("openai", "gpt-4.1")] "  " -> [(None, [("openai", "gpt-4o"); ("openai", "gpt-4.1")])] first=Some ("openai", "gpt-4o")
+[("openai", "gpt-4o"); ("openai", "gpt-4.1")] "q" -> [(None, [("openai", "gpt-4o"); ("openai", "gpt-4.1")])] first=Some ("openai", "gpt-4o")
+[("openai", "gpt-4o"); ("local", "qwen"); ("openai", "o3"); ("local", "llama")] "" -> [(Some "openai", [("openai", "gpt-4o"); ("openai", "o3")]);
+ (Some "local", [("local", "qwen"); ("local", "llama")])] first=Some ("openai", "gpt-4o")
+[("openai", "gpt-4o"); ("local", "qwen"); ("openai", "o3"); ("local", "llama")] "  " -> [(Some "openai", [("openai", "gpt-4o"); ("openai", "o3")]);
+ (Some "local", [("local", "qwen"); ("local", "llama")])] first=Some ("openai", "gpt-4o")
+[("openai", "gpt-4o"); ("local", "qwen"); ("openai", "o3"); ("local", "llama")] "q" -> [(None, [("openai", "gpt-4o"); ("openai", "o3")]);
+ (None, [("local", "qwen"); ("local", "llama")])] first=Some ("openai", "gpt-4o")
+move false -1 0 -> None
+move false 0 0 -> None
+move false -1 1 -> Some (Focus 0)
+move false 0 1 -> Some (Focus 0)
+move false 1 1 -> Some (Focus 0)
+move false -1 3 -> Some (Focus 0)
+move false 0 3 -> Some (Focus 1)
+move false 1 3 -> Some (Focus 2)
+move false 2 3 -> Some (Focus 2)
+move false 3 3 -> Some (Focus 2)
+move true -1 0 -> None
+move true 0 0 -> None
+move true -1 1 -> Some ToSearch
+move true 0 1 -> Some ToSearch
+move true 1 1 -> Some (Focus 0)
+move true -1 3 -> Some ToSearch
+move true 0 3 -> Some ToSearch
+move true 1 3 -> Some (Focus 0)
+move true 2 3 -> Some (Focus 1)
+move true 3 3 -> Some (Focus 2)
+false true 没有匹配的模型。 输入筛选，回车选第一条，下方向键进入列表，Esc 关闭

@@ -11,3 +11,4 @@
 - ModelChipRateLimitTests：`switcher lists usable models with provider, current and default marks`、`switcher search matches model or provider and ranks prefix hits first`
 - NativeTransportTests：`每个预设的传输类型都是配置层认得的`
 - OnboardingConfigTests：`错误码编码解码往返，客户端类型与主机错误码一一对应`（前半；后半用真实 HTTP 探测 ProviderCatalog.probeModels，留在旧仓库或归 ProviderCatalog）
+- Catalog.idleModelChip：迁自旧 AppShell.Render 空闲分支；测试与 tests/OldIdleChip.fs（旧代码原样摘录）逐例差分。

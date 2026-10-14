@@ -157,3 +157,29 @@ let ``library and composer members resolve through one module name`` () =
     Assert.Equal((VisionUnknown, VisionFromName), Catalog.visionOf "x" "my-model" Catalog.empty)
     Assert.Empty(ModelSwitcher.filter "a" (ModelSwitcher.options Catalog.empty None))
     Assert.Equal("未选择模型", ModelSwitcher.chipText "x" "" Catalog.empty)
+
+// 迁自旧 AppShell.Render 空闲分支：与 tests/OldIdleChip.fs（旧代码原样摘录）逐例差分。
+module IdleModelChipTests =
+    let private provider id enabled models defaultModel : ProviderInfo =
+        { id = id; label = id.ToUpperInvariant(); kind = "openai"; baseUrl = "http://h/v1"; hasApiKey = false
+          models = models; defaultModel = defaultModel; timeoutSeconds = 60; maxRetries = 0
+          enabled = enabled; visionOverrides = Map.empty; visionDetected = Map [ "gpt-4o", true ] }
+
+    let private catalogs =
+        [ Catalog.empty
+          { Catalog.empty with providers = [ provider "off" false [ "m" ] "m" ] }
+          { Catalog.empty with providers = [ provider "a" true [ "llama3.1:8b"; "gpt-4o" ] "llama3.1:8b"; provider "b" true [ "llava:13b" ] "llava:13b" ] } ]
+
+    let private render (chip: IdleModelChip) =
+        ("label " + chip.label) :: (chip.vision |> Option.map (fun (v, d) -> sprintf "vision %A %s" v d) |> Option.toList)
+
+    [<Fact>]
+    let ``idle chip matches old render branch`` () =
+        for c in catalogs do
+            for label in [ None; Some "外部标签" ] do
+                for sel in [ None; Some("a", "gpt-4o"); Some("b", "llava:13b"); Some("gone", "x") ] do
+                    Assert.Equal<string list>(OldIdleChip.run label sel c, render (Catalog.idleModelChip label sel c))
+
+    [<Fact>]
+    let ``no model anywhere shows unselected with unknown vision`` () =
+        Assert.Equal({ label = "未选择模型"; vision = Some(VisionUnknown, "") }, Catalog.idleModelChip None None Catalog.empty)

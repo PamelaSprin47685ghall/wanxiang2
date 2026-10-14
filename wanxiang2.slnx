@@ -183,6 +183,10 @@
     <Project Path="libs/Conversations/Conversations.fsproj" />
     <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
   </Folder>
+  <Folder Name="/CopyButton/">
+    <Project Path="libs/CopyButton/CopyButton.fsproj" />
+    <Project Path="libs/CopyButton/tests/CopyButton.Tests.fsproj" />
+  </Folder>
   <Folder Name="/CopyConfirm/">
     <Project Path="libs/CopyConfirm/CopyConfirm.fsproj" />
     <Project Path="libs/CopyConfirm/tests/CopyConfirm.Tests.fsproj" />
@@ -259,6 +263,14 @@
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
     <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
   </Folder>
+  <Folder Name="/FieldCheck/">
+    <Project Path="libs/FieldCheck/FieldCheck.fsproj" />
+    <Project Path="libs/FieldCheck/tests/FieldCheck.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/FocusOrigin/">
+    <Project Path="libs/FocusOrigin/FocusOrigin.fsproj" />
+    <Project Path="libs/FocusOrigin/tests/FocusOrigin.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ForkAnchor/">
     <Project Path="libs/ForkAnchor/ForkAnchor.fsproj" />
     <Project Path="libs/ForkAnchor/tests/ForkAnchor.Tests.fsproj" />
@@ -331,9 +343,17 @@
     <Project Path="libs/ImageFit/ImageFit.fsproj" />
     <Project Path="libs/ImageFit/tests/ImageFit.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ImeShield/">
+    <Project Path="libs/ImeShield/ImeShield.fsproj" />
+    <Project Path="libs/ImeShield/tests/ImeShield.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ImportView/">
     <Project Path="libs/ImportView/ImportView.fsproj" />
     <Project Path="libs/ImportView/tests/ImportView.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/InputSense/">
+    <Project Path="libs/InputSense/InputSense.fsproj" />
+    <Project Path="libs/InputSense/tests/InputSense.Tests.fsproj" />
   </Folder>
   <Folder Name="/JintScriptHost/">
     <Project Path="libs/JintScriptHost/JintScriptHost.fsproj" />
@@ -358,6 +378,10 @@
   <Folder Name="/KatexHtml/">
     <Project Path="libs/KatexHtml/KatexHtml.fsproj" />
     <Project Path="libs/KatexHtml/tests/KatexHtml.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/KeyChord/">
+    <Project Path="libs/KeyChord/KeyChord.fsproj" />
+    <Project Path="libs/KeyChord/tests/KeyChord.Tests.fsproj" />
   </Folder>
   <Folder Name="/Ledger/">
     <Project Path="libs/Ledger/Ledger.fsproj" />

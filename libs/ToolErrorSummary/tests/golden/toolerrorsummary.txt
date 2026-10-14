@@ -1,0 +1,38 @@
+tryExtract None -> None
+tryExtract "" -> None
+tryExtract "   " -> None
+tryExtract "ok" -> None
+tryExtract "error: boom" -> "boom"
+tryExtract "Error:" -> "\u6267\u884C\u5931\u8D25"
+tryExtract "{\u0022error\u0022:\u0022bad\u0022}" -> "bad"
+tryExtract "{\u0022error\u0022:{\u0022message\u0022:\u0022inner\u0022}}" -> "inner"
+tryExtract "{\u0022error\u0022:{\u0022code\u0022:1}}" -> "{\u0022code\u0022:1}"
+tryExtract "{\u0022error\u0022:true}" -> "\u6267\u884C\u5931\u8D25"
+tryExtract "{\u0022error\u0022:false}" -> None
+tryExtract "{\u0022error\u0022:null,\u0022ok\u0022:1}" -> None
+tryExtract "{\u0022error\u0022:5}" -> "5"
+tryExtract "{\u0022isError\u0022:true,\u0022message\u0022:\u0022m\u0022}" -> "m"
+tryExtract "{\u0022is_error\u0022:true}" -> "\u6267\u884C\u5931\u8D25"
+tryExtract "{\u0022isError\u0022:true,\u0022error\u0022:{\u0022message\u0022:\u0022x\u0022}}" -> "x"
+tryExtract "{\u0022success\u0022:false,\u0022msg\u0022:\u0022 why \u0022}" -> "why"
+tryExtract "{\u0022success\u0022:true}" -> None
+tryExtract "{\u0022status\u0022:\u0022Failed\u0022,\u0022reason\u0022:\u0022r\u0022}" -> "r"
+tryExtract "{\u0022status\u0022:\u0022ok\u0022}" -> None
+tryExtract "{\u0022status\u0022:\u0022error\u0022}" -> "\u6267\u884C\u5931\u8D25"
+tryExtract "{bad json}" -> None
+tryExtract "Traceback (most recent call last):\n  File \u0022x\u0022\nValueError: nope\n" -> "ValueError: nope"
+tryExtract "Command failed: exit 1\nmore" -> "Command failed: exit 1"
+tryExtract "500 Internal Server Error" -> "500 Internal Server Error"
+tryExtract "oops internal server error here" -> "Internal Server Error"
+tryExtract "line\nfatal: not a git repository\n" -> "not a git repository"
+tryExtract "fatal:" -> "\u6267\u884C\u5931\u8D25"
+tryExtract "HTTP/1.1 401 Unauthorized\nbody" -> "401 Unauthorized"
+tryExtract "HTTP 403: Forbidden" -> "403 Forbidden"
+tryExtract "x\n404 Not Found" -> "404 Not Found"
+tryExtract "x\n404 Not Found extra" -> None
+tryExtract "ls: /root: Permission denied" -> "ls: /root: Permission denied"
+tryExtract "Access denied." -> "Access denied."
+tryExtract "bash: foo: command not found" -> "bash: foo: command not found"
+tryExtract "command not found" -> "command not found"
+tryExtract "[1,2]" -> None
+tryExtract "plain output\nwith lines" -> None

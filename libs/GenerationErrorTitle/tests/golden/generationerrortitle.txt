@@ -1,0 +1,11 @@
+ofMessage null -> 生成失败
+ofMessage "" -> 生成失败
+ofMessage "  " -> 生成失败
+ofMessage "\u6A21\u578B\u670D\u52A1\u8FD4\u56DE 429\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5" -> 模型服务返回 429，请稍后再试
+ofMessage "line1\nline2" -> 生成失败
+ofMessage "System.InvalidOperationException: x" -> 生成失败
+ofMessage "has StackTrace" -> 生成失败
+ofMessage "failed at Foo.Bar()" -> 生成失败
+ofMessage "error: raw" -> 生成失败
+ofMessage "  \u524D\u540E\u7A7A\u767D  " -> 前后空白
+ofMessage "Error: capital" -> Error: capital

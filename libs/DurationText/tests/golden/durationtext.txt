@@ -1,0 +1,10 @@
+format -5 -> 
+format 0 -> 
+format 1 -> 1ms
+format 999 -> 999ms
+format 1000 -> 1.0s
+format 1049 -> 1.0s
+format 1050 -> 1.1s
+format 1999 -> 2.0s
+format 61234 -> 61.2s
+format 3600000 -> 3600.0s

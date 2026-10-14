@@ -183,7 +183,7 @@
 | UI 视图层纯逻辑第四批（库 ComposerSendState、ToolCallState、CaretBreath、SidebarEmpty） | 完成：与照抄旧分支生成的金样相同，另有真实行为测试 | 未开始：旧 Composer 发送门控与附件状态字、MessageCard resolveToolCallStatusWith 与呼吸数学、Sidebar 空态分支改调这些包并删掉对应旧代码 |
 | UI 视图层纯逻辑第五批（库 McpForm、ToolsPolicy、ProviderForm） | 完成：与照抄旧分支生成的金样相同，另有真实行为测试；MCP 与工具设置载荷字节不变 | 未开始：旧 SettingsTools 编辑器校验与载荷、SettingsProviders 编辑器校验与 isLoopbackUrl 改调这些包并删掉对应旧代码 |
 | UI 视图层纯逻辑第六批（库 MessageMenu、SidebarSelection、ProviderProbeText、ExportView、ImportView） | 完成：与照抄旧分支生成的金样相同，另有真实行为测试 | 未开始：旧 MessageCard 菜单门控、Sidebar 多选与批量条、SettingsProviders 看图说明与探活回执、ExportDialog 进度呈现与节流、ImportDialog 按键与回执取舍改调这些包并删掉对应旧代码 |
-| UI 视图层纯逻辑第七批（库 RovingIndex、StartLayout、PairingCode、ConversationSurface） | 完成：与照抄旧分支生成的金样相同，另有真实行为测试 | 未开始：旧 Menu 方向键与 SettingsView 分区循环、MainLayout 居中与侧栏钳宽、Dialogs 配对码归一与自动提交、AppShell 已打开对话分支与主机状态行改调这些包并删掉对应旧代码 |
+| UI 视图层纯逻辑第七批（库 RovingIndex、StartLayout、PairingCodeInput、ConversationSurface） | 完成：与照抄旧分支生成的金样相同，另有真实行为测试 | 未开始：旧 Menu 方向键与 SettingsView 分区循环、MainLayout 居中与侧栏钳宽、Dialogs 配对码归一与自动提交、AppShell 已打开对话分支与主机状态行改调这些包并删掉对应旧代码 |
 | UI 视图层纯逻辑第八批（库 ExchangeJump、RevealFlash、BreadcrumbAction、ModelPickerList） | 完成：与照抄旧分支生成的金样相同，另有真实行为测试 | 未开始：旧 ChatView 问答跳转、定位高亮与面包屑，ModelSwitcherView 列表分组与键盘移动改调这些包并删掉对应旧代码 |
 | UI 连接流程记账（库 ReconnectLoop） | 完成：与照抄旧记账生成的金样相同，另有真实行为测试 | 未开始：旧 AppShell 的 connectAttempt、reconnectCts、reconnectDelayMs 换成 ReconnectLoop（Connect、ScheduleReconnect、ResumeReconnectNow 与两处退避归零） |
 | UI 纯模型 10.1（PinyinInitials、FuzzyMatch、MessageLink、ModelVision、MediaTypes，组合 CommandPalette） | 完成：旧 R20/ContinueLinkUndo/AttachmentVision 中的纯逻辑用例按名迁入通过 | 未开始：旧仓库删除 Model/MessageLink.fs、ModelVision.fs、MediaTypes.fs，CommandPalette.fs 只留 loadRecent/saveRecent（改名模块 PaletteRecent，AppShell 两处调用随改），引用包 |

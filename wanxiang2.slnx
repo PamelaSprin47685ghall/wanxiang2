@@ -411,6 +411,10 @@
     <Project Path="libs/PairingCode/PairingCode.fsproj" />
     <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
   </Folder>
+  <Folder Name="/PairingCodeInput/">
+    <Project Path="libs/PairingCodeInput/PairingCodeInput.fsproj" />
+    <Project Path="libs/PairingCodeInput/tests/PairingCodeInput.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PairingHint/">
     <Project Path="libs/PairingHint/PairingHint.fsproj" />
     <Project Path="libs/PairingHint/tests/PairingHint.Tests.fsproj" />

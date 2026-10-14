@@ -3,7 +3,7 @@ namespace Wanxiang.UI
 // 照抄旧 Views/Dialogs.fs codeBox.TextChanged 的归一与自动提交分支、submitCode 的提示
 open System
 
-module PairingCode =
+module PairingCodeInput =
     let normalize (raw0: string) =
         let raw = if isNull raw0 then "" else raw0
         raw

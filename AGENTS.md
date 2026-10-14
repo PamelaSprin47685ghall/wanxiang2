@@ -146,6 +146,18 @@
 - `./x test <lib>`：只凭本库与声明的外部包构建并测试。`./x check`：库项目不引用本库目录以外的东西，也不引用兄弟库的包；组合者项目不引用自己目录以外的东西。`./x pack`：打出交付包。`./x compose`：清掉包缓存里的 `Wanxiang2.*` 后，从 `artifacts/feed` 消费交付包，测试组合者。`./x all` 依次执行全部。CI（`.github/workflows/ci.yml`）每个库一个任务，另有一个组合任务。
 - `./x check` 检查的是项目文件里的引用，不检查运行时调用；运行时独立靠每个库的测试不带任何兄弟库仍能通过（构建上就拿不到兄弟库）。
 
+## 界面控件库（widget lib）
+
+库可以依赖界面框架（Avalonia、IconPacks.Avalonia.Lucide 等，版本登记在 `Directory.Packages.props`，与旧仓库一致）。控件库连控件、行为带状态一起拥有，但仍与兄弟库没有任何依赖边。[LEMMA: 3, 4, 5]
+
+- **生成：** `./x new-widget <Name>` 由 `tools/widget-template` 生成 `libs/<Name>`（库 + Avalonia headless 行为测试），目录已存在就拒绝。测试不用 `Avalonia.Headless.XUnit`（.NET 10 上会死锁），直接用 `HeadlessUnitTestSession`，与旧仓库相同。CI 的 `widget-template` 任务每次生成一个控件库并测试，还验证 `./x check` 拒绝库对库引用。
+- **样式值都是可变的，不写死。** 控件库不含任何字面样式值（颜色、画笔、尺寸、字体、间距、圆角、时长）。这些值由主题管理者（`compose/Theme` 或一个主题管理库）拥有，是活的可变实例；管理者改值，所有控件跟着变。
+- **Look 记录：** 每个控件库声明自己的 `<Name>Look` 记录，列出它需要的外观项（画笔为 `IBrush`，尺寸、字体、间距为管理者给的活实例，如 `IObservable<_>`）。组合者在构造控件时从主题管理者取出共享实例填进去；同一画笔实例由多个控件共享。控件不认识主题管理者。
+- **共享外观：** 按钮、卡片等共同外观用 Avalonia `ControlTheme` 样式类，由 Theme 安装；控件只挂类名。每个库的 AGENTS.md 列出它用到的样式类。
+- **行为控件（Menu、Overlay 等）：** 由组合者经插槽（传入的控件或工厂）和事件接线，控件库之间从不直接依赖。
+- **模块名：** 新模块与类型名不得与旧仓库宿主模块同名（如 `Tokens`、`Menu`、`Dialogs`、`Icons`、`Interaction`、`MessageCard`、`MotionPolicy`、`Palette`、`ThemePreference` 等），因为 F# 会合并同名模块，见旧仓库的 ConversationTransfer 等先例。
+- **浏览器端：** 控件库包可被 `net10.0-browser`（Avalonia.Browser）项目引用；已在旧仓库本地验证。
+
 ## 证据现状（对应上文 SPEC）
 
 - SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。[TODO] 没有机器检查引用编号；靠评审。

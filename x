@@ -6,6 +6,7 @@
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
 #   ./x all           check + 逐库 test + pack + compose
 #   ./x sln           由 libs/ 重新生成 wanxiang2.slnx
+#   ./x new-widget <Name>  由 tools/widget-template 生成控件库 libs/<Name>（目录已存在则拒绝）
 set -euo pipefail
 export MSBUILDDISABLENODEREUSE=1
 cd "$(dirname "$0")"
@@ -110,9 +111,16 @@ case "${1:-}" in
   pack)    pack ;;
   compose) compose ;;
   sln)     gen_sln > wanxiang2.slnx; echo "wrote wanxiang2.slnx" ;;
+  new-widget)
+    [[ "${2:-}" =~ ^[A-Z][A-Za-z0-9]+$ ]] || { echo "usage: ./x new-widget <PascalName>" >&2; exit 2; }
+    [[ -e "libs/$2" ]] && { echo "refuse: libs/$2 already exists" >&2; exit 1; }
+    cp -r tools/widget-template "libs/$2"
+    for f in $(find "libs/$2" -name '*__NAME__*' | sort -r); do mv "$f" "${f//__NAME__/$2}"; done
+    find "libs/$2" -type f -exec sed -i "s/__NAME__/$2/g" {} +
+    gen_sln > wanxiang2.slnx; echo "created libs/$2" ;;
   all)
     check
     for lib in $(libs); do echo "== $lib"; dotnet test --project "libs/$lib/tests/$lib.Tests.fsproj"; done
     pack; compose ;;
-  *) sed -n '2,9p' "$0"; exit 2 ;;
+  *) sed -n '2,10p' "$0"; exit 2 ;;
 esac

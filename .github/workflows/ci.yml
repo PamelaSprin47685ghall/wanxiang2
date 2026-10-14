@@ -30,3 +30,18 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with: { global-json-file: global.json }
       - run: ./x pack && ./x compose
+  widget-template:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - run: ./x new-widget CiSmoke
+      - run: "! ./x new-widget CiSmoke"
+      - run: ./x check
+      - run: ./x test CiSmoke
+      - name: check rejects a lib-to-lib reference
+        run: |
+          sed -i 's#<PackageReference Include="Avalonia" />#<PackageReference Include="Avalonia" /><ProjectReference Include="../PairingCode/PairingCode.fsproj" />#' libs/CiSmoke/CiSmoke.fsproj
+          ! ./x check

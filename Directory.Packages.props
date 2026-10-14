@@ -13,5 +13,14 @@
     <PackageVersion Include="Jcs.Net" Version="0.1.1" />
     <PackageVersion Include="Tomlyn" Version="2.10.1" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <!-- 界面控件库：版本与旧仓库一致。 -->
+    <PackageVersion Include="Avalonia" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Skia" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Browser" Version="12.1.2" />
+    <PackageVersion Include="IconPacks.Avalonia.Core" Version="2.0.0" />
+    <PackageVersion Include="IconPacks.Avalonia.Lucide" Version="2.0.0" />
+    <PackageVersion Include="SkiaSharp" Version="3.119.4" />
   </ItemGroup>
 </Project>

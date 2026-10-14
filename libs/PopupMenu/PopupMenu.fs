@@ -68,7 +68,8 @@ module PopupMenu =
     let private live (source: IObservable<'T>) (apply: 'T -> unit) = source.Subscribe apply |> ignore
 
     /// Enter / Space / 左键松开都激活。
-    let private onInvoke (host: Border) (action: unit -> unit) =
+    let private onInvoke (host: InvokeBorder) (action: unit -> unit) =
+        host.SetAction action
         host.PointerReleased.Add(fun e ->
             if host.IsEnabled && host.IsHitTestVisible && e.InitialPressMouseButton = MouseButton.Left then
                 e.Handled <- true
@@ -123,7 +124,7 @@ module PopupMenu =
         Grid.SetColumn(rightSlot, 1)
         row.Children.Add left
         row.Children.Add rightSlot
-        let host = Border(Cursor = handCursor, Focusable = true, Child = row)
+        let host = InvokeBorder(Cursor = handCursor, Focusable = true, Child = row)
         live look.ItemPadding (fun v -> host.Padding <- v)
         live look.ItemRadius (fun v -> host.CornerRadius <- v)
         live look.ItemMinHeight (fun v -> host.MinHeight <- v)
@@ -213,7 +214,7 @@ type SelectButton(look: PopupMenuLook, initialText: string) =
     let caption = TextBlock(Text = initialText, Foreground = look.Text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis)
     let chevron = look.Chevron look.Faint
     let row = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-    let host = Border(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, Child = row)
+    let host = InvokeBorder(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, Child = row)
     // 上一次由本按钮写入的显示文本：调用方另起了名就与它不同，此后不再覆盖。
     let mutable lastText = initialText
 
@@ -231,6 +232,7 @@ type SelectButton(look: PopupMenuLook, initialText: string) =
         host.Classes.Add "select-button"
         host.Classes.Add "hover-bordered"
         AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.ComboBox)
+        host.SetAction openRequested.Trigger
         host.PointerReleased.Add(fun e ->
             if host.IsEnabled && host.IsHitTestVisible && e.InitialPressMouseButton = MouseButton.Left then
                 e.Handled <- true
@@ -246,7 +248,7 @@ type SelectButton(look: PopupMenuLook, initialText: string) =
         ToolTip.SetTip(host, initialText)
         AutomationProperties.SetName(host, initialText)
 
-    member _.View: Border = host
+    member _.View: Border = host :> Border
     member _.Text = caption.Text
 
     /// 换显示文本；读屏名只在仍是自己上次写入的值时跟随。

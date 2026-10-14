@@ -113,7 +113,8 @@ type ToastStrip(look: ToastStripLook) =
             |> Option.map (fun label ->
                 row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
                 // 外观由主题的 surface + button-secondary + hover-plain 类给（旧 Ui.button Secondary）。
-                let b = Border(Child = TextBlock(Text = label), Focusable = true, IsTabStop = true, Name = "toast-action", VerticalAlignment = VerticalAlignment.Center, Cursor = new Cursor(StandardCursorType.Hand))
+                let b = InvokeBorder(Child = TextBlock(Text = label), Focusable = true, IsTabStop = true, Name = "toast-action", VerticalAlignment = VerticalAlignment.Center, Cursor = new Cursor(StandardCursorType.Hand))
+                b.SetAction(fun () -> actionInvoked.Trigger message)
                 for c in [ "surface"; "button-secondary"; "hover-plain" ] do b.Classes.Add c
                 AutomationProperties.SetControlTypeOverride(b, Nullable Avalonia.Automation.Peers.AutomationControlType.Button)
                 AutomationProperties.SetName(b, label)

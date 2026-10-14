@@ -123,3 +123,23 @@ let ``look stays live after toasts are shown`` () =
         Assert.Equal(200.0, toast.MaxWidth)
         Assert.Equal<string list>([ "一" ], strip.Messages)
         window.Close())
+
+// 新增：提示条动作键给读屏 Invoke 模式，角色 Button，激活与 Enter 同一路径。
+[<Fact>]
+let ``toast action exposes invoke to assistive tech`` () =
+    Headless.run (fun () ->
+        let _, _, l = look ()
+        let strip = ToastStrip l
+        let _, window = host 400.0 300.0 strip
+        let invoked = ResizeArray()
+        strip.ActionInvoked.Add invoked.Add
+        strip.Add("已删除", ToastTone.Neutral, Some "撤销")
+        Dispatcher.UIThread.RunJobs()
+        let b = strip.ActionButtons |> List.exactlyOne
+        let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement b
+        Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
+        Assert.Equal("撤销", peer.GetName())
+        (Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider> peer).Invoke()
+        Dispatcher.UIThread.RunJobs()
+        Assert.Equal<string list>([ "已删除" ], List.ofSeq invoked)
+        window.Close())

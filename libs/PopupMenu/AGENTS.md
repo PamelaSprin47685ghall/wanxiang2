@@ -23,3 +23,7 @@
 - 菜单宿主是普通 Border 加类名，不再用旧 ActionBorder / Interaction.surface；焦点来源标记由组合者用 FocusOrigin 接。
 - 分隔线与分组标题不再调用旧 `Ui.hairline` / `Ui.sectionLabel`，改挂同名外观的 `hairline` / `section-label` 类，由 compose/Theme 给样式。
 - 浮层最小宽度（旧代码 200 / 240）交给组合者从主题取。
+
+## 读屏激活
+
+可激活的宿主是 `InvokeBorder`（Border 子类，样式仍按 Border 查）：自动化节点提供 Invoke 模式，角色取 ControlTypeOverride（菜单项 MenuItem、选择键 ComboBox、提示条动作 Button），读屏激活与 Enter / 点击走同一个动作，与旧 ActionBorder 一致。新增测试：Invoke 模式存在且激活生效。

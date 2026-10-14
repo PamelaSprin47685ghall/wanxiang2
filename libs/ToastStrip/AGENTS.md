@@ -23,3 +23,7 @@
 - `ToastTone` 加了 RequireQualifiedAccess。
 - 动作按钮与旧 `Ui.button Secondary` 一样是可聚焦的 Border（读屏角色 Button，Enter/Space/左键触发），外观全由主题类给。
 - 点条身由 PointerReleased 发 `Clicked`，旧代码用 `Ui.onClick`。
+
+## 读屏激活
+
+可激活的宿主是 `InvokeBorder`（Border 子类，样式仍按 Border 查）：自动化节点提供 Invoke 模式，角色取 ControlTypeOverride（菜单项 MenuItem、选择键 ComboBox、提示条动作 Button），读屏激活与 Enter / 点击走同一个动作，与旧 ActionBorder 一致。新增测试：Invoke 模式存在且激活生效。

@@ -23,3 +23,14 @@ let ``ctrl enter is the newline key when enter sends`` () =
     Assert.False(SendKey.sends true false true)
     Assert.True(SendKey.sends false false true)
     Assert.False(SendKey.sends false false false)
+
+// ---- 文档规则的真实行为
+
+[<Fact>]
+let ``send and newline are complementary in every mode`` () =
+    for enterSends in [ true; false ] do
+        // 不按 Shift 时，裸 Enter 与 Ctrl+Enter 恰有一个发送
+        Assert.NotEqual(SendKey.sends enterSends false false, SendKey.sends enterSends false true)
+        // 当前模式的发送键就是 enterSends 所指的那个
+        Assert.Equal(enterSends, SendKey.sends enterSends false false)
+        for ctrl in [ true; false ] do Assert.False(SendKey.sends enterSends true ctrl)

@@ -1,0 +1,154 @@
+namespace Wanxiang2.Theme
+
+open System
+open System.Collections.Generic
+open Avalonia
+open Avalonia.Media
+open Avalonia.Threading
+open Wanxiang.UI
+open Wanxiang2.ThemePalette
+open Wanxiang2.ThemeMetrics
+open Wanxiang2.MotionSwitch
+
+/// 由两支基础画笔叠出来的悬停底色（旧 Interaction 的 blendOver）。
+/// 旧代码在注册样式时叠一次就定死；这里每次基础画笔改色都重算，因此跟随主题。
+[<RequireQualifiedAccess>]
+type DerivedBrush =
+    /// surface 上叠 hover
+    | HoverRaised
+    /// dangerSoft 上叠 hover
+    | HoverDanger
+
+/// 主题管理者：拥有全部活的样式值，并负责切换主题。
+///
+/// - 画笔：每个配色项一支 SolidColorBrush，整个生命周期是同一实例；切主题时原地改色（补间归 ThemeTween）。
+/// - 尺寸、间距、时长、字体：LiveValue，改值即推送给绑定它的控件与样式。
+/// - 帧：默认用线程池计时器按墙钟逐帧投递到 UI 线程（与旧 Tokens 相同，理由见旧注释：无显示测试不泵 DispatcherTimer）；
+///   autoFrames = false 时由调用方调 Pump 推进，测试据此精确控制时间。
+/// - 代次：每次补间开始加一；过期帧不负责停帧，免得迟到的一帧误停新补间。
+/// 只在 UI 线程上调用。
+type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
+    let mutable mode = PaletteMode.Light
+    let motion = MotionSwitch()
+    let tween = ThemeTween<PaletteKey>()
+    let changed = Event<PaletteMode>()
+    let brushes = Dictionary<PaletteKey, SolidColorBrush>()
+    do for k in ThemePalette.keys do brushes[k] <- SolidColorBrush(ThemePalette.color PaletteMode.Light k)
+    let derived = Dictionary<DerivedBrush, SolidColorBrush>()
+    let blend (b: Color) (o: Color) =
+        let a, r, g, bl = ColorBlend.over (b.A, b.R, b.G, b.B) (o.A, o.R, o.G, o.B)
+        Color.FromArgb(a, r, g, bl)
+    let derivedColor d =
+        match d with
+        | DerivedBrush.HoverRaised -> blend brushes[PaletteKey.Surface].Color brushes[PaletteKey.Hover].Color
+        | DerivedBrush.HoverDanger -> blend brushes[PaletteKey.DangerSoft].Color brushes[PaletteKey.Hover].Color
+    do for d in [ DerivedBrush.HoverRaised; DerivedBrush.HoverDanger ] do derived[d] <- SolidColorBrush(derivedColor d)
+    let refreshDerived () = for KeyValue(d, b) in derived do b.Color <- derivedColor d
+    let metrics = Dictionary<Metric, LiveValue<float>>()
+    do for m in ThemeMetrics.all do metrics[m] <- LiveValue(ThemeMetrics.initial m)
+    let spaces = Dictionary<Space, LiveValue<float>>()
+    do for s in Space.all do spaces[s] <- LiveValue(Space.initial s)
+    let timings = Dictionary<Timing, LiveValue<float>>()
+    do for t in MotionTimings.all do timings[t] <- LiveValue(MotionTimings.initialMs t)
+    let fontFamily = LiveValue(FontFamily ThemeMetrics.fontFamily)
+    let monoFontFamily = LiveValue(FontFamily ThemeMetrics.monoFontFamily)
+    let mutable frameTimer: Threading.Timer option = None
+    let mutable generation = 0
+    let toArgb (c: Color) : Argb = { A = c.A; R = c.R; G = c.G; B = c.B }
+    let ofArgb (c: Argb) = Color.FromArgb(c.A, c.R, c.G, c.B)
+    let transitionMs () =
+        if motion.IsReduced then 0.0 else timings[Timing.ThemeColorTransition].Value
+    let stopFrames () =
+        frameTimer |> Option.iter (fun t -> t.Dispose())
+        frameTimer <- None
+    let snapAll () =
+        for KeyValue(k, b) in brushes do b.Color <- ThemePalette.color mode k
+        refreshDerived ()
+
+    new() = new ThemeManager((fun () -> DateTimeOffset.UtcNow), true)
+
+    member _.Mode = mode
+    member _.Motion = motion
+    /// 补间代次
+    member _.Generation = generation
+    member _.IsTransitioning = tween.IsRunning
+
+    /// 主题变了（模式与调色板已更新，画笔可能还在补间）
+    [<CLIEvent>]
+    member _.Changed = changed.Publish
+
+    /// 某配色项的活画笔（同一项永远是同一实例）
+    member _.Brush(key: PaletteKey) : SolidColorBrush = brushes[key]
+    member _.Derived(d: DerivedBrush) : SolidColorBrush = derived[d]
+    /// 当前模式下某项的目标色（非画笔量，如阴影色，按它取）
+    member _.Color(key: PaletteKey) = ThemePalette.color mode key
+
+    member _.Metric(m: Metric) : LiveValue<float> = metrics[m]
+    member _.Space(s: Space) : LiveValue<float> = spaces[s]
+    member _.Timing(t: Timing) : LiveValue<float> = timings[t]
+    member _.FontFamily = fontFamily
+    member _.MonoFontFamily = monoFontFamily
+
+    member _.SetMetric(m: Metric, v: float) =
+        metrics[m].Set v
+    member _.SetSpace(s: Space, v: float) =
+        spaces[s].Set v
+
+    /// 推进一帧（帧计时器调；autoFrames = false 时由调用方调）。forGeneration 不是当前代次时只画不停帧
+    member this.Pump(?forGeneration: int) =
+        let g = defaultArg forGeneration generation
+        let frame = tween.Frame(clock (), transitionMs ())
+        for k, c in frame.Colors do brushes[k].Color <- ofArgb c
+        if not frame.Colors.IsEmpty then refreshDerived ()
+        if frame.Finished && g = generation then stopFrames ()
+
+    /// 切换主题：画笔从当前色补间到新色；补间途中再切换时后来者接管。减弱动效或同主题重放同步到位
+    member this.Apply(next: PaletteMode) =
+        let sameMode = (mode = next)
+        mode <- next
+        let plan = [ for KeyValue(k, b) in brushes -> k, toArgb b.Color, toArgb (ThemePalette.color next k) ]
+        match tween.Apply(clock (), sameMode, transitionMs (), plan) with
+        | ThemeStart.Snap ->
+            stopFrames ()
+            snapAll ()
+        | ThemeStart.Tween ->
+            generation <- generation + 1
+            stopFrames ()
+            if autoFrames then
+                let g = generation
+                let period = TimeSpan.FromTicks(max 1L (TimeSpan.FromMilliseconds(transitionMs ()).Ticks / 12L))
+                frameTimer <-
+                    Some(new Threading.Timer((fun _ -> Dispatcher.UIThread.InvokeAsync(fun () -> this.Pump g) |> ignore), null, period, period))
+        changed.Trigger next
+
+    /// 立即收尾到目标色并停帧（旧 completeTransition）
+    member _.CompleteTransition() =
+        stopFrames ()
+        generation <- generation + 1
+        tween.Complete() |> ignore
+        snapAll ()
+
+    /// 中等抬升阴影：下拉、气泡（旧 Tokens.shadowPopup）
+    member this.ShadowPopup() =
+        BoxShadows(BoxShadow(OffsetX = 0.0, OffsetY = 8.0, Blur = 26.0, Spread = -8.0, Color = this.Color PaletteKey.ShadowStrong))
+
+    /// 对话框阴影（旧 Tokens.shadowDialog）
+    member this.ShadowDialog() =
+        BoxShadows(BoxShadow(OffsetX = 0.0, OffsetY = 18.0, Blur = 48.0, Spread = -12.0, Color = this.Color PaletteKey.ShadowStrong))
+
+    /// 状态过渡：只补间底色（bordered = 另补间描边，只给描边即状态的表面）。时长经减弱动效门控
+    member _.StateTransitions(bordered: bool) : Animation.Transitions =
+        let duration = motion.Duration timings[Timing.ControlStateTransition].Value
+        let make (p: AvaloniaProperty) =
+            let t = Animation.BrushTransition()
+            t.Property <- p
+            t.Duration <- duration
+            t.Easing <- EaseOutCubicEasing()
+            t
+        let ts = Animation.Transitions()
+        ts.Add(make Controls.Border.BackgroundProperty)
+        if bordered then ts.Add(make Controls.Border.BorderBrushProperty)
+        ts
+
+    interface IDisposable with
+        member _.Dispose() = stopFrames ()

@@ -335,6 +335,10 @@
     <Project Path="libs/HttpRetry/HttpRetry.fsproj" />
     <Project Path="libs/HttpRetry/tests/HttpRetry.Tests.fsproj" />
   </Folder>
+  <Folder Name="/IconSet/">
+    <Project Path="libs/IconSet/IconSet.fsproj" />
+    <Project Path="libs/IconSet/tests/IconSet.Tests.fsproj" />
+  </Folder>
   <Folder Name="/IdleSurface/">
     <Project Path="libs/IdleSurface/IdleSurface.fsproj" />
     <Project Path="libs/IdleSurface/tests/IdleSurface.Tests.fsproj" />
@@ -478,6 +482,10 @@
   <Folder Name="/ModelVision/">
     <Project Path="libs/ModelVision/ModelVision.fsproj" />
     <Project Path="libs/ModelVision/tests/ModelVision.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MotionSwitch/">
+    <Project Path="libs/MotionSwitch/MotionSwitch.fsproj" />
+    <Project Path="libs/MotionSwitch/tests/MotionSwitch.Tests.fsproj" />
   </Folder>
   <Folder Name="/MountWindow/">
     <Project Path="libs/MountWindow/MountWindow.fsproj" />
@@ -722,6 +730,14 @@
   <Folder Name="/TextSocket/">
     <Project Path="libs/TextSocket/TextSocket.fsproj" />
     <Project Path="libs/TextSocket/tests/TextSocket.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThemeMetrics/">
+    <Project Path="libs/ThemeMetrics/ThemeMetrics.fsproj" />
+    <Project Path="libs/ThemeMetrics/tests/ThemeMetrics.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThemePalette/">
+    <Project Path="libs/ThemePalette/ThemePalette.fsproj" />
+    <Project Path="libs/ThemePalette/tests/ThemePalette.Tests.fsproj" />
   </Folder>
   <Folder Name="/ThemeTween/">
     <Project Path="libs/ThemeTween/ThemeTween.fsproj" />

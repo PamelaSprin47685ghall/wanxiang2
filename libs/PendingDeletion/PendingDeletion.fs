@@ -13,14 +13,18 @@ type PendingDeletionBatch = {
     label: string
 }
 
-type PendingDeletions = { batches: PendingDeletionBatch list }
+type PendingDeletions = {
+    batches: PendingDeletionBatch list
+    /// 各批的到期时刻（token → 时刻）；未登记到期时刻的批次只能由宿主显式 commit。
+    due: Map<Guid, DateTimeOffset>
+}
 
 module PendingDeletion =
 
     /// 宽限期：比默认提示条停留略长，读完再决定。
     let grace = TimeSpan.FromSeconds 8.0
 
-    let empty = { batches = [] }
+    let empty = { batches = []; due = Map.empty }
 
     let label (titles: string list) : string =
         match titles with
@@ -34,16 +38,37 @@ module PendingDeletion =
         if List.isEmpty fresh then state, None
         else
             let batch = { token = Guid.NewGuid(); ids = List.map fst fresh; label = label (List.map snd fresh) }
-            { batches = state.batches @ [ batch ] }, Some batch
+            { state with batches = state.batches @ [ batch ] }, Some batch
 
     /// 撤销：把整批移出待删，返回被恢复的 id（批次已提交或不存在时为空）。
     let undo (token: Guid) (state: PendingDeletions) : PendingDeletions * Guid list =
         match state.batches |> List.tryFind (fun b -> b.token = token) with
-        | Some b -> { batches = state.batches |> List.filter (fun x -> x.token <> token) }, b.ids
-        | None -> state, []
+        | Some b -> { batches = state.batches |> List.filter (fun x -> x.token <> token); due = state.due.Remove token }, b.ids
+        | None -> { state with due = state.due.Remove token }, []
 
     /// 宽限期到：取出该批交给调用方提交。已撤销的批次返回空，不会误删。
     let commit (token: Guid) (state: PendingDeletions) : PendingDeletions * Guid list = undo token state
+
+    /// 登记一批待删，并记下到期时刻 now + grace（宿主不再为每批各持一个计时器的「何时到」）。
+    let scheduleAt (now: DateTimeOffset) (titles: (Guid * string) list) (state: PendingDeletions) : PendingDeletions * PendingDeletionBatch option =
+        match schedule titles state with
+        | next, Some batch -> { next with due = next.due.Add(batch.token, now + grace) }, Some batch
+        | next, None -> next, None
+
+    /// 到 now 为止到期的批次：按登记顺序交出 token，并清掉它们的到期时刻（每批只交出一次）。
+    /// 批次本身仍在，宿主随后对每个 token 调用 commit 取出 id 提交。
+    let tick (now: DateTimeOffset) (state: PendingDeletions) : PendingDeletions * Guid list =
+        let dueTokens =
+            state.batches
+            |> List.choose (fun b ->
+                match state.due.TryFind b.token with
+                | Some t when t <= now -> Some b.token
+                | _ -> None)
+        { state with due = dueTokens |> List.fold (fun m t -> Map.remove t m) state.due }, dueTokens
+
+    /// 最近的到期时刻；没有待到期的批次为 None。宿主据此安排下一次计时。
+    let nextDue (state: PendingDeletions) : DateTimeOffset option =
+        if state.due.IsEmpty then None else Some(state.due |> Map.toSeq |> Seq.map snd |> Seq.min)
 
     let isPending (id: Guid) (state: PendingDeletions) : bool =
         state.batches |> List.exists (fun b -> List.contains id b.ids)

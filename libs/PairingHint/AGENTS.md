@@ -13,3 +13,6 @@
 - 旧 JourneyR9Tests：`260 首次连接（无令牌无凭据无错误）才直接走配对码`
 
 本库新增：金样。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

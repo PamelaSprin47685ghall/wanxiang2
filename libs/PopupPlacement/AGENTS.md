@@ -10,3 +10,6 @@
 
 # 迁入或覆盖的旧测试
 旧 UiStabilityTests 的 `popup flips and clamps inside the viewport then restores anchor focus` 还测焦点归还，**旧用例不删**（部分覆盖）。本库新增：金样、翻到上方、右对齐。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

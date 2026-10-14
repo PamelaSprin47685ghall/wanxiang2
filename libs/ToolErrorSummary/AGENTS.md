@@ -16,3 +16,6 @@
 - `resolveToolCallStatus extracts last line from python traceback as failure summary`（部分覆盖）
 
 本库新增：金样、无结果、JSON 嵌套 message、traceback 末行。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

@@ -11,3 +11,6 @@
 
 # 迁入或覆盖的旧测试
 旧 CraftsmanshipPolishTests 的 `Composer prompt history records submissions and recalls with Up/Down` 要在窗口里按键，**旧用例不删**（部分覆盖）。本库新增：金样、召回后回到半截草稿、去重去空与容量。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

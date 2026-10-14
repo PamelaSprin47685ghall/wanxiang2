@@ -28,3 +28,6 @@
 未迁入（需要真实绘制，留在旧 UI 测试）：`公式的墨迹不越出它自己声明的尺寸`、MathBaselineTests。
 
 本组合新增：金样、无 katex-html 子树、量尺抛错、零宽空格、CJK 回落、外边距。
+
+# 金样生成
+`tools/mathgold/run.sh <旧仓库检出目录>`：旧仓库取 extract-ledger 的 `68e10a5^`（`git archive 68e10a5^ src tests`），在 Avalonia headless + Skia + 内嵌 KaTeX 字体下跑旧 MathLayout 与旧 JintRichBackend，重写 `tests/golden/math.txt`；输出应与提交的金样逐字节相同。生成器有自己的 Directory.Build.props，不继承仓库设置，也不打包。

@@ -15,3 +15,6 @@
 - `frozen pairing shows the minutes and offers no retry`（部分覆盖：文案含分钟数）
 
 本组合新增：金样。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

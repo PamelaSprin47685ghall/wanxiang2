@@ -10,3 +10,6 @@
 
 # 迁入或覆盖的旧测试
 旧仓库没有直接测这两个私有函数的用例（MessageCardTests 经渲染间接覆盖，留在旧仓库）。本库新增：金样、空对象、96 字截断、非 JSON 原样。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

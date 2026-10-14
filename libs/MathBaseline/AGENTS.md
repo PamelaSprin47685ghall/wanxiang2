@@ -10,3 +10,6 @@
 
 # 迁入或覆盖的旧测试
 旧 MathBaselineTests 要真实排版，留在旧仓库。本库新增：金样、行内对齐宿主基线。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

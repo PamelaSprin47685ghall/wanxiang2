@@ -15,3 +15,6 @@
 - `只有主机在本机时才探测本机端口`（部分覆盖：`ProviderPresets.OllamaProbeUrl` 那一行属于写手 2 的 ProviderPresets，**旧用例不删**）
 
 本库新增：金样、非 2xx 视为没有。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

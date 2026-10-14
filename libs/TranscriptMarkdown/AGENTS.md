@@ -14,3 +14,6 @@
 - `Markdown keeps orphan tool results timestamps and embedded fences`
 
 `export retrieves all 450 messages…` 等用例测导出分页与 MessageView 投影，不在本库，留在旧仓库。本库新增：金样、不可见消息跳过。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

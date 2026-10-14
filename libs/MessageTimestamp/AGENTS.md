@@ -10,3 +10,6 @@
 
 # 迁入或覆盖的旧测试
 旧 OperabilityTests 的 `footer timestamp carries the full timestamp for hover and screen readers` 要渲染消息卡，留在旧仓库。本库新增：金样、四档文案。
+
+# 金样生成
+`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

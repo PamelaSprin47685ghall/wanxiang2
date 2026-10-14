@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：主机目录与看图判断、会话配置、模型切换的关联。协作者：HostCatalog、ModelVision、Wire、ModelSwitcher。命名空间沿用 Wanxiang.UI。 -->
+  <ItemGroup>
+    <Compile Include="Catalog.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelVision" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelSwitcher" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

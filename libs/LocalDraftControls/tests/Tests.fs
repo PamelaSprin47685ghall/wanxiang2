@@ -13,6 +13,6 @@ let ``summary change fires once per distinct value`` () =
     c.Summary <- ""
     Assert.Equal(2, fired)
     let mutable cleared = false
-    c.ClearRequested <- fun () -> cleared <- true
-    c.ClearRequested()
+    c.ClearRequested.Add(fun () -> cleared <- true)
+    c.RequestClear()
     Assert.True cleared

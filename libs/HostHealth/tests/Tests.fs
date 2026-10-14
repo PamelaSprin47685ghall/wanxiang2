@@ -18,7 +18,7 @@ let ``host health owns doctor and config-issue state`` () =
     let mutable fired = 0
     let mutable requested = 0
     h.Changed.Add(fun () -> fired <- fired + 1)
-    h.RequestCheck <- fun () -> requested <- requested + 1
+    h.CheckRequested.Add(fun () -> requested <- requested + 1)
     Assert.Equal(NotRun, h.Doctor)
     h.BeginCheck()
     Assert.Equal(Running, h.Doctor)

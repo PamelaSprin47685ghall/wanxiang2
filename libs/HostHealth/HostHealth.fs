@@ -58,14 +58,16 @@ module DoctorCheck =
 /// 「检查主机」的结果来自 `doctor.report`。设置页订阅 Changed 重绘。
 type HostHealth() =
     let changed = Event<unit>()
+    let checkRequested = Event<unit>()
     let mutable configIssue: (string * string list) option = None
     let mutable doctor = NotRun
 
-    /// 设置页点「检查主机」时的发送动作，由 AppShell 注入。
-    member val RequestCheck: unit -> unit = ignore with get, set
-
     [<CLIEvent>]
     member _.Changed = changed.Publish
+
+    /// 设置页点「检查主机」后发出：宿主订阅后向主机发送 doctor 请求。
+    [<CLIEvent>]
+    member _.CheckRequested = checkRequested.Publish
 
     member _.ConfigIssue = configIssue
     member _.Doctor = doctor
@@ -81,10 +83,10 @@ type HostHealth() =
         if had then changed.Trigger()
         had
 
-    member this.BeginCheck() =
+    member _.BeginCheck() =
         doctor <- Running
         changed.Trigger()
-        this.RequestCheck()
+        checkRequested.Trigger()
 
     member _.SetReport(ok: bool, checks: DoctorCheck list) =
         doctor <- Report(ok, checks, DateTimeOffset.Now)

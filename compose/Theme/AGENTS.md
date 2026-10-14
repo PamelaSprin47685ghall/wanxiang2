@@ -18,8 +18,8 @@
 # SPEC
 1. [LEMMA: 1] `tests/Tests.fs`：`switching the theme recolors controls that were built before the switch`、`hover over a raised surface follows the theme`、`reduced motion and complete transition land at once`。
 2. [LEMMA: 2] `a second switch mid-tween takes over from the current color`（含过期代次的帧不停帧）。
-4. 控件库挂的类在本主题下有外观并随切换走：`tests/WidgetClassTests.fs` 的 `menu items hover and press through theme classes and follow a theme switch`、`select button rests on surface and hover swaps the stroke`、`toast action is a secondary button that hovers and presses`（测试工程引用 PopupMenu、ToastStrip 包，组合本身不依赖它们）。
 3. [LEMMA: 3] `changing a metric restyles controls already on screen`、`live values push to bound controls`、`button classes carry the old geometry`（几何取旧 Ui.button / iconButton 的值）、`state transitions are zero under reduced motion`。
+4. 控件库挂的类在本主题下有外观并随切换走：`tests/WidgetClassTests.fs` 的 `menu items hover and press through theme classes and follow a theme switch`、`select button rests on surface and hover swaps the stroke`、`toast action is a secondary button that hovers and presses`（测试工程引用 PopupMenu、ToastStrip 包，组合本身不依赖它们）。
 
 # 与旧代码的差异
 - 旧 hover-raised / hover-danger 的叠色在注册样式时算一次，之后切主题不变；这里随主题重算。

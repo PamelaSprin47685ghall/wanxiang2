@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：主窗口外壳 = 旧 MainLayout（ConversationWorkspace、MainLayoutController）在 AppShell 里的接线，加品牌标 Brand。协作者：ShellLayout、BrandMark、NavigationState、Theme、DesignRhythm。 -->
+  <ItemGroup>
+    <Compile Include="ShellDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.ShellLayout" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrandMark" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.NavigationState" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

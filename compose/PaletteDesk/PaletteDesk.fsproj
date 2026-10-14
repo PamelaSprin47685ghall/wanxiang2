@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：命令面板 = 旧 CommandPaletteView 与 AppShell.ShowCommandPalette。协作者：PalettePanel、CommandPalette、ImeShield、OverlayDesk、Theme、DesignRhythm。 -->
+  <ItemGroup>
+    <Compile Include="PaletteDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.PalettePanel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandPalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ImeShield" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

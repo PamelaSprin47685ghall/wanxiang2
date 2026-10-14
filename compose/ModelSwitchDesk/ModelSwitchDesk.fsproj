@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：快速切换模型浮层 = 旧 ModelSwitcherView。协作者：ModelSwitchPanel、ModelSwitcher、ModelPickerList、OverlayDesk、Theme、IconSet、DesignRhythm。 -->
+  <ItemGroup>
+    <Compile Include="ModelSwitchDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.ModelSwitchPanel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelSwitcher" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelPickerList" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

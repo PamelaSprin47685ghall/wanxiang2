@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：导入、导出对话框 = 旧 ImportDialog、ExportDialog。协作者：ImportSheet、ExportSheet、ImportView、ExportView、ProgressThrottle、ConversationTransfer、ConversationExport、TranscriptMarkdown、ExportFileName、MessageView、Wire、OverlayDesk、Theme、DesignRhythm。 -->
+  <ItemGroup>
+    <Compile Include="Looks.fs" />
+    <Compile Include="ImportDesk.fs" />
+    <Compile Include="ExportDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.ImportSheet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ExportSheet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ImportView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ExportView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProgressThrottle" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationTransfer" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationExport" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.TranscriptMarkdown" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ExportFileName" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -127,6 +127,10 @@
     <Project Path="libs/ChangeWatch/ChangeWatch.fsproj" />
     <Project Path="libs/ChangeWatch/tests/ChangeWatch.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ChatEmpty/">
+    <Project Path="libs/ChatEmpty/ChatEmpty.fsproj" />
+    <Project Path="libs/ChatEmpty/tests/ChatEmpty.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ChatEmptyText/">
     <Project Path="libs/ChatEmptyText/ChatEmptyText.fsproj" />
     <Project Path="libs/ChatEmptyText/tests/ChatEmptyText.Tests.fsproj" />

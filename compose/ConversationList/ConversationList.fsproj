@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：对话列表行与分叉谱系、待删批次的关联。协作者：ConversationSummary、ForkLineage、PendingDeletion。命名空间沿用 Wanxiang.UI。 -->
+  <ItemGroup>
+    <Compile Include="ConversationList.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ForkLineage" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PendingDeletion" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

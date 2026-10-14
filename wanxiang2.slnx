@@ -111,6 +111,10 @@
     <Project Path="libs/ContinuableReply/ContinuableReply.fsproj" />
     <Project Path="libs/ContinuableReply/tests/ContinuableReply.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ConversationSummary/">
+    <Project Path="libs/ConversationSummary/ConversationSummary.fsproj" />
+    <Project Path="libs/ConversationSummary/tests/ConversationSummary.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Conversations/">
     <Project Path="libs/Conversations/Conversations.fsproj" />
     <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
@@ -143,6 +147,10 @@
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
     <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ForkLineage/">
+    <Project Path="libs/ForkLineage/ForkLineage.fsproj" />
+    <Project Path="libs/ForkLineage/tests/ForkLineage.Tests.fsproj" />
+  </Folder>
   <Folder Name="/FuzzyMatch/">
     <Project Path="libs/FuzzyMatch/FuzzyMatch.fsproj" />
     <Project Path="libs/FuzzyMatch/tests/FuzzyMatch.Tests.fsproj" />
@@ -158,6 +166,10 @@
   <Folder Name="/HljsHtml/">
     <Project Path="libs/HljsHtml/HljsHtml.fsproj" />
     <Project Path="libs/HljsHtml/tests/HljsHtml.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostHealth/">
+    <Project Path="libs/HostHealth/HostHealth.fsproj" />
+    <Project Path="libs/HostHealth/tests/HostHealth.Tests.fsproj" />
   </Folder>
   <Folder Name="/HostProbe/">
     <Project Path="libs/HostProbe/HostProbe.fsproj" />
@@ -211,6 +223,10 @@
     <Project Path="libs/ListenAddress/ListenAddress.fsproj" />
     <Project Path="libs/ListenAddress/tests/ListenAddress.Tests.fsproj" />
   </Folder>
+  <Folder Name="/LocalDraftControls/">
+    <Project Path="libs/LocalDraftControls/LocalDraftControls.fsproj" />
+    <Project Path="libs/LocalDraftControls/tests/LocalDraftControls.Tests.fsproj" />
+  </Folder>
   <Folder Name="/MarkdownBlocks/">
     <Project Path="libs/MarkdownBlocks/MarkdownBlocks.fsproj" />
     <Project Path="libs/MarkdownBlocks/tests/MarkdownBlocks.Tests.fsproj" />
@@ -263,6 +279,10 @@
     <Project Path="libs/PayloadFields/PayloadFields.fsproj" />
     <Project Path="libs/PayloadFields/tests/PayloadFields.Tests.fsproj" />
   </Folder>
+  <Folder Name="/PendingDeletion/">
+    <Project Path="libs/PendingDeletion/PendingDeletion.fsproj" />
+    <Project Path="libs/PendingDeletion/tests/PendingDeletion.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PinyinInitials/">
     <Project Path="libs/PinyinInitials/PinyinInitials.fsproj" />
     <Project Path="libs/PinyinInitials/tests/PinyinInitials.Tests.fsproj" />
@@ -274,6 +294,10 @@
   <Folder Name="/ProviderCheck/">
     <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />
     <Project Path="libs/ProviderCheck/tests/ProviderCheck.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProviderPresets/">
+    <Project Path="libs/ProviderPresets/ProviderPresets.fsproj" />
+    <Project Path="libs/ProviderPresets/tests/ProviderPresets.Tests.fsproj" />
   </Folder>
   <Folder Name="/PwaAssets/">
     <Project Path="libs/PwaAssets/PwaAssets.fsproj" />
@@ -287,6 +311,10 @@
     <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
     <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />
   </Folder>
+  <Folder Name="/RevealTarget/">
+    <Project Path="libs/RevealTarget/RevealTarget.fsproj" />
+    <Project Path="libs/RevealTarget/tests/RevealTarget.Tests.fsproj" />
+  </Folder>
   <Folder Name="/RichScripts/">
     <Project Path="libs/RichScripts/RichScripts.fsproj" />
     <Project Path="libs/RichScripts/tests/RichScripts.Tests.fsproj" />
@@ -298,6 +326,10 @@
   <Folder Name="/SandboxFiles/">
     <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
     <Project Path="libs/SandboxFiles/tests/SandboxFiles.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SearchHit/">
+    <Project Path="libs/SearchHit/SearchHit.fsproj" />
+    <Project Path="libs/SearchHit/tests/SearchHit.Tests.fsproj" />
   </Folder>
   <Folder Name="/SearchSegments/">
     <Project Path="libs/SearchSegments/SearchSegments.fsproj" />

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：旧 Views/Sidebar.fs 的协作部分。界面在 SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、HostSwitcher。 -->
+  <ItemGroup>
+    <Compile Include="Looks.fs" />
+    <Compile Include="SidebarDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationList" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationRows" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarSearch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BatchBar" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostSwitcher" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarBrand" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ListEmptyCard" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SearchSession" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SearchRequery" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RowFocus" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarSelection" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarEmpty" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ForkLineage" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SearchSegments" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SearchHit" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

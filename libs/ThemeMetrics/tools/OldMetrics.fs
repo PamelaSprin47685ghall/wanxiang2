@@ -504,6 +504,7 @@ module Adapter =
           "CaptionLineHeight", 17.0
           "UiBodyLineHeight", 20.0
           "ShortcutKeyMinWidth", 136.0
+          "SidebarSkeletonBarHeight", 10.0
           // 旧 Spacing.Hit.touch
           "TouchTarget", 44.0
           // 旧 ToolApprovalCard.buttonRowMaxWidth

@@ -76,6 +76,8 @@ type Space =
     | GlyphLg
     /// 区块标签字距（旧 Spacing.Tracking.section）
     | TrackingSection
+    /// 字标字距（旧 Spacing.Tracking.display）
+    | TrackingDisplay
 
 module Space =
     open Wanxiang.UI
@@ -83,7 +85,7 @@ module Space =
     let all =
         [ Space.None; Space.XXs; Space.Xs; Space.Sm; Space.Md; Space.Lg; Space.Xl; Space.X2l; Space.X3l; Space.X4l; Space.X6l; Space.X8l
           Space.RadiusXs; Space.RadiusSm; Space.RadiusMd; Space.RadiusLg; Space.RadiusPill
-          Space.StrokeThin; Space.StrokeThick; Space.GlyphSm; Space.GlyphMd; Space.GlyphLg; Space.TrackingSection ]
+          Space.StrokeThin; Space.StrokeThick; Space.GlyphSm; Space.GlyphMd; Space.GlyphLg; Space.TrackingSection; Space.TrackingDisplay ]
 
     let initial (s: Space) =
         match s with
@@ -110,6 +112,7 @@ module Space =
         | Space.GlyphMd -> Spacing.Glyph.md
         | Space.GlyphLg -> Spacing.Glyph.lg
         | Space.TrackingSection -> Spacing.Tracking.section
+        | Space.TrackingDisplay -> Spacing.Tracking.display
 
 /// 统一缓动 easeOutCubic 的 Avalonia 形态；曲线数学归 ScrollTween 包
 type EaseOutCubicEasing() =

@@ -129,6 +129,8 @@ type Metric =
     | UiBodyLineHeight
     /// 快捷键帮助的键位块最小宽（旧 Dialogs.shortcuts 的 136）
     | ShortcutKeyMinWidth
+    /// 侧栏列表加载骨架条高（旧 Sidebar emptySkeleton 的 10）
+    | SidebarSkeletonBarHeight
     /// 触控命中下限（旧 Spacing.Hit.touch）
     | TouchTarget
     /// 审批卡按钮行最大宽（旧 ToolApprovalCard.buttonRowMaxWidth）
@@ -294,6 +296,7 @@ module ThemeMetrics =
           Metric.CaptionLineHeight
           Metric.UiBodyLineHeight
           Metric.ShortcutKeyMinWidth
+          Metric.SidebarSkeletonBarHeight
           Metric.TouchTarget
           Metric.ApprovalButtonRowMaxWidth
           Metric.LogoGlyphRatio
@@ -437,6 +440,7 @@ module ThemeMetrics =
         | Metric.CaptionLineHeight -> 17.0
         | Metric.UiBodyLineHeight -> 20.0
         | Metric.ShortcutKeyMinWidth -> 136.0
+        | Metric.SidebarSkeletonBarHeight -> 10.0
         | Metric.TouchTarget -> 44.0
         | Metric.ApprovalButtonRowMaxWidth -> 360.0
         | Metric.LogoGlyphRatio -> 0.42

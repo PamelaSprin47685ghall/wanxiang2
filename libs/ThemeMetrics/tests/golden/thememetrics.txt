@@ -117,6 +117,7 @@ ToastMaxWidth 560
 CaptionLineHeight 17
 UiBodyLineHeight 20
 ShortcutKeyMinWidth 136
+SidebarSkeletonBarHeight 10
 TouchTarget 44
 ApprovalButtonRowMaxWidth 360
 LogoGlyphRatio 0.42

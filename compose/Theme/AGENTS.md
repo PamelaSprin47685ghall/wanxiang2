@@ -3,7 +3,7 @@
 拥有全部活的样式值并负责切主题；控件库从不认识它，组合者从它取实例填进各控件的 Look。协作者（包）：ThemePalette（配色数据）、ThemeMetrics（度量初始值）、MotionSwitch（减弱动效与时长）、ThemeTween（补间记账）、SpacingRamp（间距刻度）、ScrollTween（easeOutCubic 曲线）、ColorBlend（悬停叠色）、ThemeFonts（内嵌字体，正文与等宽字体的资源地址）。来源：旧 `Design/Tokens.fs`、`Design/MotionPolicy.fs`、`Controls/Primitives.fs` 与 `Controls/Interaction.fs` 的外观部分（extract-ledger@0c0b2a6）。根规则见项目根目录 AGENTS.md。
 
 ## 活的值
-- `ThemeManager.Brush key`：每个配色项一支 `SolidColorBrush`，生命周期内同一实例，切主题原地改色。`Derived HoverRaised | HoverDanger`：叠色画笔，基础画笔每次改色都重算。
+- `ThemeManager.Brush key`：每个配色项一支 `SolidColorBrush`，生命周期内同一实例，切主题原地改色。`Derived HoverRaised | HoverDanger | HoverSelected`：叠色画笔，基础画笔每次改色都重算。
 - `Metric m`、`Space s`、`Timing t`、`FontFamily`、`MonoFontFamily`：`LiveValue<'T>`（实现 `IObservable<'T>`，订阅先给当前值），与控件模板 Look 里的 `IObservable<_>` 直接相容，模板不用改。
 - `Apply mode`：经 ThemeTween 补间（200 毫秒，帧间隔 1/12），后来的切换接管；减弱动效或同主题同步到位。代次计数 `Generation`：过期帧只画不停帧。`CompleteTransition`、`Pump`（`autoFrames = false` 时由调用方推帧，测试据此控制时间）、`Changed`、`ShadowPopup` / `ShadowDialog`、`StateTransitions`。
 

@@ -19,6 +19,8 @@ type DerivedBrush =
     | HoverRaised
     /// dangerSoft 上叠 hover
     | HoverDanger
+    /// selected 上叠 hover（选中行悬停）
+    | HoverSelected
 
 /// 主题管理者：拥有全部活的样式值，并负责切换主题。
 ///
@@ -43,7 +45,8 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
         match d with
         | DerivedBrush.HoverRaised -> blend brushes[PaletteKey.Surface].Color brushes[PaletteKey.Hover].Color
         | DerivedBrush.HoverDanger -> blend brushes[PaletteKey.DangerSoft].Color brushes[PaletteKey.Hover].Color
-    do for d in [ DerivedBrush.HoverRaised; DerivedBrush.HoverDanger ] do derived[d] <- SolidColorBrush(derivedColor d)
+        | DerivedBrush.HoverSelected -> blend brushes[PaletteKey.Selected].Color brushes[PaletteKey.Hover].Color
+    do for d in [ DerivedBrush.HoverRaised; DerivedBrush.HoverDanger; DerivedBrush.HoverSelected ] do derived[d] <- SolidColorBrush(derivedColor d)
     let refreshDerived () = for KeyValue(d, b) in derived do b.Color <- derivedColor d
     let metrics = Dictionary<Metric, LiveValue<float>>()
     do for m in ThemeMetrics.all do metrics[m] <- LiveValue(ThemeMetrics.initial m)

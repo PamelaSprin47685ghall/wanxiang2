@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：OverlayLayer + ToastStrip + PopupMenu + ToastQueue + ToastDwell + PopupPlacement + FocusOrigin = 旧 OverlayHost 与 Menu。 -->
+  <ItemGroup>
+    <Compile Include="OverlayDesk.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.OverlayLayer" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastQueue" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastDwell" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PopupPlacement" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.FocusOrigin" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

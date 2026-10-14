@@ -1,0 +1,124 @@
+module Wanxiang2.ToastStrip.Tests.Tests
+
+open System
+open Avalonia
+open Avalonia.Automation
+open Avalonia.Controls
+open Avalonia.Interactivity
+open Avalonia.Media
+open Avalonia.Threading
+open Avalonia.VisualTree
+open Xunit
+open Wanxiang2.ToastStrip
+
+let look () =
+    let maxW = Cell 480.0
+    let pad = Cell(Thickness(16.0, 12.0))
+    maxW, pad,
+    { Surface = SolidColorBrush(Colors.White)
+      Edge = SolidColorBrush(Colors.Gray)
+      Text = SolidColorBrush(Colors.Black)
+      Accent = (fun tone -> if tone = ToastTone.Failure then Brushes.Red else Brushes.Gray)
+      AccentWidth = Cell 2.0
+      AccentRadius = Cell(CornerRadius 999.0)
+      AccentOpacity = Cell 0.6
+      EdgeWidth = Cell(Thickness 1.0)
+      Radius = Cell(CornerRadius 8.0)
+      Padding = pad
+      Shadow = Cell(BoxShadows())
+      FontSize = Cell 12.0
+      LineHeight = Cell 18.0
+      ColumnSpacing = Cell 12.0
+      Spacing = Cell 8.0
+      Margin = Cell(Thickness(24.0, 0.0, 24.0, 32.0))
+      MaxWidth = maxW
+      BodyMaxHeight = Cell 160.0
+      Fade = Cell TimeSpan.Zero
+      FadeEasing = Avalonia.Animation.Easings.CubicEaseOut() }
+
+let host w h (strip: ToastStrip) =
+    let root = Grid()
+    root.Children.Add strip.View
+    let window = Window(Width = w, Height = h, Content = root)
+    window.Show()
+    Dispatcher.UIThread.RunJobs()
+    strip.Fit(root.Bounds.Width, root.Bounds.Height, 12.0)
+    root, window
+
+let byName (root: Visual) name =
+    root.GetVisualDescendants() |> Seq.choose (function :? Control as c when AutomationProperties.GetName c = name -> Some c | _ -> None) |> Seq.tryHead
+
+// 迁自旧 OverlayMenuTests.toast_stays_non_focusable_and_escape_dismisses_it（Escape 那步在组合者里测）。
+[<Fact>]
+let ``toast stays non focusable and removal is synchronous`` () =
+    Headless.run (fun () ->
+        let _, _, l = look ()
+        let strip = ToastStrip l
+        let root, window = host 400.0 300.0 strip
+        strip.Add("已保存", ToastTone.Neutral, None)
+        let toast = (byName root "已保存").Value
+        Assert.False toast.Focusable
+        Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting toast)
+        strip.Remove "已保存"
+        Assert.True((byName root "已保存").IsNone)
+        window.Close())
+
+// 迁自旧 UiStabilityTests `toast stays inside narrow viewport and is keyboard dismissible live content`（宽度与 live 部分）。
+[<Fact>]
+let ``toast stays inside narrow viewport as assertive live content`` () =
+    Headless.run (fun () ->
+        let _, _, l = look ()
+        let strip = ToastStrip l
+        let root, window = host 320.0 220.0 strip
+        let message = String.replicate 20 "很长的错误说明，需要在窄窗口内保持可访问。"
+        strip.Add(message, ToastTone.Failure, None)
+        Dispatcher.UIThread.RunJobs()
+        let toast = (byName root message).Value
+        Assert.False toast.IsFocused
+        Assert.Equal(AutomationLiveSetting.Assertive, AutomationProperties.GetLiveSetting toast)
+        Assert.True(toast.Bounds.Width <= root.Bounds.Width - 12.0 * 2.0 + 0.5)
+        window.Close())
+
+[<Fact>]
+let ``undo action carries accelerator help and focus returns home on removal`` () =
+    Headless.run (fun () ->
+        let _, _, l = look ()
+        let strip = ToastStrip l
+        let root, window = host 400.0 300.0 strip
+        let home = Button(Content = "home")
+        root.Children.Add home
+        strip.SetFocusHome(fun () -> home.Focus() |> ignore)
+        let invoked = ResizeArray()
+        let focused = ResizeArray()
+        strip.ActionInvoked.Add invoked.Add
+        strip.ActionFocused.Add focused.Add
+        strip.Add("已删除", ToastTone.Neutral, Some "撤销")
+        Dispatcher.UIThread.RunJobs()
+        let b = strip.ActionButtons |> List.exactlyOne
+        Assert.Equal("Ctrl+Z", AutomationProperties.GetAcceleratorKey b)
+        Assert.Equal("按 Ctrl / ⌘ + Z 直接撤销；按 F6 或 Tab 可移到这里", AutomationProperties.GetHelpText b)
+        Assert.True b.IsTabStop
+        Assert.True(strip.FocusAction())
+        Assert.True b.IsFocused
+        Assert.Equal<string list>([ "已删除" ], List.ofSeq focused)
+        b.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+        Assert.Equal<string list>([ "已删除" ], List.ofSeq invoked)
+        strip.Remove "已删除"
+        Assert.True home.IsFocused
+        Assert.False(strip.FocusAction())
+        window.Close())
+
+[<Fact>]
+let ``look stays live after toasts are shown`` () =
+    Headless.run (fun () ->
+        let maxW, pad, l = look ()
+        let strip = ToastStrip l
+        let root, window = host 800.0 300.0 strip
+        strip.Add("一", ToastTone.Info, None)
+        let toast = (byName root "一").Value :?> Border
+        pad.Set(Thickness 3.0)
+        maxW.Set 200.0
+        Assert.Equal(Thickness 3.0, toast.Padding)
+        Assert.Equal(200.0, toast.MaxWidth)
+        Assert.Equal<string list>([ "一" ], strip.Messages)
+        window.Close())

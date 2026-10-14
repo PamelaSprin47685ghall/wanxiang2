@@ -499,6 +499,10 @@
     <Project Path="libs/OnboardingRules/OnboardingRules.fsproj" />
     <Project Path="libs/OnboardingRules/tests/OnboardingRules.Tests.fsproj" />
   </Folder>
+  <Folder Name="/OverlayLayer/">
+    <Project Path="libs/OverlayLayer/OverlayLayer.fsproj" />
+    <Project Path="libs/OverlayLayer/tests/OverlayLayer.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PairingCode/">
     <Project Path="libs/PairingCode/PairingCode.fsproj" />
     <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
@@ -526,6 +530,10 @@
   <Folder Name="/PlainText/">
     <Project Path="libs/PlainText/PlainText.fsproj" />
     <Project Path="libs/PlainText/tests/PlainText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PopupMenu/">
+    <Project Path="libs/PopupMenu/PopupMenu.fsproj" />
+    <Project Path="libs/PopupMenu/tests/PopupMenu.Tests.fsproj" />
   </Folder>
   <Folder Name="/PopupPlacement/">
     <Project Path="libs/PopupPlacement/PopupPlacement.fsproj" />
@@ -730,6 +738,10 @@
   <Folder Name="/ToastQueue/">
     <Project Path="libs/ToastQueue/ToastQueue.fsproj" />
     <Project Path="libs/ToastQueue/tests/ToastQueue.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToastStrip/">
+    <Project Path="libs/ToastStrip/ToastStrip.fsproj" />
+    <Project Path="libs/ToastStrip/tests/ToastStrip.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolArgsPreview/">
     <Project Path="libs/ToolArgsPreview/ToolArgsPreview.fsproj" />

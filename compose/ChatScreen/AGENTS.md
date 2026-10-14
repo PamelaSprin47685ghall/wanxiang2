@@ -17,3 +17,9 @@ ChatHeader + ChatPane + MessageCardView（MessageCards、CardDeck）+ ComposerDe
 - 定位高亮停留不再在这里起 DispatcherTimer，改由宿主经 `actions.After` 计时。
 - 顶栏模型芯片按决策 350 恒隐藏，没有迁移；宿主找模型锚点一律用 `ComposerDesk.ModelAnchor()`。
 - 渲染参数收成 `ScreenFrame` 记录；`SiblingProvider` / `SiblingSelected` 属性改为 `SetSiblingProvider` 与动作字段。
+
+## 整树金样
+
+- `tests/golden/screen.txt`：旧 ChatView（extract-ledger 533b85b）用 `tools/screengold/run.sh <旧仓>` 生成，10 个状态：空态、对话、宽屏 1000、改名中、生成中、流式、面包屑可点 / 父对话已删、窄屏 400（compact + 生成中 + 面包屑）、只读标题。顶栏部分即 ChatHeader 的整树证据。
+- 两边都装共享 ThemeStyles、减弱动效（状态过渡瞬时落定）、内嵌字体；旧顶栏恒不可见的模型芯片（决策 350）在生成器里摘掉。
+- 对齐时修过的库差异：顶栏高度挂在外层 Border、右组 / 状态行 / 面包屑行垂直居中、生成中芯片初始不写 AccessibilityView、可点面包屑读屏报按钮、根面为 Border 派生类型。

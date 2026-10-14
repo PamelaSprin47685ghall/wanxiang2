@@ -13,3 +13,7 @@
 ## 证据与旧测试
 
 覆盖旧 ChatView 的 SetTitle / BeginTitleEdit / CommitTitle / CancelTitleEdit、SetGenerating 的状态点、SetConversationChrome、SetCompactMode 的顶栏部分、SetBreadcrumb / ActivateBreadcrumb。无头行为用例三条（改名、改名途中标题到达、状态点 / 更多 / 面包屑）。
+
+## 整树证据
+
+顶栏与面包屑的整树金样在 compose/ChatScreen/tests/golden/screen.txt（真 Theme 外观才有意义，故放组合者层）。

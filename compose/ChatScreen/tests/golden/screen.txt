@@ -1,0 +1,1212 @@
+== empty
+Border* @0,0 600x2000 bg=#fff5f4ed
+  DockPanel @0,0 600x2000 fill=True
+    Border @0,0 0x0 hidden h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=24,0,24,0
+      StackPanel @0,0 0x0 orient=Vertical spacing=0
+        DockPanel @0,0 0x0 va=Center fill=True
+          StackPanel @0,0 0x0 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 0x0 hidden ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 0x0 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 0x0 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @0,0 0x0 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 0x0 va=Center h=30 minw=120 minh=30 maxh=30 name=新对话 tip=新对话 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @0,0 0x0 va=Center clip name=新对话 tip=新对话 size=16 weight=Medium fg=#ff6e6b62 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 新对话
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @0,0 0x0 op=0 va=Center name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+                Border @0,0 0x0 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @0,0 0x0 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,0 0x0 hidden bg=null pad=16,0,16,4
+          Border* @0,0 0x0 ha=Left bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @0,0 0x0 va=Center clip size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 
+    Grid @0,0 600x2000 dock=Left cols= rows=
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=0,0,0,48 hidden orient=Vertical spacing=24
+      ScrollViewer @0,0 600x2000 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @122,928 356x113 m=16,0,16,32 ha=Center va=Center orient=Vertical spacing=0
+          StackPanel @90,0 176x59 ha=Center orient=Vertical spacing=8
+            TextBlock @0,0 176x31 clip size=25 weight=Medium fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Center
+              text: 开始这段对话
+            TextBlock @0,39 176x20 clip size=13.5 weight=Normal fg=#ff4e4c46 lh=20 wrap=Wrap font=Sarasa Gothic SC align=Center
+              text: 输入问题，或附上一份文件。
+          WrapPanel @0,71 356x42 m=0,12,0,0 ha=Center orient=Horizontal
+            Border* @4,4 84x34 m=4,4,4,4 va=Center minh=34 focusable cursor name=解释概念 tip=填入「用通俗的话解释：」 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+              TextBlock @17,9 50x16 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 解释概念
+            Border* @96,4 84x34 m=4,4,4,4 va=Center minh=34 focusable cursor name=总结要点 tip=填入「帮我总结下面这段内容的要点：
+
+」 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+              TextBlock @17,9 50x16 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 总结要点
+            Border* @188,4 84x34 m=4,4,4,4 va=Center minh=34 focusable cursor name=改写润色 tip=填入「帮我改写得更清楚、更简洁：
+
+」 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+              TextBlock @17,9 50x16 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 改写润色
+            Border* @280,4 72x34 m=4,4,4,4 va=Center minh=34 focusable cursor name=写代码 tip=填入「写一段代码，实现：」 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+              TextBlock @17,9 38x16 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 写代码
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== conversation
+Border* @0,0 600x2000 bg=#fff5f4ed
+  DockPanel @0,0 600x2000 fill=True
+    Border @0,0 600x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=24,0,24,0
+      StackPanel @24,0 552x51 orient=Vertical spacing=0
+        DockPanel @0,0 552x30 va=Center fill=True
+          StackPanel @522,0 30x30 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @7,13 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 522x30 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @38,0 415x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 415x30 va=Center h=30 minw=120 minh=30 maxh=30 focusable cursor name=重命名对话：京都行程 tip=京都行程 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @13,5 389x20 va=Center clip cursor name=京都行程 tip=京都行程 size=16 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 京都行程
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @461,6 61x17 op=0 va=Center name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @8,2 45x13 va=Center orient=Horizontal spacing=8
+                Border @0,4 5x5 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @13,0 32x13 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,0 0x0 hidden bg=null pad=16,0,16,4
+          Border* @0,0 0x0 ha=Left bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @0,0 0x0 va=Center clip size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 
+    Grid @0,52 600x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 600x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @24,20 552x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @298,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 552x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x94 orient=Vertical spacing=0
+              DockPanel @0,0 552x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x56 dock=Left bg=Transparent
+                  StackPanel @0,0 514x56 orient=Vertical spacing=0
+                    StackPanel @0,0 514x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @399,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 552x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x64 orient=Vertical spacing=0
+              DockPanel @0,0 552x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x26 dock=Left bg=Transparent
+                  StackPanel @0,0 514x26 orient=Vertical spacing=0
+                    StackPanel @0,0 514x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 98x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0.62 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=重新生成 help=丢弃最后一次回复并重新生成 tip=重新生成 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.85438537597656, -916.0176391601562, 832.2599487304688, 832.0424194335938:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== conversation-wide
+Border* @0,0 1000x2000 bg=#fff5f4ed
+  DockPanel @0,0 1000x2000 fill=True
+    Border @0,0 1000x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=32,0,32,0
+      StackPanel @32,0 936x51 orient=Vertical spacing=0
+        DockPanel @0,0 936x30 va=Center fill=True
+          StackPanel @906,0 30x30 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @7,13 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 906x30 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @38,0 799x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 799x30 va=Center h=30 minw=120 minh=30 maxh=30 focusable cursor name=重命名对话：京都行程 tip=京都行程 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @13,5 773x20 va=Center clip cursor name=京都行程 tip=京都行程 size=16 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 京都行程
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @845,6 61x17 op=0 va=Center name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @8,2 45x13 va=Center orient=Horizontal spacing=8
+                Border @0,4 5x5 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @13,0 32x13 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,0 0x0 hidden bg=null pad=16,0,16,4
+          Border* @0,0 0x0 ha=Left bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @0,0 0x0 va=Center clip size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 
+    Grid @0,52 1000x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 1000x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @126,20 748x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 748x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 748x88 orient=Vertical spacing=0
+              StackPanel @494,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @612,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 748x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 748x94 orient=Vertical spacing=0
+              DockPanel @0,0 748x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 710x56 dock=Left bg=Transparent
+                  StackPanel @0,0 710x56 orient=Vertical spacing=0
+                    StackPanel @0,0 710x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 710x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 710x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 748x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 748x88 orient=Vertical spacing=0
+              StackPanel @595,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @612,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 748x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 748x64 orient=Vertical spacing=0
+              DockPanel @0,0 748x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 710x26 dock=Left bg=Transparent
+                  StackPanel @0,0 710x26 orient=Vertical spacing=0
+                    StackPanel @0,0 710x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 710x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 98x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0.62 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=重新生成 help=丢弃最后一次回复并重新生成 tip=重新生成 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.85438537597656, -916.0176391601562, 832.2599487304688, 832.0424194335938:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== rename
+Border* @0,0 600x2000 bg=#fff5f4ed
+  DockPanel @0,0 600x2000 fill=True
+    Border @0,0 600x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=24,0,24,0
+      StackPanel @24,0 552x51 orient=Vertical spacing=0
+        DockPanel @0,0 552x30 va=Center fill=True
+          StackPanel @522,0 30x30 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @7,13 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 522x30 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @38,0 415x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 focusable cursor name=重命名对话：京都行程 tip=京都行程 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @0,0 0x0 va=Center clip cursor name=京都行程 tip=京都行程 size=16 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 京都行程
+              Border @0,0 415x30 va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ff1b365d bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @13,1 389x28 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @461,6 61x17 op=0 va=Center name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @8,2 45x13 va=Center orient=Horizontal spacing=8
+                Border @0,4 5x5 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @13,0 32x13 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,0 0x0 hidden bg=null pad=16,0,16,4
+          Border* @0,0 0x0 ha=Left bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @0,0 0x0 va=Center clip size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 
+    Grid @0,52 600x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 600x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @24,20 552x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @298,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 552x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x94 orient=Vertical spacing=0
+              DockPanel @0,0 552x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x56 dock=Left bg=Transparent
+                  StackPanel @0,0 514x56 orient=Vertical spacing=0
+                    StackPanel @0,0 514x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @399,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 552x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x64 orient=Vertical spacing=0
+              DockPanel @0,0 552x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x26 dock=Left bg=Transparent
+                  StackPanel @0,0 514x26 orient=Vertical spacing=0
+                    StackPanel @0,0 514x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 98x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0.62 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=重新生成 help=丢弃最后一次回复并重新生成 tip=重新生成 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.85438537597656, -916.0176391601562, 832.2599487304688, 832.0424194335938:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== generating
+Border* @0,0 600x2000 bg=#fff5f4ed
+  DockPanel @0,0 600x2000 fill=True
+    Border @0,0 600x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=24,0,24,0
+      StackPanel @24,0 552x51 orient=Vertical spacing=0
+        DockPanel @0,0 552x30 va=Center fill=True
+          StackPanel @522,0 30x30 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @7,13 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 522x30 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @38,0 415x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 415x30 va=Center h=30 minw=120 minh=30 maxh=30 focusable cursor name=重命名对话：京都行程 tip=京都行程 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @13,5 389x20 va=Center clip cursor name=京都行程 tip=京都行程 size=16 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 京都行程
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @461,6 61x17 va=Center focusable name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @8,2 45x13 va=Center orient=Horizontal spacing=8
+                Border @0,4 5x5 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @13,0 32x13 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,0 0x0 hidden bg=null pad=16,0,16,4
+          Border* @0,0 0x0 ha=Left bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @0,0 0x0 va=Center clip size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 
+    Grid @0,52 600x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 600x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @24,20 552x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @298,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 552x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x94 orient=Vertical spacing=0
+              DockPanel @0,0 552x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x56 dock=Left bg=Transparent
+                  StackPanel @0,0 514x56 orient=Vertical spacing=0
+                    StackPanel @0,0 514x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @399,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 552x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x64 orient=Vertical spacing=0
+              DockPanel @0,0 552x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x26 dock=Left bg=Transparent
+                  StackPanel @0,0 514x26 orient=Vertical spacing=0
+                    StackPanel @0,0 514x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 98x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0.62 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=重新生成 help=丢弃最后一次回复并重新生成 tip=重新生成 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.85438537597656, -916.0176391601562, 832.2599487304688, 832.0424194335938:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== streaming
+Border* @0,0 600x2000 bg=#fff5f4ed
+  DockPanel @0,0 600x2000 fill=True
+    Border @0,0 600x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=24,0,24,0
+      StackPanel @24,0 552x51 orient=Vertical spacing=0
+        DockPanel @0,0 552x30 va=Center fill=True
+          StackPanel @522,0 30x30 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @7,13 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 522x30 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @38,0 415x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 415x30 va=Center h=30 minw=120 minh=30 maxh=30 focusable cursor name=重命名对话：京都行程 tip=京都行程 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @13,5 389x20 va=Center clip cursor name=京都行程 tip=京都行程 size=16 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 京都行程
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @461,6 61x17 va=Center focusable name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @8,2 45x13 va=Center orient=Horizontal spacing=8
+                Border @0,4 5x5 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @13,0 32x13 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,0 0x0 hidden bg=null pad=16,0,16,4
+          Border* @0,0 0x0 ha=Left bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @0,0 0x0 va=Center clip size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 
+    Grid @0,52 600x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 600x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @24,20 552x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @298,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 552x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x94 orient=Vertical spacing=0
+              DockPanel @0,0 552x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x56 dock=Left bg=Transparent
+                  StackPanel @0,0 514x56 orient=Vertical spacing=0
+                    StackPanel @0,0 514x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @399,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 552x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x64 orient=Vertical spacing=0
+              DockPanel @0,0 552x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x26 dock=Left bg=Transparent
+                  StackPanel @0,0 514x26 orient=Vertical spacing=0
+                    StackPanel @0,0 514x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,430 552x77 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x77 orient=Vertical spacing=0
+              DockPanel @0,0 552x39 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x39 dock=Left bg=Transparent
+                  StackPanel @0,0 514x39 orient=Vertical spacing=0
+                    StackPanel @0,0 514x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u6B63\u5728\u6574\u7406\u7B2C\u56DB\u5929" 
+                    Border @0,24 7x15 ha=Left w=7 h=15 bg=#ff1b365d cr=1.5,1.5,1.5,1.5
+              StackPanel @38,47 0x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 0x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== crumb-clickable
+Border* @0,0 600x2000 bg=#fff5f4ed
+  DockPanel @0,0 600x2000 fill=True
+    Border @0,0 600x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=24,0,24,0
+      StackPanel @24,0 552x51 orient=Vertical spacing=0
+        DockPanel @0,0 552x30 va=Center fill=True
+          StackPanel @522,0 30x30 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @7,13 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 522x30 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @38,0 415x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 415x30 va=Center h=30 minw=120 minh=30 maxh=30 focusable cursor name=重命名对话：京都行程 tip=京都行程 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @13,5 389x20 va=Center clip cursor name=京都行程 tip=京都行程 size=16 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 京都行程
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @461,6 61x17 op=0 va=Center name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @8,2 45x13 va=Center orient=Horizontal spacing=8
+                Border @0,4 5x5 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @13,0 32x13 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,30 552x28 bg=null pad=16,0,16,4
+          Border* @16,0 121x24 ha=Left focusable cursor name=分叉自「旅行」 help=回到父对话「旅行」 role=Button tip=回到父对话「旅行」 bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @8,4 105x16 va=Center cursor orient=Horizontal spacing=8
+              Image @0,0 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @24,1 81x14 va=Center clip cursor size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 分叉自「旅行」
+    Grid @0,52 600x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 600x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @24,20 552x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @298,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 552x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x94 orient=Vertical spacing=0
+              DockPanel @0,0 552x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x56 dock=Left bg=Transparent
+                  StackPanel @0,0 514x56 orient=Vertical spacing=0
+                    StackPanel @0,0 514x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @399,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 552x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x64 orient=Vertical spacing=0
+              DockPanel @0,0 552x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x26 dock=Left bg=Transparent
+                  StackPanel @0,0 514x26 orient=Vertical spacing=0
+                    StackPanel @0,0 514x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 98x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0.62 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=重新生成 help=丢弃最后一次回复并重新生成 tip=重新生成 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.85438537597656, -916.0176391601562, 832.2599487304688, 832.0424194335938:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== crumb-deleted
+Border* @0,0 600x2000 bg=#fff5f4ed
+  DockPanel @0,0 600x2000 fill=True
+    Border @0,0 600x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=24,0,24,0
+      StackPanel @24,0 552x51 orient=Vertical spacing=0
+        DockPanel @0,0 552x30 va=Center fill=True
+          StackPanel @522,0 30x30 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @7,13 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 522x30 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @38,0 415x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 415x30 va=Center h=30 minw=120 minh=30 maxh=30 focusable cursor name=重命名对话：京都行程 tip=京都行程 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @13,5 389x20 va=Center clip cursor name=京都行程 tip=京都行程 size=16 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 京都行程
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @461,6 61x17 op=0 va=Center name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @8,2 45x13 va=Center orient=Horizontal spacing=8
+                Border @0,4 5x5 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @13,0 32x13 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,30 552x28 bg=null pad=16,0,16,4
+          Border* @16,0 121x24 ha=Left name=分叉自「旅行」 help=父对话已删除 role=Text tip=父对话已删除 bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @8,4 105x16 va=Center orient=Horizontal spacing=8
+              Image @0,0 16x16 ha=Center va=Center w=16 h=16 role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @24,1 81x14 va=Center clip size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 分叉自「旅行」
+    Grid @0,52 600x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 600x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @24,20 552x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @298,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 552x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x94 orient=Vertical spacing=0
+              DockPanel @0,0 552x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x56 dock=Left bg=Transparent
+                  StackPanel @0,0 514x56 orient=Vertical spacing=0
+                    StackPanel @0,0 514x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @399,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 552x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x64 orient=Vertical spacing=0
+              DockPanel @0,0 552x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x26 dock=Left bg=Transparent
+                  StackPanel @0,0 514x26 orient=Vertical spacing=0
+                    StackPanel @0,0 514x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 98x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0.62 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=重新生成 help=丢弃最后一次回复并重新生成 tip=重新生成 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.85438537597656, -916.0176391601562, 832.2599487304688, 832.0424194335938:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== compact
+Border* @0,0 400x2000 bg=#fff5f4ed
+  DockPanel @0,0 400x2000 fill=True
+    Border @0,0 400x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=16,0,16,0
+      StackPanel @16,0 368x51 orient=Vertical spacing=0
+        DockPanel @0,0 368x44 va=Center fill=True
+          StackPanel @324,0 44x44 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 44x44 ha=Center va=Center w=44 h=44 minw=44 minh=44 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @14,20 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 324x44 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 44x44 ha=Center va=Center w=44 h=44 minw=44 minh=44 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @14,14 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @52,7 264x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 264x30 va=Center h=30 minw=120 minh=30 maxh=30 focusable cursor name=重命名对话：京都行程 tip=京都行程 cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @13,5 238x20 va=Center clip cursor name=京都行程 tip=京都行程 size=16 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 京都行程
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @0,0 0x0 hidden op=0 va=Center name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+                Border @0,0 0x0 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @0,0 0x0 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,44 368x28 bg=null pad=16,0,16,4
+          Border* @16,0 121x24 ha=Left focusable cursor name=分叉自「旅行」 help=回到父对话「旅行」 role=Button tip=回到父对话「旅行」 bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @8,4 105x16 va=Center cursor orient=Horizontal spacing=8
+              Image @0,0 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @24,1 81x14 va=Center clip cursor size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 分叉自「旅行」
+    Grid @0,52 400x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 400x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @16,20 368x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 368x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 368x88 orient=Vertical spacing=0
+              StackPanel @114,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @232,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 368x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 368x94 orient=Vertical spacing=0
+              DockPanel @0,0 368x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 330x56 dock=Left bg=Transparent
+                  StackPanel @0,0 330x56 orient=Vertical spacing=0
+                    StackPanel @0,0 330x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 330x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 330x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 368x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 368x88 orient=Vertical spacing=0
+              StackPanel @215,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @232,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 368x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 368x64 orient=Vertical spacing=0
+              DockPanel @0,0 368x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 330x26 dock=Left bg=Transparent
+                  StackPanel @0,0 330x26 orient=Vertical spacing=0
+                    StackPanel @0,0 330x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 330x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 98x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0.62 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=重新生成 help=丢弃最后一次回复并重新生成 tip=重新生成 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.85438537597656, -916.0176391601562, 832.2599487304688, 832.0424194335938:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=44 h=44 minw=44 minh=44 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试
+== readonly-title
+Border* @0,0 600x2000 bg=#fff5f4ed
+  DockPanel @0,0 600x2000 fill=True
+    Border @0,0 600x52 h=52 dock=Top bg=null bd=#ffece9de bt=0,0,0,1 pad=24,0,24,0
+      StackPanel @24,0 552x51 orient=Vertical spacing=0
+        DockPanel @0,0 552x30 va=Center fill=True
+          StackPanel @522,0 30x30 va=Center dock=Right orient=Horizontal spacing=4
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=对话操作 tip=对话操作 bg=Transparent cr=8,8,8,8
+              Image @7,13 16x3.54 ha=Center va=Center w=16 h=16 cursor role=Image glyph=125.00279235839844, -582.954833984375, 749.962890625, 165.92333984375:#ff4e4c46
+          Grid @0,0 522x30 va=Center dock=Left cols=Auto/0;1*/0;Auto/0 rows=
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=切换侧边栏（Ctrl / ⌘ + B） tip=切换侧边栏（Ctrl / ⌘ + B） cell=0,0 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -915.875732421875, 831.25, 831.500732421875:#ff4e4c46
+            Grid @38,0 415x30 va=Center h=30 minh=30 maxh=30 cell=0,1 cols= rows=
+              Border* @0,0 415x30 va=Center h=30 minw=120 minh=30 maxh=30 name=加载中… tip=加载中… cell=0,0 bg=Transparent bd=Transparent bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBlock @13,5 389x20 va=Center clip name=加载中… tip=加载中… size=16 weight=Medium fg=#ff6e6b62 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 加载中…
+              Border @0,0 0x0 hidden va=Center h=30 minw=120 minh=30 maxh=30 cell=0,0 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=6,6,6,6 pad=12,0,12,0
+                TextBox @0,0 0x0 va=Center h=28 minw=64 maxh=28 focusable clip
+            Border @461,6 61x17 op=0 va=Center name=正在生成回答 tip=正在生成回答 cell=0,2 bg=#ffeff3f8 cr=999,999,999,999 pad=8,2,8,2
+              StackPanel @8,2 45x13 va=Center orient=Horizontal spacing=8
+                Border @0,4 5x5 va=Center w=5 h=5 bg=#ff1b365d cr=999,999,999,999
+                TextBlock @13,0 32x13 va=Center clip size=10.5 weight=Normal fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                  text: 生成中
+        Border @0,0 0x0 hidden bg=null pad=16,0,16,4
+          Border* @0,0 0x0 ha=Left bg=Transparent cr=6,6,6,6 pad=8,4,8,4
+            StackPanel @0,0 0x0 va=Center orient=Horizontal spacing=8
+              Image @0,0 0x0 ha=Center va=Center w=16 h=16 role=Image glyph=84.41670227050781, -915.7766723632812, 831.1663208007812, 831.3599853515625:#ff4e4c46
+              TextBlock @0,0 0x0 va=Center clip size=11.5 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                text: 
+    Grid @0,52 600x1948 dock=Left cols= rows=
+      ScrollViewer @0,0 600x1948 clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @24,20 552x1880 m=0,0,0,48 orient=Vertical spacing=24
+          Border @0,0 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @298,0 254x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 216x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 182x24 orient=Vertical spacing=0
+                    StackPanel @0,0 182x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 174x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 174x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 帮我列一个三天的京都行程
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @228,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 1 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,112 552x94 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x94 orient=Vertical spacing=0
+              DockPanel @0,0 552x56 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x56 dock=Left bg=Transparent
+                  StackPanel @0,0 514x56 orient=Vertical spacing=0
+                    StackPanel @0,0 514x56 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E00\u5929\uFF1A\u6E05\u6C34\u5BFA\u3001\u4E8C\u5E74\u5742\u3002" 
+                      SelectableTextBlock @0,32 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E8C\u5929\uFF1A\u5C9A\u5C71\u7AF9\u6797\u3002" 
+              StackPanel @38,64 64x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 64x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 2 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,230 552x88 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x88 orient=Vertical spacing=0
+              StackPanel @399,0 153x50 ha=Right orient=Horizontal spacing=12
+                Border @0,0 115x50 ha=Right focusable name=用户消息 bg=#ff1b365d bd=#ffddd9ca bt=1,1,1,1 cr=12,12,6,12 pad=16,12,16,12
+                  StackPanel @17,13 81x24 orient=Vertical spacing=0
+                    StackPanel @0,0 81x24 orient=Vertical spacing=4
+                      ScrollViewer @0,0 73x24 m=0,0,8,0 maxh=200 clip hbar=Disabled vbar=Auto
+                        SelectableTextBlock @0,0 73x24 focusable clip cursor size=14.5 weight=Normal fg=#fffbfaf7 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#59ffffff noflyout
+                          text: 第三天呢？
+                      Border* @0,0 0x0 hidden ha=Left va=Center minh=34 focusable cursor name=展开全部 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+                        TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                          text: 展开全部
+                Border @127,0 26x26 va=Top w=26 h=26 bg=#ffe2eaf4 cr=999,999,999,999
+                  TextBlock @8,6 11x13 ha=Center va=Center clip size=10.5 weight=Medium fg=#ff1b365d lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+                    text: 你
+              StackPanel @416,58 98x30 m=0,8,38,0 ha=Right va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制用户消息 3 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=编辑并分叉 help=以编辑后的消息创建分叉对话 tip=编辑并分叉 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x15.99 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.52345657348633, -957.8466186523438, 916.6149291992188, 916.1497802734375:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+          Border @0,342 552x64 bg=Transparent cr=12,12,12,12
+            StackPanel @0,0 552x64 orient=Vertical spacing=0
+              DockPanel @0,0 552x26 fill=True
+                Border @0,0 26x26 m=0,0,12,0 va=Top w=26 h=26 dock=Left bg=Transparent
+                Border @38,0 514x26 dock=Left bg=Transparent
+                  StackPanel @0,0 514x26 orient=Vertical spacing=0
+                    StackPanel @0,0 514x24 orient=Vertical spacing=0
+                      SelectableTextBlock @0,0 514x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+                        run "\u7B2C\u4E09\u5929\uFF1A\u4F0F\u89C1\u7A3B\u8377\u5927\u793E\u3002" 
+              StackPanel @38,34 98x30 m=38,8,0,0 ha=Left va=Center orient=Horizontal spacing=8
+                StackPanel @0,0 98x30 op=0.62 va=Center minh=30 orient=Horizontal spacing=4
+                  Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制助手消息 4 help=复制消息正文 tip=复制 bg=Transparent cr=8,8,8,8
+                    Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff4e4c46
+                  Border* @34,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=重新生成 help=丢弃最后一次回复并重新生成 tip=重新生成 bg=Transparent cr=8,8,8,8
+                    Image @7,7 16x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.85438537597656, -916.0176391601562, 832.2599487304688, 832.0424194335938:#ff4e4c46
+                  Border* @68,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=删除这条消息 help=从对话历史中删除这条消息 tip=删除这条消息 bg=Transparent cr=8,8,8,8
+                    Image @8,7 14.51x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=84.375, -958.548095703125, 831.25, 916.673095703125:#ff4e4c46
+      ScrollViewer @0,0 0x0 hidden clip cell=0,0 hbar=Disabled vbar=Auto
+        StackPanel @0,0 0x0 m=16,0,16,32 hidden ha=Center va=Center orient=Vertical spacing=0
+      Border* @0,0 0x0 m=0,0,20,16 hidden ha=Right va=Bottom w=30 h=30 minw=30 minh=30 focusable cursor name=回到最新 tip=回到最新 cell=0,0 bg=#ff1b365d cr=999,999,999,999
+        StackPanel @0,0 0x0 va=Center cursor orient=Horizontal spacing=8
+          Image @0,0 0x0 ha=Center va=Center w=16 h=16 cursor role=Image glyph=166.9102325439453, -832.8493041992188, 666.1795654296875, 666.0682983398438:#fffbfaf7
+          TextBlock @0,0 0x0 hidden va=Center clip cursor size=12.5 weight=Medium fg=#fffbfaf7 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+            text: 回到最新
+      Border @0,0 0x0 m=16,8,16,0 hidden va=Top cell=0,0 bg=White bd=#ff8a5a18 bt=1,1,1,1 cr=12,12,12,12 pad=16,8,16,8
+        Grid @0,0 0x0 cols=1*/0;Auto/0 rows=
+          TextBlock @0,0 0x0 va=Center clip cell=0,0 size=12.5 weight=Normal fg=#ff141413 lh=nan wrap=Wrap font=Sarasa Gothic SC align=Start
+            text: 
+          Border* @0,0 0x0 va=Center minh=34 focusable cursor name=重试加载更早消息 cell=0,1 bg=#fffbfaf7 bd=#ffd9d5c7 bt=1,1,1,1 cr=8,8,8,8 pad=16,6,16,6
+            TextBlock @0,0 0x0 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff141413 lh=nan wrap=NoWrap font=Sarasa Gothic SC align=Start
+              text: 重试

@@ -123,7 +123,7 @@ type ChatHeader(look: ChatHeaderLook) =
 
     let caption = TextBlock(Text = "生成中", Foreground = ink HeaderInk.Accent, VerticalAlignment = VerticalAlignment.Center)
     let dot = Border(Background = ink HeaderInk.Accent, VerticalAlignment = VerticalAlignment.Center)
-    let chipRow = StackPanel(Orientation = Orientation.Horizontal)
+    let chipRow = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
     let generatingChip =
         Border(Background = ink HeaderInk.AccentFaint, VerticalAlignment = VerticalAlignment.Center,
                Opacity = 0.0, IsHitTestVisible = false, Child = chipRow)
@@ -136,7 +136,7 @@ type ChatHeader(look: ChatHeaderLook) =
     let crumbBar = Border(IsVisible = false, Child = crumbAction)
 
     let leftGroup = Grid(VerticalAlignment = VerticalAlignment.Center)
-    let rightGroup = StackPanel(Orientation = Orientation.Horizontal)
+    let rightGroup = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
     let dock = DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
     let top = StackPanel()
     let bar = Border(BorderBrush = ink HeaderInk.Hairline, IsVisible = false, Child = top)
@@ -290,7 +290,7 @@ type ChatHeader(look: ChatHeaderLook) =
         Follow.live bar (gauge HeaderGauge.SpaceXs) (fun s -> rightGroup.Spacing <- s)
         Follow.live2 bar (gauge HeaderGauge.SpaceMd) (gauge HeaderGauge.SpaceXs) (fun m x -> crumbAction.Padding <- Thickness(m, x))
         Follow.live2 bar (gauge HeaderGauge.ShellInset) (gauge HeaderGauge.SpaceXs) (fun i x -> crumbBar.Padding <- Thickness(i, 0.0, i, x))
-        Follow.live bar (gauge HeaderGauge.BarHeight) (fun h -> dock.Height <- h)
+        Follow.live bar (gauge HeaderGauge.BarHeight) (fun h -> bar.Height <- h)
         Follow.live bar (gauge HeaderGauge.ShellInset) (fun i -> bar.Padding <- Thickness(i, 0.0, i, 0.0))
 
         chipRow.Children.Add dot
@@ -353,7 +353,7 @@ type ChatHeader(look: ChatHeaderLook) =
         let crumbIcon = look.Glyph HeaderGlyph.Fork (ink HeaderInk.TextMuted)
         Follow.live crumbIcon (gauge HeaderGauge.IconGlyph) (fun s -> crumbIcon.Width <- s; crumbIcon.Height <- s)
         crumbIcon.VerticalAlignment <- VerticalAlignment.Center
-        let crumbRow = StackPanel(Orientation = Orientation.Horizontal)
+        let crumbRow = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
         Follow.live crumbRow (gauge HeaderGauge.SpaceMd) (fun s -> crumbRow.Spacing <- s)
         crumbRow.Children.Add crumbIcon
         crumbRow.Children.Add crumbText
@@ -362,7 +362,6 @@ type ChatHeader(look: ChatHeaderLook) =
         top.Children.Add dock
         top.Children.Add crumbBar
         visual ()
-        syncChip ()
 
     /// 放进布局的根（顶栏 + 面包屑）
     member _.Host: Border = bar
@@ -435,6 +434,7 @@ type ChatHeader(look: ChatHeaderLook) =
             ToolTip.SetTip(crumbAction, c.Description)
             AutomationProperties.SetName(crumbAction, c.Text)
             AutomationProperties.SetHelpText(crumbAction, c.Description)
-            if c.Clickable then AutomationProperties.SetControlTypeOverride(crumbAction, Nullable())
+            // 可点时读屏报按钮（旧 AutomationProperties.SetRole Button），父对话没了报纯文本
+            if c.Clickable then AutomationProperties.SetControlTypeOverride(crumbAction, Nullable AutomationControlType.Button)
             else AutomationProperties.SetControlTypeOverride(crumbAction, Nullable AutomationControlType.Text)
             crumbBar.IsVisible <- not (String.IsNullOrEmpty c.Text)

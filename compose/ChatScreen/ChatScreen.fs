@@ -95,6 +95,10 @@ and private TapPeer(owner: Tap) =
     interface IInvokeProvider with
         member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())
 
+/// 根面：与旧 ChatView 一样是 Border 派生类型
+type ScreenRoot() =
+    inherit Border()
+
 /// 组合者：对话屏（旧 Views/ChatView.fs 的整体 + AppShell 里对话列的接线）。
 /// 顶栏走 ChatHeader，滚动 / 空态 / 骨架 / 跳转走 ChatPane，卡片走 MessageCards + CardDeck，
 /// 挂载窗口走 MountWindow，定位高亮记账走 RevealFlash，面包屑走 BreadcrumbAction；
@@ -113,7 +117,7 @@ type ChatScreen
     let mountWindow = MountWindow(MountWindow.Initial, MountWindow.Step)
     let flash = RevealFlash()
     let breadcrumb = BreadcrumbAction<Guid>()
-    let root = Border(Background = looks.Canvas)
+    let root = ScreenRoot(Background = looks.Canvas)
     let layout = DockPanel()
     let mutable mounted: ScreenKey option[] = [||]
     let mutable last: ScreenFrame option = None

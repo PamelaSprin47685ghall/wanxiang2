@@ -47,6 +47,10 @@
     <Project Path="libs/BoundedCache/BoundedCache.fsproj" />
     <Project Path="libs/BoundedCache/tests/BoundedCache.Tests.fsproj" />
   </Folder>
+  <Folder Name="/BoundedWait/">
+    <Project Path="libs/BoundedWait/BoundedWait.fsproj" />
+    <Project Path="libs/BoundedWait/tests/BoundedWait.Tests.fsproj" />
+  </Folder>
   <Folder Name="/BreadcrumbAction/">
     <Project Path="libs/BreadcrumbAction/BreadcrumbAction.fsproj" />
     <Project Path="libs/BreadcrumbAction/tests/BreadcrumbAction.Tests.fsproj" />
@@ -483,6 +487,10 @@
     <Project Path="libs/ProbeFailureKind/ProbeFailureKind.fsproj" />
     <Project Path="libs/ProbeFailureKind/tests/ProbeFailureKind.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ProbeSlot/">
+    <Project Path="libs/ProbeSlot/ProbeSlot.fsproj" />
+    <Project Path="libs/ProbeSlot/tests/ProbeSlot.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PromptHistory/">
     <Project Path="libs/PromptHistory/PromptHistory.fsproj" />
     <Project Path="libs/PromptHistory/tests/PromptHistory.Tests.fsproj" />
@@ -562,6 +570,10 @@
   <Folder Name="/SecretText/">
     <Project Path="libs/SecretText/SecretText.fsproj" />
     <Project Path="libs/SecretText/tests/SecretText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SectionMemory/">
+    <Project Path="libs/SectionMemory/SectionMemory.fsproj" />
+    <Project Path="libs/SectionMemory/tests/SectionMemory.Tests.fsproj" />
   </Folder>
   <Folder Name="/SendKey/">
     <Project Path="libs/SendKey/SendKey.fsproj" />

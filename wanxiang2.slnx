@@ -95,6 +95,10 @@
     <Project Path="libs/ClientTomlFile/ClientTomlFile.fsproj" />
     <Project Path="libs/ClientTomlFile/tests/ClientTomlFile.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ColorBlend/">
+    <Project Path="libs/ColorBlend/ColorBlend.fsproj" />
+    <Project Path="libs/ColorBlend/tests/ColorBlend.Tests.fsproj" />
+  </Folder>
   <Folder Name="/CommandId/">
     <Project Path="libs/CommandId/CommandId.fsproj" />
     <Project Path="libs/CommandId/tests/CommandId.Tests.fsproj" />
@@ -255,6 +259,10 @@
     <Project Path="libs/MarkdownBlocks/MarkdownBlocks.fsproj" />
     <Project Path="libs/MarkdownBlocks/tests/MarkdownBlocks.Tests.fsproj" />
   </Folder>
+  <Folder Name="/MathBaseline/">
+    <Project Path="libs/MathBaseline/MathBaseline.fsproj" />
+    <Project Path="libs/MathBaseline/tests/MathBaseline.Tests.fsproj" />
+  </Folder>
   <Folder Name="/McpCheck/">
     <Project Path="libs/McpCheck/McpCheck.fsproj" />
     <Project Path="libs/McpCheck/tests/McpCheck.Tests.fsproj" />
@@ -335,9 +343,17 @@
     <Project Path="libs/PlainText/PlainText.fsproj" />
     <Project Path="libs/PlainText/tests/PlainText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/PopupPlacement/">
+    <Project Path="libs/PopupPlacement/PopupPlacement.fsproj" />
+    <Project Path="libs/PopupPlacement/tests/PopupPlacement.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ProbeFailureKind/">
     <Project Path="libs/ProbeFailureKind/ProbeFailureKind.fsproj" />
     <Project Path="libs/ProbeFailureKind/tests/ProbeFailureKind.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PromptHistory/">
+    <Project Path="libs/PromptHistory/PromptHistory.fsproj" />
+    <Project Path="libs/PromptHistory/tests/PromptHistory.Tests.fsproj" />
   </Folder>
   <Folder Name="/ProviderCheck/">
     <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />
@@ -386,6 +402,10 @@
   <Folder Name="/SecretText/">
     <Project Path="libs/SecretText/SecretText.fsproj" />
     <Project Path="libs/SecretText/tests/SecretText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SendKey/">
+    <Project Path="libs/SendKey/SendKey.fsproj" />
+    <Project Path="libs/SendKey/tests/SendKey.Tests.fsproj" />
   </Folder>
   <Folder Name="/SharedHttpClients/">
     <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />

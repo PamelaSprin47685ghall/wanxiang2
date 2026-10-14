@@ -1,0 +1,22 @@
+metrics None -> 0 0 0
+metrics Some (10.0, 7.5, 2.25) -> 10 9.75 7.5
+metrics Some (0.0, 0.0, 0.0) -> 0 0 0
+metrics Some (33.3, 12.1, 0.0) -> 33.3 12.1 12.1
+drawBaseline true 9.75 None 0 -> 9.75
+drawBaseline true 9.75 None 3.5 -> 9.75
+drawBaseline true 9.75 None -2 -> 9.75
+drawBaseline true 9.75 Some 14.0 0 -> 9.75
+drawBaseline true 9.75 Some 14.0 3.5 -> 9.75
+drawBaseline true 9.75 Some 14.0 -2 -> 9.75
+drawBaseline true 9.75 Some 0.0 0 -> 9.75
+drawBaseline true 9.75 Some 0.0 3.5 -> 9.75
+drawBaseline true 9.75 Some 0.0 -2 -> 9.75
+drawBaseline false 9.75 None 0 -> 9.75
+drawBaseline false 9.75 None 3.5 -> 9.75
+drawBaseline false 9.75 None -2 -> 9.75
+drawBaseline false 9.75 Some 14.0 0 -> 14
+drawBaseline false 9.75 Some 14.0 3.5 -> 10.5
+drawBaseline false 9.75 Some 14.0 -2 -> 16
+drawBaseline false 9.75 Some 0.0 0 -> 0
+drawBaseline false 9.75 Some 0.0 3.5 -> -3.5
+drawBaseline false 9.75 Some 0.0 -2 -> 2

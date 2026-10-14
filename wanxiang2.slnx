@@ -99,6 +99,10 @@
     <Project Path="libs/ColorBlend/ColorBlend.fsproj" />
     <Project Path="libs/ColorBlend/tests/ColorBlend.Tests.fsproj" />
   </Folder>
+  <Folder Name="/CommandFeedback/">
+    <Project Path="libs/CommandFeedback/CommandFeedback.fsproj" />
+    <Project Path="libs/CommandFeedback/tests/CommandFeedback.Tests.fsproj" />
+  </Folder>
   <Folder Name="/CommandId/">
     <Project Path="libs/CommandId/CommandId.fsproj" />
     <Project Path="libs/CommandId/tests/CommandId.Tests.fsproj" />
@@ -106,6 +110,14 @@
   <Folder Name="/CommitTimeline/">
     <Project Path="libs/CommitTimeline/CommitTimeline.fsproj" />
     <Project Path="libs/CommitTimeline/tests/CommitTimeline.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ComposerDrafts/">
+    <Project Path="libs/ComposerDrafts/ComposerDrafts.fsproj" />
+    <Project Path="libs/ComposerDrafts/tests/ComposerDrafts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConfigFeedback/">
+    <Project Path="libs/ConfigFeedback/ConfigFeedback.fsproj" />
+    <Project Path="libs/ConfigFeedback/tests/ConfigFeedback.Tests.fsproj" />
   </Folder>
   <Folder Name="/ConnectionIssue/">
     <Project Path="libs/ConnectionIssue/ConnectionIssue.fsproj" />
@@ -150,6 +162,10 @@
   <Folder Name="/DirLock/">
     <Project Path="libs/DirLock/DirLock.fsproj" />
     <Project Path="libs/DirLock/tests/DirLock.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DownloadBuffers/">
+    <Project Path="libs/DownloadBuffers/DownloadBuffers.fsproj" />
+    <Project Path="libs/DownloadBuffers/tests/DownloadBuffers.Tests.fsproj" />
   </Folder>
   <Folder Name="/DraftStore/">
     <Project Path="libs/DraftStore/DraftStore.fsproj" />
@@ -315,6 +331,10 @@
     <Project Path="libs/ModelVision/ModelVision.fsproj" />
     <Project Path="libs/ModelVision/tests/ModelVision.Tests.fsproj" />
   </Folder>
+  <Folder Name="/NavigationState/">
+    <Project Path="libs/NavigationState/NavigationState.fsproj" />
+    <Project Path="libs/NavigationState/tests/NavigationState.Tests.fsproj" />
+  </Folder>
   <Folder Name="/OnboardingRules/">
     <Project Path="libs/OnboardingRules/OnboardingRules.fsproj" />
     <Project Path="libs/OnboardingRules/tests/OnboardingRules.Tests.fsproj" />
@@ -410,6 +430,10 @@
   <Folder Name="/SharedHttpClients/">
     <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />
     <Project Path="libs/SharedHttpClients/tests/SharedHttpClients.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ShortcutKeys/">
+    <Project Path="libs/ShortcutKeys/ShortcutKeys.fsproj" />
+    <Project Path="libs/ShortcutKeys/tests/ShortcutKeys.Tests.fsproj" />
   </Folder>
   <Folder Name="/ShutdownSignals/">
     <Project Path="libs/ShutdownSignals/ShutdownSignals.fsproj" />

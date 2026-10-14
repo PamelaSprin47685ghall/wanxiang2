@@ -859,6 +859,10 @@
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
     <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ToolsPane/">
+    <Project Path="libs/ToolsPane/ToolsPane.fsproj" />
+    <Project Path="libs/ToolsPane/tests/ToolsPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ToolsPolicy/">
     <Project Path="libs/ToolsPolicy/ToolsPolicy.fsproj" />
     <Project Path="libs/ToolsPolicy/tests/ToolsPolicy.Tests.fsproj" />

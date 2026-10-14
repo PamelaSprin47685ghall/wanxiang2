@@ -143,6 +143,10 @@
     <Project Path="libs/DirLock/DirLock.fsproj" />
     <Project Path="libs/DirLock/tests/DirLock.Tests.fsproj" />
   </Folder>
+  <Folder Name="/DraftStore/">
+    <Project Path="libs/DraftStore/DraftStore.fsproj" />
+    <Project Path="libs/DraftStore/tests/DraftStore.Tests.fsproj" />
+  </Folder>
   <Folder Name="/FailureLimiter/">
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
     <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
@@ -166,6 +170,10 @@
   <Folder Name="/HljsHtml/">
     <Project Path="libs/HljsHtml/HljsHtml.fsproj" />
     <Project Path="libs/HljsHtml/tests/HljsHtml.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostCatalog/">
+    <Project Path="libs/HostCatalog/HostCatalog.fsproj" />
+    <Project Path="libs/HostCatalog/tests/HostCatalog.Tests.fsproj" />
   </Folder>
   <Folder Name="/HostHealth/">
     <Project Path="libs/HostHealth/HostHealth.fsproj" />
@@ -271,6 +279,10 @@
     <Project Path="libs/ModelListing/ModelListing.fsproj" />
     <Project Path="libs/ModelListing/tests/ModelListing.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ModelSwitcher/">
+    <Project Path="libs/ModelSwitcher/ModelSwitcher.fsproj" />
+    <Project Path="libs/ModelSwitcher/tests/ModelSwitcher.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ModelVision/">
     <Project Path="libs/ModelVision/ModelVision.fsproj" />
     <Project Path="libs/ModelVision/tests/ModelVision.Tests.fsproj" />
@@ -294,6 +306,10 @@
   <Folder Name="/PlainText/">
     <Project Path="libs/PlainText/PlainText.fsproj" />
     <Project Path="libs/PlainText/tests/PlainText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProbeFailureKind/">
+    <Project Path="libs/ProbeFailureKind/ProbeFailureKind.fsproj" />
+    <Project Path="libs/ProbeFailureKind/tests/ProbeFailureKind.Tests.fsproj" />
   </Folder>
   <Folder Name="/ProviderCheck/">
     <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />

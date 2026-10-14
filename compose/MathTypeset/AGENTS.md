@@ -7,7 +7,7 @@
 2. **字族选择、vlist 堆叠、居中、根号拉伸与裁剪的规则归本组合者；量字形归宿主。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/math.txt` 由旧 MathLayout 在 Avalonia headless + Skia + 内嵌 KaTeX 字体下生成（旧 4 个 fixtures 与 RichJint 金样里的 12 个公式），每个字形记下字号与度量；测试回放这张度量表，输出文本与金样逐字节相同。
+1. [LEMMA: 1] 金样 `tests/golden/math.txt` 由旧 MathLayout 在 Avalonia headless + Skia + 内嵌 KaTeX 字体下生成（旧 4 个 fixtures 与 12 个公式；公式 HTML 由旧 JintRichBackend.MathHtml 现场生成，完整保留 SVG 路径里的换行），每个字形记下字号与度量；测试回放这张度量表，输出文本与金样逐字节相同。
 2. [LEMMA: 2] 字族空串表示正文字体（金样中显示为 Sarasa Gothic SC）。
 3. 与旧实现的差异：图元不再携带 FormattedText/Typeface/Geometry；旧实现在 Geometry.Parse 失败时整个 SVG 盒子变成空盒，新实现不解析路径，此情形由宿主负责（KaTeX 产出的路径都可解析）。
 

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：连接错误的用户可见文案与重试按钮文案。协作者：ConnectionIssue。 -->
+  <ItemGroup>
+    <Compile Include="ConnectIssueText.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.ConnectionIssue" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -79,6 +79,10 @@
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ChatEmptyText/">
+    <Project Path="libs/ChatEmptyText/ChatEmptyText.fsproj" />
+    <Project Path="libs/ChatEmptyText/tests/ChatEmptyText.Tests.fsproj" />
+  </Folder>
   <Folder Name="/CliArgs/">
     <Project Path="libs/CliArgs/CliArgs.fsproj" />
     <Project Path="libs/CliArgs/tests/CliArgs.Tests.fsproj" />
@@ -150,6 +154,10 @@
   <Folder Name="/DurationText/">
     <Project Path="libs/DurationText/DurationText.fsproj" />
     <Project Path="libs/DurationText/tests/DurationText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExportFileName/">
+    <Project Path="libs/ExportFileName/ExportFileName.fsproj" />
+    <Project Path="libs/ExportFileName/tests/ExportFileName.Tests.fsproj" />
   </Folder>
   <Folder Name="/FailureLimiter/">
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
@@ -299,9 +307,17 @@
     <Project Path="libs/ModelVision/ModelVision.fsproj" />
     <Project Path="libs/ModelVision/tests/ModelVision.Tests.fsproj" />
   </Folder>
+  <Folder Name="/OnboardingRules/">
+    <Project Path="libs/OnboardingRules/OnboardingRules.fsproj" />
+    <Project Path="libs/OnboardingRules/tests/OnboardingRules.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PairingCode/">
     <Project Path="libs/PairingCode/PairingCode.fsproj" />
     <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PairingHint/">
+    <Project Path="libs/PairingHint/PairingHint.fsproj" />
+    <Project Path="libs/PairingHint/tests/PairingHint.Tests.fsproj" />
   </Folder>
   <Folder Name="/PayloadFields/">
     <Project Path="libs/PayloadFields/PayloadFields.fsproj" />
@@ -426,6 +442,10 @@
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
     <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TranscriptMarkdown/">
+    <Project Path="libs/TranscriptMarkdown/TranscriptMarkdown.fsproj" />
+    <Project Path="libs/TranscriptMarkdown/tests/TranscriptMarkdown.Tests.fsproj" />
   </Folder>
   <Folder Name="/UiPrefs/">
     <Project Path="libs/UiPrefs/UiPrefs.fsproj" />

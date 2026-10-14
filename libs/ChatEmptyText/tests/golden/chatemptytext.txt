@@ -1,0 +1,10 @@
+text NotConnected -> 先连接一台万象主机 | 主机是运行万象的那台电脑：模型、密钥和对话都在它上面。
+text ConnectionFailed "连接被拒绝" -> 没能连上主机 | 连接被拒绝。请确认主机在运行、网络可达，然后重新连接。
+text ConnectionFailed "" -> 没能连上主机 | 。请确认主机在运行、网络可达，然后重新连接。
+text NoProvider -> 还没有可用的模型 | 添加一个模型服务并填入密钥，就可以开始对话了。
+text NoConversation -> 今天想讨论什么？ | 发出第一条消息后，会自动建立对话。
+text EmptyConversation -> 开始这段对话 | 输入问题，或附上一份文件。
+starter 解释概念 -> "\u7528\u901A\u4FD7\u7684\u8BDD\u89E3\u91CA\uFF1A"
+starter 总结要点 -> "\u5E2E\u6211\u603B\u7ED3\u4E0B\u9762\u8FD9\u6BB5\u5185\u5BB9\u7684\u8981\u70B9\uFF1A\n\n"
+starter 改写润色 -> "\u5E2E\u6211\u6539\u5199\u5F97\u66F4\u6E05\u695A\u3001\u66F4\u7B80\u6D01\uFF1A\n\n"
+starter 写代码 -> "\u5199\u4E00\u6BB5\u4EE3\u7801\uFF0C\u5B9E\u73B0\uFF1A"

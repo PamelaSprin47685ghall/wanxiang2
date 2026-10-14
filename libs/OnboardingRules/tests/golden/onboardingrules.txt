@@ -1,0 +1,22 @@
+FirstPrompt 你好，介绍一下你自己
+parseModelIds "" -> 
+parseModelIds "not json" -> 
+parseModelIds "[]" -> 
+parseModelIds "{}" -> 
+parseModelIds "{\u0022data\u0022:{}}" -> 
+parseModelIds "{\u0022data\u0022:[]}" -> 
+parseModelIds "{\u0022data\u0022:[{\u0022id\u0022:\u0022a\u0022},{\u0022id\u0022:\u0022b\u0022},{\u0022id\u0022:\u0022a\u0022},{\u0022x\u0022:1}]}" -> "a","b"
+parseModelIds "{\u0022object\u0022:\u0022list\u0022,\u0022data\u0022:[{\u0022id\u0022:\u0022qwen3:8b\u0022},{\u0022id\u0022:\u0022llama3.2\u0022}]}" -> "qwen3:8b","llama3.2"
+parseModelIds "{\u0022data\u0022:[{\u0022id\u0022:\u0022 \u0022},{\u0022id\u0022:5},{\u0022id\u0022:null},\u0022s\u0022,{\u0022id\u0022:\u0022ok\u0022}]}" -> "ok"
+canDiscoverLocal "" -> false
+canDiscoverLocal "ws://127.0.0.1:8765/ws" -> true
+canDiscoverLocal "http://localhost:8765" -> true
+canDiscoverLocal "https://wanxiang.example.com" -> false
+canDiscoverLocal "ws://[::1]:1/ws" -> true
+canDiscoverLocal "relative/path" -> false
+pickDefaultModel ["gpt-5"; "gpt-5-mini"] ["zzz"; "gpt-5"; "gpt-4o"] -> "gpt-5"
+pickDefaultModel ["gpt-5"; "gpt-5-mini"] ["aaa"; "zzz"] -> "aaa"
+pickDefaultModel ["gpt-5"; "gpt-5-mini"] ["gpt-5-mini"; "gpt-5"] -> "gpt-5"
+pickDefaultModel ["gpt-5"] [] -> "gpt-5"
+pickDefaultModel [] [] -> ""
+pickDefaultModel [] ["only"] -> "only"

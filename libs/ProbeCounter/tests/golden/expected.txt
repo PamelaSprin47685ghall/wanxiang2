@@ -1,0 +1,5 @@
+off a=0 b=0
+on a=2 b=1
+off-again a=2 b=1
+reset a=0 b=0
+after-reset a=0 b=1

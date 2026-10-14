@@ -439,6 +439,10 @@
     <Project Path="libs/PopupPlacement/PopupPlacement.fsproj" />
     <Project Path="libs/PopupPlacement/tests/PopupPlacement.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ProbeCounter/">
+    <Project Path="libs/ProbeCounter/ProbeCounter.fsproj" />
+    <Project Path="libs/ProbeCounter/tests/ProbeCounter.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ProbeFailureKind/">
     <Project Path="libs/ProbeFailureKind/ProbeFailureKind.fsproj" />
     <Project Path="libs/ProbeFailureKind/tests/ProbeFailureKind.Tests.fsproj" />
@@ -562,6 +566,10 @@
   <Folder Name="/StartReady/">
     <Project Path="libs/StartReady/StartReady.fsproj" />
     <Project Path="libs/StartReady/tests/StartReady.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StartupTrace/">
+    <Project Path="libs/StartupTrace/StartupTrace.fsproj" />
+    <Project Path="libs/StartupTrace/tests/StartupTrace.Tests.fsproj" />
   </Folder>
   <Folder Name="/StreamableHttp/">
     <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />

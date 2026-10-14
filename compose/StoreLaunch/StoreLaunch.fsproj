@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：入口处打开事件存储（doctor 修复、正常启动的只读检查）。协作者：EventStore、LedgerStore。命名空间 Wanxiang.App。 -->
+  <ItemGroup>
+    <Compile Include="StoreLaunch.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.EventStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LedgerStore" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

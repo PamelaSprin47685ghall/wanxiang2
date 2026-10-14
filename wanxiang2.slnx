@@ -43,9 +43,17 @@
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
   </Folder>
+  <Folder Name="/CliArgs/">
+    <Project Path="libs/CliArgs/CliArgs.fsproj" />
+    <Project Path="libs/CliArgs/tests/CliArgs.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ClientToken/">
     <Project Path="libs/ClientToken/ClientToken.fsproj" />
     <Project Path="libs/ClientToken/tests/ClientToken.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ClientTomlFile/">
+    <Project Path="libs/ClientTomlFile/ClientTomlFile.fsproj" />
+    <Project Path="libs/ClientTomlFile/tests/ClientTomlFile.Tests.fsproj" />
   </Folder>
   <Folder Name="/CommandId/">
     <Project Path="libs/CommandId/CommandId.fsproj" />
@@ -203,6 +211,10 @@
     <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />
     <Project Path="libs/ProviderCheck/tests/ProviderCheck.Tests.fsproj" />
   </Folder>
+  <Folder Name="/PwaAssets/">
+    <Project Path="libs/PwaAssets/PwaAssets.fsproj" />
+    <Project Path="libs/PwaAssets/tests/PwaAssets.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ReconnectBackoff/">
     <Project Path="libs/ReconnectBackoff/ReconnectBackoff.fsproj" />
     <Project Path="libs/ReconnectBackoff/tests/ReconnectBackoff.Tests.fsproj" />
@@ -210,6 +222,10 @@
   <Folder Name="/RefreshingPool/">
     <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
     <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RunModes/">
+    <Project Path="libs/RunModes/RunModes.fsproj" />
+    <Project Path="libs/RunModes/tests/RunModes.Tests.fsproj" />
   </Folder>
   <Folder Name="/SandboxFiles/">
     <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
@@ -222,6 +238,10 @@
   <Folder Name="/SharedHttpClients/">
     <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />
     <Project Path="libs/SharedHttpClients/tests/SharedHttpClients.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ShutdownSignals/">
+    <Project Path="libs/ShutdownSignals/ShutdownSignals.fsproj" />
+    <Project Path="libs/ShutdownSignals/tests/ShutdownSignals.Tests.fsproj" />
   </Folder>
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />

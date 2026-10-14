@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：本机桌面自动配对。协作者：ConfigStore、AppConfig、ClientToken、DesktopClient、ClientTomlFile。命名空间 Wanxiang.App。 -->
+  <ItemGroup>
+    <Compile Include="DesktopPairing.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.ConfigStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ClientToken" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesktopClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ClientTomlFile" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -175,6 +175,7 @@
 | WebSocket 连接（DeviceSightings、DeviceRules，组合 WsConnection） | 完成：认证零写配置真实组合测试；DeviceRules 单测 | 未开始：旧仓库删除 WsConnection.fs，ServerApp 传入 DeviceSightings 并 Seed 迁移 |
 | 主机（ListenAddress，组合 ServerApp） | 完成：旧主机/连接/设备/诊断等 16 个测试文件 158 条迁入通过；hostVersion 由宿主注入 | 未开始：旧仓库删除 Server 项目剩余源文件与已迁测试，改引用 Wanxiang2.ServerApp |
 | 客户端连接（ReconnectBackoff、ConnectionIssue、TextSocket、CommitTimeline，组合 WsClient） | 完成：旧 ClientStateAndWsClientTests 41 条迁入组合者、6 条退避用例迁入 ReconnectBackoff，本机真实 WebSocket 测试通过 | 未开始：旧仓库删除 src/Wanxiang.Client 全部源文件，改引用 Wanxiang2.WsClient、ReconnectBackoff、ConnectionIssue；UI 把 ConnectionIssue 分支改成限定名 |
+| 程序入口的非界面逻辑（CliArgs、RunModes、PwaAssets、ShutdownSignals、ClientTomlFile，组合 LaunchPlan、StoreLaunch、DesktopPairing） | 完成：真实磁盘、真实 EventStore/ConfigStore 上的组合测试通过；日志与错误文字与旧入口逐字相同 | 未开始：旧 Wanxiang.App/Program.fs 改为调用这些包，只留 Avalonia 启动、单实例与链接转发（UI）、信号注册 |
 | UI 纯模型 10.1（PinyinInitials、FuzzyMatch、MessageLink、ModelVision、MediaTypes，组合 CommandPalette） | 完成：旧 R20/ContinueLinkUndo/AttachmentVision 中的纯逻辑用例按名迁入通过 | 未开始：旧仓库删除 Model/MessageLink.fs、ModelVision.fs、MediaTypes.fs，CommandPalette.fs 只留 loadRecent/saveRecent（改名模块 PaletteRecent，AppShell 两处调用随改），引用包 |
 | 线协议（Wire） | 完成：`Wanxiang2.Wire` 交付包，线格式字节兼容并有金样，旧编解码测试 33 个搬来通过 | 未开始：见 `libs/Wire/AGENTS.md` 与本轮报告的接线步骤；AG-UI 映射（旧 `WireAgui.fs`）暂留旧仓库 |
 

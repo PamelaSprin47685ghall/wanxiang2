@@ -763,6 +763,10 @@
     <Project Path="libs/SidebarSelection/SidebarSelection.fsproj" />
     <Project Path="libs/SidebarSelection/tests/SidebarSelection.Tests.fsproj" />
   </Folder>
+  <Folder Name="/SkeletonList/">
+    <Project Path="libs/SkeletonList/SkeletonList.fsproj" />
+    <Project Path="libs/SkeletonList/tests/SkeletonList.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Snapshot/">
     <Project Path="libs/Snapshot/Snapshot.fsproj" />
     <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />

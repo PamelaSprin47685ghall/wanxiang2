@@ -91,6 +91,10 @@
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
     <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
   </Folder>
+  <Folder Name="/FuzzyMatch/">
+    <Project Path="libs/FuzzyMatch/FuzzyMatch.fsproj" />
+    <Project Path="libs/FuzzyMatch/tests/FuzzyMatch.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Gemini/">
     <Project Path="libs/Gemini/Gemini.fsproj" />
     <Project Path="libs/Gemini/tests/Gemini.Tests.fsproj" />
@@ -151,6 +155,14 @@
     <Project Path="libs/MediaSniff/MediaSniff.fsproj" />
     <Project Path="libs/MediaSniff/tests/MediaSniff.Tests.fsproj" />
   </Folder>
+  <Folder Name="/MediaTypes/">
+    <Project Path="libs/MediaTypes/MediaTypes.fsproj" />
+    <Project Path="libs/MediaTypes/tests/MediaTypes.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageLink/">
+    <Project Path="libs/MessageLink/MessageLink.fsproj" />
+    <Project Path="libs/MessageLink/tests/MessageLink.Tests.fsproj" />
+  </Folder>
   <Folder Name="/MessageSerde/">
     <Project Path="libs/MessageSerde/MessageSerde.fsproj" />
     <Project Path="libs/MessageSerde/tests/MessageSerde.Tests.fsproj" />
@@ -163,6 +175,10 @@
     <Project Path="libs/ModelListing/ModelListing.fsproj" />
     <Project Path="libs/ModelListing/tests/ModelListing.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ModelVision/">
+    <Project Path="libs/ModelVision/ModelVision.fsproj" />
+    <Project Path="libs/ModelVision/tests/ModelVision.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PairingCode/">
     <Project Path="libs/PairingCode/PairingCode.fsproj" />
     <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
@@ -170,6 +186,10 @@
   <Folder Name="/PayloadFields/">
     <Project Path="libs/PayloadFields/PayloadFields.fsproj" />
     <Project Path="libs/PayloadFields/tests/PayloadFields.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PinyinInitials/">
+    <Project Path="libs/PinyinInitials/PinyinInitials.fsproj" />
+    <Project Path="libs/PinyinInitials/tests/PinyinInitials.Tests.fsproj" />
   </Folder>
   <Folder Name="/PlainText/">
     <Project Path="libs/PlainText/PlainText.fsproj" />

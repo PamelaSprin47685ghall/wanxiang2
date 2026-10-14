@@ -463,6 +463,10 @@
     <Project Path="libs/ReconnectBackoff/ReconnectBackoff.fsproj" />
     <Project Path="libs/ReconnectBackoff/tests/ReconnectBackoff.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ReconnectLoop/">
+    <Project Path="libs/ReconnectLoop/ReconnectLoop.fsproj" />
+    <Project Path="libs/ReconnectLoop/tests/ReconnectLoop.Tests.fsproj" />
+  </Folder>
   <Folder Name="/RefreshingPool/">
     <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
     <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />

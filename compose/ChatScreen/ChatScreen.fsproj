@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：ChatHeader + ChatPane + MessageCardView + ComposerDesk + ApprovalDesk + OverlayDesk + MountWindow + RevealFlash + BreadcrumbAction = 旧 Views/ChatView.fs 整体与 AppShell 的对话列接线。协作者见 PackageReference。 -->
+  <ItemGroup>
+    <Compile Include="Looks.fs" />
+    <Compile Include="ChatScreen.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.ChatHeader" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ApprovalDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MountWindow" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RevealFlash" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BreadcrumbAction" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ForkLineage" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ExchangeJump" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -153,7 +153,7 @@
 - **生成：** `./x new-widget <Name>` 由 `tools/widget-template` 生成 `libs/<Name>`（库 + Avalonia headless 行为测试），目录已存在就拒绝。测试不用 `Avalonia.Headless.XUnit`（.NET 10 上会死锁），直接用 `HeadlessUnitTestSession`，与旧仓库相同。CI 的 `widget-template` 任务每次生成一个控件库并测试，还验证 `./x check` 拒绝库对库引用。
 - **样式值都是可变的，不写死。** 控件库不含任何字面样式值（颜色、画笔、尺寸、字体、间距、圆角、时长）。这些值由主题管理者（`compose/Theme` 或一个主题管理库）拥有，是活的可变实例；管理者改值，所有控件跟着变。
 - **Look 记录：** 每个控件库声明自己的 `<Name>Look` 记录，列出它需要的外观项（画笔为 `IBrush`，尺寸、字体、间距为管理者给的活实例，如 `IObservable<_>`）。组合者在构造控件时从主题管理者取出共享实例填进去；同一画笔实例由多个控件共享。控件不认识主题管理者。
-- **共享外观：** 按钮、卡片等共同外观用 Avalonia `ControlTheme` 样式类，由 Theme 安装；控件只挂类名。每个库的 AGENTS.md 列出它用到的样式类。
+- **共享外观：** 按钮、卡片等共同外观用类选择器样式（如 `Border.button-primary`），由主题管理者（`compose/Theme` 的 `ThemeStyles`）只安装一次；Setter 里放管理者的活实例：画笔直接用活画笔，尺寸、间距、焦点环颜色经 `ToBinding` 绑到活值。样式从不重建：实测清空再重填 `Styles` 不会让已显示的控件重新取值；也不用 `ControlTheme`：它只按控件类型或 `Theme` 属性生效，不能按类名套在 `Border` 上。控件只挂类名。每个库的 AGENTS.md 列出它用到的样式类。
 - **行为控件（Menu、Overlay 等）：** 由组合者经插槽（传入的控件或工厂）和事件接线，控件库之间从不直接依赖。
 - **模块名：** 新模块与类型名不得与旧仓库宿主模块同名（如 `Tokens`、`Menu`、`Dialogs`、`Icons`、`Interaction`、`MessageCard`、`MotionPolicy`、`Palette`、`ThemePreference` 等），因为 F# 会合并同名模块，见旧仓库的 ConversationTransfer 等先例。
 - **浏览器端：** 控件库包可被 `net10.0-browser`（Avalonia.Browser）项目引用；已在旧仓库本地验证。

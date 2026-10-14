@@ -170,3 +170,16 @@ module RetryCountdown =
     let remainingSeconds (info: RetryCountdownInfo) (now: DateTimeOffset) =
         let left = (info.retryAt - now).TotalSeconds
         if left <= 0.0 then 0 else int (Math.Ceiling left)
+
+/// §215 / 决策 366：哪类生成错误给哪个恢复动作。动作与文案归 ErrorRecovery，错误分类归 Wire；这里把两边接起来。
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ErrorRecovery =
+
+    let forKind (kind: GenerationErrorKind) : ErrorRecovery option =
+        match kind with
+        | ProviderAuthFailed | ModelNotFound -> Some OpenProviderSettings
+        // 限流 / 额度用尽：除了等，最有用的是换一个模型继续
+        | ProviderRateLimited -> Some SwitchModel
+        | ConfigInvalid | ProviderBadRequest -> Some OpenConversationSettings
+        | ContextTooLong -> Some StartNewConversation
+        | ProviderTimeout | ProviderUnavailable | ContentFiltered | ToolFailed | UnknownFailure -> None

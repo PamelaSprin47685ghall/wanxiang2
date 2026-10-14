@@ -11,3 +11,5 @@
 - ContinueLinkUndoTests：`230 半截回复编成去尾空白的助手消息`、`230 失败时保留有正文的半截回复，重试或重新开始即清掉`、`230 成功结束或空回复不留半截`（`230 继续生成只接受有正文的助手消息` 要 EventStore/CommandEngine，留在旧仓库）
 - PartialPersistAndUrlSchemeTests：`250 刷新后客户端从主机恢复半截与错误卡；正在生成时不覆盖`
 - ModelChipRateLimitTests：`retry countdown deadline is fixed at finish time and survives re-reads`、`non retryable errors never get a countdown`
+- LibraryUndoTests：`§215 每类不可自愈的错误都有恢复动作`（`ErrorRecovery.forKind` 在本组合者，动作与文案在 ErrorRecovery 库）
+- R19SimplifyTests：`366 限流只给「换个模型」并直达切换器`

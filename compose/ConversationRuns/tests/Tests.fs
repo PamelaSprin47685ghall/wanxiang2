@@ -221,3 +221,21 @@ let ``non retryable errors never get a countdown`` () =
     RetryCountdown.attach gid err now
     Assert.Equal(None, RetryCountdown.tryGet err now)
 
+
+// 迁自旧 LibraryUndoTests / R19SimplifyTests。
+[<Fact>]
+let ``§215 每类不可自愈的错误都有恢复动作`` () =
+    Assert.Equal(Some OpenProviderSettings, ErrorRecovery.forKind ProviderAuthFailed)
+    Assert.Equal(Some OpenProviderSettings, ErrorRecovery.forKind ModelNotFound)
+    Assert.Equal(Some OpenConversationSettings, ErrorRecovery.forKind ConfigInvalid)
+    Assert.Equal(Some SwitchModel, ErrorRecovery.forKind ProviderRateLimited)
+    Assert.Equal("换个模型", ErrorRecovery.label SwitchModel)
+    Assert.Equal(Some StartNewConversation, ErrorRecovery.forKind ContextTooLong)
+    Assert.Equal(None, ErrorRecovery.forKind ProviderTimeout)
+    Assert.Contains("换个模型", GenerationErrorKind.hint ProviderRateLimited)
+
+[<Fact>]
+let ``366 限流只给「换个模型」并直达切换器`` () =
+    Assert.Equal(Some SwitchModel, ErrorRecovery.forKind ProviderRateLimited)
+    Assert.Equal("换个模型", ErrorRecovery.label SwitchModel)
+    Assert.Equal(Some OpenConversationSettings, ErrorRecovery.forKind ConfigInvalid)

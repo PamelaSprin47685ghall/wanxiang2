@@ -299,3 +299,36 @@ module ReplyTail =
     let unansweredMessage = "这条消息没有收到回复。"
 
     let unansweredDetail = "生成可能已在另一台设备上失败或被中断；失败详情只保留在当时的那台设备上。"
+
+/// Ctrl+Shift+R「重新生成最新回复」能不能做（迁自旧 AppShell.RegenerateLatest 的判断）。
+[<RequireQualifiedAccess>]
+type RegenerateGate =
+    | Allowed
+    | NothingToRegenerate
+    | Generating
+    | NoConversation
+
+/// 重新生成 / 复制回复的前置判断与提示（迁自旧 AppShell.RegenerateLatest / CopyLatestReply）。
+/// 真正的重新生成（确认框、发命令）留在宿主。
+module ReplyGate =
+
+    /// messages = None 表示没有打开的对话；generating 表示当前对话正有生成在跑。
+    let regenerate (messages: MessageView list option) (generating: bool) : RegenerateGate =
+        match messages with
+        | Some messages when not generating ->
+            match List.tryLast messages with
+            | Some last when last.role = "user" || not (List.isEmpty (ReplyTail.chain messages)) -> RegenerateGate.Allowed
+            | _ -> RegenerateGate.NothingToRegenerate
+        | Some _ -> RegenerateGate.Generating
+        | None -> RegenerateGate.NoConversation
+
+    /// 不能重新生成时的提示；Allowed 为 None。
+    let regenerateText (gate: RegenerateGate) : string option =
+        match gate with
+        | RegenerateGate.Allowed -> None
+        | RegenerateGate.NothingToRegenerate -> Some "这段对话还没有可以重新生成的回复"
+        | RegenerateGate.Generating -> Some "正在生成；先按 Esc 停止，再重新生成"
+        | RegenerateGate.NoConversation -> Some "没有打开的对话"
+
+    /// 没有可复制的回复（ReplyTail.latestText 为 None）时的提示。
+    let nothingToCopyText = "还没有可以复制的回复"

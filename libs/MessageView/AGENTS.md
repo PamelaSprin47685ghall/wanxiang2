@@ -15,3 +15,4 @@
 - ToolCallStatusTests：`ToolCallStatus badgeText returns exact expected text for all states`、`ToolCallStatus isTerminal returns true only for terminal states`
 - ConversationJourneyTests：`latest reply text skips empty assistant tail and ignores earlier turns`、`regenerate needs confirmation only when the tail has something to lose`
 - JourneyR9Tests：`263 末尾用户消息超过宽限期仍无回复判为未回复`（除最后一行 `unansweredError.retryable`，那一行随 unansweredError 留在旧仓库）
+- RegenerateGate / ReplyGate 迁自旧 AppShell.RegenerateLatest / CopyLatestReply（测试内与旧代码原样摘录逐例比对）。

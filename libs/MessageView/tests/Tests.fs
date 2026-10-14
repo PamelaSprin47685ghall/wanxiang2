@@ -227,3 +227,56 @@ module R9 =
         Assert.False(ReplyTail.isUnanswered now [ msg "user" "流式" None ])
         Assert.False(ReplyTail.isUnanswered now [])
 
+
+// 迁自旧 AppShell.RegenerateLatest / CopyLatestReply：与原样摘录（Regenerate/toast/复制换成记录）逐例比对。
+module ReplyGateTests =
+    let private old (view: MessageView list option) (generating: bool) =
+        let mutable result = ""
+        let toast (t: string) () = result <- "toast " + t
+        let Warning, Info = (), ()
+        let regenerate () = result <- "regenerate"
+        let activeConversation () = view
+        let messagesOf = id
+        match activeConversation () with
+        | Some view when not generating ->
+            let messages = messagesOf view
+            match List.tryLast messages with
+            | Some last when last.role = "user" || not (List.isEmpty (ReplyTail.chain messages)) ->
+                regenerate ()
+            | _ -> toast "这段对话还没有可以重新生成的回复" Warning
+        | Some _ -> toast "正在生成；先按 Esc 停止，再重新生成" Info
+        | None -> toast "没有打开的对话" Warning
+        result
+
+    let private oldCopy (view: MessageView list option) =
+        match view |> Option.bind ReplyTail.latestText with
+        | Some text -> "copy " + text
+        | None -> "toast 还没有可以复制的回复"
+
+    let private msg (role: string) (text: string) =
+        MessageView.ofJson (JsonNode.Parse(sprintf """{"role":"%s","contents":[{"text":"%s"}]}""" role text).AsObject())
+
+    let private views =
+        [ None
+          Some []
+          Some [ msg "user" "q" ]
+          Some [ msg "user" "q"; msg "assistant" "a" ]
+          Some [ msg "user" "q"; msg "assistant" "" ]
+          Some [ msg "user" "q"; msg "tool" "t" ]
+          Some [ msg "system" "s" ] ]
+
+    [<Fact>]
+    let ``regenerate and copy gating match old AppShell`` () =
+        for v in views do
+            for generating in [ false; true ] do
+                let gate = ReplyGate.regenerate v generating
+                let actual =
+                    match ReplyGate.regenerateText gate with
+                    | None -> "regenerate"
+                    | Some t -> "toast " + t
+                Assert.Equal(old v generating, actual)
+            let copy =
+                match v |> Option.bind ReplyTail.latestText with
+                | Some text -> "copy " + text
+                | None -> "toast " + ReplyGate.nothingToCopyText
+            Assert.Equal(oldCopy v, copy)

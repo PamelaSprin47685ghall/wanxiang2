@@ -192,7 +192,7 @@ type ExportDesk
     /// 打开对话框（宽 480）并立即开始读取；焦点落在取消导出
     member _.Show() =
         active <- true
-        overlay.ShowDialog(sheet.View, 480.0, onClosed = (fun () ->
+        overlay.ShowDialog(sheet.View, timing.DialogWidth(), onClosed = (fun () ->
             active <- false
             expiry.Stop()
             tail.Stop()

@@ -136,7 +136,7 @@ type ImportDesk(look: ImportSheetLook, timing: TransferTiming, overlay: OverlayD
         setStatus (ImportView.noFile) ImportTone.Muted
         sheet.SetDetails None
         refresh ()
-        overlay.ShowDialog(sheet.View, 480.0, onClosed = (fun () -> active <- false; preview <- None))
+        overlay.ShowDialog(sheet.View, timing.DialogWidth(), onClosed = (fun () -> active <- false; preview <- None))
         sheet.FocusPick()
 
     /// 读到文件内容后的唯一入口（选文件窗口与测试都走这里）

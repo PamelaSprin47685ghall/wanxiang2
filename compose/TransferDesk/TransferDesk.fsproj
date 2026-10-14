@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 组合者：导入、导出对话框 = 旧 ImportDialog、ExportDialog。协作者：ImportSheet、ExportSheet、ImportView、ExportView、ProgressThrottle、ConversationTransfer、ConversationExport、TranscriptMarkdown、ExportFileName、MessageView、Wire、OverlayDesk、Theme、DesignRhythm。 -->
+  <!-- 组合者：导入、导出对话框 = 旧 ImportDialog、ExportDialog。协作者：ImportSheet、ExportSheet、ImportView、ExportView、ProgressThrottle、ConversationTransfer、ConversationExport、TranscriptMarkdown、ExportFileName、MessageView、Wire、OverlayDesk、Theme。 -->
   <ItemGroup>
     <Compile Include="Looks.fs" />
     <Compile Include="ImportDesk.fs" />
@@ -20,6 +20,5 @@
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

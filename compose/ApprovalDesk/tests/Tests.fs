@@ -121,3 +121,18 @@ let ``审批卡的字色取自主题并随主题切换`` () =
         theme.CompleteTransition()
         Assert.Equal(ThemePalette.color PaletteMode.Dark PaletteKey.Text, brush.Color)
         window.Close())
+
+// 触控下限归主题管理者：改了，已显示的审批键跟着变高。
+[<Fact>]
+let ``改主题的触控下限后已显示的审批键跟着变`` () =
+    Headless.run (fun () ->
+        let theme, _, desk, _, _, window = setup ()
+        let a = Guid.NewGuid()
+        desk.SetConversation(Some a)
+        desk.Handle(requested a) |> ignore
+        Dispatcher.UIThread.RunJobs()
+        let approve = (byId desk.View "tool-approval-approve").Value
+        Assert.True(approve.MinHeight >= 44.0)
+        theme.SetMetric(Wanxiang2.ThemeMetrics.Metric.TouchTarget, 60.0)
+        Assert.Equal(60.0, approve.MinHeight)
+        window.Close())

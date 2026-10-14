@@ -498,4 +498,26 @@ module Adapter =
           "ScrollBottomThreshold", ContentMetrics.scrollBottomThreshold
           "ScrollBottomRevealThreshold", ContentMetrics.scrollBottomRevealThreshold
           "EmptyStateMaxWidth", ContentMetrics.emptyStateMaxWidth
-          "ToastMaxWidth", ContentMetrics.toastMaxWidth ]
+          "ToastMaxWidth", ContentMetrics.toastMaxWidth
+          // 旧 ReadingRhythm.captionLineHeight
+          "CaptionLineHeight", 17.0
+          // 旧 Spacing.Hit.touch
+          "TouchTarget", 44.0
+          // 旧 ToolApprovalCard.buttonRowMaxWidth
+          "ApprovalButtonRowMaxWidth", 360.0
+          // 旧 Brand 「万」字比例
+          "LogoGlyphRatio", 0.42
+          // 旧 LayoutPolicy.menuMaxHeight
+          "MenuMaxHeight", 380.0
+          // 旧 LayoutPolicy.sidebarSplitterWidth
+          "SidebarSplitterWidth", 4.0
+          // 旧 LayoutPolicy.startWorkspaceMinHeight
+          "StartWorkspaceMinHeight", 600.0
+          // 旧 LayoutPolicy.compactBreakpoint
+          "CompactBreakpoint", 720.0
+          // 旧 ModelSwitcherView 浮层宽
+          "ModelSwitcherWidth", 300.0
+          // 旧 ShowCommandPalette 对话层宽
+          "PaletteDialogWidth", 560.0
+          // 旧 Import/ExportDialog 对话层宽
+          "TransferDialogWidth", 480.0 ]

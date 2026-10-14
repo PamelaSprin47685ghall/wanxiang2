@@ -113,3 +113,14 @@ ScrollBottomThreshold 48
 ScrollBottomRevealThreshold 120
 EmptyStateMaxWidth 480
 ToastMaxWidth 560
+CaptionLineHeight 17
+TouchTarget 44
+ApprovalButtonRowMaxWidth 360
+LogoGlyphRatio 0.42
+MenuMaxHeight 380
+SidebarSplitterWidth 4
+StartWorkspaceMinHeight 600
+CompactBreakpoint 720
+ModelSwitcherWidth 300
+PaletteDialogWidth 560
+TransferDialogWidth 480

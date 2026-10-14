@@ -121,6 +121,28 @@ type Metric =
     | ScrollBottomRevealThreshold
     | EmptyStateMaxWidth
     | ToastMaxWidth
+    /// 说明文字行高（旧 ReadingRhythm.captionLineHeight）
+    | CaptionLineHeight
+    /// 触控命中下限（旧 Spacing.Hit.touch）
+    | TouchTarget
+    /// 审批卡按钮行最大宽（旧 ToolApprovalCard.buttonRowMaxWidth）
+    | ApprovalButtonRowMaxWidth
+    /// 品牌标「万」字字号与边长之比（旧 Brand.logo 的 0.42）
+    | LogoGlyphRatio
+    /// 菜单与选择浮层最大高（旧 LayoutPolicy.menuMaxHeight）
+    | MenuMaxHeight
+    /// 侧栏分隔条宽（旧 LayoutPolicy.sidebarSplitterWidth）
+    | SidebarSplitterWidth
+    /// 起步居中所需最小高（旧 LayoutPolicy.startWorkspaceMinHeight）
+    | StartWorkspaceMinHeight
+    /// 窄屏断点（旧 LayoutPolicy.compactBreakpoint）
+    | CompactBreakpoint
+    /// 快速切换模型浮层宽（旧 ModelSwitcherView 的 300）
+    | ModelSwitcherWidth
+    /// 命令面板对话层宽（旧 AppShell.ShowCommandPalette 的 560）
+    | PaletteDialogWidth
+    /// 导入导出对话层宽（旧 ImportDialog / ExportDialog 的 480）
+    | TransferDialogWidth
 
 /// 度量的初始值：照抄旧代码，间距引用已换成 SpacingRamp 的数值。只有数据；活的可变值归主题管理者。
 module ThemeMetrics =
@@ -241,7 +263,18 @@ module ThemeMetrics =
           Metric.ScrollBottomThreshold
           Metric.ScrollBottomRevealThreshold
           Metric.EmptyStateMaxWidth
-          Metric.ToastMaxWidth ]
+          Metric.ToastMaxWidth
+          Metric.CaptionLineHeight
+          Metric.TouchTarget
+          Metric.ApprovalButtonRowMaxWidth
+          Metric.LogoGlyphRatio
+          Metric.MenuMaxHeight
+          Metric.SidebarSplitterWidth
+          Metric.StartWorkspaceMinHeight
+          Metric.CompactBreakpoint
+          Metric.ModelSwitcherWidth
+          Metric.PaletteDialogWidth
+          Metric.TransferDialogWidth ]
 
     /// 某项度量的初始值
     let initial (metric: Metric) : float =
@@ -361,4 +394,15 @@ module ThemeMetrics =
         | Metric.ScrollBottomRevealThreshold -> 120.0
         | Metric.EmptyStateMaxWidth -> 480.0
         | Metric.ToastMaxWidth -> 560.0
+        | Metric.CaptionLineHeight -> 17.0
+        | Metric.TouchTarget -> 44.0
+        | Metric.ApprovalButtonRowMaxWidth -> 360.0
+        | Metric.LogoGlyphRatio -> 0.42
+        | Metric.MenuMaxHeight -> 380.0
+        | Metric.SidebarSplitterWidth -> 4.0
+        | Metric.StartWorkspaceMinHeight -> 600.0
+        | Metric.CompactBreakpoint -> 720.0
+        | Metric.ModelSwitcherWidth -> 300.0
+        | Metric.PaletteDialogWidth -> 560.0
+        | Metric.TransferDialogWidth -> 480.0
 

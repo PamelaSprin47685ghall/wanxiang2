@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 组合者：工具审批卡宿主 = 旧 ToolApprovalPanel 在 AppShell 里的接线。协作者：ApprovalPanel、ApprovalCardText、Wire、Theme、IconSet、OverlayDesk、DesignRhythm。 -->
+  <!-- 组合者：工具审批卡宿主 = 旧 ToolApprovalPanel 在 AppShell 里的接线。协作者：ApprovalPanel、ApprovalCardText、Wire、Theme、IconSet、OverlayDesk。 -->
   <ItemGroup>
     <Compile Include="ApprovalDesk.fs" />
   </ItemGroup>
@@ -11,6 +11,5 @@
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

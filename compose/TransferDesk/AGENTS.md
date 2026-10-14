@@ -12,5 +12,5 @@ ImportSheet + ExportSheet + ImportView + ExportView + ProgressThrottle + Convers
 - PresentationRefreshTests：`export progress bar is determinate under reduced motion`（经主题的减弱动效开关）
 
 ## 与旧实现的差异
-- Markdown 改由 TranscriptMarkdown（与旧 Export.toMarkdown 金样逐字节相同）；减弱动效与时长从主题取，不读全局 MotionPolicy / MotionLedger。
+- Markdown 改由 TranscriptMarkdown（与旧 Export.toMarkdown 金样逐字节相同）；减弱动效、时长、对话层宽（TransferDialogWidth）、caption 行高从主题取，不读全局 MotionPolicy / MotionLedger。
 - 导入状态行「正在导入…」沿用上一档颜色，与旧代码一致。

@@ -40,7 +40,7 @@ module PaletteLook =
           StatusMargin = Live.map2 (fun x y -> Thickness(x, y)) xl (t.Space Space.Xs)
           HeaderMargin = Live.map2 (fun x y -> Thickness(x, y, x, (t.Space Space.Xs).Value)) xl (t.Space Space.Md)
           HintMargin = Live.map2 (fun x y -> Thickness(x, 0.0, x, y)) xl (t.Space Space.Xs)
-          ListMaxHeight = LiveValue LayoutPolicy.menuMaxHeight
+          ListMaxHeight = metric Metric.MenuMaxHeight
           FieldPadding = Live.map2 (fun x y -> Thickness(x, y)) xl (t.Metric Metric.TextFieldPaddingY)
           FieldRadius = Live.map CornerRadius (space Space.RadiusLg)
           FieldEdgeWidth = Live.map Thickness (metric Metric.BorderWidth)
@@ -50,7 +50,7 @@ module PaletteLook =
 /// 有查询时在末尾追加「在全部消息中搜索」交接行；放进对话层（宽 560，搜索框初始焦点）；
 /// 执行时先关面板、等焦点归还，再在下一拍发 `Run`（执行可能再开对话框或切页面）。
 /// 中文输入法组合期间的回车 / 方向键归输入法：构造时装上全局 ImeShield（幂等）。
-type PaletteDesk(look: PalettePanelLook, overlay: OverlayDesk, prefersTouch: unit -> bool) =
+type PaletteDesk(look: PalettePanelLook, dialogWidth: IObservable<float>, overlay: OverlayDesk, prefersTouch: unit -> bool) =
     do ImeShield.install ()
     let run = Event<PaletteItem * string>()
 
@@ -62,7 +62,7 @@ type PaletteDesk(look: PalettePanelLook, overlay: OverlayDesk, prefersTouch: uni
           keywords = []
           shortcut = Some "Ctrl / ⌘ + Shift + F" }
 
-    new(theme: ThemeManager, overlay: OverlayDesk, prefersTouch: unit -> bool) = PaletteDesk(PaletteLook.ofTheme theme, overlay, prefersTouch)
+    new(theme: ThemeManager, overlay: OverlayDesk, prefersTouch: unit -> bool) = PaletteDesk(PaletteLook.ofTheme theme, theme.Metric Metric.PaletteDialogWidth, overlay, prefersTouch)
 
     /// 只建内容（不进对话层）；`execute` 收到所选条目与当时的输入。返回 (内容, 搜索框)。
     member _.Build(items: unit -> PaletteItem list, recent: unit -> string list, execute: PaletteItem -> string -> unit) : Control * TextBox =
@@ -99,7 +99,7 @@ type PaletteDesk(look: PalettePanelLook, overlay: OverlayDesk, prefersTouch: uni
                 this.Build(items, recent, fun item q ->
                     overlay.CloseDialog()
                     Dispatcher.UIThread.Post(fun () -> run.Trigger(item, q)))
-            overlay.Layer.ShowDialog(content, 560.0, initialFocus = search, scrollWholeContent = false)
+            overlay.Layer.ShowDialog(content, (let mutable w = 0.0 in (dialogWidth.Subscribe(fun v -> w <- v)).Dispose(); w), initialFocus = search, scrollWholeContent = false)
 
     /// 面板关闭后执行所选条目（条目, 当时的输入）；宿主据 ShellPalette.commandOf 分派
     [<CLIEvent>] member _.Run = run.Publish

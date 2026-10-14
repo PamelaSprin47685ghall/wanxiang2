@@ -21,7 +21,8 @@ type private Rig =
       Sidebar: StackPanel
       Search: TextBox
       Calls: ResizeArray<string>
-      Window: Window }
+      Window: Window
+      Theme: ThemeManager }
 
 let private rig (collapsed: bool) =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
@@ -43,7 +44,7 @@ let private rig (collapsed: bool) =
     let window = Window(Width = 1000.0, Height = 700.0, Content = grid)
     window.Show()
     Dispatcher.UIThread.RunJobs()
-    { Desk = desk; Grid = grid; Sidebar = sidebar; Search = search; Calls = calls; Window = window }
+    { Desk = desk; Grid = grid; Sidebar = sidebar; Search = search; Calls = calls; Window = window; Theme = theme }
 
 // 迁自 FocusRingTests：窄屏不自动打开抽屉；显式打开后焦点送进抽屉（这里断言组合者要求聚焦搜索框）。
 [<Fact>]
@@ -143,3 +144,18 @@ let ``品牌标没有图时退成万字并随主题换色`` () =
         theme.Apply PaletteMode.Dark
         theme.CompleteTransition()
         Assert.Equal(ThemePalette.color PaletteMode.Dark PaletteKey.Accent, (glyph.Foreground :?> SolidColorBrush).Color))
+
+// 布局度量归主题管理者：改分隔条宽、窄屏断点，已显示的外壳跟着重投影。
+[<Fact>]
+let ``改主题的布局度量后已显示的外壳跟着变`` () =
+    Headless.run (fun () ->
+        let r = rig false
+        r.Desk.ApplyViewport 1000.0 |> ignore
+        Assert.Equal(4.0, r.Grid.ColumnDefinitions[1].Width.Value)
+        r.Theme.SetMetric(Wanxiang2.ThemeMetrics.Metric.SidebarSplitterWidth, 9.0)
+        Assert.Equal(9.0, r.Grid.ColumnDefinitions[1].Width.Value)
+        Assert.False r.Desk.State.compactMode
+        r.Theme.SetMetric(Wanxiang2.ThemeMetrics.Metric.CompactBreakpoint, 1200.0)
+        Assert.True r.Desk.State.compactMode
+        Assert.False r.Sidebar.IsVisible
+        r.Window.Close())

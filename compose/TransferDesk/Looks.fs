@@ -22,7 +22,7 @@ module TransferLook =
           BodyFontSize = metric Metric.FontBody
           SmallFontSize = metric Metric.FontSmall
           CaptionFontSize = metric Metric.FontCaption
-          CaptionLineHeight = LiveValue ReadingRhythm.captionLineHeight
+          CaptionLineHeight = t.Metric Metric.CaptionLineHeight
           StackSpacing = t.Space Space.Xl
           ButtonSpacing = t.Space Space.Md }
 
@@ -36,7 +36,7 @@ module TransferLook =
           TitleFontSize = metric Metric.FontTitle
           BodyFontSize = metric Metric.FontBody
           CaptionFontSize = metric Metric.FontCaption
-          CaptionLineHeight = LiveValue ReadingRhythm.captionLineHeight
+          CaptionLineHeight = t.Metric Metric.CaptionLineHeight
           StackSpacing = t.Space Space.Xl
           ButtonSpacing = t.Space Space.Md }
 
@@ -45,7 +45,9 @@ type TransferTiming =
     { ImportResponseTimeout: unit -> TimeSpan
       ExportExpiryCheckTick: unit -> TimeSpan
       ProgressTextThrottle: unit -> TimeSpan
-      ReducedMotion: unit -> bool }
+      ReducedMotion: unit -> bool
+      /// 对话层宽（主题度量 TransferDialogWidth）
+      DialogWidth: unit -> float }
 
 module TransferTiming =
     let ofTheme (t: ThemeManager) =
@@ -53,4 +55,5 @@ module TransferTiming =
         { ImportResponseTimeout = ms Timing.ImportResponseTimeout
           ExportExpiryCheckTick = ms Timing.ExportExpiryCheckTick
           ProgressTextThrottle = ms Timing.ProgressTextThrottle
-          ReducedMotion = fun () -> t.Motion.IsReduced }
+          ReducedMotion = fun () -> t.Motion.IsReduced
+          DialogWidth = fun () -> (t.Metric Metric.TransferDialogWidth).Value }

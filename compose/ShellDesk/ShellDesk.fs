@@ -29,15 +29,15 @@ module ShellLook =
           ScrimFade = duration t Timing.ScrimFade
           SidebarMinWidth = t.Metric Metric.SidebarMinWidth
           SidebarMaxWidth = t.Metric Metric.SidebarMaxWidth
-          SplitterWidth = LiveValue LayoutPolicy.sidebarSplitterWidth
+          SplitterWidth = t.Metric Metric.SidebarSplitterWidth
           ChatMinHeight = t.Metric Metric.BarHeight
-          StartMinHeight = LiveValue LayoutPolicy.startWorkspaceMinHeight }
+          StartMinHeight = t.Metric Metric.StartWorkspaceMinHeight }
 
     let brandOf (t: ThemeManager) : BrandMarkLook =
         { Surface = t.Brush PaletteKey.Surface
           Accent = t.Brush PaletteKey.Accent
           RadiusRatio = t.Metric Metric.LogoRadiusRatio
-          GlyphRatio = LiveValue 0.42 }
+          GlyphRatio = t.Metric Metric.LogoGlyphRatio }
 
 /// 品牌标（旧 Brand.logo）：图只找一次；找图顺序同旧代码。
 type ShellBrand(look: BrandMarkLook, image: IImage option) =
@@ -81,8 +81,12 @@ type ShellDesk
      composer: Control,
      hooks: ShellHooks,
      initialSidebarCollapsed: bool,
-     sidebarWidth: unit -> float) =
-    let navigation = NavigationController(initialSidebarCollapsed, LayoutPolicy.compactBreakpoint)
+     sidebarWidth: unit -> float,
+     compactBreakpoint: IObservable<float>) =
+    let mutable breakpoint = 0.0
+    do compactBreakpoint.Subscribe(fun v -> breakpoint <- v).Dispose()
+    let mutable navigation = NavigationController(initialSidebarCollapsed, breakpoint)
+    let mutable lastWidth = 0.0
     let workspace = WorkspaceStack(chat, composer, look)
     let columns = ShellColumns(shellGrid, sidebar, splitter, workspace, look, sidebarWidth)
 
@@ -112,9 +116,18 @@ type ShellDesk
         for c in [ sidebar; splitter; workspace :> Control ] do
             if not (shellGrid.Children.Contains c) then shellGrid.Children.Add c
         project navigation.State
+        // 断点改了：按当前折叠偏好换一个导航状态机，用上次视口宽度重投影（模式变了抽屉本就收起）
+        compactBreakpoint.Subscribe(fun v ->
+            if v <> breakpoint then
+                breakpoint <- v
+                navigation <- NavigationController(navigation.State.sidebarCollapsed, v)
+                if lastWidth > 0.0 then
+                    let _, state = navigation.ApplyViewport lastWidth
+                    project state)
+        |> ignore
 
     new(theme: ThemeManager, shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth) =
-        ShellDesk(ShellLook.layoutOf theme, shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth)
+        ShellDesk(ShellLook.layoutOf theme, shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth, theme.Metric Metric.CompactBreakpoint)
 
     member _.State = navigation.State
     /// 对话区一列（对话视图 + 输入区）
@@ -127,6 +140,7 @@ type ShellDesk
     /// 视口宽度变化；抽屉因此刚打开时把焦点送进搜索框（触屏除外）
     member _.ApplyViewport(width: float) =
         if width > 0.0 then
+            lastWidth <- width
             let before = navigation.State
             let needsApply, state = navigation.ApplyViewport width
             if needsApply then project state

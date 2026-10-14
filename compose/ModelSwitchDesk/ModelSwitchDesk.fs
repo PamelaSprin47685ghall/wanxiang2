@@ -49,8 +49,8 @@ module ModelSwitchLook =
           HeadingMargin = Live.map2 (fun x y -> Thickness(x, y, x, 0.0)) xl xs
           NoteMargin = Live.map2 (fun x y -> Thickness(x, y, x, y)) xl xs
           FieldMargin = Live.map (fun v -> Thickness(v, v, v, 0.0)) (space Space.Xs)
-          ListMaxHeight = LiveValue LayoutPolicy.menuMaxHeight
-          PanelWidth = LiveValue 300.0
+          ListMaxHeight = metric Metric.MenuMaxHeight
+          PanelWidth = metric Metric.ModelSwitcherWidth
           FieldPadding = pad xl (t.Metric Metric.TextFieldPaddingY)
           FieldRadius = Live.map CornerRadius (space Space.RadiusLg)
           FieldEdgeWidth = Live.map Thickness (metric Metric.BorderWidth)
@@ -85,4 +85,4 @@ type ModelSwitchDesk(look: ModelSwitchPanelLook, overlay: OverlayDesk) =
 
     /// 在锚点旁打开（宽 300）
     member this.Show(anchor: Control, alignRight: bool, options: ModelOption list, title: string, pick: ModelOption -> unit) =
-        overlay.Layer.ShowPopup(anchor, this.Build(options, title, pick), alignRight, 300.0)
+        overlay.Layer.ShowPopup(anchor, this.Build(options, title, pick), alignRight, (let mutable w = 0.0 in (look.PanelWidth.Subscribe(fun v -> w <- v)).Dispose(); w))

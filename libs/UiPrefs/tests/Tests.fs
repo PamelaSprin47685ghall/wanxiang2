@@ -42,3 +42,22 @@ let ``persisting drafts is on by default and an old ui file without the key keep
     Assert.True((UiPrefs.parse limits (Some old)).persistDrafts)
     let saved = UiPrefs.render (Some old) { UiPrefs.defaults limits with persistDrafts = false }
     Assert.False((UiPrefs.parse limits (Some saved)).persistDrafts)
+
+// 迁自旧 AppShell.CycleTheme：与原样摘录逐例比对。
+[<Fact>]
+let ``theme cycle and notice match old CycleTheme`` () =
+    let old (theme: ThemePreference) =
+        let nextTheme =
+            match theme with
+            | FollowSystem -> AlwaysLight
+            | AlwaysLight -> AlwaysDark
+            | AlwaysDark -> FollowSystem
+        nextTheme,
+        (match nextTheme with
+         | FollowSystem -> "已切换为跟随系统主题"
+         | AlwaysDark -> "已切换为深色主题"
+         | AlwaysLight -> "已切换为浅色主题")
+    for t in [ FollowSystem; AlwaysLight; AlwaysDark ] do
+        let n = ThemePreference.next t
+        Assert.Equal(old t, (n, ThemePreference.switchedText n))
+    Assert.Equal(FollowSystem, FollowSystem |> ThemePreference.next |> ThemePreference.next |> ThemePreference.next)

@@ -12,3 +12,4 @@
 # 迁入或覆盖的旧测试
 - UiPureLogicTests：`ThemePreference conversions and resolveTheme`
 - ComposerReliabilityTests：`persisting drafts is on by default and an old ui file without the key keeps it on`
+- ThemePreference.next / switchedText 迁自旧 AppShell.CycleTheme（测试内与旧代码原样摘录逐例比对）。

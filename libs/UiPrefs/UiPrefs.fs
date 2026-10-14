@@ -24,6 +24,20 @@ module ThemePreference =
         | "dark" -> AlwaysDark
         | _ -> FollowSystem
 
+    /// 快捷键轮转（迁自旧 AppShell.CycleTheme）：跟随系统 → 浅色 → 深色 → 跟随系统。
+    let next (p: ThemePreference) =
+        match p with
+        | FollowSystem -> AlwaysLight
+        | AlwaysLight -> AlwaysDark
+        | AlwaysDark -> FollowSystem
+
+    /// 轮转后的提示（迁自旧 AppShell.CycleTheme）。
+    let switchedText (p: ThemePreference) =
+        match p with
+        | FollowSystem -> "已切换为跟随系统主题"
+        | AlwaysDark -> "已切换为深色主题"
+        | AlwaysLight -> "已切换为浅色主题"
+
     let label (p: ThemePreference) =
         match p with
         | FollowSystem -> "跟随系统"

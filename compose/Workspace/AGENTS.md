@@ -13,3 +13,9 @@ ShellDesk + SidebarDesk + ChatScreen + ComposerDesk + OverlayDesk = 旧 `AppShel
 
 ## 与旧实现的差异
 - 认证成功后的步骤序列、浏览器视口轮询与恢复检测仍在宿主。
+
+## 整树金样
+
+- `tests/golden/workspace.txt`：旧 AppShell.Build 布局段（旧 Sidebar / ChatView / Composer、审批面板进输入区附属位、ShellDesk）用 `tools/workspacegold/run.sh <旧仓>` 生成，7 个状态：宽屏 1280、折叠侧栏、起步页居中、审批卡、窄屏 600、抽屉打开、窄屏审批卡。
+- 侧栏根与对话屏根只比一行布局（`Dump.cut`，不比派生类型），子树各有自己的金样；输入区连同审批位整棵比。两边都装共享 ThemeStyles、减弱动效、内嵌字体，输入区按 AppShell 空闲面 `SetEnabled(true, "")`。
+- 已知且不在本组合者修的差异：SidebarDesk.View 根是普通 Border，旧 Sidebar 是 Border 派生类型（写手二的库，已报）；新 ComposerDesk 构造后立刻落禁用外观，旧 Composer 要等第一次 SetEnabled（宿主总会调，金样两边都先调）。

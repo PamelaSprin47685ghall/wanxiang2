@@ -143,6 +143,10 @@
     <Project Path="libs/ConversationSummary/ConversationSummary.fsproj" />
     <Project Path="libs/ConversationSummary/tests/ConversationSummary.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ConversationTransfer/">
+    <Project Path="libs/ConversationTransfer/ConversationTransfer.fsproj" />
+    <Project Path="libs/ConversationTransfer/tests/ConversationTransfer.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Conversations/">
     <Project Path="libs/Conversations/Conversations.fsproj" />
     <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />

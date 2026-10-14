@@ -1,0 +1,337 @@
+{
+  "format": "wanxiang.conversation",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-12T04:05:06.0000000Z",
+  "privacy": "导出文件不含 API 密钥、访问令牌、配对信息和主机配置；但包含对话全文与工具记录，分享前请先检查内容。",
+  "conversation": {
+    "id": "0192b4a0-0000-7000-8000-000000000007",
+    "title": "标题 \"x\"",
+    "atCommitId": "42",
+    "messageCount": 3
+  },
+  "lineage": {
+    "kind": "root",
+    "forks": []
+  },
+  "messages": [
+    {
+      "commitId": "5",
+      "committedAt": "2026-10-12T04:00:00Z",
+      "payload": {
+        "role": "user",
+        "contents": [
+          {
+            "type": "text",
+            "text": "你好 & <b>"
+          }
+        ]
+      }
+    },
+    {
+      "commitId": "6",
+      "payload": {
+        "role": "assistant",
+        "contents": [
+          {
+            "type": "text",
+            "text": "hi",
+            "nested": [
+              {
+                "keep": [
+                  null,
+                  true
+                ]
+              }
+            ]
+          },
+          {
+            "type": "attachment",
+            "sha256": "aa"
+          }
+        ]
+      }
+    },
+    {
+      "payload": {
+        "role": "tool",
+        "contents": []
+      }
+    }
+  ]
+}
+
+# T
+
+> 导出自万象 · 2026-10-12 04:05 · 共 3 条消息
+>
+> 导出文件不含 API 密钥、访问令牌、配对信息和主机配置；但包含对话全文与工具记录，分享前请先检查内容。
+
+body
+# 无空行
+
+PRE
+{
+  "format": "wanxiang.conversation",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-12T04:05:06.0000000Z",
+  "privacy": "导出文件不含 API 密钥、访问令牌、配对信息和主机配置；但包含对话全文与工具记录，分享前请先检查内容。",
+  "conversation": {
+    "id": "0192b4a0-0000-7000-8000-000000000007",
+    "title": "标题 \"x\"",
+    "atCommitId": "42",
+    "messageCount": 3
+  },
+  "lineage": {
+    "kind": "fork",
+    "parentId": "0192b4a0-0000-7000-8000-000000000001",
+    "parentTitle": "原 \"对话\"",
+    "parentDeleted": false,
+    "forkOrdinal": 3,
+    "forkBaseMessageId": "4",
+    "forks": [
+      {
+        "id": "0192b4a0-0000-7000-8000-000000000002",
+        "title": "子<分叉>",
+        "forkBaseMessageId": "9"
+      },
+      {
+        "id": "0192b4a0-0000-7000-8000-000000000003",
+        "title": "无点"
+      }
+    ]
+  },
+  "messages": [
+    {
+      "commitId": "5",
+      "committedAt": "2026-10-12T04:00:00Z",
+      "payload": {
+        "role": "user",
+        "contents": [
+          {
+            "type": "text",
+            "text": "你好 & <b>"
+          }
+        ]
+      }
+    },
+    {
+      "commitId": "6",
+      "payload": {
+        "role": "assistant",
+        "contents": [
+          {
+            "type": "text",
+            "text": "hi",
+            "nested": [
+              {
+                "keep": [
+                  null,
+                  true
+                ]
+              }
+            ]
+          },
+          {
+            "type": "attachment",
+            "sha256": "aa"
+          }
+        ]
+      }
+    },
+    {
+      "payload": {
+        "role": "tool",
+        "contents": []
+      }
+    }
+  ]
+}
+这是「原 "对话"」第 3 条消息的分叉（另一个版本）。|从这个对话分出了 2 个分叉：「子<分叉>」、「无点」。分叉需要分别导出。
+# T
+
+> 导出自万象 · 2026-10-12 04:05 · 共 3 条消息
+>
+> 这是「原 "对话"」第 3 条消息的分叉（另一个版本）。
+>
+> 从这个对话分出了 2 个分叉：「子<分叉>」、「无点」。分叉需要分别导出。
+>
+> 导出文件不含 API 密钥、访问令牌、配对信息和主机配置；但包含对话全文与工具记录，分享前请先检查内容。
+
+body
+# 无空行
+
+PRE
+{
+  "format": "wanxiang.conversation",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-12T04:05:06.0000000Z",
+  "privacy": "导出文件不含 API 密钥、访问令牌、配对信息和主机配置；但包含对话全文与工具记录，分享前请先检查内容。",
+  "conversation": {
+    "id": "0192b4a0-0000-7000-8000-000000000007",
+    "title": "标题 \"x\"",
+    "atCommitId": "42",
+    "messageCount": 3
+  },
+  "lineage": {
+    "kind": "fork",
+    "parentId": "0192b4a0-0000-7000-8000-000000000001",
+    "parentDeleted": true,
+    "forks": []
+  },
+  "messages": [
+    {
+      "commitId": "5",
+      "committedAt": "2026-10-12T04:00:00Z",
+      "payload": {
+        "role": "user",
+        "contents": [
+          {
+            "type": "text",
+            "text": "你好 & <b>"
+          }
+        ]
+      }
+    },
+    {
+      "commitId": "6",
+      "payload": {
+        "role": "assistant",
+        "contents": [
+          {
+            "type": "text",
+            "text": "hi",
+            "nested": [
+              {
+                "keep": [
+                  null,
+                  true
+                ]
+              }
+            ]
+          },
+          {
+            "type": "attachment",
+            "sha256": "aa"
+          }
+        ]
+      }
+    },
+    {
+      "payload": {
+        "role": "tool",
+        "contents": []
+      }
+    }
+  ]
+}
+这是一个分叉，原对话已删除。
+# T
+
+> 导出自万象 · 2026-10-12 04:05 · 共 3 条消息
+>
+> 这是一个分叉，原对话已删除。
+>
+> 导出文件不含 API 密钥、访问令牌、配对信息和主机配置；但包含对话全文与工具记录，分享前请先检查内容。
+
+body
+# 无空行
+
+PRE
+{
+  "format": "wanxiang.conversation",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-12T04:05:06.0000000Z",
+  "privacy": "导出文件不含 API 密钥、访问令牌、配对信息和主机配置；但包含对话全文与工具记录，分享前请先检查内容。",
+  "conversation": {
+    "id": "0192b4a0-0000-7000-8000-000000000007",
+    "title": "标题 \"x\"",
+    "atCommitId": "42",
+    "messageCount": 3
+  },
+  "lineage": {
+    "kind": "fork",
+    "parentId": "0192b4a0-0000-7000-8000-000000000001",
+    "parentDeleted": false,
+    "forks": []
+  },
+  "messages": [
+    {
+      "commitId": "5",
+      "committedAt": "2026-10-12T04:00:00Z",
+      "payload": {
+        "role": "user",
+        "contents": [
+          {
+            "type": "text",
+            "text": "你好 & <b>"
+          }
+        ]
+      }
+    },
+    {
+      "commitId": "6",
+      "payload": {
+        "role": "assistant",
+        "contents": [
+          {
+            "type": "text",
+            "text": "hi",
+            "nested": [
+              {
+                "keep": [
+                  null,
+                  true
+                ]
+              }
+            ]
+          },
+          {
+            "type": "attachment",
+            "sha256": "aa"
+          }
+        ]
+      }
+    },
+    {
+      "payload": {
+        "role": "tool",
+        "contents": []
+      }
+    }
+  ]
+}
+这是「原对话」的分叉。
+# T
+
+> 导出自万象 · 2026-10-12 04:05 · 共 3 条消息
+>
+> 这是「原对话」的分叉。
+>
+> 导出文件不含 API 密钥、访问令牌、配对信息和主机配置；但包含对话全文与工具记录，分享前请先检查内容。
+
+body
+# 无空行
+
+PRE
+OK 旅行 Some 0192b4a0-0000-7000-8000-000000000007 Some "2026-10-12T04:05:06.0000000+00:00" Some "原本是「原 "对话"」的分叉，原本有 2 个分叉。导入后是一个独立的新对话，分叉关系不会恢复。" skipped=0 att=true
+  {"role":"user","contents":[{"type":"text","text":"\u4F60\u597D \u0026 \u003Cb\u003E"}]}
+  {"role":"assistant","contents":[{"type":"text","text":"hi","nested":[{"keep":[null,true]}]},{"type":"attachment","sha256":"aa"}]}
+  {"role":"tool","contents":[]}
+OK 导入的对话 Some 0192b4a0-0000-7000-8000-000000000001 Some "2026-10-12T04:05:06.0000000+00:00" Some "原本是「P」的分叉。导入后是一个独立的新对话，分叉关系不会恢复。" skipped=2 att=true
+  {"role":"user","contents":[]}
+  {"role":"assistant","contents":[{"type":"attachment","sha256":"x"}]}
+OK T None None None skipped=0 att=false
+  {"role":"system"}
+ERR 这个文件来自更新版本的万象，请先升级再导入。
+ERR 这不是万象导出的对话文件。请选择「导出为 JSON」得到的文件。
+ERR 这不是有效的 JSON 文件。请选择从万象「导出为 JSON」得到的文件；Markdown 导出不能再导入。
+ERR 这不是有效的 JSON 文件。请选择从万象「导出为 JSON」得到的文件；Markdown 导出不能再导入。
+Error "文件超过 32.0 MiB，无法导入。"
+a.json
+a.json
+b.MD.json
+旅行（导入）
+apiKey true
+Authorization true
+token false
+Bearer true

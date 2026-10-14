@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：协议事件分派（旧 AppShell.HandleEvent）。协作者：Wire、WsClient（ClientState）、ConversationRuns、Outbox、CommandFeedback、ConfigFeedback、DownloadBuffers、HostRequests、ServerErrorRoute、MessageView。命名空间沿用 Wanxiang.UI。 -->
+  <ItemGroup>
+    <Compile Include="ProtocolDispatch.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WsClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationRuns" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandFeedback" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConfigFeedback" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DownloadBuffers" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostRequests" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ServerErrorRoute" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UploadFacts" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

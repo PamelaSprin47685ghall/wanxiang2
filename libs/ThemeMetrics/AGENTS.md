@@ -13,3 +13,6 @@
 
 # 金样生成
 `dotnet fsi tools/gen-golden.fsx` 编译 `tools/OldMetrics.fs`（照抄旧 Tokens 数值段、Metrics.fs 与 SpacingRamp）逐项输出。
+
+## 字体
+不含字体地址：内嵌字体与资源地址归 ThemeFonts 库（旧 Tokens.fontFamily / monoFontFamily 对应 `ThemeFonts.body` / `ThemeFonts.mono`）。

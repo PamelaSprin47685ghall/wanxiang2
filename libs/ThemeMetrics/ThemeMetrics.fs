@@ -362,6 +362,3 @@ module ThemeMetrics =
         | Metric.EmptyStateMaxWidth -> 480.0
         | Metric.ToastMaxWidth -> 560.0
 
-    /// 正文与等宽字体（旧 Tokens.fontFamily / monoFontFamily 的资源地址）
-    let fontFamily = "avares://Wanxiang.UI/Assets/Fonts/#Sarasa Gothic SC"
-    let monoFontFamily = "avares://Wanxiang.UI/Assets/Fonts/#Sarasa Term SC, Sarasa Gothic SC"

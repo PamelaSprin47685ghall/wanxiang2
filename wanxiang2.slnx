@@ -23,6 +23,10 @@
     <Project Path="libs/ApprovalCardText/ApprovalCardText.fsproj" />
     <Project Path="libs/ApprovalCardText/tests/ApprovalCardText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ApprovalPanel/">
+    <Project Path="libs/ApprovalPanel/ApprovalPanel.fsproj" />
+    <Project Path="libs/ApprovalPanel/tests/ApprovalPanel.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Approvals/">
     <Project Path="libs/Approvals/Approvals.fsproj" />
     <Project Path="libs/Approvals/tests/Approvals.Tests.fsproj" />
@@ -54,6 +58,10 @@
   <Folder Name="/BoundedWait/">
     <Project Path="libs/BoundedWait/BoundedWait.fsproj" />
     <Project Path="libs/BoundedWait/tests/BoundedWait.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrandMark/">
+    <Project Path="libs/BrandMark/BrandMark.fsproj" />
+    <Project Path="libs/BrandMark/tests/BrandMark.Tests.fsproj" />
   </Folder>
   <Folder Name="/BreadcrumbAction/">
     <Project Path="libs/BreadcrumbAction/BreadcrumbAction.fsproj" />
@@ -255,6 +263,10 @@
     <Project Path="libs/ExportFileName/ExportFileName.fsproj" />
     <Project Path="libs/ExportFileName/tests/ExportFileName.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ExportSheet/">
+    <Project Path="libs/ExportSheet/ExportSheet.fsproj" />
+    <Project Path="libs/ExportSheet/tests/ExportSheet.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ExportView/">
     <Project Path="libs/ExportView/ExportView.fsproj" />
     <Project Path="libs/ExportView/tests/ExportView.Tests.fsproj" />
@@ -350,6 +362,10 @@
   <Folder Name="/ImeShield/">
     <Project Path="libs/ImeShield/ImeShield.fsproj" />
     <Project Path="libs/ImeShield/tests/ImeShield.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ImportSheet/">
+    <Project Path="libs/ImportSheet/ImportSheet.fsproj" />
+    <Project Path="libs/ImportSheet/tests/ImportSheet.Tests.fsproj" />
   </Folder>
   <Folder Name="/ImportView/">
     <Project Path="libs/ImportView/ImportView.fsproj" />
@@ -475,6 +491,10 @@
     <Project Path="libs/ModelPickerList/ModelPickerList.fsproj" />
     <Project Path="libs/ModelPickerList/tests/ModelPickerList.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ModelSwitchPanel/">
+    <Project Path="libs/ModelSwitchPanel/ModelSwitchPanel.fsproj" />
+    <Project Path="libs/ModelSwitchPanel/tests/ModelSwitchPanel.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ModelSwitcher/">
     <Project Path="libs/ModelSwitcher/ModelSwitcher.fsproj" />
     <Project Path="libs/ModelSwitcher/tests/ModelSwitcher.Tests.fsproj" />
@@ -522,6 +542,10 @@
   <Folder Name="/PairingHint/">
     <Project Path="libs/PairingHint/PairingHint.fsproj" />
     <Project Path="libs/PairingHint/tests/PairingHint.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PalettePanel/">
+    <Project Path="libs/PalettePanel/PalettePanel.fsproj" />
+    <Project Path="libs/PalettePanel/tests/PalettePanel.Tests.fsproj" />
   </Folder>
   <Folder Name="/PayloadFields/">
     <Project Path="libs/PayloadFields/PayloadFields.fsproj" />
@@ -670,6 +694,10 @@
   <Folder Name="/SharedHttpClients/">
     <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />
     <Project Path="libs/SharedHttpClients/tests/SharedHttpClients.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ShellLayout/">
+    <Project Path="libs/ShellLayout/ShellLayout.fsproj" />
+    <Project Path="libs/ShellLayout/tests/ShellLayout.Tests.fsproj" />
   </Folder>
   <Folder Name="/ShortcutKeys/">
     <Project Path="libs/ShortcutKeys/ShortcutKeys.fsproj" />

@@ -1,0 +1,12 @@
+false false -> false "" | { visible = true
+  fullOpacity = false
+  interactive = true }
+false true -> true "当前对话" | { visible = true
+  fullOpacity = true
+  interactive = true }
+true false -> true "当前对话" | { visible = false
+  fullOpacity = false
+  interactive = false }
+true true -> true "当前对话" | { visible = false
+  fullOpacity = false
+  interactive = false }

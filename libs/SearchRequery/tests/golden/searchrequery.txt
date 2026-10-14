@@ -1,0 +1,12 @@
+<null> "" -> "" true
+<null> "abc" -> "" true
+"" "" -> "" true
+"" "abc" -> "" true
+"  " "" -> "" true
+"  " "abc" -> "" true
+"abc" "" -> "abc" true
+"abc" "abc" -> "abc" false
+" abc " "" -> "abc" true
+" abc " "abc" -> "abc" false
+"abd" "" -> "abd" true
+"abd" "abc" -> "abd" true

@@ -411,6 +411,10 @@
     <Project Path="libs/ModelVision/ModelVision.fsproj" />
     <Project Path="libs/ModelVision/tests/ModelVision.Tests.fsproj" />
   </Folder>
+  <Folder Name="/MountWindow/">
+    <Project Path="libs/MountWindow/MountWindow.fsproj" />
+    <Project Path="libs/MountWindow/tests/MountWindow.Tests.fsproj" />
+  </Folder>
   <Folder Name="/NavigationState/">
     <Project Path="libs/NavigationState/NavigationState.fsproj" />
     <Project Path="libs/NavigationState/tests/NavigationState.Tests.fsproj" />
@@ -519,9 +523,17 @@
     <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
     <Project Path="libs/SandboxFiles/tests/SandboxFiles.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ScrollFollow/">
+    <Project Path="libs/ScrollFollow/ScrollFollow.fsproj" />
+    <Project Path="libs/ScrollFollow/tests/ScrollFollow.Tests.fsproj" />
+  </Folder>
   <Folder Name="/SearchHit/">
     <Project Path="libs/SearchHit/SearchHit.fsproj" />
     <Project Path="libs/SearchHit/tests/SearchHit.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SearchRequery/">
+    <Project Path="libs/SearchRequery/SearchRequery.fsproj" />
+    <Project Path="libs/SearchRequery/tests/SearchRequery.Tests.fsproj" />
   </Folder>
   <Folder Name="/SearchSegments/">
     <Project Path="libs/SearchSegments/SearchSegments.fsproj" />
@@ -554,6 +566,10 @@
   <Folder Name="/SidebarEmpty/">
     <Project Path="libs/SidebarEmpty/SidebarEmpty.fsproj" />
     <Project Path="libs/SidebarEmpty/tests/SidebarEmpty.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarRowState/">
+    <Project Path="libs/SidebarRowState/SidebarRowState.fsproj" />
+    <Project Path="libs/SidebarRowState/tests/SidebarRowState.Tests.fsproj" />
   </Folder>
   <Folder Name="/SidebarSelection/">
     <Project Path="libs/SidebarSelection/SidebarSelection.fsproj" />
@@ -626,6 +642,10 @@
   <Folder Name="/ToolNames/">
     <Project Path="libs/ToolNames/ToolNames.fsproj" />
     <Project Path="libs/ToolNames/tests/ToolNames.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolOverview/">
+    <Project Path="libs/ToolOverview/ToolOverview.fsproj" />
+    <Project Path="libs/ToolOverview/tests/ToolOverview.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />

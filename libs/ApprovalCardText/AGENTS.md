@@ -10,3 +10,4 @@
 
 # 迁入或覆盖的旧测试
 旧 W3ToolApprovalUiTests 的用例要点击按钮，依赖 Avalonia，留在旧仓库。本库新增：金样、中文转义还原、无法解析或空白参数原样返回、未知策略与状态回落。
+- 迁自旧 AppShell.HandleEvent 的自足部分（见 tests 里与旧代码原样摘录的差分用例）。

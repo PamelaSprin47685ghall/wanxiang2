@@ -49,3 +49,15 @@ let ``套接字错误优先于外层的超时异常`` () =
 let ``深层嵌套也能找到套接字错误`` () =
     let e = Exception("a", Exception("b", Exception("c", SocketException(int SocketError.TimedOut))))
     Assert.Equal(ConnectionIssue.TimedOut, ConnectionIssue.ofException e)
+
+// 迁自旧 AppShell.HandleEvent 的 PairingFailed 分支：与原样摘录逐例比对。
+[<Fact>]
+let ``pairing failure maps like old AppShell`` () =
+    let old (d: {| reason: string; frozen: bool; freezeMinutes: int |}) =
+        if d.frozen then ConnectionIssue.PairingFrozen d.freezeMinutes else ConnectionIssue.PairingRejected d.reason
+    for frozen in [ true; false ] do
+        for m in [ 0; 15 ] do
+            for r in [ ""; "code expired" ] do
+                Assert.Equal(old {| reason = r; frozen = frozen; freezeMinutes = m |}, ConnectionIssue.ofPairingFailure frozen m r)
+    Assert.Equal("配对码已生成，请输入后提交。", ConnectionIssue.pairingStartedStatus)
+    Assert.Equal("配对成功，正在认证…", ConnectionIssue.pairingSucceededStatus)

@@ -60,3 +60,11 @@ module ConnectionIssue =
         | _ ->
             if all |> List.exists (fun e -> e :? TimeoutException || e :? OperationCanceledException) then ConnectionIssue.TimedOut
             else ConnectionIssue.Disconnected ex.Message
+
+    /// 主机报来的配对失败：被冻结时带分钟数，否则带原因（迁自旧 AppShell 的 PairingFailed 分支）。
+    let ofPairingFailure (frozen: bool) (freezeMinutes: int) (reason: string) : ConnectionIssue =
+        if frozen then ConnectionIssue.PairingFrozen freezeMinutes else ConnectionIssue.PairingRejected reason
+
+    /// 连接对话框的状态行：配对码已发出、配对成功正在认证。
+    let pairingStartedStatus = "配对码已生成，请输入后提交。"
+    let pairingSucceededStatus = "配对成功，正在认证…"

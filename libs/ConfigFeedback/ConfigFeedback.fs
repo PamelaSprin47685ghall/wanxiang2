@@ -69,3 +69,10 @@ module ConfigApplied =
         | None ->
             if ok then ConfigAppliedNotice.Success "配置已保存", true
             else failure (), false
+
+/// 主机配置有误 → 恢复的提示（迁自旧 AppShell 的 ConfigChanged / HostConfigRejected 分支）。
+module ConfigIssueNotice =
+    /// ConfigChanged 时：只在之前确有「配置有误」时提示一次。
+    let recovered (hadIssue: bool) : string option = if hadIssue then Some "主机配置已恢复正常。" else None
+    /// HostConfigRejected 时：只在第一次出现有误时把摘要 toast 出来，之后只更新状态行。
+    let rejected (alreadyHadIssue: bool) (summary: string) : string option = if alreadyHadIssue then None else Some summary

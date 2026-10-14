@@ -40,3 +40,6 @@ module ApprovalCardText =
         | "expired" -> "这个审批已超时或已失效。"
         | "cancelled" -> "这次生成已取消，审批作废。"
         | _ -> "这个审批已经处理过了。"
+
+    /// 别的对话（不是正在看的）来了审批请求时的提示（迁自旧 AppShell 的 ToolApprovalRequested 分支）。
+    let otherConversationWaitingText = "另一个对话里有工具调用在等你批准。"

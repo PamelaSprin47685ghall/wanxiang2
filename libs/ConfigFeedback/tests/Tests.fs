@@ -29,3 +29,11 @@ let ``golden: config applied notice matches old AppShell`` () =
 let ``首次运行卡片登记空文案：成功时不叠 toast 但仍拉目录`` () =
     Assert.Equal((ConfigAppliedNotice.Silent, true), ConfigApplied.notice (Some "") true [])
     Assert.Equal((ConfigAppliedNotice.Failure "a；b", false), ConfigApplied.notice None false [ "a"; "b" ])
+
+// 迁自旧 AppShell 的 ConfigChanged / HostConfigRejected 分支：旧代码只在恢复、首次有误时 toast。
+[<Fact>]
+let ``config issue notices fire only on transitions`` () =
+    Assert.Equal(Some "主机配置已恢复正常。", ConfigIssueNotice.recovered true)
+    Assert.Equal(None, ConfigIssueNotice.recovered false)
+    Assert.Equal(Some "坏了", ConfigIssueNotice.rejected false "坏了")
+    Assert.Equal(None, ConfigIssueNotice.rejected true "坏了")

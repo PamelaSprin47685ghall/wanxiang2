@@ -112,3 +112,13 @@ let ``parse and query catalog properties`` () =
     Assert.Equal(50, catalog.generation.maxContextMessages)
     Assert.Equal<string list>([ "/home/user/workspace" ], catalog.generation.fileReadRoots)
 
+
+// 迁自旧 AppShell 的 ProviderProbeResult 分支：与原样摘录比对。
+[<Fact>]
+let ``probe models keep string items only, like old AppShell`` () =
+    let models = JsonNode.Parse("""["a", null, 3, {"x":1}, "b", true, ["c"], ""]""").AsArray()
+    let old =
+        [ for item in models do
+              if not (isNull item) && item.GetValueKind() = System.Text.Json.JsonValueKind.String then item.GetValue<string>() ]
+    Assert.Equal<string list>(old, ProbeModels.ofJson models)
+    Assert.Equal<string list>([ "a"; "b"; "" ], ProbeModels.ofJson models)

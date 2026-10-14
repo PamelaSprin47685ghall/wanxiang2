@@ -11,3 +11,4 @@
 
 # 迁入或覆盖的旧测试
 - UiPureLogicTests：`empty catalog defaults`、`parse and query catalog properties`
+- 迁自旧 AppShell.HandleEvent 的自足部分（见 tests 里与旧代码原样摘录的差分用例）。

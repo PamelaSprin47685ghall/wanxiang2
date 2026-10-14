@@ -23,6 +23,8 @@ type DownloadBuffers(?capBytes: int64) =
     let capBytes = defaultArg capBytes (128L * 1024L * 1024L)
     let buffers = Dictionary<string, MemoryStream>()
     let names = Dictionary<string, string>()
+    // 「附件过大」只提示一次；任一下载重新 Begin 时解除（迁自旧 AppShell 的 downloadCappedNotified）。
+    let mutable cappedNotified = false
 
     member _.PendingCount = buffers.Count
 
@@ -35,6 +37,7 @@ type DownloadBuffers(?capBytes: int64) =
             buffers[key] <- new MemoryStream()
         | _ -> buffers[key] <- new MemoryStream()
         names[key] <- fileName
+        cappedNotified <- false
 
     member _.Append(sha256: string, bytes: byte[]) : DownloadChunkResult =
         let key = sha256.ToLowerInvariant()
@@ -49,6 +52,18 @@ type DownloadBuffers(?capBytes: int64) =
                 buffer.Write(bytes, 0, bytes.Length)
                 DownloadChunkResult.Accepted
         | _ -> DownloadChunkResult.Unknown "没有在途缓冲：尚未开始、已被丢弃或已完成。"
+
+    /// 收一块 base64 数据。返回 true 表示刚刚超限、且这是开始以来第一次，界面该提示一次「附件过大，下载已中止。」。
+    /// 坏的 base64 静默丢弃（与旧 AppShell 相同）。
+    member this.AppendBase64(sha256: string, dataBase64: string) : bool =
+        try
+            let bytes = Convert.FromBase64String dataBase64
+            match this.Append(sha256, bytes) with
+            | DownloadChunkResult.Capped when not cappedNotified ->
+                cappedNotified <- true
+                true
+            | _ -> false
+        with _ -> false
 
     /// 完成接收：取走文件名与字节并移除缓冲。文件名缺失时回落到 sha256。
     member _.Take(sha256: string) : (string * byte[]) option =

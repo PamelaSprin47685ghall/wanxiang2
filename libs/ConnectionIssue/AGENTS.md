@@ -16,3 +16,4 @@
 - 旧 DevicesUiTests：`exceptions are classified into typed issues`（只改为限定名）。
 - 留在旧仓库（依赖 UI 的 Dialogs）：`each typed connection error maps to its retry action regardless of wording`、`retry visibility does not depend on message keywords` 等 DevicesUiTests 用例；`retry` 的映射由本库 `每种问题对应的重试动作` 直接覆盖。
 - 补充：`取消算超时，其他套接字错误算断线并保留最外层消息`、`套接字错误优先于外层的超时异常`、`深层嵌套也能找到套接字错误`。
+- 迁自旧 AppShell.HandleEvent 的自足部分（见 tests 里与旧代码原样摘录的差分用例）。

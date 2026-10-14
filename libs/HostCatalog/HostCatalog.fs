@@ -306,3 +306,10 @@ module Catalog =
         match defaultSelection catalog with
         | Some(id, _) -> id = providerId && catalog.generation.defaultProvider = Some providerId
         | None -> false
+
+/// 探测结果（`provider.probe.result`）里的模型名：只取字符串项，跳过 null 与其他类型，保持顺序。
+/// 迁自旧 AppShell 的 ProviderProbeResult 分支。
+module ProbeModels =
+    let ofJson (models: JsonArray) : string list =
+        [ for item in models do
+              if not (isNull item) && item.GetValueKind() = JsonValueKind.String then item.GetValue<string>() ]

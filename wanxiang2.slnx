@@ -135,6 +135,10 @@
     <Project Path="libs/ChatEmptyText/ChatEmptyText.fsproj" />
     <Project Path="libs/ChatEmptyText/tests/ChatEmptyText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ChatScroller/">
+    <Project Path="libs/ChatScroller/ChatScroller.fsproj" />
+    <Project Path="libs/ChatScroller/tests/ChatScroller.Tests.fsproj" />
+  </Folder>
   <Folder Name="/CliArgs/">
     <Project Path="libs/CliArgs/CliArgs.fsproj" />
     <Project Path="libs/CliArgs/tests/CliArgs.Tests.fsproj" />
@@ -282,6 +286,10 @@
   <Folder Name="/ExchangeJump/">
     <Project Path="libs/ExchangeJump/ExchangeJump.fsproj" />
     <Project Path="libs/ExchangeJump/tests/ExchangeJump.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExchangeNav/">
+    <Project Path="libs/ExchangeNav/ExchangeNav.fsproj" />
+    <Project Path="libs/ExchangeNav/tests/ExchangeNav.Tests.fsproj" />
   </Folder>
   <Folder Name="/ExportFileName/">
     <Project Path="libs/ExportFileName/ExportFileName.fsproj" />

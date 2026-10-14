@@ -259,6 +259,10 @@
     <Project Path="libs/DurationText/DurationText.fsproj" />
     <Project Path="libs/DurationText/tests/DurationText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ErrorPanel/">
+    <Project Path="libs/ErrorPanel/ErrorPanel.fsproj" />
+    <Project Path="libs/ErrorPanel/tests/ErrorPanel.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ErrorRecovery/">
     <Project Path="libs/ErrorRecovery/ErrorRecovery.fsproj" />
     <Project Path="libs/ErrorRecovery/tests/ErrorRecovery.Tests.fsproj" />
@@ -767,6 +771,10 @@
     <Project Path="libs/StartupTrace/StartupTrace.fsproj" />
     <Project Path="libs/StartupTrace/tests/StartupTrace.Tests.fsproj" />
   </Folder>
+  <Folder Name="/StreamCaret/">
+    <Project Path="libs/StreamCaret/StreamCaret.fsproj" />
+    <Project Path="libs/StreamCaret/tests/StreamCaret.Tests.fsproj" />
+  </Folder>
   <Folder Name="/StreamableHttp/">
     <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
     <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
@@ -863,9 +871,17 @@
     <Project Path="libs/UrlSchemeRegistration/UrlSchemeRegistration.fsproj" />
     <Project Path="libs/UrlSchemeRegistration/tests/UrlSchemeRegistration.Tests.fsproj" />
   </Folder>
+  <Folder Name="/UsageFoot/">
+    <Project Path="libs/UsageFoot/UsageFoot.fsproj" />
+    <Project Path="libs/UsageFoot/tests/UsageFoot.Tests.fsproj" />
+  </Folder>
   <Folder Name="/UsageTally/">
     <Project Path="libs/UsageTally/UsageTally.fsproj" />
     <Project Path="libs/UsageTally/tests/UsageTally.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UserBubble/">
+    <Project Path="libs/UserBubble/UserBubble.fsproj" />
+    <Project Path="libs/UserBubble/tests/UserBubble.Tests.fsproj" />
   </Folder>
   <Folder Name="/VerifiedCopy/">
     <Project Path="libs/VerifiedCopy/VerifiedCopy.fsproj" />

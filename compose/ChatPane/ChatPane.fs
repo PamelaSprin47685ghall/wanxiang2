@@ -45,6 +45,14 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
     let mutable compact = false
     let mutable overflows = false
     let returnedFocus = Event<unit>()
+    let mutable space2xl = 0.0
+    let mutable startMode: bool option = None
+    let applyStart () =
+        match startMode with
+        | Some v ->
+            empty.Host.VerticalAlignment <- if v then VerticalAlignment.Bottom else VerticalAlignment.Center
+            empty.Host.Margin <- Thickness(space2xl, 0.0, space2xl, space2xl)
+        | None -> ()
 
     let hideSkeleton () =
         if skeleton.IsShown then
@@ -84,6 +92,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
         body.Children.Add emptyScroller
         body.Children.Add scroller.LatestButton
         body.Children.Add nav.FailureBanner
+        looks.Space2xl |> Observable.add (fun v -> space2xl <- v; applyStart ())
         looks.Space3xl |> Observable.add (fun v -> top <- v; applyInsets ())
         body.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty then applyInsets ())
         empty.Host.PropertyChanged.Add(fun e ->
@@ -116,6 +125,11 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
 
     /// 立即写偏移并记为自己写的（旧 tween.Pin）：钉住期间重新对齐不被当成用户上滚
     member _.PinOffset(y: float) = scroller.PinOffset y
+
+    /// 起步模式（旧 SetStartMode）：空态贴近输入区；只改布局
+    member _.SetStartMode(value: bool) =
+        startMode <- Some value
+        applyStart ()
 
     member _.SetCompact(value: bool) =
         compact <- value

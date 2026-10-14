@@ -18,3 +18,4 @@ ChatScroller + ExchangeNav + ChatEmpty + SkeletonList + ScrollFollow + ScrollTwe
 
 - RefreshLatestButton()：宿主改了跟随状态后刷新「回到最新」按钮（不要再借 SetCompact 刷新）。PinOffset(y)：转给 ChatScroller.PinOffset。
 - 空态整树金样已在 tests/golden/chatpane.txt（空对话、无对话带主操作、未连接、连接失败、无模型五态，由旧 ChatView 生成）。
+- SetStartMode(bool)：起步模式空态贴近输入区（旧 ChatView.SetStartMode），留白取 Space2xl。

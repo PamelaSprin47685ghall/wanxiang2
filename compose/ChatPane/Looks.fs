@@ -21,6 +21,8 @@ type ChatPaneLooks =
       Skeleton: SkeletonListLook
       /// 滚动区顶部留白（旧 Spacing.space3xl）
       Space3xl: IObservable<float>
+      /// 起步模式空态留白（旧 Spacing.space2xl）
+      Space2xl: IObservable<float>
       /// 空态品牌标边长（旧 Tokens.logoEmpty；构造参数，取当前值）
       LogoEmpty: LiveValue<float> }
 
@@ -141,5 +143,6 @@ module ChatPaneLooks =
                 | SkeletonGauge.OpacityReduced -> metric Metric.SkeletonOpacityReduced
               Frame = span Timing.SkeletonBreathFrame
               Reduced = reduced }
+          Space2xl = space Space.X2l
           Space3xl = space Space.X3l
           LogoEmpty = manager.Metric Metric.LogoEmpty }

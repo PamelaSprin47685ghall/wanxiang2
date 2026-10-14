@@ -1,0 +1,10 @@
+<missing>
+{}
+{"theme":"dark","fontScale":30,"sidebarWidth":10,"windowWidth":100,"windowHeight":9000,"windowX":-5,"windowY":7,"hasWindowPosition":true,"persistDrafts":false,"enterSends":false}
+{"theme":"light","fontScale":13.25,"codeWrap":true,"reduceMotion":true,"showArchived":true,"sidebarCollapsed":true,"autoCollapseReasoning":false,"future":{"x":[1,"二"]}}
+{"theme":"weird","fontScale":"big","persistDrafts":"yes","sidebarWidth":300.5}
+{"windowX":1.5}
+[1,2]
+not json
+null
+{"theme":"system","fontScale":1e400}

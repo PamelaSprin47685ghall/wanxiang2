@@ -391,6 +391,10 @@
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
     <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
   </Folder>
+  <Folder Name="/UiPrefs/">
+    <Project Path="libs/UiPrefs/UiPrefs.fsproj" />
+    <Project Path="libs/UiPrefs/tests/UiPrefs.Tests.fsproj" />
+  </Folder>
   <Folder Name="/UsageTally/">
     <Project Path="libs/UsageTally/UsageTally.fsproj" />
     <Project Path="libs/UsageTally/tests/UsageTally.Tests.fsproj" />

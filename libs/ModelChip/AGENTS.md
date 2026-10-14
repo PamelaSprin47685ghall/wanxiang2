@@ -6,7 +6,7 @@
 
 ## 外观
 
-- `ModelChipLook`：`Ink`、`Gauge`（字号、最大宽、内边距、圆角、窄屏最小高）、`BodyFont`、`Dress`。
+- `ModelChipLook`：`Ink`、`Gauge`（字号、最大宽、内边距、圆角、窄屏最小高）、`BodyFont`、`Chevron`、`Dress`。
 
 ## 证据与旧测试
 

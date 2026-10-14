@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：图片自动缩小的判定与说明。协作者：ImageFit、MediaTypes、MessageView。命名空间沿用 Wanxiang.UI。 -->
+  <ItemGroup>
+    <Compile Include="ImageShrink.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.ImageFit" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

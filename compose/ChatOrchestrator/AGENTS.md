@@ -41,3 +41,7 @@ PartialReplies、HostLog、CommandId、PlainText、ContextTrim、TitleText。命
   - `empty built context with a drained batch fails retryably, never completes`
   - `tool round limit error is retryable and names maxToolRounds`
   - `250 只有助手正文才算可续写的半截`
+
+# 细拆（用量累加、半截回复判定）
+- 逐轮 token 累加拆成库 UsageTally（对象自己拥有累加状态）；durationMs 取最后一次报告用量时的耗时、拼成线上 GenerationUsage 留在组合者，线上字节不变，金样照旧逐字节通过。
+- `ChatOrchestrator.PartialText` 转发到库 ContinuableReply.hasText，公开面不变。

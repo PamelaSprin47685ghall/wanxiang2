@@ -63,6 +63,10 @@
     <Project Path="libs/ContextTrim/ContextTrim.fsproj" />
     <Project Path="libs/ContextTrim/tests/ContextTrim.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ContinuableReply/">
+    <Project Path="libs/ContinuableReply/ContinuableReply.fsproj" />
+    <Project Path="libs/ContinuableReply/tests/ContinuableReply.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Conversations/">
     <Project Path="libs/Conversations/Conversations.fsproj" />
     <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
@@ -254,6 +258,10 @@
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
     <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UsageTally/">
+    <Project Path="libs/UsageTally/UsageTally.fsproj" />
+    <Project Path="libs/UsageTally/tests/UsageTally.Tests.fsproj" />
   </Folder>
   <Folder Name="/VerifiedCopy/">
     <Project Path="libs/VerifiedCopy/VerifiedCopy.fsproj" />

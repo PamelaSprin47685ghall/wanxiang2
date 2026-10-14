@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- 组合者：聊天编排（排队、生成循环、工具执行与审批、记账、半截回复、自动标题、上下文构造）。
        协作者：EventStore、ChatDomain、Wire、AppConfig、AgentRuntime、AgentContent、MessageSerde、AgentHistory、ToolRegistry、
-       ToolApproval、PartialReplies、HostLog、CommandId、PlainText、ContextTrim、TitleText。命名空间沿用 Wanxiang.Server。 -->
+       ToolApproval、PartialReplies、HostLog、CommandId、PlainText、ContextTrim、TitleText、UsageTally、ContinuableReply。命名空间沿用 Wanxiang.Server。 -->
   <ItemGroup>
     <Compile Include="GenerationContext.fs" />
     <Compile Include="TitleGenerator.fs" />
@@ -26,5 +26,7 @@
     <PackageReference Include="Wanxiang2.PlainText" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ContextTrim" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.TitleText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UsageTally" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ContinuableReply" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

@@ -60,7 +60,9 @@ type GenerationRuntime = {
     mutable toolRounds: int
     /// 累计用量：工具循环里每一轮 Provider 调用的 token 都要计入，
     /// 否则用户只看到最后一轮的开销。
-    mutable accumulatedUsage: GenerationUsage
+    usage: UsageTally
+    /// 最近一轮报告了用量时，自生成开始到那一刻的耗时（与旧实现相同：durationMs 取最后一轮）
+    mutable lastUsageMs: int64 option
     /// 本轮 Provider 调用最近一次流出的累积消息（决策 250：中途失败时据此保存半截回复）
     mutable lastDelta: JsonNode option
 }
@@ -105,37 +107,13 @@ type ChatOrchestrator(
     let getRuntime (convId: Guid) : ConversationRuntime =
         runtimes.GetOrAdd(convId, fun id -> { conversationId = id; generation = None; pendingQueue = []; pendingInvocationIds = Set.empty })
 
-    let nullableInt (n: Nullable<int64>) =
-        if n.HasValue then Some(int n.Value) else None
-
-    let usageFromDetails (usage: UsageDetails option) (startedAt: DateTimeOffset) : GenerationUsage option =
-        match usage with
-        | None -> None
-        | Some u ->
-            let durationMs = int64 (DateTimeOffset.UtcNow - startedAt).TotalMilliseconds
-            Some
-                { promptTokens = nullableInt u.InputTokenCount
-                  completionTokens = nullableInt u.OutputTokenCount
-                  cachedTokens = nullableInt u.CachedInputTokenCount
-                  totalTokens = nullableInt u.TotalTokenCount
-                  durationMs = Some durationMs }
-
-    /// 工具循环里逐轮累加，避免只报告最后一轮的 token。
-    let addUsage (acc: GenerationUsage) (next: GenerationUsage option) : GenerationUsage =
-        match next with
-        | None -> acc
-        | Some u ->
-            let sum a b =
-                match a, b with
-                | Some x, Some y -> Some(x + y)
-                | Some x, None -> Some x
-                | None, Some y -> Some y
-                | None, None -> None
-            { promptTokens = sum acc.promptTokens u.promptTokens
-              completionTokens = sum acc.completionTokens u.completionTokens
-              cachedTokens = sum acc.cachedTokens u.cachedTokens
-              totalTokens = sum acc.totalTokens u.totalTokens
-              durationMs = u.durationMs }
+    /// 线上用量：token 来自逐轮累加，durationMs 取最后一次报告用量时的耗时。
+    let usageOf (g: GenerationRuntime) : GenerationUsage =
+        { promptTokens = g.usage.PromptTokens
+          completionTokens = g.usage.CompletionTokens
+          cachedTokens = g.usage.CachedTokens
+          totalTokens = g.usage.TotalTokens
+          durationMs = g.lastUsageMs }
 
     let finishedEvent (convId: Guid) (generationId: Guid) (status: string) (error: GenerationError option) (startedAt: DateTimeOffset) (usage: GenerationUsage option) =
         let elapsed = int64 (DateTimeOffset.UtcNow - startedAt).TotalMilliseconds
@@ -186,23 +164,7 @@ type ChatOrchestrator(
         and set v = partials <- v
 
     /// 半截回复是否有可续写的正文（助手角色、非空白文本）。
-    static member PartialText(node: JsonNode) : bool =
-        match node with
-        | :? JsonObject as o ->
-            let role = match o["role"] with null -> "" | n -> (try n.GetValue<string>() with _ -> "")
-            let hasText =
-                match o["contents"] with
-                | :? JsonArray as a ->
-                    a |> Seq.exists (fun c ->
-                        match c with
-                        | :? JsonObject as co ->
-                            match co["text"] with
-                            | null -> false
-                            | n -> (try not (String.IsNullOrWhiteSpace(n.GetValue<string>())) with _ -> false)
-                        | _ -> false)
-                | _ -> false
-            role = "assistant" && hasText
-        | _ -> false
+    static member PartialText(node: JsonNode) : bool = ContinuableReply.hasText node
 
     /// 对话当前运行状态（供 snapshot 的 runtimeState 字段）。
     member _.WithRuntimeSnapshot(convId: Guid, consume: string -> Guid option -> 'T) : 'T =
@@ -389,7 +351,8 @@ type ChatOrchestrator(
                                   cancelled = false
                                   lastProviderMessages = []
                                   toolRounds = 0
-                                  accumulatedUsage = GenerationUsage.empty
+                                  usage = UsageTally()
+                                  lastUsageMs = None
                                   lastDelta = None }
                         partials.Clear convId
                         broadcastToConversation
@@ -473,7 +436,7 @@ type ChatOrchestrator(
                     // 1. 取消检查（决策 88：取消只停止当前运行；内存中排队但尚未插入的用户消息
                     //    继续保留，等待下一个插入点——绝不先提交再取消，否则消息落盘却无回复）
                     if g.cts.IsCancellationRequested then
-                        let ev = finishedEvent convId generationId "cancelled" None g.startedAtUtc (Some g.accumulatedUsage)
+                        let ev = finishedEvent convId generationId "cancelled" None g.startedAtUtc (Some(usageOf g))
                         this.FinishGeneration(convId, generationId, ev, false) |> ignore
                         running <- false
                     else
@@ -527,7 +490,7 @@ type ChatOrchestrator(
                                     g.runtime.RunStreaming(g.agentSession, context, onDelta, g.cts.Token)
                                 match result with
                                 | AgentCallResult.Cancelled ->
-                                    let ev = finishedEvent convId generationId "cancelled" None g.startedAtUtc (Some g.accumulatedUsage)
+                                    let ev = finishedEvent convId generationId "cancelled" None g.startedAtUtc (Some(usageOf g))
                                     this.FinishGeneration(convId, generationId, ev, false) |> ignore
                                     running <- false
                                 | Failed err ->
@@ -562,7 +525,7 @@ type ChatOrchestrator(
                                                    generationId = generationId
                                                    message = msg.DeepClone()
                                                    error = Some err |})
-                                    let ev = finishedEvent convId generationId "failed" (Some err) g.startedAtUtc (Some g.accumulatedUsage)
+                                    let ev = finishedEvent convId generationId "failed" (Some err) g.startedAtUtc (Some(usageOf g))
                                     if this.FinishGeneration(convId, generationId, ev, false) then
                                         // 决策 250：落盘后再下发；新生成一开始就作废（StartGeneration 里 Clear）。
                                         partialEv |> Option.iter (fun pe ->
@@ -570,7 +533,9 @@ type ChatOrchestrator(
                                             broadcastToConversation convId pe)
                                     running <- false
                                 | Completed usage ->
-                                    g.accumulatedUsage <- addUsage g.accumulatedUsage (usageFromDetails usage g.startedAtUtc)
+                                    usage |> Option.iter (fun u ->
+                                        g.usage.Add u
+                                        g.lastUsageMs <- Some(int64 (DateTimeOffset.UtcNow - g.startedAtUtc).TotalMilliseconds))
                                     // 响应消息已由 HistoryProvider 回调提交；检查工具调用
                                     // （OnAgentResponse 在 rt 锁内写 lastProviderMessages，读取必须同锁）
                                     let responses = lock rt (fun () -> g.lastProviderMessages)
@@ -581,7 +546,7 @@ type ChatOrchestrator(
                                     if List.isEmpty calls then
                                         // 决策 22/24：idle 是可插入点——若流式期间有新消息入队，则继续循环排空，
                                         // 不立即结束 generation（避免排队消息需等下次显式动作才处理）
-                                        let ev = finishedEvent convId generationId "completed" None g.startedAtUtc (Some g.accumulatedUsage)
+                                        let ev = finishedEvent convId generationId "completed" None g.startedAtUtc (Some(usageOf g))
                                         if not (this.FinishGeneration(convId, generationId, ev, true)) then
                                             lock rt (fun () -> g.lastProviderMessages <- [])
                                             // 继续 while 循环（下一轮 DrainQueue 排空 + 再次调 Provider）
@@ -593,7 +558,7 @@ type ChatOrchestrator(
                                         // 工具循环不设上限时，一个反复调工具的模型能把 token 烧到没有上限。
                                         logInfo(sprintf "generation %O stopped: tool round limit %d reached" generationId maxRounds)
                                         let err = ToolRoundLimit.error maxRounds
-                                        let ev = finishedEvent convId generationId "failed" (Some err) g.startedAtUtc (Some g.accumulatedUsage)
+                                        let ev = finishedEvent convId generationId "failed" (Some err) g.startedAtUtc (Some(usageOf g))
                                         this.FinishGeneration(convId, generationId, ev, false) |> ignore
                                         running <- false
                                     else

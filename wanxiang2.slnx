@@ -39,6 +39,38 @@
     <Project Path="libs/AttachmentRefs/AttachmentRefs.fsproj" />
     <Project Path="libs/AttachmentRefs/tests/AttachmentRefs.Tests.fsproj" />
   </Folder>
+  <Folder Name="/BoundedCache/">
+    <Project Path="libs/BoundedCache/BoundedCache.fsproj" />
+    <Project Path="libs/BoundedCache/tests/BoundedCache.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserCredentials/">
+    <Project Path="libs/BrowserCredentials/BrowserCredentials.csproj" />
+    <Project Path="libs/BrowserCredentials/tests/BrowserCredentials.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserDrafts/">
+    <Project Path="libs/BrowserDrafts/BrowserDrafts.csproj" />
+    <Project Path="libs/BrowserDrafts/tests/BrowserDrafts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserImage/">
+    <Project Path="libs/BrowserImage/BrowserImage.csproj" />
+    <Project Path="libs/BrowserImage/tests/BrowserImage.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserLocalStore/">
+    <Project Path="libs/BrowserLocalStore/BrowserLocalStore.csproj" />
+    <Project Path="libs/BrowserLocalStore/tests/BrowserLocalStore.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserPage/">
+    <Project Path="libs/BrowserPage/BrowserPage.csproj" />
+    <Project Path="libs/BrowserPage/tests/BrowserPage.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserProbe/">
+    <Project Path="libs/BrowserProbe/BrowserProbe.csproj" />
+    <Project Path="libs/BrowserProbe/tests/BrowserProbe.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserRich/">
+    <Project Path="libs/BrowserRich/BrowserRich.csproj" />
+    <Project Path="libs/BrowserRich/tests/BrowserRich.Tests.fsproj" />
+  </Folder>
   <Folder Name="/Canonical/">
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
@@ -111,6 +143,14 @@
     <Project Path="libs/Gemini/Gemini.fsproj" />
     <Project Path="libs/Gemini/tests/Gemini.Tests.fsproj" />
   </Folder>
+  <Folder Name="/HljsCatalog/">
+    <Project Path="libs/HljsCatalog/HljsCatalog.fsproj" />
+    <Project Path="libs/HljsCatalog/tests/HljsCatalog.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HljsHtml/">
+    <Project Path="libs/HljsHtml/HljsHtml.fsproj" />
+    <Project Path="libs/HljsHtml/tests/HljsHtml.Tests.fsproj" />
+  </Folder>
   <Folder Name="/HostProbe/">
     <Project Path="libs/HostProbe/HostProbe.fsproj" />
     <Project Path="libs/HostProbe/tests/HostProbe.Tests.fsproj" />
@@ -122,6 +162,10 @@
   <Folder Name="/HttpRetry/">
     <Project Path="libs/HttpRetry/HttpRetry.fsproj" />
     <Project Path="libs/HttpRetry/tests/HttpRetry.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/JintScriptHost/">
+    <Project Path="libs/JintScriptHost/JintScriptHost.fsproj" />
+    <Project Path="libs/JintScriptHost/tests/JintScriptHost.Tests.fsproj" />
   </Folder>
   <Folder Name="/JsonLinesLog/">
     <Project Path="libs/JsonLinesLog/JsonLinesLog.fsproj" />
@@ -138,6 +182,10 @@
   <Folder Name="/JsonSeq/">
     <Project Path="libs/JsonSeq/JsonSeq.fsproj" />
     <Project Path="libs/JsonSeq/tests/JsonSeq.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/KatexHtml/">
+    <Project Path="libs/KatexHtml/KatexHtml.fsproj" />
+    <Project Path="libs/KatexHtml/tests/KatexHtml.Tests.fsproj" />
   </Folder>
   <Folder Name="/Ledger/">
     <Project Path="libs/Ledger/Ledger.fsproj" />
@@ -222,6 +270,10 @@
   <Folder Name="/RefreshingPool/">
     <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
     <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RichScripts/">
+    <Project Path="libs/RichScripts/RichScripts.fsproj" />
+    <Project Path="libs/RichScripts/tests/RichScripts.Tests.fsproj" />
   </Folder>
   <Folder Name="/RunModes/">
     <Project Path="libs/RunModes/RunModes.fsproj" />

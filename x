@@ -13,6 +13,9 @@ cd "$(dirname "$0")"
 libs()     { for d in libs/*/;    do basename "$d"; done; }
 composers(){ for d in compose/*/; do [[ -d "$d" ]] && basename "$d"; done; }
 
+# 库的主项目：F# 为 <lib>.fsproj；需要 C# source generator（JSImport）的库为 <lib>.csproj
+libproj()  { if [[ -f "libs/$1/$1.csproj" ]]; then echo "libs/$1/$1.csproj"; else echo "libs/$1/$1.fsproj"; fi; }
+
 need_lib() {
   [[ -n "${1:-}" && -d "libs/$1" ]] || { echo "unknown lib: ${1:-}" >&2; echo "libs: $(libs | tr '\n' ' ')" >&2; exit 2; }
 }
@@ -24,9 +27,10 @@ check() {
   local bad=0
   for lib in $(libs); do
     local root; root="$(realpath "libs/$lib")"
-    for f in AGENTS.md "$lib.fsproj" "tests/$lib.Tests.fsproj"; do
+    for f in AGENTS.md "tests/$lib.Tests.fsproj"; do
       [[ -f "libs/$lib/$f" ]] || { echo "FAIL $lib: missing $f"; bad=1; }
     done
+    [[ -f "$(libproj "$lib")" ]] || { echo "FAIL $lib: missing $lib.fsproj or $lib.csproj"; bad=1; }
     while IFS= read -r proj; do
       local dir; dir="$(dirname "$proj")"
       while IFS= read -r ref; do
@@ -38,7 +42,7 @@ check() {
         echo "FAIL $lib: main project must have no ProjectReference"; bad=1
       fi
       if grep -q 'Wanxiang2\.' "$proj"; then echo "FAIL $lib: $proj uses a sibling package"; bad=1; fi
-    done < <(find "libs/$lib" -name '*.fsproj' -not -path '*/obj/*' -not -path '*/bin/*')
+    done < <(find "libs/$lib" \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*')
   done
   # 组合者：不经 ProjectReference 碰 libs/（只用交付包）；库不知道组合者
   for c in $(composers); do
@@ -57,7 +61,7 @@ check() {
 
 pack() {
   rm -rf artifacts/feed
-  for lib in $(libs); do dotnet pack "libs/$lib/$lib.fsproj" -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo; done
+  for lib in $(libs); do dotnet pack "$(libproj "$lib")" -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo; done
   # 组合者也是交付物；它自己从 feed 消费库包
   rm -rf artifacts/packages/wanxiang2.* compose/*/obj
   # 组合者可以消费别的组合者的包：按依赖顺序打包（依赖的包还不在 feed 里就留到下一轮）
@@ -93,7 +97,7 @@ gen_sln() {
   echo '<Solution>'
   for lib in $(libs); do
     echo "  <Folder Name=\"/$lib/\">"
-    echo "    <Project Path=\"libs/$lib/$lib.fsproj\" />"
+    echo "    <Project Path=\"$(libproj "$lib")\" />"
     echo "    <Project Path=\"libs/$lib/tests/$lib.Tests.fsproj\" />"
     echo '  </Folder>'
   done

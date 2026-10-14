@@ -3,6 +3,7 @@
   <ItemGroup>
     <PackageVersion Include="FSharp.Core" Version="10.1.401" />
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.9.0" />
+    <PackageVersion Include="Jint" Version="4.16.1" />
     <PackageVersion Include="AGUI.Abstractions" Version="1.0.0" />
     <PackageVersion Include="Microsoft.Agents.AI" Version="1.20.0" />
     <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.20.0" />

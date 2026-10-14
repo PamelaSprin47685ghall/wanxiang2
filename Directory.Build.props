@@ -17,6 +17,6 @@
     <IsPackable Condition="($(MSBuildProjectDirectory.Contains('/libs/')) Or $(MSBuildProjectDirectory.Contains('/compose/'))) And !$(MSBuildProjectDirectory.Contains('/tests'))">true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="FSharp.Core" Condition="'$(MSBuildProjectExtension)' == '.fsproj'" />
   </ItemGroup>
 </Project>

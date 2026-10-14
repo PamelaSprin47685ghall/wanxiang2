@@ -6,7 +6,8 @@ open System.Text
 open Xunit
 open Wanxiang.UI
 
-/// 金样由旧代码（从旧视图文件原样摘出的函数）在同一组输入上生成
+/// 金样由旧代码（从旧视图文件原样摘出的函数）在同一组输入上生成；
+/// 其中受合并修正影响的行已按新口径重写（见 AGENTS.md SPEC 2）
 let render () =
     let sb = StringBuilder()
     let line (s: string) = sb.Append(s).Append('\n') |> ignore
@@ -58,20 +59,41 @@ let ``every term that matched the row is highlighted`` () =
         SidebarText.segments "模型 选型" "万象模型选型记录"
         |> List.filter _.isMatch
         |> List.map _.text
-    Assert.Equal<string list>([ "模型"; "选型" ], highlighted)
+    // 有意改动：两个词紧邻，合并为一段命中
+    Assert.Equal<string list>([ "模型选型" ], highlighted)
 
 [<Fact>]
 let ``adjacent matches cover the whole text without gaps`` () =
     let spans = SidebarText.segments "存储 模型" "存储模型"
-    Assert.Equal<string list>([ "存储"; "模型" ], spans |> List.map _.text)
+    // 有意改动：旧实现两段，现在紧邻命中合并为一段
+    Assert.Equal<string list>([ "存储模型" ], spans |> List.map _.text)
     Assert.True(spans |> List.forall _.isMatch)
-    Assert.Equal("存储模型", spans |> List.filter _.isMatch |> List.map _.text |> String.concat "")
 
 [<Fact>]
 let ``overlapping occurrences of one term are not double counted`` () =
     let spans = SidebarText.segments "aa" "aaaa"
     Assert.Equal("aaaa", spans |> List.map _.text |> String.concat "")
-    Assert.Equal<int>(2, spans |> List.filter _.isMatch |> List.length)
+    // 有意改动：旧实现两段紧邻命中，现在合并为一段
+    Assert.Equal<int>(1, spans |> List.filter _.isMatch |> List.length)
+
+// ---- 有意修正的旧缺陷：不同词的命中互相重叠时，旧实现重复取字
+
+[<Fact>]
+let ``overlapping hits of different terms do not duplicate characters`` () =
+    let spans = SidebarText.segments "ab bc" "xabcy"
+    Assert.Equal("xabcy", spans |> List.map _.text |> String.concat "")
+    Assert.Equal<string list>([ "x"; "abc"; "y" ], spans |> List.map _.text)
+    Assert.Equal<bool list>([ false; true; false ], spans |> List.map _.isMatch)
+
+[<Fact>]
+let ``a hit contained in another is absorbed`` () =
+    let spans = SidebarText.segments "abcd bc" "abcd"
+    Assert.Equal<string list>([ "abcd" ], spans |> List.map _.text)
+
+[<Fact>]
+let ``separated hits stay separate`` () =
+    let spans = SidebarText.segments "a c" "abc"
+    Assert.Equal<bool list>([ true; false; true ], spans |> List.map _.isMatch)
 
 [<Fact>]
 let ``a term that does not occur leaves the text unstyled`` () =

@@ -29,8 +29,7 @@ module SidebarText =
     ///
     /// 规则：
     /// - 空查询或空文本返回单段非命中（调用方就该当普通文本渲染）。
-    /// - 命中片段按出现次序从左到右取；多个词命中同一区域时不重叠重复取，
-    ///   全部命中片段先合并排序再去重，保证 text 被完整覆盖一次。
+    /// - 命中区间排序后，重叠或紧邻的合并成一段命中，保证 text 被完整覆盖且每个字只出现一次。
     /// - 大小写不敏感比较，但保留原文片段（不是查询词本身），长文本不被改写。
     let segments (query: string) (text: string) : Segment list =
         let words = terms query
@@ -56,21 +55,16 @@ module SidebarText =
                 [ { text = text; isMatch = false } ]
             else
                 // 排序后合并重叠/相邻区间：相邻合并让「两个词挨着」也连成一段高亮，
-                // 视觉上是一整块而不是两段中间被底色切碎。fold 一路保持列表有序，
-                // 累加时按「最后一段」比较，新区间只接到末尾——不引用中间段。
-                let sorted = raw |> List.sortBy fst
+                // 视觉上是一整块而不是两段中间被底色切碎；重叠合并保证每个字只取一次。
+                // （旧实现 fold 的状态与列表位置颠倒，从不合并；这里有意修正，只影响屏幕显示。）
                 let merged =
-                    (sorted, [])
-                    ||> List.fold (fun acc (s, e) ->
+                    raw
+                    |> List.sortBy fst
+                    |> List.fold (fun acc (s, e) ->
                         match acc with
-                        | [] -> [ (s, e) ]
-                        | prev ->
-                            let ps, pe = List.last prev
-                            if s <= pe then
-                                // 与末段重叠或紧邻：把末段延长（max 保证完全包含不被砍短）。
-                                (List.truncate (List.length prev - 1) prev) @ [ (ps, max pe e) ]
-                            else
-                                prev @ [ (s, e) ])
+                        | (ps, pe) :: rest when s <= pe -> (ps, max pe e) :: rest
+                        | _ -> (s, e) :: acc) []
+                    |> List.rev
                 // 从合并后的区间还原完整文本，空隙补非命中段。
                 let spans =
                     [ let mutable cursor = 0

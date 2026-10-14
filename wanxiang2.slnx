@@ -207,6 +207,10 @@
     <Project Path="libs/ErrorRecovery/ErrorRecovery.fsproj" />
     <Project Path="libs/ErrorRecovery/tests/ErrorRecovery.Tests.fsproj" />
   </Folder>
+  <Folder Name="/EscapeChain/">
+    <Project Path="libs/EscapeChain/EscapeChain.fsproj" />
+    <Project Path="libs/EscapeChain/tests/EscapeChain.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ExchangeJump/">
     <Project Path="libs/ExchangeJump/ExchangeJump.fsproj" />
     <Project Path="libs/ExchangeJump/tests/ExchangeJump.Tests.fsproj" />
@@ -266,6 +270,10 @@
   <Folder Name="/HostProbe/">
     <Project Path="libs/HostProbe/HostProbe.fsproj" />
     <Project Path="libs/HostProbe/tests/HostProbe.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostRequests/">
+    <Project Path="libs/HostRequests/HostRequests.fsproj" />
+    <Project Path="libs/HostRequests/tests/HostRequests.Tests.fsproj" />
   </Folder>
   <Folder Name="/HttpFailureFacts/">
     <Project Path="libs/HttpFailureFacts/HttpFailureFacts.fsproj" />
@@ -526,6 +534,10 @@
   <Folder Name="/SendKey/">
     <Project Path="libs/SendKey/SendKey.fsproj" />
     <Project Path="libs/SendKey/tests/SendKey.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ServerErrorRoute/">
+    <Project Path="libs/ServerErrorRoute/ServerErrorRoute.fsproj" />
+    <Project Path="libs/ServerErrorRoute/tests/ServerErrorRoute.Tests.fsproj" />
   </Folder>
   <Folder Name="/SharedHttpClients/">
     <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />

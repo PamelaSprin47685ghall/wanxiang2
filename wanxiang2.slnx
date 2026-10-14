@@ -55,6 +55,10 @@
     <Project Path="libs/AttachmentRefs/AttachmentRefs.fsproj" />
     <Project Path="libs/AttachmentRefs/tests/AttachmentRefs.Tests.fsproj" />
   </Folder>
+  <Folder Name="/AttachmentTray/">
+    <Project Path="libs/AttachmentTray/AttachmentTray.fsproj" />
+    <Project Path="libs/AttachmentTray/tests/AttachmentTray.Tests.fsproj" />
+  </Folder>
   <Folder Name="/BlockDiff/">
     <Project Path="libs/BlockDiff/BlockDiff.fsproj" />
     <Project Path="libs/BlockDiff/tests/BlockDiff.Tests.fsproj" />
@@ -170,6 +174,10 @@
   <Folder Name="/CommitTimeline/">
     <Project Path="libs/CommitTimeline/CommitTimeline.fsproj" />
     <Project Path="libs/CommitTimeline/tests/CommitTimeline.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ComposerBox/">
+    <Project Path="libs/ComposerBox/ComposerBox.fsproj" />
+    <Project Path="libs/ComposerBox/tests/ComposerBox.Tests.fsproj" />
   </Folder>
   <Folder Name="/ComposerDrafts/">
     <Project Path="libs/ComposerDrafts/ComposerDrafts.fsproj" />
@@ -522,6 +530,10 @@
   <Folder Name="/MessageView/">
     <Project Path="libs/MessageView/MessageView.fsproj" />
     <Project Path="libs/MessageView/tests/MessageView.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelChip/">
+    <Project Path="libs/ModelChip/ModelChip.fsproj" />
+    <Project Path="libs/ModelChip/tests/ModelChip.Tests.fsproj" />
   </Folder>
   <Folder Name="/ModelListing/">
     <Project Path="libs/ModelListing/ModelListing.fsproj" />

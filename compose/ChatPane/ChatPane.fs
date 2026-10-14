@@ -111,6 +111,12 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
     /// 按「回到最新」时焦点在按钮上：宿主把焦点交回输入区
     member _.FocusReturned = returnedFocus.Publish
 
+    /// 宿主改了跟随状态之后刷新「回到最新」按钮
+    member _.RefreshLatestButton() = refreshButton ()
+
+    /// 立即写偏移并记为自己写的（旧 tween.Pin）：钉住期间重新对齐不被当成用户上滚
+    member _.PinOffset(y: float) = scroller.PinOffset y
+
     member _.SetCompact(value: bool) =
         compact <- value
         scroller.SetCompact value

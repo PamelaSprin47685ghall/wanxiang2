@@ -224,6 +224,11 @@ type ChatScroller(look: ChatScrollerLook, ease: ScrollEase) =
     /// 立即写偏移
     member _.SetOffset(y: float) = viewer.Offset <- Vector(viewer.Offset.X, y)
 
+    /// 立即写偏移并记为自己写的（旧 tween.Pin + 写 Offset）：钉住期间宿主重新对齐不被当成用户上滚
+    member _.PinOffset(y: float) =
+        ease.Pin y
+        viewer.Offset <- Vector(viewer.Offset.X, y)
+
     member _.StopSmooth() = stopSmooth ()
 
     /// 平滑滚到 target()（每帧重取目标）。减弱动效或已很近时返回 false，不起动画；到达后回调 onArrived 最终偏移

@@ -143,3 +143,22 @@ let ``贴底时隐藏浮钮；前置锚点补偿偏移`` () =
         Assert.False s.PrependAnchorPending
         Assert.True(s.Offset >= before)
         w.Close())
+
+[<Fact>]
+let ``PinOffset 写的上移不算用户上滚；SetOffset 写的算`` () =
+    Headless.run (fun () ->
+        let s = ChatScroller(look (), ease ())
+        s.Content <- tall ()
+        let w = Window(Width = 400.0, Height = 300.0, Content = s.Host)
+        w.Show()
+        w.UpdateLayout()
+        s.ScrollToEndNow()
+        Dispatcher.UIThread.RunJobs()
+        let notes = ResizeArray<bool>()
+        s.Scrolled.Add(fun n -> notes.Add n.UserUp)
+        s.PinOffset(s.Offset - 300.0)
+        Dispatcher.UIThread.RunJobs()
+        s.SetOffset(s.Offset - 300.0)
+        Dispatcher.UIThread.RunJobs()
+        Assert.Equal<bool list>([ false; true ], List.ofSeq notes)
+        w.Close())

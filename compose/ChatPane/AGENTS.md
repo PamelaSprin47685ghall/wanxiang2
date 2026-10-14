@@ -15,3 +15,6 @@ ChatScroller + ExchangeNav + ChatEmpty + SkeletonList + ScrollFollow + ScrollTwe
 ## 与旧实现的差异
 - 消息卡、标题栏 / 面包屑、挂载窗口（MountWindow）与分页前置的宿主侧接线仍在宿主；`Messages` 是插槽。
 - 主体子项序与旧代码一致：ChatScroller 的叠放层拆开，滚动区、空态滚动区、「回到最新」、失败横幅直接放进主体 Grid；骨架时滚动区内容换成骨架。
+
+- RefreshLatestButton()：宿主改了跟随状态后刷新「回到最新」按钮（不要再借 SetCompact 刷新）。PinOffset(y)：转给 ChatScroller.PinOffset。
+- 空态整树金样已在 tests/golden/chatpane.txt（空对话、无对话带主操作、未连接、连接失败、无模型五态，由旧 ChatView 生成）。

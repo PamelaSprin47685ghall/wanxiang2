@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/ActionStrip/">
+    <Project Path="libs/ActionStrip/ActionStrip.fsproj" />
+    <Project Path="libs/ActionStrip/tests/ActionStrip.Tests.fsproj" />
+  </Folder>
   <Folder Name="/AgentHistory/">
     <Project Path="libs/AgentHistory/AgentHistory.fsproj" />
     <Project Path="libs/AgentHistory/tests/AgentHistory.Tests.fsproj" />
@@ -42,6 +46,10 @@
   <Folder Name="/AttachmentBlobs/">
     <Project Path="libs/AttachmentBlobs/AttachmentBlobs.fsproj" />
     <Project Path="libs/AttachmentBlobs/tests/AttachmentBlobs.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AttachmentChip/">
+    <Project Path="libs/AttachmentChip/AttachmentChip.fsproj" />
+    <Project Path="libs/AttachmentChip/tests/AttachmentChip.Tests.fsproj" />
   </Folder>
   <Folder Name="/AttachmentRefs/">
     <Project Path="libs/AttachmentRefs/AttachmentRefs.fsproj" />
@@ -810,6 +818,10 @@
   <Folder Name="/ToolArgsPreview/">
     <Project Path="libs/ToolArgsPreview/ToolArgsPreview.fsproj" />
     <Project Path="libs/ToolArgsPreview/tests/ToolArgsPreview.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolCallCard/">
+    <Project Path="libs/ToolCallCard/ToolCallCard.fsproj" />
+    <Project Path="libs/ToolCallCard/tests/ToolCallCard.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolCallState/">
     <Project Path="libs/ToolCallState/ToolCallState.fsproj" />

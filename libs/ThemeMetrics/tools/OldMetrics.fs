@@ -520,4 +520,9 @@ module Adapter =
           // 旧 ShowCommandPalette 对话层宽
           "PaletteDialogWidth", 560.0
           // 旧 Import/ExportDialog 对话层宽
-          "TransferDialogWidth", 480.0 ]
+          "TransferDialogWidth", 480.0
+          "FormSingleColumnBreakpoint", 440.0
+          "DialogContentMaxHeight", 560.0
+          "PairingCodeTracking", 6.0
+          "QrModuleSize", 6.0
+          "SelectCaptionMaxWidth", 260.0 ]

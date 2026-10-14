@@ -124,3 +124,8 @@ CompactBreakpoint 720
 ModelSwitcherWidth 300
 PaletteDialogWidth 560
 TransferDialogWidth 480
+FormSingleColumnBreakpoint 440
+DialogContentMaxHeight 560
+PairingCodeTracking 6
+QrModuleSize 6
+SelectCaptionMaxWidth 260

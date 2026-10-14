@@ -143,6 +143,16 @@ type Metric =
     | PaletteDialogWidth
     /// 导入导出对话层宽（旧 ImportDialog / ExportDialog 的 480）
     | TransferDialogWidth
+    /// 小型参数表单退化为单列的断点（旧 LayoutPolicy.formSingleColumnBreakpoint）
+    | FormSingleColumnBreakpoint
+    /// 对话层内表单的阅读窗高（旧 LayoutPolicy.dialogContentMaxHeight）
+    | DialogContentMaxHeight
+    /// 设备配对码字距（旧 SettingsDevices 的 6）
+    | PairingCodeTracking
+    /// 配对二维码模块边长（旧 SettingsDevices 的 6）
+    | QrModuleSize
+    /// 下拉选择器文字最宽（旧 Menu.selectButton 的 260）
+    | SelectCaptionMaxWidth
 
 /// 度量的初始值：照抄旧代码，间距引用已换成 SpacingRamp 的数值。只有数据；活的可变值归主题管理者。
 module ThemeMetrics =
@@ -274,7 +284,12 @@ module ThemeMetrics =
           Metric.CompactBreakpoint
           Metric.ModelSwitcherWidth
           Metric.PaletteDialogWidth
-          Metric.TransferDialogWidth ]
+          Metric.TransferDialogWidth
+          Metric.FormSingleColumnBreakpoint
+          Metric.DialogContentMaxHeight
+          Metric.PairingCodeTracking
+          Metric.QrModuleSize
+          Metric.SelectCaptionMaxWidth ]
 
     /// 某项度量的初始值
     let initial (metric: Metric) : float =
@@ -405,4 +420,9 @@ module ThemeMetrics =
         | Metric.ModelSwitcherWidth -> 300.0
         | Metric.PaletteDialogWidth -> 560.0
         | Metric.TransferDialogWidth -> 480.0
+        | Metric.FormSingleColumnBreakpoint -> 440.0
+        | Metric.DialogContentMaxHeight -> 560.0
+        | Metric.PairingCodeTracking -> 6.0
+        | Metric.QrModuleSize -> 6.0
+        | Metric.SelectCaptionMaxWidth -> 260.0
 

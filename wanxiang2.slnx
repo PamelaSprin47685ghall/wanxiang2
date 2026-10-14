@@ -731,6 +731,10 @@
     <Project Path="libs/ServerErrorRoute/ServerErrorRoute.fsproj" />
     <Project Path="libs/ServerErrorRoute/tests/ServerErrorRoute.Tests.fsproj" />
   </Folder>
+  <Folder Name="/SettingsFrame/">
+    <Project Path="libs/SettingsFrame/SettingsFrame.fsproj" />
+    <Project Path="libs/SettingsFrame/tests/SettingsFrame.Tests.fsproj" />
+  </Folder>
   <Folder Name="/SharedHttpClients/">
     <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />
     <Project Path="libs/SharedHttpClients/tests/SharedHttpClients.Tests.fsproj" />

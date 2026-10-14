@@ -1,0 +1,3 @@
+      /// 配对码字号、区块圆角
+      SpaceXXs: IObservable<float>
+      Hairline: IBrush

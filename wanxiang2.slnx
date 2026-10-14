@@ -195,6 +195,14 @@
     <Project Path="libs/ConfigFeedback/ConfigFeedback.fsproj" />
     <Project Path="libs/ConfigFeedback/tests/ConfigFeedback.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ConfirmPane/">
+    <Project Path="libs/ConfirmPane/ConfirmPane.fsproj" />
+    <Project Path="libs/ConfirmPane/tests/ConfirmPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConnectPane/">
+    <Project Path="libs/ConnectPane/ConnectPane.fsproj" />
+    <Project Path="libs/ConnectPane/tests/ConnectPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ConnectionIssue/">
     <Project Path="libs/ConnectionIssue/ConnectionIssue.fsproj" />
     <Project Path="libs/ConnectionIssue/tests/ConnectionIssue.Tests.fsproj" />
@@ -659,6 +667,10 @@
     <Project Path="libs/PromptHistory/PromptHistory.fsproj" />
     <Project Path="libs/PromptHistory/tests/PromptHistory.Tests.fsproj" />
   </Folder>
+  <Folder Name="/PromptPane/">
+    <Project Path="libs/PromptPane/PromptPane.fsproj" />
+    <Project Path="libs/PromptPane/tests/PromptPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ProviderCheck/">
     <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />
     <Project Path="libs/ProviderCheck/tests/ProviderCheck.Tests.fsproj" />
@@ -767,6 +779,10 @@
     <Project Path="libs/ServerErrorRoute/ServerErrorRoute.fsproj" />
     <Project Path="libs/ServerErrorRoute/tests/ServerErrorRoute.Tests.fsproj" />
   </Folder>
+  <Folder Name="/SessionPrefsPane/">
+    <Project Path="libs/SessionPrefsPane/SessionPrefsPane.fsproj" />
+    <Project Path="libs/SessionPrefsPane/tests/SessionPrefsPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/SettingsFrame/">
     <Project Path="libs/SettingsFrame/SettingsFrame.fsproj" />
     <Project Path="libs/SettingsFrame/tests/SettingsFrame.Tests.fsproj" />
@@ -778,6 +794,10 @@
   <Folder Name="/ShellLayout/">
     <Project Path="libs/ShellLayout/ShellLayout.fsproj" />
     <Project Path="libs/ShellLayout/tests/ShellLayout.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ShortcutHelpPane/">
+    <Project Path="libs/ShortcutHelpPane/ShortcutHelpPane.fsproj" />
+    <Project Path="libs/ShortcutHelpPane/tests/ShortcutHelpPane.Tests.fsproj" />
   </Folder>
   <Folder Name="/ShortcutKeys/">
     <Project Path="libs/ShortcutKeys/ShortcutKeys.fsproj" />
@@ -842,6 +862,10 @@
   <Folder Name="/StreamableHttp/">
     <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
     <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TextEditPane/">
+    <Project Path="libs/TextEditPane/TextEditPane.fsproj" />
+    <Project Path="libs/TextEditPane/tests/TextEditPane.Tests.fsproj" />
   </Folder>
   <Folder Name="/TextMatch/">
     <Project Path="libs/TextMatch/TextMatch.fsproj" />

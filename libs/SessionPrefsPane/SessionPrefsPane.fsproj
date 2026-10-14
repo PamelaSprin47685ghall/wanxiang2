@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="Look.fs" />
+    <Compile Include="Kit.fs" />
+    <Compile Include="Footer.fs" />
+    <Compile Include="SessionPrefsPane.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+  </ItemGroup>
+</Project>

@@ -40,6 +40,12 @@ module StyleClass =
     let tagWarning = "tag-warning"
     let tagDanger = "tag-danger"
     let hairline = "hairline"
+    /// 分节标签（旧 Ui.sectionLabel；浮层菜单的分组标题）
+    let sectionLabel = "section-label"
+    /// 浮层菜单项底（透明，悬停由 hover-plain / hover-danger 给）
+    let menuItem = "menu-item"
+    /// 下拉选择器外壳（底与描边；悬停换描边由 hover-bordered 给）
+    let selectButton = "select-button"
 
 /// 把主题样式装进一个 Styles。样式只建一次：画笔是管理者的活实例（原地改色），
 /// 尺寸、间距经 ToBinding 绑到管理者的活值，焦点环颜色是本对象自己的活值、随 Changed 更新。
@@ -127,6 +133,16 @@ type ThemeStyles(manager: ThemeManager) =
           yield! tagTone StyleClass.tagDanger PaletteKey.Danger PaletteKey.Danger PaletteKey.DangerSoft
           yield style (border StyleClass.hairline)
               [ Layoutable.HeightProperty, (metric Metric.BorderWidth); Border.BackgroundProperty, box (brush PaletteKey.BorderSoft) ]
+          // 静止态的底必须由样式给：本地值会压住后面的悬停样式。
+          yield style (border StyleClass.menuItem) [ Border.BackgroundProperty, box Brushes.Transparent ]
+          yield style (border StyleClass.selectButton)
+              [ Border.BackgroundProperty, box (brush PaletteKey.Surface)
+                Border.BorderBrushProperty, box (brush PaletteKey.Border) ]
+          yield style (fun s -> s.OfType<TextBlock>().Class(StyleClass.sectionLabel))
+              [ TextBlock.FontSizeProperty, (metric Metric.FontMicro)
+                TextBlock.FontWeightProperty, box FontWeight.Medium
+                TextBlock.ForegroundProperty, box (brush PaletteKey.TextFaint)
+                TextBlock.LetterSpacingProperty, bind (manager.Space Space.TrackingSection) ]
           // ---- 状态（旧 Interaction）：后注册者优先，焦点 > 悬停 > 按压/禁用 ----
           yield style (fun s -> (surface s).Class(":pressed")) [ Visual.OpacityProperty, (metric Metric.OpacityPressed) ]
           yield style (fun s -> (surface s).Class(":disabled"))

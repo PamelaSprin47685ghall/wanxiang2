@@ -3,11 +3,15 @@
   <ItemGroup>
     <Compile Include="Headless.fs" />
     <Compile Include="Tests.fs" />
+    <Compile Include="WidgetClassTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <!-- 只在测试里用：验证控件库挂的类名在本主题下有外观 -->
+    <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
     <ProjectReference Include="../Theme.fsproj" />
   </ItemGroup>
 </Project>

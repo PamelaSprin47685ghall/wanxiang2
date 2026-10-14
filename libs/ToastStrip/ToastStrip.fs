@@ -112,14 +112,23 @@ type ToastStrip(look: ToastStripLook) =
             action
             |> Option.map (fun label ->
                 row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
-                let b = Button(Content = label, Focusable = true, IsTabStop = true, Name = "toast-action", VerticalAlignment = VerticalAlignment.Center)
-                b.Classes.Add "secondary"
+                // 外观由主题的 surface + button-secondary + hover-plain 类给（旧 Ui.button Secondary）。
+                let b = Border(Child = TextBlock(Text = label), Focusable = true, IsTabStop = true, Name = "toast-action", VerticalAlignment = VerticalAlignment.Center, Cursor = new Cursor(StandardCursorType.Hand))
+                for c in [ "surface"; "button-secondary"; "hover-plain" ] do b.Classes.Add c
+                AutomationProperties.SetControlTypeOverride(b, Nullable Avalonia.Automation.Peers.AutomationControlType.Button)
                 AutomationProperties.SetName(b, label)
                 // 读屏把快捷键念出来。
                 if label = "撤销" then
                     AutomationProperties.SetAcceleratorKey(b, "Ctrl+Z")
                     AutomationProperties.SetHelpText(b, "按 Ctrl / ⌘ + Z 直接撤销；按 F6 或 Tab 可移到这里")
-                b.Click.Add(fun e -> e.Handled <- true; actionInvoked.Trigger message)
+                b.PointerReleased.Add(fun e ->
+                    if e.InitialPressMouseButton = MouseButton.Left then
+                        e.Handled <- true
+                        actionInvoked.Trigger message)
+                b.KeyDown.Add(fun e ->
+                    if e.Key = Key.Enter || e.Key = Key.Space then
+                        e.Handled <- true
+                        actionInvoked.Trigger message)
                 b.GotFocus.Add(fun _ -> actionFocused.Trigger message)
                 b.LostFocus.Add(fun _ -> actionUnfocused.Trigger message)
                 Grid.SetColumn(b, 2)

@@ -8,7 +8,7 @@
 - `Apply mode`：经 ThemeTween 补间（200 毫秒，帧间隔 1/12），后来的切换接管；减弱动效或同主题同步到位。代次计数 `Generation`：过期帧只画不停帧。`CompleteTransition`、`Pump`（`autoFrames = false` 时由调用方推帧，测试据此控制时间）、`Changed`、`ShadowPopup` / `ShadowDialog`、`StateTransitions`。
 
 ## 样式类（`ThemeStyles`，`StyleClass` 列出类名）
-`surface` 与 `hover-plain | hover-accent | hover-raised | hover-danger | hover-bordered`、`focus-soft`、`focus-by-program`（按压、禁用、悬停、焦点环，次序同旧 Interaction）；`button-primary | secondary | ghost | danger`；`icon-button`、`icon-button-accent`；`toggle-track`（`on` 为开启态）、`toggle-knob`；`grouping-card`；`tag`、`tag-warning`、`tag-danger`；`hairline`。样式只建一次：画笔是活实例，尺寸经 `ToBinding` 绑到活值，焦点环颜色是随 `Changed` 更新的活值。这些是挂在 Border 上的类选择器样式，不是 `ControlTheme`：ControlTheme 只按控件类型或 Theme 属性生效，不能按类名套在 Border 上。
+`surface` 与 `hover-plain | hover-accent | hover-raised | hover-danger | hover-bordered`、`focus-soft`、`focus-by-program`（按压、禁用、悬停、焦点环，次序同旧 Interaction）；`button-primary | secondary | ghost | danger`；`icon-button`、`icon-button-accent`；`toggle-track`（`on` 为开启态）、`toggle-knob`；`grouping-card`；`tag`、`tag-warning`、`tag-danger`；`hairline`；`section-label`（TextBlock，旧 Ui.sectionLabel）；`menu-item`（菜单项静止底透明）、`select-button`（下拉选择器的底与描边）。静止态的底一律由样式给，控件不写本地值，否则本地值会压住悬停样式。样式只建一次：画笔是活实例，尺寸经 `ToBinding` 绑到活值，焦点环颜色是随 `Changed` 更新的活值。这些是挂在 Border 上的类选择器样式，不是 `ControlTheme`：ControlTheme 只按控件类型或 Theme 属性生效，不能按类名套在 Border 上。
 
 # LEMMA
 1. **切主题时已建好的控件跟着变，不重建视图树。** [根 AXIOM: 5]
@@ -18,6 +18,7 @@
 # SPEC
 1. [LEMMA: 1] `tests/Tests.fs`：`switching the theme recolors controls that were built before the switch`、`hover over a raised surface follows the theme`、`reduced motion and complete transition land at once`。
 2. [LEMMA: 2] `a second switch mid-tween takes over from the current color`（含过期代次的帧不停帧）。
+4. 控件库挂的类在本主题下有外观并随切换走：`tests/WidgetClassTests.fs` 的 `menu items hover and press through theme classes and follow a theme switch`、`select button rests on surface and hover swaps the stroke`、`toast action is a secondary button that hovers and presses`（测试工程引用 PopupMenu、ToastStrip 包，组合本身不依赖它们）。
 3. [LEMMA: 3] `changing a metric restyles controls already on screen`、`live values push to bound controls`、`button classes carry the old geometry`（几何取旧 Ui.button / iconButton 的值）、`state transitions are zero under reduced motion`。
 
 # 与旧代码的差异

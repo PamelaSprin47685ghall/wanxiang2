@@ -4,6 +4,7 @@ open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
+open Avalonia.Input
 open Avalonia.Interactivity
 open Avalonia.Media
 open Avalonia.Threading
@@ -101,7 +102,7 @@ let ``undo action carries accelerator help and focus returns home on removal`` (
         Assert.True(strip.FocusAction())
         Assert.True b.IsFocused
         Assert.Equal<string list>([ "已删除" ], List.ofSeq focused)
-        b.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+        b.RaiseEvent(KeyEventArgs(Key = Key.Enter, RoutedEvent = InputElement.KeyDownEvent))
         Assert.Equal<string list>([ "已删除" ], List.ofSeq invoked)
         strip.Remove "已删除"
         Assert.True home.IsFocused

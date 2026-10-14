@@ -63,14 +63,10 @@ let look () =
           Faint = Brushes.LightGray
           Danger = Brushes.Red
           Accent = Brushes.Blue
-          SelectSurface = Brushes.White
-          SelectEdge = Brushes.Gray
-          Divider = Brushes.Gray
           Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b))
           Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
           FontSize = Cell 12.0
           HintFontSize = Cell 10.0
-          HeaderFontSize = Cell 11.0
           IconSlotWidth = Cell 16.0
           IconHeight = Cell 16.0
           RightSlotMinWidth = Cell 16.0
@@ -81,7 +77,6 @@ let look () =
           ItemMinHeight = Cell 32.0
           ItemSpacing = Cell 2.0
           MaxHeight = Cell 200.0
-          DividerHeight = Cell 1.0
           DividerMargin = Cell(Thickness(6.0, 2.0))
           HeaderMargin = Cell(Thickness(8.0, 6.0, 8.0, 2.0))
           SelectPadding = Cell(Thickness(8.0, 4.0))
@@ -274,7 +269,7 @@ let ``focused toast action returns focus home when invoked`` () =
         Dispatcher.UIThread.RunJobs()
         Assert.True(desk.FocusToastAction())
         let b = desk.ToastActionButtons.Head
-        b.RaiseEvent(RoutedEventArgs(Button.ClickEvent))
+        b.RaiseEvent(KeyEventArgs(Key = Key.Enter, RoutedEvent = InputElement.KeyDownEvent))
         Assert.True home.IsFocused
         Assert.True((named root "已归档").IsNone)
         window.Close())

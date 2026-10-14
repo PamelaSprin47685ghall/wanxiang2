@@ -36,16 +36,12 @@ type PopupMenuLook =
       Faint: IBrush
       Danger: IBrush
       Accent: IBrush
-      SelectSurface: IBrush
-      SelectEdge: IBrush
-      Divider: IBrush
       /// 打勾图标（插槽）
       Check: IBrush -> Control
       /// 下拉箭头图标（插槽）
       Chevron: IBrush -> Control
       FontSize: IObservable<float>
       HintFontSize: IObservable<float>
-      HeaderFontSize: IObservable<float>
       IconSlotWidth: IObservable<float>
       IconHeight: IObservable<float>
       RightSlotMinWidth: IObservable<float>
@@ -56,7 +52,6 @@ type PopupMenuLook =
       ItemMinHeight: IObservable<float>
       ItemSpacing: IObservable<float>
       MaxHeight: IObservable<float>
-      DividerHeight: IObservable<float>
       DividerMargin: IObservable<Thickness>
       HeaderMargin: IObservable<Thickness>
       SelectPadding: IObservable<Thickness>
@@ -128,7 +123,7 @@ module PopupMenu =
         Grid.SetColumn(rightSlot, 1)
         row.Children.Add left
         row.Children.Add rightSlot
-        let host = Border(Background = Brushes.Transparent, Cursor = handCursor, Focusable = true, Child = row)
+        let host = Border(Cursor = handCursor, Focusable = true, Child = row)
         live look.ItemPadding (fun v -> host.Padding <- v)
         live look.ItemRadius (fun v -> host.CornerRadius <- v)
         live look.ItemMinHeight (fun v -> host.MinHeight <- v)
@@ -197,14 +192,15 @@ module PopupMenu =
             visible
             |> List.iteri (fun index (groupLabel, items) ->
                 if index > 0 then
-                    let divider = Border(Background = look.Divider, HorizontalAlignment = HorizontalAlignment.Stretch)
-                    live look.DividerHeight (fun v -> divider.Height <- v)
+                    // 外观由主题的 hairline 类给（旧 Ui.hairline）。
+                    let divider = Border(HorizontalAlignment = HorizontalAlignment.Stretch)
+                    divider.Classes.Add "hairline"
                     live look.DividerMargin (fun v -> divider.Margin <- v)
                     panel.Children.Add divider
                 if not (String.IsNullOrWhiteSpace groupLabel) then
-                    let header = TextBlock(Text = groupLabel, Foreground = look.Muted)
+                    // 字号、字重、颜色、字距由主题的 section-label 类给（旧 Ui.sectionLabel）。
+                    let header = TextBlock(Text = groupLabel)
                     header.Classes.Add "section-label"
-                    live look.HeaderFontSize (fun v -> header.FontSize <- v)
                     live look.HeaderMargin (fun v -> header.Margin <- v)
                     panel.Children.Add header
                 for entry in items do
@@ -217,7 +213,7 @@ type SelectButton(look: PopupMenuLook, initialText: string) =
     let caption = TextBlock(Text = initialText, Foreground = look.Text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis)
     let chevron = look.Chevron look.Faint
     let row = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-    let host = Border(Background = look.SelectSurface, BorderBrush = look.SelectEdge, Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, Child = row)
+    let host = Border(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, Child = row)
     // 上一次由本按钮写入的显示文本：调用方另起了名就与它不同，此后不再覆盖。
     let mutable lastText = initialText
 
@@ -232,6 +228,7 @@ type SelectButton(look: PopupMenuLook, initialText: string) =
         look.SelectRadius.Subscribe(fun v -> host.CornerRadius <- v) |> ignore
         look.SelectPadding.Subscribe(fun v -> host.Padding <- v) |> ignore
         host.Classes.Add "surface"
+        host.Classes.Add "select-button"
         host.Classes.Add "hover-bordered"
         AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.ComboBox)
         host.PointerReleased.Add(fun e ->

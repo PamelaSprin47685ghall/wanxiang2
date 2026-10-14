@@ -8,8 +8,8 @@
 
 ## 外观
 
-- `PopupMenuLook`：画笔 `Text`、`Muted`、`Faint`、`Danger`、`Accent`、`SelectSurface`、`SelectEdge`、`Divider`；图标插槽 `Check`、`Chevron`；其余尺寸都是活的值。
-- 用到的样式类：菜单项 `menu-item`、`surface`、`hover-plain` / `hover-danger`；选择器 `surface`、`hover-bordered`；分组标题 `section-label`。悬停、按压反馈由主题按类名提供。
+- `PopupMenuLook`：画笔 `Text`、`Muted`、`Faint`、`Danger`、`Accent`；图标插槽 `Check`、`Chevron`；其余尺寸都是活的值。
+- 用到的样式类：菜单项 `menu-item`、`surface`、`hover-plain` / `hover-danger`；选择器 `surface`、`select-button`、`hover-bordered`；分组标题 `section-label`；组间分隔 `hairline`。悬停、按压反馈由主题按类名提供。
 
 ## 证据与旧测试
 
@@ -21,5 +21,5 @@
 
 - 条目类型改名 `PopupEntry`，字段改为大写开头。
 - 菜单宿主是普通 Border 加类名，不再用旧 ActionBorder / Interaction.surface；焦点来源标记由组合者用 FocusOrigin 接。
-- 分隔线与分组标题自绘，不再调用旧 `Ui.hairline` / `Ui.sectionLabel`。
+- 分隔线与分组标题不再调用旧 `Ui.hairline` / `Ui.sectionLabel`，改挂同名外观的 `hairline` / `section-label` 类，由 compose/Theme 给样式。
 - 浮层最小宽度（旧代码 200 / 240）交给组合者从主题取。

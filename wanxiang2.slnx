@@ -147,6 +147,10 @@
     <Project Path="libs/DraftStore/DraftStore.fsproj" />
     <Project Path="libs/DraftStore/tests/DraftStore.Tests.fsproj" />
   </Folder>
+  <Folder Name="/DurationText/">
+    <Project Path="libs/DurationText/DurationText.fsproj" />
+    <Project Path="libs/DurationText/tests/DurationText.Tests.fsproj" />
+  </Folder>
   <Folder Name="/FailureLimiter/">
     <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
     <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
@@ -162,6 +166,10 @@
   <Folder Name="/Gemini/">
     <Project Path="libs/Gemini/Gemini.fsproj" />
     <Project Path="libs/Gemini/tests/Gemini.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/GenerationErrorTitle/">
+    <Project Path="libs/GenerationErrorTitle/GenerationErrorTitle.fsproj" />
+    <Project Path="libs/GenerationErrorTitle/tests/GenerationErrorTitle.Tests.fsproj" />
   </Folder>
   <Folder Name="/HljsCatalog/">
     <Project Path="libs/HljsCatalog/HljsCatalog.fsproj" />
@@ -270,6 +278,10 @@
   <Folder Name="/MessageText/">
     <Project Path="libs/MessageText/MessageText.fsproj" />
     <Project Path="libs/MessageText/tests/MessageText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageTimestamp/">
+    <Project Path="libs/MessageTimestamp/MessageTimestamp.fsproj" />
+    <Project Path="libs/MessageTimestamp/tests/MessageTimestamp.Tests.fsproj" />
   </Folder>
   <Folder Name="/MessageView/">
     <Project Path="libs/MessageView/MessageView.fsproj" />
@@ -398,6 +410,14 @@
   <Folder Name="/TitleText/">
     <Project Path="libs/TitleText/TitleText.fsproj" />
     <Project Path="libs/TitleText/tests/TitleText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolArgsPreview/">
+    <Project Path="libs/ToolArgsPreview/ToolArgsPreview.fsproj" />
+    <Project Path="libs/ToolArgsPreview/tests/ToolArgsPreview.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolErrorSummary/">
+    <Project Path="libs/ToolErrorSummary/ToolErrorSummary.fsproj" />
+    <Project Path="libs/ToolErrorSummary/tests/ToolErrorSummary.Tests.fsproj" />
   </Folder>
   <Folder Name="/ToolNames/">
     <Project Path="libs/ToolNames/ToolNames.fsproj" />

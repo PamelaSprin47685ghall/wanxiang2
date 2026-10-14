@@ -275,6 +275,10 @@
     <Project Path="libs/IdleSurface/IdleSurface.fsproj" />
     <Project Path="libs/IdleSurface/tests/IdleSurface.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ImageFit/">
+    <Project Path="libs/ImageFit/ImageFit.fsproj" />
+    <Project Path="libs/ImageFit/tests/ImageFit.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ImportView/">
     <Project Path="libs/ImportView/ImportView.fsproj" />
     <Project Path="libs/ImportView/tests/ImportView.Tests.fsproj" />

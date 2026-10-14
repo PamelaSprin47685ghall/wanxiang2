@@ -263,6 +263,10 @@
     <Project Path="libs/MessageText/MessageText.fsproj" />
     <Project Path="libs/MessageText/tests/MessageText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/MessageView/">
+    <Project Path="libs/MessageView/MessageView.fsproj" />
+    <Project Path="libs/MessageView/tests/MessageView.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ModelListing/">
     <Project Path="libs/ModelListing/ModelListing.fsproj" />
     <Project Path="libs/ModelListing/tests/ModelListing.Tests.fsproj" />

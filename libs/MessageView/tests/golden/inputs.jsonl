@@ -1,0 +1,10 @@
+{"commitId":1,"committedAt":"2026-10-12T12:00:00+08:00","payload":{"role":"user","contents":[{"$type":"text","text":"你好"},{"type":"attachment","sha256":"aa","size":2048,"mediaType":"image/png","fileName":"a.png"}]}}
+{"commitId":2,"payload":{"role":"assistant","contents":[{"$type":"reasoning","text":"想"},{"$type":"reasoning","text":"一想"},{"$type":"functionCall","callId":"c1","name":"read","arguments":{"path":"x","n":[1,2]}},{"$type":"text","text":"答"}]}}
+{"commitId":3,"payload":{"role":"tool","contents":[{"$type":"functionResult","callId":"c1","result":"内容"},{"$type":"functionResult","callId":"c2","result":{"ok":true}}]}}
+{"commitId":"bad","committedAt":"not a date","payload":{"role":"assistant","text":"外层","contents":[{"text":"内","contents":[{"text":"嵌套"}]}]}}
+{"payload":{"contents":[{"type":"attachment","sha256":"","size":1},{"type":"attachment","sha256":"bb"},{"$type":"functionCall"},{"$type":"functionResult"}]}}
+{"role":"assistant","contents":[{"$type":"text","text":"无外壳"}]}
+{"commitId":18446744073709551615,"payload":{"role":"assistant","contents":[{"$type":"functionCall","callId":"c9","name":"t","arguments":null}]}}
+[1,2,3]
+{"commitId":4,"payload":{"role":"tool","contents":[{"$type":"functionResult","callId":"c9","result":42}]}}
+{"commitId":5,"committedAt":"2026-10-12T12:00:00Z","payload":{"role":"user","contents":[{"$type":"text","text":"最后"}]}}

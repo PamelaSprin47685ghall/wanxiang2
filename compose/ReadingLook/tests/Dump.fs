@@ -146,9 +146,9 @@ and private inlineOf (sb: StringBuilder) depth (i: Inline) =
         control sb (depth + 1) u.Child
     | other -> sb.Append(pad).Append(other.GetType().Name).Append('\n') |> ignore
 
-/// 放进固定宽度的窗口排版后转写
-let tree (root: Control) : string =
-    let win = Window(Width = 600.0, Height = 2000.0, Content = root)
+/// 放进固定宽度的窗口排版后转写。窗口字体取内嵌正文字体：不依赖机器上装了什么系统字体
+let tree (body: FontFamily) (root: Control) : string =
+    let win = Window(Width = 600.0, Height = 2000.0, Content = root, FontFamily = body)
     win.Show()
     win.UpdateLayout()
     root.InvalidateMeasure()

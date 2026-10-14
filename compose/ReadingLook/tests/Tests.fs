@@ -48,7 +48,7 @@ let ``every sample renders the same tree as the old MarkdownRenderer`` () =
         let sb = Text.StringBuilder()
         for label, math in [ "plain", (fun _ -> None); "rich", (fun key -> Map.tryFind key table) ] do
             for name, raw in Samples.all do
-                sb.Append("== ").Append(label).Append(' ').Append(name).Append('\n').Append(Dump.tree ((view theme math).RenderText raw)) |> ignore
+                sb.Append("== ").Append(label).Append(' ').Append(name).Append('\n').Append(Dump.tree (FontFamily Wanxiang2.ThemeFonts.ThemeFonts.body) ((view theme math).RenderText raw)) |> ignore
         same (golden "markdown.txt") (sb.ToString()))
 
 let rec private descendants (c: Control) : Control seq =

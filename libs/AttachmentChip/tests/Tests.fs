@@ -65,3 +65,19 @@ let ``字号是活的且摘下退订`` () =
         Assert.Equal(0, nameSize.Count)
         nameSize.Set 13.0
         w.Close())
+
+let private invokeVia (c: Avalonia.Controls.Control) =
+    let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement c
+    Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
+    let p = Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(peer)
+    p.Invoke()
+    Avalonia.Threading.Dispatcher.UIThread.RunJobs()
+
+[<Fact>]
+let ``附件条有读屏 Invoke 且触发下载`` () =
+    Headless.run (fun () ->
+        let c = AttachmentChip(look, data)
+        let mutable hits = 0
+        c.Invoked.Add(fun () -> hits <- hits + 1)
+        invokeVia c.Host
+        Assert.Equal(1, hits))

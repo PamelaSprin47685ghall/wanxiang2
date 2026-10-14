@@ -84,3 +84,17 @@ let ``复制按钮文案照旧`` () =
         ToolCallCard(look, data ToolTone.Success None, parts) |> ignore
         Assert.Contains(("复制调用参数", "复制工具调用参数"), copies)
         Assert.Contains(("复制工具参数与结果", "复制工具 builtin_echo 参数与结果"), copies))
+
+let private invokeVia (c: Avalonia.Controls.Control) =
+    let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement c
+    Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
+    let p = Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(peer)
+    p.Invoke()
+    Avalonia.Threading.Dispatcher.UIThread.RunJobs()
+
+[<Fact>]
+let ``工具卡头有读屏 Invoke 且能展开`` () =
+    Headless.run (fun () ->
+        let c = ToolCallCard(look, data ToolTone.Success None, parts)
+        invokeVia c.Header
+        Assert.True c.Expanded)

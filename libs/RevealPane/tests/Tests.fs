@@ -83,3 +83,19 @@ let ``度量是活的且摘下后退订`` () =
         Assert.Equal(0, gutter.Count)
         gutter.Set 8.0
         w.Close())
+
+let private invokeVia (c: Avalonia.Controls.Control) =
+    let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement c
+    Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
+    let p = Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(peer)
+    p.Invoke()
+    Avalonia.Threading.Dispatcher.UIThread.RunJobs()
+
+[<Fact>]
+let ``展开按钮有读屏 Invoke 且能切换`` () =
+    Headless.run (fun () ->
+        let p = RevealPane(look, tall (), 360.0, true)
+        let w = show p.Host
+        invokeVia p.Toggle
+        Assert.True p.IsFull
+        w.Close())

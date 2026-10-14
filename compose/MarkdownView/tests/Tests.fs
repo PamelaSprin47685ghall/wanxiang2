@@ -311,3 +311,27 @@ let ``inline math without html falls back to italic mono source`` () =
         Assert.Equal(FontStyle.Italic, run.FontStyle)
         Assert.Same(kit.Brush MarkdownInk.InlineCode, run.Background)
         Assert.Equal("monospace", run.FontFamily.Name))
+
+[<Fact>]
+let ``every clickable in markdown exposes Invoke as a button and activates`` () =
+    Headless.run (fun () ->
+        let kit = Kit()
+        let mutable opened = ""
+        let longCode = String.replicate 130 "x\n"
+        let view = make kit ignore (fun u -> opened <- u) (CodeWrapMemory false)
+        let controls = view.RenderText("[站点](https://example.com)\n\n```\n" + longCode + "```")
+        let w = show controls
+        let spots = descendants controls |> Seq.filter (fun c -> c :? ActionSpot) |> List.ofSeq
+        Assert.NotEmpty spots
+        for s in spots do
+            let peer = ControlAutomationPeer.CreatePeerForElement s
+            // 链接保持原 Hyperlink 角色，其余为按钮
+            Assert.Contains(peer.GetAutomationControlType(), [ AutomationControlType.Button; AutomationControlType.Hyperlink ])
+            Assert.IsAssignableFrom<IInvokeProvider>(peer) |> ignore
+        let link = spots |> List.find (fun s -> AutomationProperties.GetName s = "站点")
+        invoke link
+        Assert.Equal("https://example.com", opened)
+        let expand = spots |> List.find (fun s -> AutomationProperties.GetName s = "展开全部")
+        invoke expand
+        Assert.Equal("收起", AutomationProperties.GetName expand)
+        w.Close())

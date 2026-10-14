@@ -94,3 +94,23 @@ let ``只在挂上且要求时按间隔回调`` () =
         w.Content <- null
         Assert.False p.IsTicking
         w.Close())
+
+let private invokeVia (c: Avalonia.Controls.Control) =
+    let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement c
+    Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
+    let p = Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(peer)
+    p.Invoke()
+    Avalonia.Threading.Dispatcher.UIThread.RunJobs()
+
+[<Fact>]
+let ``错误卡各按钮有读屏 Invoke 且执行动作`` () =
+    Headless.run (fun () ->
+        let p = ErrorPanel(look, parts, "t", "h")
+        let log = ResizeArray<string>()
+        let c = p.AddContinue(fun () -> log.Add "c")
+        let r = p.AddRetry(true, fun () -> log.Add "r")
+        let v = p.AddRecovery("打开设置", fun () -> log.Add "v")
+        let d = p.AddDetail "x"
+        for b in [ c; r; v; d ] do invokeVia b
+        Assert.Equal<string list>([ "c"; "r"; "v" ], List.ofSeq log)
+        Assert.Equal("收起技术细节", AutomationProperties.GetName d))

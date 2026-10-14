@@ -67,3 +67,17 @@ let ``标题字号是活的`` () =
         Assert.Equal(0, caption.Count)
         caption.Set 12.0
         w.Close())
+
+let private invokeVia (c: Avalonia.Controls.Control) =
+    let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement c
+    Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
+    let p = Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(peer)
+    p.Invoke()
+    Avalonia.Threading.Dispatcher.UIThread.RunJobs()
+
+[<Fact>]
+let ``折叠头有读屏 Invoke 且能开合`` () =
+    Headless.run (fun () ->
+        let f = FoldHeader(look, false)
+        invokeVia f.Header
+        Assert.True f.Expanded)

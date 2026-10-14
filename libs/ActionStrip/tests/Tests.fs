@@ -71,3 +71,19 @@ let ``命中区边长是活的`` () =
         Assert.Equal(0, target.Count)
         target.Set 30.0
         w.Close())
+
+let private invokeVia (c: Avalonia.Controls.Control) =
+    let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement c
+    Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
+    let p = Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(peer)
+    p.Invoke()
+    Avalonia.Threading.Dispatcher.UIThread.RunJobs()
+
+[<Fact>]
+let ``操作按钮有读屏 Invoke 且执行动作`` () =
+    Headless.run (fun () ->
+        let s = ActionStrip(look, StripRest.Hidden)
+        let mutable hits = 0
+        let b = s.Add(StripGlyph.Copy, "复制", "复制", "复制", fun () -> hits <- hits + 1)
+        invokeVia b
+        Assert.Equal(1, hits))

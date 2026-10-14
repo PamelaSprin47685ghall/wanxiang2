@@ -223,3 +223,35 @@ let ``外观来自主题管理者的活值`` () =
         Assert.Equal(CornerRadius 20.0, (card :?> Border).CornerRadius)
         manager.SetSpace(Space.RadiusLg, 12.0)
         w.Close())
+
+[<Fact>]
+let ``卡上每个可点件都有读屏 Invoke 并报按钮`` () =
+    Headless.run (fun () ->
+        for name in [ "user-attach"; "assistant-tools"; "assistant-reasoning-open"; "assistant-last-usage" ] do
+            let _, _, card, _ = render name
+            let w = show card
+            let spots =
+                all card
+                |> List.filter (fun c -> c :? Border && c.Focusable && not (isNull c.Cursor))
+            Assert.NotEmpty spots
+            for s in spots do
+                let peer = Automation.Peers.ControlAutomationPeer.CreatePeerForElement s
+                Assert.Equal(Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
+                Assert.IsAssignableFrom<Automation.Provider.IInvokeProvider>(peer) |> ignore
+            w.Close())
+
+[<Fact>]
+let ``读屏 Invoke 复制消息与展开工具卡`` () =
+    Headless.run (fun () ->
+        let _, _, card, _ = render "assistant-tools"
+        let w = show card
+        Fixture.log.Clear()
+        let via (c: Control) =
+            ((Automation.Peers.ControlAutomationPeer.CreatePeerForElement c :> obj) :?> Automation.Provider.IInvokeProvider).Invoke()
+            Threading.Dispatcher.UIThread.RunJobs()
+        via (named "复制助手消息 1" card)
+        Assert.Contains(Fixture.log, fun s -> s.StartsWith "copy:")
+        let header = named "展开工具调用 builtin_echo" card
+        via header
+        Assert.Equal("收起工具调用 builtin_echo", AutomationProperties.GetName header)
+        w.Close())

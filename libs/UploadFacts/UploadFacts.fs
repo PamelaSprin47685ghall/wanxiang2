@@ -5,7 +5,7 @@ open System.Security.Cryptography
 
 /// 附件上传与取回的纯部分（旧 AppShell 的 PickAttachment / DropFiles / HandleClipboardPaste / BeginUpload / BeginUploadCore / SaveDownload）。
 /// 读文件、剪贴板、Skia 缩小、发线上消息、存文件都归宿主；这里给出分块、校验和、何时先缩小、上传归属判断与提示文案。
-module UploadPlan =
+module UploadFacts =
 
     /// 每块原始字节数（base64 前）。
     let chunkSize = 256 * 1024

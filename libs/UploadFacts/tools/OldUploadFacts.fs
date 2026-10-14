@@ -6,7 +6,7 @@ open System.Security.Cryptography
 // 原样摘自 AppShell.fs：BeginUploadCore 的 sha 与分块循环（send 换成收集）、BeginUpload 的缩小条件、
 // PickAttachment / DropFiles 的归属判断、HandleClipboardPaste 的文件名与分支、各处 toast 文案、
 // HandleEvent 的 AttachmentAborted / AttachmentDownloadChunk 文案、SaveDownload 文案。
-module UploadPlan =
+module UploadFacts =
     let chunkSize = 256 * 1024
     let maxShrinkInput = 64L * 1024L * 1024L
     let sha256Hex (bytes: byte[]) = Convert.ToHexString(SHA256.HashData bytes).ToLowerInvariant()

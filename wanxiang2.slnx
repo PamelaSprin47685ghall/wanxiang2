@@ -663,9 +663,9 @@
     <Project Path="libs/UiPrefs/UiPrefs.fsproj" />
     <Project Path="libs/UiPrefs/tests/UiPrefs.Tests.fsproj" />
   </Folder>
-  <Folder Name="/UploadPlan/">
-    <Project Path="libs/UploadPlan/UploadPlan.fsproj" />
-    <Project Path="libs/UploadPlan/tests/UploadPlan.Tests.fsproj" />
+  <Folder Name="/UploadFacts/">
+    <Project Path="libs/UploadFacts/UploadFacts.fsproj" />
+    <Project Path="libs/UploadFacts/tests/UploadFacts.Tests.fsproj" />
   </Folder>
   <Folder Name="/UrlSchemeRegistration/">
     <Project Path="libs/UrlSchemeRegistration/UrlSchemeRegistration.fsproj" />

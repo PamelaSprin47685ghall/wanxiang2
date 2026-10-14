@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <Compile Include="UploadPlan.fs" />
+    <Compile Include="UploadFacts.fs" />
   </ItemGroup>
 </Project>

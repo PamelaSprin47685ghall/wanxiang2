@@ -129,3 +129,5 @@ DialogContentMaxHeight 560
 PairingCodeTracking 6
 QrModuleSize 6
 SelectCaptionMaxWidth 260
+SettingsDialogWidth 520
+SettingsSmallDialogWidth 480

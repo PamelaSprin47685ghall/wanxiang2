@@ -153,6 +153,10 @@ type Metric =
     | QrModuleSize
     /// 下拉选择器文字最宽（旧 Menu.selectButton 的 260）
     | SelectCaptionMaxWidth
+    /// 设置页编辑对话层宽（旧模型服务、MCP 编辑器的 520）
+    | SettingsDialogWidth
+    /// 设置页小对话层宽（旧添加文件夹的 480）
+    | SettingsSmallDialogWidth
 
 /// 度量的初始值：照抄旧代码，间距引用已换成 SpacingRamp 的数值。只有数据；活的可变值归主题管理者。
 module ThemeMetrics =
@@ -289,7 +293,9 @@ module ThemeMetrics =
           Metric.DialogContentMaxHeight
           Metric.PairingCodeTracking
           Metric.QrModuleSize
-          Metric.SelectCaptionMaxWidth ]
+          Metric.SelectCaptionMaxWidth
+          Metric.SettingsDialogWidth
+          Metric.SettingsSmallDialogWidth ]
 
     /// 某项度量的初始值
     let initial (metric: Metric) : float =
@@ -425,4 +431,6 @@ module ThemeMetrics =
         | Metric.PairingCodeTracking -> 6.0
         | Metric.QrModuleSize -> 6.0
         | Metric.SelectCaptionMaxWidth -> 260.0
+        | Metric.SettingsDialogWidth -> 520.0
+        | Metric.SettingsSmallDialogWidth -> 480.0
 

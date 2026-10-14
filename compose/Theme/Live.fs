@@ -61,6 +61,9 @@ type Space =
     | X2l
     | X3l
     | X4l
+    /// 设置内容区左右与底部留白（旧 Spacing.space6xl / space8xl）
+    | X6l
+    | X8l
     | RadiusXs
     | RadiusSm
     | RadiusMd
@@ -78,7 +81,7 @@ module Space =
     open Wanxiang.UI
 
     let all =
-        [ Space.None; Space.XXs; Space.Xs; Space.Sm; Space.Md; Space.Lg; Space.Xl; Space.X2l; Space.X3l; Space.X4l
+        [ Space.None; Space.XXs; Space.Xs; Space.Sm; Space.Md; Space.Lg; Space.Xl; Space.X2l; Space.X3l; Space.X4l; Space.X6l; Space.X8l
           Space.RadiusXs; Space.RadiusSm; Space.RadiusMd; Space.RadiusLg; Space.RadiusPill
           Space.StrokeThin; Space.StrokeThick; Space.GlyphSm; Space.GlyphMd; Space.GlyphLg; Space.TrackingSection ]
 
@@ -94,6 +97,8 @@ module Space =
         | Space.X2l -> Spacing.space2xl
         | Space.X3l -> Spacing.space3xl
         | Space.X4l -> Spacing.space4xl
+        | Space.X6l -> Spacing.space6xl
+        | Space.X8l -> Spacing.space8xl
         | Space.RadiusXs -> Spacing.Radius.xs
         | Space.RadiusSm -> Spacing.Radius.sm
         | Space.RadiusMd -> Spacing.Radius.md

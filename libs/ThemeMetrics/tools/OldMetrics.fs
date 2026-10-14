@@ -525,4 +525,6 @@ module Adapter =
           "DialogContentMaxHeight", 560.0
           "PairingCodeTracking", 6.0
           "QrModuleSize", 6.0
-          "SelectCaptionMaxWidth", 260.0 ]
+          "SelectCaptionMaxWidth", 260.0
+          "SettingsDialogWidth", 520.0
+          "SettingsSmallDialogWidth", 480.0 ]

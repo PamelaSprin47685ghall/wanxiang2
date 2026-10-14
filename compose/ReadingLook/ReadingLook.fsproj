@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：用主题管理者的活实例填正文与公式的 Look。协作者：Theme、IconSet、MarkdownView、MathFigure、CopyButton、ThemePalette、ThemeMetrics、MotionSwitch、SpacingRamp。 -->
+  <ItemGroup>
+    <Compile Include="ReadingLook.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MathFigure" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CopyButton" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SpacingRamp" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

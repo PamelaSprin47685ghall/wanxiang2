@@ -9,6 +9,7 @@ open Wanxiang.UI
 open Wanxiang2.ThemePalette
 open Wanxiang2.ThemeMetrics
 open Wanxiang2.MotionSwitch
+open Wanxiang2.ThemeFonts
 
 /// 由两支基础画笔叠出来的悬停底色（旧 Interaction 的 blendOver）。
 /// 旧代码在注册样式时叠一次就定死；这里每次基础画笔改色都重算，因此跟随主题。
@@ -50,8 +51,8 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
     do for s in Space.all do spaces[s] <- LiveValue(Space.initial s)
     let timings = Dictionary<Timing, LiveValue<float>>()
     do for t in MotionTimings.all do timings[t] <- LiveValue(MotionTimings.initialMs t)
-    let fontFamily = LiveValue(FontFamily ThemeMetrics.fontFamily)
-    let monoFontFamily = LiveValue(FontFamily ThemeMetrics.monoFontFamily)
+    let fontFamily = LiveValue(FontFamily ThemeFonts.body)
+    let monoFontFamily = LiveValue(FontFamily ThemeFonts.mono)
     let mutable frameTimer: Threading.Timer option = None
     let mutable generation = 0
     let toArgb (c: Color) : Argb = { A = c.A; R = c.R; G = c.G; B = c.B }

@@ -759,6 +759,10 @@
     <Project Path="libs/TextSocket/TextSocket.fsproj" />
     <Project Path="libs/TextSocket/tests/TextSocket.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ThemeFonts/">
+    <Project Path="libs/ThemeFonts/ThemeFonts.fsproj" />
+    <Project Path="libs/ThemeFonts/tests/ThemeFonts.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ThemeMetrics/">
     <Project Path="libs/ThemeMetrics/ThemeMetrics.fsproj" />
     <Project Path="libs/ThemeMetrics/tests/ThemeMetrics.Tests.fsproj" />

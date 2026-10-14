@@ -1,0 +1,744 @@
+== plain headings
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,24 600x40 m=0,24,0,8 focusable clip cursor size=24.5 weight=Medium fg=#ff141413 lh=39.69 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u4E00\u7EA7\u6807\u9898" 
+  SelectableTextBlock @0,92 600x35 m=0,20,0,8 focusable clip cursor size=21 weight=Medium fg=#ff141413 lh=34.02 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "Second level" 
+  SelectableTextBlock @0,151 600x30 m=0,16,0,4 focusable clip cursor size=18.5 weight=Medium fg=#ff141413 lh=29.97 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u4E09\u7EA7" 
+  SelectableTextBlock @0,197 600x27 m=0,12,0,4 focusable clip cursor size=16.5 weight=Medium fg=#ff141413 lh=26.73 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u56DB" 
+  SelectableTextBlock @0,228 600x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u6B63\u6587\u7B2C\u4E00\u6BB5\u3002" 
+== plain inline
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x71 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u666E\u901A " 
+    run "\u52A0\u7C97" fg=#ff1b365d
+    run " " 
+    run "\u659C\u4F53" style=Italic
+    run " " 
+    run "\u5220\u9664" deco=Strikethrough
+    run " " 
+    run "inline code" fg=#ff141413 bg=#ffe2dcc7 font=Sarasa Term SC|Sarasa Gothic SC size=14 base=Center
+    run " \u4E0E " 
+    run "\u6DF7\u5408" fg=#ff1b365d style=Italic
+    run " \u6587\u5B57\u3002" 
+    break
+    run "\u7B2C\u4E8C\u884C" 
+    break
+    run "\u786C\u6362\u884C\u4E4B\u540E\u3002" 
+== plain links
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  WrapPanel @0,0 600x48 orient=Horizontal
+    SelectableTextBlock @0,0 19x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+      run "\u89C1 " 
+    Border* @19,0 29x24 va=Center focusable cursor name=文档 help=https://example.com/docs role=Hyperlink tip=https://example.com/docs bg=Transparent
+      TextBlock @0,0 29x24 va=Center clip cursor size=14.5 weight=Normal fg=#ff1b365d lh=23.49 wrap=Wrap font=Inter|$Default align=Start  deco=Underline
+        text: 文档
+    SelectableTextBlock @48,0 23x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+      run " \u4E0E " 
+    Border* @71,0 488x24 va=Center focusable cursor name=一个特别特别长的链接文字用来测试分段换行的行为是否正确abcdefghijklmnopqrstuvwxyz help=https://example.com/very/long/path?query=1 role=Hyperlink tip=https://example.com/very/long/path?query=1 bg=Transparent
+      TextBlock @0,0 488x24 va=Center clip cursor size=14.5 weight=Normal fg=#ff1b365d lh=23.49 wrap=Wrap font=Inter|$Default align=Start  deco=Underline
+        text: 一个特别特别长的链接文字用来测试分段换行的行为是否正确abcdefghijklm
+    Border* @0,24 104x24 va=Center cursor help=https://example.com/very/long/path?query=1 role=Hyperlink view=Raw tip=https://example.com/very/long/path?query=1 bg=Transparent
+      TextBlock @0,0 104x24 va=Center clip cursor size=14.5 weight=Normal fg=#ff1b365d lh=23.49 wrap=Wrap font=Inter|$Default align=Start  deco=Underline
+        text: nopqrstuvwxyz
+    SelectableTextBlock @104,24 15x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+      run "\u3002" 
+== plain image
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x24 focusable clip cursor name=为保护隐私，默认不加载远程图片。来源：https://img.example.org/a.png tip=为保护隐私，默认不加载远程图片。来源：https://img.example.org/a.png size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u524D\u6587 " 
+    run "[\u56FE\u7247\u672A\u52A0\u8F7D\uFF1A\u793A\u610F\u56FE \u00B7 img.example.org]" fg=#ff6e6b62
+    run " \u540E\u6587" 
+== plain math
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u884C\u5185 " 
+    run "x^2" fg=#ff141413 bg=#ffe2dcc7 font=Sarasa Term SC|Sarasa Gothic SC size=14 style=Italic base=Center
+    run " \u4E0E " 
+    run "\\frac{a}{b}" fg=#ff141413 bg=#ffe2dcc7 font=Sarasa Term SC|Sarasa Gothic SC size=14 style=Italic base=Center
+    run " \u516C\u5F0F\u3002" 
+  Border @0,32 600x77 m=0,0,0,8 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x75 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 17x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: tex
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制tex代码 help=复制tex代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x36 clip hbar=Auto vbar=Disabled
+        SelectableTextBlock @12,8 574x20 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "\\sum_{i=1}^{n} i = \\frac{n(n\u002B1)}{2}" fg=#fff2f1ec
+  SelectableTextBlock @0,117 600x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u574F\u516C\u5F0F " 
+    run "\\frac{" fg=#ff141413 bg=#ffe2dcc7 font=Sarasa Term SC|Sarasa Gothic SC size=14 style=Italic base=Center
+    run " \u7ED3\u675F\u3002" 
+== plain lists
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  StackPanel @0,0 600x80 m=0,0,0,8 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,8 20x4 m=0,7.98,0,0 ha=Left va=Top w=20 dock=Left bg=null pad=0,0,8,0
+        Border @4,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @20,0 580x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u4E00" 
+    DockPanel @0,28 600x24 fill=True
+      Border @0,8 20x4 m=0,7.98,0,0 ha=Left va=Top w=20 dock=Left bg=null pad=0,0,8,0
+        Border @4,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @20,0 580x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u4E8C" 
+    DockPanel @0,56 600x24 fill=True
+      Border @0,8 20x4 m=0,7.98,0,0 ha=Left va=Top w=20 dock=Left bg=null pad=0,0,8,0
+        Border @4,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @20,0 580x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u4E09" 
+  StackPanel @0,88 600x24 m=0,0,0,8 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,8 36x4 m=0,7.98,0,0 ha=Left va=Top w=36 dock=Left bg=null pad=0,0,8,0
+        Border @12,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @36,0 564x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u5D4C\u5957" 
+  StackPanel @0,120 600x24 m=0,0,0,8 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,8 52x4 m=0,7.98,0,0 ha=Left va=Top w=52 dock=Left bg=null pad=0,0,8,0
+        Border @20,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @52,0 548x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u66F4\u6DF1" 
+  StackPanel @0,152 600x80 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      TextBlock @0,0 20x20 m=0,0,8,0 va=Top minw=20 clip dock=Left size=14 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Inter|$Default align=Right
+        text: 1.
+      SelectableTextBlock @28,0 572x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "first" 
+    DockPanel @0,28 600x24 fill=True
+      TextBlock @0,0 20x20 m=0,0,8,0 va=Top minw=20 clip dock=Left size=14 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Inter|$Default align=Right
+        text: 2.
+      SelectableTextBlock @28,0 572x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "second" 
+    DockPanel @0,56 600x24 fill=True
+      TextBlock @0,0 20x20 m=0,0,8,0 va=Top minw=20 clip dock=Left size=14 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Inter|$Default align=Right
+        text: 3.
+      SelectableTextBlock @28,0 572x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "tenth" 
+== plain tasks
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  StackPanel @0,0 600x52 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,0 14x14 m=0,0,8,0 va=Top w=14 h=14 name=已完成任务 role=CheckBox dock=Left bg=#ff1b365d bd=#ff1b365d bt=1.4,1.4,1.4,1.4 cr=4,4,4,4
+        Image @2,3 10x7.22 ha=Center va=Center w=10 h=10 role=Image glyph=125.55308532714844, -791.1555786132812, 748.8218994140625, 540.994873046875:#fffbfaf7
+      SelectableTextBlock @22,0 578x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff4e4c46 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run " \u5DF2\u5B8C\u6210" 
+    DockPanel @0,28 600x24 fill=True
+      Border @0,0 14x14 m=0,0,8,0 va=Top w=14 h=14 name=未完成任务 role=CheckBox dock=Left bg=Transparent bd=#ffc7c3b3 bt=1.4,1.4,1.4,1.4 cr=4,4,4,4
+      SelectableTextBlock @22,0 578x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run " \u672A\u5B8C\u6210 " 
+        run "code" fg=#ff141413 bg=#ffe2dcc7 font=Sarasa Term SC|Sarasa Gothic SC size=14 base=Center
+== plain quote
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x109 clip bg=#fff5f4ee bd=#ff1b365d bt=3,0,0,0 cr=0,6,6,0 pad=8,6,8,6
+    StackPanel @11,6 581x97 orient=Vertical spacing=0
+      SelectableTextBlock @0,0 581x23 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff4e4c46 lh=22.62 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u5F15\u7528\u7B2C\u4E00\u6BB5" 
+      Border @8,31 573x35 m=8,0,0,8 clip bg=#fff5f4ee bd=#ff1b365d bt=3,0,0,0 cr=0,6,6,0 pad=8,6,8,6
+        StackPanel @11,6 554x23 orient=Vertical spacing=0
+          SelectableTextBlock @0,0 554x23 focusable clip cursor size=14.5 weight=Normal fg=#ff4e4c46 lh=22.62 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "\u5D4C\u5957\u5F15\u7528" 
+      SelectableTextBlock @0,74 581x23 focusable clip cursor size=14.5 weight=Normal fg=#ff4e4c46 lh=22.62 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u5C3E\u6BB5" 
+== plain code
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x97 m=0,0,0,8 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x95 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 35x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: fsharp
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制fsharp代码 help=复制fsharp代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x56 clip hbar=Auto vbar=Disabled
+        SelectableTextBlock @12,8 574x40 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "let x = 1\nlet y = \u0022s\u0022" fg=#fff2f1ec
+  Border @0,105 600x77 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x75 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 21x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: text
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制text代码 help=复制text代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x36 clip hbar=Auto vbar=Disabled
+        SelectableTextBlock @12,8 574x20 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "plain text block" fg=#fff2f1ec
+== plain hugecode
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x443 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x441 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 38x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: python
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制python代码 help=复制python代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x360 maxh=360 clip hbar=Auto vbar=Auto
+        SelectableTextBlock @12,8 574x2569 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "print(1)\nprint(2)\nprint(3)\nprint(4)\nprint(5)\nprint(6)\nprint(7)\nprint(8)\nprint(9)\nprint(10)\nprint(11)\nprint(12)\nprint(13)\nprint(14)\nprint(15)\nprint(16)\nprint(17)\nprint(18)\nprint(19)\nprint(20)\nprint(21)\nprint(22)\nprint(23)\nprint(24)\nprint(25)\nprint(26)\nprint(27)\nprint(28)\nprint(29)\nprint(30)\nprint(31)\nprint(32)\nprint(33)\nprint(34)\nprint(35)\nprint(36)\nprint(37)\nprint(38)\nprint(39)\nprint(40)\nprint(41)\nprint(42)\nprint(43)\nprint(44)\nprint(45)\nprint(46)\nprint(47)\nprint(48)\nprint(49)\nprint(50)\nprint(51)\nprint(52)\nprint(53)\nprint(54)\nprint(55)\nprint(56)\nprint(57)\nprint(58)\nprint(59)\nprint(60)\nprint(61)\nprint(62)\nprint(63)\nprint(64)\nprint(65)\nprint(66)\nprint(67)\nprint(68)\nprint(69)\nprint(70)\nprint(71)\nprint(72)\nprint(73)\nprint(74)\nprint(75)\nprint(76)\nprint(77)\nprint(78)\nprint(79)\nprint(80)\nprint(81)\nprint(82)\nprint(83)\nprint(84)\nprint(85)\nprint(86)\nprint(87)\nprint(88)\nprint(89)\nprint(90)\nprint(91)\nprint(92)\nprint(93)\nprint(94)\nprint(95)\nprint(96)\nprint(97)\nprint(98)\nprint(99)\nprint(100)\nprint(101)\nprint(102)\nprint(103)\nprint(104)\nprint(105)\nprint(106)\nprint(107)\nprint(108)\nprint(109)\nprint(110)\nprint(111)\nprint(112)\nprint(113)\nprint(114)\nprint(115)\nprint(116)\nprint(117)\nprint(118)\nprint(119)\nprint(120)\nprint(121)\nprint(122)\nprint(123)\nprint(124)\nprint(125)\nprint(126)\nprint(127)\nprint(128)\nprint(129)\nprint(130)" fg=#fff2f1ec
+      Border* @12,403 82x34 m=12,4,0,4 ha=Left va=Center minh=34 focusable cursor name=展开全部 status=已折叠 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+        TextBlock @16,8 50x18 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Inter|$Default align=Start
+          text: 展开全部
+== plain rule
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u4E0A" 
+  Border @0,48 600x1 m=0,16,0,16 h=1 bg=#ffe3e0d3
+  SelectableTextBlock @0,65 600x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u4E0B" 
+== plain table
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x161 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    Grid @1,1 598x159 cols=1*/90;1*/90;1*/90 rows=Auto;Auto;Auto;Auto
+      Border @0,0 200x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 28x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u540D\u79F0" 
+      Border @200,0 199x40 clip cell=0,1 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @159,8 28x23 ha=Right va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Right sel=#ffe2eaf4 noflyout
+          run "\u6570\u91CF" 
+      Border @399,0 199x40 clip cell=0,2 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @159,8 28x23 ha=Right va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Right sel=#ffe2eaf4 noflyout
+          run "\u4EF7\u683C" 
+      Border @0,40 200x40 clip cell=1,0 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 28x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u82F9\u679C" 
+      Border @200,40 199x40 clip cell=1,1 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @180,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "3" 
+      Border @399,40 199x40 clip cell=1,2 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @152,8 35x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "$1.50" 
+      Border @0,80 200x40 clip cell=2,0 bg=#ffeae7d8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 14x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u68A8" 
+      Border @200,80 199x40 clip cell=2,1 bg=#ffeae7d8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @173,8 14x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "12" 
+      Border @399,80 199x40 clip cell=2,2 bg=#ffeae7d8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @152,8 35x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "2,000" 
+      Border @0,120 200x39 clip cell=3,0 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @12,8 14x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u6843" 
+      Border @200,120 199x39 clip cell=3,1 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @12,8 0x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          text: 
+      Border @399,120 199x39 clip cell=3,2 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @166,8 21x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "-5%" 
+== plain widetable
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x121 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    ScrollViewer @1,1 598x119 clip hbar=Auto vbar=Disabled
+      Grid @0,0 720x119 cols=1*/120;1*/120;1*/120;1*/120;1*/120;1*/120 rows=Auto;Auto;Auto
+        Border @0,0 120x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "a" 
+        Border @120,0 120x40 clip cell=0,1 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 9x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "b" 
+        Border @240,0 120x40 clip cell=0,2 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 7x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "c" 
+        Border @360,0 120x40 clip cell=0,3 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 9x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "d" 
+        Border @480,0 120x40 clip cell=0,4 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "e" 
+        Border @600,0 120x40 clip cell=0,5 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 5x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "f" 
+        Border @0,40 120x40 clip cell=1,0 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "1" 
+        Border @120,40 120x40 clip cell=1,1 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "2" 
+        Border @240,40 120x40 clip cell=1,2 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "3" 
+        Border @360,40 120x40 clip cell=1,3 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "4" 
+        Border @480,40 120x40 clip cell=1,4 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "5" 
+        Border @600,40 120x40 clip cell=1,5 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "6" 
+        Border @0,80 120x39 clip cell=2,0 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "x" 
+        Border @120,80 120x39 clip cell=2,1 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "y" 
+        Border @240,80 120x39 clip cell=2,2 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 7x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "z" 
+        Border @360,80 120x39 clip cell=2,3 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 12x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "w" 
+        Border @480,80 120x39 clip cell=2,4 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "v" 
+        Border @600,80 120x39 clip cell=2,5 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 9x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "u" 
+== plain longtoken
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x81 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    Grid @1,1 598x79 cols=1*/100;1*/100 rows=Auto;Auto
+      Border @0,0 299x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 23x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "key" 
+      Border @299,0 299x40 clip cell=0,1 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 36x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "value" 
+      Border @0,40 299x39 clip cell=1,0 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @12,8 32x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "hash" 
+      Border @299,40 299x39 clip cell=1,1 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        ScrollViewer @12,8 275x23 clip hbar=Auto vbar=Disabled
+          SelectableTextBlock @0,0 499x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" 
+== plain tablelinks
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x81 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    Grid @1,1 598x79 cols=1*/100;1*/100 rows=Auto;Auto
+      Border @0,0 299x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 28x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u94FE\u63A5" 
+      Border @299,0 299x40 clip cell=0,1 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 28x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u8BF4\u660E" 
+      Border @0,40 299x39 clip cell=1,0 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        WrapPanel @12,8 8x23 ha=Left va=Center orient=Horizontal
+          Border* @0,0 8x23 va=Center focusable cursor name=x help=https://x.y role=Hyperlink tip=https://x.y bg=Transparent
+            TextBlock @0,0 8x23 va=Center clip cursor size=14 weight=Normal fg=#ff1b365d lh=22.68 wrap=Wrap font=Inter|$Default align=Start  deco=Underline
+              text: x
+      Border @299,40 299x39 clip cell=1,1 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @12,8 14x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u7C97" 
+== plain mixed
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u6BB5\u843D\u4E00" 
+  Border @0,32 600x77 m=0,0,0,8 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x75 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 21x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: text
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制text代码 help=复制text代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x36 clip hbar=Auto vbar=Disabled
+        SelectableTextBlock @12,8 574x20 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "x" fg=#fff2f1ec
+  Border @0,117 600x35 m=0,0,0,8 clip bg=#fff5f4ee bd=#ff1b365d bt=3,0,0,0 cr=0,6,6,0 pad=8,6,8,6
+    StackPanel @11,6 581x23 orient=Vertical spacing=0
+      SelectableTextBlock @0,0 581x23 focusable clip cursor size=14.5 weight=Normal fg=#ff4e4c46 lh=22.62 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "q" 
+  StackPanel @0,160 600x24 m=0,0,0,8 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,8 20x4 m=0,7.98,0,0 ha=Left va=Top w=20 dock=Left bg=null pad=0,0,8,0
+        Border @4,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @20,0 580x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "a" 
+  Border @0,192 600x81 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    Grid @1,1 598x79 cols=1*/100 rows=Auto;Auto
+      Border @0,0 598x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @577,8 9x23 ha=Right va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Right sel=#ffe2eaf4 noflyout
+          run "h" 
+      Border @0,40 598x39 clip cell=1,0 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @579,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "1" 
+== rich headings
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,24 600x40 m=0,24,0,8 focusable clip cursor size=24.5 weight=Medium fg=#ff141413 lh=39.69 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u4E00\u7EA7\u6807\u9898" 
+  SelectableTextBlock @0,92 600x35 m=0,20,0,8 focusable clip cursor size=21 weight=Medium fg=#ff141413 lh=34.02 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "Second level" 
+  SelectableTextBlock @0,151 600x30 m=0,16,0,4 focusable clip cursor size=18.5 weight=Medium fg=#ff141413 lh=29.97 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u4E09\u7EA7" 
+  SelectableTextBlock @0,197 600x27 m=0,12,0,4 focusable clip cursor size=16.5 weight=Medium fg=#ff141413 lh=26.73 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u56DB" 
+  SelectableTextBlock @0,228 600x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u6B63\u6587\u7B2C\u4E00\u6BB5\u3002" 
+== rich inline
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x71 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u666E\u901A " 
+    run "\u52A0\u7C97" fg=#ff1b365d
+    run " " 
+    run "\u659C\u4F53" style=Italic
+    run " " 
+    run "\u5220\u9664" deco=Strikethrough
+    run " " 
+    run "inline code" fg=#ff141413 bg=#ffe2dcc7 font=Sarasa Term SC|Sarasa Gothic SC size=14 base=Center
+    run " \u4E0E " 
+    run "\u6DF7\u5408" fg=#ff1b365d style=Italic
+    run " \u6587\u5B57\u3002" 
+    break
+    run "\u7B2C\u4E8C\u884C" 
+    break
+    run "\u786C\u6362\u884C\u4E4B\u540E\u3002" 
+== rich links
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  WrapPanel @0,0 600x48 orient=Horizontal
+    SelectableTextBlock @0,0 19x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+      run "\u89C1 " 
+    Border* @19,0 29x24 va=Center focusable cursor name=文档 help=https://example.com/docs role=Hyperlink tip=https://example.com/docs bg=Transparent
+      TextBlock @0,0 29x24 va=Center clip cursor size=14.5 weight=Normal fg=#ff1b365d lh=23.49 wrap=Wrap font=Inter|$Default align=Start  deco=Underline
+        text: 文档
+    SelectableTextBlock @48,0 23x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+      run " \u4E0E " 
+    Border* @71,0 488x24 va=Center focusable cursor name=一个特别特别长的链接文字用来测试分段换行的行为是否正确abcdefghijklmnopqrstuvwxyz help=https://example.com/very/long/path?query=1 role=Hyperlink tip=https://example.com/very/long/path?query=1 bg=Transparent
+      TextBlock @0,0 488x24 va=Center clip cursor size=14.5 weight=Normal fg=#ff1b365d lh=23.49 wrap=Wrap font=Inter|$Default align=Start  deco=Underline
+        text: 一个特别特别长的链接文字用来测试分段换行的行为是否正确abcdefghijklm
+    Border* @0,24 104x24 va=Center cursor help=https://example.com/very/long/path?query=1 role=Hyperlink view=Raw tip=https://example.com/very/long/path?query=1 bg=Transparent
+      TextBlock @0,0 104x24 va=Center clip cursor size=14.5 weight=Normal fg=#ff1b365d lh=23.49 wrap=Wrap font=Inter|$Default align=Start  deco=Underline
+        text: nopqrstuvwxyz
+    SelectableTextBlock @104,24 15x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+      run "\u3002" 
+== rich image
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x24 focusable clip cursor name=为保护隐私，默认不加载远程图片。来源：https://img.example.org/a.png tip=为保护隐私，默认不加载远程图片。来源：https://img.example.org/a.png size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u524D\u6587 " 
+    run "[\u56FE\u7247\u672A\u52A0\u8F7D\uFF1A\u793A\u610F\u56FE \u00B7 img.example.org]" fg=#ff6e6b62
+    run " \u540E\u6587" 
+== rich math
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u884C\u5185 " 
+    container base=Center
+      Control* @37,2 18x19 m=4,0,4,0 va=Center cursor name=公式：x^2 tip=x^2 baseline=17.12
+    run " \u4E0E " 
+    container base=Center
+      Control* @85,2 11x19 m=4,0,4,0 va=Center cursor name=公式：\frac{a}{b} tip=\frac{a}{b} baseline=17.12
+    run " \u516C\u5F0F\u3002" 
+  Border @232,32 136x71 m=0,0,0,8 ha=Center bg=null pad=0,8,0,8
+    Control* @0,8 136x55 ha=Center name=公式：\sum_{i=1}^{n} i = \frac{n(n+1)}{2} tip=\sum_{i=1}^{n} i = \frac{n(n+1)}{2} baseline=30.97
+  SelectableTextBlock @0,111 600x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u574F\u516C\u5F0F " 
+    run "\\frac{" fg=#ff141413 bg=#ffe2dcc7 font=Sarasa Term SC|Sarasa Gothic SC size=14 style=Italic base=Center
+    run " \u7ED3\u675F\u3002" 
+== rich lists
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  StackPanel @0,0 600x80 m=0,0,0,8 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,8 20x4 m=0,7.98,0,0 ha=Left va=Top w=20 dock=Left bg=null pad=0,0,8,0
+        Border @4,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @20,0 580x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u4E00" 
+    DockPanel @0,28 600x24 fill=True
+      Border @0,8 20x4 m=0,7.98,0,0 ha=Left va=Top w=20 dock=Left bg=null pad=0,0,8,0
+        Border @4,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @20,0 580x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u4E8C" 
+    DockPanel @0,56 600x24 fill=True
+      Border @0,8 20x4 m=0,7.98,0,0 ha=Left va=Top w=20 dock=Left bg=null pad=0,0,8,0
+        Border @4,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @20,0 580x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u4E09" 
+  StackPanel @0,88 600x24 m=0,0,0,8 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,8 36x4 m=0,7.98,0,0 ha=Left va=Top w=36 dock=Left bg=null pad=0,0,8,0
+        Border @12,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @36,0 564x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u5D4C\u5957" 
+  StackPanel @0,120 600x24 m=0,0,0,8 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,8 52x4 m=0,7.98,0,0 ha=Left va=Top w=52 dock=Left bg=null pad=0,0,8,0
+        Border @20,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @52,0 548x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u66F4\u6DF1" 
+  StackPanel @0,152 600x80 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      TextBlock @0,0 20x20 m=0,0,8,0 va=Top minw=20 clip dock=Left size=14 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Inter|$Default align=Right
+        text: 1.
+      SelectableTextBlock @28,0 572x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "first" 
+    DockPanel @0,28 600x24 fill=True
+      TextBlock @0,0 20x20 m=0,0,8,0 va=Top minw=20 clip dock=Left size=14 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Inter|$Default align=Right
+        text: 2.
+      SelectableTextBlock @28,0 572x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "second" 
+    DockPanel @0,56 600x24 fill=True
+      TextBlock @0,0 20x20 m=0,0,8,0 va=Top minw=20 clip dock=Left size=14 weight=Normal fg=#ff4e4c46 lh=nan wrap=NoWrap font=Inter|$Default align=Right
+        text: 3.
+      SelectableTextBlock @28,0 572x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "tenth" 
+== rich tasks
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  StackPanel @0,0 600x52 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,0 14x14 m=0,0,8,0 va=Top w=14 h=14 name=已完成任务 role=CheckBox dock=Left bg=#ff1b365d bd=#ff1b365d bt=1.4,1.4,1.4,1.4 cr=4,4,4,4
+        Image @2,3 10x7.22 ha=Center va=Center w=10 h=10 role=Image glyph=125.55308532714844, -791.1555786132812, 748.8218994140625, 540.994873046875:#fffbfaf7
+      SelectableTextBlock @22,0 578x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff4e4c46 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run " \u5DF2\u5B8C\u6210" 
+    DockPanel @0,28 600x24 fill=True
+      Border @0,0 14x14 m=0,0,8,0 va=Top w=14 h=14 name=未完成任务 role=CheckBox dock=Left bg=Transparent bd=#ffc7c3b3 bt=1.4,1.4,1.4,1.4 cr=4,4,4,4
+      SelectableTextBlock @22,0 578x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run " \u672A\u5B8C\u6210 " 
+        run "code" fg=#ff141413 bg=#ffe2dcc7 font=Sarasa Term SC|Sarasa Gothic SC size=14 base=Center
+== rich quote
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x109 clip bg=#fff5f4ee bd=#ff1b365d bt=3,0,0,0 cr=0,6,6,0 pad=8,6,8,6
+    StackPanel @11,6 581x97 orient=Vertical spacing=0
+      SelectableTextBlock @0,0 581x23 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff4e4c46 lh=22.62 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u5F15\u7528\u7B2C\u4E00\u6BB5" 
+      Border @8,31 573x35 m=8,0,0,8 clip bg=#fff5f4ee bd=#ff1b365d bt=3,0,0,0 cr=0,6,6,0 pad=8,6,8,6
+        StackPanel @11,6 554x23 orient=Vertical spacing=0
+          SelectableTextBlock @0,0 554x23 focusable clip cursor size=14.5 weight=Normal fg=#ff4e4c46 lh=22.62 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "\u5D4C\u5957\u5F15\u7528" 
+      SelectableTextBlock @0,74 581x23 focusable clip cursor size=14.5 weight=Normal fg=#ff4e4c46 lh=22.62 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "\u5C3E\u6BB5" 
+== rich code
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x97 m=0,0,0,8 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x95 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 35x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: fsharp
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制fsharp代码 help=复制fsharp代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x56 clip hbar=Auto vbar=Disabled
+        SelectableTextBlock @12,8 574x40 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "let x = 1\nlet y = \u0022s\u0022" fg=#fff2f1ec
+  Border @0,105 600x77 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x75 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 21x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: text
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制text代码 help=复制text代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x36 clip hbar=Auto vbar=Disabled
+        SelectableTextBlock @12,8 574x20 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "plain text block" fg=#fff2f1ec
+== rich hugecode
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x443 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x441 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 38x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: python
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制python代码 help=复制python代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x360 maxh=360 clip hbar=Auto vbar=Auto
+        SelectableTextBlock @12,8 574x2569 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "print(1)\nprint(2)\nprint(3)\nprint(4)\nprint(5)\nprint(6)\nprint(7)\nprint(8)\nprint(9)\nprint(10)\nprint(11)\nprint(12)\nprint(13)\nprint(14)\nprint(15)\nprint(16)\nprint(17)\nprint(18)\nprint(19)\nprint(20)\nprint(21)\nprint(22)\nprint(23)\nprint(24)\nprint(25)\nprint(26)\nprint(27)\nprint(28)\nprint(29)\nprint(30)\nprint(31)\nprint(32)\nprint(33)\nprint(34)\nprint(35)\nprint(36)\nprint(37)\nprint(38)\nprint(39)\nprint(40)\nprint(41)\nprint(42)\nprint(43)\nprint(44)\nprint(45)\nprint(46)\nprint(47)\nprint(48)\nprint(49)\nprint(50)\nprint(51)\nprint(52)\nprint(53)\nprint(54)\nprint(55)\nprint(56)\nprint(57)\nprint(58)\nprint(59)\nprint(60)\nprint(61)\nprint(62)\nprint(63)\nprint(64)\nprint(65)\nprint(66)\nprint(67)\nprint(68)\nprint(69)\nprint(70)\nprint(71)\nprint(72)\nprint(73)\nprint(74)\nprint(75)\nprint(76)\nprint(77)\nprint(78)\nprint(79)\nprint(80)\nprint(81)\nprint(82)\nprint(83)\nprint(84)\nprint(85)\nprint(86)\nprint(87)\nprint(88)\nprint(89)\nprint(90)\nprint(91)\nprint(92)\nprint(93)\nprint(94)\nprint(95)\nprint(96)\nprint(97)\nprint(98)\nprint(99)\nprint(100)\nprint(101)\nprint(102)\nprint(103)\nprint(104)\nprint(105)\nprint(106)\nprint(107)\nprint(108)\nprint(109)\nprint(110)\nprint(111)\nprint(112)\nprint(113)\nprint(114)\nprint(115)\nprint(116)\nprint(117)\nprint(118)\nprint(119)\nprint(120)\nprint(121)\nprint(122)\nprint(123)\nprint(124)\nprint(125)\nprint(126)\nprint(127)\nprint(128)\nprint(129)\nprint(130)" fg=#fff2f1ec
+      Border* @12,403 82x34 m=12,4,0,4 ha=Left va=Center minh=34 focusable cursor name=展开全部 status=已折叠 bg=Transparent cr=8,8,8,8 pad=16,6,16,6
+        TextBlock @16,8 50x18 ha=Center va=Center clip cursor size=12.5 weight=Medium fg=#ff4e4c46 lh=nan wrap=NoWrap font=Inter|$Default align=Start
+          text: 展开全部
+== rich rule
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u4E0A" 
+  Border @0,48 600x1 m=0,16,0,16 h=1 bg=#ffe3e0d3
+  SelectableTextBlock @0,65 600x24 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u4E0B" 
+== rich table
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x161 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    Grid @1,1 598x159 cols=1*/90;1*/90;1*/90 rows=Auto;Auto;Auto;Auto
+      Border @0,0 200x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 28x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u540D\u79F0" 
+      Border @200,0 199x40 clip cell=0,1 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @159,8 28x23 ha=Right va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Right sel=#ffe2eaf4 noflyout
+          run "\u6570\u91CF" 
+      Border @399,0 199x40 clip cell=0,2 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @159,8 28x23 ha=Right va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Right sel=#ffe2eaf4 noflyout
+          run "\u4EF7\u683C" 
+      Border @0,40 200x40 clip cell=1,0 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 28x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u82F9\u679C" 
+      Border @200,40 199x40 clip cell=1,1 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @180,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "3" 
+      Border @399,40 199x40 clip cell=1,2 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @152,8 35x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "$1.50" 
+      Border @0,80 200x40 clip cell=2,0 bg=#ffeae7d8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 14x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u68A8" 
+      Border @200,80 199x40 clip cell=2,1 bg=#ffeae7d8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @173,8 14x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "12" 
+      Border @399,80 199x40 clip cell=2,2 bg=#ffeae7d8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @152,8 35x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "2,000" 
+      Border @0,120 200x39 clip cell=3,0 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @12,8 14x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u6843" 
+      Border @200,120 199x39 clip cell=3,1 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @12,8 0x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          text: 
+      Border @399,120 199x39 clip cell=3,2 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @166,8 21x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "-5%" 
+== rich widetable
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x121 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    ScrollViewer @1,1 598x119 clip hbar=Auto vbar=Disabled
+      Grid @0,0 720x119 cols=1*/120;1*/120;1*/120;1*/120;1*/120;1*/120 rows=Auto;Auto;Auto
+        Border @0,0 120x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "a" 
+        Border @120,0 120x40 clip cell=0,1 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 9x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "b" 
+        Border @240,0 120x40 clip cell=0,2 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 7x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "c" 
+        Border @360,0 120x40 clip cell=0,3 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 9x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "d" 
+        Border @480,0 120x40 clip cell=0,4 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "e" 
+        Border @600,0 120x40 clip cell=0,5 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @12,8 5x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "f" 
+        Border @0,40 120x40 clip cell=1,0 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "1" 
+        Border @120,40 120x40 clip cell=1,1 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "2" 
+        Border @240,40 120x40 clip cell=1,2 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "3" 
+        Border @360,40 120x40 clip cell=1,3 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "4" 
+        Border @480,40 120x40 clip cell=1,4 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "5" 
+        Border @600,40 120x40 clip cell=1,5 bg=Transparent bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+          SelectableTextBlock @101,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+            run "6" 
+        Border @0,80 120x39 clip cell=2,0 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "x" 
+        Border @120,80 120x39 clip cell=2,1 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "y" 
+        Border @240,80 120x39 clip cell=2,2 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 7x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "z" 
+        Border @360,80 120x39 clip cell=2,3 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 12x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "w" 
+        Border @480,80 120x39 clip cell=2,4 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 8x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "v" 
+        Border @600,80 120x39 clip cell=2,5 bg=#ffeae7d8 bd=#ffece9de pad=12,8,12,8
+          SelectableTextBlock @12,8 9x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "u" 
+== rich longtoken
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x81 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    Grid @1,1 598x79 cols=1*/100;1*/100 rows=Auto;Auto
+      Border @0,0 299x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 23x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "key" 
+      Border @299,0 299x40 clip cell=0,1 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 36x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "value" 
+      Border @0,40 299x39 clip cell=1,0 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @12,8 32x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "hash" 
+      Border @299,40 299x39 clip cell=1,1 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        ScrollViewer @12,8 275x23 clip hbar=Auto vbar=Disabled
+          SelectableTextBlock @0,0 499x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+            run "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" 
+== rich tablelinks
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  Border @0,0 600x81 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    Grid @1,1 598x79 cols=1*/100;1*/100 rows=Auto;Auto
+      Border @0,0 299x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 28x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u94FE\u63A5" 
+      Border @299,0 299x40 clip cell=0,1 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @12,8 28x23 ha=Left va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u8BF4\u660E" 
+      Border @0,40 299x39 clip cell=1,0 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        WrapPanel @12,8 8x23 ha=Left va=Center orient=Horizontal
+          Border* @0,0 8x23 va=Center focusable cursor name=x help=https://x.y role=Hyperlink tip=https://x.y bg=Transparent
+            TextBlock @0,0 8x23 va=Center clip cursor size=14 weight=Normal fg=#ff1b365d lh=22.68 wrap=Wrap font=Inter|$Default align=Start  deco=Underline
+              text: x
+      Border @299,40 299x39 clip cell=1,1 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @12,8 14x23 ha=Left va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+          run "\u7C97" 
+== rich mixed
+StackPanel @0,0 600x2000 orient=Vertical spacing=0
+  SelectableTextBlock @0,0 600x24 m=0,0,0,8 focusable clip cursor size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+    run "\u6BB5\u843D\u4E00" 
+  Border @0,32 600x77 m=0,0,0,8 clip bg=#ff17171a bd=#ff2e2e33 bt=1,1,1,1 cr=8,8,8,8
+    StackPanel @1,1 598x75 orient=Vertical spacing=0
+      Border @0,0 598x39 bg=#ff202024 bd=#ff2e2e33 bt=0,0,0,1 pad=12,4,4,4
+        DockPanel @12,4 582x30 fill=False
+          TextBlock @0,8 21x15 va=Center clip dock=Left size=10.5 weight=Medium fg=#ff9b9890 lh=nan wrap=NoWrap font=Inter|$Default align=Start track=0.4
+            text: text
+          StackPanel @520,0 62x30 va=Center dock=Right orient=Horizontal spacing=2
+            Border* @0,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=长行折行 help=长行折行，在块内自动换行 tip=长行折行 / 横向滚动 bg=Transparent cr=8,8,8,8
+              Image @7,7 16x15.21 ha=Center va=Center w=16 h=16 cursor role=Image glyph=83.67713928222656, -833.6203002929688, 832.6455078125, 791.760009765625:#ff9b9890
+            Border* @32,0 30x30 ha=Center va=Center w=30 h=30 minw=30 minh=30 focusable cursor name=复制text代码 help=复制text代码 tip=复制代码 bg=Transparent cr=8,8,8,8
+              Image @7,7 15.99x16 ha=Center va=Center w=16 h=16 cursor role=Image glyph=41.875, -958.564453125, 916.25, 916.689453125:#ff9b9890
+      ScrollViewer @0,39 598x36 clip hbar=Auto vbar=Disabled
+        SelectableTextBlock @12,8 574x20 m=12,8,12,8 focusable clip cursor size=13 weight=Normal fg=#fff2f1ec lh=19.76 wrap=NoWrap font=Sarasa Term SC|Sarasa Gothic SC align=Start sel=#ffe2eaf4 noflyout
+          run "x" fg=#fff2f1ec
+  Border @0,117 600x35 m=0,0,0,8 clip bg=#fff5f4ee bd=#ff1b365d bt=3,0,0,0 cr=0,6,6,0 pad=8,6,8,6
+    StackPanel @11,6 581x23 orient=Vertical spacing=0
+      SelectableTextBlock @0,0 581x23 focusable clip cursor size=14.5 weight=Normal fg=#ff4e4c46 lh=22.62 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "q" 
+  StackPanel @0,160 600x24 m=0,0,0,8 orient=Vertical spacing=4
+    DockPanel @0,0 600x24 fill=True
+      Border @0,8 20x4 m=0,7.98,0,0 ha=Left va=Top w=20 dock=Left bg=null pad=0,0,8,0
+        Border @4,0 4x4 va=Center w=4 h=4 bg=#ff4e4c46 cr=2,2,2,2
+      SelectableTextBlock @20,0 580x24 focusable clip cursor dock=Left size=14.5 weight=Normal fg=#ff141413 lh=23.49 wrap=Wrap font=Inter|$Default align=Start sel=#ffe2eaf4 noflyout
+        run "a" 
+  Border @0,192 600x81 clip bg=null bd=#ffddd9ca bt=1,1,1,1 cr=8,8,8,8
+    Grid @1,1 598x79 cols=1*/100 rows=Auto;Auto
+      Border @0,0 598x40 clip cell=0,0 bg=#ffe1dcc8 bd=#ffece9de bt=0,0,0,1 pad=12,8,12,8
+        SelectableTextBlock @577,8 9x23 ha=Right va=Center focusable clip cursor size=14 weight=Medium fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Inter|$Default align=Right sel=#ffe2eaf4 noflyout
+          run "h" 
+      Border @0,40 598x39 clip cell=1,0 bg=Transparent bd=#ffece9de pad=12,8,12,8
+        SelectableTextBlock @579,8 7x23 ha=Right va=Center focusable clip cursor size=14 weight=Normal fg=#ff4e4c46 lh=22.68 wrap=Wrap font=Sarasa Term SC|Sarasa Gothic SC align=Right sel=#ffe2eaf4 noflyout
+          run "1" 

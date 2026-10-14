@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Headless.fs" />
+    <Compile Include="Samples.fs" />
+    <Compile Include="Dump.fs" />
+    <Compile Include="MathHtml.fs" />
+    <Compile Include="Tests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
+    <ProjectReference Include="../ReadingLook.fsproj" />
+  </ItemGroup>
+</Project>

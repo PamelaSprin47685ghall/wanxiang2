@@ -212,6 +212,7 @@
 | UI 控件第一批（写手二：库 PopupMenu、OverlayLayer、ToastStrip、FieldCheck、CopyButton、ImeShield、KeyChord、FocusOrigin、InputSense；组合 OverlayDesk） | 完成：样式全走各自 Look 的活实例；旧 OverlayMenuTests、UiStabilityTests、DismissFocusTests、R21ImeTests、SettingsSurfaceTests 相关用例按名迁入各库或组合者并通过 | 未开始：旧 OverlayHost、Menu、Ui.setFieldError 等、CopyFeedback、ImeGuard、Interaction 与 KeyShortcut 的行为部分改用这些包，主题管理者填 Look，删掉对应旧代码 |
 | UI 控件第二批（写手二：库 BrandMark、ApprovalPanel、PalettePanel、ModelSwitchPanel、ImportSheet、ExportSheet、ShellLayout） | 完成：外观走各自 Look 活实例与 compose/Theme 样式类；旧 Brand、ToolApprovalCard、CommandPaletteView、ModelSwitcherView、ImportDialog、ExportDialog、MainLayout 相关测试按名迁入并通过 | 未开始：组合者接控制器逻辑（含 R21 输入法用例 386），删掉对应旧 Views |
 | UI 主题第一批（库 ThemePalette、ThemeMetrics、MotionSwitch、IconSet；组合 Theme） | 完成：配色、度量、时长、图标映射与照抄旧代码生成的金样相同；Theme 的 headless 用例覆盖切主题后已建控件改色、补间接管与代次、改尺寸即时生效、样式类几何取旧值 | 未开始：旧 Design/Tokens、Palette、Metrics、MotionPolicy、Icons 与 Controls/Primitives、Interaction 的外观部分改为从 Theme 取实例和类名，并删掉对应旧代码 |
+| UI 正文第二批（库 ThemeFonts；组合 MathFigure、CodeTint、MarkdownView、ReadingLook） | 完成：Markdown 正文、流式面板、公式控件与量尺、代码着色排队；用旧代码生成的金样逐行（控件树 744 行）、逐像素（公式）相同，旧用例按名迁入；外观全部来自主题管理者的活实例，Theme 改用 ThemeFonts 内嵌字体 | 未开始：旧 Controls/MarkdownRenderer、Rich/MathLayout、Rich/MathVisual、Rich/Highlight 改调这些包并删除；宿主保留 RichBackend 接口与 App/Pwa 适配，给 CodeTint 传后台与计时、给 MarkdownView 传 MathHtml |
 | 线协议（Wire） | 完成：`Wanxiang2.Wire` 交付包，线格式字节兼容并有金样，旧编解码测试 33 个搬来通过 | 未开始：见 `libs/Wire/AGENTS.md` 与本轮报告的接线步骤；AG-UI 映射（旧 `WireAgui.fs`）暂留旧仓库 |
 
 ## 抽取路线（按顺序，可修订）

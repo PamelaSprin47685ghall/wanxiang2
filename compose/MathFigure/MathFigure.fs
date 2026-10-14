@@ -1,0 +1,128 @@
+namespace Wanxiang2.MathFigure
+
+open System
+open Avalonia
+open Avalonia.Controls
+open Avalonia.Media
+open Avalonia.VisualTree
+open Wanxiang.UI
+
+/// 活实例只在控件挂进可视树期间订阅，摘下即退订；否则长寿的主题实例会把流式渲染丢弃的控件一直攥着。
+module internal Follow =
+    /// 立即取一次当前值，之后随挂载订阅。
+    let live (control: Control) (source: IObservable<'T>) (apply: 'T -> unit) =
+        (source.Subscribe apply).Dispose()
+        let mutable sub: IDisposable = null
+        control.AttachedToVisualTree.Add(fun _ -> if isNull sub then sub <- source.Subscribe apply)
+        control.DetachedFromVisualTree.Add(fun _ ->
+            if not (isNull sub) then
+                sub.Dispose()
+                sub <- null)
+
+/// 公式控件的外观。全部是主题管理者的活实例：
+/// Ink 是可变画笔（改色不重排）；BodyFont 变了就重排；BlockPadding 是展示式公式上下留白。
+type MathFigureLook =
+    { Ink: IBrush
+      BodyFont: IObservable<FontFamily>
+      BlockPadding: IObservable<float> }
+
+/// 画一条公式（旧 Rich/MathVisual.fs）。KaTeX HTML 由调用方给（宿主的 RichBackend 产出），本控件只排版与绘制。
+/// lineHeight 是所在段落的行高（0 = 未设置）。
+type MathFigure(html: string option, displayMode: bool, fontSize: float, look: MathFigureLook) as this =
+    inherit Control()
+
+    let mutable body: FontFamily = null
+    let mutable picture: MathPicture option = None
+
+    let relayout () =
+        picture <-
+            match html, body with
+            | Some h, f when not (isNull f) ->
+                match MathDraw.tryLayout f look.Ink fontSize h with
+                | Ok p -> Some p
+                | Error _ -> None
+            | _ -> None
+
+    do
+        Follow.live this look.BodyFont (fun f ->
+            if not (obj.ReferenceEquals(f, body)) then
+                body <- f
+                relayout ()
+                this.InvalidateMeasure()
+                this.InvalidateVisual())
+
+    member _.HasLayout = picture.IsSome
+
+    member _.Picture = picture
+
+    /// 盒宽、盒高、盒内基线位置：只按公式自身的墨迹范围算。
+    member private _.Metrics =
+        MathBaseline.metrics (picture |> Option.map (fun p -> p.Width, p.Above, p.Below))
+
+    /// 所在段落文本块的真实首行基线。必须问父级：控件高度会反过来撑大行盒，任何预估都是循环。
+    member private this.HostBaseline: float option =
+        let rec climb (visual: Visual) =
+            match visual with
+            | null -> None
+            | :? TextBlock as host ->
+                match host.TextLayout with
+                | null -> None
+                | layout -> layout.TextLines |> Seq.tryHead |> Option.map (fun line -> line.Baseline)
+            | other -> climb (other.GetVisualParent())
+        climb (this.GetVisualParent())
+
+    /// 公式基线到控件顶缘的距离。行内时以父级文本块的真实基线为准。
+    member this.Baseline =
+        let _, _, own = this.Metrics
+        MathBaseline.drawBaseline displayMode own this.HostBaseline this.Bounds.Y
+
+    override this.MeasureOverride(_) =
+        let width, height, _ = this.Metrics
+        Size(width, height)
+
+    override this.Render(context) =
+        match picture with
+        | Some laid ->
+            use _ = context.PushTransform(Matrix.CreateTranslation(0.0, this.Baseline))
+            for mark in laid.Marks do
+                match mark with
+                | MathMark.Glyph(_, shaped, _, topLeft) -> context.DrawText(shaped, topLeft)
+                | MathMark.Rule rect -> context.FillRectangle(look.Ink, rect)
+                | MathMark.Path(geometry, transform, clip) ->
+                    use _ = context.PushClip clip
+                    use _ = context.PushTransform transform
+                    context.DrawGeometry(look.Ink, null, geometry)
+        | None -> ()
+
+/// 公式的对外入口（旧 MathRender）：能排就给控件，排不出来返回 None，由调用方退化成原文。
+module MathFigures =
+
+    let private describe (figure: MathFigure) (tex: string) =
+        // 自绘公式对读屏只是一块空白：报出原式并给悬停提示
+        Avalonia.Automation.AutomationProperties.SetName(figure, sprintf "公式：%s" tex)
+        ToolTip.SetTip(figure, tex)
+
+    /// 行内公式。字号跟随所在段落。
+    let tryInline (look: MathFigureLook) (html: string option) (fontSize: float) (tex: string) : Control option =
+        let figure = new MathFigure(html, false, fontSize, look)
+        if figure.HasLayout then
+            describe figure tex
+            Some(figure :> Control)
+        else None
+
+    /// 行内公式的内联容器。对齐必须显式指定：默认值随主题模板变化，基线对齐是可见的正确性问题。
+    let inlineContainer (control: Control) =
+        let container = Documents.InlineUIContainer control
+        container.BaselineAlignment <- BaselineAlignment.Bottom
+        container
+
+    /// 展示式公式：独占一行、水平居中，上下留白取自 Look。
+    let tryBlock (look: MathFigureLook) (html: string option) (fontSize: float) (tex: string) : Control option =
+        let figure = new MathFigure(html, true, fontSize, look)
+        if not figure.HasLayout then None
+        else
+            describe figure tex
+            figure.HorizontalAlignment <- Layout.HorizontalAlignment.Center
+            let host = Border(Child = figure, HorizontalAlignment = Layout.HorizontalAlignment.Stretch)
+            Follow.live host look.BlockPadding (fun v -> host.Padding <- Thickness(0.0, v))
+            Some(host :> Control)

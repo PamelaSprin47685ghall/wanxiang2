@@ -1,6 +1,6 @@
 # Theme（组合，主题管理者）
 
-拥有全部活的样式值并负责切主题；控件库从不认识它，组合者从它取实例填进各控件的 Look。协作者（包）：ThemePalette（配色数据）、ThemeMetrics（度量初始值）、MotionSwitch（减弱动效与时长）、ThemeTween（补间记账）、SpacingRamp（间距刻度）、ScrollTween（easeOutCubic 曲线）、ColorBlend（悬停叠色）。来源：旧 `Design/Tokens.fs`、`Design/MotionPolicy.fs`、`Controls/Primitives.fs` 与 `Controls/Interaction.fs` 的外观部分（extract-ledger@0c0b2a6）。根规则见项目根目录 AGENTS.md。
+拥有全部活的样式值并负责切主题；控件库从不认识它，组合者从它取实例填进各控件的 Look。协作者（包）：ThemePalette（配色数据）、ThemeMetrics（度量初始值）、MotionSwitch（减弱动效与时长）、ThemeTween（补间记账）、SpacingRamp（间距刻度）、ScrollTween（easeOutCubic 曲线）、ColorBlend（悬停叠色）、ThemeFonts（内嵌字体，正文与等宽字体的资源地址）。来源：旧 `Design/Tokens.fs`、`Design/MotionPolicy.fs`、`Controls/Primitives.fs` 与 `Controls/Interaction.fs` 的外观部分（extract-ledger@0c0b2a6）。根规则见项目根目录 AGENTS.md。
 
 ## 活的值
 - `ThemeManager.Brush key`：每个配色项一支 `SolidColorBrush`，生命周期内同一实例，切主题原地改色。`Derived HoverRaised | HoverDanger`：叠色画笔，基础画笔每次改色都重算。

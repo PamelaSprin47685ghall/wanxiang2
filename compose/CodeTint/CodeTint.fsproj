@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：代码着色的界面一侧（排队、缓存、重画通知）。协作者：HljsHtml（解析）、RichAssets（语言名）、BoundedCache（记忆化）、HighlightQueue（在途与合并通知）。 -->
+  <ItemGroup>
+    <Compile Include="CodeTint.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.HljsHtml" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RichAssets" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BoundedCache" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HighlightQueue" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

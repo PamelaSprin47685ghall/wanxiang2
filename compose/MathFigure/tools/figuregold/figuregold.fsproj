@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><OldRepo Condition="'$(OldRepo)' == ''">MISSING</OldRepo><TargetFramework>net10.0</TargetFramework><AssemblyName>Wanxiang.UI</AssemblyName><TreatWarningsAsErrors>false</TreatWarningsAsErrors><ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally><IsPackable>false</IsPackable></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../tests/Scenario.fs" />
+    <Compile Include="../../tests/Probe.fs" />
+    <Compile Include="Shims.fs" />
+    <Compile Include="$(OldRepo)/src/Wanxiang.UI/Rich/RichBackend.fs" />
+    <Compile Include="$(OldRepo)/src/Wanxiang.UI/Rich/MathLayout.fs" />
+    <Compile Include="$(OldRepo)/src/Wanxiang.UI/Rich/MathVisual.fs" />
+    <Compile Include="Program.fs" />
+    <AvaloniaResource Include="$(OldRepo)/src/Wanxiang.UI/Assets/Fonts/**" Link="Assets/Fonts/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Headless" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.2" />
+    <PackageReference Include="Wanxiang2.MathTypeset" Version="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MathBaseline" Version="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RichJint" Version="0.0.0-local" />
+  </ItemGroup>
+</Project>

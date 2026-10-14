@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：公式控件与公式量尺。协作者：MathTypeset（排版）、MathBaseline（基线）、ThemeFonts（KaTeX 字体）。 -->
+  <ItemGroup>
+    <Compile Include="MathDraw.fs" />
+    <Compile Include="MathFigure.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.MathTypeset" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MathBaseline" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeFonts" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

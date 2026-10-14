@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：Markdown 块 → Avalonia 控件（旧 Controls/MarkdownRenderer.fs）。
+       协作者：MarkdownBlocks（块模型）、LinkChunks（长链接分段）、BlockDiff（流式增量）、DesignRhythm（阅读节奏规则）、
+       MathFigure（公式）、CodeTint（着色）、CopyButton（复制确认）。外观全部经 MarkdownLook 由调用方给。 -->
+  <ItemGroup>
+    <Compile Include="MarkdownLook.fs" />
+    <Compile Include="Follow.fs" />
+    <Compile Include="ActionSpot.fs" />
+    <Compile Include="MarkdownView.fs" />
+    <Compile Include="MarkdownStream.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.MarkdownBlocks" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LinkChunks" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BlockDiff" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MathFigure" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CopyButton" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

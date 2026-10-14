@@ -639,6 +639,10 @@
     <Project Path="libs/ProviderProbeText/ProviderProbeText.fsproj" />
     <Project Path="libs/ProviderProbeText/tests/ProviderProbeText.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ProvidersPane/">
+    <Project Path="libs/ProvidersPane/ProvidersPane.fsproj" />
+    <Project Path="libs/ProvidersPane/tests/ProvidersPane.Tests.fsproj" />
+  </Folder>
   <Folder Name="/PwaAssets/">
     <Project Path="libs/PwaAssets/PwaAssets.fsproj" />
     <Project Path="libs/PwaAssets/tests/PwaAssets.Tests.fsproj" />

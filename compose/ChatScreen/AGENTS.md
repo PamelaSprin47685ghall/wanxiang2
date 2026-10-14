@@ -23,3 +23,5 @@ ChatHeader + ChatPane + MessageCardView（MessageCards、CardDeck）+ ComposerDe
 - `tests/golden/screen.txt`：旧 ChatView（extract-ledger 533b85b）用 `tools/screengold/run.sh <旧仓>` 生成，10 个状态：空态、对话、宽屏 1000、改名中、生成中、流式、面包屑可点 / 父对话已删、窄屏 400（compact + 生成中 + 面包屑）、只读标题。顶栏部分即 ChatHeader 的整树证据。
 - 两边都装共享 ThemeStyles、减弱动效（状态过渡瞬时落定）、内嵌字体；旧顶栏恒不可见的模型芯片（决策 350）在生成器里摘掉。
 - 对齐时修过的库差异：顶栏高度挂在外层 Border、右组 / 状态行 / 面包屑行垂直居中、生成中芯片初始不写 AccessibilityView、可点面包屑读屏报按钮、根面为 Border 派生类型。
+
+- 性能：tests/PerfTests.fs 迁自旧 IncrementalRenderTests「长对话的流式刷新代价与消息条数无关」（200 条历史，流式每帧 < 20ms）；CardDeck 身份泛型化，直接用 ScreenKey 结构相等。

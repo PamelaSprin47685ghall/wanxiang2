@@ -113,7 +113,7 @@ type ChatScreen
      actions: ChatScreenActions) =
     let header = ChatHeader(looks.Header)
     let pane = ChatPane<ScreenKey>(looks.Pane, brandLogo)
-    let deck = CardDeck(pane.Messages)
+    let deck = CardDeck<ScreenKey>(pane.Messages)
     let mountWindow = MountWindow(MountWindow.Initial, MountWindow.Step)
     let flash = RevealFlash()
     let breadcrumb = BreadcrumbAction<Guid>()
@@ -295,7 +295,7 @@ type ChatScreen
         match f.Error with
         | Some(err, retry) -> desired.Add(None, fun () -> cards.ErrorCard(err, retry, actions.Card, partialNow |> Option.map snd))
         | None -> ()
-        deck.Show [ for key, factory in desired -> key |> Option.map (sprintf "%A"), factory ] |> ignore
+        deck.Show(List.ofSeq desired) |> ignore
         mounted <- [| for key, _ in desired -> key |]
         // 锚点指向的卡不在了就丢；分页回来要续跳就等前置锚点恢复后再跳
         let resume = pane.Jumps.Mounted(mounted, mountWindow.LastFirstCommit)

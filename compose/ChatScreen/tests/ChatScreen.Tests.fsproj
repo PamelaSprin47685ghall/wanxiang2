@@ -6,6 +6,7 @@
     <Compile Include="Cases.fs" />
     <Compile Include="Tests.fs" />
     <Compile Include="GoldenTests.fs" />
+    <Compile Include="PerfTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

@@ -51,3 +51,24 @@ let ``palette recent file bytes match old load and save`` () =
     Assert.Equal<string list>([ "a"; "b"; "c"; "d"; "e"; "f"; "g"; "h" ], PaletteRecent.decode """["a","b","c","d","e","f","g","h","i","j"]""")
     for bad in [ "null"; "{bad"; "[]"; """["x",1]""" ] do
         Assert.Empty(PaletteRecent.decode bad)
+
+// 金标准：golden/expected.txt 由旧 AppShell.PaletteItems / RunPaletteItem 方法体的逐行复制在 TZ=UTC 下跑同一份 Render.fs 生成。
+[<Fact>]
+let ``golden: shell palette items and dispatch match old AppShell`` () =
+    if System.TimeZoneInfo.Local.BaseUtcOffset = System.TimeSpan.Zero then
+        Assert.Equal(System.IO.File.ReadAllText(System.IO.Path.Combine(System.AppContext.BaseDirectory, "golden", "expected.txt")), Render.all ())
+
+[<Fact>]
+let ``374 没打开对话时不给导出、分叉、存为预设；主机不支持导入时不给导入`` () =
+    let input = { Render.inputs.Head with hasConversation = false; supportsImport = false }
+    let ids = ShellPalette.items input |> List.map _.id
+    for missing in [ "act:export"; "act:fork"; "act:save-preset"; "act:import" ] do
+        Assert.DoesNotContain(missing, ids)
+    Assert.Contains("act:new", ids)
+
+[<Fact>]
+let ``选中条目：设置项落到分区，对话 id 坏了就什么都不做`` () =
+    Assert.Equal(PaletteCommand.OpenSettings "devices", ShellPalette.commandOf "set:devices:配对新设备")
+    Assert.Equal(PaletteCommand.Ignore, ShellPalette.commandOf "conv:x")
+    Assert.True(ShellPalette.closesDrawer (PaletteCommand.Action "model"))
+    Assert.False(ShellPalette.closesDrawer (PaletteCommand.Action "theme"))

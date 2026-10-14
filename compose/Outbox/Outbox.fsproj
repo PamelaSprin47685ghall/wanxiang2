@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：发件箱、按命令登记的确认台账、草稿内存与快照的转换。协作者：Wire、ComposerDrafts、CommandFeedback、DraftStore。命名空间沿用 Wanxiang.UI。 -->
+  <ItemGroup>
+    <Compile Include="Outbox.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDrafts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandFeedback" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

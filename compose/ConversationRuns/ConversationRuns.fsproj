@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：对话生成状态与重试倒计时。协作者：MessageView、Wire、ConversationSummary。命名空间沿用 Wanxiang.UI。 -->
+  <ItemGroup>
+    <Compile Include="ConversationRuns.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

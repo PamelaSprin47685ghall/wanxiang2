@@ -1,0 +1,39 @@
+base -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[]
+noId -> |本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Id, "稳定标识不能为空。")]
+takenNew -> openai|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Id, "该标识已存在，请换一个。")]
+takenEdit -> openai|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[]
+badId -> a b|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Id, "稳定标识仅支持英文字母、数字、下划线(_)与连字符(-)。")]
+noLabel -> local||http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Label, "显示名称不能为空。")]
+noUrl -> local|本地||["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Url, "端点地址不能为空。")]
+ftp -> local|本地|ftp://x|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Url, "端点地址必须以 http:// 或 https:// 开头。")]
+badUrl -> local|本地|http://|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Url, "请输入合法的 HTTP/HTTPS 地址（例如 https://api.openai.com/v1）。")]
+upperScheme -> local|本地|HTTPS://API.X.COM/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[]
+noModels -> local|本地|http://localhost:11434/v1|[]||120|2|[]|[]|None|[(Models, "至少填写一个模型名（每行一个）。")]
+dupModels -> local|本地|http://localhost:11434/v1|["a"; "b"; "c"]|a|120|2|[]|[]|Some "a"|[]
+defaultIn -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|llama|120|2|[]|[]|None|[]
+defaultOut -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|gpt|120|2|[]|[]|None|[(DefaultModel, "默认模型“gpt”不在模型列表中，请从列表中选择或留空自动选用。")]
+defaultNoModels -> local|本地|http://localhost:11434/v1|[]|gpt|120|2|[]|[]|None|[(Models, "至少填写一个模型名（每行一个）。")]
+timeoutOk -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|30|2|[]|[]|Some "qwen"|[]
+timeout0 -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Timeout, "超时时间必须是大于 0 的整秒数。")]
+timeoutBad -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Timeout, "超时时间必须是大于 0 的整秒数。")]
+existingKeep -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|45|7|[]|[]|Some "qwen"|[]
+retries10 -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|10|[]|[]|Some "qwen"|[]
+retries11 -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Retries, "重试次数必须是 0 到 10 之间的整数。")]
+retriesNeg -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|[]|[]|Some "qwen"|[(Retries, "重试次数必须是 0 到 10 之间的整数。")]
+visionOk -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|["qwen"]|["llama"]|Some "qwen"|[]
+visionUnknownYes -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|["gpt"]|[]|Some "qwen"|[(VisionYes, "“gpt”不在模型列表中，请先把它加到模型列表，或删掉这一行。")]
+visionUnknownNo -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|["qwen"]|["gpt"; "qwen"]|Some "qwen"|[(VisionNo, "“gpt”不在模型列表中，请先把它加到模型列表，或删掉这一行。")]
+visionBoth -> local|本地|http://localhost:11434/v1|["qwen"; "llama"]|qwen|120|2|["qwen"]|["qwen"]|Some "qwen"|[(VisionNo, "“qwen”同时写在两栏里，请只保留一栏。")]
+allBad -> ||x|[]||120|2|[]|["m"]|None|[(Id, "稳定标识不能为空。"); (Label, "显示名称不能为空。");
+ (Url, "端点地址必须以 http:// 或 https:// 开头。"); (Models, "至少填写一个模型名（每行一个）。");
+ (Timeout, "超时时间必须是大于 0 的整秒数。"); (Retries, "重试次数必须是 0 到 10 之间的整数。");
+ (VisionNo, "“m”不在模型列表中，请先把它加到模型列表，或删掉这一行。")]
+loopback "" -> false
+loopback "  " -> false
+loopback "http://127.0.0.1:8080" -> true
+loopback "http://localhost/v1" -> true
+loopback "http://[::1]:1234" -> true
+loopback "https://api.openai.com/v1" -> false
+loopback "LOCALHOST:11434" -> true
+loopback "http://10.0.0.2" -> false
+loopback "my-localhost-proxy.com" -> true

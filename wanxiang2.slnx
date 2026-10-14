@@ -311,6 +311,10 @@
     <Project Path="libs/McpCheck/McpCheck.fsproj" />
     <Project Path="libs/McpCheck/tests/McpCheck.Tests.fsproj" />
   </Folder>
+  <Folder Name="/McpForm/">
+    <Project Path="libs/McpForm/McpForm.fsproj" />
+    <Project Path="libs/McpForm/tests/McpForm.Tests.fsproj" />
+  </Folder>
   <Folder Name="/McpProtocol/">
     <Project Path="libs/McpProtocol/McpProtocol.fsproj" />
     <Project Path="libs/McpProtocol/tests/McpProtocol.Tests.fsproj" />
@@ -406,6 +410,10 @@
   <Folder Name="/ProviderCheck/">
     <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />
     <Project Path="libs/ProviderCheck/tests/ProviderCheck.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProviderForm/">
+    <Project Path="libs/ProviderForm/ProviderForm.fsproj" />
+    <Project Path="libs/ProviderForm/tests/ProviderForm.Tests.fsproj" />
   </Folder>
   <Folder Name="/ProviderPresets/">
     <Project Path="libs/ProviderPresets/ProviderPresets.fsproj" />
@@ -534,6 +542,10 @@
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
     <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolsPolicy/">
+    <Project Path="libs/ToolsPolicy/ToolsPolicy.fsproj" />
+    <Project Path="libs/ToolsPolicy/tests/ToolsPolicy.Tests.fsproj" />
   </Folder>
   <Folder Name="/TranscriptMarkdown/">
     <Project Path="libs/TranscriptMarkdown/TranscriptMarkdown.fsproj" />

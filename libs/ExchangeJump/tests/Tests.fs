@@ -58,3 +58,14 @@ let ``a vanished anchor card is dropped`` () =
     j.Jump(1, m, cards, 0, false, None) |> ignore
     j.Mounted([| Some 1 |], None) |> ignore
     Assert.Equal(None, j.Anchor)
+
+[<Fact>]
+let ``scrolling to the beginning drops the anchor but keeps the pending previous`` () =
+    let j = ExchangeJump<int>()
+    j.SetOlderAvailable true
+    Assert.Equal(JumpStep.RequestOlder, j.Jump(-1, m, cards, 0, false, Some 1UL))
+    Assert.Equal(Some 1, j.Anchor)
+    j.ClearAnchor()
+    Assert.Equal(None, j.Anchor)
+    Assert.True j.PendingPrevious
+    Assert.True(j.Mounted(m, Some 0UL))

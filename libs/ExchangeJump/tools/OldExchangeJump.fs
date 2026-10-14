@@ -96,6 +96,9 @@ type ExchangeJump<'K when 'K: equality>() =
 
     member _.OlderFailed() = pendingJumpPrevious <- false
 
+    // 照抄旧 ScrollToBeginning / SmoothScrollToBeginning：exchangeAnchor <- None
+    member _.ClearAnchor() = exchangeAnchor <- None
+
     member _.Reset() =
         exchangeAnchor <- None
         pendingJumpPrevious <- false

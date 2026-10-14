@@ -88,6 +88,9 @@ type ExchangeJump<'K when 'K: equality>() =
     /// 更早一页取失败：撤掉挂起
     member _.OlderFailed() = pending <- false
 
+    /// 回到开头（ScrollToBeginning / SmoothScrollToBeginning）：只丢锚点，挂起的「上一轮」保留
+    member _.ClearAnchor() = anchor <- None
+
     /// 换对话：锚点与挂起一起丢（olderOnHost 由下一次 SetOlderAvailable 给）
     member _.Reset() =
         anchor <- None

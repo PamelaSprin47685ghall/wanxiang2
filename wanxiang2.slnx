@@ -95,6 +95,10 @@
     <Project Path="libs/CliArgs/CliArgs.fsproj" />
     <Project Path="libs/CliArgs/tests/CliArgs.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ClientConnections/">
+    <Project Path="libs/ClientConnections/ClientConnections.fsproj" />
+    <Project Path="libs/ClientConnections/tests/ClientConnections.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ClientToken/">
     <Project Path="libs/ClientToken/ClientToken.fsproj" />
     <Project Path="libs/ClientToken/tests/ClientToken.Tests.fsproj" />

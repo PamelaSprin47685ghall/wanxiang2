@@ -543,6 +543,10 @@
     <Project Path="libs/RovingIndex/RovingIndex.fsproj" />
     <Project Path="libs/RovingIndex/tests/RovingIndex.Tests.fsproj" />
   </Folder>
+  <Folder Name="/RowFocus/">
+    <Project Path="libs/RowFocus/RowFocus.fsproj" />
+    <Project Path="libs/RowFocus/tests/RowFocus.Tests.fsproj" />
+  </Folder>
   <Folder Name="/RunModes/">
     <Project Path="libs/RunModes/RunModes.fsproj" />
     <Project Path="libs/RunModes/tests/RunModes.Tests.fsproj" />
@@ -566,6 +570,10 @@
   <Folder Name="/SearchSegments/">
     <Project Path="libs/SearchSegments/SearchSegments.fsproj" />
     <Project Path="libs/SearchSegments/tests/SearchSegments.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SearchSession/">
+    <Project Path="libs/SearchSession/SearchSession.fsproj" />
+    <Project Path="libs/SearchSession/tests/SearchSession.Tests.fsproj" />
   </Folder>
   <Folder Name="/SecretText/">
     <Project Path="libs/SecretText/SecretText.fsproj" />

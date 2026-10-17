@@ -1,0 +1,126 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- wanxiang2 独立桌面入口（PLAN.md GAP1 的一半）：
+       不依赖宿主 Wanxiang.UI 程序集，全部经 Wanxiang2.* 0.0.0-local 交付包消费 wanxiang2 组件。
+       AssemblyName 沿用 wanxiang、命名空间沿用 Wanxiang.App，与宿主 src/Wanxiang.App 一致。
+       本目录（app/Desktop/）是 wanxiang2 内新建的专属目录，不修改 wanxiang2 任何已有项目文件；
+       加入 wanxiang2.slnx 由后续统一处理。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>wanxiang</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="RichJintAdapter.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Avalonia.Desktop 未登记在 wanxiang2/Directory.Packages.props（该文件登记的 Avalonia 系只有
+         Avalonia/Headless/Skia/Themes.Fluent/Browser）；CPM 启用时未登记包也不允许裸 Version（NU1008），
+         故用 VersionOverride 显式覆写，版本与宿主一致（12.1.2）。 -->
+    <PackageReference Include="Avalonia.Desktop" VersionOverride="12.1.2" />
+    <!-- 纯托管 JS 解释器：让桌面端能跑 highlight.js 与 KaTeX，不引入原生依赖（Jint 经 RichJint 包传递）。 -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 非界面入口逻辑（与宿主 src/Wanxiang.App/Wanxiang.App.fsproj 相同的 25 项消费面）。 -->
+    <PackageReference Include="Wanxiang2.ServerApp" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RichJint" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LaunchPlan" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CliArgs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RunModes" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.StoreLaunch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesktopPairing" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ClientTomlFile" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PwaAssets" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShutdownSignals" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AgentRuntime" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderFailure" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AgentContent" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AgentHistory" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AguiMessageMap" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageSerde" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaContent" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderTransports" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.EventStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AguiWire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PlainText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToolSummary" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConfigStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PairingDesk" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 宿主经 Wanxiang.UI ProjectReference 传递获得的包，本入口因无宿主壳需直接引用。 -->
+    <!-- 日志（Wanxiang.Server.Stderr）与 wanxiang:// 注册纯文本（Wanxiang.UI.UrlSchemeRegistration）。 -->
+    <PackageReference Include="Wanxiang2.HostLog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UrlSchemeRegistration" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 界面组合者（wanxiang2 组件，替代宿主 Wanxiang.UI 壳的等价物）。
+         当前 UI 壳（Application 子类 / MainWindow / 各 Desk 接线）由批次 2 新建的 AppShell / EntryShells 提供，
+         本入口只做端口注入与接线。 -->
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppShell" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.EntryShells" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Workspace" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShellDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ApprovalDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PaletteDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelSwitchDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SettingsScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DialogsDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProtocolDispatch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShellCommands" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftSession" VersionOverride="0.0.0-local" />
+    <!-- 入口壳 IO 组件（批次 2 新建）：本地状态、单实例、富文本后端、外部链接、凭据、偏好文件、URL 注册。 -->
+    <PackageReference Include="Wanxiang2.LocalState" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SingleInstance" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RichBackend" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ExternalLinks" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CredentialStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefsFile" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UrlSchemeRegistrationIo" VersionOverride="0.0.0-local" />
+    <!-- buildViews 直接引用的包（PWA 参考同样直接引用；其余经 AppShell 传递）。 -->
+    <PackageReference Include="Wanxiang2.WsClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
+    <!-- 依赖缺口（见回报）：LocalHostGate / ImageShrinkIo 目录不存在，未引用。 -->
+  </ItemGroup>
+
+  <!-- 宿主 fsproj 的 Content 项（logo.png、PWA wwwroot）未迁入 wanxiang2：
+       资产迁移属 PLAN.md 资产迁移工作项，本入口暂不引用。 -->
+  <!-- 决策 404：发布桌面 App 时一并发布 PWA，并把（已补丁的）AppBundle 放进发布目录的 pwa/——
+       主机从 AppContext.BaseDirectory/pwa 托管，原来发布目录里只有 wwwroot 静态壳、没有 _framework 运行时与补丁。
+       设 WanxiangSkipPwaPublish=true 可跳过（例如只要无 PWA 的桌面包）。 -->
+  <Target Name="PublishPwaBundle" AfterTargets="Publish" Condition="'$(WanxiangSkipPwaPublish)' != 'true'">
+    <!-- 决策 410：干净克隆直接 `dotnet publish app/Desktop/Wanxiang.App` 曾失败：PWA 不在 App 的引用图里（未还原），
+         且 publish 设置的全局 _IsPublishing=true 会让 wasm 的 build 阶段跳过 AppBundle 生成、publish 阶段又依赖它。
+         先用独立进程（不继承 _IsPublishing）做一次 PWA 的 build（含 restore，增量），再走嵌套 Publish。 -->
+    <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)../Pwa/Wanxiang.Pwa.fsproj&quot; -c $(Configuration) --verbosity quiet -nologo" />
+    <MSBuild Projects="..\Pwa\Wanxiang.Pwa.fsproj" Targets="Publish" Properties="Configuration=$(Configuration)" RemoveProperties="RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishTrimmed;PublishAot" />
+    <PropertyGroup>
+      <_WxPwaBundle>$(MSBuildThisFileDirectory)..\Pwa\bin\$(Configuration)\net10.0-browser\browser-wasm\AppBundle\</_WxPwaBundle>
+    </PropertyGroup>
+    <ItemGroup>
+      <_WxPwaBundleFiles Include="$(_WxPwaBundle)**\*" Exclude="$(_WxPwaBundle)**\*.map" />
+    </ItemGroup>
+    <Error Condition="'@(_WxPwaBundleFiles)' == ''" Text="PWA AppBundle not found at $(_WxPwaBundle)" />
+    <Copy SourceFiles="@(_WxPwaBundleFiles)" DestinationFiles="@(_WxPwaBundleFiles->'$(PublishDir)pwa\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Exec Command="python3 &quot;$(MSBuildThisFileDirectory)../../tools/verify_avalonia_patch.py&quot; &quot;$(PublishDir)pwa&quot;" />
+  </Target>
+
+</Project>

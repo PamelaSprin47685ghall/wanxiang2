@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：registerCurrentUser 写文件 / 注册表。协作者：UrlSchemeRegistration（纯文本部分）。 -->
+  <ItemGroup>
+    <Compile Include="UrlSchemeRegistrationIo.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.UrlSchemeRegistration" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

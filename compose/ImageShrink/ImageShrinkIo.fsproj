@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- IO 壳：图片自动缩小的 Skia 实现（决策 332/342），与 Wanxiang2.ImageShrink 同名模块合并。 -->
+  <ItemGroup>
+    <Compile Include="ImageShrinkIo.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.ImageShrink" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ImageFit" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+</Project>

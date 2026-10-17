@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 桌面 / PWA 共用入口壳组合者（PLAN.md GAP3b，host-mapping 确认的「需新建」项）。
+       迁自宿主 src/Wanxiang.UI/{App.fs, Views/MainWindow.fs, Views/Composer.fs, Design/SharedTheme.fs, Design/Icons.fs}。
+       AssemblyName 与命名空间沿用 Wanxiang.UI（与既有组合者模式一致），
+       让 app/Desktop 与 app/Pwa 入口能直接消费（Wanxiang.UI.App / Wanxiang.UI.MainWindow / Wanxiang.UI.Composer 等）。
+       不持 DispatcherTimer、不做文件 IO：几何持久化、偏好读写等经注入端口提供。 -->
+  <ItemGroup>
+    <Compile Include="SharedTheme.fs" />
+    <Compile Include="Icons.fs" />
+    <Compile Include="MainWindow.fs" />
+    <Compile Include="Composer.fs" />
+    <Compile Include="App.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.InputSense" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ImeShield" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShellDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PromptHistory" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDrafts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelVision" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

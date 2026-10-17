@@ -203,13 +203,13 @@
     <Project Path="libs/ConfirmPane/ConfirmPane.fsproj" />
     <Project Path="libs/ConfirmPane/tests/ConfirmPane.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ConnectPane/">
-    <Project Path="libs/ConnectPane/ConnectPane.fsproj" />
-    <Project Path="libs/ConnectPane/tests/ConnectPane.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ConnectionIssue/">
     <Project Path="libs/ConnectionIssue/ConnectionIssue.fsproj" />
     <Project Path="libs/ConnectionIssue/tests/ConnectionIssue.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConnectPane/">
+    <Project Path="libs/ConnectPane/ConnectPane.fsproj" />
+    <Project Path="libs/ConnectPane/tests/ConnectPane.Tests.fsproj" />
   </Folder>
   <Folder Name="/ContextTrim/">
     <Project Path="libs/ContextTrim/ContextTrim.fsproj" />
@@ -223,6 +223,10 @@
     <Project Path="libs/ConversationRows/ConversationRows.fsproj" />
     <Project Path="libs/ConversationRows/tests/ConversationRows.Tests.fsproj" />
   </Folder>
+  <Folder Name="/Conversations/">
+    <Project Path="libs/Conversations/Conversations.fsproj" />
+    <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ConversationSummary/">
     <Project Path="libs/ConversationSummary/ConversationSummary.fsproj" />
     <Project Path="libs/ConversationSummary/tests/ConversationSummary.Tests.fsproj" />
@@ -234,10 +238,6 @@
   <Folder Name="/ConversationTransfer/">
     <Project Path="libs/ConversationTransfer/ConversationTransfer.fsproj" />
     <Project Path="libs/ConversationTransfer/tests/ConversationTransfer.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/Conversations/">
-    <Project Path="libs/Conversations/Conversations.fsproj" />
-    <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
   </Folder>
   <Folder Name="/CopyButton/">
     <Project Path="libs/CopyButton/CopyButton.fsproj" />
@@ -503,6 +503,10 @@
     <Project Path="libs/LocalDraftControls/LocalDraftControls.fsproj" />
     <Project Path="libs/LocalDraftControls/tests/LocalDraftControls.Tests.fsproj" />
   </Folder>
+  <Folder Name="/LocalState/">
+    <Project Path="libs/LocalState/LocalState.fsproj" />
+    <Project Path="libs/LocalState/tests/LocalState.Tests.fsproj" />
+  </Folder>
   <Folder Name="/MarkdownBlocks/">
     <Project Path="libs/MarkdownBlocks/MarkdownBlocks.fsproj" />
     <Project Path="libs/MarkdownBlocks/tests/MarkdownBlocks.Tests.fsproj" />
@@ -571,13 +575,13 @@
     <Project Path="libs/ModelPickerList/ModelPickerList.fsproj" />
     <Project Path="libs/ModelPickerList/tests/ModelPickerList.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ModelSwitchPanel/">
-    <Project Path="libs/ModelSwitchPanel/ModelSwitchPanel.fsproj" />
-    <Project Path="libs/ModelSwitchPanel/tests/ModelSwitchPanel.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ModelSwitcher/">
     <Project Path="libs/ModelSwitcher/ModelSwitcher.fsproj" />
     <Project Path="libs/ModelSwitcher/tests/ModelSwitcher.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelSwitchPanel/">
+    <Project Path="libs/ModelSwitchPanel/ModelSwitchPanel.fsproj" />
+    <Project Path="libs/ModelSwitchPanel/tests/ModelSwitchPanel.Tests.fsproj" />
   </Folder>
   <Folder Name="/ModelVision/">
     <Project Path="libs/ModelVision/ModelVision.fsproj" />
@@ -727,6 +731,10 @@
     <Project Path="libs/RevealTarget/RevealTarget.fsproj" />
     <Project Path="libs/RevealTarget/tests/RevealTarget.Tests.fsproj" />
   </Folder>
+  <Folder Name="/RichBackend/">
+    <Project Path="libs/RichBackend/RichBackend.fsproj" />
+    <Project Path="libs/RichBackend/tests/RichBackend.Tests.fsproj" />
+  </Folder>
   <Folder Name="/RichScripts/">
     <Project Path="libs/RichScripts/RichScripts.fsproj" />
     <Project Path="libs/RichScripts/tests/RichScripts.Tests.fsproj" />
@@ -835,6 +843,10 @@
     <Project Path="libs/SidebarSelection/SidebarSelection.fsproj" />
     <Project Path="libs/SidebarSelection/tests/SidebarSelection.Tests.fsproj" />
   </Folder>
+  <Folder Name="/SingleInstance/">
+    <Project Path="libs/SingleInstance/SingleInstance.fsproj" />
+    <Project Path="libs/SingleInstance/tests/SingleInstance.Tests.fsproj" />
+  </Folder>
   <Folder Name="/SkeletonList/">
     <Project Path="libs/SkeletonList/SkeletonList.fsproj" />
     <Project Path="libs/SkeletonList/tests/SkeletonList.Tests.fsproj" />
@@ -867,13 +879,13 @@
     <Project Path="libs/StartupTrace/StartupTrace.fsproj" />
     <Project Path="libs/StartupTrace/tests/StartupTrace.Tests.fsproj" />
   </Folder>
-  <Folder Name="/StreamCaret/">
-    <Project Path="libs/StreamCaret/StreamCaret.fsproj" />
-    <Project Path="libs/StreamCaret/tests/StreamCaret.Tests.fsproj" />
-  </Folder>
   <Folder Name="/StreamableHttp/">
     <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
     <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StreamCaret/">
+    <Project Path="libs/StreamCaret/StreamCaret.fsproj" />
+    <Project Path="libs/StreamCaret/tests/StreamCaret.Tests.fsproj" />
   </Folder>
   <Folder Name="/TextEditPane/">
     <Project Path="libs/TextEditPane/TextEditPane.fsproj" />
@@ -947,10 +959,6 @@
     <Project Path="libs/ToolOverview/ToolOverview.fsproj" />
     <Project Path="libs/ToolOverview/tests/ToolOverview.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ToolSummary/">
-    <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
-    <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ToolsPane/">
     <Project Path="libs/ToolsPane/ToolsPane.fsproj" />
     <Project Path="libs/ToolsPane/tests/ToolsPane.Tests.fsproj" />
@@ -959,6 +967,10 @@
     <Project Path="libs/ToolsPolicy/ToolsPolicy.fsproj" />
     <Project Path="libs/ToolsPolicy/tests/ToolsPolicy.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ToolSummary/">
+    <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
+    <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
+  </Folder>
   <Folder Name="/TranscriptMarkdown/">
     <Project Path="libs/TranscriptMarkdown/TranscriptMarkdown.fsproj" />
     <Project Path="libs/TranscriptMarkdown/tests/TranscriptMarkdown.Tests.fsproj" />
@@ -966,6 +978,10 @@
   <Folder Name="/UiPrefs/">
     <Project Path="libs/UiPrefs/UiPrefs.fsproj" />
     <Project Path="libs/UiPrefs/tests/UiPrefs.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UiPrimitives/">
+    <Project Path="libs/UiPrimitives/UiPrimitives.fsproj" />
+    <Project Path="libs/UiPrimitives/tests/UiPrimitives.Tests.fsproj" />
   </Folder>
   <Folder Name="/UploadFacts/">
     <Project Path="libs/UploadFacts/UploadFacts.fsproj" />
@@ -998,5 +1014,9 @@
   <Folder Name="/WsHandshake/">
     <Project Path="libs/WsHandshake/WsHandshake.fsproj" />
     <Project Path="libs/WsHandshake/tests/WsHandshake.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/App/">
+    <Project Path="app/Desktop/Wanxiang.App.fsproj" />
+    <Project Path="app/Pwa/Wanxiang.Pwa.fsproj" />
   </Folder>
 </Solution>

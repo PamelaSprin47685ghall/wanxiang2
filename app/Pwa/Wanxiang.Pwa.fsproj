@@ -1,0 +1,103 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- wanxiang2 独立 PWA 入口（PLAN.md GAP1 另一半）：不依赖宿主 src/ 任何文件，只消费 Wanxiang2.* 交付包。
+       命名空间沿用 Wanxiang.Pwa；AssemblyName 沿用 Wanxiang.Pwa（与宿主入口同名，发布时互斥）。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-browser</TargetFramework>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <WasmMainJSPath>wwwroot/main.js</WasmMainJSPath>
+    <WasmRuntimeAssetsLocation>./_framework</WasmRuntimeAssetsLocation>
+    <!-- 决策 295：首访不下载调试产物——符号表与 pdb 只在调试时有用 -->
+    <WasmEmitSymbolMap>false</WasmEmitSymbolMap>
+    <WasmDebugLevel>0</WasmDebugLevel>
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="App.fs" />
+    <Compile Include="RichBrowserAdapter.fs" />
+    <Compile Include="BrowserImageShrink.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <WasmExtraFilesToDeploy Include="wwwroot/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="runtimeconfig.template.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Browser" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.RichBrowser" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrowserImage" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ImageShrink" VersionOverride="0.0.0-local" />
+    <!-- 批次 2 组件：入口壳 / 编排核心 / 本地 IO / 富文本接口 -->
+    <PackageReference Include="Wanxiang2.AppShell" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.EntryShells" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RichBackend" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LocalState" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ExternalLinks" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CredentialStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefsFile" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UrlSchemeRegistrationIo" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WsClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Workspace" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SettingsScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ApprovalDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PaletteDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelSwitchDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrowserPage" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrowserCredentials" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrowserDrafts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrowserLocalStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrowserProbe" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+  <!-- AMD/ANGLE Chrome：Avalonia 默认 failIfMajorPerformanceCaveat=true 会得到“能创建但不呈现 Skia 帧”的 WebGL 上下文，表现为启动画面后白屏。
+       构建后补丁 avalonia.js（禁止软渲染回退；见 tools/patch_avalonia_js.py）。 -->
+  <!-- 决策 401：挂在 _WasmGenerateAppBundle 之后——build 与 publish（含 Release、嵌套 publish、裁剪/AOT）都会生成 AppBundle，
+       都经过这一步。原始文件取自 NuGet 包（PkgAvalonia_Browser），补丁版本变了就从原始文件重打，不会留下旧补丁。
+       AppBundle 里缺 avalonia.js 视为构建错误，不再静默跳过。 -->
+  <PropertyGroup>
+    <_WxAvaloniaPristine>$(PkgAvalonia_Browser)/staticwebassets/avalonia.js</_WxAvaloniaPristine>
+  </PropertyGroup>
+  <!-- 每次生成 AppBundle 之后打补丁（build 与嵌套 publish 都走这里；只挂 _WasmGenerateAppBundle，
+       不挂更早的 WasmBuildApp——同一工程实例里 target 只跑一次，过早触发会让后面重新生成的包漏补丁）。 -->
+  <Target Name="PatchAvaloniaJsWebGl" AfterTargets="_WasmGenerateAppBundle">
+    <PropertyGroup>
+      <_WxAvaloniaJs>$([MSBuild]::EnsureTrailingSlash('$(WasmAppDir)'))_framework/avalonia.js</_WxAvaloniaJs>
+      <_WxAvaloniaJs Condition="'$(WasmAppDir)' == ''">$(OutputPath)AppBundle/_framework/avalonia.js</_WxAvaloniaJs>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(_WxAvaloniaJs)')" Text="avalonia.js missing from AppBundle: $(_WxAvaloniaJs)" />
+    <Exec Command="python3 &quot;$(MSBuildThisFileDirectory)../../tools/patch_avalonia_js.py&quot; &quot;$(_WxAvaloniaJs)&quot; &quot;$(_WxAvaloniaPristine)&quot;" />
+  </Target>
+  <!-- 兜底：publish 结束时再核对一次（同一版本时是空操作），任何后续步骤覆盖了文件也会被重打。 -->
+  <Target Name="PatchAvaloniaJsAfterPublish" AfterTargets="WasmTriggerPublishApp;Publish">
+    <PropertyGroup>
+      <_WxAvaloniaJsPub>$([MSBuild]::EnsureTrailingSlash('$(WasmAppDir)'))_framework/avalonia.js</_WxAvaloniaJsPub>
+      <_WxAvaloniaJsPub Condition="'$(WasmAppDir)' == ''">$(OutputPath)AppBundle/_framework/avalonia.js</_WxAvaloniaJsPub>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(_WxAvaloniaJsPub)')" Text="avalonia.js missing from AppBundle after publish: $(_WxAvaloniaJsPub)" />
+    <Exec Command="python3 &quot;$(MSBuildThisFileDirectory)../../tools/patch_avalonia_js.py&quot; &quot;$(_WxAvaloniaJsPub)&quot; &quot;$(_WxAvaloniaPristine)&quot;" />
+  </Target>
+
+</Project>

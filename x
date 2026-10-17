@@ -60,23 +60,36 @@ check() {
   return $bad
 }
 
+# 组件工程枚举：libs/ 与 compose/ 顶层目录直属（路径深度恰好 <root>/<dir>/<file>）的全部 .fsproj/.csproj，
+# 按工程实际文件名收集，不再要求目录名==工程名。异名工程（实测全量仅此 2 个：
+# libs/StartupTrace/LocalHostGate.fsproj、compose/ImageShrink/ImageShrinkIo.fsproj）不再被漏。
+# 排除语义保持：测试工程在 <组件>/tests/、金样工具工程在 <组件>/tools/（均更深，被 maxdepth 2 挡掉），
+# 再叠加名称保险不取 *.Tests.*；app/ 入口不在 libs/ 与 compose/ 之下，本就不在枚举范围。
+component_projs() {
+  find libs compose -mindepth 2 -maxdepth 2 \( -name '*.fsproj' -o -name '*.csproj' \) \
+    -not -path '*/obj/*' -not -path '*/bin/*' -not -name '*.Tests.*' | sort
+}
+
 pack() {
   rm -rf artifacts/feed
-  for lib in $(libs); do dotnet pack "$(libproj "$lib")" -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo; done
+  # 库：主工程（F# 为 <lib>.fsproj；需要 C# source generator 的为 <lib>.csproj），按实际文件名打。
+  for proj in $(component_projs | grep '^libs/'); do
+    dotnet pack "$proj" -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo
+  done
   # 组合者也是交付物；它自己从 feed 消费库包
   rm -rf artifacts/packages/wanxiang2.* compose/*/obj
   # 组合者可以消费别的组合者的包：按依赖顺序打包（依赖的包还不在 feed 里就留到下一轮）
-  local todo; todo="$(composers)"
+  local todo; todo="$(component_projs | grep '^compose/')"
   while [[ -n "$todo" ]]; do
     local next="" progressed=0
-    for c in $todo; do
+    for proj in $todo; do
       local missing=0
-      for dep in $(grep -oE 'Include="Wanxiang2\.[A-Za-z0-9]+"' "compose/$c/$c.fsproj" | sed -E 's/.*Wanxiang2\.([A-Za-z0-9]+)"/\1/'); do
+      for dep in $(grep -oE 'Include="Wanxiang2\.[A-Za-z0-9]+"' "$proj" | sed -E 's/.*Wanxiang2\.([A-Za-z0-9]+)"/\1/'); do
         [[ -f "artifacts/feed/Wanxiang2.$dep.0.0.0-local.nupkg" ]] || missing=1
       done
-      if [[ $missing == 1 ]]; then next="$next $c"; continue; fi
-      rm -rf "compose/$c/obj"
-      dotnet pack "compose/$c/$c.fsproj" -c Release -p:Version=0.0.0-local -p:RestorePackagesPath="$PWD/artifacts/packages" -o artifacts/feed -v q -nologo
+      if [[ $missing == 1 ]]; then next="$next $proj"; continue; fi
+      rm -rf "$(dirname "$proj")/obj"
+      dotnet pack "$proj" -c Release -p:Version=0.0.0-local -p:RestorePackagesPath="$PWD/artifacts/packages" -o artifacts/feed -v q -nologo
       progressed=1
     done
     [[ $progressed == 1 ]] || { echo "composer dependency cycle or missing package:$next" >&2; return 1; }
@@ -94,14 +107,39 @@ compose() {
   done
 }
 
+# 组件目录：从 component_projs 反推顶层目录（每个至少含一个直属组件工程）。
+# 让 gen_sln 与 pack 共用同一套工程枚举（component_projs），不再各自靠「目录名==工程名」拼路径。
+# sed 把 <root>/<dir>/<file> 归约到 <root>/<dir> 再去重；libs 段与 compose 段在 gen_sln 里分别遍历，
+# 保持与现有 slnx 相同的 libs 排序，避免整段重排。
+component_dirs() {
+  component_projs | sed -E 's#^(libs\|compose)/([^/]+)(/.*)?#\1/\2#' | sort -u
+}
+
+# 一个组件目录对应的 slnx folder：先列该目录直属的全部组件工程（含异名，如 LocalHostGate / ImageShrinkIo），
+# 再列其 tests/ 下真实存在的测试工程；无 tests/ 目录的（实测 compose 有 6 个）自然跳过，不写悬空条目。
+emit_dir_folder() {
+  local d="$1"
+  echo "  <Folder Name=\"\${d#*/}/\">"
+  find "$d" -mindepth 1 -maxdepth 1 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' \
+    | sort | sed 's#^#    <Project Path="#; s#$#" />#'
+  if [[ -d "$d/tests" ]]; then
+    find "$d/tests" -mindepth 1 -maxdepth 1 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' \
+      | sort | sed 's#^#    <Project Path="#; s#$#" />#'
+  fi
+  echo '  </Folder>'
+}
+
+# 生成整份 wanxiang2.slnx：libs 组件目录（字典序，与现有一致）-> compose 组件目录 -> /App/ 入口。
+# /App/ 单 folder 含 app/ 下的真实工程（Desktop 与 Pwa 目录名异名于工程名，故按文件枚举而非目录名派生）。
 gen_sln() {
   echo '<Solution>'
-  for lib in $(libs); do
-    echo "  <Folder Name=\"/$lib/\">"
-    echo "    <Project Path=\"$(libproj "$lib")\" />"
-    echo "    <Project Path=\"libs/$lib/tests/$lib.Tests.fsproj\" />"
-    echo '  </Folder>'
-  done
+  local d
+  for d in $(component_dirs | grep '^libs/'); do emit_dir_folder "$d"; done
+  for d in $(component_dirs | grep '^compose/'); do emit_dir_folder "$d"; done
+  echo '  <Folder Name="/App/">'
+  find app -mindepth 2 -maxdepth 2 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' \
+    | sort | sed 's#^#    <Project Path="#; s#$#" />#'
+  echo '  </Folder>'
   echo '</Solution>'
 }
 

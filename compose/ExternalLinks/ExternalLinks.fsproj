@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="ExternalLinks.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.LinkInbox" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

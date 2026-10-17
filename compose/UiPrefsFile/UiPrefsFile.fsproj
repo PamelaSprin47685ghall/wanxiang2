@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：UiPrefsFile 文件读写。协作者：UiPrefs（解析/渲染）、LocalState（配置目录）。 -->
+  <ItemGroup>
+    <Compile Include="UiPrefsFile.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LocalState" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：宿主 AppShell.fs 的编排核心（认证步骤序列、连接/重连调度、视口轮询处理、协议事件界面面、
+       对话操作、附件、导入导出、草稿策略、视图组装）。命名空间沿用 Wanxiang.UI（与 ShellCommands、
+       ProtocolDispatch、DeletionDesk、DraftSession 同模式）。不持 DispatcherTimer、不做文件 IO、
+       不做 Browser 调用——计时、IO、浏览器与视图端口全部由入口壳经 ShellPorts 注入。 -->
+  <ItemGroup>
+    <Compile Include="AppShell.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WsClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Workspace" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SettingsScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ApprovalDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PaletteDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelSwitchDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.TransferDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DialogsDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DeletionDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftSession" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProtocolDispatch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShellCommands" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Catalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationRuns" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationList" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDrafts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostRequests" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BoundedWait" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DevicesModel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandFeedback" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConfigFeedback" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DownloadBuffers" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostHealth" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ReconnectLoop" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ReconnectBackoff" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConnectionIssue" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DeferredReveal" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChangeWatch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OlderPageLoad" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UploadFacts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.RevealTarget" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ForkAnchor" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageLink" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PairingHint" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConnectIssueText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OnboardingRules" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderPresets" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.StartupTrace" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShortcutKeys" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.KeyChord" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandPalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.NavigationState" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ImageShrink" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ErrorRecovery" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftSummaryText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IdleSurface" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.StartReady" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationSurface" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

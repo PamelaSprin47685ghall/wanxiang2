@@ -142,9 +142,9 @@ module Program =
             let serverTask: Task<Wanxiang.Server.ServerApp option> =
                 if RunModes.hostInBackground switches then Task.Run(fun () -> startServer ())
                 else Task.FromResult(startServer ())
-            // TODO(依赖缺口)：宿主 Wanxiang.UI.LocalHostGate 尚无 wanxiang2 等价物
-            // （批次 2 未创建 compose/LocalHostGate）；桌面入口暂以空实现占位，主机启动门
-            // 由 WsClient 连接退避兜底。等价组件落地后改为 `Wanxiang.UI.LocalHostGate.ready <- (serverTask :> Task)`。
+            // 决策 291：主机启动门接线（libs/StartupTrace/LocalHostGate）——
+            // 客户端首次连接前等主机重放与监听完成，不先报「连接失败」再退避重连。
+            Wanxiang.UI.LocalHostGate.ready <- (serverTask :> Task)
             let serverApp () =
                 try if serverTask.Wait(TimeSpan.FromSeconds 15.0) then serverTask.Result else None
                 with _ -> None
@@ -276,7 +276,16 @@ module Program =
                     let pickFiles () = ()
                     let dropFiles (_items: obj list) = ()
                     let pasteFromClipboard () : bool = false
-                    let applyDraftWrite (_write: DraftWrite) = ()
+                    // 草稿落点接线（宿主桥）：桌面写 $WANXIANG_HOME/drafts.json
+                    //（原子写 tmp+rename、0600、Q118 同口径；WANXIANG_HOME 已在上方设为 configPath 的目录）。
+                    let draftBackend: IDraftBackend =
+                        FileDraftBackend(FileDraftBackend.DefaultPath(Path.GetDirectoryName configPath))
+                    let applyDraftWrite (write: DraftWrite) =
+                        match write with
+                        | DraftWrite.Write text -> draftBackend.Save text
+                        | DraftWrite.Delete -> draftBackend.Clear()
+                        | DraftWrite.Unchanged -> Task.CompletedTask
+                        |> ignore
                     // 系统深色偏好：桌面可经 Application.RequestedThemeVariant 判断，暂固定浅色（与 PWA 一致）
                     let systemPrefersDark () : bool = false
                     // 浏览器端口：桌面不用，空实现（与 AppShell「浏览器端口 PWA 才用」注释一致）
@@ -381,6 +390,14 @@ module Program =
                         let styles = SharedTheme.styles
                         let root = Grid()
                         rootGrid <- root
+                        // KeyShortcut 换算桥装配（迁自旧 Controls/KeyShortcut.fs 的路由）：
+                        // 根视图 KeyDown → KeyChord → ShortcutKey → 意图 → ShellCommands 分派。
+                        root.AddHandler(
+                            Avalonia.Input.InputElement.KeyDownEvent,
+                            EventHandler<Avalonia.Input.KeyEventArgs>(fun _ e ->
+                                let action = KeyShortcut.resolve e
+                                if action <> ShortcutAction.NoShortcut then
+                                    e.Handled <- shell.Commands.HandleShortcut action))
                         let ov = Wanxiang2.OverlayDesk.OverlayDesk(root, overlayLook ())
                         overlay <- ov
                         let brandLogo = SharedTheme.logo
@@ -548,6 +565,8 @@ module Program =
                           SystemPrefersDark = systemPrefersDark
                           BuildViews = buildViews }
                     shell <- ShellComposer(ports)
+                    // PaletteRecent 读写接线：启动时装入已存的最近使用（与 ui.json 同目录）。
+                    shell.SetPaletteRecent(PaletteRecentFile.loadRecent ())
                     // App 静态端口（EntryShells）：Root 创建根视图、Build 调 ShellComposer.Build 并接事件、
                     // 关窗落草稿、偏好读写。
                     Wanxiang.UI.App.Root <- Some rootFactory
@@ -555,10 +574,20 @@ module Program =
                         shell.Build() |> ignore
                         client.EventReceived.Add(fun ev -> Avalonia.Threading.Dispatcher.UIThread.Post(fun () -> shell.ApplyHostEvent ev))
                         shell.AutoConnect())
-                    Wanxiang.UI.App.FlushDrafts <- Some(fun () -> shell.FlushDrafts())
+                    // 关窗：先落草稿，再落面板最近使用（同一拍）。
+                    Wanxiang.UI.App.FlushDrafts <-
+                        Some(fun () ->
+                            shell.FlushDrafts()
+                            PaletteRecentFile.saveRecent (shell.PaletteRecent()))
                     Wanxiang.UI.App.LoadPrefs <- Some Wanxiang.UI.UiPrefsFile.load
                     Wanxiang.UI.App.SavePrefs <- Some Wanxiang.UI.UiPrefsFile.save
-                    Wanxiang.UI.App.MarkFirstFrame <- None
+                    // 宿主 StartupTrace（决策 290）：采样退出由入口安装
+                    //（旧宿主 MainWindow 的 requestExit = Environment.Exit 0，见 EntryShells 的 TODO 注释）。
+                    Wanxiang.UI.StartupTrace.requestExit <- fun () -> Environment.Exit 0
+                    Wanxiang.UI.App.MarkFirstFrame <-
+                        Some(fun () ->
+                            Wanxiang.UI.StartupTrace.mark "firstFrame" |> ignore
+                            Wanxiang.UI.StartupTrace.requestExit ())
                     // MainWindow 由 EntryShells 的 App.OnFrameworkInitializationCompleted 在
                     // IClassicDesktopStyleApplicationLifetime 分支构造（Root/Build/LoadPrefs/SavePrefs 齐备时）。
                     AppBuilder

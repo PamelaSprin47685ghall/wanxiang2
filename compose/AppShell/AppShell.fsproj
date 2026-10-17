@@ -5,6 +5,8 @@
        不做 Browser 调用——计时、IO、浏览器与视图端口全部由入口壳经 ShellPorts 注入。 -->
   <ItemGroup>
     <Compile Include="AppShell.fs" />
+    <Compile Include="KeyShortcut.fs" />
+    <Compile Include="UnansweredReply.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

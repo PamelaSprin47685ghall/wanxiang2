@@ -98,7 +98,13 @@
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
-    <!-- 依赖缺口（见回报）：LocalHostGate / ImageShrinkIo 目录不存在，未引用。 -->
+    <!-- 六桥接线新增（入口直接调用故显式引用；StartupTrace 执行侧 mark/requestExit 在其包内）：
+         主机启动门（LocalHostGate）、启动打点（StartupTrace）、面板最近使用（CommandPalette，含 PaletteRecentFile）。
+         KeyShortcut 换算桥与 UnansweredReply 失败卡经 AppShell 包传递。 -->
+    <PackageReference Include="Wanxiang2.StartupTrace" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LocalHostGate" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandPalette" VersionOverride="0.0.0-local" />
+    <!-- 依赖缺口（见回报）：ImageShrinkIo 目录不存在，未引用。 -->
   </ItemGroup>
 
   <!-- 宿主 fsproj 的 Content 项（logo.png、PWA wwwroot）未迁入 wanxiang2：

@@ -103,6 +103,9 @@ compose() {
   rm -rf artifacts/packages/wanxiang2.* compose/*/obj compose/*/tests/obj
   for c in $(composers); do
     echo "== compose/$c"
+    # 无 tests/ 的组合者（CredentialStore、EntryShells、ExternalLinks、UiPrefsFile、UrlSchemeRegistrationIo）
+    # 跳过，与 gen_sln 的口径一致：不要求每个组合者都有测试工程。
+    [[ -f "compose/$c/tests/$c.Tests.fsproj" ]] || continue
     dotnet test --project "compose/$c/tests/$c.Tests.fsproj" -p:RestorePackagesPath="$PWD/artifacts/packages"
   done
 }

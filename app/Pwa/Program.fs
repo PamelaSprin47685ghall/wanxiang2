@@ -73,11 +73,15 @@ module Program =
     let private pasteFromClipboard () : bool = false
 
     // ---- 本地落点（浏览器 IndexedDB / LocalStore）----
+    /// 草稿落点经 BrowserDraftBackend（IDraftBackend 的 IndexedDB 实现，异常吞并与根 src 一致）；
+    /// 接口由 wanxiang2 libs 层定义（签名与根 src 逐字一致），这里只提供浏览器实现并接线写 / 删。
+    let private draftBackend: IDraftBackend = BrowserDraftBackend() :> IDraftBackend
+
     let private applyDraftWrite (write: DraftWrite) =
         match write with
         | DraftWrite.Unchanged -> ()
-        | DraftWrite.Write text -> BrowserDrafts.Put(text) |> ignore
-        | DraftWrite.Delete -> BrowserDrafts.Delete() |> ignore
+        | DraftWrite.Write text -> draftBackend.Save text |> ignore
+        | DraftWrite.Delete -> draftBackend.Clear() |> ignore
 
     /// TODO(默认端口)：偏好读写用 LocalStore 占位；真实 IndexedDB 由 BrowserLocalStore 扩展。
     let private prefsLoad () : UiPrefs =
@@ -366,10 +370,10 @@ module Program =
             let rich, backend = RichBrowserAdapter.create ()
             RichBackend.install backend
             rich.Warmup()
-            // 决策 342：图片缩小交给浏览器（原生解码 + Canvas，异步），不占 wasm 单线程
-            // TODO(依赖缺口)：宿主 ImageShrink.platformShrinker 槽位未迁入 wanxiang2；
-            // BrowserImageShrink.shrink 已就位但无接收槽位，待宿主 ImageShrink 迁入后恢复接线。
-            // ImageShrink.platformShrinker <- Some BrowserImageShrink.shrink
+            // 决策 342：图片缩小交给浏览器（原生解码 + Canvas，异步），不占 wasm 单线程。
+            // 宿主版接线：Wanxiang2.ImageShrinkIo 提供 platformShrinker 槽位（与 Wanxiang2.ImageShrink
+            // 的 ImageShrink 模块按名合并；shrinkAsync 优先走平台实现，None 回退包内 Skia）。
+            ImageShrink.platformShrinker <- Some BrowserImageShrink.shrink
             // App 静态端口（EntryShells.App）：PWA 分支只挂 SingleView。
             App.Root <- Some rootFactory
             App.Build <- Some buildApp

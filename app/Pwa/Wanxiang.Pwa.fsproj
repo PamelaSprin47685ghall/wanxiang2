@@ -17,6 +17,7 @@
     <Compile Include="App.fs" />
     <Compile Include="RichBrowserAdapter.fs" />
     <Compile Include="BrowserImageShrink.fs" />
+    <Compile Include="BrowserDraftBackend.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
@@ -36,6 +37,7 @@
     <PackageReference Include="Wanxiang2.RichBrowser" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BrowserImage" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ImageShrink" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ImageShrinkIo" VersionOverride="0.0.0-local" />
     <!-- 批次 2 组件：入口壳 / 编排核心 / 本地 IO / 富文本接口 -->
     <PackageReference Include="Wanxiang2.AppShell" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.EntryShells" VersionOverride="0.0.0-local" />

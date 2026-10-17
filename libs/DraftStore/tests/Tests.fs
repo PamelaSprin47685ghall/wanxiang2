@@ -71,3 +71,29 @@ let ``restore notice: unsent wins, attachments ask for reselect, nothing restore
     Assert.Equal(Some "已恢复上次未发送的草稿。附件需要重新选择。", DraftRestore.restoreNotice s "h" 0)
     Assert.Equal(Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。", DraftRestore.restoreNotice s "h" 1)
     Assert.Equal(None, DraftRestore.restoreNotice s "other" 0)
+
+// ---- 落点后端（迁自旧 DraftStore.fs 的 IDraftBackend / FileDraftBackend / MemoryDraftBackend）----
+
+[<Fact>]
+let ``file draft backend round-trips, clears, and tolerates missing files`` () =
+    let dir = Path.Combine(Path.GetTempPath(), "wx2-draft-" + Guid.NewGuid().ToString "N")
+    let path = Path.Combine(dir, "drafts.json")
+    let backend = FileDraftBackend(path) :> IDraftBackend
+    Assert.True((backend.Load().Result |> Option.isNone))
+    backend.Save("{\"version\":1}").Wait()
+    Assert.Equal(Some "{\"version\":1}", backend.Load().Result)
+    Assert.True(File.Exists path)
+    backend.Clear().Wait()
+    Assert.False(File.Exists path)
+    Assert.True((backend.Load().Result |> Option.isNone))
+
+[<Fact>]
+let ``memory draft backend keeps per-instance state`` () =
+    let a = MemoryDraftBackend()
+    (a :> IDraftBackend).Save("x").Wait()
+    Assert.Equal(Some "x", a.Stored)
+    Assert.Equal(Some "x", (a :> IDraftBackend).Load().Result)
+    let b = MemoryDraftBackend() :> IDraftBackend
+    Assert.True((b.Load().Result |> Option.isNone))
+    (a :> IDraftBackend).Clear().Wait()
+    Assert.True(((a :> IDraftBackend).Load().Result |> Option.isNone))

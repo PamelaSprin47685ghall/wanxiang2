@@ -4,6 +4,7 @@
     <Compile Include="Headless.fs" />
     <Compile Include="Tests.fs" />
     <Compile Include="WidgetClassTests.fs" />
+    <Compile Include="A11yRegression.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

@@ -896,6 +896,12 @@ type ShellComposer(ports: ShellPorts) =
           conversations = summaries
           showArchived = prefs.showArchived }
 
+    /// 命令面板「最近使用」的持久化接线（宿主桥）：入口启动时装入（loadRecent 读文件），
+    /// 关窗时读回（saveRecent 写文件）；持久化本身归入口（文件 / localStorage）。
+    member this.SetPaletteRecent(recent: string list) = paletteRecent <- recent
+
+    member this.PaletteRecent() : string list = paletteRecent
+
     member this.HandleShortcut(shortcut: ShortcutAction) : bool =
         this.Commands.HandleShortcut shortcut
 

@@ -72,3 +72,19 @@ let ``选中条目：设置项落到分区，对话 id 坏了就什么都不做`
     Assert.Equal(PaletteCommand.Ignore, ShellPalette.commandOf "conv:x")
     Assert.True(ShellPalette.closesDrawer (PaletteCommand.Action "model"))
     Assert.False(ShellPalette.closesDrawer (PaletteCommand.Action "theme"))
+
+// ---- 最近使用的文件读写（迁自旧宿主 PaletteRecent.loadRecent / saveRecent；WANXIANG_HOME 决定落点目录）----
+[<Fact>]
+let ``palette recent persists across save and load, and bad files degrade to empty`` () =
+    let home = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "wx2-pal-" + System.Guid.NewGuid().ToString "N")
+    System.Environment.SetEnvironmentVariable("WANXIANG_HOME", home)
+    try
+        Assert.Empty(PaletteRecentFile.loadRecent ())
+        PaletteRecentFile.saveRecent [ "act:new"; "conv:1" ]
+        Assert.Equal<string list>([ "act:new"; "conv:1" ], PaletteRecentFile.loadRecent ())
+        PaletteRecentFile.saveRecent [ "act:theme" ]
+        Assert.Equal<string list>([ "act:theme" ], PaletteRecentFile.loadRecent ())
+        System.IO.File.WriteAllText(PaletteRecentFile.recentFile (), "{bad")
+        Assert.Empty(PaletteRecentFile.loadRecent ())
+    finally
+        System.Environment.SetEnvironmentVariable("WANXIANG_HOME", null)

@@ -18,6 +18,32 @@ module StartupTrace =
     /// 一行输出（写到 stderr）。
     let line (name: string) (uptimeMs: float) = sprintf "startup.%s uptime_ms=%.0f" name uptimeMs
 
+    // ---- 执行侧（迁自旧 Model/StartupTrace.fs；入口外包后宿主就是本仓库，2026-10-17 增补）----
+    // 环境变量、进程启动时间与 stderr 在这里持有；入口（app/Desktop / app/Pwa）只安装 requestExit。
+    // 默认零开销：一次环境变量读取；每个里程碑只记一次（去重集合，等价旧 StartupMilestones.Mark）。
+    let private mode =
+        try System.Environment.GetEnvironmentVariable "WANXIANG_STARTUP_TRACE" with _ -> null
+
+    let enabled, exitAfter = modeOf mode
+
+    let private seen = System.Collections.Generic.HashSet<string>()
+
+    let private origin =
+        lazy
+            (try System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime()
+             with _ -> System.DateTime.UtcNow)
+
+    /// 记录里程碑；返回是否首次记录。
+    let mark (name: string) : bool =
+        if not enabled then false
+        elif seen.Add name then
+            eprintfn "%s" (line name (System.DateTime.UtcNow - origin.Force()).TotalMilliseconds)
+            true
+        else false
+
+    /// 退出回调由宿主（桌面窗口）安装。
+    let mutable requestExit: unit -> unit = ignore
+
 /// 里程碑去重：每个名字只记一次。
 type StartupMilestones() =
     let seen = HashSet<string>()

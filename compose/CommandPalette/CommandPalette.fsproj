@@ -2,10 +2,12 @@
   <!-- 组合者：命令面板检索。协作者：FuzzyMatch、PinyinInitials、ConversationSummary（壳层面板的对话条目）。命名空间沿用 Wanxiang.UI。 -->
   <ItemGroup>
     <Compile Include="CommandPalette.fs" />
+    <Compile Include="PaletteRecentFile.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Wanxiang2.FuzzyMatch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PinyinInitials" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefsFile" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

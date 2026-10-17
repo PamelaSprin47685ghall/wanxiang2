@@ -4,6 +4,10 @@
 
 最近使用的读写（`loadRecent`/`saveRecent`，依赖 UiPrefs 路径与 LocalText）不属于检索，留在宿主。
 
+## PaletteRecentFile（宿主桥，2026-10-17 增补）
+
+入口外包后宿主就是本仓库：旧宿主 `Model/CommandPalette.fs` 的 `loadRecent` / `saveRecent` / `recentFile` 迁入本组合者（`PaletteRecentFile.fs`，经 `Wanxiang2.UiPrefsFile` 包取 ui.json 同目录）。旧宿主模块名 `PaletteRecent` 与包内同名落盘格式模块冲突，故更名 `PaletteRecentFile`。新增测试覆盖往返、覆盖写与损坏文件退化为空。
+
 # SPEC
 1. 真实组合（两个交付包）下 `tests/Tests.fs` 通过，排序结果与旧实现一致。
 

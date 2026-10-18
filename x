@@ -206,6 +206,24 @@ run_tests_parallel() {
   local logdir; logdir="$(mktemp -d /tmp/wanxiang2-tests-XXXXXX)"
   local total=0 running=0
   echo "== $title（并发 $jobs；日志 $logdir）"
+  # 并发的 dotnet 首跑会抢同一套一次性初始化（NuGet-Migrations 互斥量、XDG_RUNTIME_DIR 下
+  # .dotnet/shm/session* 的建立），抢输的进程直接起不来（CI 上 AguiWire 就这么挂过，2026-10-18）。
+  # 对策：先补 shm 目录，再串行跑第一个工程把初始化坐实，然后才并发其余。
+  local xdg="${XDG_RUNTIME_DIR:-}"
+  if [[ -n "$xdg" && -d "$xdg" ]]; then mkdir -p "$xdg/.dotnet/shm" 2>/dev/null || true; fi
+  local warm; warm="$(printf '%s\n' "$list" | awk 'NF {print; exit}')"
+  local rest="$list"
+  if [[ -n "$warm" ]]; then
+    rest="$(printf '%s\n' "$list" | awk 'seen {print; next} NF {seen=1}')"
+    local wname; wname="$(basename "$(dirname "$(dirname "$warm")")")"
+    total=1
+    echo FAIL > "$logdir/$wname.status" 2>/dev/null || true
+    if dotnet test --project "$warm" $extra > "$logdir/$wname.log" 2>&1; then
+      echo ok > "$logdir/$wname.status" 2>/dev/null || true
+    else
+      echo "-- FAIL $wname（热身第一个，串行）"
+    fi
+  fi
   while IFS= read -r proj; do
     [[ -n "$proj" ]] || continue
     local name; name="$(basename "$(dirname "$(dirname "$proj")")")"
@@ -219,7 +237,7 @@ run_tests_parallel() {
     ) &
     running=$((running+1))
     if [[ $running -ge $jobs ]]; then wait -n || true; running=$((running-1)); fi
-  done <<< "$list"
+  done <<< "$rest"
   wait || true
   local failed=0 recorded=0
   for s in "$logdir"/*.status; do

@@ -48,7 +48,14 @@ jobs:
       # 控件库经包引用基础库 UiKit；该包只从 pack 产出的 feed 取。
       - uses: actions/download-artifact@v8
         with: { name: feed, path: artifacts/feed }
-      - run: ./x test ${{ matrix.lib }}
+      # 失败时把日志尾部写成注解（与 check 任务同一理由：日志接口对普通权限不可读）。
+      - name: 库测试 ${{ matrix.lib }}
+        run: |
+          if ! ./x test ${{ matrix.lib }} > test.log 2>&1; then
+            tail -40 test.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -1 test.log
   compose:
     needs: pack
     runs-on: ubuntu-latest
@@ -58,7 +65,13 @@ jobs:
         with: { global-json-file: global.json }
       - uses: actions/download-artifact@v8
         with: { name: feed, path: artifacts/feed }
-      - run: ./x compose
+      - name: 组合者测试
+        run: |
+          if ! ./x compose > compose.log 2>&1; then
+            tail -60 compose.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -1 compose.log
   # 仓库外消费（根 SPEC 2）：仓库外的临时项目只从 feed 取包，构建并真实运行。
   consume:
     needs: pack
@@ -69,7 +82,13 @@ jobs:
         with: { global-json-file: global.json }
       - uses: actions/download-artifact@v8
         with: { name: feed, path: artifacts/feed }
-      - run: ./x consume
+      - name: 仓库外消费
+        run: |
+          if ! ./x consume > consume.log 2>&1; then
+            tail -40 consume.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -2 consume.log
   # 产品入口构建：此前 ci.yml 从不构建 app/Desktop 与 app/Pwa。
   app:
     needs: pack
@@ -84,7 +103,13 @@ jobs:
       - run: dotnet workload install wasm-tools --skip-manifest-update || dotnet workload install wasm-tools
       # 实测（2026-10-17，本机 SDK 10.0.402 + wasm-tools，NuGet 外部依赖已缓存、Debug）：两入口共 12.7 秒
       #（Desktop 4.4、Pwa 7.6），不算重；CI 另加上面的 workload 安装时间。
-      - run: ./x app
+      - name: 构建两个入口
+        run: |
+          if ! ./x app > app.log 2>&1; then
+            tail -40 app.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          grep -c "Build succeeded" app.log | sed 's/^/入口构建成功数: /'
   # 发布产物冒烟：自包含 publish（含 PWA 包与 avalonia.js 补丁）+ headless Chrome 真跑一遍
   #（画布渲染、DPR 2 补丁、文本上屏桥）。这是用户实际拿到的那份产物的验证，与 Debug 构建互补。
   published-smoke:
@@ -99,7 +124,14 @@ jobs:
       - run: dotnet workload install wasm-tools --skip-manifest-update || dotnet workload install wasm-tools
       - run: npm ci
       - run: WX_SKIP_PACK=1 bash publish.sh linux-x64 v0.0.0-ci
-      - run: bash tools/smoke_published.sh artifacts/publish/linux-x64
+      - name: 发布产物冒烟
+        run: |
+          if ! bash tools/smoke_published.sh artifacts/publish/linux-x64 > smoke.log 2>&1; then
+            grep -E '^(PASS|FAIL)' smoke.log | tail -20 | sed 's/^/::error::/'
+            tail -20 smoke.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          grep -c '^PASS' smoke.log | sed 's/^/冒烟通过项: /'
   widget-template:
     needs: check
     runs-on: ubuntu-latest
@@ -109,8 +141,18 @@ jobs:
         with: { global-json-file: global.json }
       - run: ./x new-widget CiSmoke
       - run: "! ./x new-widget CiSmoke"
-      - run: ./x check
-      - run: ./x test CiSmoke
+      - name: 生成后 check
+        run: |
+          if ! ./x check > check.log 2>&1; then
+            tail -20 check.log | sed 's/^/::error::/'
+            exit 1
+          fi
+      - name: 生成后测试
+        run: |
+          if ! ./x test CiSmoke > test.log 2>&1; then
+            tail -30 test.log | sed 's/^/::error::/'
+            exit 1
+          fi
       - name: check rejects a lib-to-lib reference
         run: |
           sed -i 's#<PackageReference Include="Avalonia" />#<PackageReference Include="Avalonia" /><ProjectReference Include="../PairingCode/PairingCode.fsproj" />#' libs/CiSmoke/CiSmoke.fsproj

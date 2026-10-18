@@ -7,7 +7,15 @@ jobs:
       libs: ${{ steps.libs.outputs.libs }}
     steps:
       - uses: actions/checkout@v4
-      - run: ./x check
+      # 失败时把原因逐行写成注解：仓库日志接口对普通权限可能不可读，注解在 run 页面与
+      # `gh run view` 里都能看到（2026-10-18 首次上线时靠这条定位 CI 专属失败）。
+      - name: 依赖检查
+        run: |
+          if ! ./x check > check.log 2>&1; then
+            tail -30 check.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -1 check.log
       - id: libs
         run: echo "libs=$(ls libs | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
   # 一次产包，供组合、仓库外消费与入口构建共用（那些环节只能从交付包构建）。

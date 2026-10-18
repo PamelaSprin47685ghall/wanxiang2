@@ -210,20 +210,21 @@ run_tests_parallel() {
     [[ -n "$proj" ]] || continue
     local name; name="$(basename "$(dirname "$(dirname "$proj")")")"
     total=$((total+1))
+    # 先写下「失败」占位：状态文件写不出来（子进程被杀、日志盘满）时不能当成成功。
+    echo FAIL > "$logdir/$name.status" 2>/dev/null || true
     (
       if dotnet test --project "$proj" $extra > "$logdir/$name.log" 2>&1; then
-        echo ok > "$logdir/$name.status"
-      else
-        echo FAIL > "$logdir/$name.status"
+        echo ok > "$logdir/$name.status" 2>/dev/null || true
       fi
     ) &
     running=$((running+1))
     if [[ $running -ge $jobs ]]; then wait -n || true; running=$((running-1)); fi
   done <<< "$list"
   wait || true
-  local failed=0
+  local failed=0 recorded=0
   for s in "$logdir"/*.status; do
     [[ -e "$s" ]] || continue
+    recorded=$((recorded+1))
     if [[ "$(cat "$s")" == FAIL ]]; then
       local name; name="$(basename "$s" .status)"
       failed=$((failed+1))
@@ -231,6 +232,12 @@ run_tests_parallel() {
       tail -25 "$logdir/$name.log"
     fi
   done
+  # 没留下状态文件的（子进程被 OOM/ENOSPC 之类的系统因素干掉）也按失败算：
+  # 只数现存的状态文件会把「什么都没跑成」报成全部通过（2026-10-18 实测过）。
+  if [[ $recorded -ne $total ]]; then
+    failed=$((failed + total - recorded))
+    echo "-- $(( total - recorded )) 个工程没有留下状态文件（子进程被杀或日志盘满），按失败计"
+  fi
   if [[ $failed -eq 0 ]]; then
     echo "== $title：$total 个工程全部通过（日志 $logdir）"
   else

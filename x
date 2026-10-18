@@ -86,7 +86,9 @@ check() {
   local consumed
   consumed="$(
     for proj in $(find libs compose app \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' -not -path '*/tests/*'); do
-      grep -oE 'Wanxiang2\.[A-Za-z0-9]+' "$proj" | sed 's/^Wanxiang2\.//'
+      # `|| true`：没有 Wanxiang2.* 引用的工程 grep 返回 1；管道状态以最后一次为准，
+      # 缺了它 set -e 会在赋值处静默中止（目录遍历顺序一变就复现，2026-10-18 CI 抓到）。
+      grep -oE 'Wanxiang2\.[A-Za-z0-9]+' "$proj" | sed 's/^Wanxiang2\.//' || true
     done | sort -u
   )"
   for lib in $(libs); do
@@ -143,7 +145,8 @@ pack() {
     local next="" progressed=0
     for proj in $todo; do
       local missing=0
-      for dep in $(grep -oE 'Include="Wanxiang2\.[A-Za-z0-9]+"' "$proj" | sed -E 's/.*Wanxiang2\.([A-Za-z0-9]+)"/\1/'); do
+      # 末尾 `|| true` 同上：没有 Wanxiang2.* 依赖的工程不让那次替换把整条命令置为非零。
+      for dep in $(grep -oE 'Include="Wanxiang2\.[A-Za-z0-9]+"' "$proj" | sed -E 's/.*Wanxiang2\.([A-Za-z0-9]+)"/\1/' || true); do
         [[ -f "artifacts/feed/Wanxiang2.$dep.0.0.0-local.nupkg" ]] || missing=1
       done
       if [[ $missing == 1 ]]; then next="$next $proj"; continue; fi
@@ -162,8 +165,12 @@ compose() {
   rm -rf artifacts/packages/wanxiang2.* compose/*/obj compose/*/tests/obj
   # 无 tests/ 的组合者（CredentialStore、EntryShells、ExternalLinks、UiPrefsFile、UrlSchemeRegistrationIo）
   # 跳过，与 gen_sln 的口径一致：不要求每个组合者都有测试工程。
-  local list
-  list="$(for c in $(composers); do [[ -f "compose/$c/tests/$c.Tests.fsproj" ]] && echo "compose/$c/tests/$c.Tests.fsproj"; done)"
+  # 逐个 `if` 而不是 `[[ ]] && echo`：后者在最后一个组合者没有测试工程时让整条替换返回 1，
+  # set -e 会在赋值处静默中止（与 consumed 同一类，2026-10-18 一起修）。
+  local list=""
+  for c in $(composers); do
+    if [[ -f "compose/$c/tests/$c.Tests.fsproj" ]]; then list="$list"$'\n'"compose/$c/tests/$c.Tests.fsproj"; fi
+  done
   run_tests_parallel "compose（组合者测试）" "$list" "$(test_jobs)" "-p:RestorePackagesPath=$PWD/artifacts/packages"
 }
 

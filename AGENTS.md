@@ -162,7 +162,7 @@
 
 ## 证据现状（对应上文 SPEC）
 
-- SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。[TODO] 没有机器检查引用编号；靠评审。
+- SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。机器检查覆盖了一半：`./x check` 拒绝指向不存在组件的文档引用（`libs/<名>` / `compose/<名>`，`docs/archive` 除外），也强制每个库有消费者与登记例外。[TODO] 规则编号（`[LEMMA: n]`）与测试名的对应仍靠评审——今天整理掉的过期接线声明（见「收束后整理」）正是这类评审发现的。
 - SPEC 2 职责与交付独立：构建独立、协作独立由 `./x check` 与 `./x test <lib>` 给出，每个库都通过；交付独立由 `./x compose` 给出（干净包缓存、只用 `artifacts/feed` 中的包），通过；仓库外消费已由 `./x consume` 自动化（`mktemp -d` 下的项目只从 `artifacts/feed` 取 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`；消费者源码在 `tools/consume/`，CI 的 consume 任务运行它），2026-10-17 通过。
 - SPEC 3 状态确有主人：Ledger 与 compose/LedgerStore 测了输入、返回值别名、错误后的状态、实例隔离（见各自 AGENTS.md）。JsonSeqFile、SnapshotFile、DirLock 的状态都在文件里，也有实例隔离、非法参数与错误之后的测试（见各自 AGENTS.md 的 SPEC 11 / SPEC 7 / SPEC 6）。
 - SPEC 4 协作由真实组合证明：`compose/LedgerStore/tests` 覆盖成功、类型化拒绝、重复、游标分页、在每个字节处崩溃、半写尾与修复、解码失败、过期快照、快照策略与快照写失败、真实未知结果（`/dev/full`）、并发、同目录互斥。「写失败但确知未写」也有真实故障（测试临时收紧 RLIMIT_FSIZE，EFBIG 后截回成功），见 JsonSeq SPEC 8 与 compose/LedgerStore SPEC 15。

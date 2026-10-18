@@ -11,6 +11,7 @@ open Avalonia.Media
 open Avalonia.Threading
 open Wanxiang.Core
 open Wanxiang.UI
+open Wanxiang2.UiKit
 open Wanxiang2.ThemePalette
 open Wanxiang2.ThemeMetrics
 open Wanxiang2.Theme
@@ -92,28 +93,6 @@ type CardHost =
       Touch: CardTouch
       /// 当前时刻（脚注时间与倒计时；测试可注入）
       Now: unit -> DateTimeOffset }
-
-/// 活值跟随（同各控件库的 Follow）
-module internal Follow =
-    let now (source: IObservable<'T>) =
-        let mutable v = Unchecked.defaultof<'T>
-        (source.Subscribe(fun x -> v <- x)).Dispose()
-        v
-
-    let live (control: Control) (source: IObservable<'T>) (apply: 'T -> unit) =
-        apply (now source)
-        let mutable sub: IDisposable = null
-        control.AttachedToVisualTree.Add(fun _ -> if isNull sub then sub <- source.Subscribe apply)
-        control.DetachedFromVisualTree.Add(fun _ ->
-            if not (isNull sub) then
-                sub.Dispose()
-                sub <- null)
-
-    let live2 control (a: IObservable<'A>) (b: IObservable<'B>) (apply: 'A -> 'B -> unit) =
-        let mutable va = now a
-        let mutable vb = now b
-        live control a (fun x -> va <- x; apply va vb)
-        live control b (fun y -> vb <- y; apply va vb)
 
 /// 消息卡渲染（旧 Views/MessageCard.fs）：把 MessageView 折成各控件库的数据，拼成一张卡。
 type MessageCards(looks: CardLooks, host: CardHost) =

@@ -6,6 +6,13 @@ open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.UiKit
+
+/// 按钮档对应的主题类（旧 Ui.button 的四档）
+module internal TapTone =
+    let primary = [ "surface"; "button-primary"; "hover-accent" ]
+    let secondary = [ "surface"; "button-secondary"; "hover-raised" ]
+    let ghost = [ "surface"; "button-ghost"; "hover-plain" ]
 
 /// 一条等待用户决定的工具审批（运行时状态，只在内存里）。
 type ApprovalAsk =
@@ -80,8 +87,8 @@ module ApprovalCard =
                 status.Text <- texts.SentText approved
                 status.IsVisible <- true
                 decide approved
-        let approve = Tap("批准", TapTone.primary, choose true)
-        let deny = Tap("拒绝", TapTone.secondary, choose false)
+        let approve = Tap.TextButton("批准", TapTone.primary, choose true)
+        let deny = Tap.TextButton("拒绝", TapTone.secondary, choose false)
         buttons <- [ approve; deny ]
         AutomationProperties.SetAutomationId(approve, "tool-approval-approve")
         AutomationProperties.SetAutomationId(deny, "tool-approval-deny")
@@ -113,7 +120,7 @@ module ApprovalCard =
             expanded <- not expanded
             args.IsVisible <- expanded
             toggle |> Option.iter (fun t -> t.SetText(texts.ArgsToggleText expanded))
-        let t = Tap(texts.ArgsToggleText false, TapTone.ghost, flip)
+        let t = Tap.TextButton(texts.ArgsToggleText false, TapTone.ghost, flip)
         toggle <- Some t
         t.IsVisible <- hasArgs
         t.HorizontalAlignment <- HorizontalAlignment.Left

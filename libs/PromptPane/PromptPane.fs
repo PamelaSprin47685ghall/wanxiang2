@@ -25,7 +25,7 @@ type PromptPane(look: PromptPaneLook, title: string, hint: string, initial: stri
         t
     let value () = (if isNull box.Text then "" else box.Text).Trim()
     let mutable submit: unit -> unit = ignore
-    let footer = Footer(kit, confirmLabel, Tone.Primary, (fun () -> cancelled.Trigger()), (fun () -> submit ()))
+    let footer = kit.DialogFooter(confirmLabel, Tone.Primary, (fun () -> cancelled.Trigger()), (fun () -> submit ()))
 
     let update () =
         let raw = if isNull box.Text then "" else box.Text

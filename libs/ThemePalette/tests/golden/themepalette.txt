@@ -51,6 +51,7 @@ Light Hover #0D141413
 Light Pressed #1A141413
 Light SurfaceSoft #55FBFAF7
 Light UserBubbleSelection #59FFFFFF
+Light ControlStroke #FF8D8A7E
 Dark Canvas #FF15151A
 Dark Rail #FF1A1A22
 Dark Surface #FF22222A
@@ -104,3 +105,4 @@ Dark Hover #14FFFFFF
 Dark Pressed #24FFFFFF
 Dark SurfaceSoft #5522222A
 Dark UserBubbleSelection #59FFFFFF
+Dark ControlStroke #FF76767F

@@ -3,7 +3,7 @@
 浮层菜单内容与下拉选择器按钮（迁自旧 `Controls/Menu.fs`）。根规则见项目根目录 AGENTS.md。
 
 - `PopupMenu.build` / `PopupMenu.buildGrouped` 只造内容（ScrollViewer 包 StackPanel），条目为空时返回 None。放进浮层、激活后关浮层再执行条目动作，由组合者 compose/OverlayDesk 接（旧代码在菜单里直接调 `overlay.ClosePopup()`）。
-- 菜单项：读屏角色 MenuItem、名字与 tooltip 都是标签；Enter / Space / 左键激活；Up/Down 首尾回绕、Home/PageUp 到首、End/PageDown 到尾（与 RovingIndex.menu 同规则，在本库内重写，不引用兄弟库）。
+- 菜单项：读屏角色 MenuItem、名字与 tooltip 都是标签；Enter / Space / 左键激活；Up/Down 首尾回绕、Home/PageUp 到首、End/PageDown 到尾（方向键落点规则在本库内联）。
 - `SelectButton`：读屏角色 ComboBox；名字跟随显示文本，调用方另起名后不再覆盖；tooltip 跟随文本；点击、Enter/Space、Down/Up 发 `OpenRequested`。
 
 ## 外观

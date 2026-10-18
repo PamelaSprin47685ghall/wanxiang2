@@ -23,7 +23,7 @@ type CopyButtonLook =
       /// 淡出时长（旧 MotionLedger.copyConfirmationFade）
       Fade: IObservable<TimeSpan> }
 
-/// 复制按钮的确认反馈（迁自旧 Controls/CopyFeedback.fs，确认记账照旧 CopyConfirm 自己持有）：
+/// 复制按钮的确认反馈（迁自旧 Controls/CopyFeedback.fs，确认记账由本控件自己持有）：
 /// 复制后先淡一下，保持勾号一段时间后复位；减弱动效不淡出。离开可视树立即复位。
 /// 图标、提示文字、读屏名由使用方按 StateChanged 去换。
 type CopyButton(button: Control, look: CopyButtonLook, clock: unit -> DateTimeOffset) =

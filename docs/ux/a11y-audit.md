@@ -28,7 +28,7 @@
 修复：`libs/ThemePalette/ThemePalette.fs`（旧 `Design/Palette.fs`）中 `codeComment` 两套主题统一为 `#96938B`，深色 `codeMuted` 改为 `#9B9890`（与浅色同值）。修复后最低 4.86:1。注释色仍明显弱于 `codeText`，视觉层级不变。
 
 已知不达标但未改：
-- `border`（浅 1.33、深 1.92）、`line`（浅 1.6、深 2.1~2.5）低于 1.4.11 对“控件边界”的 3:1 要求。它们主要用作装饰性分割，但**以描边作为唯一边界的输入框**需要待实测确认；输入壳聚焦时另有 accent 描边加外扩环（见 `libs/UiPrimitives` 的 textField 外壳；旧 `Controls/Interaction.fs`），聚焦态是达标的，静止态建议后续引入专用的 `controlStroke` 令牌（≥ 3:1）；本仓库 `libs/ThemePalette` 至今没有该令牌。这会改变视觉，所以只记录不动。
+- `border`（浅 1.33、深 1.92）、`line`（浅 1.6、深 2.1~2.5）低于 1.4.11 对“控件边界”的 3:1 要求。它们主要用作装饰性分割，**不再用作输入类控件的边界**：2026-10-18 起，`libs/ThemePalette` 新增 `ControlStroke` 令牌（浅 `#8D8A7E`、深 `#76767F`），对四种基础表面（Surface / SurfaceRaised / SurfaceContainer / Canvas）两套主题都 ≥ 3:1；`FieldSurface` 与 `Surface` 同值（没有填充差），所以边界只靠这条描边——「以描边作为唯一边界」实测成立，输入壳、开关轨道与底部输入区（`ComposerBox` 的 `BoxInk.ControlStroke`）都改用它。聚焦态仍是 accent 描边加外扩环（见 `libs/UiKit` 的 textField 外壳；旧 `Controls/Interaction.fs`）。机械断言：`compose/Theme/tests/A11yRegression.fs` 的 `控件边界描边在四种底上都过 1.4.11`。`border` / `line` 自身数值不变。
 
 ## 3. 键盘导航与焦点
 
@@ -40,7 +40,7 @@
 
 ## 4. 可访问名称与语义
 
-- 共享原语 `iconButton` / `iconButtonAccent`（今天在 `libs/UiPrimitives/UiPrimitives.fs`）在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。
+- 共享原语 `iconButton`（今天在 `libs/UiKit/UiKit.fs`）在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。
 - 规则（已测）：图标按钮调用不得传空字符串或 null 作为 tip，否则按钮对辅助技术是无名控件。
 - PWA 启动页有 `role="status"`、`aria-live`、`aria-busy`，装饰条 `aria-hidden`，图片有 `alt`。入口页 `lang="zh-CN"`，viewport 不禁止缩放。
 
@@ -74,7 +74,7 @@
 
 | 项 | 位置 | 说明 |
 | --- | --- | --- |
-| 输入框静止态边界对比度 | 全部输入壳 | 见 §2，需要新令牌；本仓库至今未引入（`libs/ThemePalette` 无专用 `controlStroke`） |
+| ~~输入框静止态边界对比度~~ | 全部输入壳 | 已由 `ControlStroke`（2026-10-18，见 §2）解决，机械断言在 `compose/Theme/tests/A11yRegression.fs` |
 | ~~术语：会话→对话~~ | 已由 W6 完成 | 见 §6 |
 | ~~快捷键格式统一~~ | 已统一 | 见 §6 |
 | 屏幕阅读器实测 | 全部 | 见 §1 |
@@ -88,6 +88,7 @@
 - text / textMuted 在 6 种内嵌底色上 ≥ 4.5
 - 状态色在浅底上、textOnAccent 在 accent 与 accentHover 上、用户气泡文字 ≥ 4.5
 - 焦点环色在 5 种基础表面上 ≥ 3
+- 控件边界描边 `ControlStroke` 在 4 种基础表面上 ≥ 3（1.4.11；2026-10-18 新增）
 - 遮罩 alpha 下限
 - 图标按钮无空名称；共享原语同时设置 ToolTip 与 AutomationProperties.Name
 - 文案：禁用同义词、禁用 `...`、取消类提示含 Esc

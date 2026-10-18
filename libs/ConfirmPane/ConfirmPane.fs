@@ -13,7 +13,7 @@ type ConfirmPane(look: ConfirmPaneLook, title: string, body: string, confirmLabe
     let kit = Kit(look)
     let confirmed = Event<unit>()
     let cancelled = Event<unit>()
-    let footer = Footer(kit, confirmLabel, Tone.Danger, (fun () -> cancelled.Trigger()), (fun () -> confirmed.Trigger()))
+    let footer = kit.DialogFooter(confirmLabel, Tone.Danger, (fun () -> cancelled.Trigger()), (fun () -> confirmed.Trigger()))
     let message =
         let t = kit.Text(body, look.BodyFontSize, look.Muted)
         t.TextWrapping <- TextWrapping.Wrap

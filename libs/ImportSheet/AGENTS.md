@@ -19,4 +19,4 @@
 
 ## 与旧实现的差异
 
-- 无行为差异。与旧代码一样，`SetChrome` 换「选择」键文字时读屏名随之变化（旧 `Ui.setButtonText`）。
+- 无行为差异：三键用 `Wanxiang2.UiKit` 的 `Tap.TextButton`；与旧代码一样，`SetChrome` 换「选择」键文字时读屏名随之变化（旧 `Ui.setButtonText`）。

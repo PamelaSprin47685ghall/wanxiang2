@@ -51,3 +51,4 @@ Hover
 Pressed
 SurfaceSoft
 UserBubbleSelection
+ControlStroke

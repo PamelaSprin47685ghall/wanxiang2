@@ -68,7 +68,7 @@ type SessionPrefsPane(look: SessionPrefsPaneLook, modelPicker: Control, init: Se
           ThinkingBudget = text thinkingBudgetBox
           Tools = init.Tools |> List.filter (fun t -> selected.Contains t.Id) |> List.map (fun t -> t.Id) }
     let trySave () = if not pending then save.Trigger(draft ())
-    let footer = Footer(kit, "保存", Tone.Primary, (fun () -> cancelled.Trigger()), trySave)
+    let footer = kit.DialogFooter("保存", Tone.Primary, (fun () -> cancelled.Trigger()), trySave)
 
     let toolsPanel =
         let p = StackPanel(Orientation = Orientation.Vertical)

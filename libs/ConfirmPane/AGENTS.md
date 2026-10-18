@@ -4,7 +4,7 @@
 
 - `ConfirmPane(look, title, body, confirmLabel, dangerFirst)`：`View`、`CancelButton`、`ConfirmButton`、`InitialFocus`（dangerFirst 为假时是取消，即安全项）。
 - 事件：`Confirmed`、`Cancelled`。主键 Danger 语气，提示「确认“X”，此操作可能无法撤销」，读屏说明附正文。
-- 没有行级 Enter/Space 确认：必须落在确认键上激活。页脚左右键互跳。可点件是 `Tap`（Invoke）。
+- 没有行级 Enter/Space 确认：必须落在确认键上激活。对话框页脚（来自 UiKit 的 `Kit.DialogFooter`）左右键互跳。可点件是 `Tap`（Invoke）。
 
 ## 外观
 

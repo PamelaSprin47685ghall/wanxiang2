@@ -4,13 +4,13 @@
        MathFigure（公式）、CodeTint（着色）、CopyButton（复制确认）。外观全部经 MarkdownLook 由调用方给。 -->
   <ItemGroup>
     <Compile Include="MarkdownLook.fs" />
-    <Compile Include="Follow.fs" />
     <Compile Include="ActionSpot.fs" />
     <Compile Include="MarkdownView.fs" />
     <Compile Include="MarkdownStream.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.UiKit" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MarkdownBlocks" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.LinkChunks" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BlockDiff" VersionOverride="0.0.0-local" />

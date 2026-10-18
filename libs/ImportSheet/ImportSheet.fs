@@ -7,6 +7,13 @@ open Avalonia.Controls
 open Avalonia.Layout
 open Avalonia.Media
 open Avalonia.Threading
+open Wanxiang2.UiKit
+
+/// 按钮档对应的主题类（旧 Ui.button 的四档）
+module internal TapTone =
+    let primary = [ "surface"; "button-primary"; "hover-accent" ]
+    let secondary = [ "surface"; "button-secondary"; "hover-raised" ]
+    let ghost = [ "surface"; "button-ghost"; "hover-plain" ]
 
 /// 状态行颜色档
 [<RequireQualifiedAccess>]
@@ -48,9 +55,9 @@ type ImportSheet(look: ImportSheetLook, privacyNote: string) =
     let status = TextBlock(TextWrapping = TextWrapping.Wrap, Foreground = look.Muted, Name = "import-status")
     let details = TextBlock(TextWrapping = TextWrapping.Wrap, Foreground = look.Muted, IsVisible = false, Name = "import-details")
     let privacy = caption privacyNote
-    let closeButton = Tap("取消", TapTone.ghost, cancel.Trigger)
-    let pickButton = Tap("选择 JSON 文件…", TapTone.secondary, pick.Trigger)
-    let importButton = Tap("导入为新对话", TapTone.primary, import.Trigger)
+    let closeButton = Tap.TextButton("取消", TapTone.ghost, cancel.Trigger)
+    let pickButton = Tap.TextButton("选择 JSON 文件…", TapTone.secondary, pick.Trigger)
+    let importButton = Tap.TextButton("导入为新对话", TapTone.primary, import.Trigger)
     let content = StackPanel(Orientation = Orientation.Vertical)
 
     do

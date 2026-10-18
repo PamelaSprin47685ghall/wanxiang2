@@ -1,5 +1,7 @@
 namespace Wanxiang2.ComposerBox
 
+open Wanxiang2.UiKit
+
 open System
 open Avalonia
 open Avalonia.Automation
@@ -27,6 +29,8 @@ type BoxInk =
     | SurfaceContainer
     | HairlineStrong
     | Warning
+    /// 输入壳的静止边界描边（对基础表面 ≥ 3:1，WCAG 1.4.11）
+    | ControlStroke
 
 /// 用到的活度量
 [<RequireQualifiedAccess>]
@@ -105,7 +109,7 @@ type ComposerBox(look: ComposerBoxLook) =
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center)
     let shell =
-        Border(Background = ink BoxInk.Surface, BorderBrush = ink BoxInk.Hairline)
+        Border(Background = ink BoxInk.Surface, BorderBrush = ink BoxInk.ControlStroke)
     let send =
         Spot(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center)
     let queue =
@@ -218,11 +222,11 @@ type ComposerBox(look: ComposerBoxLook) =
             dropHint.IsVisible <- false
         else
             shell.Background <- ink BoxInk.Surface
-            shell.BorderBrush <- ink BoxInk.Hairline
+            shell.BorderBrush <- ink BoxInk.ControlStroke
             shell.BoxShadow <- BoxShadows()
             dropHint.IsVisible <- false
         if not enabled then
-            shell.BorderBrush <- ink BoxInk.Hairline
+            shell.BorderBrush <- ink BoxInk.ControlStroke
             shell.BoxShadow <- BoxShadows()
         input.PlaceholderText <-
             if not enabled && not (String.IsNullOrWhiteSpace disabledReason) then ""
@@ -366,8 +370,9 @@ type ComposerBox(look: ComposerBoxLook) =
                 elif e.Key = Key.Enter then
                     let shift = e.KeyModifiers.HasFlag KeyModifiers.Shift
                     let ctrl = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
-                    // Enter 发送档里 Ctrl+Enter 交给输入框换行（旧 SendKey.sends）
-                    let sends = if enterSends then not shift && not ctrl else ctrl
+                    // 与旧 `SendKey.sends` 同一规则（该库 2026-10-18 退役，规则归本控件）：发送键与换行键严格互补，不交叉；
+                    // Shift+Enter 永远换行（含 Ctrl+Shift+Enter），Ctrl+Enter 档里裸 Enter 换行。
+                    let sends = not shift && (enterSends <> ctrl)
                     if sends then
                         e.Handled <- true
                         submitText ()

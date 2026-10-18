@@ -1,5 +1,7 @@
 namespace Wanxiang2.StreamCaret
 
+open Wanxiang2.UiKit
+
 open System
 open Avalonia
 open Avalonia.Controls

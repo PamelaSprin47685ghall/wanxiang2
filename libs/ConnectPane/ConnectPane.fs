@@ -76,7 +76,7 @@ type ConnectPane(look: ConnectPaneLook, defaultUrl: string, rules: CodeRules) =
         let code = (text codeBox).Trim()
         if code.Length = 6 then codeSubmitted.Trigger code else codeIncomplete.Trigger()
 
-    let footer = Footer(kit, "连接", Tone.Primary, (fun () -> cancelled.Trigger()), connectAction)
+    let footer = kit.DialogFooter("连接", Tone.Primary, (fun () -> cancelled.Trigger()), connectAction)
     let codeButton =
         let b = kit.Button(Tone.Primary, "提交配对码", submitCode)
         b.IsVisible <- false

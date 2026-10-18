@@ -41,10 +41,5 @@ fi
 echo "host up on $PORT (pid $HOST)"
 rc=0
 node "$ROOT/tools/smoke_published_pwa.js" --base "http://127.0.0.1:$PORT" --out "${SMOKE_OUT:-$WORK/shots}" || rc=$?
-# 旧仓库决策 453 的 PWA 运行时一致性探针（?wxprobe=1，默认关闭）。
-# parity_pwa.js 不在本批迁移清单；放入 tools/ 后此段自动生效。
-if [ -f "$ROOT/tools/parity_pwa.js" ]; then
-    node "$ROOT/tools/parity_pwa.js" --base "http://127.0.0.1:$PORT" --out "${SMOKE_OUT:-$WORK/shots}" || rc=$?
-fi
 [ $rc -eq 0 ] || { echo "--- host.log (tail)"; tail -40 "$WORK/host.log"; }
 exit $rc

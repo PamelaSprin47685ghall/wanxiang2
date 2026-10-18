@@ -106,10 +106,49 @@ let ``row more button leaves the hit tree in selection mode`` () =
         let more = (r.MoreButton ids[2]).Value
         Assert.False more.IsVisible
         Assert.False more.IsHitTestVisible
+        Assert.False more.Focusable
         Assert.Equal(AccessibilityView.Raw, AutomationProperties.GetAccessibilityView more)
         Assert.Equal("当前对话", AutomationProperties.GetItemStatus(hostOf r 1))
         r.SetMarks(None, (fun _ -> false), false)
-        Assert.True more.IsVisible)
+        Assert.True more.IsVisible
+        Assert.True more.IsHitTestVisible
+        Assert.True more.Focusable)
+
+[<Fact>]
+let ``active or selected rows highlight and update screen reader item status`` () =
+    Headless.run (fun () ->
+        let _, l = look ()
+        let r = ConversationRows l
+        let w = host r.View
+        let archived =
+            RowItem.Conversation
+                { Id = ids[3]; Title = "对话 3"; TitleSpans = [ { Text = "对话 3"; IsMatch = false } ]; Preview = "预览"
+                  PreviewSpans = [ { Text = "预览"; IsMatch = false } ]; AccessibleName = "对话 3"; Tooltip = "对话 3"
+                  Running = false; Pinned = false; Archived = true }
+        r.Render [ row 0 true false; row 1 false true; row 2 false false; archived ]
+        Dispatcher.UIThread.RunJobs()
+        w.UpdateLayout()
+        let border i = hostOf r i :?> Border
+        // 初始：无当前对话、无多选，各行不高亮，读屏状态随模型
+        Assert.Same(Brushes.Transparent :> IBrush, (border 0).Background)
+        Assert.Same(Brushes.Transparent :> IBrush, (border 0).BorderBrush)
+        Assert.Equal("生成中", AutomationProperties.GetItemStatus(hostOf r 0))
+        Assert.Equal("已置顶", AutomationProperties.GetItemStatus(hostOf r 1))
+        Assert.Equal("", AutomationProperties.GetItemStatus(hostOf r 2))
+        Assert.Equal("已归档", AutomationProperties.GetItemStatus(hostOf r 3))
+        // 高亮 = 当前对话或多选中
+        r.SetMarks(Some ids[0], (fun id -> id = ids[2]), true)
+        Assert.Same(l.Selected, (border 0).Background)
+        Assert.Same(l.Accent, (border 0).BorderBrush)
+        Assert.Equal("当前对话，生成中", AutomationProperties.GetItemStatus(hostOf r 0))
+        Assert.Same(Brushes.Transparent :> IBrush, (border 1).Background)
+        Assert.Same(Brushes.Transparent :> IBrush, (border 1).BorderBrush)
+        Assert.Equal("已置顶", AutomationProperties.GetItemStatus(hostOf r 1))
+        Assert.Same(l.Selected, (border 2).Background)
+        Assert.Same(l.Accent, (border 2).BorderBrush)
+        Assert.Equal("当前对话", AutomationProperties.GetItemStatus(hostOf r 2))
+        Assert.Same(Brushes.Transparent :> IBrush, (border 3).Background)
+        Assert.Equal("已归档", AutomationProperties.GetItemStatus(hostOf r 3)))
 
 [<Fact>]
 let ``Sidebar conversation row right click invokes context menu`` () =

@@ -71,14 +71,21 @@ let ``Enter 发送、Shift+Enter 换行；Ctrl+Enter 模式反过来；输入法
         w.Show()
         key b.Input Key.Enter KeyModifiers.None
         key b.Input Key.Enter KeyModifiers.Shift
+        // Shift 永远换行：Ctrl+Shift+Enter、⌘+Shift+Enter 都不发送（旧 `SendKey.sends` 的互补规则）
+        key b.Input Key.Enter (KeyModifiers.Control ||| KeyModifiers.Shift)
+        key b.Input Key.Enter (KeyModifiers.Meta ||| KeyModifiers.Shift)
         Assert.Equal(1, n)
         b.SetEnterSends false
         key b.Input Key.Enter KeyModifiers.None
         key b.Input Key.Enter KeyModifiers.Control
+        key b.Input Key.Enter (KeyModifiers.Control ||| KeyModifiers.Shift)
         Assert.Equal(2, n)
+        // Ctrl+Enter 档里 ⌘+Enter 等价发送
+        key b.Input Key.Enter KeyModifiers.Meta
+        Assert.Equal(3, n)
         b.SetImeProbe(fun _ -> true)
         key b.Input Key.Enter KeyModifiers.Control
-        Assert.Equal(2, n)
+        Assert.Equal(3, n)
         w.Close())
 
 [<Fact>]

@@ -359,12 +359,6 @@ async function imageShrink(bytes, mediaType, maxDimension, maxBytes) {
     }
 }
 
-// ---- 决策 450：桌面/PWA 一致性探针（默认关闭；地址带 wxprobe=1 才记录）----
-const probeOn = (() => { try { return new URLSearchParams(location.search).get("wxprobe") === "1"; } catch (_) { return false; } })();
-if (probeOn) globalThis.__wxProbe = {};
-export function wxProbeEnabled() { return probeOn; }
-export function wxProbe(name) { if (probeOn) globalThis.__wxProbe[name] = (globalThis.__wxProbe[name] || 0) + 1; }
-
 // ---- 决策 452：小型本机文本（界面偏好等）----
 export function wxLocalGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
 export function wxLocalSet(key, value) { try { localStorage.setItem(key, value); } catch (_) { } }
@@ -376,7 +370,7 @@ const dotnetRuntime = await dotnet
     .create();
 
 dotnetRuntime.setModuleImports("wanxiang", {
-    credList, credPut, credDelete, draftGet, draftPut, draftDelete, pageUrl, wxViewportWidth, wxResumeEpoch, wxConversationSucceeded, wxProbeEnabled, wxProbe, wxLocalGet, wxLocalSet,
+    credList, credPut, credDelete, draftGet, draftPut, draftDelete, pageUrl, wxViewportWidth, wxResumeEpoch, wxConversationSucceeded, wxLocalGet, wxLocalSet,
     richLoad, richHighlight, richMath, imageShrink,
 });
 

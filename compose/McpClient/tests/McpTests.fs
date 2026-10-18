@@ -173,7 +173,9 @@ module McpTests =
                     command = Some "/bin/sh"
                     args = [ "-c"; script ] }
             let transport = McpStdioTransport(cfg, ignore) :> IMcpTransport
-            let! res = transport.Request("call/hang", JsonObject(), 5000, CancellationToken.None)
+            // 上限只兜底：正常路径是子进程退出事件立刻中断在途请求（毫秒级）。
+            // 给足余量，免得机器忙时（如并发跑全套测试）先撞上超时，把这条用例变成看负载的骰子。
+            let! res = transport.Request("call/hang", JsonObject(), 30000, CancellationToken.None)
             let resStr = res.ToJsonString(jsonOptions)
             Assert.True(resStr.Contains("MCP 进程已退出") || resStr.Contains("写入 MCP 失败") || resStr.Contains("已停止"))
             transport.Stop()

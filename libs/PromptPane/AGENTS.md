@@ -4,7 +4,7 @@
 
 - `PromptPane(look, title, hint, initial, confirmLabel, validationFor)`：`View`、`Box`、`CancelButton`、`ConfirmButton`、`InitialFocus`；`SetPending`。
 - 事件：`Submitted`（去空白的值；空白或保存中不发）、`Cancelled`、`FieldError`（全空白字符时的行内错误，None 为清除，组合者写进 FieldCheck）。
-- 空输入时禁用确认并显示「内容不能为空，请输入有效文本。」；回车、确认键、页脚行级 Enter 都提交；焦点在取消上的行级 Enter/Space 只取消。
+- 空输入时禁用确认并显示「内容不能为空，请输入有效文本。」；回车、确认键、页脚（来自 UiKit 的 `Kit.DialogFooter`）行级 Enter 都提交；焦点在取消上的行级 Enter/Space 只取消。
 
 ## 外观
 

@@ -1,5 +1,7 @@
 namespace Wanxiang2.ActionStrip
 
+open Wanxiang2.UiKit
+
 open System
 open Avalonia
 open Avalonia.Animation

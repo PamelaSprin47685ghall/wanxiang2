@@ -11,6 +11,7 @@ open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
 open Wanxiang.UI
+open Wanxiang2.UiKit
 open Wanxiang2.MathFigure
 open Wanxiang2.CodeTint
 open Wanxiang2.CopyButton

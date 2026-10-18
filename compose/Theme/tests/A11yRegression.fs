@@ -94,6 +94,17 @@ let ``键盘焦点环颜色在所有基础表面上过非文本 3 比 1`` () =
                 ("accent(focus ring)", color mode PaletteKey.Accent, g, b) ]
 
 [<Fact>]
+let ``控件边界描边在四种底上都过 1.4.11`` () =
+    // 输入壳、开关轨道这类「描边就是边界」的控件：填充色与所在表面同值（FieldSurface 取 Surface），
+    // 所以边界只能靠这条描边，WCAG 1.4.11 要求它至少 3:1。2026-10-18 引入 ControlStroke 之前，
+    // 这些控件用 border（浅 1.33~1.47、深 1.46~1.92），达不到 3:1。
+    for (label, mode) in palettes do
+        check label 3.0
+            [ for (g, b) in [ "canvas", color mode PaletteKey.Canvas; "surface", color mode PaletteKey.Surface
+                              "surfaceRaised", color mode PaletteKey.SurfaceRaised; "surfaceContainer", color mode PaletteKey.SurfaceContainer ] ->
+                ("controlStroke", color mode PaletteKey.ControlStroke, g, b) ]
+
+[<Fact>]
 let ``遮罩不透明度足以压住背后内容`` () =
     Assert.True((color PaletteMode.Light PaletteKey.Scrim).A >= 0x55uy, "浅色遮罩 alpha 过低")
     Assert.True((color PaletteMode.Dark PaletteKey.Scrim).A >= 0x80uy, "深色遮罩 alpha 过低")
@@ -102,22 +113,31 @@ let ``遮罩不透明度足以压住背后内容`` () =
 
 [<Fact>]
 let ``所有图标按钮调用都带非空名称`` () =
-    let files = Directory.GetFiles(Path.Combine(repoRoot, "compose"), "*.fs", SearchOption.AllDirectories)
-    let emptyTip = Regex("""iconButton(Accent)?\s+[\w.]+\s+(""|null)""")
+    let files =
+        [ for proj in [ "libs"; "compose" ] do
+            yield!
+                Directory.GetFiles(Path.Combine(repoRoot, proj), "*.fs", SearchOption.AllDirectories)
+                |> Array.filter (fun f ->
+                    let parts = f.Split([| Path.DirectorySeparatorChar |])
+                    not (parts |> Array.exists (fun p -> p = "tests" || p = "tools" || p = "bin" || p = "obj"))) ]
+    let emptyTip = Regex("""\.IconButton\(\s*(?:"(?:[^"\\]|\\.)*"|[\w.]+)\s*,\s*(""|null)\s*,""")
     let bad =
         [ for f in files do
-            let lines = File.ReadAllLines f
-            for i in 0 .. lines.Length - 1 do
-                if emptyTip.IsMatch lines.[i] then
-                    sprintf "%s:%d 图标按钮缺少 tip/可访问名称" (Path.GetRelativePath(repoRoot, f)) (i + 1) ]
+            let src = File.ReadAllText f
+            for m in emptyTip.Matches src do
+                let line = 1 + (src.Substring(0, m.Index) |> Seq.filter ((=) '\n') |> Seq.length)
+                sprintf "%s:%d 图标按钮缺少 tip/可访问名称" (Path.GetRelativePath(repoRoot, f)) line ]
     Assert.True(bad.IsEmpty, String.Join("\n", bad))
 
 [<Fact>]
 let ``共享图标按钮原语同时设置提示与自动化名称`` () =
-    let src = read "libs/UiPrimitives/UiPrimitives.fs"
-    let setNames = Regex.Matches(src, @"AutomationProperties\.SetName\(host, tip\)").Count
+    // IconButton 经 Tap(g, tip, …) 把 tip 传作 name 在 Tap 构造里挂 AutomationProperties.Name，
+    // 并在 IconButton 内对非空 tip 挂 ToolTip；行为证据见 libs/UiKit/tests 的
+    // `Kit.Button and IconButton carry tone classes and the tip`。
+    let src = read "libs/UiKit/UiKit.fs"
+    let setNames = Regex.Matches(src, @"AutomationProperties\.SetName\(this, name\)").Count
     let setTips = Regex.Matches(src, @"ToolTip\.SetTip\(host, tip\)").Count
-    Assert.True(setNames >= 2 && setTips >= 2, "iconButton / iconButtonAccent 必须同时挂 ToolTip 与 AutomationProperties.Name")
+    Assert.True(setNames >= 1 && setTips >= 1, "IconButton 必须经 Tap 与 ToolTip 同时挂 AutomationProperties.Name 与 ToolTip")
 
 // ---------- 文案一致性：术语表 ----------
 

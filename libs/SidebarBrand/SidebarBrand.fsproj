@@ -6,5 +6,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.UiKit" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@
   - 成员：`View`、`UrlBox`、`TokenBox`、`CodeBox`、`ConnectButton`、`CodeButton`、`PairingToggle`、`RetryButton`、`InitialFocus`（地址空则地址，否则令牌）、`StatusText`、`IsPairing`、`Code`。
   - 动作：`Announce`（中性，无重试）、`Fail(message, retryLabel, refocusCode)`、`StartPairing`、`Connect`、`SubmitCode`、`ClearToken`。
   - 事件：`ConnectRequested ConnectAsk`、`CodeSubmitted`、`CodeIncomplete`、`CodeChanged`（归一后）、`RetryClicked`、`Cancelled`。
-- 配对模式下令牌框与页脚「连接」退场，「提交配对码」是唯一主键；配对码框数字键盘 + Done、最多 6 位。
+- 配对模式下令牌框与页脚（来自 UiKit 的 `Kit.DialogFooter`）「连接」退场，「提交配对码」是唯一主键；配对码框数字键盘 + Done、最多 6 位。
 
 ## 外观
 

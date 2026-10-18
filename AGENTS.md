@@ -115,7 +115,7 @@
 
 | 事项 | 使用方 | 保留理由 | 可验证的解除条件 |
 | --- | --- | --- | --- |
-| `compose/*.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本；包版本固定为 `0.0.0-local` | `./x compose`；旧仓库 `tools/wanxiang2-feed.sh` | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
+| `.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本；包版本固定为 `0.0.0-local` | `compose/*`（消费库与组合者包）；`libs/*` 对 `UiKit` 的引用；`./x compose`、`./x test`、`./x app`；旧仓库 `tools/wanxiang2-feed.sh` | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
 
 已解除：2026-10-13 删去「`compose/LedgerStore` 与旧仓库 `Store.fs` 双重实现」一项。旧仓库分支 `extract-ledger@8f39e84` 改为消费 `Wanxiang2.LedgerStore` 包，`Store.fs` 只剩领域接线。
 
@@ -141,14 +141,16 @@
 
 ## 布局与工具
 
-- `libs/<Name>/`：一项独立职责，一个库：`<Name>.fsproj`、`tests/`、`AGENTS.md`。库之间没有任何依赖边（不只是无环），测试只引用本库。[LEMMA: 4, 5; SPEC: 2]
+- `libs/<Name>/`：一项独立职责，一个库：`<Name>.fsproj`、`tests/`、`AGENTS.md`。库之间没有任何依赖边（不只是无环），测试只引用本库；唯一例外是基础库 `UiKit`（2026-10-18 起）：控件库可以声明依赖它，`./x check` 只放行这一个包名，其余兄弟包一律拒绝。[LEMMA: 4, 5, 8; SPEC: 2]
 - `compose/<Name>/`：组合者 C，只经交付包使用库，不引用库源码。[LEMMA: 4; SPEC: 2, 4]
-- `./x test <lib>`：只凭本库与声明的外部包构建并测试。`./x check`：库项目不引用本库目录以外的东西，也不引用兄弟库的包；组合者项目不引用自己目录以外的东西；组合者目录必须有 `AGENTS.md`。`./x pack`：打出交付包。`./x compose`：清掉包缓存里的 `Wanxiang2.*` 后，从 `artifacts/feed` 消费交付包，测试组合者。`./x consume`：在仓库外的临时项目里只从 `artifacts/feed` 取包，构建并运行。`./x app`：从交付包构建 `app/` 下的两个入口（PWA 需 wasm-tools workload）。`./x all` 依次执行 check、逐库 test、pack、compose、consume。CI（`.github/workflows/ci.yml`）先 pack 出 feed 工件，库测试每个库一个任务，另有组合、仓库外消费（consume）与入口构建（app）任务消费该工件。
+- `./x test <lib>`：只凭本库与声明的外部包构建并测试（控件库的 `UiKit` 包若不在 feed 里会先自动 pack 一次）。`./x check`：库项目不引用本库目录以外的东西，只允许 `UiKit` 这一个兄弟包；组合者项目不引用自己目录以外的东西；组合者目录必须有 `AGENTS.md`；每个库必须有生产消费者（否则要在库目录放 `UNWIRED.md` 登记理由与解除条件）；`wanxiang2.slnx` 必须与 `./x sln` 的生成一致。`./x pack`：按依赖顺序打出所有交付包（库与组合者都是交付物）。`./x compose`：清掉包缓存里的 `Wanxiang2.*` 后，从 `artifacts/feed` 消费交付包，测试组合者。`./x consume`：在仓库外的临时项目里只从 `artifacts/feed` 取包，构建并运行。`./x app`：从交付包构建 `app/` 下的两个入口（PWA 需 wasm-tools workload）。`./x all` 依次执行 check、逐库 test、pack、compose、consume；逐库 test 与组合者测试并发跑（`XJOBS` 可覆盖并发数，默认 min(8, 核数)）。CI（`.github/workflows/ci.yml`）先 pack 出 feed 工件，库测试每个库一个任务（同样消费该工件），另有组合、仓库外消费（consume）与入口构建（app）任务消费该工件。
 - `./x check` 检查的是项目文件里的引用，不检查运行时调用；运行时独立靠每个库的测试不带任何兄弟库仍能通过（构建上就拿不到兄弟库）。
 
 ## 界面控件库（widget lib）
 
-库可以依赖界面框架（Avalonia、IconPacks.Avalonia.Lucide 等，版本登记在 `Directory.Packages.props`，与旧仓库一致）。控件库连控件、行为带状态一起拥有，但仍与兄弟库没有任何依赖边。[LEMMA: 3, 4, 5]
+库可以依赖界面框架（Avalonia、IconPacks.Avalonia.Lucide 等，版本登记在 `Directory.Packages.props`，与旧仓库一致）。控件库连控件、行为带状态一起拥有；跨库依赖只有下边那条基础库 `UiKit`，与其余兄弟库没有任何依赖边。[LEMMA: 3, 4, 5, 8]
+
+- **基础库 `UiKit`（跨库依赖的唯一出口）：** 控件库共用的原语都在这里——`Follow`（挂上可视树才订阅、摘下退订的活值跟随）、`Tap` / `Spot` / `InvokeBorder`（可点 Border 与读屏 Invoke）、`Tone` / `TagTone`、`KitLook` + `Kit`（旧 `Controls/Primitives.fs` 的字段组、输入壳、开关、设置行、对话框页脚）。控件库自己的 `Kit.fs` 只剩一张「本库 Look → `KitLook`」的映射。本库不依赖任何 `Wanxiang2.*` 包，也不放领域规则与控件行为（那些留在各控件库）；两件事都由 `./x check` 盯住。2026-10-18 之前，这些原语在 36 个控件库各复制了一份（约 1.1 万行），见「收束后整理」。
 
 - **生成：** `./x new-widget <Name>` 由 `tools/widget-template` 生成 `libs/<Name>`（库 + Avalonia headless 行为测试），目录已存在就拒绝。测试不用 `Avalonia.Headless.XUnit`（.NET 10 上会死锁），直接用 `HeadlessUnitTestSession`，与旧仓库相同。CI 的 `widget-template` 任务每次生成一个控件库并测试，还验证 `./x check` 拒绝库对库引用。
 - **样式值都是可变的，不写死。** 控件库不含任何字面样式值（颜色、画笔、尺寸、字体、间距、圆角、时长）。这些值由主题管理者（`compose/Theme` 或一个主题管理库）拥有，是活的可变实例；管理者改值，所有控件跟着变。
@@ -166,6 +168,19 @@
 - SPEC 4 协作由真实组合证明：`compose/LedgerStore/tests` 覆盖成功、类型化拒绝、重复、游标分页、在每个字节处崩溃、半写尾与修复、解码失败、过期快照、快照策略与快照写失败、真实未知结果（`/dev/full`）、并发、同目录互斥。「写失败但确知未写」也有真实故障（测试临时收紧 RLIMIT_FSIZE，EFBIG 后截回成功），见 JsonSeq SPEC 8 与 compose/LedgerStore SPEC 15。
 - SPEC 5 增强经得起拆除：目前没有增强层，不适用。
 - SPEC 6 每步形成真实闭环：见下表。
+
+## 收束后整理（2026-10-18，抽取路线收束之后的第一次全仓整理）
+
+1. **孤儿库退役（8 个）。** 全仓扫出 8 个零消费者的库：`CopyConfirm`、`RovingIndex`、`SidebarRowState`、`StartLayout`、`SendKey`、`UiPrimitives`、`ProbeCounter`、`BrowserProbe`。前五个是早期迁出的纯逻辑库，其规则在控件库重写时被内联进真正的行为拥有者（`CopyButton`、`PopupMenu`/`SettingsFrame`、`ConversationRows`、`ShellLayout`、`ComposerBox`），原库成了同一事实的第二份；后三个分别是被控件库取代的历史原语库与从未接线的探针链（`?wxprobe=1` / `WANXIANG_PARITY_PROBE`，见 `docs/ux/r28-pwa-parity.md`）。处置：删除，不建兼容层；被删库的旧用例其等价断言在各行为拥有者的 headless 测试里（`SendKey.sends` 的 8 种组合并入 `ComposerBox` 的 Enter 矩阵；`StartLayout` 两条规则在 `ShellLayout` 测试；`SidebarRowState` 三条规则在 `ConversationRows` 测试）。
+2. **`ComposerBox` 的发送判定修正。** 内联判定原先漏了 `not shift`：Enter 发送档里 Ctrl+Shift+Enter 会误发送；已改为与旧 `SendKey.sends` 相同的 `not shift && (enterSends <> ctrl)`，并由测试钉住两种模式的全部组合。
+3. **`libs/UiKit` 建立，36 份复制件合并成 1 份。** 控件库各自的 `Kit.fs`（18 份 309 行全量版 + 18 份 62 行 Follow/Spot 版 + `SkeletonList` 的 38 行版）、`PopupMenu`/`ToastStrip` 的 `InvokeBorder`、三个对话框页的 `Footer`、`ApprovalPanel`/`ExportSheet`/`ImportSheet` 的 `Tap`，以及 `MarkdownView`、`MessageCardView`、`MathFigure` 各自的 `Follow` 副本，统一归 `libs/UiKit`。纯删除约 1.1 万行；`./x test` 对 37 个受影响库逐个通过。
+4. **工具与 CI。** `./x check` 增加「无消费者库」检查与 `UNWIRED.md` 例外（登记理由与解除条件），模板 `tools/widget-template` 自带该文件；`./x pack` 改为库与组合者统一按依赖顺序打包（`UiKit` 自然排在被依赖方前）；`./x all` 的逐库测试与组合者测试并行（`XJOBS`）；CI 的库测试矩阵与 widget-template 任务改为消费 pack 出的 feed 工件。
+5. **例外清单同步。** `VersionOverride="0.0.0-local"` 一行补上新的使用方（库对 `UiKit` 的包引用）。
+6. **`ControlStroke`：输入类控件的边界描边过 WCAG 1.4.11。** `docs/ux/a11y-audit.md` §2 一直记着「以描边作唯一边界的输入框」不达标（`border` 浅 1.33~1.47、深 1.46~1.92）。实测确认边界只靠描边（`FieldSurface` 与 `Surface` 同值，没有填充差），于是 `libs/ThemePalette` 补 `ControlStroke`（浅 `#8D8A7E`、深 `#76767F`；对 Surface / SurfaceRaised / SurfaceContainer / Canvas 两套主题都 ≥ 3:1），22 处 `FieldEdge` 与 `ComposerBox` 的 `BoxInk.ControlStroke` 改用它，聚焦态仍是 `Accent`。机械断言 `compose/Theme/tests/A11yRegression.fs` 的 `控件边界描边在四种底上都过 1.4.11`；`ComposerDesk` / `Workspace` 整树金样里 7 行壳描边按新值改（有意偏离，已在这两个组合者的 AGENTS.md 记明）。`border` / `line` 数值不变，仍作装饰性分割。
+
+7. **看过的、决定不动的：测试工程的 `Headless.fs` / `Probe.fs` / `Dump.fs` 副本**（libs 与 compose 的 tests 目录共约 74 / 18 / 7 份，逐字节相同的部分约 4–5 千行）保留按库复制，不进基础库。理由：它们是测试脚手架，各库测试自足（SPEC 2「只凭本库与声明依赖」）；副本漂移只影响本库且会立刻在本地测试里响，没有 `UiKit` 那种「36 份行为必须一致」的正确性压力；合并需要再开一类「测试支撑包」依赖并为此在 `./x check` 再开一个口子，代价大于收益（Axiom 2、LEMMA 8）。将来若真出现跨库同步的测试基建需求，再按 LEMMA 1 重新判断。
+
+**证据（2026-10-18，本机）：** `XJOBS=10 ./x all` —— `check ok: 247 libs with no sibling references; 72 composer(s) using packages only`；逐库测试 247 个工程全部通过；`./x compose` 67 个工程全部通过；`./x consume` 通过（仓库外消费者提交后重开得到 `Used 1UL`）。`./x app` 两个入口构建成功。新检查的负例也跑过：`./x new-widget CiSmoke` 生成后 `./x check` 通过（模板自带 `UNWIRED.md`），删掉该文件即失败并给出指引，库引用兄弟包（`Wanxiang2.BatchBar`）被拒；`./x test BatchBar` 在 feed 里没有 UiKit 包时会先自动 pack。本轮删掉的 8 个库、`UiKit` 的 37 个受影响库、`ControlStroke` 的两个金样（`ComposerDesk`、`Workspace`）都在上述命令的覆盖里。
 
 ## 迁移状态
 

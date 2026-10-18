@@ -6,7 +6,7 @@
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
 #   ./x consume       在仓库外的临时项目里只从 artifacts/feed 取包，构建并真实运行
 #   ./x app           从 artifacts/feed 构建 app/ 下的入口（Pwa 需 wasm-tools workload）
-#   ./x all           check + 逐库 test + pack + compose + consume
+#   ./x all           check + 逐库 test + pack + compose + consume（测试并发：XJOBS，默认 min(8, 核数)）
 #   ./x sln           由 libs/ 重新生成 wanxiang2.slnx
 #   ./x new-widget <Name>  由 tools/widget-template 生成控件库 libs/<Name>（目录已存在则拒绝）
 set -euo pipefail
@@ -32,6 +32,15 @@ need_lib() {
   [[ -n "${1:-}" && -d "libs/$1" ]] || { echo "unknown lib: ${1:-}" >&2; echo "libs: $(libs | tr '\n' ' ')" >&2; exit 2; }
 }
 
+# 基础库 UiKit 是控件库唯一允许的跨库依赖；单测一个库前先确保它的包在 feed 里
+#（控件库的 PackageReference 只从 artifacts/feed 还原，见根 NuGet.config）。
+ensure_base_packed() {
+  [[ -f artifacts/feed/Wanxiang2.UiKit.0.0.0-local.nupkg ]] || {
+    echo "== pack UiKit（控件库的基础依赖，feed 里还没有）"
+    dotnet pack libs/UiKit/UiKit.fsproj -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo
+  }
+}
+
 # 项目文件中的相对引用路径（ProjectReference / Import / Compile）
 refs() { grep -oE '(ProjectReference|Import|Compile)[^>]*(Include|Project)="[^"]*"' "$1" | sed -E 's/.*"([^"]*)"/\1/' || true; }
 
@@ -53,7 +62,10 @@ check() {
       if [[ "$proj" != */tests/* ]] && grep -q 'ProjectReference' "$proj"; then
         echo "FAIL $lib: main project must have no ProjectReference"; bad=1
       fi
-      if grep -q 'Wanxiang2\.' "$proj"; then echo "FAIL $lib: $proj uses a sibling package"; bad=1; fi
+      # 库唯一允许的跨库依赖是声明的基础库 UiKit（根 AGENTS.md 例外清单）；其余 Wanxiang2.* 都是兄弟库。
+      local sibs
+      sibs="$(grep -oE 'Wanxiang2\.[A-Za-z0-9]+' "$proj" | sort -u | grep -v '^Wanxiang2\.UiKit$' || true)"
+      if [[ -n "$sibs" ]]; then echo "FAIL $lib: $proj uses sibling package(s): $(echo $sibs | tr '\n' ' ')"; bad=1; fi
     done < <(find "libs/$lib" \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*')
   done
   # 组合者：不经 ProjectReference 碰 libs/（只用交付包）；库不知道组合者
@@ -68,6 +80,23 @@ check() {
     done < <(find "compose/$c" -name '*.fsproj' -not -path '*/obj/*' -not -path '*/bin/*')
   done
   if ! diff -q <(gen_sln) wanxiang2.slnx >/dev/null 2>&1; then echo "FAIL wanxiang2.slnx out of date (run ./x sln)"; bad=1; fi
+  # 每个库都要有消费者：至少一个 libs/compose/app 的生产工程（非 tests/）引用它的包。
+  # 没有消费者的库是死重（Axiom 2）：接上、删掉，或者确有过渡必要就在库目录放 UNWIRED.md
+  #（登记理由与可验证的解除条件，LEMMA 9）。这条检查是 2026-10-18 那次「孤儿库」整理的固化。
+  local consumed
+  consumed="$(
+    for proj in $(find libs compose app \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' -not -path '*/tests/*'); do
+      grep -oE 'Wanxiang2\.[A-Za-z0-9]+' "$proj" | sed 's/^Wanxiang2\.//'
+    done | sort -u
+  )"
+  for lib in $(libs); do
+    if ! grep -qx "$lib" <<< "$consumed"; then
+      if [[ -s "libs/$lib/UNWIRED.md" ]]; then :; else
+        echo "FAIL $lib: no production consumer (wire it into a composer/app, delete it, or add libs/$lib/UNWIRED.md with reason + exit condition)"
+        bad=1
+      fi
+    fi
+  done
   # 包二进制不得进 Git 索引。忽略规则挡不住已经暂存的文件。
   local packed
   packed="$(git ls-files '*.nupkg' '*.snupkg' '*.tgz' 2>/dev/null || true)"
@@ -92,14 +121,10 @@ component_projs() {
 
 pack() {
   rm -rf artifacts/feed
-  # 库：主工程（F# 为 <lib>.fsproj；需要 C# source generator 的为 <lib>.csproj），按实际文件名打。
-  for proj in $(component_projs | grep '^libs/'); do
-    dotnet pack "$proj" -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo
-  done
-  # 组合者也是交付物；它自己从 feed 消费库包
-  rm -rf artifacts/packages/wanxiang2.* compose/*/obj
-  # 组合者可以消费别的组合者的包：按依赖顺序打包（依赖的包还不在 feed 里就留到下一轮）
-  local todo; todo="$(component_projs | grep '^compose/')"
+  # 库与组合者都是交付物，都从 feed 消费 Wanxiang2.* 包（库只允许依赖基础库 UiKit）。
+  rm -rf artifacts/packages/wanxiang2.*
+  # 按依赖顺序打包：依赖的包还不在 feed 里就留到下一轮（UiKit 这类基础库自然排在被依赖方前面）。
+  local todo; todo="$(component_projs)"
   while [[ -n "$todo" ]]; do
     local next="" progressed=0
     for proj in $todo; do
@@ -121,13 +146,59 @@ compose() {
   [[ -d artifacts/feed ]] || pack
   # 干净消费：包缓存里不留任何 Wanxiang2.*，确保用的是刚打的包，而不是旧缓存或源码
   rm -rf artifacts/packages/wanxiang2.* compose/*/obj compose/*/tests/obj
-  for c in $(composers); do
-    echo "== compose/$c"
-    # 无 tests/ 的组合者（CredentialStore、EntryShells、ExternalLinks、UiPrefsFile、UrlSchemeRegistrationIo）
-    # 跳过，与 gen_sln 的口径一致：不要求每个组合者都有测试工程。
-    [[ -f "compose/$c/tests/$c.Tests.fsproj" ]] || continue
-    dotnet test --project "compose/$c/tests/$c.Tests.fsproj" -p:RestorePackagesPath="$PWD/artifacts/packages"
+  # 无 tests/ 的组合者（CredentialStore、EntryShells、ExternalLinks、UiPrefsFile、UrlSchemeRegistrationIo）
+  # 跳过，与 gen_sln 的口径一致：不要求每个组合者都有测试工程。
+  local list
+  list="$(for c in $(composers); do [[ -f "compose/$c/tests/$c.Tests.fsproj" ]] && echo "compose/$c/tests/$c.Tests.fsproj"; done)"
+  run_tests_parallel "compose（组合者测试）" "$list" "$(test_jobs)" "-p:RestorePackagesPath=$PWD/artifacts/packages"
+}
+
+# 并发数：默认 min(8, 核数)；XJOBS 可覆盖。
+test_jobs() {
+  if [[ -n "${XJOBS:-}" ]]; then echo "$XJOBS"; else
+    local n; n="$(nproc 2>/dev/null || echo 4)"
+    echo $(( n < 8 ? n : 8 ))
+  fi
+}
+
+# 并行跑一组测试工程：list 是换行分隔的工程路径；每工程一份日志（/tmp），结束只回显失败项与汇总。
+# extra 作为每个 dotnet test 的附加参数（如 RestorePackagesPath）。
+run_tests_parallel() {
+  local title="$1" list="$2" jobs="$3" extra="${4:-}"
+  local logdir; logdir="$(mktemp -d /tmp/wanxiang2-tests-XXXXXX)"
+  local total=0 running=0
+  echo "== $title（并发 $jobs；日志 $logdir）"
+  while IFS= read -r proj; do
+    [[ -n "$proj" ]] || continue
+    local name; name="$(basename "$(dirname "$(dirname "$proj")")")"
+    total=$((total+1))
+    (
+      if dotnet test --project "$proj" $extra > "$logdir/$name.log" 2>&1; then
+        echo ok > "$logdir/$name.status"
+      else
+        echo FAIL > "$logdir/$name.status"
+      fi
+    ) &
+    running=$((running+1))
+    if [[ $running -ge $jobs ]]; then wait -n || true; running=$((running-1)); fi
+  done <<< "$list"
+  wait || true
+  local failed=0
+  for s in "$logdir"/*.status; do
+    [[ -e "$s" ]] || continue
+    if [[ "$(cat "$s")" == FAIL ]]; then
+      local name; name="$(basename "$s" .status)"
+      failed=$((failed+1))
+      echo "-- FAIL $name（日志 $logdir/$name.log 末尾）"
+      tail -25 "$logdir/$name.log"
+    fi
   done
+  if [[ $failed -eq 0 ]]; then
+    echo "== $title：$total 个工程全部通过（日志 $logdir）"
+  else
+    echo "== $title：$total 个工程中 $failed 个失败" >&2
+    return 1
+  fi
 }
 
 # 仓库外消费：交付包要能在仓库外使用（根 SPEC 2；compose/LedgerStore SPEC 14）。
@@ -200,7 +271,7 @@ gen_sln() {
 }
 
 case "${1:-}" in
-  test)    need_lib "${2:-}"; dotnet test --project "libs/$2/tests/$2.Tests.fsproj" ;;
+  test)    need_lib "${2:-}"; ensure_base_packed; dotnet test --project "libs/$2/tests/$2.Tests.fsproj" ;;
   check)   check ;;
   pack)    pack ;;
   compose) compose ;;
@@ -216,7 +287,8 @@ case "${1:-}" in
     gen_sln > wanxiang2.slnx; echo "created libs/$2" ;;
   all)
     check
-    for lib in $(libs); do echo "== $lib"; dotnet test --project "libs/$lib/tests/$lib.Tests.fsproj"; done
+    ensure_base_packed
+    run_tests_parallel "逐库测试" "$(libs | sed 's#^\(.*\)$#libs/\1/tests/\1.Tests.fsproj#')" "$(test_jobs)"
     pack; compose; consume ;;
   # 用法块 = 开头连续的注释行；行数变化自动同步（末行是第一条非注释行，去掉）
   *) sed -n '2,/^[^#]/p' "$0" | sed '$d'; exit 2 ;;

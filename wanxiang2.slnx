@@ -107,10 +107,6 @@
     <Project Path="libs/BrowserPage/BrowserPage.csproj" />
     <Project Path="libs/BrowserPage/tests/BrowserPage.Tests.fsproj" />
   </Folder>
-  <Folder Name="/BrowserProbe/">
-    <Project Path="libs/BrowserProbe/BrowserProbe.csproj" />
-    <Project Path="libs/BrowserProbe/tests/BrowserProbe.Tests.fsproj" />
-  </Folder>
   <Folder Name="/BrowserRich/">
     <Project Path="libs/BrowserRich/BrowserRich.csproj" />
     <Project Path="libs/BrowserRich/tests/BrowserRich.Tests.fsproj" />
@@ -242,10 +238,6 @@
   <Folder Name="/CopyButton/">
     <Project Path="libs/CopyButton/CopyButton.fsproj" />
     <Project Path="libs/CopyButton/tests/CopyButton.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/CopyConfirm/">
-    <Project Path="libs/CopyConfirm/CopyConfirm.fsproj" />
-    <Project Path="libs/CopyConfirm/tests/CopyConfirm.Tests.fsproj" />
   </Folder>
   <Folder Name="/CountdownTicker/">
     <Project Path="libs/CountdownTicker/CountdownTicker.fsproj" />
@@ -659,10 +651,6 @@
     <Project Path="libs/PopupPlacement/PopupPlacement.fsproj" />
     <Project Path="libs/PopupPlacement/tests/PopupPlacement.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ProbeCounter/">
-    <Project Path="libs/ProbeCounter/ProbeCounter.fsproj" />
-    <Project Path="libs/ProbeCounter/tests/ProbeCounter.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ProbeFailureKind/">
     <Project Path="libs/ProbeFailureKind/ProbeFailureKind.fsproj" />
     <Project Path="libs/ProbeFailureKind/tests/ProbeFailureKind.Tests.fsproj" />
@@ -739,10 +727,6 @@
     <Project Path="libs/RichScripts/RichScripts.fsproj" />
     <Project Path="libs/RichScripts/tests/RichScripts.Tests.fsproj" />
   </Folder>
-  <Folder Name="/RovingIndex/">
-    <Project Path="libs/RovingIndex/RovingIndex.fsproj" />
-    <Project Path="libs/RovingIndex/tests/RovingIndex.Tests.fsproj" />
-  </Folder>
   <Folder Name="/RowFocus/">
     <Project Path="libs/RowFocus/RowFocus.fsproj" />
     <Project Path="libs/RowFocus/tests/RowFocus.Tests.fsproj" />
@@ -787,10 +771,6 @@
     <Project Path="libs/SectionMemory/SectionMemory.fsproj" />
     <Project Path="libs/SectionMemory/tests/SectionMemory.Tests.fsproj" />
   </Folder>
-  <Folder Name="/SendKey/">
-    <Project Path="libs/SendKey/SendKey.fsproj" />
-    <Project Path="libs/SendKey/tests/SendKey.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ServerErrorRoute/">
     <Project Path="libs/ServerErrorRoute/ServerErrorRoute.fsproj" />
     <Project Path="libs/ServerErrorRoute/tests/ServerErrorRoute.Tests.fsproj" />
@@ -831,10 +811,6 @@
     <Project Path="libs/SidebarEmpty/SidebarEmpty.fsproj" />
     <Project Path="libs/SidebarEmpty/tests/SidebarEmpty.Tests.fsproj" />
   </Folder>
-  <Folder Name="/SidebarRowState/">
-    <Project Path="libs/SidebarRowState/SidebarRowState.fsproj" />
-    <Project Path="libs/SidebarRowState/tests/SidebarRowState.Tests.fsproj" />
-  </Folder>
   <Folder Name="/SidebarSearch/">
     <Project Path="libs/SidebarSearch/SidebarSearch.fsproj" />
     <Project Path="libs/SidebarSearch/tests/SidebarSearch.Tests.fsproj" />
@@ -866,10 +842,6 @@
   <Folder Name="/Sse/">
     <Project Path="libs/Sse/Sse.fsproj" />
     <Project Path="libs/Sse/tests/Sse.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/StartLayout/">
-    <Project Path="libs/StartLayout/StartLayout.fsproj" />
-    <Project Path="libs/StartLayout/tests/StartLayout.Tests.fsproj" />
   </Folder>
   <Folder Name="/StartReady/">
     <Project Path="libs/StartReady/StartReady.fsproj" />
@@ -976,13 +948,13 @@
     <Project Path="libs/TranscriptMarkdown/TranscriptMarkdown.fsproj" />
     <Project Path="libs/TranscriptMarkdown/tests/TranscriptMarkdown.Tests.fsproj" />
   </Folder>
+  <Folder Name="/UiKit/">
+    <Project Path="libs/UiKit/UiKit.fsproj" />
+    <Project Path="libs/UiKit/tests/UiKit.Tests.fsproj" />
+  </Folder>
   <Folder Name="/UiPrefs/">
     <Project Path="libs/UiPrefs/UiPrefs.fsproj" />
     <Project Path="libs/UiPrefs/tests/UiPrefs.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/UiPrimitives/">
-    <Project Path="libs/UiPrimitives/UiPrimitives.fsproj" />
-    <Project Path="libs/UiPrimitives/tests/UiPrimitives.Tests.fsproj" />
   </Folder>
   <Folder Name="/UploadFacts/">
     <Project Path="libs/UploadFacts/UploadFacts.fsproj" />

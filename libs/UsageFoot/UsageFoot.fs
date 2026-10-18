@@ -1,5 +1,7 @@
 namespace Wanxiang2.UsageFoot
 
+open Wanxiang2.UiKit
+
 open System
 open System.Globalization
 open Avalonia

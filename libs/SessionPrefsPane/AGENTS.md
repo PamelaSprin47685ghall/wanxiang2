@@ -4,7 +4,7 @@
 
 - `SessionPrefsPane(look, modelPicker, init, validationFor)`：`View`、四个参数框与系统指令框、`SaveButton`、`CancelButton`、`Parameters`、`ToolsExpander`、`Summary`。
   - 动作：`ShowSummary`（多错摘要，任一参数框改动即收起）、`RevealParameters`、`SetPending`。
-  - 事件：`SaveRequested SessionPrefsDraft`（原始输入 + 选中工具 id）、`Cancelled`。Ctrl/⌘ + Enter 与页脚行级 Enter 保存。
+  - 事件：`SaveRequested SessionPrefsDraft`（原始输入 + 选中工具 id）、`Cancelled`。Ctrl/⌘ + Enter 与页脚（来自 UiKit 的 `Kit.DialogFooter`）行级 Enter 保存。
 - 工具折叠头「工具 · 已启用 N 项」在展开 / 收起时更新，不重建开关。
 
 ## 外观

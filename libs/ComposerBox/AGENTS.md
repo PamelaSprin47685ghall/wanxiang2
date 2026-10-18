@@ -4,7 +4,7 @@
 
 ## 外观
 
-- `ComposerBoxLook`：`Ink`、`Gauge`、`BodyFont`、`Glyph`、`DressSend` / `DressQueue` / `DressAttach` / `DressGhost`。
+- `ComposerBoxLook`：`Ink`、`Gauge`、`BodyFont`、`Glyph`、`DressSend` / `DressQueue` / `DressAttach` / `DressGhost`。输入壳的静止/禁用边界描边走 `BoxInk.ControlStroke`（≥3:1，见 `libs/ThemePalette` 与 `docs/ux/a11y-audit.md` §2），聚焦与拖入仍是 `Accent`。
 
 ## 证据与旧测试
 

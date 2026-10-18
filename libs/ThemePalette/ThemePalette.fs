@@ -64,6 +64,8 @@ type PaletteKey =
     | Pressed
     | SurfaceSoft
     | UserBubbleSelection
+    /// 控件边界描边（输入壳、开关轨道这类「描边就是边界」的控件用）；对四种基础表面 ≥ 3:1（WCAG 1.4.11）。
+    | ControlStroke
 
 /// 旧 Design/Palette.fs 的两套配色数据（暖纸浅色、墨夜深色）。只有数据，没有可变状态：
 /// 活的画笔归主题管理者。
@@ -126,7 +128,8 @@ module ThemePalette =
           PaletteKey.Hover
           PaletteKey.Pressed
           PaletteKey.SurfaceSoft
-          PaletteKey.UserBubbleSelection ]
+          PaletteKey.UserBubbleSelection
+          PaletteKey.ControlStroke ]
 
     let rec private light (key: PaletteKey) : Color =
         match key with
@@ -185,6 +188,8 @@ module ThemePalette =
         | PaletteKey.SurfaceSoft -> let s = light PaletteKey.Surface in Color.FromArgb(0x55uy, s.R, s.G, s.B)
         // 用户气泡选中底：半透明白，明暗相同（旧 Tokens.userBubbleSelection）
         | PaletteKey.UserBubbleSelection -> argb 0x59FFFFFFu
+        // 控件边界描边：对 Surface 3.31、SurfaceRaised 3.46、SurfaceContainer / Canvas 3.14（本仓库补的令牌，旧配色没有）
+        | PaletteKey.ControlStroke -> rgb 0x8D8A7E
 
     let rec private dark (key: PaletteKey) : Color =
         match key with
@@ -243,6 +248,8 @@ module ThemePalette =
         | PaletteKey.SurfaceSoft -> let s = dark PaletteKey.Surface in Color.FromArgb(0x55uy, s.R, s.G, s.B)
         // 用户气泡选中底：半透明白，明暗相同（旧 Tokens.userBubbleSelection）
         | PaletteKey.UserBubbleSelection -> argb 0x59FFFFFFu
+        // 控件边界描边：对 Surface 3.51、SurfaceRaised 3.07、SurfaceContainer 3.68、Canvas 4.04（本仓库补的令牌，旧配色没有）
+        | PaletteKey.ControlStroke -> rgb 0x76767F
 
     /// 某一模式下某一项的颜色
     let color (mode: PaletteMode) (key: PaletteKey) : Color =

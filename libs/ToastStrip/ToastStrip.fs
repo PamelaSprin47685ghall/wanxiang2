@@ -7,6 +7,7 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.UiKit
 
 /// 提示条语气。Info 承载信息性进展播报，与 Neutral 的弱存在提示分开。
 [<RequireQualifiedAccess>]

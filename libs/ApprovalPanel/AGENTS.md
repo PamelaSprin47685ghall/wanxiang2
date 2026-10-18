@@ -3,7 +3,7 @@
 工具审批卡与卡宿主（迁自旧 `Views/ToolApprovalCard.fs`：`ToolApprovalCard.build` → `ApprovalCard.build`，`ToolApprovalPanel` → `ApprovalPanel`）。根规则见项目根目录 AGENTS.md。
 
 - 批准 / 拒绝只发一次，随后两键不可用并在 polite 状态行显示「已发送」文案；参数默认收起，「查看参数」展开全文；没有参数（空或 `{}`）不显示该键。
-- 按钮是可聚焦 Border（读屏 Button + Invoke，Enter / Space / 左键），命中高度不低于 Look 的触控下限，两键等宽、行宽封顶。
+- 按钮用 `Wanxiang2.UiKit` 的 `Tap.TextButton`（可聚焦 Border，读屏 Button + Invoke，Enter / Space / 左键），命中高度不低于 Look 的触控下限，两键等宽、行宽封顶。
 - 文案是插槽 `ApprovalTexts`，组合者填 ApprovalCardText 的 `policyNote`、`sentText`、`displayArguments`、`argsToggleText`；固定标题「模型想使用工具，需要你批准」与读屏名格式照旧。
 - AutomationId 与旧代码相同：`tool-approval-summary`、`-status`、`-approve`、`-deny`、`-args`、`-args-toggle`、`tool-approval-<id>`。
 

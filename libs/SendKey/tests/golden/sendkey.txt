@@ -1,8 +1,0 @@
-sends enterSends=true shift=false ctrl=false -> true
-sends enterSends=true shift=false ctrl=true -> false
-sends enterSends=true shift=true ctrl=false -> false
-sends enterSends=true shift=true ctrl=true -> false
-sends enterSends=false shift=false ctrl=false -> false
-sends enterSends=false shift=false ctrl=true -> true
-sends enterSends=false shift=true ctrl=false -> false
-sends enterSends=false shift=true ctrl=true -> false

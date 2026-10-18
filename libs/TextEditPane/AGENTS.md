@@ -3,7 +3,7 @@
 长文本编辑的内容（迁自旧 `Views/Dialogs.fs` 的 editText：编辑消息并分叉）。根规则见项目根目录 AGENTS.md。
 
 - `TextEditPane(look, title, initial, confirmLabel)`：`View`、`Box`、`CancelButton`、`ConfirmButton`；`FocusEnd()`（聚焦并把光标放末尾）。
-- 事件：`Submitted`（原文）、`Cancelled`。Ctrl/⌘ + Enter 提交。
+- 事件：`Submitted`（原文）、`Cancelled`。Ctrl/⌘ + Enter 或对话框页脚（来自 UiKit 的 `Kit.DialogFooter`）提交。
 
 ## 外观
 

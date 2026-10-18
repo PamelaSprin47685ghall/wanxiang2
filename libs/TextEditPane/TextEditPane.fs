@@ -14,7 +14,7 @@ type TextEditPane(look: TextEditPaneLook, title: string, initial: string, confir
     let cancelled = Event<unit>()
     let shell, box = kit.TextArea("消息内容", look.TextAreaLongMinHeight)
     let submit () = submitted.Trigger(if isNull box.Text then "" else box.Text)
-    let footer = Footer(kit, confirmLabel, Tone.Primary, (fun () -> cancelled.Trigger()), submit)
+    let footer = kit.DialogFooter(confirmLabel, Tone.Primary, (fun () -> cancelled.Trigger()), submit)
     let view =
         box.Text <- initial
         AutomationProperties.SetName(box, "消息内容")

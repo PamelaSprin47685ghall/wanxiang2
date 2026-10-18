@@ -56,6 +56,7 @@ module ComposerLooks =
                 | BoxInk.Hairline -> brush PaletteKey.Hairline
                 | BoxInk.SurfaceContainer -> brush PaletteKey.SurfaceContainer
                 | BoxInk.HairlineStrong -> brush PaletteKey.HairlineStrong
+                | BoxInk.ControlStroke -> brush PaletteKey.ControlStroke
                 | BoxInk.Warning -> brush PaletteKey.Warning
               Gauge =
                 function

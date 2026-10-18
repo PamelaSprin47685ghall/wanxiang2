@@ -21,4 +21,4 @@
 
 ## 与旧实现的差异
 
-- 无行为差异：关闭键文字变化时读屏名随之变化，与旧 `Ui.setButtonText` 相同。
+- 无行为差异：四键用 `Wanxiang2.UiKit` 的 `Tap.TextButton`，关闭键文字变化时读屏名随之变化，与旧 `Ui.setButtonText` 相同。

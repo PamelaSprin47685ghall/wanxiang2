@@ -25,7 +25,7 @@ jobs:
           path: artifacts/feed
           if-no-files-found: error
   test:
-    needs: check
+    needs: pack
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -35,6 +35,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with: { global-json-file: global.json }
+      # 控件库经包引用基础库 UiKit；该包只从 pack 产出的 feed 取。
+      - uses: actions/download-artifact@v8
+        with: { name: feed, path: artifacts/feed }
       - run: ./x test ${{ matrix.lib }}
   compose:
     needs: pack

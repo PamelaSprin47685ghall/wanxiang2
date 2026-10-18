@@ -1,9 +1,9 @@
 # 第 28 轮：桌面 / PWA 生命周期一致性审计
 
-> 基准变更（2026-10-18）：下表是旧仓库 wanxiang（2026-10-17 退役，活文档迁入本仓库）的运行时实测记录，打点靠旧 `ParityProbe`（决策 450）。本仓库只迁了探针的计数与浏览器 JS 绑定（`libs/ProbeCounter`、`libs/BrowserProbe`），逐点打位与宿主开关未接线、`tools/parity_pwa.js` 不存在 → 下表**今天不可复现**，按历史记录读；`?wxprobe=1` 的 JS 钩子仍在 `app/Pwa/wwwroot/main.js`，但只写 `globalThis.__wxProbe`，没有消费者。
+> 基准变更（2026-10-18）：下表是旧仓库 wanxiang（2026-10-17 退役，活文档迁入本仓库）的运行时实测记录，打点靠旧 `ParityProbe`（决策 450）。探针链已于 2026-10-18 退役删除（无接线、无消费者），本表按历史记录读；今天的行为证据是 `compose/AppShell/tests`、`tools/smoke_desktop.sh`、`tools/smoke_published.sh`。
 > 今天的证据基础：`compose/AppShell/tests`（18 个 headless 用例，假端口 rig）、`tools/smoke_desktop.sh`（真实启动断言）、`tools/smoke_published.sh` + `tools/smoke_published_pwa.js`（发布产物 + headless Chrome 壳冒烟）。表中浏览器运行时行为（剪贴板、文件选择/保存、右键菜单、拖放、`visibilitychange/pagehide` 落草稿、焦点在 body 时快捷键、localStorage 持久化）今天只有编译与 JS 绑定契约级证据，无运行时实测。
 
-方法（旧仓库，2026-10 执行）：`ParityProbe`（决策 450，默认关闭）在每条依赖生命周期的路径上打点。PWA 用发布产物 + headless Chrome（`?wxprobe=1`，`tools/parity_pwa.js`）实测；桌面用发布产物 + Xvfb（`WANXIANG_PARITY_PROBE=1`）实测。
+方法（旧仓库，2026-10 执行）：`ParityProbe`（决策 450，默认关闭）在每条依赖生命周期的路径上打点。PWA 用发布产物 + headless Chrome（查询参数开关，`tools/parity_pwa.js`）实测；桌面用发布产物 + Xvfb（`WANXIANG_PARITY_PROBE=1`）实测。
 
 | 行为 | 桌面 | PWA（修复前） | PWA（修复后） | 说明 / 守护 |
 |---|---|---|---|---|

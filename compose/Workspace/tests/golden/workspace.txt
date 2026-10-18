@@ -20,7 +20,7 @@ Grid @0,0 1280x900 cols= rows=
             Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
               ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
                 StackPanel @0,0 0x0 orient=Vertical spacing=8
-            Border @0,8 748x90 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+            Border @0,8 748x90 bg=#fffbfaf7 bd=#ff8d8a7e bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
               Grid @13,9 722x72 cols= rows=
                 StackPanel @0,0 722x72 cell=0,0 orient=Vertical spacing=8
                   ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Disabled vbar=Auto
@@ -69,7 +69,7 @@ Grid @0,0 1280x900 cols= rows=
             Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
               ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
                 StackPanel @0,0 0x0 orient=Vertical spacing=8
-            Border @0,8 748x90 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+            Border @0,8 748x90 bg=#fffbfaf7 bd=#ff8d8a7e bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
               Grid @13,9 722x72 cols= rows=
                 StackPanel @0,0 722x72 cell=0,0 orient=Vertical spacing=8
                   ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Disabled vbar=Auto
@@ -118,7 +118,7 @@ Grid @0,0 1280x900 cols= rows=
             Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
               ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
                 StackPanel @0,0 0x0 orient=Vertical spacing=8
-            Border @0,8 748x90 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+            Border @0,8 748x90 bg=#fffbfaf7 bd=#ff8d8a7e bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
               Grid @13,9 722x72 cols= rows=
                 StackPanel @0,0 722x72 cell=0,0 orient=Vertical spacing=8
                   ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Disabled vbar=Auto
@@ -191,7 +191,7 @@ Grid @0,0 1280x900 cols= rows=
             Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
               ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
                 StackPanel @0,0 0x0 orient=Vertical spacing=8
-            Border @0,205 748x90 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+            Border @0,205 748x90 bg=#fffbfaf7 bd=#ff8d8a7e bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
               Grid @13,9 722x72 cols= rows=
                 StackPanel @0,0 722x72 cell=0,0 orient=Vertical spacing=8
                   ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Disabled vbar=Auto
@@ -240,7 +240,7 @@ Grid @0,0 600x900 cols= rows=
             Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
               ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
                 StackPanel @0,0 0x0 orient=Vertical spacing=8
-            Border @0,8 397x104 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+            Border @0,8 397x104 bg=#fffbfaf7 bd=#ff8d8a7e bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
               Grid @13,9 371x86 cols= rows=
                 StackPanel @0,0 371x86 cell=0,0 orient=Vertical spacing=8
                   ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Auto vbar=Disabled
@@ -289,7 +289,7 @@ Grid @0,0 600x900 cols= rows=
             Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
               ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
                 StackPanel @0,0 0x0 orient=Vertical spacing=8
-            Border @0,8 397x104 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+            Border @0,8 397x104 bg=#fffbfaf7 bd=#ff8d8a7e bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
               Grid @13,9 371x86 cols= rows=
                 StackPanel @0,0 371x86 cell=0,0 orient=Vertical spacing=8
                   ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Auto vbar=Disabled
@@ -362,7 +362,7 @@ Grid @0,0 600x900 cols= rows=
             Border @0,0 0x0 m=0,0,0,8 hidden bg=Transparent
               ScrollViewer @0,0 0x0 m=0,0,8,0 hidden maxh=168 clip hbar=Disabled vbar=Auto
                 StackPanel @0,0 0x0 orient=Vertical spacing=8
-            Border @0,205 397x104 bg=#fffbfaf7 bd=#ffece9de bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
+            Border @0,205 397x104 bg=#fffbfaf7 bd=#ff8d8a7e bt=1,1,1,1 cr=12,12,12,12 pad=12,8,12,8
               Grid @13,9 371x86 cols= rows=
                 StackPanel @0,0 371x86 cell=0,0 orient=Vertical spacing=8
                   ScrollViewer @0,0 0x0 m=0,0,8,8 hidden maxh=104 clip hbar=Auto vbar=Disabled

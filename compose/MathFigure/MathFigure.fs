@@ -6,18 +6,7 @@ open Avalonia.Controls
 open Avalonia.Media
 open Avalonia.VisualTree
 open Wanxiang.UI
-
-/// 活实例只在控件挂进可视树期间订阅，摘下即退订；否则长寿的主题实例会把流式渲染丢弃的控件一直攥着。
-module internal Follow =
-    /// 立即取一次当前值，之后随挂载订阅。
-    let live (control: Control) (source: IObservable<'T>) (apply: 'T -> unit) =
-        (source.Subscribe apply).Dispose()
-        let mutable sub: IDisposable = null
-        control.AttachedToVisualTree.Add(fun _ -> if isNull sub then sub <- source.Subscribe apply)
-        control.DetachedFromVisualTree.Add(fun _ ->
-            if not (isNull sub) then
-                sub.Dispose()
-                sub <- null)
+open Wanxiang2.UiKit
 
 /// 公式控件的外观。全部是主题管理者的活实例：
 /// Ink 是可变画笔（改色不重排）；BodyFont 变了就重排；BlockPadding 是展示式公式上下留白。

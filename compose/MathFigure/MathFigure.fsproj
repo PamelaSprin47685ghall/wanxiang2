@@ -6,6 +6,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.UiKit" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MathTypeset" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MathBaseline" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemeFonts" VersionOverride="0.0.0-local" />

@@ -8,6 +8,7 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.UiKit
 
 /// 浮层菜单里的一项。
 type PopupEntry =
@@ -138,7 +139,7 @@ module PopupMenu =
         onInvoke host (fun () -> activate entry)
         host :> Control
 
-    /// 与 RovingIndex.menu 相同的落点：Home/PageUp 到首、End/PageDown 到尾、Up/Down 首尾回绕。
+    /// 菜单方向键落点（在本文件内联）：Home/PageUp 到首、End/PageDown 到尾、Up/Down 首尾回绕。
     let nextIndex (key: Key) (current: int) (count: int) =
         if count <= 0 then None
         else

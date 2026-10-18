@@ -79,7 +79,6 @@
     <PackageReference Include="Wanxiang2.BrowserCredentials" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BrowserDrafts" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BrowserLocalStore" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BrowserProbe" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.StartupTrace" VersionOverride="0.0.0-local" />
   </ItemGroup>
   <!-- AMD/ANGLE Chrome：Avalonia 默认 failIfMajorPerformanceCaveat=true 会得到“能创建但不呈现 Skia 帧”的 WebGL 上下文，表现为启动画面后白屏。

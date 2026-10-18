@@ -8,6 +8,13 @@ open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
 open Avalonia.Threading
+open Wanxiang2.UiKit
+
+/// 按钮档对应的主题类（旧 Ui.button 的四档）
+module internal TapTone =
+    let primary = [ "surface"; "button-primary"; "hover-accent" ]
+    let secondary = [ "surface"; "button-secondary"; "hover-raised" ]
+    let ghost = [ "surface"; "button-ghost"; "hover-plain" ]
 
 /// 状态行颜色档（读取中退一档；已保存 / 出错 / 其余）
 [<RequireQualifiedAccess>]
@@ -61,10 +68,10 @@ type ExportSheet(look: ExportSheetLook, conversationTitle: string, privacyNote: 
     let heading = TextBlock(Text = "导出对话", FontWeight = FontWeight.Medium, Foreground = look.Text)
     let status = TextBlock(TextWrapping = TextWrapping.Wrap, Foreground = look.Text)
     let progress = ProgressBar(IsIndeterminate = false, Minimum = 0.0, Maximum = 100.0)
-    let closeButton = Tap("取消导出", TapTone.ghost, close.Trigger)
-    let retryButton = Tap("重新导出", TapTone.secondary, retry.Trigger)
-    let saveButton = Tap("保存 Markdown", TapTone.primary, (fun () -> save.Trigger false))
-    let saveJsonButton = Tap("保存 JSON", TapTone.secondary, (fun () -> save.Trigger true))
+    let closeButton = Tap.TextButton("取消导出", TapTone.ghost, close.Trigger)
+    let retryButton = Tap.TextButton("重新导出", TapTone.secondary, retry.Trigger)
+    let saveButton = Tap.TextButton("保存 Markdown", TapTone.primary, (fun () -> save.Trigger false))
+    let saveJsonButton = Tap.TextButton("保存 JSON", TapTone.secondary, (fun () -> save.Trigger true))
     let rowButtons: Tap list = [ closeButton; retryButton; saveJsonButton; saveButton ]
     let content = StackPanel(Orientation = Orientation.Vertical)
 

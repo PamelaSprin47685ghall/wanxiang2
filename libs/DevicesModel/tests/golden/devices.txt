@@ -41,77 +41,21 @@ httpOrigin "ws://[::1]:8787/ws" -> Some "http://[::1]:8787/"
 isLoopbackHost "ws://[::1]:8787/ws" -> true
 inviteTarget "ws://[::1]:8787/ws" -> LoopbackOnly ["http://192.168.1.9:8787/"; "http://10.0.0.2:8787/"]
 inviteTarget-nolan "ws://[::1]:8787/ws" -> LoopbackOnly []
-device { id = "a"
-  name = "Phone"
-  createdAt = Some 10/01/2026 08:00:00 +00:00
-  lastSeen = Some 10/14/2026 11:59:30 +00:00
-  revoked = false
-  online = false
-  current = false
-  desktop = false }
+device id="a" name="Phone" created=2026-10-01T08:00:00.0000000+00:00 seen=2026-10-14T11:59:30.0000000+00:00 revoked=false online=false current=false desktop=false
   lastSeenText 刚刚在线 createdText 加入于 2026-10-01
-device { id = "b"
-  name = "Pad"
-  createdAt = None
-  lastSeen = Some 10/14/2026 11:20:00 +00:00
-  revoked = false
-  online = false
-  current = false
-  desktop = false }
+device id="b" name="Pad" created=- seen=2026-10-14T11:20:00.0000000+00:00 revoked=false online=false current=false desktop=false
   lastSeenText 40 分钟前在线 createdText 加入时间未知
-device { id = "c"
-  name = ""
-  createdAt = None
-  lastSeen = Some 10/14/2026 03:00:00 +00:00
-  revoked = false
-  online = false
-  current = true
-  desktop = false }
+device id="c" name="" created=- seen=2026-10-14T03:00:00.0000000+00:00 revoked=false online=false current=true desktop=false
   lastSeenText 9 小时前在线 createdText 加入时间未知
-device { id = "d"
-  name = ""
-  createdAt = None
-  lastSeen = Some 10/01/2026 03:00:00 +00:00
-  revoked = false
-  online = false
-  current = false
-  desktop = true }
+device id="d" name="" created=- seen=2026-10-01T03:00:00.0000000+00:00 revoked=false online=false current=false desktop=true
   lastSeenText 2026-10-01 在线 createdText 加入时间未知
-device { id = "e"
-  name = ""
-  createdAt = None
-  lastSeen = None
-  revoked = true
-  online = false
-  current = false
-  desktop = false }
+device id="e" name="" created=- seen=- revoked=true online=false current=false desktop=false
   lastSeenText 已吊销 createdText 加入时间未知
-device { id = "f"
-  name = ""
-  createdAt = None
-  lastSeen = None
-  revoked = false
-  online = true
-  current = false
-  desktop = false }
+device id="f" name="" created=- seen=- revoked=false online=true current=false desktop=false
   lastSeenText 在线 createdText 加入时间未知
-device { id = "g"
-  name = ""
-  createdAt = None
-  lastSeen = None
-  revoked = false
-  online = false
-  current = false
-  desktop = false }
+device id="g" name="" created=- seen=- revoked=false online=false current=false desktop=false
   lastSeenText 从未连接 createdText 加入时间未知
-device { id = ""
-  name = ""
-  createdAt = None
-  lastSeen = None
-  revoked = false
-  online = false
-  current = false
-  desktop = false }
+device id="" name="" created=- seen=- revoked=false online=false current=false desktop=false
   lastSeenText 从未连接 createdText 加入时间未知
 qr "https://example.com/" 25 #######.#..##.###.#######|#.....#..###....#.#.....#|#.###.#..#....#.#.#.###.#|#.###.#.###.#####.#.###.#|#.###.#.#..#..###.#.###.#|#.....#.##...#....#.....#|#######.#.#.#.#.#.#######|........##..#.#..........|#...#.####.#..##.#####..#|#..#.#..##.#..##.#..##.#.|#..#.##.##.#####.###.##..|#.#..#.#..##..##.#.#..##.|###.#.#.#....##..###.####|##......###.#.###...#..#.|....#.##.#.#######.####..|..#.#..#..##.#.#...##.##.|####..#.###.##.########..|........#....##.#...#....|#######.#.#.....#.#.#....|#.....#..#..#.#.#...####.|#.###.#.####.##.#########|#.###.#...#.#....###..###|#.###.#..##########..#.#.|#.....#....#.#....######.|#######.###.##.#.##...###
 qr "" 21 #######.##.##.#######|#.....#.##.##.#.....#|#.###.#.##..#.#.###.#|#.###.#..##...#.###.#|#.###.#.##.##.#.###.#|#.....#.......#.....#|#######.#.#.#.#######|.....................|#..#######.#.#..#.###|..#.##.###.###.###.##|..#..###.#.##..#.#..#|######.###..#####..#.|##....##...##########|........#.#.###...###|#######.##.#.....##.#|#.....#.#.....#...#..|#.###.#.###..##.#.##.|#.###.#.##..#####....|#.###.#...####.###.##|#.....#..#.##..#.#.##|#######.#.#.##.##.##.

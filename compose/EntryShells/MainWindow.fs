@@ -55,8 +55,8 @@ type MainWindow(port: MainWindowPort) as this =
 
         SharedTheme.manager.Changed.Add(fun _ -> this.Background <- SharedTheme.manager.Brush PaletteKey.Canvas)
 
-        // TODO(入口壳)：宿主 MainWindow 的 StartupTrace 采样退出（requestExit = Environment.Exit 0）
-        // 是进程级副作用，由入口注入的 MarkFirstFrame 承担；采样退出本身留给 app/Desktop 接线。
+        // 采样模式：Opened 后的第一帧只打点。退出由入口安装的 StartupTrace.requestExit 执行，
+        // 时机在组合者（listReady 后 3 秒，或 chatReady），不在这一帧。
         port.MarkFirstFrame |> Option.iter (fun mark ->
             this.Opened.Add(fun _ -> this.RequestAnimationFrame(fun _ -> mark ())))
 

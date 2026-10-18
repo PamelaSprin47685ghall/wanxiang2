@@ -26,3 +26,4 @@ ScrimFade 150
 DisclosureChevronRotate 150
 ControlRowFade 150
 ToastFade 300
+OutboxConfirmTimeout 30000

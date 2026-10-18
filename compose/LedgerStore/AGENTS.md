@@ -30,7 +30,7 @@
 9. **「结果未知」要说清是哪条提交、用户该做什么。** [根 AXIOM: 5]
     - 推理：只说「未知」，用户不知道丢的可能是什么。现在带上 commitId，只读提示写明「提交 n 可能保存了，也可能没有；重新打开会从日志查明」。不带幂等戳的命令重发可能执行两次，所以不能把它说成「失败，可以重试」。
 7. **故障证据用真实故障，不建注入框架。** [根 SPEC 4; 根 LEMMA 7]
-    - 推理：旧系统的 FaultInjector 是全局可变开关，要在生产代码里埋故障点。新结构里，崩溃对磁盘的影响只有一种：追加在某个字节处中断。所以测试直接写出每一种截断后的文件；写失败用 `/dev/full`；快照失败用「目标是目录」。
+    - 推理：旧系统的 FaultInjector 是全局可变开关，要在生产代码里埋故障点。新结构里，崩溃对磁盘的影响只有一种：追加在某个字节处中断。所以测试直接写出每一种截断后的文件；写失败用 `/dev/full`；写失败但可截回用测试临时收紧的本进程 `RLIMIT_FSIZE` 上限；快照失败用「目标是目录」。
 
 # SPEC
 （证明都在 `tests/Tests.fs`，用真实文件和真实的四个库；`./x compose` 在干净包缓存下运行，Linux 通过。）
@@ -49,8 +49,8 @@
 13. [LEMMA: 1] 100 个并发提交各恰好一次：`concurrent submits each commit exactly once`。
 14a. [LEMMA: 8] 不持锁检查：宿主持锁时能检查、文件字节不变、宿主仍可写：`inspect reads without the lock and writes nothing, also while the host holds it`；宿主并发写 400 条时反复检查，lastId 单调不减，只可能出现 `tailMayBeInFlight` 的损坏：`inspect while the host writes sees a consistent prefix`（连跑 5 次都通过）；损坏证据和半写尾标记：`inspect reports damage with evidence; torn tail is flagged as possibly in flight`。
 14b. [LEMMA: 9] 未知结果带 commitId，只读提示说明事实：`unknown outcome names the commit that may exist`（`/dev/full`）。
-14. [根 SPEC 2] 交付包可以在仓库外消费：在 /tmp 下新建项目，只引用 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`。2026-10-13 手动跑过；[TODO] 没有自动化。
-15. [TODO] `NotWritten` 分支（写失败但截回成功）没有真实故障触发。
+14. [根 SPEC 2] 交付包可以在仓库外消费：`./x consume` 在 /tmp 下新建项目，只从 `artifacts/feed` 引用 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`（消费者源码在 `tools/consume/`）。2026-10-13 手动跑过；2026-10-17 起自动化，通过。
+15. [LEMMA: 2, 7] 写失败但截回成功 → `NotWritten`：日志逐字节不变、`Abandon` 撤销提议、id 复用、存储仍 `Healthy`，所以可以重试：`not written is known and retryable; the log stays byte-identical and the id is reused`（真实故障：测试临时收紧本进程 `RLIMIT_FSIZE` 上限并忽略 SIGXFSZ，超过上限的写按 EFBIG 失败、截回成功；仅 Linux）。
 16. [TODO] 进程被真正杀掉（而不是由测试写出截断文件）的测试没有；按 LEMMA 7，二者对磁盘的效果相同。
 
 ## 旧仓库测试的去留（供接入时参考）

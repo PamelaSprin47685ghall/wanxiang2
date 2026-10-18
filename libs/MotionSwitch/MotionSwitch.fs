@@ -33,6 +33,7 @@ type Timing =
     | DisclosureChevronRotate
     | ControlRowFade
     | ToastFade
+    | OutboxConfirmTimeout
 
 /// 时长初始值：照抄旧 MotionLedger。只有数据；活的可变值归主题管理者。
 module MotionTimings =
@@ -65,7 +66,8 @@ module MotionTimings =
           Timing.ScrimFade
           Timing.DisclosureChevronRotate
           Timing.ControlRowFade
-          Timing.ToastFade ]
+          Timing.ToastFade
+          Timing.OutboxConfirmTimeout ]
 
     /// 初始毫秒数
     let initialMs (timing: Timing) : float =
@@ -98,6 +100,7 @@ module MotionTimings =
         | Timing.DisclosureChevronRotate -> 150.0
         | Timing.ControlRowFade -> 150.0
         | Timing.ToastFade -> 300.0
+        | Timing.OutboxConfirmTimeout -> 30000.0
 
     /// 几何动画一律禁止：状态反馈只改颜色与透明度（旧 MotionLedger.geometryAnimationAllowed）
     let geometryAnimationAllowed = false

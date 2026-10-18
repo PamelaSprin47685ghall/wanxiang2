@@ -2,12 +2,52 @@ module JsonSeqTests
 
 open System
 open System.IO
+open System.Runtime.InteropServices
 open Xunit
 open JsonSeq
 
 let appended = function Appended e -> e | o -> failwithf "%A" o
 
 let tempFile () = Path.Combine(Path.GetTempPath(), "jsonseq-" + Guid.NewGuid().ToString("N"), "log.jsonseq")
+
+/// 只在测试里用：临时收紧本进程的 RLIMIT_FSIZE（内核的文件大小上限），并忽略 SIGXFSZ。
+/// 信号被忽略时，内核把超过上限的写报成 EFBIG（.NET 转成 ArgumentOutOfRangeException），
+/// 而在上限内缩小文件的截回仍被允许 —— 这是与磁盘写满同类的真实故障，不是注入开关。
+/// 用完恢复原上限与原信号处置。仅 Linux。
+module private FsizeLimit =
+    [<Struct; StructLayout(LayoutKind.Sequential)>]
+    type RLimit = { mutable Cur: uint64; mutable Max: uint64 }
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern int getrlimit(int resource, RLimit& rlim)
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern int setrlimit(int resource, RLimit& rlim)
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern IntPtr signal(int signum, IntPtr handler)
+
+    [<Literal>]
+    let private RlimitFsize = 1
+
+    [<Literal>]
+    let private Sigxfsz = 25
+
+    /// 以文件大小上限 limit 字节运行 act，之后恢复原上限与原信号处置。
+    let at (limit: int64) (act: unit -> unit) =
+        let mutable old = { Cur = 0UL; Max = 0UL }
+        if getrlimit (RlimitFsize, &old) <> 0 then failwith "getrlimit failed"
+        let previous = signal (Sigxfsz, IntPtr 1)   // SIG_IGN
+        if previous = IntPtr(-1) then failwith "signal failed"
+        try
+            try
+                let mutable tightened = { Cur = min (uint64 limit) old.Max; Max = old.Max }
+                if setrlimit (RlimitFsize, &tightened) <> 0 then failwith "setrlimit failed"
+                act ()
+            finally
+                setrlimit (RlimitFsize, &old) |> ignore
+        finally
+            signal (Sigxfsz, previous) |> ignore
 
 // SPEC 1：往返
 [<Fact>]
@@ -91,6 +131,23 @@ let ``write failure without rollback evidence is Unknown`` () =
         use f = new JsonSeqFile("/dev/full")
         match f.Append "{}" with Unknown _ -> () | o -> failwithf "%A" o
 
+[<Fact>]
+let ``write failure with rollback evidence is NotWritten`` () =
+    // 真实故障：本进程 RLIMIT_FSIZE 上限（写按 EFBIG 失败），截回缩小文件仍被允许。仅 Linux。
+    if OperatingSystem.IsLinux() then
+        let p = tempFile ()
+        use f = new JsonSeqFile(p)
+        appended (f.Append "[1]") |> ignore
+        let before = File.ReadAllBytes p
+        // 上限卡在写前长度 + 16KB：这条 64KB 的追加必然超限；已经写进上限内的字节也须截回
+        FsizeLimit.at (int64 before.Length + 16L * 1024L) (fun () ->
+            match f.Append("[" + String('x', 64 * 1024) + "]") with
+            | NotWritten _ -> ()
+            | o -> failwithf "%A" o)
+        Assert.Equal<byte[]>(before, File.ReadAllBytes p)
+        Assert.Equal(int64 before.Length, f.Length)
+        Assert.Equal<string list>([ "[1]" ], f.ReadFrom 0L |> List.map _.payload)
+
 // SPEC 10：没有正文的 RS 不被忽略：末尾是 TornTail，中间是 EmptyRecord；偏移连续覆盖全部字节
 [<Fact>]
 let ``bare RS is a faulted record, never skipped`` () =
@@ -99,3 +156,33 @@ let ``bare RS is a faulted record, never skipped`` () =
     Assert.Equal<string option list>([ None; Some Frame.EmptyRecord; None; Some Frame.TornTail ], rs |> List.map _.fault)
     for a, b in List.pairwise rs do Assert.Equal(a.endOffset, b.startOffset)
     Assert.Equal(int64 bytes.Length, (List.last rs).endOffset)
+
+// SPEC 11：状态有主人
+[<Fact>]
+let ``instances are isolated; errors and illegal arguments leave state legal`` () =
+    use a = new JsonSeqFile(tempFile ())
+    use b = new JsonSeqFile(tempFile ())
+    let a1 = appended (a.Append """{"a":1}""")
+    // 实例隔离：b 的字节与 a 的写入无关
+    Assert.Equal(0L, b.Length)
+    Assert.Empty(b.ReadFrom 0L)
+    // 状态在文件里，不在对象里：同一路径上的第二个实例读到同一个文件（写者唯一是 DirLock 的事）
+    if OperatingSystem.IsLinux() then
+        use c = new JsonSeqFile(a.Path)
+        Assert.Equal(a1, c.Length)
+        Assert.Equal<string list>([ """{"a":1}""" ], c.ReadFrom 0L |> List.map _.payload)
+    // 读出的记录不是内部状态的活视图：之后继续写、再截回，早先拿到的记录不变
+    let first = a.ReadFrom 0L
+    appended (a.Append """{"a":2}""") |> ignore
+    a.Truncate a1
+    Assert.Equal<string list>([ """{"a":1}""" ], first |> List.map _.payload)
+    // 非法消息不改状态
+    Assert.Throws<ArgumentException>(fun () -> a.Read(0L, a.Length + 1L) |> ignore) |> ignore
+    Assert.Throws<ArgumentException>(fun () -> a.Read(-1L, 0L) |> ignore) |> ignore
+    Assert.Throws<ArgumentException>(fun () -> a.Truncate -1L) |> ignore
+    Assert.Throws<ArgumentException>(fun () -> a.Truncate(a.Length + 1L)) |> ignore
+    Assert.Equal(a1, a.Length)
+    Assert.Equal<string list>([ """{"a":1}""" ], a.ReadFrom 0L |> List.map _.payload)
+    // 错误之后状态合法：继续追加、读出正常
+    Assert.Equal(a1 + 9L, appended (a.Append """{"a":3}"""))
+    Assert.Equal<string list>([ """{"a":1}"""; """{"a":3}""" ], a.ReadFrom 0L |> List.map _.payload)

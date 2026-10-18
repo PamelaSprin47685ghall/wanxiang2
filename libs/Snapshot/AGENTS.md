@@ -26,3 +26,7 @@
 5. [LEMMA: 1] 真实组合中，删掉快照或快照与日志对不上时，组合者从日志重建，结果相同。
     - 证明：`compose/LedgerStore/tests/Tests.fs` `commits survive reopen with and without snapshot`、`stale snapshot from a truncated log is ignored`。
 6. [TODO] 改名后没有对所在目录 fsync，断电时改名本身可能丢失（读到旧快照，按 LEMMA 1 仍安全，只是慢）。
+
+7. [根 SPEC 3] 实例隔离；文件被外部弄坏后 `Load` 如实报 `Corrupt`，下一次 `Save` 覆盖它；`Load` 交出的文本是副本，不是内部状态的活视图。
+    - 证明：`instances are isolated and a corrupt file is replaced by the next save`，通过。
+    - 剩余边界：私有状态就是它管的那个路径；两个实例指向同一路径时共用那个文件，这是调用方的选择，不是别名。

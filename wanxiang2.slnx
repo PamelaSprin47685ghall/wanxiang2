@@ -1,659 +1,1304 @@
 <Solution>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ActionStrip/">
+    <Project Path="libs/ActionStrip/ActionStrip.fsproj" />
+    <Project Path="libs/ActionStrip/tests/ActionStrip.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AgentHistory/">
+    <Project Path="libs/AgentHistory/AgentHistory.fsproj" />
+    <Project Path="libs/AgentHistory/tests/AgentHistory.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Agui/">
+    <Project Path="libs/Agui/Agui.fsproj" />
+    <Project Path="libs/Agui/tests/Agui.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AguiMessageMap/">
+    <Project Path="libs/AguiMessageMap/AguiMessageMap.fsproj" />
+    <Project Path="libs/AguiMessageMap/tests/AguiMessageMap.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Anthropic/">
+    <Project Path="libs/Anthropic/Anthropic.fsproj" />
+    <Project Path="libs/Anthropic/tests/Anthropic.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AppConfig/">
+    <Project Path="libs/AppConfig/AppConfig.fsproj" />
+    <Project Path="libs/AppConfig/tests/AppConfig.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ApprovalCardText/">
+    <Project Path="libs/ApprovalCardText/ApprovalCardText.fsproj" />
+    <Project Path="libs/ApprovalCardText/tests/ApprovalCardText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ApprovalPanel/">
+    <Project Path="libs/ApprovalPanel/ApprovalPanel.fsproj" />
+    <Project Path="libs/ApprovalPanel/tests/ApprovalPanel.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Approvals/">
+    <Project Path="libs/Approvals/Approvals.fsproj" />
+    <Project Path="libs/Approvals/tests/Approvals.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AtomicTextFile/">
+    <Project Path="libs/AtomicTextFile/AtomicTextFile.fsproj" />
+    <Project Path="libs/AtomicTextFile/tests/AtomicTextFile.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AttachmentAudit/">
+    <Project Path="libs/AttachmentAudit/AttachmentAudit.fsproj" />
+    <Project Path="libs/AttachmentAudit/tests/AttachmentAudit.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AttachmentBlobs/">
+    <Project Path="libs/AttachmentBlobs/AttachmentBlobs.fsproj" />
+    <Project Path="libs/AttachmentBlobs/tests/AttachmentBlobs.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AttachmentChip/">
+    <Project Path="libs/AttachmentChip/AttachmentChip.fsproj" />
+    <Project Path="libs/AttachmentChip/tests/AttachmentChip.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AttachmentRefs/">
+    <Project Path="libs/AttachmentRefs/AttachmentRefs.fsproj" />
+    <Project Path="libs/AttachmentRefs/tests/AttachmentRefs.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/AttachmentTray/">
+    <Project Path="libs/AttachmentTray/AttachmentTray.fsproj" />
+    <Project Path="libs/AttachmentTray/tests/AttachmentTray.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BatchBar/">
+    <Project Path="libs/BatchBar/BatchBar.fsproj" />
+    <Project Path="libs/BatchBar/tests/BatchBar.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BlockDiff/">
+    <Project Path="libs/BlockDiff/BlockDiff.fsproj" />
+    <Project Path="libs/BlockDiff/tests/BlockDiff.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BoundedCache/">
+    <Project Path="libs/BoundedCache/BoundedCache.fsproj" />
+    <Project Path="libs/BoundedCache/tests/BoundedCache.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BoundedWait/">
+    <Project Path="libs/BoundedWait/BoundedWait.fsproj" />
+    <Project Path="libs/BoundedWait/tests/BoundedWait.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrandMark/">
+    <Project Path="libs/BrandMark/BrandMark.fsproj" />
+    <Project Path="libs/BrandMark/tests/BrandMark.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BreadcrumbAction/">
+    <Project Path="libs/BreadcrumbAction/BreadcrumbAction.fsproj" />
+    <Project Path="libs/BreadcrumbAction/tests/BreadcrumbAction.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BreathPhase/">
+    <Project Path="libs/BreathPhase/BreathPhase.fsproj" />
+    <Project Path="libs/BreathPhase/tests/BreathPhase.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserCredentials/">
+    <Project Path="libs/BrowserCredentials/BrowserCredentials.csproj" />
+    <Project Path="libs/BrowserCredentials/tests/BrowserCredentials.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserDrafts/">
+    <Project Path="libs/BrowserDrafts/BrowserDrafts.csproj" />
+    <Project Path="libs/BrowserDrafts/tests/BrowserDrafts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserImage/">
+    <Project Path="libs/BrowserImage/BrowserImage.csproj" />
+    <Project Path="libs/BrowserImage/tests/BrowserImage.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserLocalStore/">
+    <Project Path="libs/BrowserLocalStore/BrowserLocalStore.csproj" />
+    <Project Path="libs/BrowserLocalStore/tests/BrowserLocalStore.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserPage/">
+    <Project Path="libs/BrowserPage/BrowserPage.csproj" />
+    <Project Path="libs/BrowserPage/tests/BrowserPage.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserProbe/">
+    <Project Path="libs/BrowserProbe/BrowserProbe.csproj" />
+    <Project Path="libs/BrowserProbe/tests/BrowserProbe.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BrowserRich/">
+    <Project Path="libs/BrowserRich/BrowserRich.csproj" />
+    <Project Path="libs/BrowserRich/tests/BrowserRich.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/BusyRing/">
+    <Project Path="libs/BusyRing/BusyRing.fsproj" />
+    <Project Path="libs/BusyRing/tests/BusyRing.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Canonical/">
+    <Project Path="libs/Canonical/Canonical.fsproj" />
+    <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CardReconcile/">
+    <Project Path="libs/CardReconcile/CardReconcile.fsproj" />
+    <Project Path="libs/CardReconcile/tests/CardReconcile.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CaretBreath/">
+    <Project Path="libs/CaretBreath/CaretBreath.fsproj" />
+    <Project Path="libs/CaretBreath/tests/CaretBreath.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ChangeWatch/">
+    <Project Path="libs/ChangeWatch/ChangeWatch.fsproj" />
+    <Project Path="libs/ChangeWatch/tests/ChangeWatch.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ChatEmpty/">
+    <Project Path="libs/ChatEmpty/ChatEmpty.fsproj" />
+    <Project Path="libs/ChatEmpty/tests/ChatEmpty.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ChatEmptyText/">
+    <Project Path="libs/ChatEmptyText/ChatEmptyText.fsproj" />
+    <Project Path="libs/ChatEmptyText/tests/ChatEmptyText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ChatHeader/">
+    <Project Path="libs/ChatHeader/ChatHeader.fsproj" />
+    <Project Path="libs/ChatHeader/tests/ChatHeader.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ChatScroller/">
+    <Project Path="libs/ChatScroller/ChatScroller.fsproj" />
+    <Project Path="libs/ChatScroller/tests/ChatScroller.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CliArgs/">
+    <Project Path="libs/CliArgs/CliArgs.fsproj" />
+    <Project Path="libs/CliArgs/tests/CliArgs.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ClientConnections/">
+    <Project Path="libs/ClientConnections/ClientConnections.fsproj" />
+    <Project Path="libs/ClientConnections/tests/ClientConnections.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ClientToken/">
+    <Project Path="libs/ClientToken/ClientToken.fsproj" />
+    <Project Path="libs/ClientToken/tests/ClientToken.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ClientTomlFile/">
+    <Project Path="libs/ClientTomlFile/ClientTomlFile.fsproj" />
+    <Project Path="libs/ClientTomlFile/tests/ClientTomlFile.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ColorBlend/">
+    <Project Path="libs/ColorBlend/ColorBlend.fsproj" />
+    <Project Path="libs/ColorBlend/tests/ColorBlend.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CommandFeedback/">
+    <Project Path="libs/CommandFeedback/CommandFeedback.fsproj" />
+    <Project Path="libs/CommandFeedback/tests/CommandFeedback.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CommandId/">
+    <Project Path="libs/CommandId/CommandId.fsproj" />
+    <Project Path="libs/CommandId/tests/CommandId.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CommitTimeline/">
+    <Project Path="libs/CommitTimeline/CommitTimeline.fsproj" />
+    <Project Path="libs/CommitTimeline/tests/CommitTimeline.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ComposerBox/">
+    <Project Path="libs/ComposerBox/ComposerBox.fsproj" />
+    <Project Path="libs/ComposerBox/tests/ComposerBox.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ComposerDrafts/">
+    <Project Path="libs/ComposerDrafts/ComposerDrafts.fsproj" />
+    <Project Path="libs/ComposerDrafts/tests/ComposerDrafts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ComposerSendState/">
+    <Project Path="libs/ComposerSendState/ComposerSendState.fsproj" />
+    <Project Path="libs/ComposerSendState/tests/ComposerSendState.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConfigFeedback/">
+    <Project Path="libs/ConfigFeedback/ConfigFeedback.fsproj" />
+    <Project Path="libs/ConfigFeedback/tests/ConfigFeedback.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConfirmPane/">
+    <Project Path="libs/ConfirmPane/ConfirmPane.fsproj" />
+    <Project Path="libs/ConfirmPane/tests/ConfirmPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConnectionIssue/">
+    <Project Path="libs/ConnectionIssue/ConnectionIssue.fsproj" />
+    <Project Path="libs/ConnectionIssue/tests/ConnectionIssue.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConnectPane/">
+    <Project Path="libs/ConnectPane/ConnectPane.fsproj" />
+    <Project Path="libs/ConnectPane/tests/ConnectPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ContextTrim/">
+    <Project Path="libs/ContextTrim/ContextTrim.fsproj" />
+    <Project Path="libs/ContextTrim/tests/ContextTrim.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ContinuableReply/">
+    <Project Path="libs/ContinuableReply/ContinuableReply.fsproj" />
+    <Project Path="libs/ContinuableReply/tests/ContinuableReply.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConversationRows/">
+    <Project Path="libs/ConversationRows/ConversationRows.fsproj" />
+    <Project Path="libs/ConversationRows/tests/ConversationRows.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Conversations/">
+    <Project Path="libs/Conversations/Conversations.fsproj" />
+    <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConversationSummary/">
+    <Project Path="libs/ConversationSummary/ConversationSummary.fsproj" />
+    <Project Path="libs/ConversationSummary/tests/ConversationSummary.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConversationSurface/">
+    <Project Path="libs/ConversationSurface/ConversationSurface.fsproj" />
+    <Project Path="libs/ConversationSurface/tests/ConversationSurface.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConversationTransfer/">
+    <Project Path="libs/ConversationTransfer/ConversationTransfer.fsproj" />
+    <Project Path="libs/ConversationTransfer/tests/ConversationTransfer.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CopyButton/">
+    <Project Path="libs/CopyButton/CopyButton.fsproj" />
+    <Project Path="libs/CopyButton/tests/CopyButton.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CopyConfirm/">
+    <Project Path="libs/CopyConfirm/CopyConfirm.fsproj" />
+    <Project Path="libs/CopyConfirm/tests/CopyConfirm.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/CountdownTicker/">
+    <Project Path="libs/CountdownTicker/CountdownTicker.fsproj" />
+    <Project Path="libs/CountdownTicker/tests/CountdownTicker.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DeferredReveal/">
+    <Project Path="libs/DeferredReveal/DeferredReveal.fsproj" />
+    <Project Path="libs/DeferredReveal/tests/DeferredReveal.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DesktopClient/">
+    <Project Path="libs/DesktopClient/DesktopClient.fsproj" />
+    <Project Path="libs/DesktopClient/tests/DesktopClient.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DeviceListJson/">
+    <Project Path="libs/DeviceListJson/DeviceListJson.fsproj" />
+    <Project Path="libs/DeviceListJson/tests/DeviceListJson.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DeviceRules/">
+    <Project Path="libs/DeviceRules/DeviceRules.fsproj" />
+    <Project Path="libs/DeviceRules/tests/DeviceRules.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DeviceSightings/">
+    <Project Path="libs/DeviceSightings/DeviceSightings.fsproj" />
+    <Project Path="libs/DeviceSightings/tests/DeviceSightings.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DevicesModel/">
+    <Project Path="libs/DevicesModel/DevicesModel.fsproj" />
+    <Project Path="libs/DevicesModel/tests/DevicesModel.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DevicesPane/">
+    <Project Path="libs/DevicesPane/DevicesPane.fsproj" />
+    <Project Path="libs/DevicesPane/tests/DevicesPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DirLock/">
+    <Project Path="libs/DirLock/DirLock.fsproj" />
+    <Project Path="libs/DirLock/tests/DirLock.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DownloadBuffers/">
+    <Project Path="libs/DownloadBuffers/DownloadBuffers.fsproj" />
+    <Project Path="libs/DownloadBuffers/tests/DownloadBuffers.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DraftStore/">
+    <Project Path="libs/DraftStore/DraftStore.fsproj" />
+    <Project Path="libs/DraftStore/tests/DraftStore.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DraftSummaryText/">
+    <Project Path="libs/DraftSummaryText/DraftSummaryText.fsproj" />
+    <Project Path="libs/DraftSummaryText/tests/DraftSummaryText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/DurationText/">
+    <Project Path="libs/DurationText/DurationText.fsproj" />
+    <Project Path="libs/DurationText/tests/DurationText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ErrorPanel/">
+    <Project Path="libs/ErrorPanel/ErrorPanel.fsproj" />
+    <Project Path="libs/ErrorPanel/tests/ErrorPanel.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ErrorRecovery/">
+    <Project Path="libs/ErrorRecovery/ErrorRecovery.fsproj" />
+    <Project Path="libs/ErrorRecovery/tests/ErrorRecovery.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/EscapeChain/">
+    <Project Path="libs/EscapeChain/EscapeChain.fsproj" />
+    <Project Path="libs/EscapeChain/tests/EscapeChain.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExchangeJump/">
+    <Project Path="libs/ExchangeJump/ExchangeJump.fsproj" />
+    <Project Path="libs/ExchangeJump/tests/ExchangeJump.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExchangeNav/">
+    <Project Path="libs/ExchangeNav/ExchangeNav.fsproj" />
+    <Project Path="libs/ExchangeNav/tests/ExchangeNav.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExportFileName/">
+    <Project Path="libs/ExportFileName/ExportFileName.fsproj" />
+    <Project Path="libs/ExportFileName/tests/ExportFileName.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExportSheet/">
+    <Project Path="libs/ExportSheet/ExportSheet.fsproj" />
+    <Project Path="libs/ExportSheet/tests/ExportSheet.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExportView/">
+    <Project Path="libs/ExportView/ExportView.fsproj" />
+    <Project Path="libs/ExportView/tests/ExportView.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/FailureLimiter/">
+    <Project Path="libs/FailureLimiter/FailureLimiter.fsproj" />
+    <Project Path="libs/FailureLimiter/tests/FailureLimiter.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/FieldCheck/">
+    <Project Path="libs/FieldCheck/FieldCheck.fsproj" />
+    <Project Path="libs/FieldCheck/tests/FieldCheck.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/FocusOrigin/">
+    <Project Path="libs/FocusOrigin/FocusOrigin.fsproj" />
+    <Project Path="libs/FocusOrigin/tests/FocusOrigin.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/FoldHeader/">
+    <Project Path="libs/FoldHeader/FoldHeader.fsproj" />
+    <Project Path="libs/FoldHeader/tests/FoldHeader.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ForkAnchor/">
+    <Project Path="libs/ForkAnchor/ForkAnchor.fsproj" />
+    <Project Path="libs/ForkAnchor/tests/ForkAnchor.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ForkLineage/">
+    <Project Path="libs/ForkLineage/ForkLineage.fsproj" />
+    <Project Path="libs/ForkLineage/tests/ForkLineage.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/FuzzyMatch/">
+    <Project Path="libs/FuzzyMatch/FuzzyMatch.fsproj" />
+    <Project Path="libs/FuzzyMatch/tests/FuzzyMatch.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Gemini/">
+    <Project Path="libs/Gemini/Gemini.fsproj" />
+    <Project Path="libs/Gemini/tests/Gemini.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/GeneralPane/">
+    <Project Path="libs/GeneralPane/GeneralPane.fsproj" />
+    <Project Path="libs/GeneralPane/tests/GeneralPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/GenerationDraft/">
+    <Project Path="libs/GenerationDraft/GenerationDraft.fsproj" />
+    <Project Path="libs/GenerationDraft/tests/GenerationDraft.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/GenerationErrorTitle/">
+    <Project Path="libs/GenerationErrorTitle/GenerationErrorTitle.fsproj" />
+    <Project Path="libs/GenerationErrorTitle/tests/GenerationErrorTitle.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/GenerationForm/">
+    <Project Path="libs/GenerationForm/GenerationForm.fsproj" />
+    <Project Path="libs/GenerationForm/tests/GenerationForm.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HighlightQueue/">
+    <Project Path="libs/HighlightQueue/HighlightQueue.fsproj" />
+    <Project Path="libs/HighlightQueue/tests/HighlightQueue.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HljsCatalog/">
+    <Project Path="libs/HljsCatalog/HljsCatalog.fsproj" />
+    <Project Path="libs/HljsCatalog/tests/HljsCatalog.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HljsHtml/">
+    <Project Path="libs/HljsHtml/HljsHtml.fsproj" />
+    <Project Path="libs/HljsHtml/tests/HljsHtml.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostCatalog/">
+    <Project Path="libs/HostCatalog/HostCatalog.fsproj" />
+    <Project Path="libs/HostCatalog/tests/HostCatalog.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostHealth/">
+    <Project Path="libs/HostHealth/HostHealth.fsproj" />
+    <Project Path="libs/HostHealth/tests/HostHealth.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostProbe/">
+    <Project Path="libs/HostProbe/HostProbe.fsproj" />
+    <Project Path="libs/HostProbe/tests/HostProbe.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostRequests/">
+    <Project Path="libs/HostRequests/HostRequests.fsproj" />
+    <Project Path="libs/HostRequests/tests/HostRequests.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostSwitcher/">
+    <Project Path="libs/HostSwitcher/HostSwitcher.fsproj" />
+    <Project Path="libs/HostSwitcher/tests/HostSwitcher.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HttpFailureFacts/">
+    <Project Path="libs/HttpFailureFacts/HttpFailureFacts.fsproj" />
+    <Project Path="libs/HttpFailureFacts/tests/HttpFailureFacts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HttpRetry/">
+    <Project Path="libs/HttpRetry/HttpRetry.fsproj" />
+    <Project Path="libs/HttpRetry/tests/HttpRetry.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/IconSet/">
+    <Project Path="libs/IconSet/IconSet.fsproj" />
+    <Project Path="libs/IconSet/tests/IconSet.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/IdleSurface/">
+    <Project Path="libs/IdleSurface/IdleSurface.fsproj" />
+    <Project Path="libs/IdleSurface/tests/IdleSurface.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ImageFit/">
+    <Project Path="libs/ImageFit/ImageFit.fsproj" />
+    <Project Path="libs/ImageFit/tests/ImageFit.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ImeShield/">
+    <Project Path="libs/ImeShield/ImeShield.fsproj" />
+    <Project Path="libs/ImeShield/tests/ImeShield.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ImportSheet/">
+    <Project Path="libs/ImportSheet/ImportSheet.fsproj" />
+    <Project Path="libs/ImportSheet/tests/ImportSheet.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ImportView/">
+    <Project Path="libs/ImportView/ImportView.fsproj" />
+    <Project Path="libs/ImportView/tests/ImportView.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/InputSense/">
+    <Project Path="libs/InputSense/InputSense.fsproj" />
+    <Project Path="libs/InputSense/tests/InputSense.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/JintScriptHost/">
+    <Project Path="libs/JintScriptHost/JintScriptHost.fsproj" />
+    <Project Path="libs/JintScriptHost/tests/JintScriptHost.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/JsonLinesLog/">
+    <Project Path="libs/JsonLinesLog/JsonLinesLog.fsproj" />
+    <Project Path="libs/JsonLinesLog/tests/JsonLinesLog.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/JsonPick/">
+    <Project Path="libs/JsonPick/JsonPick.fsproj" />
+    <Project Path="libs/JsonPick/tests/JsonPick.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/JsonRpc/">
+    <Project Path="libs/JsonRpc/JsonRpc.fsproj" />
+    <Project Path="libs/JsonRpc/tests/JsonRpc.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/JsonSeq/">
+    <Project Path="libs/JsonSeq/JsonSeq.fsproj" />
+    <Project Path="libs/JsonSeq/tests/JsonSeq.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/KatexHtml/">
+    <Project Path="libs/KatexHtml/KatexHtml.fsproj" />
+    <Project Path="libs/KatexHtml/tests/KatexHtml.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/KeyChord/">
+    <Project Path="libs/KeyChord/KeyChord.fsproj" />
+    <Project Path="libs/KeyChord/tests/KeyChord.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Ledger/">
+    <Project Path="libs/Ledger/Ledger.fsproj" />
+    <Project Path="libs/Ledger/tests/Ledger.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LineProcess/">
+    <Project Path="libs/LineProcess/LineProcess.fsproj" />
+    <Project Path="libs/LineProcess/tests/LineProcess.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LinkChunks/">
+    <Project Path="libs/LinkChunks/LinkChunks.fsproj" />
+    <Project Path="libs/LinkChunks/tests/LinkChunks.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LinkInbox/">
+    <Project Path="libs/LinkInbox/LinkInbox.fsproj" />
+    <Project Path="libs/LinkInbox/tests/LinkInbox.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ListEmptyCard/">
+    <Project Path="libs/ListEmptyCard/ListEmptyCard.fsproj" />
+    <Project Path="libs/ListEmptyCard/tests/ListEmptyCard.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ListenAddress/">
+    <Project Path="libs/ListenAddress/ListenAddress.fsproj" />
+    <Project Path="libs/ListenAddress/tests/ListenAddress.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LocalDraftControls/">
+    <Project Path="libs/LocalDraftControls/LocalDraftControls.fsproj" />
+    <Project Path="libs/LocalDraftControls/tests/LocalDraftControls.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LocalState/">
+    <Project Path="libs/LocalState/LocalState.fsproj" />
+    <Project Path="libs/LocalState/tests/LocalState.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MarkdownBlocks/">
+    <Project Path="libs/MarkdownBlocks/MarkdownBlocks.fsproj" />
+    <Project Path="libs/MarkdownBlocks/tests/MarkdownBlocks.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MathBaseline/">
+    <Project Path="libs/MathBaseline/MathBaseline.fsproj" />
+    <Project Path="libs/MathBaseline/tests/MathBaseline.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/McpCheck/">
+    <Project Path="libs/McpCheck/McpCheck.fsproj" />
+    <Project Path="libs/McpCheck/tests/McpCheck.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/McpForm/">
+    <Project Path="libs/McpForm/McpForm.fsproj" />
+    <Project Path="libs/McpForm/tests/McpForm.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/McpProtocol/">
+    <Project Path="libs/McpProtocol/McpProtocol.fsproj" />
+    <Project Path="libs/McpProtocol/tests/McpProtocol.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MediaContent/">
+    <Project Path="libs/MediaContent/MediaContent.fsproj" />
+    <Project Path="libs/MediaContent/tests/MediaContent.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MediaSniff/">
+    <Project Path="libs/MediaSniff/MediaSniff.fsproj" />
+    <Project Path="libs/MediaSniff/tests/MediaSniff.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MediaTypes/">
+    <Project Path="libs/MediaTypes/MediaTypes.fsproj" />
+    <Project Path="libs/MediaTypes/tests/MediaTypes.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageLink/">
+    <Project Path="libs/MessageLink/MessageLink.fsproj" />
+    <Project Path="libs/MessageLink/tests/MessageLink.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageMenu/">
+    <Project Path="libs/MessageMenu/MessageMenu.fsproj" />
+    <Project Path="libs/MessageMenu/tests/MessageMenu.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageSerde/">
+    <Project Path="libs/MessageSerde/MessageSerde.fsproj" />
+    <Project Path="libs/MessageSerde/tests/MessageSerde.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageText/">
+    <Project Path="libs/MessageText/MessageText.fsproj" />
+    <Project Path="libs/MessageText/tests/MessageText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageTimestamp/">
+    <Project Path="libs/MessageTimestamp/MessageTimestamp.fsproj" />
+    <Project Path="libs/MessageTimestamp/tests/MessageTimestamp.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageView/">
+    <Project Path="libs/MessageView/MessageView.fsproj" />
+    <Project Path="libs/MessageView/tests/MessageView.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelChip/">
+    <Project Path="libs/ModelChip/ModelChip.fsproj" />
+    <Project Path="libs/ModelChip/tests/ModelChip.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelListing/">
+    <Project Path="libs/ModelListing/ModelListing.fsproj" />
+    <Project Path="libs/ModelListing/tests/ModelListing.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelPickerList/">
+    <Project Path="libs/ModelPickerList/ModelPickerList.fsproj" />
+    <Project Path="libs/ModelPickerList/tests/ModelPickerList.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelSwitcher/">
+    <Project Path="libs/ModelSwitcher/ModelSwitcher.fsproj" />
+    <Project Path="libs/ModelSwitcher/tests/ModelSwitcher.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelSwitchPanel/">
+    <Project Path="libs/ModelSwitchPanel/ModelSwitchPanel.fsproj" />
+    <Project Path="libs/ModelSwitchPanel/tests/ModelSwitchPanel.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelVision/">
+    <Project Path="libs/ModelVision/ModelVision.fsproj" />
+    <Project Path="libs/ModelVision/tests/ModelVision.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MotionSwitch/">
+    <Project Path="libs/MotionSwitch/MotionSwitch.fsproj" />
+    <Project Path="libs/MotionSwitch/tests/MotionSwitch.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MountWindow/">
+    <Project Path="libs/MountWindow/MountWindow.fsproj" />
+    <Project Path="libs/MountWindow/tests/MountWindow.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/NavigationState/">
+    <Project Path="libs/NavigationState/NavigationState.fsproj" />
+    <Project Path="libs/NavigationState/tests/NavigationState.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/OlderPageLoad/">
+    <Project Path="libs/OlderPageLoad/OlderPageLoad.fsproj" />
+    <Project Path="libs/OlderPageLoad/tests/OlderPageLoad.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/OnboardingFlow/">
+    <Project Path="libs/OnboardingFlow/OnboardingFlow.fsproj" />
+    <Project Path="libs/OnboardingFlow/tests/OnboardingFlow.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/OnboardingPane/">
+    <Project Path="libs/OnboardingPane/OnboardingPane.fsproj" />
+    <Project Path="libs/OnboardingPane/tests/OnboardingPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/OnboardingRules/">
+    <Project Path="libs/OnboardingRules/OnboardingRules.fsproj" />
+    <Project Path="libs/OnboardingRules/tests/OnboardingRules.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/OverlayLayer/">
+    <Project Path="libs/OverlayLayer/OverlayLayer.fsproj" />
+    <Project Path="libs/OverlayLayer/tests/OverlayLayer.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PairingCode/">
+    <Project Path="libs/PairingCode/PairingCode.fsproj" />
+    <Project Path="libs/PairingCode/tests/PairingCode.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PairingCodeInput/">
+    <Project Path="libs/PairingCodeInput/PairingCodeInput.fsproj" />
+    <Project Path="libs/PairingCodeInput/tests/PairingCodeInput.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PairingHint/">
+    <Project Path="libs/PairingHint/PairingHint.fsproj" />
+    <Project Path="libs/PairingHint/tests/PairingHint.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PalettePanel/">
+    <Project Path="libs/PalettePanel/PalettePanel.fsproj" />
+    <Project Path="libs/PalettePanel/tests/PalettePanel.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PayloadFields/">
+    <Project Path="libs/PayloadFields/PayloadFields.fsproj" />
+    <Project Path="libs/PayloadFields/tests/PayloadFields.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PendingDeletion/">
+    <Project Path="libs/PendingDeletion/PendingDeletion.fsproj" />
+    <Project Path="libs/PendingDeletion/tests/PendingDeletion.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PinyinInitials/">
+    <Project Path="libs/PinyinInitials/PinyinInitials.fsproj" />
+    <Project Path="libs/PinyinInitials/tests/PinyinInitials.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PlainText/">
+    <Project Path="libs/PlainText/PlainText.fsproj" />
+    <Project Path="libs/PlainText/tests/PlainText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PopupMenu/">
+    <Project Path="libs/PopupMenu/PopupMenu.fsproj" />
+    <Project Path="libs/PopupMenu/tests/PopupMenu.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PopupPlacement/">
+    <Project Path="libs/PopupPlacement/PopupPlacement.fsproj" />
+    <Project Path="libs/PopupPlacement/tests/PopupPlacement.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProbeCounter/">
+    <Project Path="libs/ProbeCounter/ProbeCounter.fsproj" />
+    <Project Path="libs/ProbeCounter/tests/ProbeCounter.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProbeFailureKind/">
+    <Project Path="libs/ProbeFailureKind/ProbeFailureKind.fsproj" />
+    <Project Path="libs/ProbeFailureKind/tests/ProbeFailureKind.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProbeSlot/">
+    <Project Path="libs/ProbeSlot/ProbeSlot.fsproj" />
+    <Project Path="libs/ProbeSlot/tests/ProbeSlot.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProgressThrottle/">
+    <Project Path="libs/ProgressThrottle/ProgressThrottle.fsproj" />
+    <Project Path="libs/ProgressThrottle/tests/ProgressThrottle.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PromptHistory/">
+    <Project Path="libs/PromptHistory/PromptHistory.fsproj" />
+    <Project Path="libs/PromptHistory/tests/PromptHistory.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PromptPane/">
+    <Project Path="libs/PromptPane/PromptPane.fsproj" />
+    <Project Path="libs/PromptPane/tests/PromptPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProviderCheck/">
+    <Project Path="libs/ProviderCheck/ProviderCheck.fsproj" />
+    <Project Path="libs/ProviderCheck/tests/ProviderCheck.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProviderForm/">
+    <Project Path="libs/ProviderForm/ProviderForm.fsproj" />
+    <Project Path="libs/ProviderForm/tests/ProviderForm.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProviderPresets/">
+    <Project Path="libs/ProviderPresets/ProviderPresets.fsproj" />
+    <Project Path="libs/ProviderPresets/tests/ProviderPresets.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProviderProbeText/">
+    <Project Path="libs/ProviderProbeText/ProviderProbeText.fsproj" />
+    <Project Path="libs/ProviderProbeText/tests/ProviderProbeText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ProvidersPane/">
+    <Project Path="libs/ProvidersPane/ProvidersPane.fsproj" />
+    <Project Path="libs/ProvidersPane/tests/ProvidersPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/PwaAssets/">
+    <Project Path="libs/PwaAssets/PwaAssets.fsproj" />
+    <Project Path="libs/PwaAssets/tests/PwaAssets.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ReconnectBackoff/">
+    <Project Path="libs/ReconnectBackoff/ReconnectBackoff.fsproj" />
+    <Project Path="libs/ReconnectBackoff/tests/ReconnectBackoff.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ReconnectLoop/">
+    <Project Path="libs/ReconnectLoop/ReconnectLoop.fsproj" />
+    <Project Path="libs/ReconnectLoop/tests/ReconnectLoop.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RefreshingPool/">
+    <Project Path="libs/RefreshingPool/RefreshingPool.fsproj" />
+    <Project Path="libs/RefreshingPool/tests/RefreshingPool.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RevealFlash/">
+    <Project Path="libs/RevealFlash/RevealFlash.fsproj" />
+    <Project Path="libs/RevealFlash/tests/RevealFlash.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RevealPane/">
+    <Project Path="libs/RevealPane/RevealPane.fsproj" />
+    <Project Path="libs/RevealPane/tests/RevealPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RevealTarget/">
+    <Project Path="libs/RevealTarget/RevealTarget.fsproj" />
+    <Project Path="libs/RevealTarget/tests/RevealTarget.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RichBackend/">
+    <Project Path="libs/RichBackend/RichBackend.fsproj" />
+    <Project Path="libs/RichBackend/tests/RichBackend.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RichScripts/">
+    <Project Path="libs/RichScripts/RichScripts.fsproj" />
+    <Project Path="libs/RichScripts/tests/RichScripts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RovingIndex/">
+    <Project Path="libs/RovingIndex/RovingIndex.fsproj" />
+    <Project Path="libs/RovingIndex/tests/RovingIndex.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RowFocus/">
+    <Project Path="libs/RowFocus/RowFocus.fsproj" />
+    <Project Path="libs/RowFocus/tests/RowFocus.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/RunModes/">
+    <Project Path="libs/RunModes/RunModes.fsproj" />
+    <Project Path="libs/RunModes/tests/RunModes.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SandboxFiles/">
+    <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
+    <Project Path="libs/SandboxFiles/tests/SandboxFiles.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ScrollFollow/">
+    <Project Path="libs/ScrollFollow/ScrollFollow.fsproj" />
+    <Project Path="libs/ScrollFollow/tests/ScrollFollow.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ScrollTween/">
+    <Project Path="libs/ScrollTween/ScrollTween.fsproj" />
+    <Project Path="libs/ScrollTween/tests/ScrollTween.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SearchHit/">
+    <Project Path="libs/SearchHit/SearchHit.fsproj" />
+    <Project Path="libs/SearchHit/tests/SearchHit.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SearchRequery/">
+    <Project Path="libs/SearchRequery/SearchRequery.fsproj" />
+    <Project Path="libs/SearchRequery/tests/SearchRequery.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SearchSegments/">
+    <Project Path="libs/SearchSegments/SearchSegments.fsproj" />
+    <Project Path="libs/SearchSegments/tests/SearchSegments.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SearchSession/">
+    <Project Path="libs/SearchSession/SearchSession.fsproj" />
+    <Project Path="libs/SearchSession/tests/SearchSession.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SecretText/">
+    <Project Path="libs/SecretText/SecretText.fsproj" />
+    <Project Path="libs/SecretText/tests/SecretText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SectionMemory/">
+    <Project Path="libs/SectionMemory/SectionMemory.fsproj" />
+    <Project Path="libs/SectionMemory/tests/SectionMemory.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SendKey/">
+    <Project Path="libs/SendKey/SendKey.fsproj" />
+    <Project Path="libs/SendKey/tests/SendKey.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ServerErrorRoute/">
+    <Project Path="libs/ServerErrorRoute/ServerErrorRoute.fsproj" />
+    <Project Path="libs/ServerErrorRoute/tests/ServerErrorRoute.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SessionPrefsPane/">
+    <Project Path="libs/SessionPrefsPane/SessionPrefsPane.fsproj" />
+    <Project Path="libs/SessionPrefsPane/tests/SessionPrefsPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SettingsFrame/">
+    <Project Path="libs/SettingsFrame/SettingsFrame.fsproj" />
+    <Project Path="libs/SettingsFrame/tests/SettingsFrame.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SharedHttpClients/">
+    <Project Path="libs/SharedHttpClients/SharedHttpClients.fsproj" />
+    <Project Path="libs/SharedHttpClients/tests/SharedHttpClients.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ShellLayout/">
+    <Project Path="libs/ShellLayout/ShellLayout.fsproj" />
+    <Project Path="libs/ShellLayout/tests/ShellLayout.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ShortcutHelpPane/">
+    <Project Path="libs/ShortcutHelpPane/ShortcutHelpPane.fsproj" />
+    <Project Path="libs/ShortcutHelpPane/tests/ShortcutHelpPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ShortcutKeys/">
+    <Project Path="libs/ShortcutKeys/ShortcutKeys.fsproj" />
+    <Project Path="libs/ShortcutKeys/tests/ShortcutKeys.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ShutdownSignals/">
+    <Project Path="libs/ShutdownSignals/ShutdownSignals.fsproj" />
+    <Project Path="libs/ShutdownSignals/tests/ShutdownSignals.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarBrand/">
+    <Project Path="libs/SidebarBrand/SidebarBrand.fsproj" />
+    <Project Path="libs/SidebarBrand/tests/SidebarBrand.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarEmpty/">
+    <Project Path="libs/SidebarEmpty/SidebarEmpty.fsproj" />
+    <Project Path="libs/SidebarEmpty/tests/SidebarEmpty.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarRowState/">
+    <Project Path="libs/SidebarRowState/SidebarRowState.fsproj" />
+    <Project Path="libs/SidebarRowState/tests/SidebarRowState.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarSearch/">
+    <Project Path="libs/SidebarSearch/SidebarSearch.fsproj" />
+    <Project Path="libs/SidebarSearch/tests/SidebarSearch.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SidebarSelection/">
+    <Project Path="libs/SidebarSelection/SidebarSelection.fsproj" />
+    <Project Path="libs/SidebarSelection/tests/SidebarSelection.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SingleInstance/">
+    <Project Path="libs/SingleInstance/SingleInstance.fsproj" />
+    <Project Path="libs/SingleInstance/tests/SingleInstance.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SkeletonList/">
+    <Project Path="libs/SkeletonList/SkeletonList.fsproj" />
+    <Project Path="libs/SkeletonList/tests/SkeletonList.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Snapshot/">
+    <Project Path="libs/Snapshot/Snapshot.fsproj" />
+    <Project Path="libs/Snapshot/tests/Snapshot.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SnapshotCheck/">
+    <Project Path="libs/SnapshotCheck/SnapshotCheck.fsproj" />
+    <Project Path="libs/SnapshotCheck/tests/SnapshotCheck.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/SpacingRamp/">
+    <Project Path="libs/SpacingRamp/SpacingRamp.fsproj" />
+    <Project Path="libs/SpacingRamp/tests/SpacingRamp.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Sse/">
+    <Project Path="libs/Sse/Sse.fsproj" />
+    <Project Path="libs/Sse/tests/Sse.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StartLayout/">
+    <Project Path="libs/StartLayout/StartLayout.fsproj" />
+    <Project Path="libs/StartLayout/tests/StartLayout.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StartReady/">
+    <Project Path="libs/StartReady/StartReady.fsproj" />
+    <Project Path="libs/StartReady/tests/StartReady.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StartupTrace/">
+    <Project Path="libs/StartupTrace/LocalHostGate.fsproj" />
+    <Project Path="libs/StartupTrace/StartupTrace.fsproj" />
+    <Project Path="libs/StartupTrace/tests/StartupTrace.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StreamableHttp/">
+    <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
+    <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StreamCaret/">
+    <Project Path="libs/StreamCaret/StreamCaret.fsproj" />
+    <Project Path="libs/StreamCaret/tests/StreamCaret.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TextEditPane/">
+    <Project Path="libs/TextEditPane/TextEditPane.fsproj" />
+    <Project Path="libs/TextEditPane/tests/TextEditPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TextMatch/">
+    <Project Path="libs/TextMatch/TextMatch.fsproj" />
+    <Project Path="libs/TextMatch/tests/TextMatch.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TextSocket/">
+    <Project Path="libs/TextSocket/TextSocket.fsproj" />
+    <Project Path="libs/TextSocket/tests/TextSocket.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThemeFonts/">
+    <Project Path="libs/ThemeFonts/ThemeFonts.fsproj" />
+    <Project Path="libs/ThemeFonts/tests/ThemeFonts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThemeMetrics/">
+    <Project Path="libs/ThemeMetrics/ThemeMetrics.fsproj" />
+    <Project Path="libs/ThemeMetrics/tests/ThemeMetrics.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThemePalette/">
+    <Project Path="libs/ThemePalette/ThemePalette.fsproj" />
+    <Project Path="libs/ThemePalette/tests/ThemePalette.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThemeTween/">
+    <Project Path="libs/ThemeTween/ThemeTween.fsproj" />
+    <Project Path="libs/ThemeTween/tests/ThemeTween.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ThinkingBlock/">
+    <Project Path="libs/ThinkingBlock/ThinkingBlock.fsproj" />
+    <Project Path="libs/ThinkingBlock/tests/ThinkingBlock.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TitleText/">
+    <Project Path="libs/TitleText/TitleText.fsproj" />
+    <Project Path="libs/TitleText/tests/TitleText.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToastDwell/">
+    <Project Path="libs/ToastDwell/ToastDwell.fsproj" />
+    <Project Path="libs/ToastDwell/tests/ToastDwell.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToastQueue/">
+    <Project Path="libs/ToastQueue/ToastQueue.fsproj" />
+    <Project Path="libs/ToastQueue/tests/ToastQueue.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToastStrip/">
+    <Project Path="libs/ToastStrip/ToastStrip.fsproj" />
+    <Project Path="libs/ToastStrip/tests/ToastStrip.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolArgsPreview/">
+    <Project Path="libs/ToolArgsPreview/ToolArgsPreview.fsproj" />
+    <Project Path="libs/ToolArgsPreview/tests/ToolArgsPreview.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolCallCard/">
+    <Project Path="libs/ToolCallCard/ToolCallCard.fsproj" />
+    <Project Path="libs/ToolCallCard/tests/ToolCallCard.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolCallState/">
+    <Project Path="libs/ToolCallState/ToolCallState.fsproj" />
+    <Project Path="libs/ToolCallState/tests/ToolCallState.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolErrorSummary/">
+    <Project Path="libs/ToolErrorSummary/ToolErrorSummary.fsproj" />
+    <Project Path="libs/ToolErrorSummary/tests/ToolErrorSummary.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolNames/">
+    <Project Path="libs/ToolNames/ToolNames.fsproj" />
+    <Project Path="libs/ToolNames/tests/ToolNames.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolOverview/">
+    <Project Path="libs/ToolOverview/ToolOverview.fsproj" />
+    <Project Path="libs/ToolOverview/tests/ToolOverview.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolsPane/">
+    <Project Path="libs/ToolsPane/ToolsPane.fsproj" />
+    <Project Path="libs/ToolsPane/tests/ToolsPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolsPolicy/">
+    <Project Path="libs/ToolsPolicy/ToolsPolicy.fsproj" />
+    <Project Path="libs/ToolsPolicy/tests/ToolsPolicy.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ToolSummary/">
+    <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
+    <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/TranscriptMarkdown/">
+    <Project Path="libs/TranscriptMarkdown/TranscriptMarkdown.fsproj" />
+    <Project Path="libs/TranscriptMarkdown/tests/TranscriptMarkdown.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UiPrefs/">
+    <Project Path="libs/UiPrefs/UiPrefs.fsproj" />
+    <Project Path="libs/UiPrefs/tests/UiPrefs.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UiPrimitives/">
+    <Project Path="libs/UiPrimitives/UiPrimitives.fsproj" />
+    <Project Path="libs/UiPrimitives/tests/UiPrimitives.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UploadFacts/">
+    <Project Path="libs/UploadFacts/UploadFacts.fsproj" />
+    <Project Path="libs/UploadFacts/tests/UploadFacts.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UrlSchemeRegistration/">
+    <Project Path="libs/UrlSchemeRegistration/UrlSchemeRegistration.fsproj" />
+    <Project Path="libs/UrlSchemeRegistration/tests/UrlSchemeRegistration.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UsageFoot/">
+    <Project Path="libs/UsageFoot/UsageFoot.fsproj" />
+    <Project Path="libs/UsageFoot/tests/UsageFoot.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UsageTally/">
+    <Project Path="libs/UsageTally/UsageTally.fsproj" />
+    <Project Path="libs/UsageTally/tests/UsageTally.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/UserBubble/">
+    <Project Path="libs/UserBubble/UserBubble.fsproj" />
+    <Project Path="libs/UserBubble/tests/UserBubble.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/VerifiedCopy/">
+    <Project Path="libs/VerifiedCopy/VerifiedCopy.fsproj" />
+    <Project Path="libs/VerifiedCopy/tests/VerifiedCopy.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/Wire/">
+    <Project Path="libs/Wire/Wire.fsproj" />
+    <Project Path="libs/Wire/tests/Wire.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/WsHandshake/">
+    <Project Path="libs/WsHandshake/WsHandshake.fsproj" />
+    <Project Path="libs/WsHandshake/tests/WsHandshake.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/AgentContent/">
+    <Project Path="compose/AgentContent/AgentContent.fsproj" />
+    <Project Path="compose/AgentContent/tests/AgentContent.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/AgentRuntime/">
+    <Project Path="compose/AgentRuntime/AgentRuntime.fsproj" />
+    <Project Path="compose/AgentRuntime/tests/AgentRuntime.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/AguiWire/">
+    <Project Path="compose/AguiWire/AguiWire.fsproj" />
+    <Project Path="compose/AguiWire/tests/AguiWire.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ApprovalDesk/">
+    <Project Path="compose/ApprovalDesk/ApprovalDesk.fsproj" />
+    <Project Path="compose/ApprovalDesk/tests/ApprovalDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/AppShell/">
+    <Project Path="compose/AppShell/AppShell.fsproj" />
+    <Project Path="compose/AppShell/tests/AppShell.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/Attachments/">
+    <Project Path="compose/Attachments/Attachments.fsproj" />
+    <Project Path="compose/Attachments/tests/Attachments.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/BuiltinTools/">
+    <Project Path="compose/BuiltinTools/BuiltinTools.fsproj" />
+    <Project Path="compose/BuiltinTools/tests/BuiltinTools.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/Catalog/">
+    <Project Path="compose/Catalog/Catalog.fsproj" />
+    <Project Path="compose/Catalog/tests/Catalog.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ChatDomain/">
+    <Project Path="compose/ChatDomain/ChatDomain.fsproj" />
+    <Project Path="compose/ChatDomain/tests/ChatDomain.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ChatOrchestrator/">
+    <Project Path="compose/ChatOrchestrator/ChatOrchestrator.fsproj" />
+    <Project Path="compose/ChatOrchestrator/tests/ChatOrchestrator.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ChatPane/">
+    <Project Path="compose/ChatPane/ChatPane.fsproj" />
+    <Project Path="compose/ChatPane/tests/ChatPane.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ChatScreen/">
+    <Project Path="compose/ChatScreen/ChatScreen.fsproj" />
+    <Project Path="compose/ChatScreen/tests/ChatScreen.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/CodeTint/">
+    <Project Path="compose/CodeTint/CodeTint.fsproj" />
+    <Project Path="compose/CodeTint/tests/CodeTint.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/CommandPalette/">
+    <Project Path="compose/CommandPalette/CommandPalette.fsproj" />
+    <Project Path="compose/CommandPalette/tests/CommandPalette.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ComposerDesk/">
+    <Project Path="compose/ComposerDesk/ComposerDesk.fsproj" />
+    <Project Path="compose/ComposerDesk/tests/ComposerDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ConfigMutation/">
+    <Project Path="compose/ConfigMutation/ConfigMutation.fsproj" />
+    <Project Path="compose/ConfigMutation/tests/ConfigMutation.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ConfigStore/">
+    <Project Path="compose/ConfigStore/ConfigStore.fsproj" />
+    <Project Path="compose/ConfigStore/tests/ConfigStore.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ConnectIssueText/">
+    <Project Path="compose/ConnectIssueText/ConnectIssueText.fsproj" />
+    <Project Path="compose/ConnectIssueText/tests/ConnectIssueText.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ConversationExport/">
+    <Project Path="compose/ConversationExport/ConversationExport.fsproj" />
+    <Project Path="compose/ConversationExport/tests/ConversationExport.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ConversationList/">
+    <Project Path="compose/ConversationList/ConversationList.fsproj" />
+    <Project Path="compose/ConversationList/tests/ConversationList.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ConversationRuns/">
+    <Project Path="compose/ConversationRuns/ConversationRuns.fsproj" />
+    <Project Path="compose/ConversationRuns/tests/ConversationRuns.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/CredentialStore/">
+    <Project Path="compose/CredentialStore/CredentialStore.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/DeletionDesk/">
+    <Project Path="compose/DeletionDesk/DeletionDesk.fsproj" />
+    <Project Path="compose/DeletionDesk/tests/DeletionDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/DesignRhythm/">
+    <Project Path="compose/DesignRhythm/DesignRhythm.fsproj" />
+    <Project Path="compose/DesignRhythm/tests/DesignRhythm.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/DesktopPairing/">
+    <Project Path="compose/DesktopPairing/DesktopPairing.fsproj" />
+    <Project Path="compose/DesktopPairing/tests/DesktopPairing.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/DialogsDesk/">
+    <Project Path="compose/DialogsDesk/DialogsDesk.fsproj" />
+    <Project Path="compose/DialogsDesk/tests/DialogsDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/Doctor/">
+    <Project Path="compose/Doctor/Doctor.fsproj" />
+    <Project Path="compose/Doctor/tests/Doctor.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/DraftSession/">
+    <Project Path="compose/DraftSession/DraftSession.fsproj" />
+    <Project Path="compose/DraftSession/tests/DraftSession.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/EntryShells/">
+    <Project Path="compose/EntryShells/EntryShells.fsproj" />
+  </Folder>
+  <Folder Name="/EventStore/">
+    <Project Path="compose/EventStore/EventStore.fsproj" />
+    <Project Path="compose/EventStore/tests/EventStore.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ExternalLinks/">
+    <Project Path="compose/ExternalLinks/ExternalLinks.fsproj" />
+  </Folder>
+  <Folder Name="/HostLog/">
+    <Project Path="compose/HostLog/HostLog.fsproj" />
+    <Project Path="compose/HostLog/tests/HostLog.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/HostStatus/">
+    <Project Path="compose/HostStatus/HostStatus.fsproj" />
+    <Project Path="compose/HostStatus/tests/HostStatus.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ImageShrink/">
+    <Project Path="compose/ImageShrink/ImageShrink.fsproj" />
+    <Project Path="compose/ImageShrink/ImageShrinkIo.fsproj" />
+    <Project Path="compose/ImageShrink/tests/ImageShrink.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LaunchPlan/">
+    <Project Path="compose/LaunchPlan/LaunchPlan.fsproj" />
+    <Project Path="compose/LaunchPlan/tests/LaunchPlan.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/LedgerStore/">
+    <Project Path="compose/LedgerStore/LedgerStore.fsproj" />
+    <Project Path="compose/LedgerStore/tests/LedgerStore.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MarkdownView/">
+    <Project Path="compose/MarkdownView/MarkdownView.fsproj" />
+    <Project Path="compose/MarkdownView/tests/MarkdownView.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MathFigure/">
+    <Project Path="compose/MathFigure/MathFigure.fsproj" />
+    <Project Path="compose/MathFigure/tests/MathFigure.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MathTypeset/">
+    <Project Path="compose/MathTypeset/MathTypeset.fsproj" />
+    <Project Path="compose/MathTypeset/tests/MathTypeset.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/McpClient/">
+    <Project Path="compose/McpClient/McpClient.fsproj" />
+    <Project Path="compose/McpClient/tests/McpClient.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/MessageCardView/">
+    <Project Path="compose/MessageCardView/MessageCardView.fsproj" />
+    <Project Path="compose/MessageCardView/tests/MessageCardView.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelSwitchDesk/">
+    <Project Path="compose/ModelSwitchDesk/ModelSwitchDesk.fsproj" />
+    <Project Path="compose/ModelSwitchDesk/tests/ModelSwitchDesk.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Outbox/">
+    <Project Path="compose/Outbox/Outbox.fsproj" />
+    <Project Path="compose/Outbox/tests/Outbox.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/OverlayDesk/">
+    <Project Path="compose/OverlayDesk/OverlayDesk.fsproj" />
+    <Project Path="compose/OverlayDesk/tests/OverlayDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/PairingDesk/">
+    <Project Path="compose/PairingDesk/PairingDesk.fsproj" />
+    <Project Path="compose/PairingDesk/tests/PairingDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/PaletteDesk/">
+    <Project Path="compose/PaletteDesk/PaletteDesk.fsproj" />
+    <Project Path="compose/PaletteDesk/tests/PaletteDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/PartialReplies/">
+    <Project Path="compose/PartialReplies/PartialReplies.fsproj" />
+    <Project Path="compose/PartialReplies/tests/PartialReplies.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ProtocolDispatch/">
+    <Project Path="compose/ProtocolDispatch/ProtocolDispatch.fsproj" />
+    <Project Path="compose/ProtocolDispatch/tests/ProtocolDispatch.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ProviderCatalog/">
+    <Project Path="compose/ProviderCatalog/ProviderCatalog.fsproj" />
+    <Project Path="compose/ProviderCatalog/tests/ProviderCatalog.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ProviderFailure/">
+    <Project Path="compose/ProviderFailure/ProviderFailure.fsproj" />
+    <Project Path="compose/ProviderFailure/tests/ProviderFailure.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ProviderTransports/">
+    <Project Path="compose/ProviderTransports/ProviderTransports.fsproj" />
+    <Project Path="compose/ProviderTransports/tests/ProviderTransports.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ReadingLook/">
+    <Project Path="compose/ReadingLook/ReadingLook.fsproj" />
+    <Project Path="compose/ReadingLook/tests/ReadingLook.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/RichAssets/">
+    <Project Path="compose/RichAssets/RichAssets.fsproj" />
+    <Project Path="compose/RichAssets/tests/RichAssets.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/RichBrowser/">
+    <Project Path="compose/RichBrowser/RichBrowser.fsproj" />
+    <Project Path="compose/RichBrowser/tests/RichBrowser.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/RichJint/">
+    <Project Path="compose/RichJint/RichJint.fsproj" />
+    <Project Path="compose/RichJint/tests/RichJint.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/Search/">
+    <Project Path="compose/Search/Search.fsproj" />
+    <Project Path="compose/Search/tests/Search.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ServerApp/">
+    <Project Path="compose/ServerApp/ServerApp.fsproj" />
+    <Project Path="compose/ServerApp/tests/ServerApp.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ServerModel/">
+    <Project Path="compose/ServerModel/ServerModel.fsproj" />
+    <Project Path="compose/ServerModel/tests/ServerModel.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/SettingsScreen/">
+    <Project Path="compose/SettingsScreen/SettingsScreen.fsproj" />
+    <Project Path="compose/SettingsScreen/tests/SettingsScreen.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ShellCommands/">
+    <Project Path="compose/ShellCommands/ShellCommands.fsproj" />
+    <Project Path="compose/ShellCommands/tests/ShellCommands.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ShellDesk/">
+    <Project Path="compose/ShellDesk/ShellDesk.fsproj" />
+    <Project Path="compose/ShellDesk/tests/ShellDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/SidebarDesk/">
+    <Project Path="compose/SidebarDesk/SidebarDesk.fsproj" />
+    <Project Path="compose/SidebarDesk/tests/SidebarDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/StoreLaunch/">
+    <Project Path="compose/StoreLaunch/StoreLaunch.fsproj" />
+    <Project Path="compose/StoreLaunch/tests/StoreLaunch.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/Theme/">
+    <Project Path="compose/Theme/Theme.fsproj" />
+    <Project Path="compose/Theme/tests/Theme.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ToolApproval/">
+    <Project Path="compose/ToolApproval/ToolApproval.fsproj" />
+    <Project Path="compose/ToolApproval/tests/ToolApproval.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/ToolRegistry/">
+    <Project Path="compose/ToolRegistry/ToolRegistry.fsproj" />
+    <Project Path="compose/ToolRegistry/tests/ToolRegistry.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/TransferDesk/">
+    <Project Path="compose/TransferDesk/TransferDesk.fsproj" />
+    <Project Path="compose/TransferDesk/tests/TransferDesk.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/UiPrefsFile/">
+    <Project Path="compose/UiPrefsFile/UiPrefsFile.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/UrlSchemeRegistrationIo/">
+    <Project Path="compose/UrlSchemeRegistrationIo/UrlSchemeRegistrationIo.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/Workspace/">
+    <Project Path="compose/Workspace/Workspace.fsproj" />
+    <Project Path="compose/Workspace/tests/Workspace.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/WsClient/">
+    <Project Path="compose/WsClient/WsClient.fsproj" />
+    <Project Path="compose/WsClient/tests/WsClient.Tests.fsproj" />
   </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
-  </Folder>
-  <Folder Name="${d#*/}/">
+  <Folder Name="/WsConnection/">
+    <Project Path="compose/WsConnection/WsConnection.fsproj" />
+    <Project Path="compose/WsConnection/tests/WsConnection.Tests.fsproj" />
   </Folder>
   <Folder Name="/App/">
     <Project Path="app/Desktop/Wanxiang.App.fsproj" />

@@ -3,6 +3,7 @@ module LedgerStoreTests
 
 open System
 open System.IO
+open System.Runtime.InteropServices
 open System.Text.Json.Nodes
 open Xunit
 open Ledger
@@ -29,6 +30,45 @@ let openWith policy dir = new S(dir, apply, 0, codec, policy)
 let openAt dir = openWith SnapshotPolicy.Manual dir
 let logOf dir = Path.Combine(dir, "log.jsonseq")
 let committed = function Committed c -> c | r -> failwithf "expected Committed, got %A" r
+
+/// 只在测试里用：临时收紧本进程的 RLIMIT_FSIZE（内核的文件大小上限），并忽略 SIGXFSZ。
+/// 信号被忽略时，内核把超过上限的写报成 EFBIG（.NET 转成 ArgumentOutOfRangeException），
+/// 而在上限内缩小文件的截回仍被允许 —— 这是与磁盘写满同类的真实故障，不是注入开关。
+/// 用完恢复原上限与原信号处置。仅 Linux。
+module private FsizeLimit =
+    [<Struct; StructLayout(LayoutKind.Sequential)>]
+    type RLimit = { mutable Cur: uint64; mutable Max: uint64 }
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern int getrlimit(int resource, RLimit& rlim)
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern int setrlimit(int resource, RLimit& rlim)
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern IntPtr signal(int signum, IntPtr handler)
+
+    [<Literal>]
+    let private RlimitFsize = 1
+
+    [<Literal>]
+    let private Sigxfsz = 25
+
+    /// 以文件大小上限 limit 字节运行 act，之后恢复原上限与原信号处置。
+    let at (limit: int64) (act: unit -> unit) =
+        let mutable old = { Cur = 0UL; Max = 0UL }
+        if getrlimit (RlimitFsize, &old) <> 0 then failwith "getrlimit failed"
+        let previous = signal (Sigxfsz, IntPtr 1)   // SIG_IGN
+        if previous = IntPtr(-1) then failwith "signal failed"
+        try
+            try
+                let mutable tightened = { Cur = min (uint64 limit) old.Max; Max = old.Max }
+                if setrlimit (RlimitFsize, &tightened) <> 0 then failwith "setrlimit failed"
+                act ()
+            finally
+                setrlimit (RlimitFsize, &old) |> ignore
+        finally
+            signal (Sigxfsz, previous) |> ignore
 
 [<Fact>]
 let ``commits survive reopen with and without snapshot, startup says which`` () =
@@ -191,6 +231,26 @@ let ``unknown write outcome stays unknown and is never turned into a retry`` () 
         match s.Health with OutcomeUnknown _ -> () | h -> failwithf "%A" h
         match s.Submit([ 1 ], t0) with ReadOnly _ -> () | r -> failwithf "%A" r
         Assert.Equal(0UL, s.LastId)
+
+[<Fact>]
+let ``not written is known and retryable; the log stays byte-identical and the id is reused`` () =
+    // 真实故障：本进程 RLIMIT_FSIZE 上限（写按 EFBIG 失败），截回成功，所以结果确知是没写。仅 Linux。
+    if OperatingSystem.IsLinux() then
+        let d = tempDir ()
+        use s = openAt d
+        committed (s.Submit([ 1 ], t0)) |> ignore
+        committed (s.Submit([ 2 ], t0)) |> ignore
+        let before = File.ReadAllBytes(logOf d)
+        FsizeLimit.at (FileInfo(logOf d).Length) (fun () ->
+            match s.Submit([ 3 ], t0) with
+            | NotWritten _ -> ()
+            | r -> failwithf "%A" r)
+        // 日志逐字节没变，存储仍健康；Abandon 撤销了提议，id 复用，所以可以重试
+        Assert.Equal<byte[]>(before, File.ReadAllBytes(logOf d))
+        Assert.Equal((2UL, 3), (s.LastId, s.State))
+        Assert.Equal<Health>(Healthy, s.Health)
+        Assert.Equal(3UL, (committed (s.Submit([ 3 ], t0))).id)
+        Assert.Equal((3UL, 6), (s.LastId, s.State))
 
 [<Fact>]
 let ``snapshot save failure does not affect commits`` () =

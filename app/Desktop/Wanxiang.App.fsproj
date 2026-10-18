@@ -76,6 +76,8 @@
     <PackageReference Include="Wanxiang2.ModelSwitchDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.SettingsScreen" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DialogsDesk" VersionOverride="0.0.0-local" />
+    <!-- 导入导出对话框：入口按 ShellViews 的工厂构造，需直接引用（不依赖 AppShell 的传递引用）。 -->
+    <PackageReference Include="Wanxiang2.TransferDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
@@ -98,6 +100,9 @@
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
+    <!-- 附件入口（选文件 / 拖入 / 粘贴）读字节后交给组合者：分块、校验与文案归这两个包。 -->
+    <PackageReference Include="Wanxiang2.UploadFacts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
     <!-- 六桥接线新增（入口直接调用故显式引用；StartupTrace 执行侧 mark/requestExit 在其包内）：
          主机启动门（LocalHostGate）、启动打点（StartupTrace）、面板最近使用（CommandPalette，含 PaletteRecentFile）。
          KeyShortcut 换算桥与 UnansweredReply 失败卡经 AppShell 包传递。 -->

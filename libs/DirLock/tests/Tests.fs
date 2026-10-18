@@ -63,3 +63,27 @@ let ``pid write failure is reported distinctly and releases the lock`` () =
     match DirLock.TryAcquire d with
     | Ok l -> (l :> IDisposable).Dispose()
     | Error e -> failwith e
+
+// SPEC 4：状态有主人
+[<Fact>]
+let ``failed acquires leave the holder intact; locks in different directories are independent`` () =
+    let d1, d2 = tempDir (), tempDir ()
+    let first = match DirLock.TryAcquire d1 with Ok l -> l | Error e -> failwith e
+    let pidFile = Path.Combine(d1, ".lock.pid")
+    let holder = File.ReadAllText(pidFile).Trim()
+    // 反复尝试同一目录都失败；失败不惊动持有者：诊断里的 pid 不变，锁仍被拒
+    for _ in 1..2 do
+        match DirLock.TryAcquire d1 with
+        | Ok _ -> failwith "expected lock conflict"
+        | Error msg -> Assert.Contains(holder, msg)
+    Assert.Equal(holder, File.ReadAllText(pidFile).Trim())
+    // 另一个目录是独立实例，可以同时持有
+    let second = match DirLock.TryAcquire d2 with Ok l -> l | Error e -> failwith e
+    Assert.Equal(Path.Combine(d1, ".lock"), first.Path)
+    Assert.NotEqual<string>(first.Path, second.Path)
+    // 释放其中一个不影响另一个
+    (second :> IDisposable).Dispose()
+    match DirLock.TryAcquire d2 with Ok l -> (l :> IDisposable).Dispose() | Error e -> failwith e
+    match DirLock.TryAcquire d1 with Ok _ -> failwith "expected d1 still held" | Error _ -> ()
+    (first :> IDisposable).Dispose()
+    match DirLock.TryAcquire d1 with Ok l -> (l :> IDisposable).Dispose() | Error e -> failwith e

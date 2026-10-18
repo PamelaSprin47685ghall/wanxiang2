@@ -10,6 +10,20 @@ jobs:
       - run: ./x check
       - id: libs
         run: echo "libs=$(ls libs | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+  # 一次产包，供组合、仓库外消费与入口构建共用（那些环节只能从交付包构建）。
+  pack:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - run: ./x pack
+      - uses: actions/upload-artifact@v7
+        with:
+          name: feed
+          path: artifacts/feed
+          if-no-files-found: error
   test:
     needs: check
     runs-on: ubuntu-latest
@@ -23,13 +37,41 @@ jobs:
         with: { global-json-file: global.json }
       - run: ./x test ${{ matrix.lib }}
   compose:
-    needs: check
+    needs: pack
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with: { global-json-file: global.json }
-      - run: ./x pack && ./x compose
+      - uses: actions/download-artifact@v8
+        with: { name: feed, path: artifacts/feed }
+      - run: ./x compose
+  # 仓库外消费（根 SPEC 2）：仓库外的临时项目只从 feed 取包，构建并真实运行。
+  consume:
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - uses: actions/download-artifact@v8
+        with: { name: feed, path: artifacts/feed }
+      - run: ./x consume
+  # 产品入口构建：此前 ci.yml 从不构建 app/Desktop 与 app/Pwa。
+  app:
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - uses: actions/download-artifact@v8
+        with: { name: feed, path: artifacts/feed }
+      # PWA 构建需要 wasm-tools workload；安装方式与 release-publish.yml 相同。
+      - run: dotnet workload install wasm-tools --skip-manifest-update || dotnet workload install wasm-tools
+      # 实测（2026-10-17，本机 SDK 10.0.402 + wasm-tools，NuGet 外部依赖已缓存、Debug）：两入口共 12.7 秒
+      #（Desktop 4.4、Pwa 7.6），不算重；CI 另加上面的 workload 安装时间。
+      - run: ./x app
   widget-template:
     needs: check
     runs-on: ubuntu-latest

@@ -1,9 +1,13 @@
 # ADR-001：Wire 版本协商收敛（第八阶段）
 
+> 迁移说明（2026-10-18）：本 ADR 于 2026-10-10 在旧仓库 wanxiang 定案；该仓库已于 2026-10-17 物理退役，本文件随活文档迁入本仓库。文中 `src/Wanxiang.*` 是旧路径，今天的对应物见「影响面」里逐条的括号注。方案 B 是今天的现行实现：`compose/WsConnection` 的 `HandshakeState` 只有 `NotStarted | Authenticated`，`Hello`/`UpgradeRequired` 仅作兼容 reader 留在 `libs/Wire`，N-1 兼容断言在 `compose/ServerApp/tests/N1CompatTests.fs`；旧仓库 skill（`wanxiang-protocol`）未随迁，版本权威的现行活文档是 `docs/contracts/version-authority.md`。
+
 - 状态：**已定案（方案 B）**，2026-10-10
-- 关联：`wanxiang-protocol` 第 32 节（决策 69/70 现行决议）、`docs/contracts/version-authority.md`
+- 关联：`wanxiang-protocol` 第 32 节（旧仓库 skill，未随迁；决策 69/70）、`docs/contracts/version-authority.md`
 
 ## 问题
+
+以下为定案前（旧仓库，2026-10-10）的状态；方案 B 落地后今天的现行状态见文首迁移说明。
 
 协议类型保留 `Hello` 与 `UpgradeRequired`，但：
 
@@ -50,13 +54,14 @@
 - 旧客户端（发送 Hello）：服务端忽略之，认证照常 → **兼容**（不破坏）。
 - 旧服务端（发送 UpgradeRequired）：新客户端忽略 → 兼容。
 - 新客户端（不发送 Hello）：旧服务端若要求 Hello 会拒绝 → **不兼容**，但旧服务端
-  已随本 ADR 一并升级；N-1 组合由 CI 兼容测试覆盖（当前无旧服务端部署）。
+  已随本 ADR 一并升级；N-1 组合由 CI 兼容测试覆盖（旧仓库表述；本仓库等价物是
+  `compose/ServerApp/tests/N1CompatTests.fs`，随 `./x compose` 跑；当前无旧服务端部署）。
 
 ## 影响面
 
-- `src/Wanxiang.Server/WsConnection.fs`：删除 `HelloSeen`，状态机收敛；
+- `compose/WsConnection/WsConnection.fs`（旧 `src/Wanxiang.Server/WsConnection.fs`）：删除 `HelloSeen`，状态机收敛；
   `Hello`/`UpgradeRequired` 分支保留（兼容 reader，注释说明）。
-- `src/Wanxiang.UI/AppShell.fs`：删除连接时发送 `Hello`；删除 `UpgradeRequired` UI 处理。
-- `src/Wanxiang.Protocol/WireEvent.fs`、`WireCodec.fs`：变体与编解码保留（兼容 reader），
+- `compose/AppShell/AppShell.fs`（旧 `src/Wanxiang.UI/AppShell.fs`）：删除连接时发送 `Hello`；删除 `UpgradeRequired` UI 处理。
+- `libs/Wire/WireEvent.fs`、`libs/Wire/WireCodec.fs`（旧 `src/Wanxiang.Protocol/…`）：变体与编解码保留（兼容 reader），
   加注释。
-- `tests/Wanxiang.Tests/ServerConnectionsTests.fs`：`HandshakeState` 结构断言更新。
+- `compose/ServerApp/tests/ServerConnectionsTests.fs`（旧 `tests/Wanxiang.Tests/ServerConnectionsTests.fs`）：`HandshakeState` 结构断言更新。

@@ -21,8 +21,11 @@ let render () =
         line (sprintf "inviteTarget %s -> %A" (js u) (DevicesModel.inviteTarget u [ "192.168.1.9"; "10.0.0.2" ]))
         line (sprintf "inviteTarget-nolan %s -> %A" (js u) (DevicesModel.inviteTarget u []))
     let devices = DevicesModel.parse (Text.Json.Nodes.JsonNode.Parse(Samples.deviceJson).AsArray())
+    let stamp (t: DateTimeOffset option) =
+        t |> Option.map (fun v -> v.ToString("o", Globalization.CultureInfo.InvariantCulture)) |> Option.defaultValue "-"
     for d in devices do
-        line (sprintf "device %A" d)
+        line (sprintf "device id=%s name=%s created=%s seen=%s revoked=%b online=%b current=%b desktop=%b"
+                (js d.id) (js d.name) (stamp d.createdAt) (stamp d.lastSeen) d.revoked d.online d.current d.desktop)
         line (sprintf "  lastSeenText %s createdText %s" (DevicesModel.lastSeenText Samples.now d) (DevicesModel.createdText d))
     for t in [ "https://example.com/"; "" ; "WX-123456" ] do
         let m = DevicesModel.qrMatrix t

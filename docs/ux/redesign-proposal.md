@@ -1,5 +1,8 @@
 # 万象 UX 重设计提案
 
+> 基准变更（2026-10-18）：本提案 2026-10-12 写于旧仓库 wanxiang（2026-10-17 物理退役，活文档迁入本仓库），是历史设计文本：正文里 `src/Wanxiang.*` 是旧路径，每处已在本行改注今天的 `compose/`、`libs/` 对应物；`tools/mock_openai.py`、`tools/e2e_smoke.js`、`./run-tests.sh`、根 `README.md` 在本仓库都不存在。本文引用的旧仓库 skill（`wanxiang-*`）与决策编号只作历史出处。
+> 落地前请以本仓库当前代码与 `./x` 为准：部分条目此后已经落地（例如全局默认模型 `[generation] defaultProvider/defaultModel` 已在 `libs/AppConfig` 实现）；本文未逐条标注实现状态。
+
 状态：提案（待分工实施）。日期：2026-10-12。
 范围：旅程、信息架构、功能、默认值、术语均可调整。不可破坏的边界见第 1 节。
 
@@ -22,6 +25,8 @@
 | UI 规范 v1（Lucide、间距阶梯、字号、无伪类手写、对比度） | `wanxiang-ui` | 新界面沿用现有 token 和控件。需要例外时先改规范。 |
 | 一方文案不得出现旧名称 | `wanxiang` 总纲 | 不引入禁用名称。 |
 
+（上表“出处”里的 `wanxiang-*` 章节与裸 `README` 是旧仓库文档，未随迁；决策编号沿用为历史引用。）
+
 文档同步规则：有意修改上表任一行的语义时，在同一 PR 里更新对应 skill 章节，并在 `wanxiang` 总纲新增章节记录原因。预留编号 60 起。
 
 ---
@@ -32,7 +37,7 @@
 
 ### 2.1 首次运行（桌面）
 
-1. `./start.sh`，首次构建，界面打开并**自动**连接本机服务端（桌面自动配对，决策 64）。
+1. `./run-desktop.sh`（旧 `./start.sh`），首次构建，界面打开并**自动**连接本机服务端（桌面自动配对，决策 64）。
 2. 看到空态“还没有可用的模型”，旁边有“添加服务商”。
 3. 进入 设置 → 服务商 → 添加服务商 → 选预设 → 粘贴密钥 → （可选）获取模型列表 → 保存。
 4. 关闭设置，回到输入框，选模型（输入框左下角），发送。
@@ -50,7 +55,7 @@
 
 - 新建入口有 Ctrl+N 与侧栏按钮；空态不再重复（上一轮已改）。
 - 发送、排队发送、停止共用右侧。会话参数（temperature、系统指令、工具）藏在顶栏菜单“会话上下文”和输入区摘要里。
-- 草稿、待确认消息只在内存里，刷新或关窗即丢（README 已声明）。
+- 草稿、待确认消息只在内存里，刷新或关窗即丢（旧仓库 README 的声明）。
 - 错误在原位显示卡片，可重试的给按钮。
 
 ### 2.4 工具调用与审批
@@ -79,7 +84,7 @@
 3. 提示“配对码会打印在服务端终端（stderr），5 分钟内有效。”
 4. 用户必须切到运行万象的那台机器的终端，找到 JSON Lines 里的 `pairing-code` 一行，抄 6 位数字，在 5 分钟内回来输入。
 
-**对桌面用户**（已经开着万象窗口）这一步要翻终端，而 `start.sh` 启动后终端可能早就被滚走。**对手机用户**，这是整条旅程里最难的一步。服务端已经认识桌面客户端，却不让它帮忙发码。
+**对桌面用户**（已经开着万象窗口）这一步要翻终端，而启动脚本（旧 `start.sh`，今天 `./run-desktop.sh`）启动后终端可能早就被滚走。**对手机用户**，这是整条旅程里最难的一步。服务端已经认识桌面客户端，却不让它帮忙发码。
 
 ### 2.8 错误恢复
 
@@ -97,16 +102,16 @@
 | # | 级别 | 问题 | 证据 | 本质 |
 |---|---|---|---|---|
 | P1 | S | **首次运行要跨 4 个界面才能发出第一句话** | §2.1 | 旅程终点（发消息）与起点之间隔着“设置”这个维护区 |
-| P2 | S | **PWA 配对码只出现在服务端 stderr** | §2.7；`ServerApp.fs` 第 393 行 | 已认证的桌面客户端无法替新设备发邀请 |
-| P3 | A | **工具对用户不透明且无法拒绝**；默认工具是调试工具 | §2.4；`BuiltinTools.fs` | 唯一的安全模型是“信任一切”，且看不懂参数 JSON |
+| P2 | S | **PWA 配对码只出现在服务端 stderr** | §2.7；`compose/ServerApp/ServerApp.fs`（旧 `ServerApp.fs` 第 393 行，行号已失效） | 已认证的桌面客户端无法替新设备发邀请 |
+| P3 | A | **工具对用户不透明且无法拒绝**；默认工具是调试工具 | §2.4；`compose/BuiltinTools/`（旧 `BuiltinTools.fs`） | 唯一的安全模型是“信任一切”，且看不懂参数 JSON |
 | P4 | A | **搜不到消息正文** | §2.5 | 历史越长，侧栏搜索越没用 |
-| P5 | A | **“服务器 / 服务商”“对话 / 会话 / 分叉 / 分支”概念重叠** | §2.6；代码里“会话”约 300 次、“对话”约 74 次、“分叉”约 22 次、“分支”约 21 次 | 同一事物多个名字，不同事物相近名字 |
+| P5 | A | **“服务器 / 服务商”“对话 / 会话 / 分叉 / 分支”概念重叠** | §2.6；代码里“会话”约 300 次、“对话”约 74 次、“分叉”约 22 次、“分支”约 21 次（旧仓库计数） | 同一事物多个名字，不同事物相近名字 |
 | P6 | A | **分叉看不到谱系** | §2.5 | 能力存在，但用户建不起“这是一棵树”的心智 |
 | P7 | A | **模型选择无全局默认；服务商“原生/兼容”二选一让人困惑** | §2.2 | 用户想表达“默认用 Claude Sonnet”，概念却是“服务商的 defaultModel” |
 | P8 | B | **服务端配置错误只在 stderr 出现，客户端无感知** | §2.8 | “服务端继续跑旧配置”合理，但用户以为改好了 |
-| P9 | B | **草稿刷新即丢** | README | 对 PWA（手机切后台就会被回收）影响尤其大 |
+| P9 | B | **草稿刷新即丢** | 旧仓库 README | 对 PWA（手机切后台就会被回收）影响尤其大 |
 | P10 | B | **工具调用展示是 JSON** | §2.4 | 面向开发者，不面向使用者 |
-| P11 | B | **错误重试判断靠文案关键词** | `Dialogs.fs` 第 327 行 | 实现隐患，文案一改行为就变 |
+| P11 | B | **错误重试判断靠文案关键词** | `compose/DialogsDesk/DialogsDesk.fs`（旧 `Dialogs.fs` 第 327 行，行号已失效） | 实现隐患，文案一改行为就变 |
 
 ### 3.1 可以删的步骤
 
@@ -211,9 +216,9 @@
 共同约定：
 
 - 每条工作流一个分支（`ux/w1-…`），一个 PR，按 rebase 合并。
-- 共享文件（`AppShell.fs`、`Sidebar.fs`、`ChatView.fs`、`Dialogs.fs`、`SettingsView.fs`）是冲突热点，下面按**区域**切分所有权。需要在对方区域加一个挂接点时，只加最小接线并在 PR 描述里点名。
+- 共享文件（旧 `AppShell.fs`、`Sidebar.fs`、`ChatView.fs`、`Dialogs.fs`、`SettingsView.fs`；今天分别是 `compose/AppShell/AppShell.fs`、`compose/SidebarDesk/`、`compose/ChatScreen/` + `compose/ChatPane/`、`compose/DialogsDesk/`、`compose/SettingsScreen/`）是冲突热点，下面按**区域**切分所有权。需要在对方区域加一个挂接点时，只加最小接线并在 PR 描述里点名。
 - 凡新增线上事件，先在 W 内的“协议附录”里写事件名与载荷，再实现。事件名一律以 `wanxiang.dev/` 开头。
-- 每条工作流自己带测试；不得降低现有 UI 385 / 非 UI 763 的通过数。
+- 每条工作流自己带测试；不得降低现有测试通过数（旧仓库当时基线是 UI 385 / 非 UI 763；本仓库按 `./x test <lib>` 与 `./x compose` 跑）。
 - 术语改动（W6）最后落地，其他流先用**新术语**写新字符串，旧字符串由 W6 统一扫。
 
 ### W1 首次运行与模型服务（对应 P1、P7，部分 P11）
@@ -227,18 +232,18 @@
 - 预设列表重排：常用 4 家置顶；“原生/兼容端点”合并为一个条目，由 `kind` 自动决定，高级区才可改。
 
 **独占文件**
-- `src/Wanxiang.UI/Views/SettingsProviders.fs`
-- `src/Wanxiang.UI/Model/ProviderPresets.fs`
-- `src/Wanxiang.UI/Model/Catalog.fs`
-- 新增 `src/Wanxiang.UI/Views/OnboardingCard.fs`
-- `src/Wanxiang.Server/ProviderCatalog.fs`、`ConfigMutation.fs`
-- `src/Wanxiang.Config/ConfigModel.fs`、`TomlCodec.fs`（仅 `generation` 新键与版本迁移）
+- `compose/SettingsScreen/ProvidersDesk.fs`（旧 `src/Wanxiang.UI/Views/SettingsProviders.fs`）
+- `libs/ProviderPresets/`（旧 `src/Wanxiang.UI/Model/ProviderPresets.fs`）
+- `compose/Catalog/`（旧 `src/Wanxiang.UI/Model/Catalog.fs`）
+- 新增 `compose/SettingsScreen/OnboardingDesk.fs`（旧提案名 `src/Wanxiang.UI/Views/OnboardingCard.fs`；本仓库已存在）
+- `compose/ProviderCatalog/`、`compose/ConfigMutation/`（旧 `src/Wanxiang.Server/ProviderCatalog.fs`、`ConfigMutation.fs`）
+- `libs/AppConfig/ConfigModel.fs`、`libs/AppConfig/TomlCodec.fs`（旧 `src/Wanxiang.Config/ConfigModel.fs`、`TomlCodec.fs`；仅 `generation` 新键与版本迁移）
 
-**共享接线（只加挂接点）**：`Views/ChatView.fs` 空态区域放卡片；`AppShell.fs` 一处模型选择逻辑。
+**共享接线（只加挂接点）**：`compose/ChatPane`（旧 `Views/ChatView.fs` 的空态区域）放卡片；`compose/AppShell/AppShell.fs` 一处模型选择逻辑。
 
 **验收测试**
 1. 新建空配置启动，UI 无任何服务商时，主界面出现卡片，设置页未被打开。
-2. 在 mock 服务（`tools/mock_openai.py`）上：选 OpenAI 预设、填密钥、点击后模型列表被自动填充，默认模型被选中，输入框获得焦点且预填文本。动作总数 ≤ 4（用 headless 测试数点击/输入次数）。
+2. 在 mock 服务（旧仓库用 `tools/mock_openai.py`，该脚本未随迁；本仓库需自建夹具）上：选 OpenAI 预设、填密钥、点击后模型列表被自动填充，默认模型被选中，输入框获得焦点且预填文本。动作总数 ≤ 4（用 headless 测试数点击/输入次数）。
 3. 密钥错误、端点不通、路径错误各自给出不同的人话原因；没有一条只写“失败”。
 4. `configVersion = 2` 的旧 TOML 读入后行为不变；写回时升为 3；重复读写幂等；未知键仍整体拒绝。
 5. 新对话的模型 = 全局默认；删掉全局默认键后回落为服务商 `defaultModel`。
@@ -260,14 +265,14 @@
 - 设备列表需要 `[[auth.clients]]` 增加可选 `name`、`createdAt`、`lastSeenAt`（可选键，缺省兼容）。最后在线时间不写 TOML（运行时状态），只在连接内存中给出。
 
 **独占文件**
-- `src/Wanxiang.UI/Views/Dialogs.fs` 的连接对话框部分（`connectWithClosed` 及相关）
-- 新增 `src/Wanxiang.UI/Views/SettingsDevices.fs`
-- `src/Wanxiang.Config/Auth.fs`
-- `src/Wanxiang.Server/WsConnection.fs` 的配对段（约 410–470 行）与 `ServerApp.fs` 第 385–395 行
-- `src/Wanxiang.Client/WsClient.fs` 的连接状态与错误类型
-- `src/Wanxiang.Pwa/wwwroot/*`（配对页与安装壳文案）
+- `compose/DialogsDesk/DialogsDesk.fs` 的连接对话框部分（旧 `src/Wanxiang.UI/Views/Dialogs.fs`；`connectWithClosed` 及相关）
+- 新增 `compose/SettingsScreen/DevicesDesk.fs`（旧提案名 `src/Wanxiang.UI/Views/SettingsDevices.fs`；本仓库已存在）
+- `libs/AppConfig`（旧 `src/Wanxiang.Config/Auth.fs`；auth.clients 模型与校验）
+- `compose/WsConnection/WsConnection.fs` 的配对段、`compose/ServerApp/ServerApp.fs`（旧 `src/Wanxiang.Server/…`；旧行号 410–470 / 385–395 已失效）
+- `compose/WsClient/` 的连接状态与错误类型（旧 `src/Wanxiang.Client/WsClient.fs`）
+- `app/Pwa/wwwroot/*`（旧 `src/Wanxiang.Pwa/wwwroot/*`；配对页与安装壳文案）
 
-**共享接线**：`SettingsView.fs` 增加一个分区枚举项（只加一行与导航）；`Protocol/WireEvent.fs`、`WireAgui.fs` 增加两个事件（只追加）。
+**共享接线**：`compose/SettingsScreen/SettingsScreen.fs`（旧 `SettingsView.fs`）增加一个分区枚举项（只加一行与导航）；`libs/Wire/WireEvent.fs`、`compose/AguiWire/WireAgui.fs`（旧 `Protocol/…`）增加两个事件（只追加）。
 
 **验收测试**
 1. 已认证客户端发 `pairing.invite`，收到码；用该码在**另一条连接**上配对成功，拿到永久令牌。
@@ -292,14 +297,14 @@
 - 取消生成时，等待中的审批一并作废。
 
 **独占文件**
-- `src/Wanxiang.UI/Views/SettingsTools.fs`
-- `src/Wanxiang.UI/Views/MessageCard.fs` 的工具调用段（约 700–930 行）
-- 新增 `src/Wanxiang.UI/Views/ToolApprovalCard.fs`
-- `src/Wanxiang.Server/BuiltinTools.fs`、`ToolRegistry.fs`、`McpClient.fs`
-- `src/Wanxiang.Server/ChatOrchestrator.fs` 的工具执行段
-- `src/Wanxiang.Agent/AgentRuntime.fs` 的工具循环（如需）
+- `compose/SettingsScreen/ToolsDesk.fs`（旧 `src/Wanxiang.UI/Views/SettingsTools.fs`）
+- `compose/MessageCardView/Card.fs` 的工具调用段（旧 `src/Wanxiang.UI/Views/MessageCard.fs`；旧行号 700–930 已失效）
+- 新增 `compose/ApprovalDesk/`（旧提案名 `src/Wanxiang.UI/Views/ToolApprovalCard.fs`；面板在 `libs/ApprovalPanel`；本仓库已存在）
+- `compose/BuiltinTools/`、`compose/ToolRegistry/`、`compose/McpClient/`（旧 `src/Wanxiang.Server/…`）
+- `compose/ChatOrchestrator/` 的工具执行段（旧 `src/Wanxiang.Server/ChatOrchestrator.fs`）
+- `compose/AgentRuntime/` 的工具循环（如需；旧 `src/Wanxiang.Agent/AgentRuntime.fs`）
 
-**共享接线**：`Protocol/WireEvent.fs`、`WireAgui.fs`（追加两个事件）；`Config/TomlCodec.fs`（追加 `tools.policy`，与 W1 约定**在不同函数里**加，合并时按键名排序避免冲突）。
+**共享接线**：`libs/Wire/WireEvent.fs`、`compose/AguiWire/WireAgui.fs`（旧 `Protocol/…`；追加两个事件）；`libs/AppConfig/TomlCodec.fs`（旧 `Config/TomlCodec.fs`；追加 `tools.policy`，与 W1 约定**在不同函数里**加，合并时按键名排序避免冲突）。
 
 **验收测试**
 1. 默认配置下，全部工具无需审批，现有 `ChatOrchestratorTests`、`McpTests` 全部不改而通过。
@@ -326,14 +331,14 @@
 - 术语“分叉 / 版本”落地到这里的字符串。
 
 **独占文件**
-- `src/Wanxiang.UI/Views/Sidebar.fs`（全部）
-- `src/Wanxiang.UI/Model/ConversationSummary.fs`
-- `src/Wanxiang.UI/Views/ChatView.fs` 的顶栏区域（标题、面包屑、会话菜单，约 70–130 行与 480–520 行）
-- `src/Wanxiang.Core/Projection.fs` 的查询辅助（只读）
-- 新增 `src/Wanxiang.Server/SearchService.fs`
-- `src/Wanxiang.Store/Snapshot.fs` 仅在需要暴露 fork 关系时（只读）
+- `compose/SidebarDesk/`（全部；旧 `src/Wanxiang.UI/Views/Sidebar.fs`）
+- `libs/ConversationSummary/`（旧 `src/Wanxiang.UI/Model/ConversationSummary.fs`）
+- `compose/ChatScreen/ChatScreen.fs` 的顶栏区域（旧 `src/Wanxiang.UI/Views/ChatView.fs`；标题、面包屑、对话菜单；旧行号 70–130 / 480–520 已失效）
+- `compose/ChatDomain/Projection.fs` 的查询辅助（只读；旧 `src/Wanxiang.Core/Projection.fs`）
+- 新增 `compose/Search/`（旧提案名 `src/Wanxiang.Server/SearchService.fs`；本仓库已存在）
+- `libs/Snapshot/Snapshot.fs` 仅在需要暴露 fork 关系时（只读；旧 `src/Wanxiang.Store/Snapshot.fs`）
 
-**共享接线**：`MessageCard.fs` 在用户消息处加兄弟切换控件的挂接点（与 W3 不重叠，W3 只动工具段）；`WireEvent.fs`/`WireAgui.fs` 追加。
+**共享接线**：`compose/MessageCardView/Card.fs`（旧 `MessageCard.fs`）在用户消息处加兄弟切换控件的挂接点（与 W3 不重叠，W3 只动工具段）；`libs/Wire/WireEvent.fs` / `compose/AguiWire/WireAgui.fs` 追加。
 
 **验收测试**
 1. 构造 500 个对话的夹具，搜索正文里的一个罕见词，只返回包含它的对话，片段包含该词，命中位置正确。
@@ -346,7 +351,7 @@
 
 **风险**
 - 全文搜索在大历史上的内存与延迟：需要在“最近 N 条优先 + 分页”和“预算上限”之间设计，并有大历史分级测试（`--large-history`）。
-- `Sidebar.fs` 1572 行，是冲突热点；本流独占它，其余流不得改。
+- 旧 `Sidebar.fs` 1572 行（今天 `compose/SidebarDesk/`），是冲突热点；本流独占它，其余流不得改。
 
 ### W5 对话输入与可靠性（对应 P9，部分 P8）
 
@@ -358,13 +363,13 @@
 - 输入区上下文摘要与模型入口的小调整，使其与 W1 的全局默认模型一致。
 
 **独占文件**
-- `src/Wanxiang.UI/Views/Composer.fs`
-- `src/Wanxiang.UI/Model/UiPrefs.fs`、`CredentialStore.fs`（草稿存取）
-- 新增 `src/Wanxiang.UI/Model/DraftStore.fs`
-- `src/Wanxiang.Server/Doctor.fs`（只增加报告序列化）
-- `src/Wanxiang.Server/ConfigMutation.fs` 的失败上报点（与 W1 约定：W1 改保存逻辑，W5 只在 reload 失败分支加事件）
+- `compose/ComposerDesk/`（旧 `src/Wanxiang.UI/Views/Composer.fs`）
+- `compose/UiPrefs/`、`compose/CredentialStore/`（草稿存取；旧 `src/Wanxiang.UI/Model/UiPrefs.fs`、`CredentialStore.fs`）
+- 新增 `libs/DraftStore/`（旧提案名 `src/Wanxiang.UI/Model/DraftStore.fs`；本仓库已存在，含宿主桥 `IDraftBackend`）
+- `compose/Doctor/`（只增加报告序列化；旧 `src/Wanxiang.Server/Doctor.fs`）
+- `compose/ConfigMutation/` 的失败上报点（旧 `src/Wanxiang.Server/ConfigMutation.fs`；与 W1 约定：W1 改保存逻辑，W5 只在 reload 失败分支加事件）
 
-**共享接线**：`AppShell.fs` 的发送与断线分支（约 540–600 行）。
+**共享接线**：`compose/AppShell/AppShell.fs` 的发送与断线分支（旧 `AppShell.fs`；旧行号 540–600 已失效）。
 
 **验收测试**
 1. 输入文字并添加附件后“关闭窗口”再启动：草稿文字恢复；附件列表显示“需重新选择”。
@@ -376,7 +381,7 @@
 7. PWA：模拟页面被回收后重开，草稿恢复（IndexedDB 夹具）。
 
 **风险**
-- 本地草稿可能含敏感文本，落盘即是新的隐私面。需要在设置里提供“清除本地草稿”，并在 README 的“发送与草稿”一节同步修改（现有文字写明“关闭后不会恢复”）。
+- 本地草稿可能含敏感文本，落盘即是新的隐私面。需要在设置里提供“清除本地草稿”，并在旧仓库 README 的“发送与草稿”一节同步修改（本仓库无根 README，行为以 `libs/DraftStore` 与 `compose/DraftSession` 为准；旧文字写明“关闭后不会恢复”）。
 - 这属于“涉及用户数据保留”的取舍（原则 43 第 2 条），建议实施前向负责人确认默认开启。
 
 ### W6 术语、信息架构与文案（对应 P5，及全局一致性）
@@ -387,24 +392,24 @@
   “主机”组：模型服务、工具、默认设置、设备（W2 加入）；  
   “这台客户端”组：外观与操作、关于。  
   “服务器”一词全部替换。
-- README、帮助文本、空态、toast、AutomationProperties.Name 同步。
+- 旧仓库 README（本仓库无对应根文档；对应物是 `docs/` 与界面内帮助）、帮助文本、空态、toast、AutomationProperties.Name 同步。
 - 文案风格：句子大小写、不使用感叹号；错误文案固定三段：发生了什么 / 为什么 / 下一步。
 - 术语一致性测试：扫描用户可见字符串，禁止出现被淘汰的词（白名单：代码标识符、协议名、skill 引用）。
 
 **独占文件**
-- `src/Wanxiang.UI/Views/SettingsView.fs`、`SettingsGeneral.fs`
-- `README.md`、`docs/ux/*`（本提案以外）
+- `compose/SettingsScreen/SettingsScreen.fs`、`compose/SettingsScreen/GeneralDesk.fs`（旧 `src/Wanxiang.UI/Views/SettingsView.fs`、`SettingsGeneral.fs`）
+- `docs/ux/*`（本提案以外；旧 `README.md` 在本仓库无对应物）
 - 其余文件**只改字符串字面量**，且必须在其他工作流全部合并之后进行（最后一棒），以免冲突。
 
 **验收测试**
-1. 术语扫描测试：UI 与 Client 项目的字符串字面量中不得出现“会话”（白名单列出的技术语境除外）、“服务器”（除“万象服务器”这类已确认的复合专名外应全部改“主机”）、“提供商”。
+1. 术语扫描测试：字符串字面量（旧仓库的 UI 与 Client 项目；今天对应 `compose/` 与 `app/`）中不得出现“会话”（白名单列出的技术语境除外）、“服务器”（除“万象服务器”这类已确认的复合专名外应全部改“主机”）、“提供商”。
 2. 所有现有 UI 测试按新文案更新后通过；测试里**不要**再依赖整句文案做定位，改用 AutomationId 或类型化标识（这是对 P11 的系统性缓解）。
 3. 设置分区的标题、分组名与 4.6 一致。
-4. README 与界面术语一致。
+4. 旧仓库 README 的对应物（`docs/` 与界面内帮助）与界面术语一致。
 
 **风险**
 - 影响面最大（字符串遍布 300 多处），冲突风险最高，因此排在最后。
-- 屏幕阅读器标签随文案变化，需要回归 `A11yRegressionTests`。
+- 屏幕阅读器标签随文案变化，需要回归 `compose/Theme/tests/A11yRegression.fs`（旧 `A11yRegressionTests`）。
 - 部分测试靠文案定位；改文案会连带改测试。
 
 ---
@@ -420,9 +425,9 @@ W5 ─┘
 ```
 
 - W1–W5 互不依赖，可同时开工。
-- 协议与 TOML 的追加点（`WireEvent.fs`、`WireAgui.fs`、`TomlCodec.fs`）是唯一的“文件重叠”，约定只追加、按字母序，冲突时取并集。
+- 协议与 TOML 的追加点（今天 `libs/Wire/WireEvent.fs`、`compose/AguiWire/WireAgui.fs`、`libs/AppConfig/TomlCodec.fs`）是唯一的“文件重叠”，约定只追加、按字母序，冲突时取并集。
 - W5 的“默认模型一致”依赖 W1 的键名；两边先约定键名 `generation.defaultProvider` / `generation.defaultModel`，各自实现，不必等对方。
-- 每合并一条流，跑 `./run-tests.sh` 全量与 `tools/e2e_smoke.js`。
+- 每合并一条流，跑全量（`./x all`，或按范围 `./x test <lib>` + `./x compose`）与冒烟（`tools/smoke_desktop.sh`；发布产物另跑 `tools/smoke_published.sh`）。旧 `./run-tests.sh` 与 `tools/e2e_smoke.js` 在本仓库不存在。
 
 ## 7. 总体验收（旅程级）
 
@@ -448,7 +453,7 @@ W5 ─┘
 ## 9. 不做的事
 
 - 不引入项目、工作区、标签等新的持久化对象。
-- 不改日志格式与现有 56 个 `WireEvent` 语义。
+- 不改日志格式与现有 `WireEvent` 语义（旧仓库当时 56 个；今天见 `libs/Wire/WireEvent.fs`）。
 - 不做自动重试，不做隐藏的错误恢复。
 - 不做云同步、多账号、RBAC。
 - 不重写视觉系统；视觉层只跟随新增界面使用现有 token。

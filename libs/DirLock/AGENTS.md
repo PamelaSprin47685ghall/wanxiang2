@@ -22,3 +22,7 @@
 4. [LEMMA: 1] 真实组合中，第二个存储打不开同一目录。
     - 证明：`compose/LedgerStore/tests/Tests.fs` `second store on the same directory is refused`。
 5. [TODO] Windows 上的跨进程行为（FileShare.None 是强制锁）没有测试。
+
+6. [根 SPEC 3] 失败的 `TryAcquire` 不惊动持有者：诊断 pid 不变、锁仍被拒；不同目录的锁是独立实例，释放一个不影响另一个。
+    - 证明：`failed acquires leave the holder intact; locks in different directories are independent`，通过。
+    - 剩余边界：输入只有 `string`；`TryAcquire` 要么交出锁对象本身（所有权转移），要么给出错误消息，没有可共享的可变别名。

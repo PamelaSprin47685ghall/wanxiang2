@@ -4,9 +4,9 @@
        ProtocolDispatch、DeletionDesk、DraftSession 同模式）。不持 DispatcherTimer、不做文件 IO、
        不做 Browser 调用——计时、IO、浏览器与视图端口全部由入口壳经 ShellPorts 注入。 -->
   <ItemGroup>
+    <Compile Include="UnansweredReply.fs" />
     <Compile Include="AppShell.fs" />
     <Compile Include="KeyShortcut.fs" />
-    <Compile Include="UnansweredReply.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
@@ -71,6 +71,8 @@
     <PackageReference Include="Wanxiang2.NavigationState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ImageShrink" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ImageShrinkIo" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationTransfer" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ErrorRecovery" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DraftSummaryText" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IdleSurface" VersionOverride="0.0.0-local" />

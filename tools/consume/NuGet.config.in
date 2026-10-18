@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 仓库外消费者：./x consume 把本文件的占位符换成仓库 artifacts/feed 的绝对路径后拷进临时目录。
+     Wanxiang2.* 只从本地 feed 取（packageSourceMapping），其余依赖走 nuget.org；
+     仓库里的 NuGet.config / Directory.*.props 都不会作用到这个临时项目。 -->
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="local" value="__FEED__" />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+  <packageSourceMapping>
+    <packageSource key="local"><package pattern="Wanxiang2.*" /></packageSource>
+    <packageSource key="nuget.org"><package pattern="*" /></packageSource>
+  </packageSourceMapping>
+</configuration>

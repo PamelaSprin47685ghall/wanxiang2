@@ -4,12 +4,23 @@
 #   ./x check         依赖检查：库不引用本库以外的源码；组合者只经交付包使用库
 #   ./x pack          把每个库和组合者打成包，放进 artifacts/feed
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
-#   ./x all           check + 逐库 test + pack + compose
+#   ./x consume       在仓库外的临时项目里只从 artifacts/feed 取包，构建并真实运行
+#   ./x app           从 artifacts/feed 构建 app/ 下的入口（Pwa 需 wasm-tools workload）
+#   ./x all           check + 逐库 test + pack + compose + consume
 #   ./x sln           由 libs/ 重新生成 wanxiang2.slnx
 #   ./x new-widget <Name>  由 tools/widget-template 生成控件库 libs/<Name>（目录已存在则拒绝）
 set -euo pipefail
 export MSBUILDDISABLENODEREUSE=1
 cd "$(dirname "$0")"
+
+# 全仓统一 SDK：系统 SDK（/usr/share/dotnet）没有 Microsoft.AspNetCore.App 共享框架
+# （compose/ServerApp 需要，NETSDK1226），也没有 wasm-tools（app/Pwa 需要）。
+# 用户级 SDK（~/.dotnet）两者都有；global.json 的 rollForward=latestFeature 允许它。
+# 凡 ~/.dotnet 存在，全部 dotnet 调用都走它；系统环境没有用户级 SDK 时照常走系统 dotnet。
+if [ -x "$HOME/.dotnet/dotnet" ]; then
+  export DOTNET_ROOT="$HOME/.dotnet"
+  export PATH="$HOME/.dotnet:$PATH"
+fi
 
 libs()     { for d in libs/*/;    do basename "$d"; done; }
 composers(){ for d in compose/*/; do [[ -d "$d" ]] && basename "$d"; done; }
@@ -47,6 +58,7 @@ check() {
   done
   # 组合者：不经 ProjectReference 碰 libs/（只用交付包）；库不知道组合者
   for c in $(composers); do
+    [[ -f "compose/$c/AGENTS.md" ]] || { echo "FAIL compose/$c: missing AGENTS.md"; bad=1; }
     while IFS= read -r proj; do
       local dir; dir="$(dirname "$proj")"
       while IFS= read -r ref; do
@@ -56,6 +68,14 @@ check() {
     done < <(find "compose/$c" -name '*.fsproj' -not -path '*/obj/*' -not -path '*/bin/*')
   done
   if ! diff -q <(gen_sln) wanxiang2.slnx >/dev/null 2>&1; then echo "FAIL wanxiang2.slnx out of date (run ./x sln)"; bad=1; fi
+  # 包二进制不得进 Git 索引。忽略规则挡不住已经暂存的文件。
+  local packed
+  packed="$(git ls-files '*.nupkg' '*.snupkg' '*.tgz' 2>/dev/null || true)"
+  if [[ -n "$packed" ]]; then
+    echo "FAIL git index contains package binaries:"
+    echo "$packed"
+    bad=1
+  fi
   [[ $bad == 0 ]] && echo "check ok: $(libs | wc -l) libs with no sibling references; $(composers | wc -l) composer(s) using packages only"
   return $bad
 }
@@ -110,19 +130,52 @@ compose() {
   done
 }
 
+# 仓库外消费：交付包要能在仓库外使用（根 SPEC 2；compose/LedgerStore SPEC 14）。
+# 在仓库外的临时目录里拷出消费者项目（tools/consume/），只从 artifacts/feed 取 Wanxiang2.* 交付包，
+# 构建并真实运行；程序自己断言落盘行为，失败就以非零码退出。
+consume() {
+  [[ -d artifacts/feed ]] || pack
+  local root; root="$PWD"
+  # 干净消费：包缓存里不留任何 Wanxiang2.*，确保用的是刚打的包，而不是旧缓存或源码
+  rm -rf artifacts/packages/wanxiang2.*
+  local tmp; tmp="$(mktemp -d /tmp/wanxiang2-consume-XXXXXX)"
+  cp tools/consume/Program.fs tools/consume/Consumer.fsproj "$tmp/"
+  sed "s#__FEED__#$root/artifacts/feed#" tools/consume/NuGet.config.in > "$tmp/NuGet.config"
+  echo "== consume：仓库外消费者 $tmp（Wanxiang2.* 只从 artifacts/feed 取）"
+  if ( cd "$tmp" && NUGET_PACKAGES="$root/artifacts/packages" dotnet run --project Consumer.fsproj -c Release ); then
+    rm -rf "$tmp"
+  else
+    echo "consume 失败：消费者项目保留在 $tmp" >&2
+    return 1
+  fi
+}
+
+# 产品入口：从交付包构建 app/ 下的全部入口（Desktop 与 Pwa），只构建、不启动。
+# PWA 需要 wasm-tools workload：系统 SDK 没有、用户级 SDK 有时优先用后者（run-pwa.sh 的同一约定）。
+app() {
+  [[ -d artifacts/feed ]] || pack
+  # 干净消费：包缓存里不留任何 Wanxiang2.*，确保入口用的是刚打的包，而不是旧缓存或源码
+  rm -rf artifacts/packages/wanxiang2.* app/*/obj
+  local proj
+  for proj in $(find app -mindepth 2 -maxdepth 2 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' | sort); do
+    echo "== app：$proj"
+    dotnet build "$proj" -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages" --verbosity minimal -nologo
+  done
+}
+
 # 组件目录：从 component_projs 反推顶层目录（每个至少含一个直属组件工程）。
 # 让 gen_sln 与 pack 共用同一套工程枚举（component_projs），不再各自靠「目录名==工程名」拼路径。
 # sed 把 <root>/<dir>/<file> 归约到 <root>/<dir> 再去重；libs 段与 compose 段在 gen_sln 里分别遍历，
 # 保持与现有 slnx 相同的 libs 排序，避免整段重排。
 component_dirs() {
-  component_projs | sed -E 's#^(libs\|compose)/([^/]+)(/.*)?#\1/\2#' | sort -u
+  component_projs | sed -E 's#^(libs|compose)/([^/]+)/.*#\1/\2#' | sort -u
 }
 
 # 一个组件目录对应的 slnx folder：先列该目录直属的全部组件工程（含异名，如 LocalHostGate / ImageShrinkIo），
 # 再列其 tests/ 下真实存在的测试工程；无 tests/ 目录的（实测 compose 有 6 个）自然跳过，不写悬空条目。
 emit_dir_folder() {
   local d="$1"
-  echo "  <Folder Name=\"\${d#*/}/\">"
+  echo "  <Folder Name=\"/${d#*/}/\">"
   find "$d" -mindepth 1 -maxdepth 1 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' \
     | sort | sed 's#^#    <Project Path="#; s#$#" />#'
   if [[ -d "$d/tests" ]]; then
@@ -151,6 +204,8 @@ case "${1:-}" in
   check)   check ;;
   pack)    pack ;;
   compose) compose ;;
+  consume) consume ;;
+  app)     app ;;
   sln)     gen_sln > wanxiang2.slnx; echo "wrote wanxiang2.slnx" ;;
   new-widget)
     [[ "${2:-}" =~ ^[A-Z][A-Za-z0-9]+$ ]] || { echo "usage: ./x new-widget <PascalName>" >&2; exit 2; }
@@ -162,6 +217,7 @@ case "${1:-}" in
   all)
     check
     for lib in $(libs); do echo "== $lib"; dotnet test --project "libs/$lib/tests/$lib.Tests.fsproj"; done
-    pack; compose ;;
-  *) sed -n '2,10p' "$0"; exit 2 ;;
+    pack; compose; consume ;;
+  # 用法块 = 开头连续的注释行；行数变化自动同步（末行是第一条非注释行，去掉）
+  *) sed -n '2,/^[^#]/p' "$0" | sed '$d'; exit 2 ;;
 esac

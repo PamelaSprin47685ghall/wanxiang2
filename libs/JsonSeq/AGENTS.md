@@ -31,9 +31,13 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
     - 证明：`bytes before first RS are stray`，通过。
 7. [LEMMA: 1] `Read(from, until)` 只读出区间内的记录。
     - 证明：`Read returns only records within range`，通过。
-8. [LEMMA: 4] 写之前就失败给出 `NotWritten`；真实的写失败（ENOSPC）且截不回时给出 `Unknown`。
-    - 证明：`failure before writing is NotWritten`；`write failure without rollback evidence is Unknown`（真实设备 `/dev/full`，仅 Linux）。都通过。
-    - 剩余边界：[TODO]「写失败但截回成功 → NotWritten」这条分支没有真实故障能触发它的测试。
+8. [LEMMA: 4] 写之前就失败给出 `NotWritten`；写失败但截回成功也给出 `NotWritten`；写失败且截不回时给出 `Unknown`。
+    - 证明：`failure before writing is NotWritten`；`write failure without rollback evidence is Unknown`（真实设备 `/dev/full`：写 ENOSPC、截断 EINVAL；仅 Linux）；`write failure with rollback evidence is NotWritten`（真实故障：测试临时收紧本进程 `RLIMIT_FSIZE` 上限并忽略 SIGXFSZ，超过上限的写按 EFBIG 失败，而缩小文件的截回仍被允许；已写进上限内的部分字节由截回清掉；仅 Linux）。都通过。
+    - 剩余边界：`RLIMIT_FSIZE` 在测试进程内是全局的，测试在 `finally` 里恢复原上限与原信号处置；期间只运行本用例。
 9. [LEMMA: 1, 3] 没有正文的 RS 不被忽略：在末尾算 `TornTail`，在中间算 `EmptyRecord`；记录的偏移首尾相接，覆盖全部字节。
     - 证明：`bare RS is a faulted record, never skipped`，通过。缺陷由 compose 的逐字节崩溃测试发现。
 10. [TODO] `ReadFrom` 一次读入到末尾的全部字节；超大日志需要流式读取。
+
+11. [根 SPEC 3] 实例隔离；同一路径上的第二个实例读同一个文件（写者唯一归 `DirLock`，本库不假装独占）；非法参数与错误之后状态合法；`Read` 交出的记录不是内部状态的活视图。
+    - 证明：`instances are isolated; errors and illegal arguments leave state legal`（其中同一路径第二个实例一段仅 Linux），通过。
+    - 剩余边界：输入只有 `string` 与 `int64`，返回值是 `string`、`int64` 与不可变记录，没有可共享的可变别名；同路径多实例的写交错本库不裁决。

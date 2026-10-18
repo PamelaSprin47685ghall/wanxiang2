@@ -65,6 +65,13 @@
     <PackageReference Include="Wanxiang2.ApprovalDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PaletteDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ModelSwitchDesk" VersionOverride="0.0.0-local" />
+    <!-- ShellViews 的四个新成员：Overlay / Dialogs / NewExportDesk / NewImportDesk 的宿主侧构造；
+         类型面（ExportLineage / ImportPreview / ConversationExportQuery）也显式声明，不依赖传递依赖。 -->
+    <PackageReference Include="Wanxiang2.DialogsDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.TransferDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConversationTransfer" VersionOverride="0.0.0-local" />
+    <!-- 决策 452：命令面板「最近使用」的落盘格式（PaletteRecent.fileName / decode / encode）。 -->
+    <PackageReference Include="Wanxiang2.CommandPalette" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
@@ -73,6 +80,7 @@
     <PackageReference Include="Wanxiang2.BrowserDrafts" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BrowserLocalStore" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BrowserProbe" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.StartupTrace" VersionOverride="0.0.0-local" />
   </ItemGroup>
   <!-- AMD/ANGLE Chrome：Avalonia 默认 failIfMajorPerformanceCaveat=true 会得到“能创建但不呈现 Skia 帧”的 WebGL 上下文，表现为启动画面后白屏。
        构建后补丁 avalonia.js（禁止软渲染回退；见 tools/patch_avalonia_js.py）。 -->

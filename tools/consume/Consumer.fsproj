@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 仓库外消费者（根 SPEC 2；compose/LedgerStore SPEC 14）：只引用交付包 Wanxiang2.LedgerStore。
+       本文件、Program.fs 与 NuGet.config.in 由 ./x consume 一起拷到仓库外的临时目录，再构建运行。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.LedgerStore" Version="0.0.0-local" />
+  </ItemGroup>
+</Project>

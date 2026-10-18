@@ -6,7 +6,7 @@
 1. **解析、文案、地址和二维码矩阵与旧实现相同。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/devices.txt` 由旧代码在 UTC 时区生成。日期文案用本地时区，所以在非 UTC 机器上会跳过含日期的行。
+1. [LEMMA: 1] 金样 `tests/golden/devices.txt` 锁解析结果与文案。设备时间字段用不变文化的 roundtrip（`o`），不锁 `%A`；`%A` 的日期格式随当前文化区变，不是契约。`createdText` 仍是本地日历日，金样按 UTC 机器记录，非 UTC 机器只跳过含 `lastSeenText` 的行。
 2. 与旧代码的差异：`InviteTarget` 加了 RequireQualifiedAccess，因为 Reachable、NoAddress 是泛化的名字。UI 的调用点要改成 `InviteTarget.Reachable` 这样的写法。
 
 # 迁入或覆盖的旧测试

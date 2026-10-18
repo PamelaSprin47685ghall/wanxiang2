@@ -199,13 +199,13 @@
     <Project Path="libs/ConfirmPane/ConfirmPane.fsproj" />
     <Project Path="libs/ConfirmPane/tests/ConfirmPane.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ConnectionIssue/">
-    <Project Path="libs/ConnectionIssue/ConnectionIssue.fsproj" />
-    <Project Path="libs/ConnectionIssue/tests/ConnectionIssue.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ConnectPane/">
     <Project Path="libs/ConnectPane/ConnectPane.fsproj" />
     <Project Path="libs/ConnectPane/tests/ConnectPane.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ConnectionIssue/">
+    <Project Path="libs/ConnectionIssue/ConnectionIssue.fsproj" />
+    <Project Path="libs/ConnectionIssue/tests/ConnectionIssue.Tests.fsproj" />
   </Folder>
   <Folder Name="/ContextTrim/">
     <Project Path="libs/ContextTrim/ContextTrim.fsproj" />
@@ -219,10 +219,6 @@
     <Project Path="libs/ConversationRows/ConversationRows.fsproj" />
     <Project Path="libs/ConversationRows/tests/ConversationRows.Tests.fsproj" />
   </Folder>
-  <Folder Name="/Conversations/">
-    <Project Path="libs/Conversations/Conversations.fsproj" />
-    <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ConversationSummary/">
     <Project Path="libs/ConversationSummary/ConversationSummary.fsproj" />
     <Project Path="libs/ConversationSummary/tests/ConversationSummary.Tests.fsproj" />
@@ -234,6 +230,10 @@
   <Folder Name="/ConversationTransfer/">
     <Project Path="libs/ConversationTransfer/ConversationTransfer.fsproj" />
     <Project Path="libs/ConversationTransfer/tests/ConversationTransfer.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/Conversations/">
+    <Project Path="libs/Conversations/Conversations.fsproj" />
+    <Project Path="libs/Conversations/tests/Conversations.Tests.fsproj" />
   </Folder>
   <Folder Name="/CopyButton/">
     <Project Path="libs/CopyButton/CopyButton.fsproj" />
@@ -567,13 +567,13 @@
     <Project Path="libs/ModelPickerList/ModelPickerList.fsproj" />
     <Project Path="libs/ModelPickerList/tests/ModelPickerList.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ModelSwitcher/">
-    <Project Path="libs/ModelSwitcher/ModelSwitcher.fsproj" />
-    <Project Path="libs/ModelSwitcher/tests/ModelSwitcher.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ModelSwitchPanel/">
     <Project Path="libs/ModelSwitchPanel/ModelSwitchPanel.fsproj" />
     <Project Path="libs/ModelSwitchPanel/tests/ModelSwitchPanel.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ModelSwitcher/">
+    <Project Path="libs/ModelSwitcher/ModelSwitcher.fsproj" />
+    <Project Path="libs/ModelSwitcher/tests/ModelSwitcher.Tests.fsproj" />
   </Folder>
   <Folder Name="/ModelVision/">
     <Project Path="libs/ModelVision/ModelVision.fsproj" />
@@ -852,13 +852,13 @@
     <Project Path="libs/StartupTrace/StartupTrace.fsproj" />
     <Project Path="libs/StartupTrace/tests/StartupTrace.Tests.fsproj" />
   </Folder>
-  <Folder Name="/StreamableHttp/">
-    <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
-    <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
-  </Folder>
   <Folder Name="/StreamCaret/">
     <Project Path="libs/StreamCaret/StreamCaret.fsproj" />
     <Project Path="libs/StreamCaret/tests/StreamCaret.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/StreamableHttp/">
+    <Project Path="libs/StreamableHttp/StreamableHttp.fsproj" />
+    <Project Path="libs/StreamableHttp/tests/StreamableHttp.Tests.fsproj" />
   </Folder>
   <Folder Name="/TextEditPane/">
     <Project Path="libs/TextEditPane/TextEditPane.fsproj" />
@@ -932,6 +932,10 @@
     <Project Path="libs/ToolOverview/ToolOverview.fsproj" />
     <Project Path="libs/ToolOverview/tests/ToolOverview.Tests.fsproj" />
   </Folder>
+  <Folder Name="/ToolSummary/">
+    <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
+    <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
+  </Folder>
   <Folder Name="/ToolsPane/">
     <Project Path="libs/ToolsPane/ToolsPane.fsproj" />
     <Project Path="libs/ToolsPane/tests/ToolsPane.Tests.fsproj" />
@@ -939,10 +943,6 @@
   <Folder Name="/ToolsPolicy/">
     <Project Path="libs/ToolsPolicy/ToolsPolicy.fsproj" />
     <Project Path="libs/ToolsPolicy/tests/ToolsPolicy.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/ToolSummary/">
-    <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
-    <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
   </Folder>
   <Folder Name="/TranscriptMarkdown/">
     <Project Path="libs/TranscriptMarkdown/TranscriptMarkdown.fsproj" />
@@ -1000,13 +1000,13 @@
     <Project Path="compose/AguiWire/AguiWire.fsproj" />
     <Project Path="compose/AguiWire/tests/AguiWire.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ApprovalDesk/">
-    <Project Path="compose/ApprovalDesk/ApprovalDesk.fsproj" />
-    <Project Path="compose/ApprovalDesk/tests/ApprovalDesk.Tests.fsproj" />
-  </Folder>
   <Folder Name="/AppShell/">
     <Project Path="compose/AppShell/AppShell.fsproj" />
     <Project Path="compose/AppShell/tests/AppShell.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/ApprovalDesk/">
+    <Project Path="compose/ApprovalDesk/ApprovalDesk.fsproj" />
+    <Project Path="compose/ApprovalDesk/tests/ApprovalDesk.Tests.fsproj" />
   </Folder>
   <Folder Name="/Attachments/">
     <Project Path="compose/Attachments/Attachments.fsproj" />

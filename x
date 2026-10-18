@@ -44,6 +44,10 @@ ensure_base_packed() {
 # 项目文件中的相对引用路径（ProjectReference / Import / Compile）
 refs() { grep -oE '(ProjectReference|Import|Compile)[^>]*(Include|Project)="[^"]*"' "$1" | sed -E 's/.*"([^"]*)"/\1/' || true; }
 
+# 排序一律走字节序：`sort` 的默认排序随 locale 变，而 gen_sln 的输出要与仓库里的
+# wanxiang2.slnx 逐字节比对（2026-10-18 首轮 CI 就因为本机 en_US 与 runner 的 C 排序不同而失败）。
+sort_c() { LC_ALL=C sort "$@"; }
+
 check() {
   local bad=0
   for lib in $(libs); do
@@ -132,7 +136,7 @@ FAIL $f: references missing $ref"
 # 再叠加名称保险不取 *.Tests.*；app/ 入口不在 libs/ 与 compose/ 之下，本就不在枚举范围。
 component_projs() {
   find libs compose -mindepth 2 -maxdepth 2 \( -name '*.fsproj' -o -name '*.csproj' \) \
-    -not -path '*/obj/*' -not -path '*/bin/*' -not -name '*.Tests.*' | sort
+    -not -path '*/obj/*' -not -path '*/bin/*' -not -name '*.Tests.*' | sort_c
 }
 
 pack() {
@@ -249,7 +253,7 @@ app() {
   # 干净消费：包缓存里不留任何 Wanxiang2.*，确保入口用的是刚打的包，而不是旧缓存或源码
   rm -rf artifacts/packages/wanxiang2.* app/*/obj
   local proj
-  for proj in $(find app -mindepth 2 -maxdepth 2 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' | sort); do
+  for proj in $(find app -mindepth 2 -maxdepth 2 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' | sort_c); do
     echo "== app：$proj"
     dotnet build "$proj" -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages" --verbosity minimal -nologo
   done
@@ -260,7 +264,7 @@ app() {
 # sed 把 <root>/<dir>/<file> 归约到 <root>/<dir> 再去重；libs 段与 compose 段在 gen_sln 里分别遍历，
 # 保持与现有 slnx 相同的 libs 排序，避免整段重排。
 component_dirs() {
-  component_projs | sed -E 's#^(libs|compose)/([^/]+)/.*#\1/\2#' | sort -u
+  component_projs | sed -E 's#^(libs|compose)/([^/]+)/.*#\1/\2#' | sort_c -u
 }
 
 # 一个组件目录对应的 slnx folder：先列该目录直属的全部组件工程（含异名，如 LocalHostGate / ImageShrinkIo），
@@ -269,10 +273,10 @@ emit_dir_folder() {
   local d="$1"
   echo "  <Folder Name=\"/${d#*/}/\">"
   find "$d" -mindepth 1 -maxdepth 1 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' \
-    | sort | sed 's#^#    <Project Path="#; s#$#" />#'
+    | sort_c | sed 's#^#    <Project Path="#; s#$#" />#'
   if [[ -d "$d/tests" ]]; then
     find "$d/tests" -mindepth 1 -maxdepth 1 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' \
-      | sort | sed 's#^#    <Project Path="#; s#$#" />#'
+      | sort_c | sed 's#^#    <Project Path="#; s#$#" />#'
   fi
   echo '  </Folder>'
 }

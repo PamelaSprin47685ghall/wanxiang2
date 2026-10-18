@@ -121,7 +121,14 @@
     <!-- 决策 410：干净克隆直接 `dotnet publish app/Desktop/Wanxiang.App` 曾失败：PWA 不在 App 的引用图里（未还原），
          且 publish 设置的全局 _IsPublishing=true 会让 wasm 的 build 阶段跳过 AppBundle 生成、publish 阶段又依赖它。
          先用独立进程（不继承 _IsPublishing）做一次 PWA 的 build（含 restore，增量），再走嵌套 Publish。 -->
-    <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)../Pwa/Wanxiang.Pwa.fsproj&quot; -c $(Configuration) --verbosity quiet -nologo" />
+    <!-- 独立进程同样不继承全局属性 RestorePackagesPath，故显式转发：不转发的话，PWA 的 build 会落回
+         ~/.nuget/packages——同版本号（0.0.0-local）的陈旧解包命中缓存后 NuGet 不再重解，publish 就对着
+         过期包编译（2026-10-18 实测 36 个 FS0039；CI release 工作流缓存 ~/.nuget/packages，同理）。
+         仅当调用方给了该属性才转发；空值（干净克隆裸 publish）省略参数，让还原走默认。 -->
+    <PropertyGroup>
+      <_WxPwaRestoreArg Condition="'$(RestorePackagesPath)' != ''">-p:RestorePackagesPath="$(RestorePackagesPath)"</_WxPwaRestoreArg>
+    </PropertyGroup>
+    <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)../Pwa/Wanxiang.Pwa.fsproj&quot; -c $(Configuration) --verbosity quiet -nologo $(_WxPwaRestoreArg)" />
     <MSBuild Projects="..\Pwa\Wanxiang.Pwa.fsproj" Targets="Publish" Properties="Configuration=$(Configuration)" RemoveProperties="RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishTrimmed;PublishAot" />
     <PropertyGroup>
       <_WxPwaBundle>$(MSBuildThisFileDirectory)..\Pwa\bin\$(Configuration)\net10.0-browser\browser-wasm\AppBundle\</_WxPwaBundle>

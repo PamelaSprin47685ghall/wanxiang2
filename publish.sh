@@ -75,7 +75,12 @@ for rid in "${TARGETS[@]}"; do
   echo "== publish $rid ($VER)"
   PUB="$PUB_ROOT/$rid"
   rm -rf "$PUB"
-  dotnet publish "$PROJ" -c Release -r "$rid" --self-contained true -o "$PUB" --verbosity minimal
+  # 干净消费（与 ./x app、tools/smoke_desktop.sh 同一约定）：Wanxiang2.* 必须从 artifacts/feed
+  # 解到仓库内缓存。走 ~/.nuget/packages 时，同版本号（0.0.0-local）的陈旧解包命中缓存后
+  # NuGet 不再重解，发布会对着过期包编译（2026-10-18 run-desktop.sh 实测 37 个 FS0039/FS1129；
+  # CI 的 release 工作流缓存 ~/.nuget/packages，同理）。
+  rm -rf artifacts/packages/wanxiang2.*
+  dotnet publish "$PROJ" -c Release -r "$rid" --self-contained true -o "$PUB" --verbosity minimal -p:RestorePackagesPath="$PWD/artifacts/packages"
   package "$rid" "$PUB"
 done
 

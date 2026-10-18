@@ -59,6 +59,77 @@ const check = (name, ok, detail) => { if (!ok) failed++; console.log(`${ok ? 'PA
         const v = await page.evaluate(() => document.querySelector('.avalonia-input-element').value);
         await page.screenshot({ path: `${OUT}/smoke-insert.png` });
         check('文本上屏桥：insertText 各落一次', v === '万象ok', `value=${JSON.stringify(v)}`);
+
+        // ---- 第二段（可选）：预置凭据 → 认证态 → 草稿往返（IndexedDB 落盘 + 重开恢复）----
+        // 发布产物冒烟里由 tools/smoke_published.sh 把 WX_SMOKE_TOKEN/INSTANCE 传进来（配置里已登记同一哈希）。
+        const token = process.env.WX_SMOKE_TOKEN || '';
+        const instance = process.env.WX_SMOKE_INSTANCE || '';
+        if (token && instance) {
+            const wsUrl = BASE.replace(/^http/, 'ws').replace(/\/$/, '') + '/ws';
+            const visits = () => page.evaluate(() => Number(localStorage.getItem('wanxiang.visits') || 0));
+            const visitsBefore = await visits();
+            const seeded = await page.evaluate((args) => new Promise((resolve) => {
+                const req = indexedDB.open('wanxiang', 1);
+                req.onupgradeneeded = () => { try { req.result.createObjectStore('connections', { keyPath: 'instanceId' }); } catch (e) { } };
+                req.onsuccess = () => {
+                    const db = req.result;
+                    try {
+                        const tx = db.transaction('connections', 'readwrite');
+                        tx.objectStore('connections').put({ instanceId: args.instance, url: args.wsUrl, token: args.token, name: 'PWA', updatedAt: Date.now() });
+                        tx.oncomplete = () => resolve(true);
+                        tx.onerror = () => resolve(false);
+                    } catch (e) { resolve(false); }
+                };
+                req.onerror = () => resolve(false);
+            }), { instance, wsUrl, token });
+            check('预置客户端凭据', seeded);
+            const canvasUp = () => page.waitForFunction(() => {
+                const c = document.querySelector('canvas');
+                return c && c.width > 0 && document.querySelector('.avalonia-input-element');
+            }, { timeout: 120000, polling: 250 }).then(() => true, () => false);
+            const draftText = (want) => page.evaluate(`(() => new Promise((resolve) => {
+                const req = indexedDB.open('wanxiang-drafts', 1);
+                req.onupgradeneeded = () => { try { req.result.createObjectStore('drafts'); } catch (e) { } };
+                req.onsuccess = () => {
+                    const db = req.result;
+                    try {
+                        const g = db.transaction('drafts', 'readonly').objectStore('drafts').get('snapshot');
+                        g.onsuccess = () => resolve((g.result || '').indexOf(${JSON.stringify(want)}) >= 0);
+                        g.onerror = () => resolve(false);
+                    } catch (e) { resolve(false); }
+                };
+                req.onerror = () => resolve(false);
+            }))()`);
+            const inputIs = (want) => page.evaluate((w) => document.querySelector('.avalonia-input-element').value === w, want);
+            const until = async (probe, timeoutMs) => {
+                const deadline = Date.now() + timeoutMs;
+                while (Date.now() < deadline) {
+                    if (await probe()) return true;
+                    await sleep(250);
+                }
+                return false;
+            };
+            await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+            const back = await canvasUp();
+            await sleep(6000); // 连上、认证、列表
+            const visitsAfter = await visits();
+            await page.mouse.click(738, 720); await sleep(800);
+            await cdp.send('Input.insertText', { text: '草稿往返' });
+            const typed = await until(() => inputIs('草稿往返'), 5000);
+            const savedToDb = await until(() => draftText('草稿往返'), 20000);
+            await page.screenshot({ path: `${OUT}/smoke-draft.png` });
+            await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+            await canvasUp();
+            await sleep(6000);
+            await page.mouse.click(738, 720);
+            const restored = await until(() => inputIs('草稿往返'), 20000);
+            const visitsThird = await visits();
+            // main.js：每次加载把 localStorage 的访问计数 +1（决策 365 的安装提示按它分档）
+            check('localStorage：重开页面后访问计数继续递增', visitsBefore >= 1 && visitsAfter === visitsBefore + 1 && visitsThird === visitsAfter + 1,
+                `visits ${visitsBefore} -> ${visitsAfter} -> ${visitsThird}`);
+            check('认证态：草稿落进 IndexedDB', back && typed && savedToDb, `back=${back} typed=${typed} saved=${savedToDb}`);
+            check('认证态：重开页面草稿回到输入框', restored);
+        }
         check('无未捕获页面异常', errors.length === 0, errors.slice(0, 3).join(' | '));
     } finally { await browser.close(); }
     process.exit(failed ? 1 : 0);

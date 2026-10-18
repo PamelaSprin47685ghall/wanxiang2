@@ -364,7 +364,7 @@
 
 **独占文件**
 - `compose/ComposerDesk/`（旧 `src/Wanxiang.UI/Views/Composer.fs`）
-- `compose/UiPrefs/`、`compose/CredentialStore/`（草稿存取；旧 `src/Wanxiang.UI/Model/UiPrefs.fs`、`CredentialStore.fs`）
+- `compose/UiPrefsFile/`（界面偏好的文件落点；纯逻辑在 `libs/UiPrefs`，规划时这个组合者叫 UiPrefs）、`compose/CredentialStore/`（草稿存取；旧 `src/Wanxiang.UI/Model/UiPrefs.fs`、`CredentialStore.fs`）
 - 新增 `libs/DraftStore/`（旧提案名 `src/Wanxiang.UI/Model/DraftStore.fs`；本仓库已存在，含宿主桥 `IDraftBackend`）
 - `compose/Doctor/`（只增加报告序列化；旧 `src/Wanxiang.Server/Doctor.fs`）
 - `compose/ConfigMutation/` 的失败上报点（旧 `src/Wanxiang.Server/ConfigMutation.fs`；与 W1 约定：W1 改保存逻辑，W5 只在 reload 失败分支加事件）

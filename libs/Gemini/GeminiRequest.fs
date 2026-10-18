@@ -35,6 +35,26 @@ module GeminiRequest =
             | -1 -> callId
             | at -> callId.Substring(0, at)
 
+    /// 结果要配回发起调用时用的名字。Gemini 自己造的 id 是「名字@序号」，
+    /// 但会话可能从别的提供方切过来，那里的 id 不含名字——同一份请求里那次
+    /// functionCall 带着名字，就用它；都找不到才退回解析 id（旧行为）。
+    let private callNames (messages: ChatMessage list) =
+        let names = Dictionary<string, string>(StringComparer.Ordinal)
+        for message in messages do
+            for content in message.Contents do
+                match content with
+                | :? FunctionCallContent as call when not (String.IsNullOrWhiteSpace call.CallId) && not (String.IsNullOrWhiteSpace call.Name) ->
+                    names[call.CallId] <- call.Name
+                | _ -> ()
+        names
+
+    let private nameFor (names: Dictionary<string, string>) (callId: string) =
+        if String.IsNullOrEmpty callId then ""
+        else
+            match names.TryGetValue callId with
+            | true, name -> name
+            | _ -> nameOfCallId callId
+
     let private textPart (text: string) =
         let o = JsonObject()
         o["text"] <- JsonValue.Create text
@@ -64,7 +84,7 @@ module GeminiRequest =
         o["functionCall"] <- call
         o :> JsonNode
 
-    let private functionResponsePart (callId: string) (result: obj) =
+    let private functionResponsePart (names: Dictionary<string, string>) (callId: string) (result: obj) =
         // response 必须是对象；标量结果包一层，否则 Gemini 直接 400
         let payload = JsonObject()
         payload["result"] <-
@@ -74,13 +94,13 @@ module GeminiRequest =
                 | :? string as s -> s
                 | other -> string other)
         let body = JsonObject()
-        body["name"] <- JsonValue.Create(nameOfCallId callId)
+        body["name"] <- JsonValue.Create(nameFor names callId)
         body["response"] <- payload
         let o = JsonObject()
         o["functionResponse"] <- body
         o :> JsonNode
 
-    let private partsOf (message: ChatMessage) : JsonNode list =
+    let private partsOf (names: Dictionary<string, string>) (message: ChatMessage) : JsonNode list =
         [ for content in message.Contents do
             match content with
             | :? TextContent as text when not (String.IsNullOrEmpty text.Text) -> textPart text.Text
@@ -88,7 +108,7 @@ module GeminiRequest =
             // AttachmentContent 按传输能力过滤过，这里不必再判类型
             | :? DataContent as data -> inlineDataPart data.MediaType (Convert.ToBase64String(data.Data.ToArray()))
             | :? FunctionCallContent as call -> functionCallPart call.Name call.Arguments
-            | :? FunctionResultContent as result -> functionResponsePart result.CallId result.Result
+            | :? FunctionResultContent as result -> functionResponsePart names result.CallId result.Result
             | _ -> () ]
 
     let private roleOf (message: ChatMessage) =
@@ -158,8 +178,11 @@ module GeminiRequest =
 
     let build (messages: ChatMessage seq) (options: ChatOptions) (thinkingBudget: int) : JsonObject =
         let body = JsonObject()
+        // 一遍扫出 id→名字，后面配 functionResponse 用；也避免对 seq 多遍取值。
+        let messageList = messages |> Seq.toList
+        let names = callNames messageList
 
-        match systemOf messages options with
+        match systemOf messageList options with
         | Some system ->
             let parts = JsonArray()
             parts.Add(textPart system)
@@ -169,9 +192,9 @@ module GeminiRequest =
         | None -> ()
 
         let conversation =
-            messages
+            messageList
             |> Seq.filter (fun m -> m.Role <> ChatRole.System)
-            |> Seq.map (fun m -> roleOf m, partsOf m)
+            |> Seq.map (fun m -> roleOf m, partsOf names m)
             |> Seq.filter (fun (_, parts) -> not (List.isEmpty parts))
             |> List.ofSeq
             |> mergeAdjacent

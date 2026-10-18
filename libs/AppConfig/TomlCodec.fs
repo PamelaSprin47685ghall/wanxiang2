@@ -229,129 +229,120 @@ module TomlCodec =
             elif c.tokenHash <> c.tokenHash.ToLowerInvariant() then
                 errors.Add "auth.clients[]: tokenHash must be lowercase"
 
-    /// 解析 v1 配置并显式升级到当前 AppConfig 模型（决策 184）。
-    let private tryParseV1 (top: System.Collections.Generic.Dictionary<string, obj>) : Result<AppConfig, string list> =
-        let errors = ResizeArray<string>()
-        checkKeys top knownTopKeysV1 "config" errors
+    let private parseNetworkV1 (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : string * int64 * int =
+        match top.TryGetValue "network" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                checkKeys t knownNetworkKeysV1 "network" errors
+                let getStr k def =
+                    match t.TryGetValue k with
+                    | true, b -> asString b |> Option.defaultValue def
+                    | _ -> def
+                let getInt64 k def =
+                    match t.TryGetValue k with
+                    | true, b -> (asInt b |> Option.map int64) |> Option.defaultValue def
+                    | _ -> def
+                getStr "listen" "127.0.0.1:8765",
+                getInt64 "maxAttachmentBytes" (64L * 1024L * 1024L),
+                int (getInt64 "chunkSizeBytes" (256L * 1024L))
+            | None ->
+                errors.Add "network: expected table"
+                "127.0.0.1:8765", 64L * 1024L * 1024L, 256 * 1024
+        | _ -> "127.0.0.1:8765", 64L * 1024L * 1024L, 256 * 1024
 
-        let instanceId =
-            match top.TryGetValue "instanceId" with
-            | true, v -> asGuid v
-            | _ -> None
+    let private parseProvidersV1 (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : Map<string, ProviderConfig> =
+        match top.TryGetValue "providers" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                [ for kv in t do
+                      match asTable kv.Value with
+                      | Some pt ->
+                          checkKeys pt knownProviderKeysV1 (sprintf "providers.%s" kv.Key) errors
+                          let getStr k =
+                              match pt.TryGetValue k with
+                              | true, b -> asString b
+                              | _ -> None
+                          let kind = getStr "kind" |> Option.defaultValue "openai"
+                          let baseUrl = getStr "baseUrl" |> Option.defaultValue ""
+                          let model = getStr "model" |> Option.defaultValue ""
+                          let extra =
+                              match pt.TryGetValue "extra" with
+                              | true, b -> Some(tomlNodeToJson b)
+                              | _ -> None
+                          let models = if String.IsNullOrWhiteSpace model then [] else [ model.Trim() ]
+                          yield
+                              kv.Key,
+                              { id = kv.Key
+                                kind = kind
+                                label = ""
+                                baseUrl = baseUrl
+                                apiKey = getStr "apiKey"
+                                models = models
+                                defaultModel = model.Trim()
+                                timeoutSeconds = ProviderConfig.defaultTimeoutSeconds
+                                maxRetries = ProviderConfig.defaultMaxRetries
+                                enabled = true
+                                headers = Map.empty
+                                promptCaching = false
+                                extraJson = extra
+                                visionOverrides = Map.empty }
+                      | None -> errors.Add(sprintf "providers.%s: expected table" kv.Key) ]
+                |> Map.ofList
+            | None ->
+                errors.Add "providers: expected table"
+                Map.empty
+        | _ -> Map.empty
 
-        let runtime = parseRuntime top errors
+    let private parseMcpV1 (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : Map<string, McpServerConfig> =
+        match top.TryGetValue "mcp" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                [ for kv in t do
+                      match asTable kv.Value with
+                      | Some mt ->
+                          checkKeys mt knownMcpKeysV1 (sprintf "mcp.%s" kv.Key) errors
+                          let getStr k =
+                              match mt.TryGetValue k with
+                              | true, b -> asString b
+                              | _ -> None
+                          let getInt k =
+                              match mt.TryGetValue k with
+                              | true, b -> asInt b
+                              | _ -> None
+                          let args = match mt.TryGetValue "args" with true, b -> asStringList b |> Option.defaultValue [] | _ -> []
+                          let env = match mt.TryGetValue "env" with true, b -> asStringMap b |> Option.defaultValue Map.empty | _ -> Map.empty
+                          yield
+                              kv.Key,
+                              { id = kv.Key
+                                label = ""
+                                command = getStr "command"
+                                args = args
+                                env = env
+                                url = getStr "url"
+                                maxConcurrency = getInt "maxConcurrency"
+                                callTimeoutSeconds = McpServerConfig.defaultCallTimeoutSeconds
+                                enabled = true }
+                      | None -> errors.Add(sprintf "mcp.%s: expected table" kv.Key) ]
+                |> Map.ofList
+            | None ->
+                errors.Add "mcp: expected table"
+                Map.empty
+        | _ -> Map.empty
 
-        let network =
-            match top.TryGetValue "network" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    checkKeys t knownNetworkKeysV1 "network" errors
-                    let getStr k def =
-                        match t.TryGetValue k with
-                        | true, b -> asString b |> Option.defaultValue def
-                        | _ -> def
-                    let getInt64 k def =
-                        match t.TryGetValue k with
-                        | true, b -> (asInt b |> Option.map int64) |> Option.defaultValue def
-                        | _ -> def
-                    getStr "listen" "127.0.0.1:8765",
-                    getInt64 "maxAttachmentBytes" (64L * 1024L * 1024L),
-                    int (getInt64 "chunkSizeBytes" (256L * 1024L))
-                | None ->
-                    errors.Add "network: expected table"
-                    "127.0.0.1:8765", 64L * 1024L * 1024L, 256 * 1024
-            | _ -> "127.0.0.1:8765", 64L * 1024L * 1024L, 256 * 1024
-
-        let pairing = parsePairing top errors
-
-        let providers =
-            match top.TryGetValue "providers" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    [ for kv in t do
-                          match asTable kv.Value with
-                          | Some pt ->
-                              checkKeys pt knownProviderKeysV1 (sprintf "providers.%s" kv.Key) errors
-                              let getStr k =
-                                  match pt.TryGetValue k with
-                                  | true, b -> asString b
-                                  | _ -> None
-                              let kind = getStr "kind" |> Option.defaultValue "openai"
-                              let baseUrl = getStr "baseUrl" |> Option.defaultValue ""
-                              let model = getStr "model" |> Option.defaultValue ""
-                              let extra =
-                                  match pt.TryGetValue "extra" with
-                                  | true, b -> Some(tomlNodeToJson b)
-                                  | _ -> None
-                              let models = if String.IsNullOrWhiteSpace model then [] else [ model.Trim() ]
-                              yield
-                                  kv.Key,
-                                  { id = kv.Key
-                                    kind = kind
-                                    label = ""
-                                    baseUrl = baseUrl
-                                    apiKey = getStr "apiKey"
-                                    models = models
-                                    defaultModel = model.Trim()
-                                    timeoutSeconds = ProviderConfig.defaultTimeoutSeconds
-                                    maxRetries = ProviderConfig.defaultMaxRetries
-                                    enabled = true
-                                    headers = Map.empty
-                                    promptCaching = false
-                                    extraJson = extra
-                                    visionOverrides = Map.empty }
-                          | None -> errors.Add(sprintf "providers.%s: expected table" kv.Key) ]
-                    |> Map.ofList
-                | None ->
-                    errors.Add "providers: expected table"
-                    Map.empty
-            | _ -> Map.empty
-
-        let mcpServers =
-            match top.TryGetValue "mcp" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    [ for kv in t do
-                          match asTable kv.Value with
-                          | Some mt ->
-                              checkKeys mt knownMcpKeysV1 (sprintf "mcp.%s" kv.Key) errors
-                              let getStr k =
-                                  match mt.TryGetValue k with
-                                  | true, b -> asString b
-                                  | _ -> None
-                              let getInt k =
-                                  match mt.TryGetValue k with
-                                  | true, b -> asInt b
-                                  | _ -> None
-                              let args = match mt.TryGetValue "args" with true, b -> asStringList b |> Option.defaultValue [] | _ -> []
-                              let env = match mt.TryGetValue "env" with true, b -> asStringMap b |> Option.defaultValue Map.empty | _ -> Map.empty
-                              yield
-                                  kv.Key,
-                                  { id = kv.Key
-                                    label = ""
-                                    command = getStr "command"
-                                    args = args
-                                    env = env
-                                    url = getStr "url"
-                                    maxConcurrency = getInt "maxConcurrency"
-                                    callTimeoutSeconds = McpServerConfig.defaultCallTimeoutSeconds
-                                    enabled = true }
-                          | None -> errors.Add(sprintf "mcp.%s: expected table" kv.Key) ]
-                    |> Map.ofList
-                | None ->
-                    errors.Add "mcp: expected table"
-                    Map.empty
-            | _ -> Map.empty
-
-        let authClients = parseAuthClients top errors
-
+    let private validateV1
+        (instanceId: Guid option)
+        (listen: string, maxAtt: int64, chunk: int)
+        (providers: Map<string, ProviderConfig>)
+        (mcpServers: Map<string, McpServerConfig>)
+        (authClients: ClientAuthRecord list)
+        (errors: ResizeArray<string>)
+        =
         match instanceId with
         | None -> errors.Add "instanceId: required UUID"
         | Some _ -> ()
-        let listen, maxAtt, chunk = network
         if String.IsNullOrWhiteSpace listen then errors.Add "network.listen: required"
         if maxAtt <= 0L then errors.Add "network.maxAttachmentBytes: must be positive"
         if chunk <= 0 then errors.Add "network.chunkSizeBytes: must be positive"
@@ -385,6 +376,26 @@ module TomlCodec =
 
         validateAuth authClients errors
 
+    /// 解析 v1 配置并显式升级到当前 AppConfig 模型（决策 184）。
+    let private tryParseV1 (top: System.Collections.Generic.Dictionary<string, obj>) : Result<AppConfig, string list> =
+        let errors = ResizeArray<string>()
+        checkKeys top knownTopKeysV1 "config" errors
+
+        let instanceId =
+            match top.TryGetValue "instanceId" with
+            | true, v -> asGuid v
+            | _ -> None
+
+        let runtime = parseRuntime top errors
+        let network = parseNetworkV1 top errors
+        let pairing = parsePairing top errors
+        let providers = parseProvidersV1 top errors
+        let mcpServers = parseMcpV1 top errors
+        let authClients = parseAuthClients top errors
+
+        let listen, maxAtt, chunk = network
+        validateV1 instanceId network providers mcpServers authClients errors
+
         if errors.Count > 0 then
             Error(List.ofSeq errors)
         else
@@ -407,292 +418,240 @@ module TomlCodec =
                   authClients = authClients
                   presets = Map.empty }
 
-    /// 解析当前版本（v2）配置。
-    let private tryParseV2 (top: System.Collections.Generic.Dictionary<string, obj>) : Result<AppConfig, string list> =
-        let errors = ResizeArray<string>()
-        checkKeys top knownTopKeys "config" errors
+    let private parseNetwork (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : string * string * string * int64 * int =
+        match top.TryGetValue "network" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                checkKeys t knownNetworkKeys "network" errors
+                let getStr k def =
+                    match t.TryGetValue k with
+                    | true, b -> asString b |> Option.defaultValue def
+                    | _ -> def
+                let getInt64 k def =
+                    match t.TryGetValue k with
+                    | true, b -> (asInt b |> Option.map int64) |> Option.defaultValue def
+                    | _ -> def
+                getStr "listen" "127.0.0.1:8765",
+                getStr "tlsCertPath" "",
+                getStr "tlsKeyPath" "",
+                getInt64 "maxAttachmentBytes" (64L * 1024L * 1024L),
+                int (getInt64 "chunkSizeBytes" (256L * 1024L))
+            | None ->
+                errors.Add "network: expected table"
+                "127.0.0.1:8765", "", "", 64L * 1024L * 1024L, 256 * 1024
+        | _ -> "127.0.0.1:8765", "", "", 64L * 1024L * 1024L, 256 * 1024
 
-        let instanceId =
-            match top.TryGetValue "instanceId" with
-            | true, v -> asGuid v
-            | _ -> None
+    let private parseGeneration (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : GenerationDefaults =
+        match top.TryGetValue "generation" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                checkKeys t knownGenerationKeys "generation" errors
+                let getFloatOpt k =
+                    match t.TryGetValue k with
+                    | true, b -> asFloat b
+                    | _ -> None
+                let getIntOpt k =
+                    match t.TryGetValue k with
+                    | true, b -> asInt b
+                    | _ -> None
+                let d = GenerationDefaults.defaults
+                { temperature = getFloatOpt "temperature"
+                  topP = getFloatOpt "topP"
+                  maxTokens = getIntOpt "maxTokens"
+                  instructions =
+                    match t.TryGetValue "instructions" with
+                    | true, b -> asString b |> Option.filter (String.IsNullOrWhiteSpace >> not)
+                    | _ -> None
+                  maxContextMessages = getIntOpt "maxContextMessages" |> Option.defaultValue d.maxContextMessages
+                  maxContextTokens = getIntOpt "maxContextTokens" |> Option.defaultValue d.maxContextTokens
+                  autoTitle =
+                    (match t.TryGetValue "autoTitle" with
+                     | true, b -> asBool b |> Option.defaultValue d.autoTitle
+                     | _ -> d.autoTitle)
+                  maxToolRounds = getIntOpt "maxToolRounds" |> Option.defaultValue d.maxToolRounds
+                  thinkingBudget = getIntOpt "thinkingBudget" |> Option.defaultValue d.thinkingBudget
+                  defaultProvider =
+                    match t.TryGetValue "defaultProvider" with
+                    | true, b -> asString b |> Option.filter (String.IsNullOrWhiteSpace >> not)
+                    | _ -> None
+                  defaultModel =
+                    match t.TryGetValue "defaultModel" with
+                    | true, b -> asString b |> Option.filter (String.IsNullOrWhiteSpace >> not)
+                    | _ -> None }
+            | None ->
+                errors.Add "generation: expected table"
+                GenerationDefaults.defaults
+        | _ -> GenerationDefaults.defaults
 
-        let runtime = parseRuntime top errors
+    let private parseTools (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : ToolsConfig =
+        match top.TryGetValue "tools" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                checkKeys t knownToolsKeys "tools" errors
+                let d = ToolsConfig.defaults
+                let policyDefault, policy = parseToolPolicy t errors
+                { fileReadRoots =
+                    (match t.TryGetValue "fileReadRoots" with
+                     | true, b -> asStringList b |> Option.defaultValue []
+                     | _ -> [])
+                  callTimeoutSeconds =
+                    (match t.TryGetValue "callTimeoutSeconds" with
+                     | true, b -> asInt b |> Option.defaultValue d.callTimeoutSeconds
+                     | _ -> d.callTimeoutSeconds)
+                  policyDefault = policyDefault
+                  policy = policy
+                  approvalTimeoutSeconds =
+                    (match t.TryGetValue "approvalTimeoutSeconds" with
+                     | true, b -> asInt b |> Option.defaultValue d.approvalTimeoutSeconds
+                     | _ -> d.approvalTimeoutSeconds)
+                  exposeDebug =
+                    (match t.TryGetValue "exposeDebug" with
+                     | true, (:? bool as b) -> b
+                     | _ -> d.exposeDebug) }
+            | None ->
+                errors.Add "tools: expected table"
+                ToolsConfig.defaults
+        | _ -> ToolsConfig.defaults
 
-        let network =
-            match top.TryGetValue "network" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    checkKeys t knownNetworkKeys "network" errors
-                    let getStr k def =
-                        match t.TryGetValue k with
-                        | true, b -> asString b |> Option.defaultValue def
-                        | _ -> def
-                    let getInt64 k def =
-                        match t.TryGetValue k with
-                        | true, b -> (asInt b |> Option.map int64) |> Option.defaultValue def
-                        | _ -> def
-                    getStr "listen" "127.0.0.1:8765",
-                    getStr "tlsCertPath" "",
-                    getStr "tlsKeyPath" "",
-                    getInt64 "maxAttachmentBytes" (64L * 1024L * 1024L),
-                    int (getInt64 "chunkSizeBytes" (256L * 1024L))
-                | None ->
-                    errors.Add "network: expected table"
-                    "127.0.0.1:8765", "", "", 64L * 1024L * 1024L, 256 * 1024
-            | _ -> "127.0.0.1:8765", "", "", 64L * 1024L * 1024L, 256 * 1024
+    let private parseProviderEntry (id: string) (pt: TomlTable) (errors: ResizeArray<string>) : ProviderConfig =
+        checkKeys pt knownProviderKeys (sprintf "providers.%s" id) errors
+        let getStr k = match pt.TryGetValue k with true, b -> asString b | _ -> None
+        let getInt k = match pt.TryGetValue k with true, b -> asInt b | _ -> None
+        let listOf k =
+            match pt.TryGetValue k with
+            | true, b ->
+                asStringList b
+                |> Option.defaultValue []
+                |> List.map (fun s -> s.Trim())
+                |> List.filter (String.IsNullOrWhiteSpace >> not)
+            | _ -> []
+        let models = listOf "models" |> List.distinct
+        let defaultModel =
+            match getStr "defaultModel" with
+            | Some m when not (String.IsNullOrWhiteSpace m) -> m.Trim()
+            | _ -> models |> List.tryHead |> Option.defaultValue ""
+        { id = id
+          kind = getStr "kind" |> Option.defaultValue "openai"
+          label = getStr "label" |> Option.defaultValue ""
+          baseUrl = getStr "baseUrl" |> Option.defaultValue ""
+          apiKey = getStr "apiKey"
+          models = models
+          defaultModel = defaultModel
+          timeoutSeconds = getInt "timeoutSeconds" |> Option.defaultValue ProviderConfig.defaultTimeoutSeconds
+          maxRetries = getInt "maxRetries" |> Option.defaultValue ProviderConfig.defaultMaxRetries
+          enabled = match pt.TryGetValue "enabled" with true, b -> asBool b |> Option.defaultValue true | _ -> true
+          headers = match pt.TryGetValue "headers" with true, b -> asStringMap b |> Option.defaultValue Map.empty | _ -> Map.empty
+          promptCaching = match pt.TryGetValue "promptCaching" with true, b -> asBool b |> Option.defaultValue false | _ -> false
+          extraJson = match pt.TryGetValue "extra" with true, b -> Some(tomlNodeToJson b) | _ -> None
+          // 同一模型两边都写时以「只吃文字」为准（保守，不误发图片）。
+          visionOverrides =
+            [ for m in listOf "visionModels" -> m, true
+              for m in listOf "textOnlyModels" -> m, false ]
+            |> Map.ofList }
 
-        let pairing = parsePairing top errors
+    let private parseProviders (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : Map<string, ProviderConfig> =
+        match top.TryGetValue "providers" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                [ for kv in t do
+                      match asTable kv.Value with
+                      | Some pt -> yield kv.Key, parseProviderEntry kv.Key pt errors
+                      | None -> errors.Add(sprintf "providers.%s: expected table" kv.Key) ]
+                |> Map.ofList
+            | None ->
+                errors.Add "providers: expected table"
+                Map.empty
+        | _ -> Map.empty
 
-        // generation 默认值
-        let generation =
-            match top.TryGetValue "generation" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    checkKeys t knownGenerationKeys "generation" errors
-                    let getFloatOpt k =
-                        match t.TryGetValue k with
-                        | true, b -> asFloat b
-                        | _ -> None
-                    let getIntOpt k =
-                        match t.TryGetValue k with
-                        | true, b -> asInt b
-                        | _ -> None
-                    let d = GenerationDefaults.defaults
-                    { temperature = getFloatOpt "temperature"
-                      topP = getFloatOpt "topP"
-                      maxTokens = getIntOpt "maxTokens"
-                      instructions =
-                        match t.TryGetValue "instructions" with
-                        | true, b -> asString b |> Option.filter (String.IsNullOrWhiteSpace >> not)
-                        | _ -> None
-                      maxContextMessages = getIntOpt "maxContextMessages" |> Option.defaultValue d.maxContextMessages
-                      maxContextTokens = getIntOpt "maxContextTokens" |> Option.defaultValue d.maxContextTokens
-                      autoTitle =
-                        (match t.TryGetValue "autoTitle" with
-                         | true, b -> asBool b |> Option.defaultValue d.autoTitle
-                         | _ -> d.autoTitle)
-                      maxToolRounds = getIntOpt "maxToolRounds" |> Option.defaultValue d.maxToolRounds
-                      thinkingBudget = getIntOpt "thinkingBudget" |> Option.defaultValue d.thinkingBudget
-                      defaultProvider =
-                        match t.TryGetValue "defaultProvider" with
-                        | true, b -> asString b |> Option.filter (String.IsNullOrWhiteSpace >> not)
-                        | _ -> None
-                      defaultModel =
-                        match t.TryGetValue "defaultModel" with
-                        | true, b -> asString b |> Option.filter (String.IsNullOrWhiteSpace >> not)
-                        | _ -> None }
-                | None ->
-                    errors.Add "generation: expected table"
-                    GenerationDefaults.defaults
-            | _ -> GenerationDefaults.defaults
+    let private parseMcp (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : Map<string, McpServerConfig> =
+        match top.TryGetValue "mcp" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                [ for kv in t do
+                      match asTable kv.Value with
+                      | Some mt ->
+                          checkKeys mt knownMcpKeys (sprintf "mcp.%s" kv.Key) errors
+                          let getStr k =
+                              match mt.TryGetValue k with
+                              | true, b -> asString b
+                              | _ -> None
+                          let getInt k =
+                              match mt.TryGetValue k with
+                              | true, b -> asInt b
+                              | _ -> None
+                          let args = match mt.TryGetValue "args" with true, b -> asStringList b |> Option.defaultValue [] | _ -> []
+                          let env = match mt.TryGetValue "env" with true, b -> asStringMap b |> Option.defaultValue Map.empty | _ -> Map.empty
+                          yield
+                              kv.Key,
+                              { id = kv.Key
+                                label = getStr "label" |> Option.defaultValue ""
+                                command = getStr "command"
+                                args = args
+                                env = env
+                                url = getStr "url"
+                                maxConcurrency = getInt "maxConcurrency"
+                                callTimeoutSeconds = getInt "callTimeoutSeconds" |> Option.defaultValue McpServerConfig.defaultCallTimeoutSeconds
+                                enabled =
+                                  (match mt.TryGetValue "enabled" with
+                                   | true, b -> asBool b |> Option.defaultValue true
+                                   | _ -> true) }
+                      | None -> errors.Add(sprintf "mcp.%s: expected table" kv.Key) ]
+                |> Map.ofList
+            | None ->
+                errors.Add "mcp: expected table"
+                Map.empty
+        | _ -> Map.empty
 
-        // tools 配置
-        let toolsCfg =
-            match top.TryGetValue "tools" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    checkKeys t knownToolsKeys "tools" errors
-                    let d = ToolsConfig.defaults
-                    let policyDefault, policy = parseToolPolicy t errors
-                    { fileReadRoots =
-                        (match t.TryGetValue "fileReadRoots" with
-                         | true, b -> asStringList b |> Option.defaultValue []
-                         | _ -> [])
-                      callTimeoutSeconds =
-                        (match t.TryGetValue "callTimeoutSeconds" with
-                         | true, b -> asInt b |> Option.defaultValue d.callTimeoutSeconds
-                         | _ -> d.callTimeoutSeconds)
-                      policyDefault = policyDefault
-                      policy = policy
-                      approvalTimeoutSeconds =
-                        (match t.TryGetValue "approvalTimeoutSeconds" with
-                         | true, b -> asInt b |> Option.defaultValue d.approvalTimeoutSeconds
-                         | _ -> d.approvalTimeoutSeconds)
-                      exposeDebug =
-                        (match t.TryGetValue "exposeDebug" with
-                         | true, (:? bool as b) -> b
-                         | _ -> d.exposeDebug) }
-                | None ->
-                    errors.Add "tools: expected table"
-                    ToolsConfig.defaults
-            | _ -> ToolsConfig.defaults
+    /// 决策 431：对话预设。
+    let private parsePresets (top: System.Collections.Generic.IDictionary<string, obj>) (errors: ResizeArray<string>) : Map<string, ConversationPreset> =
+        match top.TryGetValue "presets" with
+        | true, v ->
+            match asTable v with
+            | Some t ->
+                [ for kv in t do
+                      match asTable kv.Value with
+                      | Some pt ->
+                          checkKeys pt knownPresetKeys (sprintf "presets.%s" kv.Key) errors
+                          let getStr k =
+                              match pt.TryGetValue k with
+                              | true, b -> asString b |> Option.filter (String.IsNullOrWhiteSpace >> not)
+                              | _ -> None
+                          let getInt k = match pt.TryGetValue k with | true, b -> asInt b | _ -> None
+                          let getFloat k = match pt.TryGetValue k with | true, b -> asFloat b | _ -> None
+                          let preset : ConversationPreset =
+                              { id = kv.Key
+                                name = getStr "name" |> Option.defaultValue kv.Key
+                                provider = getStr "provider" |> Option.defaultValue ""
+                                model = getStr "model" |> Option.defaultValue ""
+                                instructions = getStr "instructions"
+                                tools = match pt.TryGetValue "tools" with | true, b -> asStringList b |> Option.defaultValue [] | _ -> []
+                                temperature = getFloat "temperature"
+                                topP = getFloat "topP"
+                                maxTokens = getInt "maxTokens"
+                                thinkingBudget = getInt "thinkingBudget" }
+                          match preset.temperature with
+                          | Some x when x < 0.0 || x > 2.0 -> errors.Add(sprintf "presets.%s.temperature: must be within [0, 2]" kv.Key)
+                          | _ -> ()
+                          match preset.topP with
+                          | Some x when x <= 0.0 || x > 1.0 -> errors.Add(sprintf "presets.%s.topP: must be within (0, 1]" kv.Key)
+                          | _ -> ()
+                          match preset.maxTokens with
+                          | Some m when m <= 0 -> errors.Add(sprintf "presets.%s.maxTokens: must be positive" kv.Key)
+                          | _ -> ()
+                          yield kv.Key, preset
+                      | None -> errors.Add(sprintf "presets.%s: expected table" kv.Key) ]
+                |> Map.ofList
+            | None ->
+                errors.Add "presets: expected table"
+                Map.empty
+        | _ -> Map.empty
 
-        // providers
-        let providers =
-            match top.TryGetValue "providers" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    [ for kv in t do
-                          match asTable kv.Value with
-                          | Some pt ->
-                              checkKeys pt knownProviderKeys (sprintf "providers.%s" kv.Key) errors
-                              let getStr k =
-                                  match pt.TryGetValue k with
-                                  | true, b -> asString b
-                                  | _ -> None
-                              let getInt k =
-                                  match pt.TryGetValue k with
-                                  | true, b -> asInt b
-                                  | _ -> None
-                              let kind = getStr "kind" |> Option.defaultValue "openai"
-                              let baseUrl = getStr "baseUrl" |> Option.defaultValue ""
-                              let models =
-                                  match pt.TryGetValue "models" with
-                                  | true, b ->
-                                      asStringList b
-                                      |> Option.defaultValue []
-                                      |> List.map (fun s -> s.Trim())
-                                      |> List.filter (String.IsNullOrWhiteSpace >> not)
-                                      |> List.distinct
-                                  | _ -> []
-                              let defaultModel =
-                                  match getStr "defaultModel" with
-                                  | Some m when not (String.IsNullOrWhiteSpace m) -> m.Trim()
-                                  | _ -> models |> List.tryHead |> Option.defaultValue ""
-                              let headers =
-                                  match pt.TryGetValue "headers" with
-                                  | true, b -> asStringMap b |> Option.defaultValue Map.empty
-                                  | _ -> Map.empty
-                              let extra =
-                                  match pt.TryGetValue "extra" with
-                                  | true, b -> Some(tomlNodeToJson b)
-                                  | _ -> None
-                              yield
-                                  kv.Key,
-                                  { id = kv.Key
-                                    kind = kind
-                                    label = getStr "label" |> Option.defaultValue ""
-                                    baseUrl = baseUrl
-                                    apiKey = getStr "apiKey"
-                                    models = models
-                                    defaultModel = defaultModel
-                                    timeoutSeconds = getInt "timeoutSeconds" |> Option.defaultValue ProviderConfig.defaultTimeoutSeconds
-                                    maxRetries = getInt "maxRetries" |> Option.defaultValue ProviderConfig.defaultMaxRetries
-                                    enabled =
-                                      (match pt.TryGetValue "enabled" with
-                                       | true, b -> asBool b |> Option.defaultValue true
-                                       | _ -> true)
-                                    headers = headers
-                                    promptCaching =
-                                      (match pt.TryGetValue "promptCaching" with
-                                       | true, b -> asBool b |> Option.defaultValue false
-                                       | _ -> false)
-                                    extraJson = extra
-                                    visionOverrides =
-                                      (let listOf k =
-                                          match pt.TryGetValue k with
-                                          | true, b ->
-                                              asStringList b |> Option.defaultValue []
-                                              |> List.map (fun s -> s.Trim())
-                                              |> List.filter (String.IsNullOrWhiteSpace >> not)
-                                          | _ -> []
-                                       // 同一模型两边都写时以「只吃文字」为准（保守，不误发图片）。
-                                       [ for m in listOf "visionModels" -> m, true
-                                         for m in listOf "textOnlyModels" -> m, false ]
-                                       |> Map.ofList) }
-                          | None -> errors.Add(sprintf "providers.%s: expected table" kv.Key) ]
-                    |> Map.ofList
-                | None ->
-                    errors.Add "providers: expected table"
-                    Map.empty
-            | _ -> Map.empty
-
-        // mcp
-        let mcpServers =
-            match top.TryGetValue "mcp" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    [ for kv in t do
-                          match asTable kv.Value with
-                          | Some mt ->
-                              checkKeys mt knownMcpKeys (sprintf "mcp.%s" kv.Key) errors
-                              let getStr k =
-                                  match mt.TryGetValue k with
-                                  | true, b -> asString b
-                                  | _ -> None
-                              let getInt k =
-                                  match mt.TryGetValue k with
-                                  | true, b -> asInt b
-                                  | _ -> None
-                              let args = match mt.TryGetValue "args" with true, b -> asStringList b |> Option.defaultValue [] | _ -> []
-                              let env = match mt.TryGetValue "env" with true, b -> asStringMap b |> Option.defaultValue Map.empty | _ -> Map.empty
-                              yield
-                                  kv.Key,
-                                  { id = kv.Key
-                                    label = getStr "label" |> Option.defaultValue ""
-                                    command = getStr "command"
-                                    args = args
-                                    env = env
-                                    url = getStr "url"
-                                    maxConcurrency = getInt "maxConcurrency"
-                                    callTimeoutSeconds = getInt "callTimeoutSeconds" |> Option.defaultValue McpServerConfig.defaultCallTimeoutSeconds
-                                    enabled =
-                                      (match mt.TryGetValue "enabled" with
-                                       | true, b -> asBool b |> Option.defaultValue true
-                                       | _ -> true) }
-                          | None -> errors.Add(sprintf "mcp.%s: expected table" kv.Key) ]
-                    |> Map.ofList
-                | None ->
-                    errors.Add "mcp: expected table"
-                    Map.empty
-            | _ -> Map.empty
-
-        let authClients = parseAuthClients top errors
-
-        // 决策 431：对话预设
-        let presets =
-            match top.TryGetValue "presets" with
-            | true, v ->
-                match asTable v with
-                | Some t ->
-                    [ for kv in t do
-                          match asTable kv.Value with
-                          | Some pt ->
-                              checkKeys pt knownPresetKeys (sprintf "presets.%s" kv.Key) errors
-                              let getStr k =
-                                  match pt.TryGetValue k with
-                                  | true, b -> asString b |> Option.filter (String.IsNullOrWhiteSpace >> not)
-                                  | _ -> None
-                              let getInt k = match pt.TryGetValue k with | true, b -> asInt b | _ -> None
-                              let getFloat k = match pt.TryGetValue k with | true, b -> asFloat b | _ -> None
-                              let preset : ConversationPreset =
-                                  { id = kv.Key
-                                    name = getStr "name" |> Option.defaultValue kv.Key
-                                    provider = getStr "provider" |> Option.defaultValue ""
-                                    model = getStr "model" |> Option.defaultValue ""
-                                    instructions = getStr "instructions"
-                                    tools = match pt.TryGetValue "tools" with | true, b -> asStringList b |> Option.defaultValue [] | _ -> []
-                                    temperature = getFloat "temperature"
-                                    topP = getFloat "topP"
-                                    maxTokens = getInt "maxTokens"
-                                    thinkingBudget = getInt "thinkingBudget" }
-                              match preset.temperature with
-                              | Some x when x < 0.0 || x > 2.0 -> errors.Add(sprintf "presets.%s.temperature: must be within [0, 2]" kv.Key)
-                              | _ -> ()
-                              match preset.topP with
-                              | Some x when x <= 0.0 || x > 1.0 -> errors.Add(sprintf "presets.%s.topP: must be within (0, 1]" kv.Key)
-                              | _ -> ()
-                              match preset.maxTokens with
-                              | Some m when m <= 0 -> errors.Add(sprintf "presets.%s.maxTokens: must be positive" kv.Key)
-                              | _ -> ()
-                              yield kv.Key, preset
-                          | None -> errors.Add(sprintf "presets.%s: expected table" kv.Key) ]
-                    |> Map.ofList
-                | None ->
-                    errors.Add "presets: expected table"
-                    Map.empty
-            | _ -> Map.empty
-
-        match instanceId with
-        | None -> errors.Add "instanceId: required UUID"
-        | Some _ -> ()
-        let listen, tlsCert, tlsKey, maxAtt, chunk = network
+    let private validateNetwork (listen: string, tlsCert: string, tlsKey: string, maxAtt: int64, chunk: int) (errors: ResizeArray<string>) =
         if String.IsNullOrWhiteSpace listen then errors.Add "network.listen: required"
         if maxAtt <= 0L then errors.Add "network.maxAttachmentBytes: must be positive"
         if chunk <= 0 then errors.Add "network.chunkSizeBytes: must be positive"
@@ -704,6 +663,8 @@ module TomlCodec =
             if not (IO.File.Exists tlsCert) then errors.Add $"network.tlsCertPath: file not found: {tlsCert}"
             if not (IO.File.Exists tlsKey) then errors.Add $"network.tlsKeyPath: file not found: {tlsKey}"
         | true, true -> ()
+
+    let private validateGeneration (generation: GenerationDefaults) (errors: ResizeArray<string>) =
         match generation.temperature with
         | Some t when t < 0.0 || t > 2.0 -> errors.Add "generation.temperature: must be within [0, 2]"
         | _ -> ()
@@ -717,11 +678,15 @@ module TomlCodec =
         if generation.maxContextTokens < 0 then errors.Add "generation.maxContextTokens: must not be negative"
         if generation.maxToolRounds <= 0 then errors.Add "generation.maxToolRounds: must be positive"
         if generation.thinkingBudget < 0 then errors.Add "generation.thinkingBudget: must not be negative"
+
+    let private validateTools (toolsCfg: ToolsConfig) (errors: ResizeArray<string>) =
         if toolsCfg.callTimeoutSeconds <= 0 then errors.Add "tools.callTimeoutSeconds: must be positive"
         if toolsCfg.approvalTimeoutSeconds <= 0 then errors.Add "tools.approvalTimeoutSeconds: must be positive"
         for root in toolsCfg.fileReadRoots do
             if not (Path.IsPathRooted root) then
                 errors.Add(sprintf "tools.fileReadRoots: %s must be an absolute path" root)
+
+    let private validateProvidersAndMcp (providers: Map<string, ProviderConfig>) (mcpServers: Map<string, McpServerConfig>) (errors: ResizeArray<string>) =
         for kv in providers do
             let p = kv.Value
             if not (supportedProviderKinds.Contains p.kind) then
@@ -754,7 +719,35 @@ module TomlCodec =
             | Some c when c <= 0 -> errors.Add(sprintf "mcp.%s.maxConcurrency: must be positive" kv.Key)
             | _ -> ()
 
+    /// 解析当前版本（v2）配置。
+    let private tryParseV2 (top: System.Collections.Generic.Dictionary<string, obj>) : Result<AppConfig, string list> =
+        let errors = ResizeArray<string>()
+        checkKeys top knownTopKeys "config" errors
+
+        let instanceId =
+            match top.TryGetValue "instanceId" with
+            | true, v -> asGuid v
+            | _ -> None
+
+        let runtime = parseRuntime top errors
+        let network = parseNetwork top errors
+        let pairing = parsePairing top errors
+        let generation = parseGeneration top errors
+        let toolsCfg = parseTools top errors
+        let providers = parseProviders top errors
+        let mcpServers = parseMcp top errors
+        let authClients = parseAuthClients top errors
+        let presets = parsePresets top errors
+
+        match instanceId with
+        | None -> errors.Add "instanceId: required UUID"
+        | Some _ -> ()
+        validateNetwork network errors
+        validateGeneration generation errors
+        validateTools toolsCfg errors
+        validateProvidersAndMcp providers mcpServers errors
         validateAuth authClients errors
+        let listen, tlsCert, tlsKey, maxAtt, chunk = network
 
         if errors.Count > 0 then
             Error(List.ofSeq errors)

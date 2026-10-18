@@ -10,7 +10,7 @@ anthropic-beta=interleaved-thinking-2025-05-14;anthropic-version=2023-06-01;x-ap
 == gemini request
 POST https://generativelanguage.googleapis.com/v1beta/models/gemini-x:streamGenerateContent?alt=sse
 x-goog-api-key=KEY
-{"systemInstruction":{"parts":[{"text":"\u4F60\u662F\u52A9\u624B"}]},"contents":[{"role":"user","parts":[{"text":"\u770B\u56FE"},{"inlineData":{"mimeType":"image/png","data":"AAECAw=="}}]},{"role":"model","parts":[{"text":"\u67E5\u4E00\u4E0B"},{"functionCall":{"name":"search","args":{"q":"\u5929\u6C14"}}}]},{"role":"user","parts":[{"functionResponse":{"name":"call1","response":{"result":"{\u0022ok\u0022:true}"}}},{"text":"\u7EE7\u7EED"}]}],"generationConfig":{"temperature":0.5,"maxOutputTokens":300,"thinkingConfig":{"thinkingBudget":512,"includeThoughts":true},"service_tier":"auto"}}
+{"systemInstruction":{"parts":[{"text":"\u4F60\u662F\u52A9\u624B"}]},"contents":[{"role":"user","parts":[{"text":"\u770B\u56FE"},{"inlineData":{"mimeType":"image/png","data":"AAECAw=="}}]},{"role":"model","parts":[{"text":"\u67E5\u4E00\u4E0B"},{"functionCall":{"name":"search","args":{"q":"\u5929\u6C14"}}}]},{"role":"user","parts":[{"functionResponse":{"name":"search","response":{"result":"{\u0022ok\u0022:true}"}}},{"text":"\u7EE7\u7EED"}]}],"generationConfig":{"temperature":0.5,"maxOutputTokens":300,"thinkingConfig":{"thinkingBudget":512,"includeThoughts":true},"service_tier":"auto"}}
 == gemini updates
 [reasoning:想] id= finish=
 [text:你好] id= finish=

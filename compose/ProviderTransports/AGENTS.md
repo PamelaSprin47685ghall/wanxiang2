@@ -7,6 +7,7 @@
     - 推理：两家共用的只有这段流程（`StreamPump`）；协议语义各在自己的库里。限流头属于线协议，只有组合者同时认识 HttpRetry 和 Wire。
 2. **对外行为与旧实现逐字节相同。** [根 AXIOM: 1, 5]
     - 推理：请求发往用户自己的提供方账户；解码出的增量会变成落盘的会话消息。金样由旧仓库源码跑同一个场景生成（`tests/Scenario.fs`、`tests/golden/transports.txt`），不是由新代码生成。
+    - 已知偏离（2026-10-18，1 行）：场景里的跨提供方历史用 id `call1`，旧实现给 Gemini 的 `functionResponse.name` 填了原始 id，是个缺陷（不是任何已声明函数）；`libs/Gemini` 修成了「取同一请求里那次调用的名字」，金样的 Gemini 请求行随之从 `"name":"call1"` 改为 `"name":"search"`。其余字节仍与旧实现相同。
 3. **`ProviderConfig.headers`（附加请求头）不在这里处理。** [根 AXIOM: 3]
     - 推理：旧实现里它由 `ProviderHttp` 设在共享的 HttpClient 上，传输只拿到一个现成的 HttpClient。这一点保持不变。
 

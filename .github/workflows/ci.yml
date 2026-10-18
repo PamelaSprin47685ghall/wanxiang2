@@ -75,6 +75,21 @@ jobs:
       # 实测（2026-10-17，本机 SDK 10.0.402 + wasm-tools，NuGet 外部依赖已缓存、Debug）：两入口共 12.7 秒
       #（Desktop 4.4、Pwa 7.6），不算重；CI 另加上面的 workload 安装时间。
       - run: ./x app
+  # 发布产物冒烟：自包含 publish（含 PWA 包与 avalonia.js 补丁）+ headless Chrome 真跑一遍
+  #（画布渲染、DPR 2 补丁、文本上屏桥）。这是用户实际拿到的那份产物的验证，与 Debug 构建互补。
+  published-smoke:
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - uses: actions/download-artifact@v8
+        with: { name: feed, path: artifacts/feed }
+      - run: dotnet workload install wasm-tools --skip-manifest-update || dotnet workload install wasm-tools
+      - run: npm ci
+      - run: WX_SKIP_PACK=1 bash publish.sh linux-x64 v0.0.0-ci
+      - run: bash tools/smoke_published.sh artifacts/publish/linux-x64
   widget-template:
     needs: check
     runs-on: ubuntu-latest

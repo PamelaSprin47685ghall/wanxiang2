@@ -97,6 +97,20 @@ check() {
       fi
     fi
   done
+  # 文档与各 AGENTS.md 里点名的 libs/<名> / compose/<名> 必须存在：拆库/删库后最容易留下的就是这种过期引用
+  #（docs/archive 是历史档案，不查；`<Name>` 是模板占位，放过）。
+  local stale=""
+  for f in AGENTS.md $(find libs compose docs tools -name '*.md' -not -path '*/archive/*' | sort); do
+    while IFS= read -r ref; do
+      case "$ref" in "libs/<Name>"|"compose/<Name>") continue;; esac
+      [[ -d "$ref" ]] || stale="$stale
+FAIL $f: references missing $ref"
+    done < <(grep -oE '(libs|compose)/[A-Za-z0-9_]+' "$f" 2>/dev/null | sort -u || true)
+  done
+  if [[ -n "$stale" ]]; then
+    echo "$stale"
+    bad=1
+  fi
   # 包二进制不得进 Git 索引。忽略规则挡不住已经暂存的文件。
   local packed
   packed="$(git ls-files '*.nupkg' '*.snupkg' '*.tgz' 2>/dev/null || true)"

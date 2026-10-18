@@ -1,0 +1,12 @@
+{
+  "name": "wanxiang2-tools",
+  "private": true,
+  "description": "仓库工具的 Node 依赖（发布产物冒烟 / 性能采样）。C#、F# 构建不走这里。",
+  "scripts": {
+    "smoke:pwa": "node tools/smoke_published_pwa.js",
+    "perf:pwa": "node tools/perf_pwa.js"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.29.1"
+  }
+}

@@ -20,6 +20,22 @@ let ``call ids are made from name and index and give the name back`` () =
     Assert.Equal("custom", GeminiRequest.nameOfCallId "custom")
     Assert.Equal("", GeminiRequest.nameOfCallId null)
 
+// SPEC 4：跨提供方历史里的 id 不含名字时，functionResponse.name 取同一份请求里那次调用的名字
+[<Fact>]
+let ``functionResponse takes the name from the call in the same request when the id has none`` () =
+    let foreign =
+        [ ChatMessage(ChatRole.Assistant, [| TextContent "查一下" :> AIContent; FunctionCallContent("call1", "search", null) :> AIContent |])
+          ChatMessage(ChatRole.Tool, [| FunctionResultContent("call1", box "{\"ok\":true}") :> AIContent |]) ]
+    Assert.Contains("\"functionResponse\":{\"name\":\"search\"", (GeminiRequest.build foreign null 0).ToJsonString())
+    // Gemini 自己的「名字@序号」仍然解析出名字（此时两者一致）
+    let own =
+        [ ChatMessage(ChatRole.Assistant, [| FunctionCallContent("search@0", "search", null) :> AIContent |])
+          ChatMessage(ChatRole.Tool, [| FunctionResultContent("search@0", box "ok") :> AIContent |]) ]
+    Assert.Contains("\"functionResponse\":{\"name\":\"search\"", (GeminiRequest.build own null 0).ToJsonString())
+    // 都找不到（历史里没有那次调用）才退回解析 id：保持旧行为
+    let orphan = [ ChatMessage(ChatRole.Tool, [| FunctionResultContent("legacy-call", box "ok") :> AIContent |]) ]
+    Assert.Contains("\"functionResponse\":{\"name\":\"legacy-call\"", (GeminiRequest.build orphan null 0).ToJsonString())
+
 [<Fact>]
 let ``thought parts are reasoning, calls are numbered in arrival order`` () =
     let s = GeminiStream()

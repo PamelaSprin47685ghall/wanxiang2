@@ -48,6 +48,13 @@ jobs:
       - name: Publish and package ${{ matrix.rid }}
         run: bash publish.sh ${{ matrix.rid }} "$WX_VERSION"
 
+      # 只有 linux-x64 能在 ubuntu runner 上真跑起来：发布产物（含 PWA 与 avalonia.js 补丁）先冒烟再上传。
+      - name: Smoke the published linux-x64 bundle
+        if: matrix.rid == 'linux-x64'
+        run: |
+          npm ci
+          bash tools/smoke_published.sh artifacts/publish/linux-x64
+
       - uses: actions/upload-artifact@v7
         with:
           name: wanxiang2-${{ matrix.rid }}

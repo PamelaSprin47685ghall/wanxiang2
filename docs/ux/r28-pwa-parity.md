@@ -1,7 +1,7 @@
 # 第 28 轮：桌面 / PWA 生命周期一致性审计
 
 > 基准变更（2026-10-18）：下表是旧仓库 wanxiang（2026-10-17 退役，活文档迁入本仓库）的运行时实测记录，打点靠旧 `ParityProbe`（决策 450）。探针链已于 2026-10-18 退役删除（无接线、无消费者），本表按历史记录读；今天的行为证据是 `compose/AppShell/tests`、`tools/smoke_desktop.sh`、`tools/smoke_published.sh`。
-> 今天的证据基础：`compose/AppShell/tests`（18 个 headless 用例，假端口 rig）、`tools/smoke_desktop.sh`（真实启动断言）、`tools/smoke_published.sh` + `tools/smoke_published_pwa.js`（发布产物 + headless Chrome 壳冒烟）。表中浏览器运行时行为（剪贴板、文件选择/保存、右键菜单、拖放、`visibilitychange/pagehide` 落草稿、焦点在 body 时快捷键、localStorage 持久化）今天只有编译与 JS 绑定契约级证据，无运行时实测。
+> 今天的证据基础：`compose/AppShell/tests`（18 个 headless 用例，假端口 rig）、`tools/smoke_desktop.sh`（真实启动断言）、`tools/smoke_published.sh` + `tools/smoke_published_pwa.js`（发布产物 + headless Chrome 壳冒烟；先 `npm ci` 装 `puppeteer-core`，CI 的 `published-smoke` 任务与发布流程的 linux-x64 都跑它；2026-10-18 本机通过：画布渲染、DPR 2、文本上屏桥、**认证态下草稿落进 IndexedDB 且重开页面恢复**、无页面异常——最后一项由脚本预置客户端凭据把浏览器接进已认证状态后真跑）。表中浏览器运行时行为里，**落草稿一条已有运行时实测**；剪贴板、文件选择/保存、右键菜单、拖放、焦点在 body 时快捷键、localStorage 持久化仍只有编译与 JS 绑定契约级证据。
 
 方法（旧仓库，2026-10 执行）：`ParityProbe`（决策 450，默认关闭）在每条依赖生命周期的路径上打点。PWA 用发布产物 + headless Chrome（查询参数开关，`tools/parity_pwa.js`）实测；桌面用发布产物 + Xvfb（`WANXIANG_PARITY_PROBE=1`）实测。
 

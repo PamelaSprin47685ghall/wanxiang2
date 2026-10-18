@@ -22,4 +22,4 @@
 6. `Reconfigure` 让新的限额生效：`reconfigure applies new limits`。
 9. [LEMMA: 1] 配置重载（宿主每次重载都调 `Reconfigure`）不清空已记的失败与冻结：`a config reload between wrong codes does not erase the failures already counted`、`a reload that changes limits keeps an existing freeze and the counted failures`。这是旧仓库 DevicesTests「five failures」偶发失败的根因。
 7. [LEMMA: 1] 与码无关的失败（未认证的连接要求发邀请）通过 `RecordFailure` 计入同一个限额，与旧 WsConnection 一致：`unauthenticated invites count toward the same limit as wrong codes`。
-8. [TODO] 宿主侧「持久化失败时不发令牌」的证据要在旧仓库接线时补上。
+8. 「持久化失败时不发令牌」的证据已在本仓库：`compose/ServerApp/tests/DevicesTests.fs` 的 `config write failure during pairing sends no token`（配置目录只读这一真实故障：远端收到 `pairing.failed`，配置文本逐字不变、没写进新设备）；本机桌面一条在 `compose/DesktopPairing/tests/Tests.fs` 的 `配置无效时返回错误且不写 client.toml`。宿主侧接线见 `compose/WsConnection/WsConnection.fs:455`（先持久化哈希、成功后 `Paired`、再下发令牌）。

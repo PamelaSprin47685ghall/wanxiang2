@@ -18,4 +18,4 @@ RFC 8785 JSON 规范化（JCS）与 SHA-256 内容哈希。纯函数，无状态
     - 证明：`RFC 8785 sorting example`，通过。
 3. [LEMMA: 1] `sha256Hex` 输出 64 位小写十六进制，`{}` 的值固定。
     - 证明：`hash is 64 lowercase hex chars`，通过。
-4. [LEMMA: 2] [TODO] 大整数被改写这件事没有测试锁住；目前只是文档约束。
+4. [LEMMA: 2] 大整数被改写这件事锁进了测试：`numbers are serialized as doubles: big integers are rewritten, equal numbers are equal`（2^53-1 原样、2^53+1 落回 2^53 且两者哈希相同、超范围整数走指数写法、`1.0`/`1e2`/`-0` 归一），通过。

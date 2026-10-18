@@ -8,7 +8,7 @@
 
 # SPEC
 1. [LEMMA: 2] `tests/Tests.fs` 覆盖 `socketPath` 的路径拼接。
-2. [LEMMA: 1] `tryForward`/`listen` 需要真实 Unix 套接字与运行中的监听进程，属 IO 部分，测试留 TODO，待 Long Stroke 或宿主集成测试覆盖。
+2. [LEMMA: 1] `tests/Tests.fs` 用真实 Unix 套接字与真实监听循环覆盖：`listen 收到转发的链接并回 ok；空行只当唤起；Dispose 后不再有人接`（转发链接逐字、空行只唤起不产生链接、换行被剥掉、Dispose 清掉套接字文件后 tryForward 一律 false）、`没有监听者时 tryForward 一律 false`（文件不存在与陈旧残留两种）。
 
 # 迁入或覆盖的旧测试
 无。旧仓库宿主保留单实例套接字（见根 AGENTS.md「UI 非视图余项」）；本库为 wanxiang2 新建，逻辑迁自旧宿主保留部分。

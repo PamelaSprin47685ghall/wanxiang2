@@ -25,3 +25,18 @@ let ``hash is 64 lowercase hex chars`` () =
     let h = Jcs.sha256Hex "{}"
     Assert.Matches("^[0-9a-f]{64}$", h)
     Assert.Equal("44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a", h)
+
+// SPEC 4：超出 double 精确范围的整数会被静默改写（RFC 8785 附录 D），约束本身锁进测试
+[<Fact>]
+let ``numbers are serialized as doubles: big integers are rewritten, equal numbers are equal`` () =
+    // 2^53-1 仍是精确值
+    Assert.Equal("""{"n":9007199254740991}""", Jcs.text """{"n":9007199254740991}""")
+    // 2^53+1 落回最近的 double：值变了，哈希仍稳定（所以要靠 JSON 字符串承载大整数）
+    Assert.Equal("""{"n":9007199254740992}""", Jcs.text """{"n":9007199254740993}""")
+    Assert.Equal(Jcs.sha256Hex """{"n":9007199254740993}""", Jcs.sha256Hex """{"n":9007199254740992}""")
+    // 更大的整数走指数写法
+    Assert.Equal("""{"n":1.2345678901234568e+29}""", Jcs.text """{"n":123456789012345678901234567890}""")
+    // 等值写法归一：1.0 = 1、1e2 = 100、-0 = 0
+    Assert.Equal("""{"n":1}""", Jcs.text """{"n":1.0}""")
+    Assert.Equal("""{"n":100}""", Jcs.text """{"n":1e2}""")
+    Assert.Equal("""{"n":0}""", Jcs.text """{"n":-0}""")

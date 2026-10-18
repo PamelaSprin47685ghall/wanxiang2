@@ -6,7 +6,7 @@
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
 #   ./x consume       在仓库外的临时项目里只从 artifacts/feed 取包，构建并真实运行
 #   ./x app           从 artifacts/feed 构建 app/ 下的入口（Pwa 需 wasm-tools workload）
-#   ./x all           check + 逐库 test + pack + compose + consume（测试并发：XJOBS，默认 min(8, 核数)）
+#   ./x all           check + 逐库 test + pack + compose + consume（测试并发：XJOBS；默认按内存与核数取，见 test_jobs）
 #   ./x sln           由 libs/ 重新生成 wanxiang2.slnx
 #   ./x new-widget <Name>  由 tools/widget-template 生成控件库 libs/<Name>（目录已存在则拒绝）
 set -euo pipefail
@@ -178,11 +178,24 @@ compose() {
   run_tests_parallel "compose（组合者测试）" "$list" "$(test_jobs)" "-p:RestorePackagesPath=$PWD/artifacts/packages"
 }
 
-# 并发数：默认 min(8, 核数)；XJOBS 可覆盖。
+# 并发数：默认由核数与**内存**共同决定，XJOBS 可覆盖。
+# 只按核数来会 OOM：每个 `dotnet test`（restore + F# 编译 + 跑用例）峰值近 1 GiB，
+# 12 GiB 无 swap 的机器上开 10 路会把系统打死（2026-10-18 实测）。规则：
+# 每个并发工程按 2 GiB 计，另给系统与编辑器留 4 GiB，再按核数封顶（最多 8）。
 test_jobs() {
   if [[ -n "${XJOBS:-}" ]]; then echo "$XJOBS"; else
     local n; n="$(nproc 2>/dev/null || echo 4)"
-    echo $(( n < 8 ? n : 8 ))
+    local mem_gb=8
+    if [[ -r /proc/meminfo ]]; then
+      mem_gb="$(awk '/^MemTotal:/ {printf "%d", $2 / 1048576}' /proc/meminfo)"
+    fi
+    local by_mem=$(( (mem_gb - 4) / 2 ))
+    # 用 if 而不是 `(( )) && ...`：条件不成立时后者让整条语句返回 1，set -e 会当场中止。
+    if (( by_mem < 1 )); then by_mem=1; fi
+    local j=$n
+    if (( j > by_mem )); then j=$by_mem; fi
+    if (( j > 8 )); then j=8; fi
+    echo "$j"
   fi
 }
 

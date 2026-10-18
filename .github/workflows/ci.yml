@@ -33,7 +33,9 @@ jobs:
           path: artifacts/feed
           if-no-files-found: error
   test:
-    needs: pack
+    # 两个都要：矩阵来自 check 的 libs 输出（needs 只写 pack 会让 fromJson 拿到空串，
+    # 2026-10-18 首轮 CI 就是这样在策略求值阶段失败的），feed 来自 pack。
+    needs: [check, pack]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

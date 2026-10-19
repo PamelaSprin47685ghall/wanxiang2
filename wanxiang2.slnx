@@ -87,29 +87,9 @@
     <Project Path="libs/BreathPhase/BreathPhase.fsproj" />
     <Project Path="libs/BreathPhase/tests/BreathPhase.Tests.fsproj" />
   </Folder>
-  <Folder Name="/BrowserCredentials/">
-    <Project Path="libs/BrowserCredentials/BrowserCredentials.csproj" />
-    <Project Path="libs/BrowserCredentials/tests/BrowserCredentials.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/BrowserDrafts/">
-    <Project Path="libs/BrowserDrafts/BrowserDrafts.csproj" />
-    <Project Path="libs/BrowserDrafts/tests/BrowserDrafts.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/BrowserImage/">
-    <Project Path="libs/BrowserImage/BrowserImage.csproj" />
-    <Project Path="libs/BrowserImage/tests/BrowserImage.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/BrowserLocalStore/">
-    <Project Path="libs/BrowserLocalStore/BrowserLocalStore.csproj" />
-    <Project Path="libs/BrowserLocalStore/tests/BrowserLocalStore.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/BrowserPage/">
-    <Project Path="libs/BrowserPage/BrowserPage.csproj" />
-    <Project Path="libs/BrowserPage/tests/BrowserPage.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/BrowserRich/">
-    <Project Path="libs/BrowserRich/BrowserRich.csproj" />
-    <Project Path="libs/BrowserRich/tests/BrowserRich.Tests.fsproj" />
+  <Folder Name="/BrowserInterop/">
+    <Project Path="libs/BrowserInterop/BrowserInterop.csproj" />
+    <Project Path="libs/BrowserInterop/tests/BrowserInterop.Tests.fsproj" />
   </Folder>
   <Folder Name="/BusyRing/">
     <Project Path="libs/BusyRing/BusyRing.fsproj" />

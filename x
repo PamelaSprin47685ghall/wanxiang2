@@ -10,7 +10,7 @@
 #   ./x sln           由 libs/ 重新生成 wanxiang2.slnx
 #   ./x new-widget <Name>  由 tools/widget-template 生成控件库 libs/<Name>（目录已存在则拒绝）
 set -euo pipefail
-export MSBUILDDISABLENODEREUSE=1
+export MSBUILDDISABLENODEREUSE=0
 cd "$(dirname "$0")"
 
 # 全仓统一 SDK：系统 SDK（/usr/share/dotnet）没有 Microsoft.AspNetCore.App 共享框架
@@ -143,23 +143,43 @@ pack() {
   rm -rf artifacts/feed
   # 库与组合者都是交付物，都从 feed 消费 Wanxiang2.* 包（库只允许依赖基础库 UiKit）。
   rm -rf artifacts/packages/wanxiang2.*
-  # 按依赖顺序打包：依赖的包还不在 feed 里就留到下一轮（UiKit 这类基础库自然排在被依赖方前面）。
+  mkdir -p artifacts/feed artifacts
+  # 按依赖顺序分波打包：同一波内的工程互不依赖，可以放进一个临时 solution 里
+  # 让 MSBuild 自己并行（一次 restore + 一次 pack），不再为每个包各起一个 dotnet 进程。
+  # 这是「每个包的编译准备时间太长」的主要来源：进程启动 + 逐包 restore + 逐包 MSBuild 求值。
   local todo; todo="$(component_projs)"
+  local wave=0
   while [[ -n "$todo" ]]; do
-    local next="" progressed=0
+    local ready="" blocked=""
     for proj in $todo; do
       local missing=0
       # 末尾 `|| true` 同上：没有 Wanxiang2.* 依赖的工程不让那次替换把整条命令置为非零。
       for dep in $(grep -oE 'Include="Wanxiang2\.[A-Za-z0-9]+"' "$proj" | sed -E 's/.*Wanxiang2\.([A-Za-z0-9]+)"/\1/' || true); do
         [[ -f "artifacts/feed/Wanxiang2.$dep.0.0.0-local.nupkg" ]] || missing=1
       done
-      if [[ $missing == 1 ]]; then next="$next $proj"; continue; fi
-      rm -rf "$(dirname "$proj")/obj"
-      dotnet pack "$proj" -c Release -p:Version=0.0.0-local -p:RestorePackagesPath="$PWD/artifacts/packages" -o artifacts/feed -v q -nologo
-      progressed=1
+      if [[ $missing == 1 ]]; then blocked="$blocked $proj"; else ready="$ready $proj"; fi
     done
-    [[ $progressed == 1 ]] || { echo "composer dependency cycle or missing package:$next" >&2; return 1; }
-    todo="$next"
+    if [[ -z "$ready" ]]; then
+      echo "composer dependency cycle or missing package:$blocked" >&2
+      return 1
+    fi
+    wave=$((wave+1))
+    # 临时 solution 放在 artifacts/ 下（NuGet.config 向上查找能找到根配置）。
+    local sln; sln="artifacts/pack-wave-$wave.slnx"
+    {
+      echo '<Solution>'
+      for proj in $ready; do echo "  <Project Path=\"$proj\" />"; done
+      echo '</Solution>'
+    } > "$sln"
+    echo "== pack wave $wave（$(printf '%s\n' $ready | wc -l) 个工程，一个 solution 一次 restore/pack）"
+    if ! dotnet restore "$sln" -p:RestorePackagesPath="$PWD/artifacts/packages" --verbosity q --nologo; then
+      rm -f "$sln"; return 1
+    fi
+    if ! dotnet pack "$sln" -c Release -p:Version=0.0.0-local -p:RestorePackagesPath="$PWD/artifacts/packages" -o artifacts/feed --no-restore --verbosity q --nologo; then
+      rm -f "$sln"; return 1
+    fi
+    rm -f "$sln"
+    todo="$blocked"
   done
 }
 
@@ -194,7 +214,7 @@ test_jobs() {
     if (( by_mem < 1 )); then by_mem=1; fi
     local j=$n
     if (( j > by_mem )); then j=$by_mem; fi
-    if (( j > 8 )); then j=8; fi
+    if (( j > 12 )); then j=12; fi
     echo "$j"
   fi
 }
@@ -290,10 +310,23 @@ app() {
   [[ -d artifacts/feed ]] || pack
   # 干净消费：包缓存里不留任何 Wanxiang2.*，确保入口用的是刚打的包，而不是旧缓存或源码
   rm -rf artifacts/packages/wanxiang2.* app/*/obj
-  local proj
+  local jobs; jobs="$(test_jobs)"
+  local logdir; logdir="$(mktemp -d /tmp/wanxiang2-app-XXXXXX)"
+  local running=0
   for proj in $(find app -mindepth 2 -maxdepth 2 \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*' | sort_c); do
     echo "== app：$proj"
-    dotnet build "$proj" -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages" --verbosity minimal -nologo
+    (
+      dotnet build "$proj" -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages" --verbosity minimal -nologo > "$logdir/$(basename "$(dirname "$proj")").log" 2>&1
+    ) &
+    running=$((running+1))
+    if [[ $running -ge $jobs ]]; then wait -n || true; running=$((running-1)); fi
+  done
+  wait || true
+  for f in "$logdir"/*.log; do
+    [[ -e "$f" ]] || continue
+    if grep -Eq 'error |Build FAILED|Failed!' "$f"; then
+      echo "-- APP FAIL $(basename "$f" .log)"; tail -15 "$f"; return 1
+    fi
   done
 }
 

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="BrowserCredentials.Tests.fs" />
+    <Compile Include="BrowserDrafts.Tests.fs" />
+    <Compile Include="BrowserImage.Tests.fs" />
+    <Compile Include="BrowserLocalStore.Tests.fs" />
+    <Compile Include="BrowserPage.Tests.fs" />
+    <Compile Include="BrowserRich.Tests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <ProjectReference Include="../BrowserInterop.csproj" />
+  </ItemGroup>
+</Project>

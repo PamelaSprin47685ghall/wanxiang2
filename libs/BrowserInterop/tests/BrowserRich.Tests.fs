@@ -1,4 +1,4 @@
-module Tests
+module BrowserRichTests
 
 open System.Reflection
 open System.Runtime.InteropServices.JavaScript

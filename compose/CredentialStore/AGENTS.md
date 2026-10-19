@@ -15,7 +15,7 @@
 
 # SPEC
 1. [LEMMA: 1] 解析部分：`libs/ClientConnections/tests` 的金标准用例（`tests/golden/expected.txt` 由旧程序集读真实临时 `WANXIANG_HOME` 下的 client.toml 生成）通过；`./x test ClientConnections` 可重跑。
-2. [LEMMA: 3] JS 绑定名比对：`libs/BrowserCredentials/tests` 与 `libs/BrowserPage/tests` 通过；`./x test BrowserCredentials`、`./x test BrowserPage` 可重跑。
+2. [LEMMA: 3] JS 绑定名比对：`libs/BrowserInterop/tests` 与 `libs/BrowserInterop/tests` 通过；`./x test BrowserCredentials`、`./x test BrowserPage` 可重跑。
 3. 本组合者无独立测试工程：`./x compose` 跳过它（`x` 的 `compose()` 注释点名）。旧仓库没有 CredentialStore 的单元测试可迁；浏览器分支的 JSImport 在浏览器之外不能实例化、更不能调（BrowserCredentials SPEC 1），桌面文件分支要真实文件系统。
 
 # 迁入或覆盖的旧测试

@@ -1,4 +1,4 @@
-module Tests
+module BrowserLocalStoreTests
 
 open System.Reflection
 open System.Runtime.InteropServices.JavaScript
@@ -15,5 +15,5 @@ let private imports (t: System.Type) =
 
 [<Fact>]
 let ``JS 绑定名与旧 BrowserBridge 一致`` () =
-    let expected = [ "Delete", "credDelete", "wanxiang"; "List", "credList", "wanxiang"; "Put", "credPut", "wanxiang" ] |> List.sort
-    Assert.Equal<(string * string * string) list>(expected, imports typeof<BrowserCredentials>)
+    let expected = [ "Get", "wxLocalGet", "wanxiang"; "Set", "wxLocalSet", "wanxiang" ] |> List.sort
+    Assert.Equal<(string * string * string) list>(expected, imports typeof<BrowserLocalStore>)

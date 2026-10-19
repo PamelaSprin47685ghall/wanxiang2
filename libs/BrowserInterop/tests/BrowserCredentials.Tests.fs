@@ -1,4 +1,4 @@
-module Tests
+module BrowserCredentialsTests
 
 open System.Reflection
 open System.Runtime.InteropServices.JavaScript
@@ -15,5 +15,5 @@ let private imports (t: System.Type) =
 
 [<Fact>]
 let ``JS 绑定名与旧 BrowserBridge 一致`` () =
-    let expected = [ "Shrink", "imageShrink", "wanxiang" ] |> List.sort
-    Assert.Equal<(string * string * string) list>(expected, imports typeof<BrowserImage>)
+    let expected = [ "Delete", "credDelete", "wanxiang"; "List", "credList", "wanxiang"; "Put", "credPut", "wanxiang" ] |> List.sort
+    Assert.Equal<(string * string * string) list>(expected, imports typeof<BrowserCredentials>)

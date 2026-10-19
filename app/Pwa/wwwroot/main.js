@@ -379,7 +379,7 @@ const config = dotnetRuntime.getConfig();
 // 决策 451：页面转入后台 / 卸载 = 桌面的关窗口：立刻落草稿（800 ms 定时器在后台标签页会被节流甚至冻结）。
 async function wirePageHidden() {
     try {
-        const exports = await dotnetRuntime.getAssemblyExports("BrowserPage.dll");
+        const exports = await dotnetRuntime.getAssemblyExports("BrowserInterop.dll");
         const notify = () => { try { exports.Wanxiang.Interop.BrowserPage.NotifyHidden(); } catch (_) { } };
         document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") notify(); });
         addEventListener("pagehide", notify);

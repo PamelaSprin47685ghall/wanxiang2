@@ -35,7 +35,7 @@
 
   <ItemGroup>
     <PackageReference Include="Wanxiang2.RichBrowser" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BrowserImage" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrowserInterop" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ImageShrink" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ImageShrinkIo" VersionOverride="0.0.0-local" />
     <!-- 批次 2 组件：入口壳 / 编排核心 / 本地 IO / 富文本接口 -->
@@ -75,10 +75,6 @@
     <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BrowserPage" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BrowserCredentials" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BrowserDrafts" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BrowserLocalStore" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.StartupTrace" VersionOverride="0.0.0-local" />
   </ItemGroup>
   <!-- AMD/ANGLE Chrome：Avalonia 默认 failIfMajorPerformanceCaveat=true 会得到“能创建但不呈现 Skia 帧”的 WebGL 上下文，表现为启动画面后白屏。

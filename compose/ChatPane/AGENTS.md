@@ -1,10 +1,10 @@
 # ChatPane（组合者）
 
-ChatScroller + ExchangeNav + ChatEmpty + SkeletonList + ScrollFollow + ScrollTween + ExchangeJump + BreathPhase + ChatEmptyText + Theme = 旧 `Views/ChatView.fs` 的滚动区、空态、历史骨架与问答跳转。消息卡片由宿主放进 `Messages` 插槽（卡片组合者 MessageCardView）。根规则见项目根目录 AGENTS.md。
+ChatScroller + ExchangeNav + ChatEmpty + SkeletonList + ScrollFollow + ExchangeJump + ChatEmptyText + Theme = 旧 `Views/ChatView.fs` 的滚动区、空态、历史骨架与问答跳转。消息卡片由宿主放进 `Messages` 插槽（卡片组合者 MessageCardView）。根规则见项目根目录 AGENTS.md。
 
 - 宿主入口：`ChatPane<'K>(ChatPaneMetrics.ofTheme manager styles, brandLogo: float -> Control)`（`'K` 为消息键；品牌标边长取 Metric.LogoEmpty）。
 - 成员：`Host`、`Scroller`、`Nav`、`Empty`、`Skeleton`、`Follow`、`Jumps`、`Messages`、`ItemsControl`、`FocusReturned`；`Render(ChatVS)` 单入口投影；`ItemsControl` 配合原生 `VirtualizingStackPanel` 提供消息列表的真虚拟化回收；废除 Look 注入与 PrependAnchor 前置高度补偿（交由 Effect.ScrollChat）。
-- 贴底与未读走 ScrollFollow；平滑滚动曲线走 ScrollTween（经 ChatScroller 的 ScrollEase）；骨架呼吸走 BreathPhase；空态文案走 ChatEmptyText；问答跳转走 ExchangeJump。
+- 贴底与未读走 ScrollFollow；平滑滚动由 ScrollViewer 原生机制与 Effect.ScrollChat 驱动，废除手搓 ScrollTween；骨架呼吸走声明式 anim-breathe（废除手搓 BreathPhase 计时记账）；空态文案走 ChatEmptyText；问答跳转走 ExchangeJump。
 - 外观全部取主题活实例；字距强调取 Spacing.Tracking.emphasis；常量只来自 DesignRhythm 的 LayoutPolicy。
 
 ## 证据与旧测试

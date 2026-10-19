@@ -49,6 +49,8 @@ type ScreenFrame =
       Error: (GenerationError * (unit -> unit)) option
       FontSize: float
       AutoCollapseReasoning: bool
+      /// 减弱动效：转圈等循环动画保持静态（宿主按 MotionSwitch 填充）
+      ReducedMotion: bool
       Usage: GenerationUsage option
       MissingAttachments: Set<string> }
 
@@ -210,6 +212,7 @@ type ChatScreen
         let ctxFor index streaming : CardContext =
             { FontSize = f.FontSize
               AutoCollapseReasoning = f.AutoCollapseReasoning
+              Spin = not f.ReducedMotion
               Streaming = streaming
               IsLastAssistant = (f.Streaming.IsNone && lastAssistant = Some index)
               Usage = f.Usage

@@ -1,6 +1,6 @@
 # CardReconcile
 
-合并包：CardReconcile、CaretBreath、CountdownTicker、DurationText、GenerationErrorTitle、MessageMenu、MessageTimestamp、ToolArgsPreview、ToolCallState、ToolErrorSummary、ToolOverview。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。
+合并包：CardReconcile、CountdownTicker、DurationText、GenerationErrorTitle、MessageMenu、MessageTimestamp、ToolArgsPreview、ToolCallState、ToolErrorSummary、ToolOverview。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。手搓光标呼吸 CaretBreath 已退役删除，改由 Avalonia 声明式动效类 anim-breathe 原生驱动。
 
 测试工程 `<包名>.Tests.fsproj` 合并各成员用例（`<成员名>.<文件>.fs`），golden 目录按成员分目录；控件库的测试工程用 `AssemblySettings.fs` 关掉并行（Avalonia 平台状态是进程级全局量）。
 
@@ -23,30 +23,11 @@
 ## 金样生成
 `dotnet fsi tools/gen-golden.fsx` 用 `tools/OldCardReconcile.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样证据较弱；规则另由 `tests/Tests.fs` 直接断言。
 
-## 成员 `CaretBreath`
-
-## CaretBreath（库）
-
-旧 `Views/MessageCard.fs` 的流式光标呼吸数学 `caretBreathPhase`、`caretBreathWave`、`caretBreathOpacity` 迁入，改为以毫秒为参数的纯函数。运行原点与单调时钟（beginBreathRun、breathElapsed）仍归 MessageCard；常量由调用方传入：MotionLedger.caretBreathPhase 为 900，Tokens.opacityCaretBreathMin 与 Max 为 0.55 与 1.0。不引用任何其他库。根规则见项目根目录 AGENTS.md。
-
-## LEMMA
-1. **同一流逝时间，相位、波与不透明度和旧实现相同（12 位小数）。** [根 AXIOM: 5]
-
-## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/caretbreath.txt`。
-2. t=0 时在峰值，半周期时在下限，结果始终落在 [lo, hi] 内。
-
-## 迁入或覆盖的旧测试
-旧呼吸连续性用例（beginBreathRunAtElapsedMs 接缝）要起窗口，留在旧仓库。本库新增：金样与 2 条规则用例。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样只证明照抄的分支与新实现一致，证据较弱；规则另由 `tests/Tests.fs` 的「真实行为」测试直接断言。
-
 ## 成员 `CountdownTicker`
 
 ## CountdownTicker（库）
 
-旧 `Views/MessageCard.fs` 限流倒计时（1109-1150）的刷新记账迁入：`Refresh(left)` 返回 `CountdownFrame`（剩余秒数、是否走完、是否该播报、计时器是否继续），`Left` 记最近一次剩余秒数，`IntervalMs` 为 1000。剩余秒数仍由宿主用 `RetryCountdown.remainingSeconds` 按截止时刻算；计时器、文字、颜色、读屏属性仍归 MessageCard。不引用任何其他库。根规则见项目根目录 AGENTS.md。
+旧 `Views/MessageCard.fs` 限流倒计时（1109-1150）的刷新记账迁入：`Refresh(left)` 返回 `CountdownFrame`（剩余秒数、是否走完、是否该播报、计时器是否继续），`Left` 记最近一次剩余秒数，`IntervalMs` 为 1000。剩余秒数由宿主用 `RetryCountdown.remainingSeconds` 按截止时刻算并以事件驱动；无内部 DispatcherTimer。不引用任何其他库。根规则见项目根目录 AGENTS.md。
 
 ## LEMMA
 1. **走完只播报一次，走完就停表。** [根 AXIOM: 5] 读屏用户只在可以重试那一刻听到一次，之后反复刷新不再打扰。

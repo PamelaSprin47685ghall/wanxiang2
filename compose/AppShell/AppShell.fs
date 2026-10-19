@@ -173,6 +173,7 @@ type ShellComposer(ports: ShellPorts) =
                       Error = run.error |> Option.map (fun e -> e, retry)
                       FontSize = model.Prefs.fontScale
                       AutoCollapseReasoning = model.Prefs.autoCollapseReasoning
+                      ReducedMotion = Wanxiang.UI.SharedTheme.manager.Motion.IsReduced
                       Usage = run.usage
                       MissingAttachments = Set.empty }
 

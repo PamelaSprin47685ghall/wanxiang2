@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 组合者：主题管理者。协作者：ThemePalette、ThemeMetrics、MotionSwitch、ThemeTween、SpacingRamp、ScrollTween（曲线）、ColorBlend（悬停叠色）、ThemeFonts（内嵌字体）。 -->
+  <!-- 组合者：主题管理者。协作者：ThemePalette、ThemeMetrics、MotionSwitch、ThemeTween、SpacingRamp、ColorBlend（悬停叠色）、ThemeFonts（内嵌字体）。 -->
   <ItemGroup>
     <Compile Include="Live.fs" />
     <Compile Include="ThemeManager.fs" />
@@ -12,7 +12,6 @@
     <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ColorBlend" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.SpacingRamp" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ScrollTween" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemeFonts" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

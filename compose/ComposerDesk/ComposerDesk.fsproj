@@ -8,7 +8,6 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.AttachmentTray" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BusyRing" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerSendState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ModelVision" VersionOverride="0.0.0-local" />

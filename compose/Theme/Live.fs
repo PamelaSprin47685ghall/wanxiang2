@@ -114,7 +114,6 @@ module Space =
         | Space.TrackingSection -> Spacing.Tracking.section
         | Space.TrackingDisplay -> Spacing.Tracking.display
 
-/// 统一缓动 easeOutCubic 的 Avalonia 形态；曲线数学归 ScrollTween 包
+/// 统一缓动 easeOutCubic（cubic-bezier 0.215, 0.61, 0.355, 1）的原生 Avalonia 形态
 type EaseOutCubicEasing() =
-    inherit Avalonia.Animation.Easings.Easing()
-    override _.Ease(t: float) = Wanxiang.UI.EaseOutCubic.ease t
+    inherit Avalonia.Animation.Easings.SplineEasing(X1 = 0.215, Y1 = 0.61, X2 = 0.355, Y2 = 1.0)

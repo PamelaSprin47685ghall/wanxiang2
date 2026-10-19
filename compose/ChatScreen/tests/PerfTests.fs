@@ -67,7 +67,7 @@ let ``长对话的流式刷新代价与消息条数无关`` () =
         let messages = [ for i in 1 .. 200 -> messageAt i ]
         let frame n =
             { Messages = messages; Streaming = Some { MessageView.empty with role = "assistant"; text = String('x', n) }
-              Error = None; FontSize = 14.5; AutoCollapseReasoning = false; Usage = None; MissingAttachments = Set.empty }
+              Error = None; FontSize = 14.5; AutoCollapseReasoning = false; ReducedMotion = false; Usage = None; MissingAttachments = Set.empty }
         s.Render(frame 1)
         let watch = Stopwatch.StartNew()
         for n in 2 .. 21 do s.Render(frame n)

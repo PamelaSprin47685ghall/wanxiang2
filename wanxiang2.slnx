@@ -87,10 +87,6 @@
     <Project Path="libs/BrowserInterop/BrowserInterop.csproj" />
     <Project Path="libs/BrowserInterop/tests/BrowserInterop.Tests.fsproj" />
   </Folder>
-  <Folder Name="/BusyRing/">
-    <Project Path="libs/BusyRing/BusyRing.fsproj" />
-    <Project Path="libs/BusyRing/tests/BusyRing.Tests.fsproj" />
-  </Folder>
   <Folder Name="/Canonical/">
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
@@ -422,10 +418,6 @@
   <Folder Name="/SandboxFiles/">
     <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
     <Project Path="libs/SandboxFiles/tests/SandboxFiles.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/ScrollTween/">
-    <Project Path="libs/ScrollTween/ScrollTween.fsproj" />
-    <Project Path="libs/ScrollTween/tests/ScrollTween.Tests.fsproj" />
   </Folder>
   <Folder Name="/ServerErrorRoute/">
     <Project Path="libs/ServerErrorRoute/ServerErrorRoute.fsproj" />

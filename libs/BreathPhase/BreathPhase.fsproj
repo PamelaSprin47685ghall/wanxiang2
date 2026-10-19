@@ -1,6 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <Compile Include="BreathPhase.fs" />
     <Compile Include="ChatEmptyText.fs" />
     <Compile Include="ScrollFollow.fs" />
   </ItemGroup>

@@ -82,6 +82,7 @@ let private msg role text commit =
 
 let private frame messages streaming =
     { Messages = messages; Streaming = streaming; Error = None; FontSize = 14.5; AutoCollapseReasoning = false
+      ReducedMotion = false
       Usage = None; MissingAttachments = Set.empty }
 
 let private exchange n =

@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="CardReconcile.fs" />
-    <Compile Include="CaretBreath.fs" />
     <Compile Include="CountdownTicker.fs" />
     <Compile Include="DurationText.fs" />
     <Compile Include="GenerationErrorTitle.fs" />

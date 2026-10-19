@@ -18,18 +18,18 @@ open Wanxiang2.WorkspaceState
 /// 废除 Look 注入，空态与骨架收敛到 Render(ChatVS)。
 type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> Control) =
     let follow = ScrollFollow()
-    let tween = ScrollTween()
+    let mutable lastAnimatedOffset = Double.NaN
     let jump = ExchangeJump<'K>()
     let ease =
-        { Start = fun now offset target reduced -> tween.Start(now, offset, target, reduced)
+        { Start =
+            fun _now offset target reduced ->
+                if reduced || abs (target - offset) < 5.0 then false
+                else true
           Frame =
-            fun now target ->
-                match tween.Frame(now, target) with
-                | ScrollFrame.Offset y -> EaseStep.Moved y
-                | ScrollFrame.Done y -> EaseStep.Arrived y
-          Cancel = tween.Cancel
-          Pin = tween.Pin
-          IsOwn = tween.IsOwnOffset }
+            fun _now target -> EaseStep.Arrived target
+          Cancel = fun () -> ()
+          Pin = fun y -> lastAnimatedOffset <- y
+          IsOwn = fun y -> not (Double.IsNaN lastAnimatedOffset) && abs (y - lastAnimatedOffset) < 1.0 }
     let scroller = ChatScroller(ease)
     let nav = ExchangeNav()
     let empty = ChatEmpty(brandLogo)

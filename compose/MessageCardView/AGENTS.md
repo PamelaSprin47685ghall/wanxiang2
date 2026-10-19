@@ -1,6 +1,6 @@
 # MessageCardView（组合，消息卡）
 
-把 MessageView 折成各消息卡控件库的数据，拼成一张卡（迁自旧 `Views/MessageCard.fs`）；消息卡内部控件（ActionStrip、AttachmentChip、ErrorPanel、FoldHeader、RevealPane、StreamCaret、ThinkingBlock、ToolCallCard、UsageFoot、UserBubble）全量使用无 Look 原生控件与单入口 Render，外观由 Avalonia 主题样式与 DynamicResource 驱动，废除旧式 CardLooks 传参。协作者（包）：ActionStrip、BusyRing、MarkdownView、ReadingLook、CodeTint、CopyButton、CountdownTicker、CardReconcile、CaretBreath、MessageMenu、MessageView、ToolCallState、ToolOverview、ToolSummary、ToolArgsPreview、ToolErrorSummary、DurationText、MessageTimestamp、GenerationErrorTitle、ErrorRecovery、ConversationRuns、Wire、Theme、ThemePalette、ThemeMetrics、MotionSwitch、IconSet、DesignRhythm。根规则见项目根目录 AGENTS.md。
+把 MessageView 折成各消息卡控件库的数据，拼成一张卡（迁自旧 `Views/MessageCard.fs`）；消息卡内部控件（ActionStrip、AttachmentChip、ErrorPanel、FoldHeader、RevealPane、StreamCaret、ThinkingBlock、ToolCallCard、UsageFoot、UserBubble）全量使用无 Look 原生控件与单入口 Render，外观由 Avalonia 主题样式与 DynamicResource 驱动，废除旧式 CardLooks 传参。转圈加载指示（OverviewIcon.Spinner）采用原生 12x12 弧形 Path + 声明式 `anim-spin` 动画类，流式光标采用 `anim-breathe` 声明式动画类，无 DispatcherTimer。协作者（包）：ActionStrip、MarkdownView、ReadingLook、CodeTint、CopyButton、CountdownTicker、CardReconcile、MessageMenu、MessageView、ToolCallState、ToolOverview、ToolSummary、ToolArgsPreview、ToolErrorSummary、DurationText、MessageTimestamp、GenerationErrorTitle、ErrorRecovery、ConversationRuns、Wire、Theme、ThemePalette、ThemeMetrics、MotionSwitch、IconSet、DesignRhythm。根规则见项目根目录…
 
 ## 接口（给宿主）
 - `CardLooks.ofTheme manager styles`：全部外观。
@@ -10,7 +10,7 @@
   - `ErrorCard(error, onRetry, actions, onContinue)`（旧 `errorCardWith`；倒计时读 `RetryCountdown.tryGet`，按 `host.Now` 走表）。
   - `IncompleteMarker()`（旧 `incompleteMarker`）、`CopyButton(copy, tip, name, getText)`、`ToolCard`、`ToolActivity`、`Thinking`、`Attachment`、`Menu`、`Actions`、`Footer` 各件也公开。
   - `MessageCards.HighlightName = "reveal-highlight"`：卡外层高亮承载面的名字。
-- `CardContext`（旧 MessageContext，同名字段改 PascalCase）；`CardActions`（旧 MessageActions，加上旧模块级的 `CopyLink`、`Recover` 两个出口，None 时不出对应入口）。
+- `CardContext`（旧 MessageContext，同名字段改 PascalCase，加 `Spin: bool` 由 AppShell 依据 MotionSwitch 填充）；`CardActions`（旧 MessageActions，加上旧模块级的 `CopyLink`、`Recover` 两个出口，None 时不出对应入口）。
 - `CardDeck(panel)`：`Show [key, factory]` 按身份复用（CardReconcile），`CardDeck.key message ctx` 给已提交消息的身份（流式卡为 None，每次重建）；`Clear()` 换对话。
 
 # LEMMA
@@ -31,5 +31,5 @@
 # 迁入或覆盖的旧测试
 按名迁入：`MessageCard toolCallCard header toggles argument and result details`（CraftsmanshipPolishTests）、`工具概览在等待批准时用警示色，不显示「完成」对勾配色`（VisualPassV4Tests）、`230 错误卡有半截回复时先给「继续生成」，没有时不给`（ContinueLinkUndoTests）、`§215 密钥失效的错误卡给出「打开模型服务设置」并路由到 sink`（LibraryUndoTests）、`262 限流倒计时未结束时重试按钮不可按并显示剩余秒数`（JourneyR9Tests，扩成「走完才可按」）、`262 没有倒计时的可重试错误照常可按`（JourneyR9Tests）、`error card toggles technical detail and triggers retry action`（DeliveryPolishingTests）、`r8 右键消息正文弹消息菜单（含复制消息链接）`（PartialPersistAndUrlSchemeTests）、`streaming completion keeps the message footnote row geometry constant`（UiStabilityTests）、`rebuilt streaming caret continues the breath run instead of restarting at peak`（PresentationRefreshTests）。
 由金样覆盖：`message card renders user and assistant with reasoning and tools without error`、`message card renders assistant markdown without extra view mode`（DeliveryPolishingTests）、`long user messages get a clipped viewport with an expand entry`（SelectionOperabilityTests）、`等审批的工具调用显示「等待批准」而不是「执行中」`（VisualPassR3Tests）。
-由控件库覆盖：`large tool detail is bounded first and can explicitly expand fully`（RevealPane）、`reduced motion keeps spinner static`（BusyRing）、`streaming caret keeps opacity inside the breath band and pins to max under reduced motion`（StreamCaret + CaretBreath）、`限流倒计时读屏名带剩余时间、走完才播报一次`（ErrorPanel）、`disclosure headers share one bordered transition` 与 `disclosure chevron and copy confirmation ride the shared easeOutCubic`（FoldHeader；过渡由主题的 hover-bordered 样式给）、`caret breath opacity is a periodic pure function pinned inside the band`（CaretBreath）。
-另加：`生成中的消息没有菜单项也没有操作按钮`、`复制按钮走宿主的复制入口并换成已复制`、`卡片堆按身份复用，流式卡每次重建`。
+由控件库覆盖：`large tool detail is bounded first and can explicitly expand fully`（RevealPane）、`reduced motion keeps spinner static`（MessageCards 原生 spinner）、`streaming caret keeps opacity inside the breath band and pins to max under reduced motion`（StreamCaret 原生声明式动画）、`限流倒计时读屏名带剩余时间、走完才播报一次`（ErrorPanel）、`disclosure headers share one bordered transition` 与 `disclosure chevron and copy confirmation ride the shared easeOutCubic`（FoldHeader；过渡由主题的 hover-bordered 样式给）。
+另加：`生成中的消息没有菜单项也没有操作按钮`、`复制按钮走宿主的复制入口并换成已复制`、`卡片堆按身份复用，流式卡每次重建`、`流式光标挂载声明式 anim-breathe 动效类`。

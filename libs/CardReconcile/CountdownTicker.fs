@@ -11,7 +11,7 @@ type CountdownFrame =
       KeepTicking: bool }
 
 /// 旧 Views/MessageCard.fs 限流倒计时（1109-1150）的刷新记账：剩余秒数由宿主按截止时刻算好传入，
-/// 本对象记住「已播报过」并告诉宿主要不要继续走表。DispatcherTimer、文字与颜色仍归 MessageCard。
+/// 本对象纯状态记住「已播报过」并告诉宿主要不要继续走表。无独立定时器，文字与颜色由错误面板呈现。
 type CountdownTicker() =
     let mutable announced = false
     let mutable last: int option = None

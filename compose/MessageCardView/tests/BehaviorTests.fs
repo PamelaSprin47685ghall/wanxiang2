@@ -178,22 +178,19 @@ let ``streaming completion keeps the message footnote row geometry constant`` ()
         Assert.Equal(measure { f with Streaming = true; Usage = None }, measure f))
 
 [<Fact>]
-let ``rebuilt streaming caret continues the breath run instead of restarting at peak`` () =
+let ``streaming caret attaches declarative anim-breathe style class`` () =
     Headless.run (fun () ->
         let manager, styles = Fixture.themed ()
-        let mutable t = 0L
-        let clock = CaretClock((fun () -> t), 1000L)
-        let cards = MessageCards(CardLooks.ofTheme manager styles, { Fixture.host () with Clock = clock })
+        let cards = MessageCards(CardLooks.ofTheme manager styles, Fixture.host ())
         let m, f = sample "assistant-streaming"
         let first, _ = cards.Render(m, Fixture.ctxOf f, Fixture.actions, None)
         let w = show first
-        let origin = clock.Origin
-        Assert.True clock.IsLive
-        t <- 700L
+        let caret = (first.GetVisualDescendants() |> Seq.find (fun c -> c.Classes.Contains "anim-breathe")) :?> Control
+        Assert.True(caret.Classes.Contains "anim-breathe")
         let second, _ = cards.Render(m, Fixture.ctxOf f, Fixture.actions, None)
         w.Content <- second
-        Assert.Equal(origin, clock.Origin)
-        Assert.Equal(TimeSpan.FromMilliseconds 700.0, clock.Elapsed)
+        let caret2 = (second.GetVisualDescendants() |> Seq.find (fun c -> c.Classes.Contains "anim-breathe")) :?> Control
+        Assert.True(caret2.Classes.Contains "anim-breathe")
         w.Close())
 
 [<Fact>]

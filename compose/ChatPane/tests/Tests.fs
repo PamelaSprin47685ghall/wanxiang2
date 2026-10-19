@@ -1,6 +1,6 @@
 module Wanxiang2.ChatPane.Tests.Tests
 
-// 真实组合：主题外观 + ChatScroller / ExchangeNav / ChatEmpty / SkeletonList + ScrollFollow / ScrollTween / ExchangeJump / BreathPhase / ChatEmptyText。
+// 真实组合：主题外观 + ChatScroller / ExchangeNav / ChatEmpty / SkeletonList + ScrollFollow / ExchangeJump / ChatEmptyText。
 
 open System
 open Avalonia.Controls

@@ -5,6 +5,8 @@ open System.Diagnostics
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
+open Avalonia.Controls.Shapes
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
@@ -20,7 +22,6 @@ open Wanxiang2.CopyButton
 open Wanxiang2.CodeTint
 open Wanxiang2.MarkdownView
 open Wanxiang2.RevealPane
-open Wanxiang2.BusyRing
 open Wanxiang2.FoldHeader
 open Wanxiang2.ThinkingBlock
 open Wanxiang2.ToolCallCard
@@ -48,6 +49,8 @@ type CardActions =
 type CardContext =
     { FontSize: float
       AutoCollapseReasoning: bool
+      /// 是否允许转圈动效（默认 true；减弱动效开启时由宿主填 false 保持静态）
+      Spin: bool
       /// 流式进行中的临时消息
       Streaming: bool
       /// 最后一条助手消息：出用量与「重新生成」
@@ -59,6 +62,24 @@ type CardContext =
       AwaitingApproval: Set<string>
       /// 品牌头像（BrandMark 归宿主）
       BrandAvatar: unit -> Control }
+
+module private CardUi =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
+
+    /// 原生加载转圈（12x12 弧形 Path + 声明式 anim-spin 样式类，无 DispatcherTimer）
+    let spinner (spin: bool) (tint: IBrush) : Control =
+        let p =
+            Path(
+                Data = Geometry.Parse "M 6 1 A 5 5 0 0 1 11 6",
+                Stroke = tint,
+                StrokeThickness = 1.4,
+                StrokeLineCap = PenLineCap.Round,
+                Width = 12.0, Height = 12.0)
+        if spin then p.Classes.Add "anim-spin"
+        p :> Control
 
 module private Follow =
     let now (source: IObservable<'T>) =
@@ -269,7 +290,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
         let icon =
             match ToolOverview.icon counts with
             | OverviewIcon.Info -> looks.Icon Glyph.Info tint
-            | OverviewIcon.Spinner -> BusyRing(12.0).Host
+            | OverviewIcon.Spinner -> CardUi.spinner ctx.Spin tint
             | OverviewIcon.Alert -> looks.Icon Glyph.Alert tint
             | OverviewIcon.Check -> looks.Icon Glyph.Check tint
         icon.VerticalAlignment <- VerticalAlignment.Center
@@ -479,15 +500,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
         for a in message.attachments do
             body.Children.Add(this.Attachment(ctx, actions, a))
         if ctx.Streaming then
-            let clock = host.Clock
-            let lo = Follow.now (looks.Metric Metric.OpacityCaretBreathMin)
-            let hi = Follow.now (looks.Metric Metric.OpacityCaretBreathMax)
-            let half = Follow.now (looks.Timing Timing.CaretBreathPhase)
-            let breath () =
-                // 尚无运行中的段落时才开启新运行：进程内第一枚光标从峰值起步
-                if not clock.IsLive then clock.Begin()
-                CaretBreath.opacity lo hi half clock.Elapsed.TotalMilliseconds
-            body.Children.Add(StreamCaret(breath).Host)
+            body.Children.Add(StreamCaret().Host)
 
         let row: Control =
             if isUser then

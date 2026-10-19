@@ -2,7 +2,6 @@
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
     <Compile Include="CardReconcile.Tests.fs" />
-    <Compile Include="CaretBreath.Tests.fs" />
     <Compile Include="CountdownTicker.Tests.fs" />
     <Compile Include="DurationText.Tests.fs" />
     <Compile Include="GenerationErrorTitle.Tests.fs" />

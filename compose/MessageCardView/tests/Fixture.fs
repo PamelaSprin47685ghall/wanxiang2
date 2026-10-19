@@ -43,6 +43,7 @@ let avatar () = Border(Width = 26.0, Height = 26.0, Background = Brushes.Transpa
 let ctxOf (f: Samples.Flags) =
     { FontSize = 14.5
       AutoCollapseReasoning = f.AutoCollapse
+      Spin = true
       Streaming = f.Streaming
       IsLastAssistant = f.IsLastAssistant
       Usage = f.Usage

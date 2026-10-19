@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 组合者：把 MessageView 折成各消息卡控件库的数据并拼成一张卡，外观由主题管理者的活实例填。协作者：RevealPane、FoldHeader、BusyRing、ThinkingBlock、ToolCallCard、AttachmentChip、ActionStrip、ErrorPanel、UserBubble、StreamCaret、UsageFoot、MarkdownView、ReadingLook、CopyButton、CountdownTicker、CardReconcile、CaretBreath、MessageMenu、MessageView、ToolCallState、ToolOverview、ToolSummary、ToolArgsPreview、ToolErrorSummary、DurationText、MessageTimestamp、GenerationErrorTitle、ErrorRecovery、ConversationRuns、Wire、Theme、IconSet、DesignRhythm。 -->
+  <!-- 组合者：把 MessageView 折成各消息卡控件库的数据并拼成一张卡，外观由主题管理者的活实例填。协作者：RevealPane、FoldHeader、ThinkingBlock、ToolCallCard、AttachmentChip、ActionStrip、ErrorPanel、UserBubble、StreamCaret、UsageFoot、MarkdownView、ReadingLook、CopyButton、CountdownTicker、CardReconcile、MessageMenu、MessageView、ToolCallState、ToolOverview、ToolSummary、ToolArgsPreview、ToolErrorSummary、DurationText、MessageTimestamp、GenerationErrorTitle、ErrorRecovery、ConversationRuns、Wire、Theme、IconSet、DesignRhythm。 -->
   <ItemGroup>
     <Compile Include="Looks.fs" />
     <Compile Include="Card.fs" />
@@ -8,7 +8,6 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.ActionStrip" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BusyRing" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ReadingLook" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />

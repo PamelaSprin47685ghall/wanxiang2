@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="BreathPhase.Tests.fs" />
     <Compile Include="ChatEmptyText.Tests.fs" />
     <Compile Include="ScrollFollow.Tests.fs" />
   </ItemGroup>

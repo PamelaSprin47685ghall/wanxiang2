@@ -2,5 +2,10 @@
   <ItemGroup>
     <Compile Include="Frame.fs" />
     <Compile Include="JsonSeqFile.fs" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Envelope.fs" />
+    <Compile Include="CheckpointJson.fs" />
+    <Compile Include="Ledger.fs" />
+    <Compile Include="Snapshot.fs" />
   </ItemGroup>
 </Project>

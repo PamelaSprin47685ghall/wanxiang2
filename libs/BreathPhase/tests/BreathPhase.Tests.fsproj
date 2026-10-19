@@ -1,12 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Samples.fs" />
-    <Compile Include="Render.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="BreathPhase.Samples.fs" />
+    <Compile Include="BreathPhase.Render.fs" />
+    <Compile Include="BreathPhase.Tests.fs" />
+    <Compile Include="ChatEmptyText.Samples.fs" />
+    <Compile Include="ChatEmptyText.Render.fs" />
+    <Compile Include="ChatEmptyText.Tests.fs" />
+    <Compile Include="ScrollFollow.Samples.fs" />
+    <Compile Include="ScrollFollow.Render.fs" />
+    <Compile Include="ScrollFollow.Tests.fs" />
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../BreathPhase.fsproj" />
   </ItemGroup>

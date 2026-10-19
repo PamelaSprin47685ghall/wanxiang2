@@ -1,12 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Samples.fs" />
-    <Compile Include="Render.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="ExportFileName.Samples.fs" />
+    <Compile Include="ExportFileName.Render.fs" />
+    <Compile Include="ExportFileName.Tests.fs" />
+    <Compile Include="ExportView.Samples.fs" />
+    <Compile Include="ExportView.Render.fs" />
+    <Compile Include="ExportView.Tests.fs" />
+    <Compile Include="ImportView.Samples.fs" />
+    <Compile Include="ImportView.Render.fs" />
+    <Compile Include="ImportView.Tests.fs" />
+    <Compile Include="ProgressThrottle.Samples.fs" />
+    <Compile Include="ProgressThrottle.Render.fs" />
+    <Compile Include="ProgressThrottle.Tests.fs" />
+    <Compile Include="TranscriptMarkdown.Samples.fs" />
+    <Compile Include="TranscriptMarkdown.Render.fs" />
+    <Compile Include="TranscriptMarkdown.Tests.fs" />
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../ExportFileName.fsproj" />
   </ItemGroup>

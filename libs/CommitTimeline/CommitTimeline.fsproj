@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="CommitTimeline.fs" />
+    <Compile Include="TextSocket.fs" />
   </ItemGroup>
 </Project>

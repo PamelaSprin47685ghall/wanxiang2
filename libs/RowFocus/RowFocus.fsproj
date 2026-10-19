@@ -1,5 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="RowFocus.fs" />
+    <Compile Include="SearchHit.fs" />
+    <Compile Include="SearchRequery.fs" />
+    <Compile Include="SearchSegments.fs" />
+    <Compile Include="SearchSession.fs" />
+    <Compile Include="SidebarEmpty.fs" />
+    <Compile Include="SidebarSelection.fs" />
   </ItemGroup>
 </Project>

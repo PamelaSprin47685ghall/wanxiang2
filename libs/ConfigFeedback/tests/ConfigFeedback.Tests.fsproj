@@ -1,8 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Render.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="ConfigFeedback.Render.fs" />
+    <Compile Include="ConfigFeedback.Tests.fs" />
+    <Compile Include="DownloadBuffers.Tests.fs" />
+    <Compile Include="HostRequests.Render.fs" />
+    <Compile Include="HostRequests.Tests.fs" />
+    <Compile Include="UploadFacts.Render.fs" />
+    <Compile Include="UploadFacts.Tests.fs" />
     <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

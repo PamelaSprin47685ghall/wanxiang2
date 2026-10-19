@@ -1,6 +1,6 @@
 # UrlSchemeRegistrationIo（组合）
 
-`wanxiang://` 协议注册的 IO 壳（决策 251），迁自旧 `src/Wanxiang.UI/Model/DesktopLinks.fs` 的 `UrlSchemeRegistration` 模块（旧仓库 bfdda85 删除；同一旧文件的 `ExternalLinks` 与 `SingleInstance` 模块分别在 `compose/ExternalLinks` 与 `libs/SingleInstance`）。纯文本部分（`desktopFileName` / `desktopEntry` / `quote`）在 `Wanxiang2.UrlSchemeRegistration` 库，本组合者经交付包引用它，只留与旧代码相同的 IO 面：
+`wanxiang://` 协议注册的 IO 壳（决策 251），迁自旧 `src/Wanxiang.UI/Model/DesktopLinks.fs` 的 `UrlSchemeRegistration` 模块（旧仓库 bfdda85 删除；同一旧文件的 `ExternalLinks` 与 `SingleInstance` 模块分别在 `compose/ExternalLinks` 与 `libs/LocalHostGate`）。纯文本部分（`desktopFileName` / `desktopEntry` / `quote`）在 `Wanxiang2.UrlSchemeRegistration` 库，本组合者经交付包引用它，只留与旧代码相同的 IO 面：
 
 - `launchCommand ()`：apphost 直接用它；`dotnet wanxiang.dll` 形态带上程序集。
 - `registerCurrentUser (log : string -> unit)`：Linux 写 `$XDG_DATA_HOME/applications/<desktopFileName>`，内容不变就不碰，然后调 `xdg-mime` / `update-desktop-database`；Windows 写 HKCU `Software\Classes\wanxiang`；macOS 不注册（`.app` 的 Info.plist 声明，`IActivatableLifetime` 收 `OpenUri`）。`WANXIANG_NO_URL_SCHEME=1` 关闭（开发 / 测试环境不改写用户的协议关联）。

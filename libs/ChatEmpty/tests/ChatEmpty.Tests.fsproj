@@ -1,14 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Headless.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="AssemblySettings.fs" />
+    <Compile Include="ChatEmpty.Headless.fs" />
+    <Compile Include="ChatEmpty.Tests.fs" />
+    <Compile Include="ChatScroller.Headless.fs" />
+    <Compile Include="ChatScroller.Tests.fs" />
+    <Compile Include="ExchangeNav.Headless.fs" />
+    <Compile Include="ExchangeNav.Tests.fs" />
+    <Compile Include="SkeletonList.Headless.fs" />
+    <Compile Include="SkeletonList.Dump.fs" />
+    <Compile Include="SkeletonList.Tests.fs" />
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Skia" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../ChatEmpty.fsproj" />
   </ItemGroup>
 </Project>

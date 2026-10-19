@@ -4,7 +4,6 @@
     <Compile Include="RichAssets.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Wanxiang2.RichScripts" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.HljsCatalog" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

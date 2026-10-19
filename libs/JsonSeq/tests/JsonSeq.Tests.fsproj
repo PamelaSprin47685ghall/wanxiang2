@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Tests.fs" />
+    <Compile Include="JsonSeq.Tests.fs" />
+    <Compile Include="Ledger.Toy.fs" />
+    <Compile Include="Ledger.Tests.fs" />
+    <Compile Include="Snapshot.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

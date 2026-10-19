@@ -14,7 +14,7 @@
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.Gemini" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Anthropic" VersionOverride="0.0.0-local" />
     <ProjectReference Include="../AgentContent.fsproj" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="AttachmentTray.fs" />
+    <Compile Include="ComposerBox.fs" />
+    <Compile Include="ModelChip.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

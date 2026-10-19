@@ -28,18 +28,15 @@
     <PackageReference Include="Wanxiang2.RichJint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.LaunchPlan" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CliArgs" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.RunModes" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.StoreLaunch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesktopPairing" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ClientTomlFile" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.PwaAssets" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ShutdownSignals" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.LocalHostGate" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AgentRuntime" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ProviderFailure" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AgentContent" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AgentHistory" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AguiMessageMap" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MessageSerde" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaContent" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ProviderTransports" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.EventStore" VersionOverride="0.0.0-local" />
@@ -86,7 +83,6 @@
     <PackageReference Include="Wanxiang2.DraftSession" VersionOverride="0.0.0-local" />
     <!-- 入口壳 IO 组件（批次 2 新建）：本地状态、单实例、富文本后端、外部链接、凭据、偏好文件、URL 注册。 -->
     <PackageReference Include="Wanxiang2.LocalState" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.SingleInstance" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.RichBackend" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ExternalLinks" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CredentialStore" VersionOverride="0.0.0-local" />
@@ -101,13 +97,12 @@
     <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
     <!-- 附件入口（选文件 / 拖入 / 粘贴）读字节后交给组合者：分块、校验与文案归这两个包。 -->
-    <PackageReference Include="Wanxiang2.UploadFacts" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConfigFeedback" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
     <!-- 六桥接线新增（入口直接调用故显式引用；StartupTrace 执行侧 mark/requestExit 在其包内）：
          主机启动门（LocalHostGate）、启动打点（StartupTrace）、面板最近使用（CommandPalette，含 PaletteRecentFile）。
          KeyShortcut 换算桥与 UnansweredReply 失败卡经 AppShell 包传递。 -->
-    <PackageReference Include="Wanxiang2.StartupTrace" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.LocalHostGate" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChangeWatch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CommandPalette" VersionOverride="0.0.0-local" />
     <!-- 依赖缺口（见回报）：ImageShrinkIo 目录不存在，未引用。 -->
   </ItemGroup>

@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="AttachmentAudit.fs" />
+    <Compile Include="HostProbe.fs" />
+    <Compile Include="McpCheck.fs" />
+    <Compile Include="ProviderCheck.fs" />
+    <Compile Include="SecretText.fs" />
+    <Compile Include="SnapshotCheck.fs" />
   </ItemGroup>
 </Project>

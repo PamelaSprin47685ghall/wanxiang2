@@ -1,6 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="ChatEmpty.fs" />
+    <Compile Include="ChatScroller.fs" />
+    <Compile Include="ExchangeNav.fs" />
+    <Compile Include="SkeletonList.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

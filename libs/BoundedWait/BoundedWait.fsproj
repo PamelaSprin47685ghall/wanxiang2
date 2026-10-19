@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="BoundedWait.fs" />
+    <Compile Include="HostHealth.fs" />
+    <Compile Include="OnboardingRules.fs" />
+    <Compile Include="ProviderPresets.fs" />
   </ItemGroup>
 </Project>

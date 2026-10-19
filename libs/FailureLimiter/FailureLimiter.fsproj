@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="FailureLimiter.fs" />
+    <Compile Include="PairingCode.fs" />
   </ItemGroup>
 </Project>

@@ -1,12 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Samples.fs" />
-    <Compile Include="Render.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="ColorBlend.Samples.fs" />
+    <Compile Include="ColorBlend.Render.fs" />
+    <Compile Include="ColorBlend.Tests.fs" />
+    <Compile Include="ThemeTween.Samples.fs" />
+    <Compile Include="ThemeTween.Render.fs" />
+    <Compile Include="ThemeTween.Tests.fs" />
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../ColorBlend.fsproj" />
   </ItemGroup>

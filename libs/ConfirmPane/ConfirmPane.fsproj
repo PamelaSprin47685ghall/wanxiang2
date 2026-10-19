@@ -3,6 +3,21 @@
     <Compile Include="Look.fs" />
     <Compile Include="Kit.fs" />
     <Compile Include="ConfirmPane.fs" />
+    <Compile Include="ConnectPane.Look.fs" />
+    <Compile Include="ConnectPane.Kit.fs" />
+    <Compile Include="ConnectPane.fs" />
+    <Compile Include="PromptPane.Look.fs" />
+    <Compile Include="PromptPane.Kit.fs" />
+    <Compile Include="PromptPane.fs" />
+    <Compile Include="SessionPrefsPane.Look.fs" />
+    <Compile Include="SessionPrefsPane.Kit.fs" />
+    <Compile Include="SessionPrefsPane.fs" />
+    <Compile Include="ShortcutHelpPane.Look.fs" />
+    <Compile Include="ShortcutHelpPane.Kit.fs" />
+    <Compile Include="ShortcutHelpPane.fs" />
+    <Compile Include="TextEditPane.Look.fs" />
+    <Compile Include="TextEditPane.Kit.fs" />
+    <Compile Include="TextEditPane.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

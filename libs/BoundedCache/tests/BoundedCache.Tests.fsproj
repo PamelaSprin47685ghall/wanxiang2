@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Tests.fs" />
+    <Compile Include="BoundedCache.Tests.fs" />
+    <Compile Include="HighlightQueue.Samples.fs" />
+    <Compile Include="HighlightQueue.Render.fs" />
+    <Compile Include="HighlightQueue.Tests.fs" />
+    <Compile Include="HljsHtml.Tests.fs" />
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

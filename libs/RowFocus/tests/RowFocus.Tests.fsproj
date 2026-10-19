@@ -1,7 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Tests.fs" />
+    <Compile Include="RowFocus.Tests.fs" />
+    <Compile Include="SearchHit.Tests.fs" />
+    <Compile Include="SearchRequery.Samples.fs" />
+    <Compile Include="SearchRequery.Render.fs" />
+    <Compile Include="SearchRequery.Tests.fs" />
+    <Compile Include="SearchSegments.Samples.fs" />
+    <Compile Include="SearchSegments.Tests.fs" />
+    <Compile Include="SearchSession.Tests.fs" />
+    <Compile Include="SidebarEmpty.Samples.fs" />
+    <Compile Include="SidebarEmpty.Render.fs" />
+    <Compile Include="SidebarEmpty.Tests.fs" />
+    <Compile Include="SidebarSelection.Samples.fs" />
+    <Compile Include="SidebarSelection.Render.fs" />
+    <Compile Include="SidebarSelection.Tests.fs" />
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

@@ -1,6 +1,6 @@
 # compose/LedgerStore
 
-组合者 C：用 `JsonSeqFile`、`Ledger`、`SnapshotFile`、`DirLock` 组成一个目录上的持久事件存储。只经 `./x pack` 产出的交付包使用这四个库，不引用它们的源码（根 SPEC 2）；本目录自己也打成包 `Wanxiang2.LedgerStore`，供旧仓库消费。根规则见项目根目录 AGENTS.md。
+组合者 C：用 `JsonSeqFile`、`Ledger`、`SnapshotFile`、`DirLock` 组成一个目录上的持久事件存储。只经 `./x pack` 产出的交付包使用这四个库，不引用它们的源码（根 SPEC 2）；本目录自己也打成包 `Wanxiang2.JsonSeqStore`，供旧仓库消费。根规则见项目根目录 AGENTS.md。
 
 公开面：
 - 构造：`new LedgerStore<'S,'E,'Err>(dir, apply : 'S -> Commit<'E> -> Result<'S,'Err>, initial, codec, ?policy)`。
@@ -49,7 +49,7 @@
 13. [LEMMA: 1] 100 个并发提交各恰好一次：`concurrent submits each commit exactly once`。
 14a. [LEMMA: 8] 不持锁检查：宿主持锁时能检查、文件字节不变、宿主仍可写：`inspect reads without the lock and writes nothing, also while the host holds it`；宿主并发写 400 条时反复检查，lastId 单调不减，只可能出现 `tailMayBeInFlight` 的损坏：`inspect while the host writes sees a consistent prefix`（连跑 5 次都通过）；损坏证据和半写尾标记：`inspect reports damage with evidence; torn tail is flagged as possibly in flight`。
 14b. [LEMMA: 9] 未知结果带 commitId，只读提示说明事实：`unknown outcome names the commit that may exist`（`/dev/full`）。
-14. [根 SPEC 2] 交付包可以在仓库外消费：`./x consume` 在 /tmp 下新建项目，只从 `artifacts/feed` 引用 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`（消费者源码在 `tools/consume/`）。2026-10-13 手动跑过；2026-10-17 起自动化，通过。
+14. [根 SPEC 2] 交付包可以在仓库外消费：`./x consume` 在 /tmp 下新建项目，只从 `artifacts/feed` 引用 `Wanxiang2.JsonSeqStore`，提交后重开得到 `Used 1UL`（消费者源码在 `tools/consume/`）。2026-10-13 手动跑过；2026-10-17 起自动化，通过。
 15. [LEMMA: 2, 7] 写失败但截回成功 → `NotWritten`：日志逐字节不变、`Abandon` 撤销提议、id 复用、存储仍 `Healthy`，所以可以重试：`not written is known and retryable; the log stays byte-identical and the id is reused`（真实故障：测试临时收紧本进程 `RLIMIT_FSIZE` 上限并忽略 SIGXFSZ，超过上限的写按 EFBIG 失败、截回成功；仅 Linux）。
 16. [TODO] 进程被真正杀掉（而不是由测试写出截断文件）的测试没有；按 LEMMA 7，二者对磁盘的效果相同。
 

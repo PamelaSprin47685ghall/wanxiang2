@@ -12,7 +12,6 @@
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.UiKit" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MarkdownBlocks" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.LinkChunks" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BlockDiff" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MathFigure" VersionOverride="0.0.0-local" />

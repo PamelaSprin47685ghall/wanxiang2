@@ -233,7 +233,7 @@
 
 **独占文件**
 - `compose/SettingsScreen/ProvidersDesk.fs`（旧 `src/Wanxiang.UI/Views/SettingsProviders.fs`）
-- `libs/ProviderPresets/`（旧 `src/Wanxiang.UI/Model/ProviderPresets.fs`）
+- `libs/BoundedWait/`（旧 `src/Wanxiang.UI/Model/ProviderPresets.fs`）
 - `compose/Catalog/`（旧 `src/Wanxiang.UI/Model/Catalog.fs`）
 - 新增 `compose/SettingsScreen/OnboardingDesk.fs`（旧提案名 `src/Wanxiang.UI/Views/OnboardingCard.fs`；本仓库已存在）
 - `compose/ProviderCatalog/`、`compose/ConfigMutation/`（旧 `src/Wanxiang.Server/ProviderCatalog.fs`、`ConfigMutation.fs`）
@@ -336,7 +336,7 @@
 - `compose/ChatScreen/ChatScreen.fs` 的顶栏区域（旧 `src/Wanxiang.UI/Views/ChatView.fs`；标题、面包屑、对话菜单；旧行号 70–130 / 480–520 已失效）
 - `compose/ChatDomain/Projection.fs` 的查询辅助（只读；旧 `src/Wanxiang.Core/Projection.fs`）
 - 新增 `compose/Search/`（旧提案名 `src/Wanxiang.Server/SearchService.fs`；本仓库已存在）
-- `libs/Snapshot/Snapshot.fs` 仅在需要暴露 fork 关系时（只读；旧 `src/Wanxiang.Store/Snapshot.fs`）
+- `libs/JsonSeq/Snapshot.fs` 仅在需要暴露 fork 关系时（只读；旧 `src/Wanxiang.Store/Snapshot.fs`）
 
 **共享接线**：`compose/MessageCardView/Card.fs`（旧 `MessageCard.fs`）在用户消息处加兄弟切换控件的挂接点（与 W3 不重叠，W3 只动工具段）；`libs/Wire/WireEvent.fs` / `compose/AguiWire/WireAgui.fs` 追加。
 

@@ -5,12 +5,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <PackageReference Include="Wanxiang2.OverlayLayer" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.FocusOrigin" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToastQueue" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToastDwell" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupPlacement" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.FocusOrigin" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

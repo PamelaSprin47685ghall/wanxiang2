@@ -5,7 +5,6 @@
     <Compile Include="WsClient.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Wanxiang2.TextSocket" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CommitTimeline" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AguiWire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />

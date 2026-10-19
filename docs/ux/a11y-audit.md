@@ -34,8 +34,8 @@
 
 - 可点击表面统一走 `Ui.iconButton` / `ActionBorder` 等原语，`Focusable = true`，焦点环只在 `:focus-visible`（Tab / 方向键）或程序化焦点时出现，鼠标点击不留环（旧 `FocusRingTests`；本仓库等价用例：`libs/FocusOrigin/tests`「键盘与程序化聚焦挂类名，指针聚焦与失焦去掉」）。
 - 全应用没有显式 `TabIndex`，Tab 顺序等于视觉树顺序。这是正确默认值，**规则：不要引入正的 TabIndex**；顺序问题应通过调整视觉树解决。
-- 对话框 / 弹层 Esc 关闭、关闭后焦点回到触发处（旧 `DismissFocusTests`、`OverlayHost.fs`；今天迁到 `libs/OverlayLayer` 与 `compose/OverlayDesk`，用例如 `libs/OverlayLayer/tests` 的「dialog … restores focus」「escape precedence …」与 `compose/AppShell/tests` 的「打开设置记下焦点归宿，关闭时把焦点还回去」）。规则：任何新弹层必须同时满足这两条。
-- 全局快捷键见 `compose/DialogsDesk`（帮助面板在 `libs/ShortcutHelpPane`；旧 `Dialogs.fs`）的快捷键帮助。待实测：快捷键与屏幕阅读器自身快捷键、浏览器（PWA）保留键（Ctrl+W、Ctrl+N 在浏览器标签页内会被浏览器抢占）的冲突。
+- 对话框 / 弹层 Esc 关闭、关闭后焦点回到触发处（旧 `DismissFocusTests`、`OverlayHost.fs`；今天迁到 `libs/FocusOrigin` 与 `compose/OverlayDesk`，用例如 `libs/FocusOrigin/tests` 的「dialog … restores focus」「escape precedence …」与 `compose/AppShell/tests` 的「打开设置记下焦点归宿，关闭时把焦点还回去」）。规则：任何新弹层必须同时满足这两条。
+- 全局快捷键见 `compose/DialogsDesk`（帮助面板在 `libs/ConfirmPane`；旧 `Dialogs.fs`）的快捷键帮助。待实测：快捷键与屏幕阅读器自身快捷键、浏览器（PWA）保留键（Ctrl+W、Ctrl+N 在浏览器标签页内会被浏览器抢占）的冲突。
 - PWA 壳：`app/Pwa/wwwroot/app.css` 保留了 `:focus-visible` 外扩环；Avalonia 画布内部的焦点由 Avalonia 绘制，壳层把 `#out *` 的 outline 关掉是有意为之。
 
 ## 4. 可访问名称与语义
@@ -46,7 +46,7 @@
 
 ## 5. 动效
 
-- 几何动画被禁止（旧 `DesignConvergenceTests`，未随迁；本仓库的动效机械检查是 `libs/ThemeTween` 的颜色补间金样与 `compose/Theme/tests` 的「reduced motion …」用例，**没有**等价于「禁止几何动画」的断言），状态只补间颜色与不透明度。
+- 几何动画被禁止（旧 `DesignConvergenceTests`，未随迁；本仓库的动效机械检查是 `libs/ColorBlend` 的颜色补间金样与 `compose/Theme/tests` 的「reduced motion …」用例，**没有**等价于「禁止几何动画」的断言），状态只补间颜色与不透明度。
 - PWA 样式含 `prefers-reduced-motion`（本仓库仍由 `compose/Theme/tests/A11yRegression.fs` 静态断言存在）。已查（2026-10-18）：Avalonia 12.1.2 的 `IPlatformSettings` 只有点击尺寸、热键和 `GetColorValues`。`PlatformColorValues.ContrastPreference` 是系统高对比，不是减弱动效。画布内补间因此读不到系统“减少动态”；`libs/MotionSwitch` 只由 `libs/UiPrefs.reduceMotion`（默认 false）经 `compose/AppShell` 的 `SetReducedMotion` 驱动。PWA 壳的 `prefers-reduced-motion` 只作用于壳层 CSS，不进入 Avalonia 画布。
 
 ## 6. 文案一致性与术语表

@@ -6,7 +6,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Wanxiang2.AttachmentBlobs" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MediaSniff" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.HostLog" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
   </ItemGroup>

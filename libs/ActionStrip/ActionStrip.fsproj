@@ -1,6 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="ActionStrip.fs" />
+    <Compile Include="AttachmentChip.fs" />
+    <Compile Include="ErrorPanel.fs" />
+    <Compile Include="FoldHeader.fs" />
+    <Compile Include="RevealPane.fs" />
+    <Compile Include="StreamCaret.fs" />
+    <Compile Include="ThinkingBlock.fs" />
+    <Compile Include="ToolCallCard.fs" />
+    <Compile Include="UsageFoot.fs" />
+    <Compile Include="UserBubble.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

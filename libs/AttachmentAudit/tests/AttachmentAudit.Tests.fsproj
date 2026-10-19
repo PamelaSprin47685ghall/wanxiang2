@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Tests.fs" />
+    <Compile Include="AttachmentAudit.Tests.fs" />
+    <Compile Include="HostProbe.Tests.fs" />
+    <Compile Include="McpCheck.Tests.fs" />
+    <Compile Include="ProviderCheck.Tests.fs" />
+    <Compile Include="SecretText.Tests.fs" />
+    <Compile Include="SnapshotCheck.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

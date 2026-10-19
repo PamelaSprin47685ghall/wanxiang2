@@ -17,12 +17,7 @@
     <PackageReference Include="Wanxiang2.ShellDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Catalog" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.SettingsFrame" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProvidersPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToolsPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.GeneralPane" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DevicesPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.OnboardingPane" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.FieldCheck" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
@@ -31,22 +26,9 @@
     <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ModelVision" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.SectionMemory" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProbeSlot" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.GenerationDraft" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BoundedWait" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DevicesModel" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.OnboardingFlow" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.OnboardingRules" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProviderPresets" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProviderForm" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProviderProbeText" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProbeFailureKind" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.McpForm" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToolsPolicy" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.GenerationForm" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.GenerationDraft" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.HostHealth" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.LocalDraftControls" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

@@ -1,13 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Headless.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="AssemblySettings.fs" />
+    <Compile Include="FocusOrigin.Headless.fs" />
+    <Compile Include="FocusOrigin.Tests.fs" />
+    <Compile Include="OverlayLayer.Headless.fs" />
+    <Compile Include="OverlayLayer.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../FocusOrigin.fsproj" />
   </ItemGroup>
 </Project>

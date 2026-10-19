@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="ColorBlend.fs" />
+    <Compile Include="ThemeTween.fs" />
   </ItemGroup>
 </Project>

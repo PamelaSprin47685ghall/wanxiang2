@@ -1,5 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="CardReconcile.fs" />
+    <Compile Include="CaretBreath.fs" />
+    <Compile Include="CountdownTicker.fs" />
+    <Compile Include="DurationText.fs" />
+    <Compile Include="GenerationErrorTitle.fs" />
+    <Compile Include="MessageMenu.fs" />
+    <Compile Include="MessageTimestamp.fs" />
+    <Compile Include="ToolArgsPreview.fs" />
+    <Compile Include="ToolCallState.fs" />
+    <Compile Include="ToolErrorSummary.fs" />
+    <Compile Include="ToolOverview.fs" />
   </ItemGroup>
 </Project>

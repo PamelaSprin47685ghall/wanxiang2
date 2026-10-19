@@ -1,7 +1,0 @@
-      /// 防抖时长（毫秒）
-      DebounceMs: IObservable<float>
-      /// 搜索图标尺寸、清空键命中面（桌面 / 紧凑）
-      GlyphSize: IObservable<float>
-      IconButtonSize: IObservable<float>
-      CompactTarget: IObservable<float>
-      Space6xl: IObservable<float>

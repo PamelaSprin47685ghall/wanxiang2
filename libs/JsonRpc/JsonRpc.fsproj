@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="JsonRpc.fs" />
+    <Compile Include="LineProcess.fs" />
+    <Compile Include="McpProtocol.fs" />
+    <Compile Include="StreamableHttp.fs" />
   </ItemGroup>
 </Project>

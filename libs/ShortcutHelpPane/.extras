@@ -1,5 +1,0 @@
-      /// 键位块最小宽、对话框内容上限
-      KeyCapMinWidth: IObservable<float>
-      ContentMaxHeight: IObservable<float>
-      SpaceXXs: IObservable<float>
-      RadiusSm: IObservable<float>

@@ -1,14 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Headless.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="AssemblySettings.fs" />
+    <Compile Include="AttachmentTray.Headless.fs" />
+    <Compile Include="AttachmentTray.Tests.fs" />
+    <Compile Include="ComposerBox.Headless.fs" />
+    <Compile Include="ComposerBox.Tests.fs" />
+    <Compile Include="ModelChip.Headless.fs" />
+    <Compile Include="ModelChip.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Skia" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../AttachmentTray.fsproj" />
   </ItemGroup>
 </Project>

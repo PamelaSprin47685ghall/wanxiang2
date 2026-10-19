@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="BreadcrumbAction.fs" />
+    <Compile Include="MountWindow.fs" />
+    <Compile Include="RevealFlash.fs" />
   </ItemGroup>
 </Project>

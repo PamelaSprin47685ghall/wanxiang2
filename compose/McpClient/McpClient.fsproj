@@ -6,9 +6,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Wanxiang2.JsonRpc" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.McpProtocol" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.LineProcess" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.StreamableHttp" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

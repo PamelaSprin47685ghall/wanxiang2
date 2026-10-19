@@ -9,7 +9,7 @@
 - `KeyShortcut`：Avalonia 按键事件 → `KeyChord` 四字段 → `ShortcutAction` 的换算与分派（迁自旧 `Controls/KeyShortcut.fs`）。
 - `UnansweredReply`：末尾用户消息久无回复时补出的失败卡形状（迁自旧 `Model/UnansweredReply.fs`）。
 
-引用的包：`Wanxiang2.ProtocolDispatch`、`Wanxiang2.ShellCommands`、`Wanxiang2.DeletionDesk`、`Wanxiang2.DraftSession`、`Wanxiang2.Catalog`、`Wanxiang2.ConversationRuns`、`Wanxiang2.Outbox`、`Wanxiang2.ConversationList`、`Wanxiang2.TransferDesk`、`Wanxiang2.DialogsDesk`、`Wanxiang2.OverlayDesk`、`Wanxiang2.SidebarDesk`、`Wanxiang2.ChatScreen`、`Wanxiang2.ComposerDesk`、`Wanxiang2.SettingsScreen`、`Wanxiang2.Workspace`、`Wanxiang2.ApprovalDesk`、`Wanxiang2.PaletteDesk`、`Wanxiang2.ModelSwitchDesk`、`Wanxiang2.MessageCardView`、`Wanxiang2.Theme`、`Wanxiang2.ImageShrink`…（完整清单见 `AppShell.fsproj`；库侧含 `Wanxiang2.Wire`、`Wanxiang2.WsClient`、`Wanxiang2.ConversationTransfer`、`Wanxiang2.UploadFacts`、`Wanxiang2.MediaTypes`、`Wanxiang2.DownloadBuffers`、`Wanxiang2.HostFeatures` 等）。
+引用的包：`Wanxiang2.ProtocolDispatch`、`Wanxiang2.ShellCommands`、`Wanxiang2.DeletionDesk`、`Wanxiang2.DraftSession`、`Wanxiang2.Catalog`、`Wanxiang2.ConversationRuns`、`Wanxiang2.Outbox`、`Wanxiang2.ConversationList`、`Wanxiang2.TransferDesk`、`Wanxiang2.DialogsDesk`、`Wanxiang2.OverlayDesk`、`Wanxiang2.SidebarDesk`、`Wanxiang2.ChatScreen`、`Wanxiang2.ComposerDesk`、`Wanxiang2.SettingsScreen`、`Wanxiang2.Workspace`、`Wanxiang2.ApprovalDesk`、`Wanxiang2.PaletteDesk`、`Wanxiang2.ModelSwitchDesk`、`Wanxiang2.MessageCardView`、`Wanxiang2.Theme`、`Wanxiang2.ImageShrink`…（完整清单见 `AppShell.fsproj`；库侧含 `Wanxiang2.Wire`、`Wanxiang2.WsClient`、`Wanxiang2.ConversationTransfer`、`Wanxiang2.ConfigFeedback`、`Wanxiang2.MediaTypes`、`Wanxiang2.ConfigFeedback`、`Wanxiang2.HostFeatures` 等）。
 
 本组合者不持 DispatcherTimer、不做文件 IO、不做 Browser 调用、不构造 Avalonia 控件：计时器、对话框、剪贴板、文件选择与保存、主题应用、焦点捕获、窗口关闭全部经 `ShellPorts` 由 `app/Desktop`、`app/Pwa` 注入。
 
@@ -27,7 +27,7 @@
 1. [LEMMA: 1] 组合者成员与旧实现的对照：每个公开成员都能在旧文件里找到同名或同义的来源（连接与认证 `old:586-637`、事件界面面 `old:1552-1719`、侧栏动作 `old:1723-1833`、聊天动作 `old:1845-1925`、附件 `old:1138-1317`、转移 `old:1338-1392`、设置与预设 `old:2006-2130`、主题与偏好 `old:418-536`、快捷键与命令面板 `old:1416-1504`）。
 2. [LEMMA: 3] 视图事件在 `Build()` 内接线，入口壳构造 Desk 时只调用动作记录工厂（`SidebarActions` / `CardActions` / `ChatActions` / `ComposerActions` / `SettingsHooks` / `OnboardingHooks` / `WorkspaceHooks`）。
 3. [LEMMA: 4] `ShellSurface` 里不再有空操作：`OverlayEscape` / `IsDialogOpen` / `IsPopupOpen` / `IsSettingsOpen` / `IsDrawerOpen` / `CloseDrawer` / `FocusSearch` / `OpenModelPicker` / `JumpExchange` / `ScrollToBeginning` / `ScrollToEnd` / `CopyLastReply` / `RegenerateLast` / `TryUndo` / `FocusToast` / `ShowShortcuts` / `ApplyPreset` / `SavePreset` / `Fork` / `CloseWindow` / `SaveTheme` 全部接真实实现。
-4. [LEMMA: 1] 文案不改：附件、保存、剪贴板、模型选择器、导入导出、重连与配对的用户可见字符串与旧实现逐字相同（来源：`Wanxiang2.UploadFacts`、`Wanxiang2.MediaTypes`、`Wanxiang2.ConnectIssueText`、`Wanxiang2.PairingHint`、`compose/TransferDesk`）。
+4. [LEMMA: 1] 文案不改：附件、保存、剪贴板、模型选择器、导入导出、重连与配对的用户可见字符串与旧实现逐字相同（来源：`Wanxiang2.ConfigFeedback`、`Wanxiang2.MediaTypes`、`Wanxiang2.ConnectIssueText`、`Wanxiang2.PairingHint`、`compose/TransferDesk`）。
 5. [LEMMA: 1] headless 测试覆盖宿主桥与装配规则：`compose/AppShell/tests/ComposerTests.fs` 用假端口（`tests/Rig.fs`）钉住——未连接时的导入导出提示、`RequireFeature` 拦截与旧主机放行、附件归属过期与上传事件序列（含缩略图端口）、空文件与超大文件校验、`SavePrefs` 扇出、系统深色只在跟随系统时重应用、侧栏搜索与消息链接分派、命令回执的提交与未发出两态、设置焦点归还、配置回执提示、侧栏折叠落盘、断开连接的清理与重连调度；`Tests.fs` 钉住 `KeyShortcut` 换算分派与 `UnansweredReply` 失败卡形状。
 
 # 迁入或覆盖的旧测试

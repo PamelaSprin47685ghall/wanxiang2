@@ -3,6 +3,21 @@
     <Compile Include="Look.fs" />
     <Compile Include="Kit.fs" />
     <Compile Include="DevicesPane.fs" />
+    <Compile Include="GeneralPane.Look.fs" />
+    <Compile Include="GeneralPane.Kit.fs" />
+    <Compile Include="GeneralPane.fs" />
+    <Compile Include="OnboardingPane.Look.fs" />
+    <Compile Include="OnboardingPane.Kit.fs" />
+    <Compile Include="OnboardingPane.fs" />
+    <Compile Include="ProvidersPane.Look.fs" />
+    <Compile Include="ProvidersPane.Kit.fs" />
+    <Compile Include="ProvidersPane.fs" />
+    <Compile Include="SettingsFrame.Look.fs" />
+    <Compile Include="SettingsFrame.Kit.fs" />
+    <Compile Include="SettingsFrame.fs" />
+    <Compile Include="ToolsPane.Look.fs" />
+    <Compile Include="ToolsPane.Kit.fs" />
+    <Compile Include="ToolsPane.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

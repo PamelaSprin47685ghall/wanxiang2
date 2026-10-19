@@ -15,7 +15,6 @@
     <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AgentRuntime" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AgentContent" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MessageSerde" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaContent" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AgentHistory" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ToolRegistry" VersionOverride="0.0.0-local" />
@@ -25,8 +24,6 @@
     <PackageReference Include="Wanxiang2.CommandId" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PlainText" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ContextTrim" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.TitleText" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.UsageTally" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ContinuableReply" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

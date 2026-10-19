@@ -12,14 +12,9 @@
     <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DirLock" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.HostProbe" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AttachmentAudit" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AttachmentRefs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Agui" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.HostLog" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.SecretText" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProviderCheck" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.McpCheck" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.SnapshotCheck" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.AttachmentAudit" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

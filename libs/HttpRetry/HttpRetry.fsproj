@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="HttpRetry.fs" />
+    <Compile Include="JsonPick.fs" />
+    <Compile Include="Sse.fs" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Wanxiang2.CliArgs" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.RunModes" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

@@ -9,8 +9,8 @@
     <!-- 真实上游：目录快照的 generation 由主机的 ProviderCatalog 从 AppConfig 生成；错误码与传输类型和主机、配置层核对。 -->
     <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ProviderCatalog" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProviderPresets" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ProbeFailureKind" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BoundedWait" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.GenerationDraft" VersionOverride="0.0.0-local" />
     <ProjectReference Include="../Catalog.fsproj" />
   </ItemGroup>
 </Project>

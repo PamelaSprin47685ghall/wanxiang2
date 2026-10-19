@@ -10,7 +10,7 @@
 
 ## 为什么先做这一项
 
-原 `run-tests.sh` 只检查一个 `Wanxiang2.LedgerStore.0.0.0-local.nupkg` 是否存在，不能据此确认整套包属于当前 pin。它又使用 `set -uo pipefail`，失败的产包命令之后没有显式退出。
+原 `run-tests.sh` 只检查一个 `Wanxiang2.JsonSeqStore.0.0.0-local.nupkg` 是否存在，不能据此确认整套包属于当前 pin。它又使用 `set -uo pipefail`，失败的产包命令之后没有显式退出。
 
 修改前实际运行了受控反例：临时 Git 仓库里的产包命令写下一份包后退出 31，已有测试二进制仍被执行，整个测试入口退出 0。故障夹具只用来控制脚本路径，不是一个假的 NuGet/应用实现；它证明的是失败未阻断，不冒充生产库行为。
 

@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <Compile Include="ErrorPanel.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Avalonia" />
-    <PackageReference Include="Wanxiang2.UiKit" VersionOverride="0.0.0-local" />
-  </ItemGroup>
-</Project>

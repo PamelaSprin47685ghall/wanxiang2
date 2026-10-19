@@ -9,8 +9,7 @@
     <PackageReference Include="Wanxiang2.ConfigStore" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Doctor" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BuiltinTools" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.WsHandshake" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.McpClient" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ListenAddress" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.McpClient" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

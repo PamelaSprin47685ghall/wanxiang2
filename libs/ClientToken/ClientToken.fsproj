@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="ClientToken.fs" />
+    <Compile Include="DesktopClient.fs" />
   </ItemGroup>
 </Project>

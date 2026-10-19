@@ -4,6 +4,10 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
+    <!-- F# SDK 会隐式加一份 FSharp.Core（跟 SDK 走，本机 10.0.111）。交付包按仓库登记的
+         10.1.401 编译，隐式那份会让 NuGet 判降级、运行时装不上程序集。
+         关掉隐式引用，下面显式引同一版本。 -->
+    <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,5 +16,9 @@
 
   <ItemGroup>
     <PackageReference Include="Wanxiang2.LedgerStore" Version="0.0.0-local" />
+    <!-- 交付包按仓库登记的 FSharp.Core 版本编译（Directory.Packages.props 的 10.1.401）。
+         仓库外的临时项目读不到那份登记，SDK 只会给隐式版本（本机 10.0.111），于是 NuGet 报降级、
+         运行时装不上程序集。显式引用同一个版本，版本事实仍只有登记处一处。 -->
+    <PackageReference Include="FSharp.Core" Version="10.1.401" />
   </ItemGroup>
 </Project>

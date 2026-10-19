@@ -7,8 +7,8 @@
 **库侧接线已完成，无需改库、无需新 pin。** 以当前调用路径为准（不照旧待办表）：
 
 - 传输层：AppShell.fs `let client = WsClient()`（`open Wanxiang.Client`），命名空间整体来自 `Wanxiang2.WsClient` 包（fsproj:67）；旧 `src/Wanxiang.Client` 工程已不存在（src 仅剩 App / Pwa / UI）。
-- 重连接记账：`Wanxiang2.ReconnectLoop`（Connect / IsCurrent / Schedule / Fire / ResumeNow / ResetDelay），fsproj:208；计时与真正连接有意留宿主。
-- 退避：`Wanxiang2.ReconnectBackoff`（1s 翻倍封顶 30s），fsproj:83。
+- 重连接记账：`Wanxiang2.ChangeWatch`（Connect / IsCurrent / Schedule / Fire / ResumeNow / ResetDelay），fsproj:208；计时与真正连接有意留宿主。
+- 退避：`Wanxiang2.ChangeWatch`（1s 翻倍封顶 30s），fsproj:83。
 - 失败类型化：`Wanxiang2.ConnectionIssue` + `ConnectIssueText`，fsproj:84/100。
 - 配对/凭据：协议事件经 WsClient；配对 UI 走 `Wanxiang2.DialogsDesk` ConnectPane；桌面自动配对 `Wanxiang2.DesktopPairing.ensure`（Program.fs:91）；凭据解析在 `Wanxiang2.ClientConnections`（fsproj:202），IndexedDB 在 `Wanxiang2.BrowserCredentials`（fsproj:73）。
 
@@ -17,7 +17,7 @@
 | 职责 | owner | 备注 |
 |---|---|---|
 | WebSocket 传输 / 按代发送 | Wanxiang2.WsClient | 已消费 |
-| 重连记账与退避 | Wanxiang2.ReconnectLoop / ReconnectBackoff | 已消费 |
+| 重连记账与退避 | Wanxiang2.ChangeWatch / ReconnectBackoff | 已消费 |
 | 失败类型化与文案 | Wanxiang2.ConnectionIssue / ConnectIssueText | 已消费 |
 | 配对码/令牌流程 | 协议事件在库，首事件时序在宿主 | 有意组合职责 |
 | 桌面自动配对 | Wanxiang2.DesktopPairing（Program.fs:91） | 已消费 |

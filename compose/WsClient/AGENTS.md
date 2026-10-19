@@ -11,7 +11,7 @@
 3. **行为与旧实现一致。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1, 2, 3] 旧 ClientStateAndWsClientTests 原文迁入（去掉移到 libs/ReconnectBackoff 的 6 个），含本机真实 WebSocket 服务上的连接、代号、并发发送、分片、二进制帧、断线重连用例，通过。
+1. [LEMMA: 1, 2, 3] 旧 ClientStateAndWsClientTests 原文迁入（去掉移到 libs/ChangeWatch 的 6 个），含本机真实 WebSocket 服务上的连接、代号、并发发送、分片、二进制帧、断线重连用例，通过。
 
 # 迁入或覆盖的旧测试
 旧 ClientStateAndWsClientTests（tests/ClientStateAndWsClientTests.fs）：
@@ -59,4 +59,4 @@
 
 留在旧仓库（依赖 UI 或主机）：DeliveryPolishingTests、ConversationExportTests、InteractionReliabilityTests、R27HostCapabilitiesTests、ServerE2eTests 里用到 WsClient/ClientState 的用例。
 
-迁入时改写的两条（旧版用反射调私有成员，只钉实现形状，不钉行为）：`WsClient TrySendTextAsync respects expectedGeneration parameter` 改为经公开的按代发送检查；`WsClient ReceiveLoop decodes text, triggers events and handles exceptions safely` 改为检查未连接时不发事件，接收循环本身由 libs/TextSocket 测试。
+迁入时改写的两条（旧版用反射调私有成员，只钉实现形状，不钉行为）：`WsClient TrySendTextAsync respects expectedGeneration parameter` 改为经公开的按代发送检查；`WsClient ReceiveLoop decodes text, triggers events and handles exceptions safely` 改为检查未连接时不发事件，接收循环本身由 libs/CommitTimeline 测试。

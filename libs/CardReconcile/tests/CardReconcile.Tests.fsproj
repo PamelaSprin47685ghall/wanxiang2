@@ -1,12 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Samples.fs" />
-    <Compile Include="Render.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="CardReconcile.Samples.fs" />
+    <Compile Include="CardReconcile.Render.fs" />
+    <Compile Include="CardReconcile.Tests.fs" />
+    <Compile Include="CaretBreath.Samples.fs" />
+    <Compile Include="CaretBreath.Render.fs" />
+    <Compile Include="CaretBreath.Tests.fs" />
+    <Compile Include="CountdownTicker.Samples.fs" />
+    <Compile Include="CountdownTicker.Render.fs" />
+    <Compile Include="CountdownTicker.Tests.fs" />
+    <Compile Include="DurationText.Samples.fs" />
+    <Compile Include="DurationText.Render.fs" />
+    <Compile Include="DurationText.Tests.fs" />
+    <Compile Include="GenerationErrorTitle.Samples.fs" />
+    <Compile Include="GenerationErrorTitle.Render.fs" />
+    <Compile Include="GenerationErrorTitle.Tests.fs" />
+    <Compile Include="MessageMenu.Samples.fs" />
+    <Compile Include="MessageMenu.Render.fs" />
+    <Compile Include="MessageMenu.Tests.fs" />
+    <Compile Include="MessageTimestamp.Samples.fs" />
+    <Compile Include="MessageTimestamp.Render.fs" />
+    <Compile Include="MessageTimestamp.Tests.fs" />
+    <Compile Include="ToolArgsPreview.Samples.fs" />
+    <Compile Include="ToolArgsPreview.Render.fs" />
+    <Compile Include="ToolArgsPreview.Tests.fs" />
+    <Compile Include="ToolCallState.Samples.fs" />
+    <Compile Include="ToolCallState.Render.fs" />
+    <Compile Include="ToolCallState.Tests.fs" />
+    <Compile Include="ToolErrorSummary.Samples.fs" />
+    <Compile Include="ToolErrorSummary.Render.fs" />
+    <Compile Include="ToolErrorSummary.Tests.fs" />
+    <Compile Include="ToolOverview.Samples.fs" />
+    <Compile Include="ToolOverview.Render.fs" />
+    <Compile Include="ToolOverview.Tests.fs" />
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../CardReconcile.fsproj" />
   </ItemGroup>

@@ -6,7 +6,7 @@
 
 **库侧接线已完成，与草稿、reconnect 两切口一致；迁移表「未开始」再次过期。** 以当前调用路径为准：
 
-- 翻页请求编排（RequestOlderHistory）在 AppShell 宿主；在途/超时/失败文案判定归 `Wanxiang2.OlderPageLoad`（fsproj:188，消费于 AppShell.fs 的 FailOlderPage / CheckOlderPageTimeout / 重试条）。
+- 翻页请求编排（RequestOlderHistory）在 AppShell 宿主；在途/超时/失败文案判定归 `Wanxiang2.ChangeWatch`（fsproj:188，消费于 AppShell.fs 的 FailOlderPage / CheckOlderPageTimeout / 重试条）。
 - watchdog `DispatcherTimer` 本体留宿主（olderPageWatchdog 字段 + EnsureOlderPageWatchdog）——符合 OlderPageLoad 库 AGENTS「计时器、请求、失败条留在宿主」的既定分工，不是欠账。
 - 游标（pageEarliest / pageHasMore）归 compose/WsClient 的 ConversationView（从 snapshot 字段解析）；服务端分页在 compose/WsConnection → ServerModel.historyPageItems（稳定 commitID 页边界，Q127）。宿主只读。
 - 定位：RevealTarget（fsproj:175）、滚动/高亮/前置锚点归 compose/ChatScreen；问答跳转 ExchangeJump 由 ChatScreen 接线；搜索命中 SearchHit parse 在宿主。
@@ -17,11 +17,11 @@
 | 职责 | owner | 已被消费？ |
 |---|---|---|
 | 翻页请求编排（HistoryRequest 发出、toast） | 宿主 AppShell | ✓ |
-| 在途/超时/失败判定与文案 | Wanxiang2.OlderPageLoad | ✓ |
+| 在途/超时/失败判定与文案 | Wanxiang2.ChangeWatch | ✓ |
 | watchdog 计时器本体 | 宿主（库 AGENTS 有意留宿主） | — |
 | 游标解析 | compose/WsClient ConversationView | ✓ |
 | 服务端分页 | compose/WsConnection → ServerModel | ✓ |
-| 定位目标解析 / 滚动 / 高亮 / 跳转 | Wanxiang2.RevealTarget / ChatScreen / ExchangeJump | ✓ |
+| 定位目标解析 / 滚动 / 高亮 / 跳转 | Wanxiang2.ChangeWatch / ChatScreen / ExchangeJump | ✓ |
 | HistoryPaging 能力声明与 unsupported 文案 | Wanxiang.Wire HostFeatures（label「加载更早的消息」） | 声明侧 ✓；**UI 门控本轮补上（见第 2 节）** |
 
 ## 2. 本轮改动：RequestOlderHistory 加 HostFeatures.HistoryPaging 门控

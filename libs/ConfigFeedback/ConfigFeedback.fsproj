@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="ConfigFeedback.fs" />
+    <Compile Include="DownloadBuffers.fs" />
+    <Compile Include="HostRequests.fs" />
+    <Compile Include="UploadFacts.fs" />
   </ItemGroup>
 </Project>

@@ -1,14 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Headless.fs" />
-    <Compile Include="Probe.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="AssemblySettings.fs" />
+    <Compile Include="BatchBar.Headless.fs" />
+    <Compile Include="BatchBar.Probe.fs" />
+    <Compile Include="BatchBar.Tests.fs" />
+    <Compile Include="ConversationRows.Headless.fs" />
+    <Compile Include="ConversationRows.Probe.fs" />
+    <Compile Include="ConversationRows.Tests.fs" />
+    <Compile Include="HostSwitcher.Headless.fs" />
+    <Compile Include="HostSwitcher.Probe.fs" />
+    <Compile Include="HostSwitcher.Tests.fs" />
+    <Compile Include="ListEmptyCard.Headless.fs" />
+    <Compile Include="ListEmptyCard.Probe.fs" />
+    <Compile Include="ListEmptyCard.Fixture.fs" />
+    <Compile Include="ListEmptyCard.Tests.fs" />
+    <Compile Include="SidebarBrand.Headless.fs" />
+    <Compile Include="SidebarBrand.Probe.fs" />
+    <Compile Include="SidebarBrand.Fixture.fs" />
+    <Compile Include="SidebarBrand.Tests.fs" />
+    <Compile Include="SidebarSearch.Headless.fs" />
+    <Compile Include="SidebarSearch.Probe.fs" />
+    <Compile Include="SidebarSearch.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../BatchBar.fsproj" />
   </ItemGroup>
 </Project>

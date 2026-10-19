@@ -9,11 +9,6 @@
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConfirmPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.PromptPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.TextEditPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ConnectPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.SessionPrefsPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ShortcutHelpPane" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.FieldCheck" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />

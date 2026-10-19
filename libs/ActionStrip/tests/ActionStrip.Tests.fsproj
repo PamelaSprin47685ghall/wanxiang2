@@ -1,14 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Headless.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="AssemblySettings.fs" />
+    <Compile Include="ActionStrip.Headless.fs" />
+    <Compile Include="ActionStrip.Tests.fs" />
+    <Compile Include="AttachmentChip.Headless.fs" />
+    <Compile Include="AttachmentChip.Tests.fs" />
+    <Compile Include="ErrorPanel.Headless.fs" />
+    <Compile Include="ErrorPanel.Tests.fs" />
+    <Compile Include="FoldHeader.Headless.fs" />
+    <Compile Include="FoldHeader.Tests.fs" />
+    <Compile Include="RevealPane.Headless.fs" />
+    <Compile Include="RevealPane.Tests.fs" />
+    <Compile Include="StreamCaret.Headless.fs" />
+    <Compile Include="StreamCaret.Tests.fs" />
+    <Compile Include="ThinkingBlock.Headless.fs" />
+    <Compile Include="ThinkingBlock.Tests.fs" />
+    <Compile Include="ToolCallCard.Headless.fs" />
+    <Compile Include="ToolCallCard.Tests.fs" />
+    <Compile Include="UsageFoot.Headless.fs" />
+    <Compile Include="UsageFoot.Tests.fs" />
+    <Compile Include="UserBubble.Headless.fs" />
+    <Compile Include="UserBubble.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Skia" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../ActionStrip.fsproj" />
   </ItemGroup>
 </Project>

@@ -5,8 +5,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Wanxiang2.JsonSeq" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.Ledger" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.Snapshot" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DirLock" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

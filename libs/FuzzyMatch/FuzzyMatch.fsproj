@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="FuzzyMatch.fs" />
+    <Compile Include="PinyinInitials.fs" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,0 @@
-      /// 头条底、底条底、分隔线
-      HeaderSurface: IBrush
-      BarSurface: IBrush
-      Hairline: IBrush
-      DividerWidth: IObservable<float>
-      SelectButtonPaddingY: IObservable<float>

@@ -11,7 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
-    <PackageReference Include="Wanxiang2.MessageSerde" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaContent" VersionOverride="0.0.0-local" />
     <ProjectReference Include="../AgentRuntime.fsproj" />
   </ItemGroup>
 </Project>

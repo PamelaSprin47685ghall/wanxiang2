@@ -1,12 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Samples.fs" />
-    <Compile Include="Render.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="PopupPlacement.Samples.fs" />
+    <Compile Include="PopupPlacement.Render.fs" />
+    <Compile Include="PopupPlacement.Tests.fs" />
+    <Compile Include="ToastDwell.Samples.fs" />
+    <Compile Include="ToastDwell.Render.fs" />
+    <Compile Include="ToastDwell.Tests.fs" />
+    <Compile Include="ToastQueue.Samples.fs" />
+    <Compile Include="ToastQueue.Render.fs" />
+    <Compile Include="ToastQueue.Tests.fs" />
+    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../PopupPlacement.fsproj" />
   </ItemGroup>

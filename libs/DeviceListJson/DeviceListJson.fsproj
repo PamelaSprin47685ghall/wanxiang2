@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="DeviceListJson.fs" />
+    <Compile Include="DeviceRules.fs" />
+    <Compile Include="DeviceSightings.fs" />
   </ItemGroup>
 </Project>

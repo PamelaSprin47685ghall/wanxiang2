@@ -8,34 +8,15 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.UiKit" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.RevealPane" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.FoldHeader" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BusyRing" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ThinkingBlock" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToolCallCard" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.AttachmentChip" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ActionStrip" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ErrorPanel" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.UserBubble" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.StreamCaret" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.UsageFoot" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BusyRing" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ReadingLook" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CopyButton" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.CountdownTicker" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CardReconcile" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.CaretBreath" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MessageMenu" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToolCallState" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToolOverview" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ToolSummary" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToolArgsPreview" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToolErrorSummary" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DurationText" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MessageTimestamp" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.GenerationErrorTitle" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ErrorRecovery" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationRuns" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="PwaAssets.Tests.fs" />
+    <Compile Include="ShutdownSignals.Tests.fs" />
+    <Compile Include="SingleInstance.Tests.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <ProjectReference Include="../LocalHostGate.fsproj" />
+  </ItemGroup>
+</Project>

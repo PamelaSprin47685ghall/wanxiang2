@@ -165,10 +165,12 @@ pack() {
     fi
     wave=$((wave+1))
     # 临时 solution 放在 artifacts/ 下（NuGet.config 向上查找能找到根配置）。
+    # solution 里的工程路径按 solution 自身所在目录解析，所以要写成 ../ 开头；
+    # 否则 MSBuild 会去找 artifacts/libs/...（MSB3202）。
     local sln; sln="artifacts/pack-wave-$wave.slnx"
     {
       echo '<Solution>'
-      for proj in $ready; do echo "  <Project Path=\"$proj\" />"; done
+      for proj in $ready; do echo "  <Project Path=\"../$proj\" />"; done
       echo '</Solution>'
     } > "$sln"
     echo "== pack wave $wave（$(printf '%s\n' $ready | wc -l) 个工程，一个 solution 一次 restore/pack）"

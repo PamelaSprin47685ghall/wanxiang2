@@ -6,15 +6,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <PackageReference Include="Wanxiang2.ChatScroller" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ExchangeNav" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatEmpty" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.SkeletonList" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ScrollFollow" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BreathPhase" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ScrollTween" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ExchangeJump" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BreathPhase" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ChatEmptyText" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.SpacingRamp" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />

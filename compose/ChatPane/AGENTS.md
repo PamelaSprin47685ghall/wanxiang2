@@ -10,7 +10,7 @@ ChatScroller + ExchangeNav + ChatEmpty + SkeletonList + ScrollFollow + ScrollTwe
 ## 证据与旧测试
 - 整树金样 `tests/golden/chatpane.txt`（260 行，8 个状态：消息列、骨架、更早一页失败、5 种空态），由 `tools/panegold/run.sh <旧仓库>` 用 extract-ledger 533b85b 的旧 ChatView 主体生成，嵌入字体排版。
 - ChatViewTests：`空态文案与品牌态`、`贴底跟随与回到最新`、`骨架显示与隐藏`、`问答跳转端点`
-- 空态文案金样在 libs/ChatEmptyText；滚动/跳转/呼吸的逐分支金样在对应逻辑库。
+- 空态文案金样在 libs/BreathPhase；滚动/跳转/呼吸的逐分支金样在对应逻辑库。
 
 ## 与旧实现的差异
 - 消息卡、标题栏 / 面包屑、挂载窗口（MountWindow）与分页前置的宿主侧接线仍在宿主；`Messages` 是插槽。

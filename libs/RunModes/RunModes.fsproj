@@ -1,5 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <Compile Include="RunModes.fs" />
-  </ItemGroup>
-</Project>

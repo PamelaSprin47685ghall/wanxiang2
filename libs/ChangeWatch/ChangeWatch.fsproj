@@ -1,5 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="ChangeWatch.fs" />
+    <Compile Include="ConversationSurface.fs" />
+    <Compile Include="DeferredReveal.fs" />
+    <Compile Include="DraftSummaryText.fs" />
+    <Compile Include="ForkAnchor.fs" />
+    <Compile Include="IdleSurface.fs" />
+    <Compile Include="MessageLink.fs" />
+    <Compile Include="OlderPageLoad.fs" />
+    <Compile Include="ReconnectBackoff.fs" />
+    <Compile Include="ReconnectLoop.fs" />
+    <Compile Include="RevealTarget.fs" />
+    <Compile Include="StartReady.fs" />
+    <Compile Include="StartupTrace.fs" />
   </ItemGroup>
 </Project>

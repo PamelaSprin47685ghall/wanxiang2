@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="LocalHostGate.fs" />
+    <Compile Include="PwaAssets.fs" />
+    <Compile Include="ShutdownSignals.fs" />
+    <Compile Include="SingleInstance.fs" />
+  </ItemGroup>
+</Project>

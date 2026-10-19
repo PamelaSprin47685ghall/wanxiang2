@@ -1,14 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Headless.fs" />
-    <Compile Include="Probe.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="AssemblySettings.fs" />
+    <Compile Include="DevicesPane.Headless.fs" />
+    <Compile Include="DevicesPane.Probe.fs" />
+    <Compile Include="DevicesPane.Tests.fs" />
+    <Compile Include="GeneralPane.Headless.fs" />
+    <Compile Include="GeneralPane.Probe.fs" />
+    <Compile Include="GeneralPane.Tests.fs" />
+    <Compile Include="OnboardingPane.Headless.fs" />
+    <Compile Include="OnboardingPane.Probe.fs" />
+    <Compile Include="OnboardingPane.Tests.fs" />
+    <Compile Include="ProvidersPane.Headless.fs" />
+    <Compile Include="ProvidersPane.Probe.fs" />
+    <Compile Include="ProvidersPane.Tests.fs" />
+    <Compile Include="SettingsFrame.Headless.fs" />
+    <Compile Include="SettingsFrame.Probe.fs" />
+    <Compile Include="SettingsFrame.Tests.fs" />
+    <Compile Include="ToolsPane.Headless.fs" />
+    <Compile Include="ToolsPane.Probe.fs" />
+    <Compile Include="ToolsPane.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../DevicesPane.fsproj" />
   </ItemGroup>
 </Project>

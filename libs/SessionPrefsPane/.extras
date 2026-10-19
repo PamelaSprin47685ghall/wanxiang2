@@ -1,3 +1,0 @@
-      TextAreaMinHeight: IObservable<float>
-      ContentMaxHeight: IObservable<float>
-      PendingMinWidth: IObservable<float>

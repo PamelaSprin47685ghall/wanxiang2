@@ -11,9 +11,6 @@
     <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CommandFeedback" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConfigFeedback" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DownloadBuffers" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.HostRequests" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ServerErrorRoute" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.UploadFacts" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

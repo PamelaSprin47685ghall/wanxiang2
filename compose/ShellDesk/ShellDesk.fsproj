@@ -5,7 +5,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <PackageReference Include="Wanxiang2.ShellLayout" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BrandMark" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.NavigationState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />

@@ -290,7 +290,7 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
         scrim.Opacity <- 1.0
         hosted.KeyDown.Add(fun e -> trapTab hosted e)
         match initialFocus with
-        | Some target -> Dispatcher.UIThread.Post(fun () -> target.Focus() |> ignore)
+        | Some target -> Dispatcher.UIThread.Post(fun () -> target.Focus() |> ignore) // 跨线程/布局排队等待首帧排版完成，非焦点竞态
         // 跨线程/布局排队等待首帧排版完成，非焦点竞态
         | None -> Dispatcher.UIThread.Post(fun () -> focusFirst content) // 跨线程/布局排队，非焦点竞态
 
@@ -314,7 +314,7 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
         popupCard.IsVisible <- true
         content.KeyDown.Add(fun e -> trapTab content e)
         // 平台原生排版与定位：测量后同步布局，非焦点竞态
-        Dispatcher.UIThread.Post(fun () ->
+        Dispatcher.UIThread.Post(fun () -> // 跨线程/布局排队等待首帧排版完成，非焦点竞态
             positionPopup ()
             focusFirst content
             Dispatcher.UIThread.Post(fun () -> if popupCard.IsVisible then positionPopup ()) // 跨线程/布局排队，非焦点竞态

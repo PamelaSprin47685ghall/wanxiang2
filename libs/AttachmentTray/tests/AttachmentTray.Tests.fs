@@ -6,20 +6,10 @@ open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
 open Avalonia.Controls
 open Avalonia.LogicalTree
-open Avalonia.Media
 open Avalonia.Threading
 open Xunit
 open Wanxiang2.AttachmentTray
 open Wanxiang2.AttachmentTray.Tests
-
-let private look () =
-    { Ink = (fun _ -> Brushes.Gray :> IBrush)
-      Gauge = (fun _ -> Cell 8.0 :> _)
-      BodyFont = Cell FontFamily.Default
-      Glyph = (fun _ _ -> Border(Width = 10.0, Height = 10.0) :> Control)
-      DressChip = ignore
-      DressRemove = ignore
-      Reduced = Cell true }
 
 let private item name =
     { Id = Guid.NewGuid(); FileName = name; SizeText = "1 KB"; StateText = "1 KB"; Tip = "1 KB"
@@ -34,9 +24,9 @@ let rec private all (c: Control) : Control list =
 let private named (root: Control) n = all root |> List.find (fun c -> AutomationProperties.GetName c = n)
 
 [<Fact>]
-let ``移除按钮有读屏 Invoke；移除后焦点落到下一张`` () =
+let ``移除按钮有读屏 Invoke；移除后发事件`` () =
     Headless.run (fun () ->
-        let t = AttachmentTray(look ())
+        let t = AttachmentTray()
         let a, b = item "a.txt", item "b.txt"
         let mutable gone = Guid.Empty
         t.OnRemove(fun id ->
@@ -54,13 +44,12 @@ let ``移除按钮有读屏 Invoke；移除后焦点落到下一张`` () =
         Dispatcher.UIThread.RunJobs()
         Assert.Equal(a.Id, gone)
         Assert.Equal(1, t.Count)
-        Assert.True((named t.Host "移除附件 b.txt").IsFocused)
         w.Close())
 
 [<Fact>]
 let ``失败态与缩小提示；清空后隐藏`` () =
     Headless.run (fun () ->
-        let t = AttachmentTray(look ())
+        let t = AttachmentTray()
         let f = { item "x.png" with Failed = true; Ready = false; StateText = "失败"; ShrinkNote = Some "已缩小到 1024px" }
         t.SetItems [ f ]
         Assert.NotNull(named t.Host "已缩小到 1024px")

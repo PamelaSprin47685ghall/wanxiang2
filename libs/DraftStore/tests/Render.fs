@@ -1,4 +1,3 @@
-/// 金标准渲染：同一份源码分别对旧程序集与新库编译。保存序列经 `save` 回调取得「对落点做了什么」。
 module Render
 
 open System
@@ -22,7 +21,6 @@ let snapshots : DraftSnapshot list =
       { drafts = []; unsent = [ u1 ] } ]
 
 let all (inputs: string list) (saves: DraftSnapshot list -> string list) =
-    // 金样在 invariant 文化下生成（savedAt 为 24 小时制）；%A 对 DateTimeOffset 走当前线程文化，
     // 先钉死再渲染，测试在任何 locale 下字节可比。
     System.Threading.Thread.CurrentThread.CurrentCulture <- System.Globalization.CultureInfo.InvariantCulture
     let sb = StringBuilder()

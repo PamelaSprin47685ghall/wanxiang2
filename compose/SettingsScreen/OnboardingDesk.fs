@@ -26,8 +26,8 @@ type OnboardingHooks =
 
 /// 「连接一个模型」卡片的协作（旧 Views/OnboardingCard.fs）：所选预设、步骤与本次尝试（OnboardingFlow）、
 /// 兼容端点切换（ProbeFailureKind）、两次写回（先存再按探到的清单与默认模型落盘）、本机 Ollama 一键接入。界面归 OnboardingPane。
-type OnboardingDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: OnboardingHooks) =
-    let pane = OnboardingPane(SettingsLooks.onboardingOf theme)
+type OnboardingDesk(_theme: ThemeManager, overlay: OverlayDesk, hooks: OnboardingHooks) =
+    let pane = OnboardingPane()
     let flow = OnboardingFlow()
     let selectable = ProviderPresets.all |> List.filter (fun p -> not (String.IsNullOrWhiteSpace p.baseUrl))
     let customPreset = ProviderPresets.tryFind "custom"
@@ -187,9 +187,9 @@ type OnboardingDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: Onboarding
     /// 卡片显示时：发现本机 Ollama（每次显示只探一次）
     member this.StartDiscovery() =
         if flow.StartDiscovery() then
-            hooks.DiscoverLocal().ContinueWith(fun (t: Task<string list option>) ->
+            hooks.DiscoverLocal().ContinueWith((fun (t: Task<string list option>) ->
                 let result = if t.IsCompletedSuccessfully then t.Result else None
-                Dispatcher.UIThread.Post(fun () -> if not disposed then this.ShowDiscovered result))
+                if not disposed then this.ShowDiscovered result), TaskScheduler.FromCurrentSynchronizationContext())
             |> ignore
 
     member _.ShowDiscovered(result: string list option) =

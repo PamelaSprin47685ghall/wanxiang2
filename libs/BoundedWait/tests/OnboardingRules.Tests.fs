@@ -1,18 +1,12 @@
 module OnboardingRulesTests
 open System
 open System.IO
+open System.Net
+open System.Net.Http
+open System.Net.Sockets
 open Xunit
 open Wanxiang.UI
 
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "OnboardingRules", "onboardingrules.txt"))
-
-/// 金样由旧代码（从 旧 Views/OnboardingCard.fs 的 Onboarding 模块 摘出的函数）跑同一份 Samples 与 Render 生成
-[<Fact>]
-let ``golden: output matches the old code`` () =
-    Assert.Equal(expected (), OnboardingRulesRender.render ())
-
-open System.Net
-open System.Net.Sockets
 
 let private freePort () =
     let l = new TcpListener(IPAddress.Loopback, 0)

@@ -9,6 +9,7 @@
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationList" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BatchBar" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.RowFocus" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />

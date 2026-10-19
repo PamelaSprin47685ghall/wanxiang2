@@ -1,7 +1,5 @@
 namespace Wanxiang2.ExchangeNav
 
-open Wanxiang2.UiKit
-
 open System
 open Avalonia
 open Avalonia.Automation
@@ -9,67 +7,36 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Avalonia.Markup.Xaml.MarkupExtensions
 
-/// 用到的笔刷
-[<RequireQualifiedAccess>]
-type NavInk =
-    | Text
-    | SurfaceRaised
-    | Warning
-
-/// 用到的活度量
-[<RequireQualifiedAccess>]
-type NavGauge =
-    | SpaceMd
-    | SpaceXl
-    | Space2xl
-    | RadiusLg
-    | BorderWidth
-    | FontSmall
-    | ReadingWidth
-    | TextButtonPadY
-    | TextButtonMinHeight
-
-/// 外观
-type ExchangeNavLook =
-    { Ink: NavInk -> IBrush
-      Gauge: NavGauge -> IObservable<float>
-      BodyFont: IObservable<FontFamily>
-      /// 次要按钮样式类（旧 Ui.Secondary）
-      DressRetry: Border -> unit
-      /// 浮层阴影（旧 Tokens.shadowPopup）
-      Shadow: unit -> BoxShadows }
-
-type private TextSpot(label: string) as this =
-    inherit Spot()
-    let text = TextBlock(Text = label, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
-    do this.Child <- text
-    member _.Label = text
+/// 动态资源绑定辅助
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
 
 /// 阅读导航端点态与「更早一页取失败」行内提示（旧 ChatView 的 canJump*、olderFailureBanner）。
-/// 跳转状态机仍归 ExchangeJump；平滑滚动与挂载窗口扩容由宿主做。重试按钮是本库 Spot。
-type ExchangeNav(look: ExchangeNavLook) =
-    let ink = look.Ink
-    let gauge = look.Gauge
+/// 废除 Look 记录，重试按钮改原生 Button 样式类 secondary。
+type ExchangeNav() =
     let mutable canPrev = false
     let mutable canNext = false
     let mutable retry: unit -> unit = ignore
     let message =
-        TextBlock(Foreground = ink NavInk.Text, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center)
+        TextBlock(TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, FontSize = 12.5)
+    do message.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
     let retryButton =
-        let b = TextSpot "重试"
+        let b = Button(Content = "重试")
         b.Focusable <- true
         b.Cursor <- new Cursor(StandardCursorType.Hand)
         b.VerticalAlignment <- VerticalAlignment.Center
-        look.DressRetry b
-        Follow.live2 b (gauge NavGauge.Space2xl) (gauge NavGauge.TextButtonPadY) (fun x y -> b.Padding <- Thickness(x, y))
-        Follow.live b (gauge NavGauge.TextButtonMinHeight) (fun h -> b.MinHeight <- h)
+        b.Classes.Add "secondary"
+        b.Classes.Add "button-secondary"
         AutomationProperties.SetName(b, "重试加载更早消息")
-        b.OnInvoke(fun () -> retry ())
+        b.Click.Add(fun _ -> retry ())
         b
     let banner =
-        let row = Grid()
-        Follow.live row (gauge NavGauge.SpaceXl) (fun s -> row.ColumnSpacing <- s)
+        let row = Grid(ColumnSpacing = 12.0)
         row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
         row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
         Grid.SetColumn(message, 0)
@@ -79,27 +46,24 @@ type ExchangeNav(look: ExchangeNavLook) =
         let border =
             Border(
                 Name = "older-page-failure",
-                Background = ink NavInk.SurfaceRaised,
-                BorderBrush = ink NavInk.Warning,
                 Child = row,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Top,
+                BorderThickness = Thickness 1.0,
+                CornerRadius = CornerRadius 12.0,
+                Padding = Thickness(16.0, 8.0),
+                Margin = Thickness(16.0, 8.0, 16.0, 0.0),
+                MaxWidth = 748.0,
                 IsVisible = false)
-        border.BoxShadow <- look.Shadow ()
-        Follow.live border (gauge NavGauge.BorderWidth) (fun w -> border.BorderThickness <- Thickness w)
-        Follow.live border (gauge NavGauge.RadiusLg) (fun r -> border.CornerRadius <- CornerRadius r)
-        Follow.live2 border (gauge NavGauge.Space2xl) (gauge NavGauge.SpaceMd) (fun x y -> border.Padding <- Thickness(x, y))
-        Follow.live2 border (gauge NavGauge.Space2xl) (gauge NavGauge.SpaceMd) (fun x y -> border.Margin <- Thickness(x, y, x, 0.0))
-        Follow.live border (gauge NavGauge.ReadingWidth) (fun w -> border.MaxWidth <- w)
-        Follow.live message (gauge NavGauge.FontSmall) (fun s -> message.FontSize <- s)
-        Follow.live message look.BodyFont (fun f -> message.FontFamily <- f)
+        border.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceRaised") |> ignore
+        border.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Warning") |> ignore
         AutomationProperties.SetLiveSetting(message, AutomationLiveSetting.Polite)
         border
 
     /// 「更早一页失败」横幅（宿主叠在消息区顶部）
     member _.FailureBanner: Control = banner
-    /// 「重试」按钮（测试与读屏）
-    member _.RetryButton: Border = retryButton
+    /// 「重试」按钮
+    member _.RetryButton: Button = retryButton
     member _.CanJumpPrevious = canPrev
     member _.CanJumpNext = canNext
     member _.OlderFailureVisible = banner.IsVisible

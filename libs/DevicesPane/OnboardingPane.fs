@@ -7,6 +7,8 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.WorkspaceState
+open Wanxiang2.DevicesPane
 
 /// 一枚服务商选择键
 type OnboardingChip =
@@ -33,8 +35,7 @@ type OnboardingPaneState =
 
 /// 聊天主界面上的「添加一个模型服务」卡片（迁自旧 Views/OnboardingCard.fs 的界面部分）。
 /// 步骤、写回、探测、发现、预设清单与「更多」菜单都由组合者接（OnboardingFlow、ProviderPresets、OnboardingRules、PopupMenu）。
-type OnboardingPane(look: OnboardingPaneLook) =
-    let kit = Kit(look)
+type OnboardingPane() =
     let chipClicked = Event<string>()
     let moreClicked = Event<Control>()
     let connect = Event<unit>()
@@ -43,30 +44,29 @@ type OnboardingPane(look: OnboardingPaneLook) =
     let useLocal = Event<unit>()
 
     let chipRow = WrapPanel(Orientation = Orientation.Horizontal)
-    let title = kit.Title "添加一个模型服务"
-    let subtitle = kit.Caption "主机已连上。再选一家模型服务、粘贴密钥，就能开始对话；密钥只保存在主机上。"
-    let _, customUrlBox = kit.TextField "https://example.com/v1"
-    let customUrlGroup = kit.FieldGroup("服务地址", "兼容 OpenAI 的接口地址，通常以 /v1 结尾。", (customUrlBox.Parent :?> Control), None)
-    let _, keyBox = kit.TextField "粘贴 API Key"
-    let keyGroup = kit.FieldGroup("API Key", "只保存在主机上，界面不会回显。", (keyBox.Parent :?> Control), None)
-    let hintText = kit.Caption ""
-    let statusText = kit.Caption ""
+    let title = Ui.title "添加一个模型服务"
+    let subtitle = Ui.caption "主机已连上。再选一家模型服务、粘贴密钥，就能开始对话；密钥只保存在主机上。"
+    let customUrlBox = Ui.textField "https://example.com/v1"
+    let customUrlGroup = Ui.fieldGroup "服务地址" "兼容 OpenAI 的接口地址，通常以 /v1 结尾。" customUrlBox None
+    let keyBox = Ui.textField "粘贴 API Key"
+    let keyGroup = Ui.fieldGroup "API Key" "只保存在主机上，界面不会回显。" keyBox None
+    let hintText = Ui.caption ""
+    let statusText = Ui.caption ""
     let discoveryPanel = StackPanel(Orientation = Orientation.Vertical, IsVisible = false)
-    let discoveryText = kit.Caption ""
-    let connectButton = kit.Button(Tone.Primary, "连接", connect.Trigger)
-    let switchButton = kit.Button(Tone.Secondary, "改用兼容端点", switchClicked.Trigger)
-    let advanced = kit.Button(Tone.Ghost, "需要更多选项？打开设置", advancedClicked.Trigger)
-    let useLocalButton = kit.Button(Tone.Secondary, "一键使用本机 Ollama", useLocal.Trigger)
+    let discoveryText = Ui.caption ""
+    let connectButton = Ui.button "primary" "连接" connect.Trigger
+    let switchButton = Ui.button "secondary" "改用兼容端点" switchClicked.Trigger
+    let advanced = Ui.button "ghost" "需要更多选项？打开设置" advancedClicked.Trigger
+    let useLocalButton = Ui.button "secondary" "一键使用本机 Ollama" useLocal.Trigger
     let mutable busy = false
-    let chipMargin (b: Control) = kit.Live(look.SpaceMd, fun v -> b.Margin <- Thickness(0.0, 0.0, v, v))
+    let chipMargin (b: Control) = b.Margin <- Thickness(0.0, 0.0, 12.0, 12.0)
 
     let card =
-        let form = StackPanel(Orientation = Orientation.Vertical)
-        kit.Live(look.SpaceXl, fun v -> form.Spacing <- v)
+        let form = StackPanel(Orientation = Orientation.Vertical, Spacing = 16.0)
         advanced.HorizontalAlignment <- HorizontalAlignment.Left
         AutomationProperties.SetName(advanced, "高级设置")
         connectButton.HorizontalAlignment <- HorizontalAlignment.Left
-        kit.Live(look.PendingMinWidth, fun v -> connectButton.MinWidth <- v)
+        connectButton.MinWidth <- 96.0
         switchButton.IsVisible <- false
         switchButton.HorizontalAlignment <- HorizontalAlignment.Left
         statusText.IsVisible <- false
@@ -79,14 +79,14 @@ type OnboardingPane(look: OnboardingPaneLook) =
             if e.Key = Key.Enter then
                 e.Handled <- true
                 connect.Trigger())
-        kit.Live(look.SpaceMd, fun v -> discoveryPanel.Spacing <- v)
+        discoveryPanel.Spacing <- 12.0
         useLocalButton.HorizontalAlignment <- HorizontalAlignment.Left
         discoveryPanel.Children.Add discoveryText
         discoveryPanel.Children.Add useLocalButton
-        for c in [ title :> Control; subtitle; discoveryPanel; chipRow; hintText; customUrlGroup; keyGroup; statusText; switchButton; connectButton; advanced ] do
+        for c in [ title :> Control; subtitle; chipRow; hintText; customUrlGroup; keyGroup; connectButton; switchButton; statusText; discoveryPanel; advanced ] do
             form.Children.Add c
-        let card = kit.Card(look.Space3xl, look.Space3xl, look.RadiusLg, form)
-        kit.Live(look.CardMaxWidth, fun v -> card.MaxWidth <- v)
+        let card = Ui.card form
+        card.MaxWidth <- 520.0
         // 拉伸到最宽（受限后居中）：出现错误提示或切换服务商时卡片不忽宽忽窄
         card.HorizontalAlignment <- HorizontalAlignment.Stretch
         AutomationProperties.SetName(card, "添加一个模型服务")
@@ -106,12 +106,12 @@ type OnboardingPane(look: OnboardingPaneLook) =
         busy <- state.Busy
         chipRow.Children.Clear()
         for chip in state.Chips do
-            let b = kit.Button((if chip.Selected then Tone.Primary else Tone.Secondary), chip.Label, (fun () -> chipClicked.Trigger chip.Key))
+            let b = Ui.button (if chip.Selected then "primary" else "secondary") chip.Label (fun () -> chipClicked.Trigger chip.Key)
             chipMargin b
             AutomationProperties.SetHelpText(b, "选择这家模型服务：" + chip.Label)
             chipRow.Children.Add b
-        let mutable more: Tap = Unchecked.defaultof<_>
-        more <- kit.Button(Tone.Ghost, state.MoreLabel, (fun () -> if not busy then moreClicked.Trigger(more :> Control)))
+        let mutable more: Button = Unchecked.defaultof<_>
+        more <- Ui.button "ghost" state.MoreLabel (fun () -> if not busy then moreClicked.Trigger(more :> Control))
         chipMargin more
         AutomationProperties.SetName(more, "更多模型服务")
         chipRow.Children.Add more
@@ -128,7 +128,10 @@ type OnboardingPane(look: OnboardingPaneLook) =
         AutomationProperties.SetHelpText(connectButton, (if state.Busy then text else ""))
         AutomationProperties.SetName(connectButton, "连接")
         statusText.Text <- state.StatusText
-        statusText.Foreground <- (if state.StatusIsError then look.Danger else look.Muted)
+        if state.StatusIsError then
+            statusText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
+        else
+            statusText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
         statusText.IsVisible <- not (String.IsNullOrWhiteSpace state.StatusText)
         match state.SwitchLabel with
         | Some label ->

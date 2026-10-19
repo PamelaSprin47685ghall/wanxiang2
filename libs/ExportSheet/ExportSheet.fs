@@ -8,7 +8,54 @@ open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
 open Avalonia.Threading
-open Wanxiang2.UiKit
+open Avalonia.Automation.Peers
+open Avalonia.Automation.Provider
+
+/// 可点的 Border（与旧 ActionBorder 同义）：读屏得到 Button 与 Invoke；Enter / Space / 左键松开都触发。
+type internal Tap(child: Control, name: string, classes: string list, action: unit -> unit) as this =
+    inherit Border()
+
+    do
+        this.Child <- child
+        this.Focusable <- true
+        this.VerticalAlignment <- VerticalAlignment.Center
+        this.Cursor <- new Cursor(StandardCursorType.Hand)
+        for c in classes do this.Classes.Add c
+        if not (String.IsNullOrEmpty name) then AutomationProperties.SetName(this, name)
+        this.PointerReleased.Add(fun e ->
+            if this.IsEnabled && e.InitialPressMouseButton = MouseButton.Left then
+                e.Handled <- true
+                action ())
+        this.KeyDown.Add(fun e ->
+            if this.IsEnabled && (e.Key = Key.Enter || e.Key = Key.Space) then
+                e.Handled <- true
+                action ())
+
+    override _.StyleKeyOverride = typeof<Border>
+    override _.OnCreateAutomationPeer() = TapPeer(this) :> AutomationPeer
+
+    member _.Invoke() = if this.IsEnabled then action ()
+
+    member _.SetText(value: string) =
+        match this.Child with
+        | :? TextBlock as t -> t.Text <- value
+        | _ -> ()
+        AutomationProperties.SetName(this, value)
+
+    member _.SetEnabled(enabled: bool) =
+        this.IsEnabled <- enabled
+        this.Focusable <- enabled
+
+    static member TextButton(text: string, classes: string list, action: unit -> unit) : Tap =
+        let t = TextBlock(Text = text, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
+        Tap(t, text, classes, action)
+
+and internal TapPeer(owner: Tap) =
+    inherit ControlAutomationPeer(owner)
+    override _.GetAutomationControlTypeCore() = AutomationControlType.Button
+    interface IInvokeProvider with
+        // 跨线程 marshal，非焦点竞态（UI Automation 调用方可能来自辅助功能后台线程）
+        member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())
 
 /// 按钮档对应的主题类（旧 Ui.button 的四档）
 module internal TapTone =
@@ -39,7 +86,7 @@ type ExportSheetState =
       CloseText: string }
 
 /// 外观。全部由主题管理者提供活的实例。
-type ExportSheetLook =
+type ExportSheetAppearance =
     { Text: IBrush
       Muted: IBrush
       Success: IBrush
@@ -54,7 +101,7 @@ type ExportSheetLook =
 /// 导出对话框的内容（迁自旧 Views/ExportDialog.fs 的界面部分）：标题、对话名、assertive 状态行、进度条、说明、
 /// 「取消导出 / 重新导出 / 保存 JSON / 保存 Markdown」四键与左右方向键接线。
 /// 分页读取、节流、到期、生成文件与保存窗口由组合者接（ConversationExport、ExportView、ProgressThrottle、ConversationTransfer）。
-type ExportSheet(look: ExportSheetLook, conversationTitle: string, privacyNote: string) =
+type ExportSheet(look: ExportSheetAppearance, conversationTitle: string, privacyNote: string) =
     let live (o: IObservable<'T>) f = o.Subscribe(fun v -> f v) |> ignore
     let close = Event<unit>()
     let retry = Event<unit>()
@@ -157,8 +204,8 @@ type ExportSheet(look: ExportSheetLook, conversationTitle: string, privacyNote: 
                 | _ -> ()
 
     /// 打开后的初始焦点：读取中唯一可用的取消导出
-    member _.FocusClose() =
-        Dispatcher.UIThread.Post(fun () -> if closeButton.IsEffectivelyVisible && closeButton.IsEnabled then closeButton.Focus() |> ignore)
+    member _.FocusClose() = // 布局首帧排队，非焦点竞态
+        Dispatcher.UIThread.Post(fun () -> if closeButton.IsEffectivelyVisible && closeButton.IsEnabled then closeButton.Focus() |> ignore) // 布局首帧排队，非焦点竞态
 
     /// 关闭键（读取中组合者当作取消，其余当作关闭）
     [<CLIEvent>] member _.CloseClicked = close.Publish

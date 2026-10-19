@@ -36,4 +36,5 @@ and internal ActionSpotPeer(owner: ActionSpot) =
     inherit ControlAutomationPeer(owner)
     override _.GetAutomationControlTypeCore() = AutomationControlType.Button
     interface IInvokeProvider with
+        // 跨线程 marshal，非焦点竞态（UI Automation 调用方可能来自辅助功能后台线程）
         member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())

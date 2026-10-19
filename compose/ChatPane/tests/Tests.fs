@@ -10,11 +10,12 @@ open Wanxiang.UI
 open Wanxiang2.Theme
 open Wanxiang2.ChatPane
 open Wanxiang2.ChatPaneTests
+open Wanxiang2.WorkspaceState
 
 let private rig () =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
     let styles = ThemeStyles(theme)
-    let pane = ChatPane<string>(ChatPaneLooks.ofTheme theme styles, fun s -> Border(Width = s, Height = s) :> Control)
+    let pane = ChatPane<string>(ChatPaneMetrics.ofTheme theme styles, fun s -> Border(Width = s, Height = s) :> Control)
     let w = Window(Width = 800.0, Height = 600.0, Content = pane.Host)
     w.Show()
     Dispatcher.UIThread.RunJobs()
@@ -88,4 +89,76 @@ let ``问答跳转端点`` () =
         match pane.Jump(1, mounted, cards, 0, false, None) with
         | JumpStep.ScrollTo(i, _) -> Assert.Equal(2, i)
         | other -> Assert.Fail(sprintf "expected ScrollTo, got %A" other)
+        w.Close())
+
+[<Fact>]
+let ``1000 条消息下 ItemsControl 使用 VirtualizingStackPanel 仅渲染视口行`` () =
+    Headless.run (fun () ->
+        let pane, w = rig ()
+        let mkMsg i = {
+            Role = "user"
+            Text = sprintf "msg %d" i
+            Reasoning = ""
+            CommitId = Some(uint64 i)
+            ToolCalls = []
+            Attachments = []
+            CommittedAt = None
+            Usage = None
+            IsLastAssistant = false
+            Streaming = false
+            AutoCollapseReasoning = false
+            MissingAttachments = Set.empty
+            AwaitingApproval = Set.empty
+            Index = Some i
+        }
+        let msgs = [ for i in 1 .. 1000 -> mkMsg i ]
+        let vs: ChatVS = {
+            Phase = ChatPhase.Messages msgs
+            Streaming = false
+            ScrollHint = None
+            RevealTarget = None
+        }
+        pane.Render(vs)
+        Dispatcher.UIThread.RunJobs()
+        Assert.True(pane.ItemsControl.IsVisible)
+        let panel = pane.ItemsControl.ItemsPanel.Build()
+        Assert.IsAssignableFrom<VirtualizingStackPanel>(panel) |> ignore
+        let vsp = panel :?> VirtualizingStackPanel
+        // 1000 条数据源，虚拟化面板子元素数远小于 1000
+        Assert.True(vsp.Children.Count < 100, sprintf "Realized count should be small, got %d" vsp.Children.Count)
+        w.Close())
+
+[<Fact>]
+let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
+    Headless.run (fun () ->
+        let pane, w = rig ()
+        // 空态
+        pane.Render { Phase = ChatPhase.Empty IdleEmptyKind.NotConnected; Streaming = false; ScrollHint = None; RevealTarget = None }
+        Assert.True pane.IsEmptyShown
+        Assert.False pane.Scroller.Viewer.IsVisible
+        // 骨架
+        pane.Render { Phase = ChatPhase.Skeleton; Streaming = false; ScrollHint = None; RevealTarget = None }
+        Assert.False pane.IsEmptyShown
+        Assert.True pane.Skeleton.IsShown
+        // 消息
+        let msgs = [ {
+            Role = "user"
+            Text = "hello"
+            Reasoning = ""
+            CommitId = Some 1UL
+            ToolCalls = []
+            Attachments = []
+            CommittedAt = None
+            Usage = None
+            IsLastAssistant = false
+            Streaming = false
+            AutoCollapseReasoning = false
+            MissingAttachments = Set.empty
+            AwaitingApproval = Set.empty
+            Index = Some 1
+        } ]
+        pane.Render { Phase = ChatPhase.Messages msgs; Streaming = false; ScrollHint = None; RevealTarget = None }
+        Assert.False pane.IsEmptyShown
+        Assert.False pane.Skeleton.IsShown
+        Assert.True pane.Scroller.Viewer.IsVisible
         w.Close())

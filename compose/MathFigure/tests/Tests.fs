@@ -24,7 +24,7 @@ let private look () =
     let ink = SolidColorBrush(Probe.ink.Color)
     font, pad, ink, { Ink = ink; BodyFont = font; BlockPadding = pad }
 
-let private run tex disp html (l: MathFigureLook) =
+let private run tex disp html (l: MathFigureMetrics) =
     Probe.probe (FontFamily ThemeFonts.body)
         (fun () -> MathFigures.tryInline l html 14.5 tex)
         (fun () -> MathFigures.tryBlock l html 14.5 tex)

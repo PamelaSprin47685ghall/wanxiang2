@@ -10,7 +10,7 @@ open Avalonia.Media
 open Avalonia.Threading
 
 /// 字段校验的外观。全部由主题管理者提供活的实例；本库不写字面样式值。
-type FieldCheckLook =
+type FieldCheckAppearance =
     { /// 错误行文字
       ErrorForeground: IBrush
       /// 校验错误时输入壳的描边
@@ -26,7 +26,7 @@ type FieldCheckLook =
 /// bindValidationSummaryReset / applyValidationFeedback，以及 Interaction.setInvalid / isInvalid）。
 /// 每个输入框一条错误行，由本对象创建并持有；用户真的改了文字才清掉错误。
 /// 输入壳是输入框的父级 Border（与旧 Ui.textField 一致）。不改边框粗细与内边距，出错时没有横向漂移。
-type FieldCheck(look: FieldCheckLook) =
+type FieldCheck(look: FieldCheckAppearance) =
     let messages = ConditionalWeakTable<TextBox, TextBlock>()
 
     static let invalidProperty =
@@ -113,10 +113,6 @@ type FieldCheck(look: FieldCheckLook) =
         let focusField (box: TextBox) =
             box.BringIntoView()
             box.Focus(NavigationMethod.Directional) |> ignore
-            Dispatcher.UIThread.Post(fun () ->
-                if box.IsEffectivelyVisible && box.IsEnabled then
-                    box.BringIntoView()
-                    box.Focus(NavigationMethod.Directional) |> ignore)
         let single (box: TextBox, message: string) =
             focusField box
             if String.IsNullOrWhiteSpace message then None else Some message
@@ -133,10 +129,6 @@ type FieldCheck(look: FieldCheckLook) =
                 AutomationProperties.SetName(region, region.Text)
                 region.BringIntoView()
                 region.Focus(NavigationMethod.Directional) |> ignore
-                Dispatcher.UIThread.Post(fun () ->
-                    if region.IsEffectivelyVisible then
-                        region.BringIntoView()
-                        region.Focus(NavigationMethod.Directional) |> ignore)
                 Some(sprintf "有 %d 处需要修正，请查看表单顶部摘要。" (List.length errors))
             | None -> single first
         | first :: _ ->

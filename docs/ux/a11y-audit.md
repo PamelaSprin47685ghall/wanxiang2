@@ -28,7 +28,7 @@
 修复：`libs/ThemePalette/ThemePalette.fs`（旧 `Design/Palette.fs`）中 `codeComment` 两套主题统一为 `#96938B`，深色 `codeMuted` 改为 `#9B9890`（与浅色同值）。修复后最低 4.86:1。注释色仍明显弱于 `codeText`，视觉层级不变。
 
 已知不达标但未改：
-- `border`（浅 1.33、深 1.92）、`line`（浅 1.6、深 2.1~2.5）低于 1.4.11 对“控件边界”的 3:1 要求。它们主要用作装饰性分割，**不再用作输入类控件的边界**：2026-10-18 起，`libs/ThemePalette` 新增 `ControlStroke` 令牌（浅 `#8D8A7E`、深 `#76767F`），对四种基础表面（Surface / SurfaceRaised / SurfaceContainer / Canvas）两套主题都 ≥ 3:1；`FieldSurface` 与 `Surface` 同值（没有填充差），所以边界只靠这条描边——「以描边作为唯一边界」实测成立，输入壳、开关轨道与底部输入区（`ComposerBox` 的 `BoxInk.ControlStroke`）都改用它。聚焦态仍是 accent 描边加外扩环（见 `libs/UiKit` 的 textField 外壳；旧 `Controls/Interaction.fs`）。机械断言：`compose/Theme/tests/A11yRegression.fs` 的 `控件边界描边在四种底上都过 1.4.11`。`border` / `line` 自身数值不变。
+- `border`（浅 1.33、深 1.92）、`line`（浅 1.6、深 2.1~2.5）低于 1.4.11 对“控件边界”的 3:1 要求。它们主要用作装饰性分割，**不再用作输入类控件的边界**：2026-10-18 起，`libs/ThemePalette` 新增 `ControlStroke` 令牌（浅 `#8D8A7E`、深 `#76767F`），对四种基础表面（Surface / SurfaceRaised / SurfaceContainer / Canvas）两套主题都 ≥ 3:1；`FieldSurface` 与 `Surface` 同值（没有填充差），所以边界只靠这条描边——「以描边作为唯一边界」实测成立，输入壳、开关轨道与底部输入区（`ComposerBox` 的 `BoxInk.ControlStroke`）都改用它。聚焦态仍是 accent 描边加外扩环（见 `各输入控件外壳` 的 textField 外壳；旧 `Controls/Interaction.fs`）。机械断言：`compose/Theme/tests/A11yRegression.fs` 的 `控件边界描边在四种底上都过 1.4.11`。`border` / `line` 自身数值不变。
 
 ## 3. 键盘导航与焦点
 
@@ -40,7 +40,7 @@
 
 ## 4. 可访问名称与语义
 
-- 共享原语 `iconButton`（今天在 `libs/UiKit/UiKit.fs`）在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。
+- 共享原语 `iconButton`（今天在 `UiKit`）在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。
 - 规则（已测）：图标按钮调用不得传空字符串或 null 作为 tip，否则按钮对辅助技术是无名控件。
 - PWA 启动页有 `role="status"`、`aria-live`、`aria-busy`，装饰条 `aria-hidden`，图片有 `alt`。入口页 `lang="zh-CN"`，viewport 不禁止缩放。
 

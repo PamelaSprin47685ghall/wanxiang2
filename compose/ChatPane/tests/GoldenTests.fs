@@ -43,7 +43,7 @@ let ``主体各状态与旧 ChatView 同一棵树`` () =
         let styles = ThemeStyles theme
         styles.Install Avalonia.Application.Current.Styles
         for name, show in cases do
-            let pane = ChatPane<string>(ChatPaneLooks.ofTheme theme styles, logo)
+            let pane = ChatPane<string>(ChatPaneMetrics.ofTheme theme styles, logo)
             pane.SetStarterPick(Some ignore)
             pane.SetPresets [ "晨记", "每天早上写三件", ignore ]
             show pane

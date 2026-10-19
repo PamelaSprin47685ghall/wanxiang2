@@ -135,15 +135,12 @@ let ``起步模式经插槽同步，拖分隔条只在桌面写回宽度`` () =
 [<Fact>]
 let ``品牌标没有图时退成万字并随主题换色`` () =
     Headless.run (fun () ->
-        let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
-        let brand = ShellBrand(ShellLook.brandOf theme, None)
+        let brand = ShellBrand(None)
         let tile = brand.Logo 40.0 :?> Border
-        Assert.Same(theme.Brush PaletteKey.Surface, tile.Background)
         let glyph = tile.Child :?> TextBlock
         Assert.Equal("万", glyph.Text)
-        theme.Apply PaletteMode.Dark
-        theme.CompleteTransition()
-        Assert.Equal(ThemePalette.color PaletteMode.Dark PaletteKey.Accent, (glyph.Foreground :?> SolidColorBrush).Color))
+        Assert.True(tile.Classes.Contains "surface")
+        Assert.True(glyph.Classes.Contains "brand-glyph"))
 
 // 布局度量归主题管理者：改分隔条宽、窄屏断点，已显示的外壳跟着重投影。
 [<Fact>]

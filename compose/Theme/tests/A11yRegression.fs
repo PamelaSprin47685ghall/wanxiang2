@@ -129,16 +129,6 @@ let ``所有图标按钮调用都带非空名称`` () =
                 sprintf "%s:%d 图标按钮缺少 tip/可访问名称" (Path.GetRelativePath(repoRoot, f)) line ]
     Assert.True(bad.IsEmpty, String.Join("\n", bad))
 
-[<Fact>]
-let ``共享图标按钮原语同时设置提示与自动化名称`` () =
-    // IconButton 经 Tap(g, tip, …) 把 tip 传作 name 在 Tap 构造里挂 AutomationProperties.Name，
-    // 并在 IconButton 内对非空 tip 挂 ToolTip；行为证据见 libs/UiKit/tests 的
-    // `Kit.Button and IconButton carry tone classes and the tip`。
-    let src = read "libs/UiKit/UiKit.fs"
-    let setNames = Regex.Matches(src, @"AutomationProperties\.SetName\(this, name\)").Count
-    let setTips = Regex.Matches(src, @"ToolTip\.SetTip\(host, tip\)").Count
-    Assert.True(setNames >= 1 && setTips >= 1, "IconButton 必须经 Tap 与 ToolTip 同时挂 AutomationProperties.Name 与 ToolTip")
-
 // ---------- 文案一致性：术语表 ----------
 
 let private uiStrings () =

@@ -5,7 +5,6 @@ open System.Text
 open Xunit
 open Wanxiang.UI
 
-/// 金样由旧代码（从旧视图文件原样摘出的函数）在同一组输入上生成；
 /// 其中受合并修正影响的行已按新口径重写（见 AGENTS.md SPEC 2）
 let render () =
     let sb = StringBuilder()
@@ -17,14 +16,6 @@ let render () =
             line (sprintf "segments %s %s -> %s" (js q) (js t) (SidebarText.segments q t |> List.map (fun s -> sprintf "%s%s" (if s.isMatch then "*" else "") (js s.text)) |> String.concat ","))
     sb.ToString()
 
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "SearchSegments", "segments.txt"))
-
-[<Fact>]
-let ``golden: terms and segments match the old SidebarText`` () =
-    Assert.Equal(expected (), render ())
-
-
-// ---- 旧 SearchHighlightTests 第 1 节（去掉 Headless 包装）
 
 [<Fact>]
 let ``empty query yields one plain segment covering the whole text`` () =

@@ -1,26 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <Compile Include="Look.fs" />
-    <Compile Include="Kit.fs" />
     <Compile Include="BatchBar.fs" />
-    <Compile Include="ConversationRows.Look.fs" />
-    <Compile Include="ConversationRows.Kit.fs" />
     <Compile Include="ConversationRows.fs" />
-    <Compile Include="HostSwitcher.Look.fs" />
-    <Compile Include="HostSwitcher.Kit.fs" />
     <Compile Include="HostSwitcher.fs" />
-    <Compile Include="ListEmptyCard.Look.fs" />
-    <Compile Include="ListEmptyCard.Kit.fs" />
     <Compile Include="ListEmptyCard.fs" />
-    <Compile Include="SidebarBrand.Look.fs" />
-    <Compile Include="SidebarBrand.Kit.fs" />
     <Compile Include="SidebarBrand.fs" />
-    <Compile Include="SidebarSearch.Look.fs" />
-    <Compile Include="SidebarSearch.Kit.fs" />
     <Compile Include="SidebarSearch.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <PackageReference Include="Wanxiang2.UiKit" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

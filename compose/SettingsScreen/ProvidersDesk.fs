@@ -21,8 +21,7 @@ type ProviderEditorSession =
 /// 设置 → 模型服务的协作（旧 Views/SettingsProviders.fs）：列表行状态、预设套用与分歧判定、传输切换、
 /// 探活归属与结果缓存（ProbeSlot）、校验（ProviderForm + FieldCheck）、保存往返、更多菜单。界面归 ProvidersPane。
 type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> SettingsHooks) =
-    let look = SettingsLooks.providersOf theme
-    let pane = ProvidersPane(look)
+    let pane = ProvidersPane(SettingsLooks.glyphOf theme)
     let check = FieldCheck(SettingsLooks.fieldCheckOf theme)
     let probeSlot = ProbeSlot()
     let mutable catalog = Catalog.empty
@@ -58,7 +57,7 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
     let text (box: TextBox) = if isNull box.Text then "" else box.Text
 
     let rec showEditor (existing: ProviderInfo option) =
-        let editor = ProviderEditor(look, existing.IsNone, (fun box -> Some(check.MessageFor box :> Control)))
+        let editor = ProviderEditor(existing.IsNone, (fun box -> Some(check.MessageFor box :> Control)), SettingsLooks.glyphOf theme)
         let mutable active = true
         let takenIds = catalog.providers |> List.map (fun p -> p.id)
         let initialPreset =

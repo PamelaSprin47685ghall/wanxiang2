@@ -1,6 +1,6 @@
 # ActionStrip
 
-合并包：ActionStrip、AttachmentChip、ErrorPanel、FoldHeader、RevealPane、StreamCaret、ThinkingBlock、ToolCallCard、UsageFoot、UserBubble。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。
+合并包：ActionStrip、AttachmentChip、ErrorPanel、FoldHeader、RevealPane、StreamCaret、ThinkingBlock、ToolCallCard、UsageFoot、UserBubble。已彻底拔除 Wanxiang2.UiKit 依赖与手搓 Look/Follow 原语，全套控件使用 Avalonia 原生控件 + 语义样式类 + DynamicResource 资源绑定，提供单入口幂等 Render(VS) 接入 ViewState，移除内部 DispatcherTimer（StreamCaret 呼吸改 anim-breathe 动效类，ErrorPanel 倒计时由 VS/宿主驱动，RevealPane 移除 Dispatcher.UIThread.Post），完全达成原生化。
 
 测试工程 `<包名>.Tests.fsproj` 合并各成员用例（`<成员名>.<文件>.fs`），golden 目录按成员分目录；控件库的测试工程用 `AssemblySettings.fs` 关掉并行（Avalonia 平台状态是进程级全局量）。
 

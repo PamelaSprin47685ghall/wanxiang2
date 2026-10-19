@@ -4,27 +4,21 @@
     <Compile Include="AssemblySettings.fs" />
     <Compile Include="ConfirmPane.Headless.fs" />
     <Compile Include="ConfirmPane.Probe.fs" />
-    <Compile Include="ConfirmPane.Fixture.fs" />
     <Compile Include="ConfirmPane.Tests.fs" />
     <Compile Include="ConnectPane.Headless.fs" />
     <Compile Include="ConnectPane.Probe.fs" />
-    <Compile Include="ConnectPane.Fixture.fs" />
     <Compile Include="ConnectPane.Tests.fs" />
     <Compile Include="PromptPane.Headless.fs" />
     <Compile Include="PromptPane.Probe.fs" />
-    <Compile Include="PromptPane.Fixture.fs" />
     <Compile Include="PromptPane.Tests.fs" />
     <Compile Include="SessionPrefsPane.Headless.fs" />
     <Compile Include="SessionPrefsPane.Probe.fs" />
-    <Compile Include="SessionPrefsPane.Fixture.fs" />
     <Compile Include="SessionPrefsPane.Tests.fs" />
     <Compile Include="ShortcutHelpPane.Headless.fs" />
     <Compile Include="ShortcutHelpPane.Probe.fs" />
-    <Compile Include="ShortcutHelpPane.Fixture.fs" />
     <Compile Include="ShortcutHelpPane.Tests.fs" />
     <Compile Include="TextEditPane.Headless.fs" />
     <Compile Include="TextEditPane.Probe.fs" />
-    <Compile Include="TextEditPane.Fixture.fs" />
     <Compile Include="TextEditPane.Tests.fs" />
   </ItemGroup>
   <ItemGroup>

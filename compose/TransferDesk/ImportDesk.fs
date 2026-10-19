@@ -16,7 +16,7 @@ open Wanxiang2.ImportSheet
 /// 导入对话（决策 313）的接线：说明 → 选文件并预览 → 确认导入。
 /// 选文件窗口在点击回调里直接打开（浏览器要求用户手势）；预览通过前什么都不发；
 /// 确认后交给 `submit`，只认最新一次提交的回执（ImportAttempt），等待有上限，超时给说明。
-type ImportDesk(look: ImportSheetLook, timing: TransferTiming, overlay: OverlayDesk, topLevel: unit -> TopLevel, submit: ImportPreview -> (bool -> unit) -> unit) =
+type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: OverlayDesk, topLevel: unit -> TopLevel, submit: ImportPreview -> (bool -> unit) -> unit) =
     let ui = Dispatcher.UIThread
     let sheet = ImportSheet(look, ConversationTransfer.privacyNote)
     let attempts = ImportAttempt()
@@ -108,7 +108,7 @@ type ImportDesk(look: ImportSheetLook, timing: TransferTiming, overlay: OverlayD
                             setStatus (message) ImportTone.Danger
                             refresh ()
                 // 旧主机不认识 conversation.import 时不会回应：等待有上限。
-                DispatcherTimer.RunOnce((fun () -> finish false ImportView.timedOut), timing.ImportResponseTimeout()) |> ignore
+                timing.After (timing.ImportResponseTimeout()) (fun () -> finish false ImportView.timedOut) |> ignore
                 submit p (fun ok -> finish ok ImportView.rejected)
         | None -> ()
 

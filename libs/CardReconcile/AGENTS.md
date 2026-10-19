@@ -8,6 +8,7 @@
 
 ## CardReconcile（库）
 
+> **注意（P2/P3 清理）**：CardReconcile（Reconciler）是旧手搓 DOM 共同前缀比对器。随着消息卡片容器改用原生 VirtualizingStackPanel 以及卡片工厂按消息 ID 缓存与幂等 Render，CardReconcile 里的手搓容器对账部分已不再被实际消费，将在 P3 阶段彻底删除。
 旧 `Views/ChatView.fs` 消息卡对账（1245-1290）迁入为泛型 `Reconciler<'K, 'V>`：`Reconcile(desired)` 返回 `ReconcilePlan`（保留前缀长度 `Keep`、其后依次挂上的 `Append`），`MountedKeys`、`CachedCount`、`Clear`。共同前缀只认两边都有身份且相等的项；前缀之后按身份取缓存、未命中或无身份才调工厂；每帧丢掉不再用到的缓存。面板增删、锚点恢复、跟随判断仍归 ChatView。不引用任何其他库。根规则见项目根目录 AGENTS.md。
 
 ## LEMMA

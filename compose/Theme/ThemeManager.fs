@@ -3,6 +3,7 @@ namespace Wanxiang2.Theme
 open System
 open System.Collections.Generic
 open Avalonia
+open Avalonia.Controls
 open Avalonia.Media
 open Avalonia.Threading
 open Wanxiang.UI
@@ -68,6 +69,55 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
     let snapAll () =
         for KeyValue(k, b) in brushes do b.Color <- ThemePalette.color mode k
         refreshDerived ()
+    let resources = Controls.ResourceDictionary()
+    let initResources () =
+        // 1. 活画笔直接放入基础字典，键名按 PaletteKey.<Name>
+        for KeyValue(k, b) in brushes do
+            let keyName = sprintf "Palette.%A" k
+            resources[box keyName] <- box b
+            resources[box (sprintf "Brush.%A" k)] <- box b
+        for KeyValue(d, b) in derived do
+            resources[box (sprintf "Derived.%A" d)] <- box b
+        // 2. ThemeDictionaries（Light / Dark）供 Avalonia 原生 ThemeVariant 解析
+        let lightDict = Controls.ResourceDictionary()
+        let darkDict = Controls.ResourceDictionary()
+        for k in ThemePalette.keys do
+            let keyName = sprintf "Palette.%A" k
+            lightDict[box keyName] <- box (SolidColorBrush(ThemePalette.color PaletteMode.Light k))
+            darkDict[box keyName] <- box (SolidColorBrush(ThemePalette.color PaletteMode.Dark k))
+        resources.ThemeDictionaries[Avalonia.Styling.ThemeVariant.Light] <- (lightDict :> Controls.IThemeVariantProvider)
+        resources.ThemeDictionaries[Avalonia.Styling.ThemeVariant.Dark] <- (darkDict :> Controls.IThemeVariantProvider)
+        // 3. 度量、间距、字体与时长
+        for KeyValue(m, v) in metrics do
+            let keyName = sprintf "Metric.%A" m
+            resources[box keyName] <- box v.Value
+            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x) |> ignore
+        for KeyValue(s, v) in spaces do
+            let keyName = sprintf "Space.%A" s
+            resources[box keyName] <- box v.Value
+            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x) |> ignore
+        for KeyValue(t, v) in timings do
+            let keyName = sprintf "Timing.%A" t
+            resources[box keyName] <- box v.Value
+            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x) |> ignore
+        resources[box "FontFamily.Body"] <- box fontFamily.Value
+        (fontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Body"] <- box f) |> ignore
+        resources[box "FontFamily.Mono"] <- box monoFontFamily.Value
+        (monoFontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Mono"] <- box f) |> ignore
+        // 常用派生度量（Thickness / CornerRadius）预置
+        let updateDerivedMetrics () =
+            resources[box "CornerRadius.RadiusXs"] <- box (CornerRadius spaces[Space.RadiusXs].Value)
+            resources[box "CornerRadius.RadiusSm"] <- box (CornerRadius spaces[Space.RadiusSm].Value)
+            resources[box "CornerRadius.RadiusMd"] <- box (CornerRadius spaces[Space.RadiusMd].Value)
+            resources[box "CornerRadius.RadiusLg"] <- box (CornerRadius spaces[Space.RadiusLg].Value)
+            resources[box "CornerRadius.RadiusPill"] <- box (CornerRadius spaces[Space.RadiusPill].Value)
+            resources[box "Thickness.BorderThin"] <- box (Thickness metrics[Metric.BorderWidth].Value)
+        updateDerivedMetrics ()
+        (metrics[Metric.BorderWidth] :> IObservable<float>).Subscribe(fun _ -> updateDerivedMetrics ()) |> ignore
+        (spaces[Space.RadiusMd] :> IObservable<float>).Subscribe(fun _ -> updateDerivedMetrics ()) |> ignore
+        (spaces[Space.RadiusLg] :> IObservable<float>).Subscribe(fun _ -> updateDerivedMetrics ()) |> ignore
+        (spaces[Space.RadiusPill] :> IObservable<float>).Subscribe(fun _ -> updateDerivedMetrics ()) |> ignore
+    do initResources ()
 
     new() = new ThemeManager((fun () -> DateTimeOffset.UtcNow), true)
 
@@ -91,6 +141,8 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
     member _.Space(s: Space) : LiveValue<float> = spaces[s]
     member _.Timing(t: Timing) : LiveValue<float> = timings[t]
     member _.FontFamily = fontFamily
+    member _.Resources = resources
+    member _.MergedDictionary = resources
     member _.MonoFontFamily = monoFontFamily
 
     member _.SetMetric(m: Metric, v: float) =

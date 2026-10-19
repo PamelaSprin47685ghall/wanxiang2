@@ -19,6 +19,8 @@ let themed () =
     let manager = new ThemeManager((fun () -> DateTimeOffset.UnixEpoch), false)
     let styles = ThemeStyles manager
     styles.Install Application.Current.Styles
+    for KeyValue(k, v) in manager.Resources do
+        Application.Current.Resources[k] <- v
     manager, styles
 
 let mutable now = DateTimeOffset(2026, 10, 14, 12, 0, 0, TimeSpan.Zero)

@@ -211,10 +211,6 @@
     <Project Path="libs/ErrorRecovery/ErrorRecovery.fsproj" />
     <Project Path="libs/ErrorRecovery/tests/ErrorRecovery.Tests.fsproj" />
   </Folder>
-  <Folder Name="/EscapeChain/">
-    <Project Path="libs/EscapeChain/EscapeChain.fsproj" />
-    <Project Path="libs/EscapeChain/tests/EscapeChain.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ExchangeJump/">
     <Project Path="libs/ExchangeJump/ExchangeJump.fsproj" />
     <Project Path="libs/ExchangeJump/tests/ExchangeJump.Tests.fsproj" />
@@ -471,10 +467,6 @@
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
     <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
   </Folder>
-  <Folder Name="/UiKit/">
-    <Project Path="libs/UiKit/UiKit.fsproj" />
-    <Project Path="libs/UiKit/tests/UiKit.Tests.fsproj" />
-  </Folder>
   <Folder Name="/UiPrefs/">
     <Project Path="libs/UiPrefs/UiPrefs.fsproj" />
     <Project Path="libs/UiPrefs/tests/UiPrefs.Tests.fsproj" />
@@ -490,6 +482,10 @@
   <Folder Name="/Wire/">
     <Project Path="libs/Wire/Wire.fsproj" />
     <Project Path="libs/Wire/tests/Wire.Tests.fsproj" />
+  </Folder>
+  <Folder Name="/WorkspaceState/">
+    <Project Path="libs/WorkspaceState/WorkspaceState.fsproj" />
+    <Project Path="libs/WorkspaceState/tests/WorkspaceState.Tests.fsproj" />
   </Folder>
   <Folder Name="/AgentContent/">
     <Project Path="compose/AgentContent/AgentContent.fsproj" />
@@ -604,6 +600,7 @@
   </Folder>
   <Folder Name="/EntryShells/">
     <Project Path="compose/EntryShells/EntryShells.fsproj" />
+    <Project Path="compose/EntryShells/tests/EntryShells.Tests.fsproj" />
   </Folder>
   <Folder Name="/EventStore/">
     <Project Path="compose/EventStore/EventStore.fsproj" />

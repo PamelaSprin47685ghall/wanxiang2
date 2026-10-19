@@ -38,7 +38,7 @@ type private Kit() =
             c
     member _.Reduced = reduced
     member _.FadeOpacity = opacity
-    member this.Look : MarkdownLook =
+    member this.Look : MarkdownMetrics =
         { Ink = fun k -> this.Brush k :> IBrush
           Gauge = fun k -> this.Gauge k :> IObservable<float>
           BodyFont = Cell(FontFamily.Default)

@@ -23,8 +23,15 @@ let private all (root: Visual) = root.GetVisualDescendants() |> Seq.choose (func
 let private byName (root: Visual) name = all root |> List.tryFind (fun c -> AutomationProperties.GetName c = name)
 let private pump () = Dispatcher.UIThread.RunJobs()
 let private invoke (c: Control) =
-    let peer = ControlAutomationPeer.CreatePeerForElement c
-    (Assert.IsAssignableFrom<IInvokeProvider> peer).Invoke()
+    match c with
+    | :? Button as b ->
+        b.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, b))
+    | :? Border as border ->
+        border.Focus() |> ignore
+        border.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.None, Source = border))
+    | _ ->
+        let peer = ControlAutomationPeer.CreatePeerForElement c
+        (Assert.IsAssignableFrom<IInvokeProvider> peer).Invoke()
     pump ()
 let private press (c: Control) (k: Key) (mods: KeyModifiers) =
     c.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = k, KeyModifiers = mods, Source = c))

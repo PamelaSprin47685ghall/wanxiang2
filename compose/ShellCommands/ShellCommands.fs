@@ -117,15 +117,13 @@ type ShellCommands(surface: ShellSurface, initialRecent: string list) =
         match shortcut with
         | ShortcutAction.Escape ->
             // 浮层先试；落到这里说明焦点在抽屉外（D3/D4）。
-            let overlayHandled = surface.OverlayEscape()
-            match EscapeChain.decide overlayHandled (surface.IsSettingsOpen()) (surface.IsDrawerOpen()) (surface.IsGenerating()) with
-            | EscapeTarget.Overlay -> true
-            | EscapeTarget.CloseSettings -> surface.CloseSettings(); true
-            | EscapeTarget.CloseDrawer -> surface.CloseDrawer(); true
-            | EscapeTarget.StopGeneration -> surface.StopGeneration(); true
-            | EscapeTarget.Unhandled -> false
+            if surface.OverlayEscape() then true
+            elif surface.IsSettingsOpen() then surface.CloseSettings(); true
+            elif surface.IsDrawerOpen() then surface.CloseDrawer(); true
+            elif surface.IsGenerating() then surface.StopGeneration(); true
+            else false
         | ShortcutAction.NoShortcut -> false
-        | _ when EscapeChain.blockedByOverlay (surface.IsDialogOpen()) (surface.IsPopupOpen()) -> false
+        | _ when surface.IsDialogOpen() || surface.IsPopupOpen() -> false
         | ShortcutAction.ToggleSidebar -> surface.ToggleSidebar(); true
         | ShortcutAction.CloseWindow -> surface.CloseWindow()
         | ShortcutAction.NewConversation -> surface.NewConversation(); true
@@ -145,7 +143,14 @@ type ShellCommands(surface: ShellSurface, initialRecent: string list) =
         | ShortcutAction.ExportConversation -> this.Export(); true
         | ShortcutAction.OpenConversationAt index ->
             // Ctrl+1..9 按侧栏可见顺序（C2）。
-            match EscapeChain.conversationAt index (surface.VisibleOrder()) with
+            let order = surface.VisibleOrder()
+            let target =
+                if index >= 0 && index < order.Length then
+                    match System.Guid.TryParse order[index] with
+                    | true, id -> Some id
+                    | _ -> None
+                else None
+            match target with
             | Some id -> surface.OpenConversation id; true
             | None -> false
         | ShortcutAction.ShowShortcuts -> surface.ShowShortcuts(); true

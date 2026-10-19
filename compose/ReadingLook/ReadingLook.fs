@@ -88,20 +88,20 @@ module ReadingLook =
         v :> IObservable<bool>
 
     /// 公式外观
-    let math (manager: ThemeManager) : MathFigureLook =
+    let math (manager: ThemeManager) : MathFigureMetrics =
         { Ink = manager.Brush PaletteKey.Text
           BodyFont = manager.FontFamily
           BlockPadding = ofSpace manager Space.Md }
 
     /// 复制确认外观
-    let copy (manager: ThemeManager) : CopyButtonLook =
+    let copy (manager: ThemeManager) : CopyButtonAppearance =
         let ms t = Live.map (fun (v: float) -> TimeSpan.FromMilliseconds v) (manager.Timing t)
         { FadeOpacity = ofMetric manager Metric.OpacityCopyConfirmFade
           Hold = ms Timing.CopyConfirmationHold
           Fade = ms Timing.CopyConfirmationFade }
 
     /// Markdown 正文外观
-    let markdown (manager: ThemeManager) (styles: ThemeStyles) : MarkdownLook =
+    let markdown (manager: ThemeManager) (styles: ThemeStyles) : MarkdownMetrics =
         { Ink = ink manager
           Gauge = gauge manager
           BodyFont = manager.FontFamily

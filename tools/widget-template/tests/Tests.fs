@@ -6,16 +6,11 @@ open Avalonia.Media
 open Xunit
 open Wanxiang2.__NAME__
 
-let private look () =
-    let bg = SolidColorBrush(Colors.White)
-    let pad = Cell(Thickness 4.0)
-    bg, pad, { Background = bg; Foreground = SolidColorBrush(Colors.Black); Padding = pad }
-
 [<Fact>]
 let ``bump raises changed and shows the count in a real window`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let w = __NAME__ l
+        let w = __NAME__()
+        w.Render { Visible = true; Text = "" }
         let win = Window(Content = w)
         win.Show()
         let mutable seen = 0
@@ -27,11 +22,13 @@ let ``bump raises changed and shows the count in a real window`` () =
         win.Close())
 
 [<Fact>]
-let ``look instances stay live after construction`` () =
+let ``render is idempotent and drives visibility from the view state`` () =
     Headless.run (fun () ->
-        let bg, pad, l = look ()
-        let w = __NAME__ l
-        bg.Color <- Colors.Red
-        pad.Set(Thickness 9.0)
-        Assert.Equal(Colors.Red, (w.Background :?> SolidColorBrush).Color)
-        Assert.Equal(Thickness 9.0, w.Padding))
+        let w = __NAME__()
+        let vs = { Visible = true; Text = "hi" }
+        w.Render vs
+        w.Render vs
+        Assert.True w.IsVisible
+        Assert.Equal("hi", (w.Child :?> TextBlock).Text)
+        w.Render { Visible = false; Text = "hi" }
+        Assert.False w.IsVisible)

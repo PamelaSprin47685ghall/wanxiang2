@@ -9,8 +9,8 @@
 
 ## 外观
 
-- `ModelSwitchPanelLook`：画笔 `Text`、`Muted`、`Faint`、`Accent`、`TagText`、`TagSurface`、`FieldSurface`、`FieldEdge`、`Caret`；图标插槽 `Check`；字号、边距、尺寸、面板宽度都是活的值。
-- 用到的样式类（compose/Theme）：行 `model-row menu-item surface hover-plain`；组头 `section-label`；分隔 `hairline`；输入壳 `surface focus-soft`。
+- 废除 `ModelSwitchPanelLook`，外观全走 Avalonia 样式类与主题资源。
+- 用到的样式类（compose/Theme）：行 `model-row menu-item surface hover-plain`；分组标题 `section-label`；分隔 `hairline`；输入壳 `surface control-stroke`；文本类 `muted`、`faint`。
 
 ## 证据与旧测试
 

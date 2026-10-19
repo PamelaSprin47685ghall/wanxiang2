@@ -9,7 +9,13 @@ open Avalonia
 open Avalonia.Controls
 open Xunit
 open Wanxiang.UI
+open Wanxiang.Core
 open Wanxiang2.Theme
+open Wanxiang2.CodeTint
+open Wanxiang2.MessageCardView
+open Wanxiang2.ComposerDesk
+open Wanxiang2.ApprovalDesk
+open Wanxiang2.OverlayDesk
 open Wanxiang2.ChatScreen
 open Wanxiang2.ChatScreenTests
 
@@ -20,13 +26,40 @@ let private messageAt (index: int) : MessageView =
         commitId = Some(uint64 index)
         committedAt = Some DateTimeOffset.UtcNow }
 
+let private createScreen (theme: ThemeManager) (styles: ThemeStyles) =
+    let root = Grid()
+    let overlay = OverlayDesk(root, Desk.look ())
+    let host =
+        { Tint = CodeTint { HighlightHtml = (fun _ -> None); Background = (fun f -> f ()); After = (fun _ f -> f ()); Synchronous = true }
+          MathHtml = (fun _ -> None)
+          Wrap = Wanxiang2.MarkdownView.CodeWrapMemory false
+          Clock = CaretClock()
+          Touch = CardTouch()
+          Now = fun () -> DateTimeOffset.UnixEpoch }
+    let cards = MessageCards(CardLooks.ofTheme theme styles, host)
+    let composer =
+        ComposerDesk(
+            ComposerMetrics.ofTheme theme styles,
+            { Submit = (fun _ -> true); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
+              OpenModelPicker = ignore; DropFiles = ignore; PasteFromClipboard = (fun () -> false); OpenSessionSettings = ignore })
+    let approvals = ApprovalDesk(theme, overlay, ignore)
+    let cardActions =
+        { CopyText = ignore; Regenerate = ignore; EditAndFork = ignore; DeleteMessage = ignore; DownloadAttachment = ignore
+          OpenLink = ignore; CopyLink = None; Recover = None }
+    let actions =
+        { Card = cardActions
+          RenameTitle = ignore; ToggleSidebar = ignore; OpenSessionSettings = ignore; ForkFromHere = ignore
+          ExportConversation = ignore; StopGeneration = ignore; RequestOlderHistory = ignore; FocusHome = ignore
+          OpenParent = ignore; SiblingSelected = (fun _ -> ()); After = (fun _ _ -> { new IDisposable with member _.Dispose() = () }) }
+    ChatScreen(ChatScreenMetrics.ofTheme theme styles, cards, composer, approvals, overlay, (fun _ -> Border() :> Control), actions)
+
 [<Fact>]
 let ``长对话的流式刷新代价与消息条数无关`` () =
     Headless.run (fun () ->
         let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
         let styles = ThemeStyles theme
         styles.Install Application.Current.Styles
-        let s = GoldenTests.screen theme styles
+        let s = createScreen theme styles
         let w = Window(Width = 900.0, Height = 800.0, Content = s.Host)
         w.Show()
         s.SetConversationChrome true

@@ -44,7 +44,7 @@ let ``输入区各状态与旧 Composer 同一棵树`` () =
               "compact", (fun c -> c.SetCompactMode true) ]
         let sb = Text.StringBuilder()
         for name, show in cases do
-            let c = ComposerDesk(ComposerLooks.ofTheme theme styles, actions)
+            let c = ComposerDesk(ComposerMetrics.ofTheme theme styles, actions)
             c.SetEnabled(true, "")
             c.SetModelLabel "gpt-x"
             show c

@@ -32,7 +32,7 @@ type Composer(actions: ComposerActions) =
 
     let desk =
         ComposerDesk(
-            ComposerLooks.ofTheme SharedTheme.manager SharedTheme.styles,
+            ComposerMetrics.ofTheme SharedTheme.manager SharedTheme.styles,
             { Submit = fun text -> if actions.submit text then (history.Record text; true) else false
               StopGeneration = fun () -> actions.stopGeneration ()
               PickAttachment = fun () -> actions.pickAttachment ()

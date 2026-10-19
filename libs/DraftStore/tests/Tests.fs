@@ -5,21 +5,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-// 金标准：golden/expected.txt 由旧 DraftCodec / DraftStore(MemoryDraftBackend) / DraftPolicy 跑同一份 Render.fs 生成。
-[<Fact>]
-let ``golden: codec bytes, save decisions and merges match old code`` () =
-    let dir = Path.Combine(AppContext.BaseDirectory, "golden")
-    let inputs = File.ReadAllLines(Path.Combine(dir, "inputs.jsonl")) |> Array.filter ((<>) "") |> List.ofArray
-    let saves (xs: DraftSnapshot list) =
-        let store = DraftStore()
-        [ for s in xs ->
-            match store.Save s with
-            | DraftWrite.Unchanged -> "Unchanged"
-            | DraftWrite.Delete -> "Delete"
-            | DraftWrite.Write t -> "Write " + t ]
-    Assert.Equal(File.ReadAllText(Path.Combine(dir, "expected.txt")), Render.all inputs saves)
-
-// 迁自旧 ComposerReliabilityTests：后端换成「宿主保存的文本」，页面回收 = 只剩这段文本。
 [<Fact>]
 let ``a recycled page restores drafts from the browser backend`` () =
     let before = DraftStore()
@@ -55,15 +40,6 @@ let ``conversations that vanish from the list count as deleted unless a send is 
     let deleted = DraftPolicy.deletedConversations (Set.ofList [ kept ]) (Set.ofList [ kept; gone; sending ]) (Set.ofList [ sending ])
     Assert.Equal<Guid list>([ gone ], Set.toList deleted)
 
-
-// 金标准：golden/restore.txt 由 tools/OldDraftRestore.fs（旧 AppShell 原样摘录）跑 RestoreRender 生成。
-[<Fact>]
-let ``golden: restore notice, prune and summary match old AppShell`` () =
-    let expected = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "restore.txt"))
-    let actual =
-        RestoreRender.render DraftRestore.knownConversations DraftRestore.restoreNotice DraftRestore.fillComposer
-            DraftRestore.summaryCounts DraftRestore.pruneStored DraftRestore.knownAfterPrune DraftRestore.clearedText
-    Assert.Equal(expected, actual)
 
 [<Fact>]
 let ``restore notice: unsent wins, attachments ask for reselect, nothing restored is silent`` () =

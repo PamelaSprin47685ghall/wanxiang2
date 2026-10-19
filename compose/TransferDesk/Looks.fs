@@ -12,7 +12,7 @@ open Wanxiang2.ExportSheet
 
 /// 从主题管理者取两张对话框的外观与时长。
 module TransferLook =
-    let importOf (t: ThemeManager) : ImportSheetLook =
+    let importOf (t: ThemeManager) : ImportSheetAppearance =
         let brush k = t.Brush k :> IBrush
         let metric m = t.Metric m :> IObservable<float>
         { Text = brush PaletteKey.Text
@@ -26,7 +26,7 @@ module TransferLook =
           StackSpacing = t.Space Space.Xl
           ButtonSpacing = t.Space Space.Md }
 
-    let exportOf (t: ThemeManager) : ExportSheetLook =
+    let exportOf (t: ThemeManager) : ExportSheetAppearance =
         let brush k = t.Brush k :> IBrush
         let metric m = t.Metric m :> IObservable<float>
         { Text = brush PaletteKey.Text
@@ -45,15 +45,23 @@ type TransferTiming =
     { ImportResponseTimeout: unit -> TimeSpan
       ExportExpiryCheckTick: unit -> TimeSpan
       ProgressTextThrottle: unit -> TimeSpan
+      After: TimeSpan -> (unit -> unit) -> IDisposable
       ReducedMotion: unit -> bool
       /// 对话层宽（主题度量 TransferDialogWidth）
       DialogWidth: unit -> float }
 
 module TransferTiming =
-    let ofTheme (t: ThemeManager) =
+    let ofThemeWithAfter (t: ThemeManager) (after: TimeSpan -> (unit -> unit) -> IDisposable) =
         let ms timing () = TimeSpan.FromMilliseconds (t.Timing timing).Value
         { ImportResponseTimeout = ms Timing.ImportResponseTimeout
           ExportExpiryCheckTick = ms Timing.ExportExpiryCheckTick
           ProgressTextThrottle = ms Timing.ProgressTextThrottle
+          After = after
           ReducedMotion = fun () -> t.Motion.IsReduced
           DialogWidth = fun () -> (t.Metric Metric.TransferDialogWidth).Value }
+
+    let ofTheme (t: ThemeManager) =
+        let defaultAfter span (action: unit -> unit) =
+            let timer = new System.Threading.Timer((fun _ -> Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(fun () -> action ()) |> ignore), null, span, System.Threading.Timeout.InfiniteTimeSpan)
+            { new IDisposable with member _.Dispose() = timer.Dispose() }
+        ofThemeWithAfter t defaultAfter

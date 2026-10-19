@@ -13,6 +13,7 @@ open Wanxiang.UI
 open Wanxiang2.ThemePalette
 open Wanxiang2.ThemeMetrics
 open Wanxiang2.Theme
+open Wanxiang2.WorkspaceState
 open Wanxiang2.PopupMenu
 open Wanxiang2.OverlayDesk
 open Wanxiang2.ConversationRows
@@ -46,12 +47,13 @@ type SidebarDeskActions =
 /// 行焦点（RowFocus）、多选（SidebarSelection）、空态（SidebarEmpty）、行菜单，摆进
 /// SidebarBrand / SidebarSearch / ConversationRows / ListEmptyCard / BatchBar / HostSwitcher。
 type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDeskActions, brandLogo: float -> Control) =
-    let brand = SidebarBrand(SidebarLooks.brandOf theme brandLogo)
-    let search = SidebarSearch(SidebarLooks.searchOf theme)
-    let rows = ConversationRows(SidebarLooks.rowsOf theme)
-    let empty = ListEmptyCard(SidebarLooks.emptyOf theme brandLogo)
-    let batch = BatchBar(SidebarLooks.batchOf theme)
-    let hostBar = HostSwitcher(SidebarLooks.hostOf theme)
+    let brand = SidebarBrand()
+    let search = SidebarSearch()
+    do ignore brandLogo
+    let rows = ConversationRows()
+    let empty = ListEmptyCard()
+    let batch = BatchBar()
+    let hostBar = HostSwitcher()
     let icon = SidebarLooks.menuIcon theme
 
     let messageSearch = SearchSession<SearchHit>()
@@ -183,28 +185,34 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         marks ()
         rowFocus.SetVisible(Array.ofList rows.VisibleIds)
         rowFocus.RestoreAfterRebuild restore |> Option.iter rows.FocusRow
-        let e = SidebarEmpty.decide query (List.isEmpty visible) section.IsSome connected listLoading compact
-        search.SetEmptyHint e.searchEmpty
-        if not e.hostVisible then empty.Hide()
-        else
-            match e.kind with
-            | Some SidebarEmptyKind.NotConnected ->
-                empty.Show(EmptyCardStyle.Note, "", defaultArg e.note "", false, e.actionVisible)
-            | Some SidebarEmptyKind.ListLoading ->
-                empty.Show(EmptyCardStyle.Brand, defaultArg e.title "", "", e.skeletonVisible, false)
-            | Some SidebarEmptyKind.NoConversations ->
-                empty.Show(EmptyCardStyle.Plain, defaultArg e.title "", defaultArg e.note "", false, false)
-            | None -> empty.Hide()
+        let searchEmpty = not (String.IsNullOrWhiteSpace query) && List.isEmpty visible && section.IsNone
+        search.SetEmptyHint searchEmpty
+        let emptyKind =
+            if not connected then Some (SidebarEmptyKind.NotConnected compact)
+            elif listLoading then Some SidebarEmptyKind.Loading
+            elif List.isEmpty visible && section.IsNone then
+                if not (String.IsNullOrWhiteSpace query) then Some (SidebarEmptyKind.NoSearchResults query)
+                else Some SidebarEmptyKind.NoConversations
+            else None
+        empty.Render emptyKind
+
+    let selectedIds () = selection.SelectedIds rows.VisibleIds
 
     let refreshChrome () =
         let c = selection.Chrome(rows.VisibleIds, actions.selectionAllPinned)
-        batch.Render
-            { CountText = c.countText; SelectAllText = c.selectAllText; SelectAllHelp = c.selectAllHelp
-              PinText = c.pinText; SelectAllEnabled = c.selectAllEnabled; BatchEnabled = c.batchEnabled
-              Visible = c.barsVisible }
+        let batchVS =
+            if c.barsVisible then
+                Some {
+                    SelectedCount = selectedIds().Length
+                    AllSelected = c.selectAllText = "取消全选"
+                    Busy = not c.batchEnabled
+                    AllPinned = c.pinText = "取消置顶"
+                }
+            else None
+        batch.Render batchVS
         marks ()
-        // 多选只留「取消 / 全选 / 计数」与底部批量条：品牌行与页脚让位
-        brand.View.IsVisible <- not selection.Active
+        let brandView = brand.View
+        brandView.IsVisible <- not selection.Active
         hostBar.View.IsVisible <- not selection.Active
 
     let focusSearch (selectAll: bool) = search.Focus selectAll
@@ -214,8 +222,6 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         search.StopDebounce()
         rebuild ()
         if focus then focusSearch true
-
-    let selectedIds () = selection.SelectedIds rows.VisibleIds
 
     let exitSelection () =
         selection.Exit()
@@ -310,7 +316,6 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         root
 
     do
-        empty.SetAction SidebarEmpty.actionLabel
         empty.ActionClicked.Add(fun () -> actions.reconnect ())
         brand.NewClicked.Add(fun () -> actions.newConversation ())
         brand.BackClicked.Add(fun () -> actions.closeNavigation ())
@@ -331,7 +336,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         search.ClearRequested.Add(fun () -> resetSearch true)
         search.Debounced.Add(fun text ->
             // 词没变（已为它发过查询）就不重发
-            if SearchRequery.shouldQuery text messageSearch.Query then beginSearch ()
+            if text <> messageSearch.Query then beginSearch ()
             rebuild ())
         search.Keys.Add(fun e ->
             let ids = rows.VisibleIds

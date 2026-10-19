@@ -8,11 +8,12 @@
 
 ## ChatEmpty
 
-对话区空态（迁自旧 `Views/ChatView.fs` 的 `emptyPanel` / `ShowEmpty` / `ShowEmbeddedEmpty` / `HideEmpty`）：对话起点提示、品牌空态卡、起手式与预设芯片、或内嵌内容。文案表与 `ChatEmptyState` 仍归 `ChatEmptyText`；本库只接收标题、提示与动作。主按钮与芯片是本库自带的 Spot，带读屏 Invoke。根规则见项目根目录 AGENTS.md。
+对话区空态（迁自旧 `Views/ChatView.fs` 的 `emptyPanel` / `ShowEmpty` / `ShowEmbeddedEmpty` / `HideEmpty`）：对话起点提示、品牌空态卡、起手式与预设芯片、或内嵌内容。
+P2 去脑化：废除 Look 记录与 Spot 仿制件，改用原生 Button（样式类 primary/secondary）；单入口 `Render(ChatPhase)` 幂等渲染。
 
 ### 外观
 
-- `ChatEmptyLook`：`Ink`、`Gauge`（字号、间距、按钮几何、字距、行高）、`BodyFont`、`DressPrimary` / `DressSecondary` / `DressCard`（样式类），都是活值或主题样式。
+统一接入 Avalonia 主题资源（`Palette.*`）与 ControlTheme / StyleClass，不再通过 Look 注入。
 
 ### 证据与旧测试
 
@@ -22,13 +23,11 @@
 
 ## ChatScroller
 
-对话滚动区（迁自旧 `Views/ChatView.fs` 的 `scroller`、回到最新浮钮、平滑滚动计时器、延迟滚到底 / 顶、分页前置锚点）。贴底跟随、未读、补间曲线、挂载窗口的记账仍归 `ScrollFollow` / `ScrollTween` / `MountWindow`；本库只执行滚动并报观察。浮钮是本库 Spot，带读屏 Invoke。根规则见项目根目录 AGENTS.md。
+对话滚动区（`scroller`、回到最新浮钮）。废除控件内 DispatcherTimer 补间动画与 Post 队列重试，滚动由宿主 Runner 直设并保证最终状态正确性。贴底跟随、未读由使用方持有；本控件只报滚动观察并执行滚动。浮钮使用原生 Button（样式类 primary / icon-button-accent）。分页前置历史的高度补偿与锚定动作交由 Effect.ScrollChat(PreparePrepend / RestorePrepend) 在入口 Runner 统一执行。
 
 ### 外观
 
-- `ChatScrollerLook`：`Ink`、`Gauge`、`Glyph`、`Frame`、`Reduced`、`DressLatest`、`Shadow`。
-- `ScrollEase`：使用方注入的补间（旧 ScrollTween）。
-
+外观接入主题动态资源（`Palette.*`），废除 `ChatScrollerLook`。使用方注入补间判定接口 `ScrollEase`。
 ### 证据与旧测试
 
 覆盖旧用例：`CraftsmanshipPolishTests` 回到最新显隐与读屏名、`EndpointScrollTests` / `InteractabilityPolishTests` 平滑滚动与滚轮打断、分页前置锚点。本库无头行为用例覆盖 Invoke、两拍到达、滚轮打断、前置补偿。
@@ -39,11 +38,11 @@
 
 ## ExchangeNav
 
-阅读导航端点态与「更早一页取失败」行内提示（迁自旧 `Views/ChatView.fs` 的 `canJumpPrevious` / `canJumpNext`、`olderFailureBanner`）。跳转状态机仍归 `ExchangeJump`；平滑滚动与挂载窗口扩容由宿主做。重试按钮是本库 Spot，带读屏 Invoke。根规则见项目根目录 AGENTS.md。
+阅读导航端点态与「更早一页取失败」行内提示（迁自旧 `Views/ChatView.fs` 的 `canJumpPrevious` / `canJumpNext`、`olderFailureBanner`）。跳转状态机仍归 `ExchangeJump`；重试按钮改用原生 Button（样式类 secondary）。
 
 ### 外观
 
-- `ExchangeNavLook`：`Ink`、`Gauge`、`BodyFont`、`DressRetry`、`Shadow`。
+废除 `ExchangeNavLook`，颜色使用 `Palette.Text`、`Palette.SurfaceRaised`、`Palette.Warning` 等动态资源。
 
 ### 证据与旧测试
 
@@ -53,12 +52,11 @@
 
 ## SkeletonList
 
-历史加载骨架（迁自旧 `Views/ChatView.fs` 的 `EnsureSkeletonBuilt` / `ShowSkeletonLoading` / `HideSkeletonLoading` 与骨架呼吸）：助手 → 用户 → 助手三块占位；显示且挂在可视树上、未减弱动效时按帧呼吸整块透明度。相位记账由使用方注入（旧 `BreathPhase`），计时器属于控件自己。根规则见项目根目录 AGENTS.md。
+历史加载骨架：助手 → 用户 → 助手三块占位。废除 DispatcherTimer 与 Look，视觉呼吸通过声明式动效样式类 `anim-breathe` 实现，减弱动效经 MotionSwitch 自动降级。
 
 ### 外观
 
-- `SkeletonListLook`：`Ink`（`SkeletonInk.Bar` / `Edge`）、`Gauge`（间距、阅读宽、头像、圆角、透明度档）、`Frame`、`Reduced`，都是活值。
-- `SkeletonBreath`：`Begin` 相位归零，`Step` 走一拍返回透明度（旧 BreathPhase 曲线）。
+废除 `SkeletonListLook`，统一走 Avalonia 资源字典与样式系统。
 
 ### 证据与旧测试
 

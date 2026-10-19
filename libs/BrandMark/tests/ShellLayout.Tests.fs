@@ -12,17 +12,6 @@ open Wanxiang2.ShellLayout
 
 let sidebarMin, sidebarMax, sidebarDefault, splitterW = 220.0, 420.0, 280.0, 6.0
 
-let look () =
-    let minW = Cell sidebarMin
-    minW,
-    { Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
-      ScrimFade = Cell TimeSpan.Zero
-      SidebarMinWidth = minW
-      SidebarMaxWidth = Cell sidebarMax
-      SplitterWidth = Cell splitterW
-      ChatMinHeight = Cell 48.0
-      StartMinHeight = Cell 560.0 }
-
 let fixture () =
     let sidebar = StackPanel()
     let list = ListBox(Focusable = true)
@@ -54,9 +43,8 @@ let ``main layout controller projects navigation state onto the shell grid`` () 
         let shell, sidebar, _, splitter, chatColumn, _, _ = fixture ()
         let window = Window(Width = 1000.0, Height = 640.0, Content = shell)
         window.Show()
-        let _, l = look ()
         let savedWidth = sidebarDefault
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, l, fun () -> savedWidth)
+        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMin, sidebarMax, splitterW, fun () -> savedWidth)
         let compactSeen = ResizeArray<bool>()
         controller.CompactApplied.Add compactSeen.Add
         let collapsed = { wide with SidebarCollapsed = true }
@@ -102,8 +90,7 @@ let ``collapsing the sidebar moves focus from the sidebar to the composer`` () =
         let shell, sidebar, list, splitter, chatColumn, composer, input = fixture ()
         let window = Window(Width = 1000.0, Height = 640.0, Content = shell)
         window.Show()
-        let _, l = look ()
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, l, fun () -> sidebarDefault)
+        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMin, sidebarMax, splitterW, fun () -> sidebarDefault)
         controller.FocusHomeRequested.Add(fun () -> input.Focus() |> ignore)
         controller.Apply wide
         list.Focus() |> ignore
@@ -125,16 +112,13 @@ let ``compact drawer scrim follows drawer state and dismisses on press`` () =
         let shell, sidebar, _, splitter, chatColumn, _, _ = fixture ()
         let window = Window(Width = 600.0, Height = 640.0, Content = shell)
         window.Show()
-        let minW, l = look ()
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, l, fun () -> sidebarDefault)
+        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMin, sidebarMax, splitterW, fun () -> sidebarDefault)
         let mutable dismissed = 0
         controller.ScrimPressed.Add(fun () -> dismissed <- dismissed + 1)
         controller.Apply compact
         Assert.True controller.Scrim.IsVisible
-        // 不透明度经过渡补间：断言目标值（基值）
-        Assert.Equal(box 1.0, controller.Scrim.GetBaseValue(Visual.OpacityProperty).Value)
         Assert.Equal(1, controller.Scrim.ZIndex)
-        Assert.Same(l.Scrim, controller.Scrim.Background)
+        Assert.True(controller.Scrim.Classes.Contains "scrim")
         let pointer = new Pointer(1, PointerType.Mouse, true)
         let args = PointerPressedEventArgs(controller.Scrim, pointer, shell, Point(10.0, 10.0), 0UL, PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed), KeyModifiers.None)
         controller.Scrim.RaiseEvent args
@@ -143,11 +127,9 @@ let ``compact drawer scrim follows drawer state and dismisses on press`` () =
         controller.Apply { compact with DrawerOpen = false }
         Assert.False controller.Scrim.IsVisible
         Assert.False sidebar.IsVisible
-        Assert.Equal(box 0.0, controller.Scrim.GetBaseValue(Visual.OpacityProperty).Value)
         controller.Apply wide
         Assert.False controller.Scrim.IsVisible
-        // 尺寸实时：最小宽度变了按上次状态重投影
-        minW.Set 250.0
+        controller.SetMinWidth 250.0
         Assert.Equal(250.0, shell.ColumnDefinitions[0].MinWidth)
         window.Close())
 
@@ -155,11 +137,10 @@ let ``compact drawer scrim follows drawer state and dismisses on press`` () =
 [<Fact>]
 let ``starting and continuing share the same focused draft and attachment controls`` () =
     Headless.run (fun () ->
-        let _, l = look ()
         let chat = Border()
         let input = TextBox(AcceptsReturn = true, Text = "保留这段尚未发送的想法")
         let composer = Border(Child = input, Height = 120.0)
-        let surface = WorkspaceStack(chat, composer, l)
+        let surface = WorkspaceStack(chat, composer, 560.0)
         let modes = ResizeArray<bool>()
         surface.StartModeChanged.Add modes.Add
         let window = Window(Width = 1000.0, Height = 820.0, Content = surface)

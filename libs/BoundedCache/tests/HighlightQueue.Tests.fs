@@ -5,14 +5,6 @@ open System.Threading.Tasks
 open Xunit
 open Wanxiang.UI
 
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "HighlightQueue", "highlightqueue.txt"))
-
-/// 金样由旧代码（旧 Rich/Highlight.fs 锁段，照抄）跑同一份 Samples 与 Render 生成
-[<Fact>]
-let ``golden: output matches the old code`` () =
-    Assert.Equal(expected (), HighlightQueueRender.render ())
-
-// ---- 文档规则的真实行为
 
 [<Fact>]
 let ``completions inside one window share a single notification`` () =

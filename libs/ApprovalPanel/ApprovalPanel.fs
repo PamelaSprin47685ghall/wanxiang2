@@ -6,13 +6,6 @@ open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Layout
 open Avalonia.Media
-open Wanxiang2.UiKit
-
-/// 按钮档对应的主题类（旧 Ui.button 的四档）
-module internal TapTone =
-    let primary = [ "surface"; "button-primary"; "hover-accent" ]
-    let secondary = [ "surface"; "button-secondary"; "hover-raised" ]
-    let ghost = [ "surface"; "button-ghost"; "hover-plain" ]
 
 /// 一条等待用户决定的工具审批（运行时状态，只在内存里）。
 type ApprovalAsk =
@@ -34,61 +27,43 @@ type ApprovalTexts =
       DisplayArguments: string -> string
       ArgsToggleText: bool -> string }
 
-/// 审批卡外观。全部由主题管理者提供活的实例。
-type ApprovalPanelLook =
-    { Text: IBrush
-      Muted: IBrush
-      Faint: IBrush
-      Warning: IBrush
-      /// 扳手图标（插槽）
-      Wrench: IBrush -> Control
-      BodyFontSize: IObservable<float>
-      CaptionFontSize: IObservable<float>
-      MicroFontSize: IObservable<float>
-      CaptionLineHeight: IObservable<float>
-      MonoFont: IObservable<FontFamily>
-      /// 触控命中下限（旧 Spacing.Hit.touch = 44）
-      TouchTarget: IObservable<float>
-      /// 按钮行最大宽度（旧 360）
-      ButtonRowMaxWidth: IObservable<float>
-      /// 卡内纵向间距、按钮间距、面板卡间距（旧 spaceMd）
-      Gap: IObservable<float>
-      /// 图标与正文的间距（旧 spaceXl）
-      IconGap: IObservable<float>
-      CardPadding: IObservable<Thickness>
-      CardRadius: IObservable<CornerRadius> }
-
 /// 审批卡（迁自旧 Views/ToolApprovalCard.fs 的 ToolApprovalCard 模块）。
 module ApprovalCard =
 
-    let private live (o: IObservable<'T>) f = o.Subscribe(fun v -> f v) |> ignore
-
     /// 渲染一张审批卡。`decide true` = 批准，`false` = 拒绝；只发一次，之后两键置灰并显示「已发送」。
-    let build (look: ApprovalPanelLook) (texts: ApprovalTexts) (req: ApprovalAsk) (decide: bool -> unit) : Control =
-        let icon = look.Wrench look.Warning
+    let build (wrench: Control option) (texts: ApprovalTexts) (req: ApprovalAsk) (decide: bool -> unit) : Control =
+        let icon =
+            match wrench with
+            | Some w -> w
+            | None ->
+                let b = Border(Width = 16.0, Height = 16.0)
+                b.Classes.Add "warning-icon"
+                b :> Control
         icon.VerticalAlignment <- VerticalAlignment.Top
-        let title = TextBlock(Text = "模型想使用工具，需要你批准", FontWeight = FontWeight.Medium, Foreground = look.Text, TextWrapping = TextWrapping.Wrap)
-        let summary = TextBlock(Text = req.Summary, Foreground = look.Text, TextWrapping = TextWrapping.Wrap)
-        for t in [ title; summary ] do live look.BodyFontSize (fun v -> t.FontSize <- v)
+        let title = TextBlock(Text = "模型想使用工具，需要你批准", FontWeight = FontWeight.Medium, TextWrapping = TextWrapping.Wrap)
+        let summary = TextBlock(Text = req.Summary, TextWrapping = TextWrapping.Wrap)
         AutomationProperties.SetAutomationId(summary, "tool-approval-summary")
-        let note = TextBlock(Text = texts.PolicyNote req.Policy, Foreground = look.Muted, TextWrapping = TextWrapping.Wrap)
-        live look.CaptionFontSize (fun v -> note.FontSize <- v)
-        live look.CaptionLineHeight (fun v -> note.LineHeight <- v)
-        let status = TextBlock(Text = "", Foreground = look.Muted, IsVisible = false)
-        live look.CaptionFontSize (fun v -> status.FontSize <- v)
+        let note = TextBlock(Text = texts.PolicyNote req.Policy, TextWrapping = TextWrapping.Wrap)
+        note.Classes.Add "muted"
+        let status = TextBlock(Text = "", IsVisible = false)
+        status.Classes.Add "muted"
         AutomationProperties.SetAutomationId(status, "tool-approval-status")
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)
         let mutable decided = false
-        let mutable buttons: Tap list = []
+        let mutable buttons: Button list = []
         let choose approved () =
             if not decided then
                 decided <- true
-                for b in buttons do b.SetEnabled false
+                for b in buttons do b.IsEnabled <- false
                 status.Text <- texts.SentText approved
                 status.IsVisible <- true
                 decide approved
-        let approve = Tap.TextButton("批准", TapTone.primary, choose true)
-        let deny = Tap.TextButton("拒绝", TapTone.secondary, choose false)
+        let approve = Button(Content = "批准")
+        approve.Classes.Add "primary"
+        approve.Click.Add(fun _ -> choose true ())
+        let deny = Button(Content = "拒绝")
+        deny.Classes.Add "secondary"
+        deny.Click.Add(fun _ -> choose false ())
         buttons <- [ approve; deny ]
         AutomationProperties.SetAutomationId(approve, "tool-approval-approve")
         AutomationProperties.SetAutomationId(deny, "tool-approval-deny")
@@ -97,12 +72,11 @@ module ApprovalCard =
         // 触控优先：两键等宽平分一行，命中高度不低于触控下限。
         for b in buttons do
             b.HorizontalAlignment <- HorizontalAlignment.Stretch
-            live look.TouchTarget (fun v -> b.MinHeight <- v)
-        let row = Grid(HorizontalAlignment = HorizontalAlignment.Stretch)
-        live look.Gap (fun v -> row.ColumnSpacing <- v)
+            b.MinHeight <- 44.0
+        let row = Grid(HorizontalAlignment = HorizontalAlignment.Stretch, ColumnSpacing = 8.0)
         let cols = [ for _ in 1..2 -> ColumnDefinition(GridLength.Star) ]
         for c in cols do row.ColumnDefinitions.Add c
-        live look.ButtonRowMaxWidth (fun v -> for c in cols do c.MaxWidth <- v / 2.0)
+        for c in cols do c.MaxWidth <- 180.0
         Grid.SetColumn(approve, 0)
         Grid.SetColumn(deny, 1)
         row.Children.Add approve
@@ -110,28 +84,32 @@ module ApprovalCard =
         // 原始参数只出现一处：默认收起，点「查看参数」展开全文。
         let hasArgs = not (String.IsNullOrWhiteSpace req.ArgumentsJson) && req.ArgumentsJson <> "{}"
         let args =
-            TextBlock(Text = (if hasArgs then texts.DisplayArguments req.ArgumentsJson else ""), Foreground = look.Faint, TextWrapping = TextWrapping.Wrap, IsVisible = false)
-        live look.MicroFontSize (fun v -> args.FontSize <- v)
-        live look.MonoFont (fun v -> args.FontFamily <- v)
+            TextBlock(Text = (if hasArgs then texts.DisplayArguments req.ArgumentsJson else ""), TextWrapping = TextWrapping.Wrap, IsVisible = false)
+        args.Classes.Add "code-box"
         AutomationProperties.SetAutomationId(args, "tool-approval-args")
         let mutable expanded = false
-        let mutable toggle: Tap option = None
+        let mutable toggle: Button option = None
         let flip () =
             expanded <- not expanded
             args.IsVisible <- expanded
-            toggle |> Option.iter (fun t -> t.SetText(texts.ArgsToggleText expanded))
-        let t = Tap.TextButton(texts.ArgsToggleText false, TapTone.ghost, flip)
+            let txt = texts.ArgsToggleText expanded
+            toggle |> Option.iter (fun t ->
+                t.Content <- txt
+                AutomationProperties.SetName(t, txt))
+        let initialToggleText = texts.ArgsToggleText false
+        let t = Button(Content = initialToggleText)
+        t.Classes.Add "ghost"
+        t.Click.Add(fun _ -> flip ())
+        AutomationProperties.SetName(t, initialToggleText)
         toggle <- Some t
         t.IsVisible <- hasArgs
         t.HorizontalAlignment <- HorizontalAlignment.Left
-        live look.TouchTarget (fun v -> t.MinHeight <- v)
+        t.MinHeight <- 44.0
         AutomationProperties.SetAutomationId(t, "tool-approval-args-toggle")
-        let column = StackPanel(Orientation = Orientation.Vertical)
-        live look.Gap (fun v -> column.Spacing <- v)
+        let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
         for c in [ title :> Control; summary; args; t; note; row; status ] do column.Children.Add c
         // Auto/Star 网格：窄屏上摘要换行而不是被裁掉。
-        let body = Grid()
-        live look.IconGap (fun v -> body.ColumnSpacing <- v)
+        let body = Grid(ColumnSpacing = 12.0)
         body.ColumnDefinitions.Add(ColumnDefinition(GridLength.Auto))
         body.ColumnDefinitions.Add(ColumnDefinition(GridLength.Star))
         Grid.SetColumn(icon, 0)
@@ -140,36 +118,49 @@ module ApprovalCard =
         body.Children.Add column
         let card = Border(Child = body)
         card.Classes.Add "grouping-card"
-        live look.CardPadding (fun v -> card.Padding <- v)
-        live look.CardRadius (fun v -> card.CornerRadius <- v)
+        card.Padding <- Thickness(16.0, 12.0)
+        card.CornerRadius <- CornerRadius 8.0
         AutomationProperties.SetAutomationId(card, sprintf "tool-approval-%O" req.ApprovalId)
         AutomationProperties.SetName(card, sprintf "工具审批：%s" req.Summary)
         card :> Control
 
-/// 对话内的审批卡宿主（迁自旧 ToolApprovalPanel）：只显示当前对话的待审批项，内容全由主机事件驱动。
-type ApprovalPanel(look: ApprovalPanelLook, texts: ApprovalTexts, decide: Guid -> bool -> unit) as this =
+/// 对话内的审批卡宿主：单入口 Render(ApprovalVS)，单出口意图事件 Decide(Guid * bool)。
+type ApprovalPanel(texts: ApprovalTexts, wrenchIcon: (unit -> Control) option) as this =
     inherit StackPanel()
 
     let pending = Collections.Generic.List<ApprovalAsk>()
     let mutable conversation: Guid option = None
+    let decideEvent = Event<Guid * bool>()
 
     let refresh () =
         this.Children.Clear()
         for req in pending do
             if conversation = Some req.ConversationId then
-                this.Children.Add(ApprovalCard.build look texts req (fun ok -> decide req.ApprovalId ok))
+                let icon = wrenchIcon |> Option.map (fun f -> f ())
+                this.Children.Add(ApprovalCard.build icon texts req (fun ok -> decideEvent.Trigger(req.ApprovalId, ok)))
         this.IsVisible <- this.Children.Count > 0
 
     do
         this.Orientation <- Orientation.Vertical
-        look.Gap.Subscribe(fun v -> this.Spacing <- v) |> ignore
+        this.Spacing <- 8.0
         this.VerticalAlignment <- VerticalAlignment.Bottom
         // 宽度与边距跟随宿主列，自己不定 MaxWidth。
         this.HorizontalAlignment <- HorizontalAlignment.Stretch
         this.IsVisible <- false
 
+    new(texts: ApprovalTexts) = ApprovalPanel(texts, None)
+
+    [<CLIEvent>] member _.Decide = decideEvent.Publish
+
     member _.Pending: ApprovalAsk list = List.ofSeq pending
     member _.AwaitingCallIds: Set<string> = pending |> Seq.map _.CallId |> Set.ofSeq
+
+    /// 单入口幂等渲染：以当前对话的审批列表投影为准
+    member _.Render(items: ApprovalAsk list, currentConversation: Guid option) =
+        conversation <- currentConversation
+        pending.Clear()
+        pending.AddRange items
+        refresh ()
 
     /// 新增（或按 ApprovalId 覆盖）一条
     member _.Upsert(req: ApprovalAsk) =

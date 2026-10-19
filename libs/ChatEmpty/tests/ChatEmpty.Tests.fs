@@ -12,14 +12,7 @@ open Avalonia.Threading
 open Xunit
 open Wanxiang2.ChatEmpty
 open Wanxiang2.ChatEmpty.Tests
-
-let private look () =
-    { Ink = (fun _ -> Brushes.Gray :> IBrush)
-      Gauge = (fun _ -> Cell 8.0 :> IObservable<float>)
-      BodyFont = Cell FontFamily.Default
-      DressPrimary = (fun b -> b.Classes.Add "button-primary")
-      DressSecondary = (fun b -> b.Classes.Add "button-secondary")
-      DressCard = (fun b -> b.Classes.Add "grouping-card") }
+open Wanxiang2.WorkspaceState
 
 let rec private all (c: Control) : Control list =
     c :: [ for x in c.GetLogicalChildren() do
@@ -38,7 +31,7 @@ let private invoke (c: Control) =
 [<Fact>]
 let ``对话起点：主按钮、预设与起手式都可经读屏 Invoke 触发`` () =
     Headless.run (fun () ->
-        let e = ChatEmpty(look ())
+        let e = ChatEmpty()
         let log = ResizeArray<string>()
         e.SetStarters [ "解释概念", "用通俗的话解释：" ]
         e.SetStarterPick(Some(fun seed -> log.Add("seed:" + seed)))
@@ -59,7 +52,7 @@ let ``对话起点：主按钮、预设与起手式都可经读屏 Invoke 触发
 [<Fact>]
 let ``同一空态重复显示不重建；换动作仍生效`` () =
     Headless.run (fun () ->
-        let e = ChatEmpty(look ())
+        let e = ChatEmpty()
         let mutable hit = ""
         e.ShowPrompt("t", "h", Some("开始", fun () -> hit <- "a"))
         let first = (e.Host :?> StackPanel).Children[0]
@@ -72,9 +65,19 @@ let ``同一空态重复显示不重建；换动作仍生效`` () =
         w.Close())
 
 [<Fact>]
+let ``Render 单入口：根据 ChatPhase 渲染对应空态`` () =
+    Headless.run (fun () ->
+        let e = ChatEmpty()
+        e.Render(ChatPhase.Empty IdleEmptyKind.NotConnected, ("连接", ignore))
+        Assert.True e.IsShown
+        e.Render(ChatPhase.Empty IdleEmptyKind.NoConversation)
+        Assert.True e.IsShown
+        e.Render(ChatPhase.Skeleton)
+        Assert.False e.IsShown)
+[<Fact>]
 let ``没有起手式回调时不画起手式行；品牌空态包在分组卡里`` () =
     Headless.run (fun () ->
-        let e = ChatEmpty(look ())
+        let e = ChatEmpty()
         e.SetStarters [ "写代码", "写一段代码，实现：" ]
         e.ShowPrompt("t", "h", None)
         Assert.Equal(1, (e.Host :?> StackPanel).Children.Count)
@@ -88,7 +91,7 @@ let ``没有起手式回调时不画起手式行；品牌空态包在分组卡�
 [<Fact>]
 let ``内嵌内容原样挂上，再挂同一块不重建；贴底改对齐`` () =
     Headless.run (fun () ->
-        let e = ChatEmpty(look ())
+        let e = ChatEmpty()
         let content = Border()
         e.ShowEmbedded content
         e.ShowEmbedded content

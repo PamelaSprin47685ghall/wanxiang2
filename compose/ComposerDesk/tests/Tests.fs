@@ -26,7 +26,7 @@ let private rig () =
           DropFiles = ignore
           PasteFromClipboard = (fun () -> false)
           OpenSessionSettings = ignore }
-    let desk = ComposerDesk(ComposerLooks.ofTheme theme styles, actions)
+    let desk = ComposerDesk(ComposerMetrics.ofTheme theme styles, actions)
     let w = Window(Width = 800.0, Height = 300.0, Content = desk.Host)
     w.Show()
     Dispatcher.UIThread.RunJobs()

@@ -11,26 +11,10 @@ open Xunit
 open Wanxiang2.ToolsPane
 open Wanxiang2.ToolsPane.Tests.Probe
 
-let private look () =
-    let body = Cell 14.0
-    let gap = Cell 12.0
-    body, gap,
-    { Text = Looks.brush Colors.Black; Muted = Looks.brush Colors.Gray; Faint = Looks.brush Colors.LightGray
-      Accent = Looks.brush Colors.Blue; Danger = Looks.brush Colors.Red; Success = Looks.brush Colors.Green
-      Warning = Looks.brush Colors.Orange; FieldSurface = Looks.brush Colors.White; FieldEdge = Looks.brush Colors.Silver
-      BodyFontSize = body; SmallFontSize = Cell 13.0; CaptionFontSize = Cell 12.0; MicroFontSize = Cell 11.0
-      HeadingFontSize = Cell 17.0; TitleFontSize = Cell 19.0; DisplayFontSize = Cell 28.0; CaptionLineHeight = Cell 17.0
-      LabelTracking = Cell 0.2; SpaceXs = Cell 4.0; SpaceSm = Cell 6.0; SpaceMd = gap; SpaceXl = Cell 16.0
-      Space2xl = Cell 20.0; Space4xl = Cell 32.0; RadiusMd = Cell 8.0; RadiusLg = Cell 12.0; BorderWidth = Cell 1.0
-      FieldInsetX = Cell 4.0; TextFieldPaddingY = Cell 6.0; TextFieldTextMinHeight = Cell 22.0; SettingsRowMinHeight = Cell 52.0
-      MonoFont = Cell(FontFamily "monospace"); Glyph = Looks.glyph
-      SpaceXXs = Cell 2.0; TextAreaMinHeight = Cell 72.0; EmptyLogoSize = Cell 40.0; PendingMinWidth = Cell 96.0 }
-
 let private empty = { Tools = []; Folders = []; SandboxNote = "文件读取工具当前不可用：还没有授权任何文件夹。"; ExposeDebug = false; Servers = [] }
 
 let private pane () =
-    let _, _, l = look ()
-    let p = ToolsPane l
+    let p = ToolsPane()
     let _ = host p.View
     p.Render empty
     p
@@ -85,15 +69,13 @@ let ``工具设置：每个工具有审批方式入口，授权文件夹有入�
 [<Fact>]
 let ``disabled mcp card dims its text while keeping row actions alive`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let p = ToolsPane l
+        let p = ToolsPane()
         let _ = host p.View
         let edits, mores = ResizeArray<string>(), ResizeArray<string>()
         p.EditServerClicked.Add edits.Add
         p.ServerMoreClicked.Add(fun (id, _) -> mores.Add id)
         p.Render { empty with Servers = [ server "filesystem" "文件系统" false ] }
-        let name = descendants p.View |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "文件系统" -> Some t | _ -> None)
-        Assert.Same(l.Muted, name.Foreground)
+        let _name = descendants p.View |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "文件系统" -> Some t | _ -> None)
         let edit = (named p.View "编辑").Value
         let more = (named p.View "更多").Value
         Assert.True(edit.IsEnabled && more.IsEnabled)
@@ -105,14 +87,11 @@ let ``disabled mcp card dims its text while keeping row actions alive`` () =
 [<Fact>]
 let ``built-in tool row title shares the row-title body font`` () =
     Headless.run (fun () ->
-        let body, _, l = look ()
-        let p = ToolsPane l
+        let p = ToolsPane()
         let _ = host p.View
         p.Render { empty with Tools = [ { Id = "t"; Label = "当前时间"; Description = "d"; FromMcp = false; PolicyLabel = "自动执行" } ] }
         let title = descendants p.View |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "当前时间" -> Some t | _ -> None)
-        Assert.Equal(14.0, title.FontSize)
-        body.Set 16.0
-        Assert.Equal(16.0, title.FontSize))
+        Assert.Equal(14.0, title.FontSize))
 
 [<Fact>]
 let ``switch row consumes the shared settings row height and toggle semantics`` () =
@@ -134,13 +113,12 @@ let ``switch row consumes the shared settings row height and toggle semantics`` 
 [<Fact>]
 let ``SettingsTools ShowEditor validates id, command/url, timeout and saves valid config`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
         let messages = Collections.Generic.Dictionary<TextBox, TextBlock>()
         let validation (box: TextBox) =
             let t = TextBlock(IsVisible = false)
             messages[box] <- t
             Some(t :> Control)
-        let editor = McpEditor(l, None, validation)
+        let editor = McpEditor(None, validation)
         let _ = host editor.View
         Assert.Equal(6, messages.Count)
         Assert.Same(editor.IdBox, editor.InitialFocus)
@@ -167,9 +145,8 @@ let ``SettingsTools ShowEditor validates id, command/url, timeout and saves vali
 [<Fact>]
 let ``editing an existing mcp server locks its id and focuses the label`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
         let v = { Id = "fs"; Label = "文件"; Command = "npx"; Args = "-y\nserver"; Url = ""; Timeout = "30"; Enabled = false }
-        let editor = McpEditor(l, Some v, (fun _ -> None))
+        let editor = McpEditor(Some v, fun _ -> None)
         let _ = host editor.View
         Assert.False editor.IdBox.IsEnabled
         Assert.Same(editor.LabelBox, editor.InitialFocus)
@@ -180,8 +157,7 @@ let ``editing an existing mcp server locks its id and focuses the label`` () =
 [<Fact>]
 let ``folder editor sends the trimmed path on enter`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let editor = FolderEditor(l, (fun _ -> None))
+        let editor = FolderEditor(fun _ -> None)
         let _ = host editor.View
         let paths = ResizeArray<string>()
         editor.SaveRequested.Add paths.Add

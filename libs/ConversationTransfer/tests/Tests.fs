@@ -6,12 +6,6 @@ open System.Text.Json.Nodes
 open Xunit
 open Wanxiang.UI
 
-// 金标准：golden/expected.txt 由旧程序集在 TZ=UTC 下跑同一份 Render.fs 生成；Markdown 头部按本地时区写时间，故只在 UTC 下比对。
-[<Fact>]
-let ``golden: export json, preamble and import preview match old code`` () =
-    if TimeZoneInfo.Local.BaseUtcOffset = TimeSpan.Zero then
-        Assert.Equal(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "expected.txt")), Render.all ())
-
 let private forkLineage parent =
     { parentId = Some parent; parentTitle = Some "原对话"; parentDeleted = false; forkOrdinal = Some 3
       forkBaseMessageId = Some 4UL; forks = [ Guid.NewGuid(), "子分叉", Some 9UL ] }

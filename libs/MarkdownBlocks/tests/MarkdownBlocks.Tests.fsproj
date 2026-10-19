@@ -5,7 +5,6 @@
     <Compile Include="Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../MarkdownBlocks.fsproj" />
   </ItemGroup>

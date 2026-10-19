@@ -11,7 +11,6 @@ open Avalonia.Threading
 open Xunit
 open Wanxiang2.TextEditPane
 open Wanxiang2.TextEditPane.Tests.Probe
-open Wanxiang2.TextEditPane.Tests.Fixture
 
 let private press (w: Window) k mods =
     w.KeyPress(k, mods, PhysicalKey.None, null)
@@ -21,8 +20,7 @@ let private press (w: Window) k mods =
 [<Fact>]
 let ``editText dialog loads text and submits on confirm`` () =
     Headless.run (fun () ->
-        let look, _ = make ()
-        let p = TextEditPane(look, "编辑消息", "原文\n第二行", "分叉")
+        let p = TextEditPane("编辑消息", "原文\n第二行", "分叉")
         let w = host p.View
         let sent = ResizeArray<string>()
         p.Submitted.Add sent.Add

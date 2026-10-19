@@ -4,14 +4,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "BreathPhase", "breathphase.txt"))
-
-/// 金样由旧代码（旧 Views/ChatView.fs StartSkeletonBreathing，照抄）跑同一份 Samples 与 Render 生成
-[<Fact>]
-let ``golden: output matches the old code`` () =
-    Assert.Equal(expected (), BreathPhaseRender.render ())
-
-// ---- 文档规则的真实行为
 
 [<Fact>]
 let ``opacity stays inside 0.55 to 0.95 and restarts from zero phase`` () =

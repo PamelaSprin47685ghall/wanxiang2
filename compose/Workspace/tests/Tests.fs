@@ -35,13 +35,13 @@ let private rig (collapsed: bool) =
           Now = fun () -> DateTimeOffset.UnixEpoch }
     let composer =
         ComposerDesk(
-            ComposerLooks.ofTheme theme styles,
+            ComposerMetrics.ofTheme theme styles,
             { Submit = (fun _ -> true); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
               OpenModelPicker = ignore; DropFiles = ignore; PasteFromClipboard = (fun () -> false); OpenSessionSettings = ignore })
     let ws: Workspace option ref = ref None
     let chat =
         ChatScreen(
-            ChatScreenLooks.ofTheme theme styles,
+            ChatScreenMetrics.ofTheme theme styles,
             MessageCards(CardLooks.ofTheme theme styles, host),
             composer, ApprovalDesk(theme, overlay, ignore), overlay, logo,
             { Card =
@@ -104,4 +104,29 @@ let ``顶栏侧栏按钮经宿主切换：桌面折叠侧栏，紧凑模式开�
         Assert.True ws.State.compactNavigationOpen
         press ()
         Assert.False ws.State.compactNavigationOpen
+        w.Close())
+
+[<Fact>]
+let ``Workspace.Render(ShellVS) 单入口幂等应用布局与抽屉状态`` () =
+    Headless.run (fun () ->
+        let ws, _, _, w = rig false
+        let shellVS: Wanxiang2.WorkspaceState.ShellVS = {
+            Compact = false
+            SidebarOpen = true
+            SidebarWidth = 280.0
+            StartingPageVisible = true
+        }
+        ws.Render shellVS
+        Dispatcher.UIThread.RunJobs()
+        Assert.False ws.State.sidebarCollapsed
+        let compactVS: Wanxiang2.WorkspaceState.ShellVS = {
+            Compact = true
+            SidebarOpen = true
+            SidebarWidth = 280.0
+            StartingPageVisible = false
+        }
+        ws.ObserveViewport 480.0
+        ws.Render compactVS
+        Dispatcher.UIThread.RunJobs()
+        Assert.True ws.State.compactNavigationOpen
         w.Close())

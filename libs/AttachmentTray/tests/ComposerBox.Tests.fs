@@ -7,21 +7,10 @@ open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
 open Avalonia.Controls
 open Avalonia.Input
-open Avalonia.Media
 open Avalonia.Threading
 open Xunit
 open Wanxiang2.ComposerBox
 open Wanxiang2.ComposerBox.Tests
-
-let private look () =
-    { Ink = (fun _ -> SolidColorBrush(Colors.Gray) :> IBrush)
-      Gauge = (fun _ -> Cell 8.0 :> _)
-      BodyFont = Cell FontFamily.Default
-      Glyph = (fun _ _ -> Border(Width = 10.0, Height = 10.0) :> Control)
-      DressSend = ignore
-      DressQueue = ignore
-      DressAttach = ignore
-      DressGhost = ignore }
 
 let private ready =
     { VisionBlocked = false; VisionMessage = ""; SendEnabled = true; QueueEnabled = true; QueueVisible = false
@@ -39,7 +28,7 @@ let private key (c: Control) k m =
 [<Fact>]
 let ``发送、附件、停止都可经读屏 Invoke`` () =
     Headless.run (fun () ->
-        let b = ComposerBox(look ())
+        let b = ComposerBox()
         let log = ResizeArray<string>()
         b.Submitted.Add(fun t -> log.Add("send:" + t))
         b.AttachAsked.Add(fun () -> log.Add "attach")
@@ -61,7 +50,7 @@ let ``发送、附件、停止都可经读屏 Invoke`` () =
 [<Fact>]
 let ``Enter 发送、Shift+Enter 换行；Ctrl+Enter 模式反过来；输入法组合中不提交`` () =
     Headless.run (fun () ->
-        let b = ComposerBox(look ())
+        let b = ComposerBox()
         let mutable n = 0
         b.Submitted.Add(fun _ -> n <- n + 1)
         b.SetEnabled(true, "")
@@ -71,7 +60,6 @@ let ``Enter 发送、Shift+Enter 换行；Ctrl+Enter 模式反过来；输入法
         w.Show()
         key b.Input Key.Enter KeyModifiers.None
         key b.Input Key.Enter KeyModifiers.Shift
-        // Shift 永远换行：Ctrl+Shift+Enter、⌘+Shift+Enter 都不发送（旧 `SendKey.sends` 的互补规则）
         key b.Input Key.Enter (KeyModifiers.Control ||| KeyModifiers.Shift)
         key b.Input Key.Enter (KeyModifiers.Meta ||| KeyModifiers.Shift)
         Assert.Equal(1, n)
@@ -80,7 +68,6 @@ let ``Enter 发送、Shift+Enter 换行；Ctrl+Enter 模式反过来；输入法
         key b.Input Key.Enter KeyModifiers.Control
         key b.Input Key.Enter (KeyModifiers.Control ||| KeyModifiers.Shift)
         Assert.Equal(2, n)
-        // Ctrl+Enter 档里 ⌘+Enter 等价发送
         key b.Input Key.Enter KeyModifiers.Meta
         Assert.Equal(3, n)
         b.SetImeProbe(fun _ -> true)
@@ -91,7 +78,7 @@ let ``Enter 发送、Shift+Enter 换行；Ctrl+Enter 模式反过来；输入法
 [<Fact>]
 let ``禁用时说明条可见、附件键不可用；看图受阻挂提示`` () =
     Headless.run (fun () ->
-        let b = ComposerBox(look ())
+        let b = ComposerBox()
         b.SetEnabled(false, "连接已断开")
         Assert.False b.AttachButton.IsEnabled
         Assert.Equal("", b.Input.PlaceholderText)
@@ -104,7 +91,7 @@ let ``禁用时说明条可见、附件键不可用；看图受阻挂提示`` ()
 [<Fact>]
 let ``Enter 发送档 Ctrl+Enter 不发送；钩子先于发送判定；排队键直达提交；异常照常抛出`` () =
     Headless.run (fun () ->
-        let b = ComposerBox(look ())
+        let b = ComposerBox()
         let log = ResizeArray<string>()
         b.Submitted.Add(fun t -> log.Add t)
         b.SetEnabled(true, "")
@@ -114,7 +101,6 @@ let ``Enter 发送档 Ctrl+Enter 不发送；钩子先于发送判定；排队�
         key b.Input Key.Enter KeyModifiers.Control
         Assert.Empty log
         b.Input.Text <- "x"
-        // 门控尚未写入也照样交给宿主（宿主同步判定）
         key b.Input Key.Enter KeyModifiers.None
         Assert.Equal<string list>([ "x" ], List.ofSeq log)
         b.SetKeyHook(fun e -> e.Key = Key.Enter)
@@ -132,7 +118,7 @@ let ``Enter 发送档 Ctrl+Enter 不发送；钩子先于发送判定；排队�
 [<Fact>]
 let ``窄屏收起对话上下文按钮，回到宽屏恢复`` () =
     Headless.run (fun () ->
-        let b = ComposerBox(look ())
+        let b = ComposerBox()
         b.ShowContext("系统指令", "详情", true)
         b.SetCompact true
         Assert.False b.ContextButton.IsVisible

@@ -32,3 +32,9 @@ module CardDeck =
         match message.commitId with
         | Some id when not ctx.Streaming -> Some(sprintf "%d|%b|%g" id ctx.IsLastAssistant ctx.FontSize)
         | _ -> None
+
+    /// 针对 MessageRowVS 的缓存键：commitId 存在且非流式时作为主键
+    let keyOfRow (row: Wanxiang2.WorkspaceState.MessageRowVS) (ctx: CardContext) =
+        match row.CommitId with
+        | Some id when not row.Streaming -> Some(sprintf "%d|%b|%g" id row.IsLastAssistant ctx.FontSize)
+        | _ -> None

@@ -31,7 +31,7 @@
 
 ### 外观
 
-- `OverlayLayerLook`：`Scrim`、`Surface`、`Edge`（画笔）；`EdgeWidth`、`DialogRadius`、`PopupRadius`、`DialogPadding`、`PopupPadding`、`DialogShadow`、`PopupShadow`、`ViewportInset`、`PopupGap`、`PopupMinWidth`、`ScrimFade`（活的值）；`ScrimEasing`。
+- `OverlayLayerAppearance`：`Scrim`、`Surface`、`Edge`（画笔）；`EdgeWidth`、`DialogRadius`、`PopupRadius`、`DialogPadding`、`PopupPadding`、`DialogShadow`、`PopupShadow`、`ViewportInset`、`PopupGap`、`PopupMinWidth`、`ScrimFade`（活的值）；`ScrimEasing`。
 - 用到的样式类：无。
 
 ### 证据与旧测试
@@ -45,3 +45,4 @@
 
 - 阴影改为 Look 里的活值绑定，取代旧代码订阅 `Tokens.Changed` 重新赋值。
 - 浮层默认最小宽度来自 Look（旧代码写死 180）。
+- `OverlayLayer` 内部保留的焦点与定位 Post（第 103/110/137/316/318 行）：浮层/对话框挂载后等待首帧排版及关闭后归还焦点（布局时序排队，非焦点竞态）。

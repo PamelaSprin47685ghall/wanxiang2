@@ -7,6 +7,7 @@
        不持 DispatcherTimer、不做文件 IO：几何持久化、偏好读写等经注入端口提供。 -->
   <ItemGroup>
     <Compile Include="SharedTheme.fs" />
+    <Compile Include="Effects.fs" />
     <Compile Include="Icons.fs" />
     <Compile Include="MainWindow.fs" />
     <Compile Include="Composer.fs" />
@@ -25,11 +26,14 @@
     <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PromptHistory" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerDrafts" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ModelVision" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

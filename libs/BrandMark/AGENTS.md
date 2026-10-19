@@ -16,8 +16,8 @@
 
 ### 外观
 
-- `BrandMarkLook`：`Surface`、`Accent`（画笔）；`RadiusRatio`、`GlyphRatio`（活的值）。
-- 用到的样式类：无。
+- 废除 `BrandMarkLook`，样式全走 Avalonia 样式系统。
+- 用到的样式类：无图时外框 `surface`，字 `brand-glyph`。
 
 ### 证据与旧测试
 
@@ -42,7 +42,8 @@
 
 ### 外观
 
-- `ShellLayoutLook`：`Scrim` 画笔、`ScrimFade` 时长、侧栏最小最大宽、分隔条宽、聊天区与开始页最小高，均为活实例。
+- 废除 `ShellLayoutLook`，样式全走 Avalonia 样式系统。
+- 用到的样式类：遮罩 `scrim`。
 
 ### 证据与旧测试
 

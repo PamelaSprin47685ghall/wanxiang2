@@ -1,4 +1,3 @@
-/// 金标准渲染：同一份源码分别对旧程序集与新库编译。导出时间固定、用 UTC 偏移，Markdown 头部的本地时间由 TZ=UTC 固定。
 module Render
 
 open System

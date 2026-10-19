@@ -6,19 +6,23 @@ open Avalonia.Controls
 open Avalonia.Media
 open Avalonia.VisualTree
 open Wanxiang.UI
-open Wanxiang2.UiKit
 
 /// 公式控件的外观。全部是主题管理者的活实例：
 /// Ink 是可变画笔（改色不重排）；BodyFont 变了就重排；BlockPadding 是展示式公式上下留白。
-type MathFigureLook =
+type MathFigureMetrics =
     { Ink: IBrush
       BodyFont: IObservable<FontFamily>
       BlockPadding: IObservable<float> }
 
 /// 画一条公式（旧 Rich/MathVisual.fs）。KaTeX HTML 由调用方给（宿主的 RichBackend 产出），本控件只排版与绘制。
 /// lineHeight 是所在段落的行高（0 = 未设置）。
-type MathFigure(html: string option, displayMode: bool, fontSize: float, look: MathFigureLook) as this =
+type MathFigure(html: string option, displayMode: bool, fontSize: float, look: MathFigureMetrics) as this =
     inherit Control()
+
+    static let now (source: IObservable<'T>) =
+        let mutable v = Unchecked.defaultof<'T>
+        (source.Subscribe(fun x -> v <- x)).Dispose()
+        v
 
     let mutable body: FontFamily = null
     let mutable picture: MathPicture option = None
@@ -33,12 +37,20 @@ type MathFigure(html: string option, displayMode: bool, fontSize: float, look: M
             | _ -> None
 
     do
-        Follow.live this look.BodyFont (fun f ->
+        let applyFont f =
             if not (obj.ReferenceEquals(f, body)) then
                 body <- f
                 relayout ()
                 this.InvalidateMeasure()
-                this.InvalidateVisual())
+                this.InvalidateVisual()
+        applyFont (now look.BodyFont)
+        let mutable fontSub: IDisposable = null
+        this.AttachedToVisualTree.Add(fun _ ->
+            if isNull fontSub then fontSub <- look.BodyFont.Subscribe applyFont)
+        this.DetachedFromVisualTree.Add(fun _ ->
+            if not (isNull fontSub) then (
+                fontSub.Dispose()
+                fontSub <- null))
 
     member _.HasLayout = picture.IsSome
 
@@ -92,7 +104,7 @@ module MathFigures =
         ToolTip.SetTip(figure, tex)
 
     /// 行内公式。字号跟随所在段落。
-    let tryInline (look: MathFigureLook) (html: string option) (fontSize: float) (tex: string) : Control option =
+    let tryInline (look: MathFigureMetrics) (html: string option) (fontSize: float) (tex: string) : Control option =
         let figure = new MathFigure(html, false, fontSize, look)
         if figure.HasLayout then
             describe figure tex
@@ -106,12 +118,25 @@ module MathFigures =
         container
 
     /// 展示式公式：独占一行、水平居中，上下留白取自 Look。
-    let tryBlock (look: MathFigureLook) (html: string option) (fontSize: float) (tex: string) : Control option =
+    let tryBlock (look: MathFigureMetrics) (html: string option) (fontSize: float) (tex: string) : Control option =
         let figure = new MathFigure(html, true, fontSize, look)
         if not figure.HasLayout then None
         else
             describe figure tex
             figure.HorizontalAlignment <- Layout.HorizontalAlignment.Center
             let host = Border(Child = figure, HorizontalAlignment = Layout.HorizontalAlignment.Stretch)
-            Follow.live host look.BlockPadding (fun v -> host.Padding <- Thickness(0.0, v))
+            let now (source: IObservable<'T>) =
+                let mutable v = Unchecked.defaultof<'T>
+                (source.Subscribe(fun x -> v <- x)).Dispose()
+                v
+            let applyPad v = host.Padding <- Thickness(0.0, v)
+            applyPad (now look.BlockPadding)
+            let mutable padSub: IDisposable = null
+            host.AttachedToVisualTree.Add(fun _ ->
+                if isNull padSub then
+                    padSub <- look.BlockPadding.Subscribe applyPad)
+            host.DetachedFromVisualTree.Add(fun _ ->
+                if not (isNull padSub) then
+                    padSub.Dispose()
+                    padSub <- null)
             Some(host :> Control)

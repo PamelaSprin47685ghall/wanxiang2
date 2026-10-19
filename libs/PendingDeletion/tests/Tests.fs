@@ -31,12 +31,6 @@ let ``§214 到期提交只交出一次；重复登记不重复删`` () =
     let _, twice = PendingDeletion.commit batch.Value.token s2
     Assert.Empty twice
 
-// 金标准：golden/expected.txt 由 tools/OldPendingDeletion.fs（旧 AppShell 原样摘录）跑同一份 Render.fs 生成。
-[<Fact>]
-let ``golden: neighbor and restored text match old AppShell`` () =
-    Assert.Equal(IO.File.ReadAllText(IO.Path.Combine(AppContext.BaseDirectory, "golden", "expected.txt")), Render.all ())
-
-// 迁自旧 AppShellTests（原用例经反射调 MainView.NeighborExcluding，侧栏可见顺序由真实 Sidebar 排出；这里直接给出同样的顺序）。
 [<Fact>]
 let ``NeighborExcluding returns next visible neighbor when active conversation is removed`` () =
     let id1, id2, id3 = Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()

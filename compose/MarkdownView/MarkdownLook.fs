@@ -81,7 +81,7 @@ type MarkdownButton =
 /// Markdown 正文的外观。全部是主题管理者的活实例，由组合者填：
 /// 画笔原地改色；尺寸与字体是活值，控件挂在可视树上期间跟随；
 /// Glyph 给定画笔造一个图标（尺寸由填写方决定）；Dress 给按钮挂上主题安装的共享样式类。
-type MarkdownLook =
+type MarkdownMetrics =
     { Ink: MarkdownInk -> IBrush
       Gauge: MarkdownGauge -> IObservable<float>
       BodyFont: IObservable<FontFamily>
@@ -90,5 +90,5 @@ type MarkdownLook =
       Dress: MarkdownButton -> Border -> unit
       /// 减弱动效（复制确认不淡出）
       Reduced: IObservable<bool>
-      Copy: CopyButtonLook
-      Math: MathFigureLook }
+      Copy: CopyButtonAppearance
+      Math: MathFigureMetrics }

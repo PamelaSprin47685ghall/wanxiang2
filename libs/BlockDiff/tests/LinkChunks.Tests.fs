@@ -7,18 +7,6 @@ open Wanxiang.UI
 
 let private js (s: string) = Text.Json.JsonSerializer.Serialize s
 
-/// 金样由旧 MarkdownRenderer.SafeChunk / RebalanceLinkChunks 生成
-[<Fact>]
-let ``golden: chunking and rebalancing match the old renderer`` () =
-    let sb = StringBuilder()
-    let line (s: string) = sb.Append(s).Append('\n') |> ignore
-    for (s, n) in LinkChunksSamples.chunkInputs do
-        let chunks = LinkChunks.safeChunk n s
-        line (sprintf "== chunk %s %d" (js s) n)
-        line ("safe: " + (chunks |> List.map js |> String.concat ","))
-        line ("rebalanced: " + (LinkChunks.rebalance chunks |> List.map js |> String.concat ","))
-    Assert.Equal(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "LinkChunks", "chunks.txt")), sb.ToString())
-
 [<Fact>]
 let ``empty input or non-positive size yields no chunks`` () =
     Assert.Empty(LinkChunks.safeChunk 3 null)

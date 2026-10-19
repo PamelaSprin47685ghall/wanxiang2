@@ -1,4 +1,3 @@
-/// 金标准渲染：同一份源码对旧程序集（经 load/save 文件）与新库（parse/render）分别取得结果后比较。
 module Render
 
 open System.Text

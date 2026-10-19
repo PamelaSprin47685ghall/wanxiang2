@@ -7,20 +7,11 @@ open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
 open Avalonia.Controls
 open Avalonia.Input
-open Avalonia.Media
 open Avalonia.Threading
 open Xunit
+open Wanxiang2.WorkspaceState
 open Wanxiang2.ChatHeader
 open Wanxiang2.ChatHeader.Tests
-
-let private look () =
-    { Ink = (fun _ -> SolidColorBrush(Colors.Gray) :> IBrush)
-      Gauge = (fun _ -> Cell 8.0 :> _)
-      BodyFont = Cell FontFamily.Default
-      Glyph = (fun _ _ -> Border(Width = 10.0, Height = 10.0) :> Control)
-      DressIcon = ignore
-      DressPlain = ignore
-      DressField = ignore }
 
 let private invoke (b: Control) =
     let peer = ControlAutomationPeer.CreatePeerForElement b
@@ -33,7 +24,7 @@ let private key (c: Control) k =
 [<Fact>]
 let ``标题改名：Enter 提交去空白，Esc 取消，未变不报；不可编辑时不进编辑`` () =
     Headless.run (fun () ->
-        let h = ChatHeader(look ())
+        let h = ChatHeader()
         let log = ResizeArray<string>()
         h.Renamed.Add log.Add
         let w = Window(Content = h.Host)
@@ -62,7 +53,7 @@ let ``标题改名：Enter 提交去空白，Esc 取消，未变不报；不可�
 [<Fact>]
 let ``改名途中主机标题到达：草稿不丢，提交以草稿为准`` () =
     Headless.run (fun () ->
-        let h = ChatHeader(look ())
+        let h = ChatHeader()
         let log = ResizeArray<string>()
         h.Renamed.Add log.Add
         let w = Window(Content = h.Host)
@@ -80,7 +71,7 @@ let ``改名途中主机标题到达：草稿不丢，提交以草稿为准`` ()
 [<Fact>]
 let ``生成中状态点桌面保留槽位、窄屏收起；更多按钮随对话；面包屑可点才报`` () =
     Headless.run (fun () ->
-        let h = ChatHeader(look ())
+        let h = ChatHeader()
         let w = Window(Content = h.Host)
         w.Show()
         Assert.True h.GeneratingChip.IsVisible
@@ -106,4 +97,53 @@ let ``生成中状态点桌面保留槽位、窄屏收起；更多按钮随对�
         h.SetCrumb None
         Assert.Equal("", h.CrumbText)
         Assert.Equal((1, 1), (more, crumb))
+        w.Close())
+
+[<Fact>]
+let ``单入口 Render(ChatHeaderVS) 幂等投影全部状态`` () =
+    Headless.run (fun () ->
+        let h = ChatHeader()
+        let w = Window(Content = h.Host)
+        w.Show()
+        let vs: ChatHeaderVS = {
+            Visible = true
+            Compact = false
+            InsetLeft = 16.0
+            Title = TitleMode.Viewing("测试会话", true)
+            GeneratingStatus = Some "生成中..."
+            Crumb = Some { ParentId = Guid.NewGuid(); ParentTitle = "根会话"; Clickable = true }
+            ShowBack = true
+            ShowMore = true
+        }
+        h.Render vs
+        Assert.True h.Host.IsVisible
+        Assert.Equal("测试会话", h.Title)
+        Assert.True h.MoreButton.IsVisible
+        Assert.Equal(1.0, h.GeneratingChip.Opacity)
+        Assert.Equal("根会话", h.CrumbText)
+        w.Close())
+
+[<Fact>]
+let ``紧凑态命中区宽按 target 放大，非紧凑态为默认尺寸`` () =
+    Headless.run (fun () ->
+        let h = ChatHeader()
+        let w = Window(Content = h.Host)
+        w.Show()
+        let desktopWidth = h.SidebarButton.Width
+        Assert.Equal(30.0, desktopWidth)
+        h.SetCompact(true, 44.0)
+        Assert.Equal(44.0, h.SidebarButton.Width)
+        Assert.Equal(44.0, h.MoreButton.Width)
+        Assert.True(h.SidebarButton.Width > desktopWidth)
+        h.SetCompact(false)
+        Assert.Equal(30.0, h.SidebarButton.Width)
+        Assert.Equal(30.0, h.MoreButton.Width)
+        let vsCompact = {
+            Visible = true; Compact = true; InsetLeft = 0.0
+            Title = TitleMode.Viewing("测试", false)
+            GeneratingStatus = None; Crumb = None; ShowBack = true; ShowMore = true
+        }
+        h.Render vsCompact
+        Assert.Equal(44.0, h.SidebarButton.Width)
+        Assert.Equal(44.0, h.MoreButton.Width)
         w.Close())

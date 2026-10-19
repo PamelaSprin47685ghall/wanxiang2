@@ -1,68 +1,60 @@
 namespace Wanxiang2.StreamCaret
 
-open Wanxiang2.UiKit
-
 open System
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Layout
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
-open Avalonia.Threading
+open Wanxiang2.WorkspaceState
+
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
 
 [<RequireQualifiedAccess>]
-type CaretGauge =
-    | Width
-    | Height
-    | Radius
-    /// 呼吸上限（减弱动效时恒定取它）
-    | OpacityMax
-
-type StreamCaretLook =
-    { Ink: IBrush
-      Gauge: CaretGauge -> IObservable<float>
-      /// 帧间隔（旧 MotionLedger.caretBreathFrame）
-      Frame: IObservable<TimeSpan>
-      Reduced: IObservable<bool> }
-
-/// 流式光标（旧 MessageCard.renderWithStream 里的 caret）：只做透明度呼吸，尺寸几何一概不动。
-/// 当前不透明度由使用方给的 `breath` 算（相位挂在跨重建持久的时钟上，重建不从峰值重启）；
-/// 本控件只在挂在树上时按帧重算，减弱动效时静态取上限、不起计时器。
-type StreamCaret(look: StreamCaretLook, breath: unit -> float) =
+/// 流式光标：采用声明式 anim-breathe 动效类，单入口 Render(StreamCaretVS)。
+type StreamCaret(?breath: unit -> float) =
     let caret =
-        Border(Background = look.Ink, HorizontalAlignment = HorizontalAlignment.Left, Margin = Thickness 0.0)
-    let timer = DispatcherTimer()
+        Border(
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = Thickness 0.0,
+            Width = 7.0,
+            Height = 15.0,
+            CornerRadius = CornerRadius 1.5)
     let mutable attached = false
     let mutable reduced = false
     let mutable peak = 1.0
+    let breathFn = defaultArg breath (fun () -> 1.0)
     let refresh () =
         if reduced || not attached then
-            timer.Stop()
+            caret.Classes.Remove "anim-breathe" |> ignore
             caret.Opacity <- peak
         else
-            caret.Opacity <- breath ()
-            timer.Start()
+            caret.Opacity <- breathFn ()
+            if not (caret.Classes.Contains "anim-breathe") then caret.Classes.Add "anim-breathe"
     do
-        Follow.live2 caret (look.Gauge CaretGauge.Width) (look.Gauge CaretGauge.Height) (fun w h ->
-            caret.Width <- w
-            caret.Height <- h)
-        Follow.live caret (look.Gauge CaretGauge.Radius) (fun r -> caret.CornerRadius <- CornerRadius r)
-        Follow.live caret (look.Gauge CaretGauge.OpacityMax) (fun m ->
-            peak <- m
-            if reduced || not attached then caret.Opacity <- m)
-        Follow.live caret look.Frame (fun f -> timer.Interval <- f)
-        Follow.live caret look.Reduced (fun r ->
-            reduced <- r
-            refresh ())
-        // 帧 tick 只按帧重算：相位是流逝时间的纯函数，掉帧不累积漂移
-        timer.Tick.Add(fun _ -> caret.Opacity <- breath ())
+        caret.Bind(Border.BackgroundProperty, Dyn.res "Palette.Accent") |> ignore
+        caret.Classes.Add "anim-breathe"
         caret.AttachedToVisualTree.Add(fun _ ->
             attached <- true
             refresh ())
         caret.DetachedFromVisualTree.Add(fun _ ->
             attached <- false
-            timer.Stop())
+            caret.Classes.Remove "anim-breathe" |> ignore)
 
     member _.Host: Control = caret
-    member _.IsBreathing = timer.IsEnabled
+    member _.IsBreathing = caret.Classes.Contains "anim-breathe" && not reduced
     /// 走一帧（测试不等真计时器）
-    member _.Step() = if attached && not reduced then caret.Opacity <- breath ()
+    member _.Step() = if attached && not reduced then caret.Opacity <- breathFn ()
+
+    /// 单入口：Render(StreamCaretVS)
+    member _.Render(vs: StreamCaretVS) =
+        caret.IsVisible <- vs.Visible
+        if vs.Visible then refresh () else caret.Classes.Remove "anim-breathe" |> ignore
+
+    /// 兼容重载：Render(visible)
+    member this.Render(visible: bool) =
+        this.Render({ Visible = visible })

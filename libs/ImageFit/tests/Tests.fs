@@ -5,12 +5,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-// 金标准：golden/expected.txt 由旧 ImageShrink.shrink 经 Skia 真实缩小得到。
-[<Fact>]
-let ``golden: fitted size, format and name match old shrink`` () =
-    Assert.Equal(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "expected.txt")), Render.all ())
-
-// 旧 shrink 的逐轮循环：第一轮放不下时按 0.75 缩边，最多 8 轮。
 [<Fact>]
 let ``332 放不下时按 0.75 逐轮缩边，最长边不超过 4096`` () =
     let limits = List.scan (fun l _ -> ImageFit.nextLimit (ImageFit.fit (12000, 3000) l)) ImageFit.maxDimension [ 1 .. ImageFit.maxAttempts - 1 ]

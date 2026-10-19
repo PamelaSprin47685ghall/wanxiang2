@@ -17,7 +17,7 @@ open Wanxiang2.ThemePalette
 open Wanxiang2.ThemeMetrics
 
 /// 未确认消息区的外观：主题管理者的活实例
-type PendingLook =
+type PendingAppearance =
     { Brush: PaletteKey -> IBrush
       Metric: Metric -> IObservable<float>
       Space: Space -> IObservable<float>
@@ -51,11 +51,12 @@ and private PendingButtonPeer(owner: PendingButton) =
     inherit ControlAutomationPeer(owner)
     override _.GetAutomationControlTypeCore() = AutomationControlType.Button
     interface IInvokeProvider with
+        // 跨线程 marshal，非焦点竞态（UI Automation 调用方可能来自辅助功能后台线程）
         member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())
 
 /// 未确认消息区（旧 Composer.SetPendingMessages）：当前对话的每条未确认消息一张分组卡，
 /// 别的对话的按对话给一个「查看」按钮，末尾一句保存提醒。
-type PendingPanel(look: PendingLook) =
+type PendingPanel(look: PendingAppearance) =
     let live (o: IObservable<'T>) (f: 'T -> unit) = o |> Observable.add f
     let panel = StackPanel()
     let scroller =

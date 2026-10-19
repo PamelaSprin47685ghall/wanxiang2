@@ -17,11 +17,10 @@ open Wanxiang2.GeneralPane
 /// （GenerationForm + FieldCheck）、对话预设列表、本机偏好（UiPrefs）、本机草稿（LocalDraftControls）、主机状态（HostHealth）、
 /// 诊断报告复制。界面归 GeneralPane 的三个分区。
 type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> SettingsHooks, initialPrefs: UiPrefs, onPrefsChanged: UiPrefs -> unit) =
-    let look = SettingsLooks.generalOf theme
     let check = FieldCheck(SettingsLooks.fieldCheckOf theme)
-    let generation = GenerationSection(look, (fun box -> Some(check.MessageFor box :> Control)))
-    let appearance = AppearanceSection(look)
-    let about = AboutSection(look)
+    let generation = GenerationSection((fun box -> Some(check.MessageFor box :> Control)), SettingsLooks.glyphOf theme)
+    let appearance = AppearanceSection(SettingsLooks.glyphOf theme)
+    let about = AboutSection(SettingsLooks.glyphOf theme)
     let health = HostHealth()
     let localDrafts = LocalDraftControls()
     let draft = GenerationDraft<GenerationInfo>(Catalog.empty.generation)
@@ -171,9 +170,9 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
                 async {
                     try
                         do! clip.SetTextAsync text |> Async.AwaitTask
-                        Dispatcher.UIThread.Post(fun () -> toast "诊断报告已复制到剪贴板。" ToastTone.Success)
+                        toast "诊断报告已复制到剪贴板。" ToastTone.Success
                     with _ ->
-                        Dispatcher.UIThread.Post(fun () -> toast "复制诊断报告失败，请重试。" ToastTone.Failure)
+                        toast "复制诊断报告失败，请重试。" ToastTone.Failure
                 }
                 |> Async.Start
 

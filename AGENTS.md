@@ -70,6 +70,19 @@
     临时兼容层、开关、废弃接口和未解耦关系，统一写在本文《例外清单》：使用方、保留理由、可验证的解除条件。条件满足就删除；无实际使用方的不建、不继续保留。若确无解除条件，应重新判断它是不是长期需求，明确修订相关规则和独立性声明，不虚构期限，也不靠改名为“上下层”宣告解耦。
     - 推理：必要义务应有依据（LEMMA 8），临时成本应可盘点和退出（AXIOM 2）。登记不是豁免，也不能把尚未满足的规则变成已完成。
 
+
+10. **底座已有的能力直接使用，不造仿制品。** [AXIOM: 2, 5; LEMMA: 8]
+    已声明的基础依赖（运行时、标准库、界面框架）若已提供某项机制（按钮与开关交互、焦点流转、浮层定位与外部点击关闭、列表虚拟化、样式资源下发、属性过渡动画），直接使用并配置该机制。不因为不熟悉其配置方式，就退回底层图元（裸边框、裸定时器、手工坐标计算）重新拼装一个功能残缺的仿制品。
+    - 推理：成熟底座已承担了大量跨平台与无障碍的边界条件（AXIOM 5）。用底层图元手搓仿制品，表面上少了框架配置，实际上要用成倍的业务代码和补丁去应付焦点、重入、输入法与触控边界，直接违背 AXIOM 2。
+
+11. **完整个体有粒度下限：拆职责，不拆条件分支与算式。** [AXIOM: 2, 3; LEMMA: 3, 4]
+    一个库（libs/）应对应一项能独立成立的领域职责或一个契约完整的组件。同一个状态机里的单个判断分支、纯算式、常量表或辅助函数，属于该状态机的内部实现，不单独拆成库。若拆出一个库后，外层组合者必须维护更多同步步骤或传递更多布尔标志，说明拆碎了同一个职责，应合回原处。
+    - 推理：把一个完整状态机切碎成十几个无状态小函数库，并没有减少依赖，只是把状态不变量拆散成组合者手里的隐式时序约定，违背 AXIOM 2 与 AXIOM 3。
+
+12. **状态单一归属，界面是状态的纯投影。** [AXIOM: 2, 3; LEMMA: 3]
+    同一份业务事实在内存中只有一个主人；用互斥类型表达合法状态，不用多个布尔或可空字段的排列组合暗示状态。展示组件不私藏业务状态的副本，也不提供多个具有调用先后依赖的 `Set*` 方法；组件接收完整视图状态并幂等地投影到界面。焦点转移与滚动定位作为状态转移的结果统一执行，不在子组件事件中各自异步投递。
+    - 推理：多处保存同一事实或靠调用顺序拼凑界面，必然在异步事件交错时产生分裂状态（AXIOM 3）。让非法状态在类型上不可表示，才能写出「明显没有缺陷」的代码（AXIOM 2）。
+
 # SPEC — 用什么证据验收
 
 1. **规则可追溯。** [LEMMA: 1, 8, 9]
@@ -107,6 +120,13 @@
 
 具体项目只补本项目特有的需要、协议、工具和证据。测试与构建采用能完成验证的最简单手段，不为执行本模板另建通用治理平台。规则与实现共同演进；局部条款与根规则冲突时明确修订，不能靠复制或默默覆盖留下两套要求。
 
+
+7. **界面闭环与不变式证明（本项目补充）。** [AXIOM: 1, 5; SPEC: 3, 4, 6]
+    界面验证以用户的真实操作闭环为准，不再新增与旧仓库死代码比对的金样测试（Golden Test）。
+    - 状态闭环证明：对核心用户旅程（首次配对 → 引导配模型 → 发送含附件消息 → 流式增量与工具审批 → 中途停止或失败重试 → 切换 / 搜索 / 删除恢复对话 → 断线重连），向工作区状态机连续输入真实事件序列，验证每一步的视图状态投影无冲突、无残留在途锁死（Pending Wedge）。
+    - 原生交互证明：在 Headless 窗口中验证焦点流转（Tab 序、Esc 退栈后焦点归位、删除后邻位聚焦）与无障碍角色均由 Avalonia 原生控件及统一焦点调度兑现，无未处理的异步重入竞态。
+    - 证明：[TODO] 随 P3 宿主收拢落地于 `compose/AppShell/tests` 的状态机旅程用例与各控件库 headless 用例。
+
 # 例外清单
 
 [TODO] 接入项目时盘点。每项记录：事项 / 使用方 / 保留理由 / 可验证的解除条件。完成盘点且无例外时写“无”；未盘点不等于没有例外。长期设计选择写入对应规则，不永久寄存在临时清单。
@@ -115,9 +135,10 @@
 
 | 事项 | 使用方 | 保留理由 | 可验证的解除条件 |
 | --- | --- | --- | --- |
-| `.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本；包版本固定为 `0.0.0-local` | `compose/*`（消费库与组合者包）；`libs/*` 对 `UiKit` 的引用；`./x compose`、`./x test`、`./x app`；旧仓库 `tools/wanxiang2-feed.sh` | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
+| `.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本；包版本固定为 `0.0.0-local` | `compose/*`（消费库与组合者包）；`libs/WorkspaceState` 对兄弟包的引用；`./x compose`、`./x test`、`./x app`；旧仓库 `tools/wanxiang2-feed.sh` | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
+| WorkspaceState 单一状态树需要多兄弟包依赖 | compose/AppShell(P3) | WorkspaceState 是单一状态树，收编原碎布尔判断库 | P3 接线完成且碎布尔库删除后收窄 |
 
-已解除：2026-10-13 删去「`compose/LedgerStore` 与旧仓库 `Store.fs` 双重实现」一项。旧仓库分支 `extract-ledger@8f39e84` 改为消费 `Wanxiang2.LedgerStore` 包，`Store.fs` 只剩领域接线。
+已解除：2026-10-20 解除「手搓动画与滚动定时器」一项：生产代码 DispatcherTimer 只剩 app/Desktop、app/Pwa 入口壳的 After/Every 端口实现（判定 grep 达标）。同批解除「散落的 Dispatcher.UIThread.Post」：焦点/滚动投递收归 compose/EntryShells/Effects.fs 唯一 Runner；其余存活 Post 均为两类合规项——UI-Automation IInvokeProvider 跨线程 marshal 与浮层首帧布局排队，逐处注释并在各 AGENTS.md 登记。 2026-10-20 解除「手搓动画与滚动定时器（DispatcherTimer）」一项：TransferDesk（ExportDesk 导出节流与到期检查、ImportDesk 超时）彻底替换为 timing.After 调度，生产代码中 `grep -rn DispatcherTimer libs compose app --include='*.fs' | grep -v tests | grep -v /obj/` 仅剩 app/Desktop 与 app/Pwa 入口壳端口实现。 2026-10-20 解除「散落的 Dispatcher.UIThread.Post」一项：ChatScreen 三处滚动与高亮时序同步化、TransferDesk 调度交由宿主端口、ExportSheet 与 ImportSheet 保留首帧布局排队并注释登记、其余皆为 UI-Automation（IInvokeProvider.Invoke）跨线程 marshal；生产代码中除唯一的 Effect Runner（compose/EntryShells/Effects.fs）、app/* 端口实现及注释登记项外无散落 Post。 2026-10-20 解除「碎布尔判断库与其 golden 复刻测试」一项：StartReady/IdleSurface/ConversationSurface/SidebarEmpty/SearchRequery/EscapeChain 已从 libs/ChangeWatch、libs/RowFocus 删除，判定合入 `libs/WorkspaceState` 的 DU 状态树；golden 复刻断言与样本随 SPEC 7 退役（保留线协议/哈希/字体指纹等外部契约向量）。 2026-10-13 删去「`compose/LedgerStore` 与旧仓库 `Store.fs` 双重实现」一项。旧仓库分支 `extract-ledger@8f39e84` 改为消费 `Wanxiang2.LedgerStore` 包，`Store.fs` 只剩领域接线。2026-10-20 解除「手搓 UI 原语：UiKit 的 Tap / Spot / InvokeBorder / Follow / KitLook ＋ 各控件库的 `<Name>Look` 记录」一项：libs/ActionStrip 十控件完成原生化、UiKit 整库删除，全仓无 UiKit 依赖。
 
 
 # 落地起点
@@ -141,25 +162,37 @@
 
 ## 布局与工具
 
-- `libs/<Name>/`：一项独立职责，一个库：`<Name>.fsproj`、`tests/`、`AGENTS.md`。库之间没有任何依赖边（不只是无环），测试只引用本库；唯一例外是基础库 `UiKit`（2026-10-18 起）：控件库可以声明依赖它，`./x check` 只放行这一个包名，其余兄弟包一律拒绝。[LEMMA: 4, 5, 8; SPEC: 2]
+- `libs/<Name>/`：一项独立职责，一个库：`<Name>.fsproj`、`tests/`、`AGENTS.md`。库之间没有任何依赖边（不只是无环），测试只引用本库。[LEMMA: 4, 5, 8; SPEC: 2]
 - `compose/<Name>/`：组合者 C，只经交付包使用库，不引用库源码。[LEMMA: 4; SPEC: 2, 4]
-- `./x test <lib>`：只凭本库与声明的外部包构建并测试（控件库的 `UiKit` 包若不在 feed 里会先自动 pack 一次）。`./x check`：库项目不引用本库目录以外的东西，只允许 `UiKit` 这一个兄弟包；组合者项目不引用自己目录以外的东西；组合者目录必须有 `AGENTS.md`；每个库必须有生产消费者（否则要在库目录放 `UNWIRED.md` 登记理由与解除条件）；`wanxiang2.slnx` 必须与 `./x sln` 的生成一致；文档与各 AGENTS.md 里点名的 `libs/<名>` / `compose/<名>` 必须存在（`docs/archive` 除外）。`./x pack`：按依赖顺序打出所有交付包（库与组合者都是交付物）。`./x compose`：清掉包缓存里的 `Wanxiang2.*` 后，从 `artifacts/feed` 消费交付包，测试组合者。`./x consume`：在仓库外的临时项目里只从 `artifacts/feed` 取包，构建并运行。`./x app`：从交付包构建 `app/` 下的两个入口（PWA 需 wasm-tools workload）。`./x all` 依次执行 check、逐库 test、pack、compose、consume；逐库 test 与组合者测试并发跑（`XJOBS` 可覆盖并发数；默认由核数与**内存**共同决定——每个并发工程按 2 GiB 计并给系统留 4 GiB，12 GiB 无 swap 的机器上是 4，只按核数开满会 OOM）。CI（`.github/workflows/ci.yml`）先 pack 出 feed 工件，库测试每个库一个任务（同样消费该工件），另有组合、仓库外消费（consume）、入口构建（app）与发布产物冒烟（published-smoke：`publish.sh linux-x64` + `npm ci` + `tools/smoke_published.sh`，headless Chrome 真跑画布/DPR/上屏桥）四个任务消费该工件；发布流程（`release-publish.yml`）在 linux-x64 上传前跑同一冒烟。
+- `./x test <lib>`：只凭本库与声明的外部包构建并测试。`./x check`：库项目不引用本库目录以外的东西，除《例外清单》登记的 `WorkspaceState` 特例外不允许任何兄弟包；组合者项目不引用自己目录以外的东西；组合者目录必须有 `AGENTS.md`；每个库必须有生产消费者（否则要在库目录放 `UNWIRED.md` 登记理由与解除条件）；`wanxiang2.slnx` 必须与 `./x sln` 的生成一致；文档与各 AGENTS.md 里点名的 `libs/<名>` / `compose/<名>` 必须存在（`docs/archive` 除外）。`./x pack`：按依赖顺序打出所有交付包（库与组合者都是交付物）。`./x compose`：清掉包缓存里的 `Wanxiang2.*` 后，从 `artifacts/feed` 消费交付包，测试组合者。`./x consume`：在仓库外的临时项目里只从 `artifacts/feed` 取包，构建并运行。`./x app`：从交付包构建 `app/` 下的两个入口（PWA 需 wasm-tools workload）。`./x all` 依次执行 check、逐库 test、pack、compose、consume；逐库 test 与组合者测试并发跑（`XJOBS` 可覆盖并发数；默认由核数与**内存**共同决定——每个并发工程按 2 GiB 计并给系统留 4 GiB，12 GiB 无 swap 的机器上是 4，只按核数开满会 OOM）。CI（`.github/workflows/ci.yml`）先 pack 出 feed 工件，库测试每个库一个任务（同样消费该工件），另有组合、仓库外消费（consume）、入口构建（app）与发布产物冒烟（published-smoke：`publish.sh linux-x64` + `npm ci` + `tools/smoke_published.sh`，headless Chrome 真跑画布/DPR/上屏桥）四个任务消费该工件；发布流程（`release-publish.yml`）在 linux-x64 上传前跑同一冒烟。
 - `./x check` 检查的是项目文件里的引用，不检查运行时调用；运行时独立靠每个库的测试不带任何兄弟库仍能通过（构建上就拿不到兄弟库）。
 
-## 界面控件库（widget lib）
+## 界面与前端组装（UI）
 
-库可以依赖界面框架（Avalonia、IconPacks.Avalonia.Lucide 等，版本登记在 `Directory.Packages.props`，与旧仓库一致）。控件库连控件、行为带状态一起拥有；跨库依赖只有下边那条基础库 `UiKit`，与其余兄弟库没有任何依赖边。[LEMMA: 3, 4, 5, 8]
+迁移期的「逐字节复刻旧仓库金样」已完成历史使命并退役。自本规则生效起，前端代码以「不造轮子、单一状态投影、真实操作闭环」为准绳，按 Via Negativa 持续做减法。[AXIOM: 1, 2, 4; LEMMA: 1, 8, 10, 11, 12]
 
-- **基础库 `UiKit`（跨库依赖的唯一出口）：** 控件库共用的原语都在这里——`Follow`（挂上可视树才订阅、摘下退订的活值跟随）、`Tap` / `Spot` / `InvokeBorder`（可点 Border 与读屏 Invoke）、`Tone` / `TagTone`、`KitLook` + `Kit`（旧 `Controls/Primitives.fs` 的字段组、输入壳、开关、设置行、对话框页脚）。控件库自己的 `Kit.fs` 只剩一张「本库 Look → `KitLook`」的映射。本库不依赖任何 `Wanxiang2.*` 包，也不放领域规则与控件行为（那些留在各控件库）；两件事都由 `./x check` 盯住。2026-10-18 之前，这些原语在 36 个控件库各复制了一份（约 1.1 万行），见「收束后整理」。
+1. **只用 Avalonia 原生控件，废除 `Border` 仿制件。** [AXIOM: 2, 5; LEMMA: 10]
+   按钮用 `Button`，开关用 `ToggleSwitch` / `CheckBox`，下拉选择用 `ComboBox`，菜单与气泡用 `ContextMenu` / `MenuFlyout` / `Flyout`，折叠用 `Expander`，长列表用 `ItemsControl` 或 `ListBox` 配合原生 `VirtualizingStackPanel`。
+   不再使用 `Tap`、`Spot`、`InvokeBorder` 等以 `Border` 冒充交互控件的做法，也不再手写 `AutomationPeer`、手算浮层坐标（`PopupPlacement`）或手搓列表挂载窗口（`MountWindow`、`CardReconcile`）。它们登记为待退出的迁移遗留（见《例外清单》），按工作区模块逐个替换为原生控件并删除对应库。
 
-- **生成：** `./x new-widget <Name>` 由 `tools/widget-template` 生成 `libs/<Name>`（库 + Avalonia headless 行为测试），目录已存在就拒绝。测试不用 `Avalonia.Headless.XUnit`（.NET 10 上会死锁），直接用 `HeadlessUnitTestSession`，与旧仓库相同。CI 的 `widget-template` 任务每次生成一个控件库并测试，还验证 `./x check` 拒绝库对库引用。
-- **样式值都是可变的，不写死。** 控件库不含任何字面样式值（颜色、画笔、尺寸、字体、间距、圆角、时长）。这些值由主题管理者（`compose/Theme` 或一个主题管理库）拥有，是活的可变实例；管理者改值，所有控件跟着变。
-- **Look 记录：** 每个控件库声明自己的 `<Name>Look` 记录，列出它需要的外观项（画笔为 `IBrush`，尺寸、字体、间距为管理者给的活实例，如 `IObservable<_>`）。组合者在构造控件时从主题管理者取出共享实例填进去；同一画笔实例由多个控件共享。控件不认识主题管理者。
-- **共享外观：** 按钮、卡片等共同外观用类选择器样式（如 `Border.button-primary`），由主题管理者（`compose/Theme` 的 `ThemeStyles`）只安装一次；Setter 里放管理者的活实例：画笔直接用活画笔，尺寸、间距、焦点环颜色经 `ToBinding` 绑到活值。样式从不重建：实测清空再重填 `Styles` 不会让已显示的控件重新取值；也不用 `ControlTheme`：它只按控件类型或 `Theme` 属性生效，不能按类名套在 `Border` 上。控件只挂类名。每个库的 AGENTS.md 列出它用到的样式类。
-- **行为控件（Menu、Overlay 等）：** 由组合者经插槽（传入的控件或工厂）和事件接线，控件库之间从不直接依赖。
-- **模块名：** 新模块与类型名不得与旧仓库宿主模块同名（如 `Tokens`、`Menu`、`Dialogs`、`Icons`、`Interaction`、`MessageCard`、`MotionPolicy`、`Palette`、`ThemePreference` 等），因为 F# 会合并同名模块，见旧仓库的 ConversationTransfer 等先例。
-- **浏览器端：** 控件库包可被 `net10.0-browser`（Avalonia.Browser）项目引用；已在旧仓库本地验证。
+2. **样式与动效归 Avalonia 资源与样式系统，废除 `*Look` 记录与帧定时器。** [AXIOM: 2; LEMMA: 10]
+   颜色、字号、间距、圆角、过渡时长统一登记在主题层的 `ResourceDictionary`（含 Light / Dark `ThemeVariant`）与 `ControlTheme` / `Styles` 中。控件通过 `DynamicResource` 与样式类（`Classes`）获取外观。
+   新建或改写的界面组件不再声明 `<Name>Look` 记录，不再用 `Follow.live` 逐属性订阅 `IObservable<float>`。呼吸、旋转、颜色过渡与平滑滚动优先使用 Avalonia 声明式 `Transitions` 与 `Animation`，不在 F# 代码里开 `DispatcherTimer` 逐帧计算。
 
+3. **单入口幂等渲染，单出口意图事件。** [LEMMA: 3, 4, 12]
+   视图组件只负责呈现与采集用户意图，不持有业务状态副本。
+   - 输入（渲染）：每个视图组件对外只暴露一个幂等的 `Render(viewState)` 方法（或纯声明式视图函数），一次性接收该组件所需的全部展示数据；废除多入口、有调用顺序依赖的 `SetTitle` / `SetGenerating` / `SetEnabled` / `SetCompact` 零散方法。
+   - 输出（意图）：用户操作通过明确的消息类型（`Msg` 分支或事件）向上汇报，组件内部不自行决定跨组件副作用。
+
+4. **工作区状态收敛与统一副作用执行。** [LEMMA: 3, 4, 12; SPEC: 3, 4, 7]
+   客户端工作区的连接阶段、引导流程、当前对话、流式生成、待删批次与浮层状态，由组合者以单一互斥的状态树建模（让非法状态在类型上不可表示），不再拆成多个布尔入参的判断库（如 `StartReady`、`IdleSurface`、`ConversationSurface`）。
+   焦点转移、滚动定位、网络发送与计时器启停，作为状态演进产出的显式动作（`Effect`），在每次视图树 `Render` 完成后由宿主统一执行一次；禁止在子控件内部散落调用 `Dispatcher.UIThread.Post` 争抢焦点或滚动偏移。
+
+5. **控件库交付约定（沿用）。**
+   - 生成：`./x new-widget <Name>` 由 `tools/widget-template` 生成 `libs/<Name>`（库 + Avalonia headless 行为测试），目录已存在就拒绝。测试不用 `Avalonia.Headless.XUnit`（.NET 10 上会死锁），直接用 `HeadlessUnitTestSession`。
+   - 行为控件（Menu、Overlay 等）由组合者经插槽和事件接线，控件库之间从不直接依赖；基础库 `UiKit` 已随全仓原生化退役删除（2026-10-20）；控件库现在零跨库依赖，唯一例外是单一状态树 `WorkspaceState`（见《布局与工具》与《例外清单》）。
+   - 模块名：新模块与类型名不得与旧仓库宿主模块同名（F# 会合并同名模块）。
+   - 浏览器端：控件库包可被 `net10.0-browser`（Avalonia.Browser）项目引用。
 ## 证据现状（对应上文 SPEC）
 
 - SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。机器检查覆盖了一半：`./x check` 拒绝指向不存在组件的文档引用（`libs/<名>` / `compose/<名>`，`docs/archive` 除外），也强制每个库有消费者与登记例外。[TODO] 规则编号（`[LEMMA: n]`）与测试名的对应仍靠评审——今天整理掉的过期接线声明（见「收束后整理」）正是这类评审发现的。
@@ -173,7 +206,7 @@
 
 1. **孤儿库退役（8 个）。** 全仓扫出 8 个零消费者的库：`CopyConfirm`、`RovingIndex`、`SidebarRowState`、`StartLayout`、`SendKey`、`UiPrimitives`、`ProbeCounter`、`BrowserProbe`。前五个是早期迁出的纯逻辑库，其规则在控件库重写时被内联进真正的行为拥有者（`CopyButton`、`PopupMenu`/`SettingsFrame`、`ConversationRows`、`ShellLayout`、`ComposerBox`），原库成了同一事实的第二份；后三个分别是被控件库取代的历史原语库与从未接线的探针链（`?wxprobe=1` / `WANXIANG_PARITY_PROBE`，见 `docs/ux/r28-pwa-parity.md`）。处置：删除，不建兼容层；被删库的旧用例其等价断言在各行为拥有者的 headless 测试里（`SendKey.sends` 的 8 种组合并入 `ComposerBox` 的 Enter 矩阵；`StartLayout` 两条规则在 `ShellLayout` 测试；`SidebarRowState` 三条规则在 `ConversationRows` 测试）。
 2. **`ComposerBox` 的发送判定修正。** 内联判定原先漏了 `not shift`：Enter 发送档里 Ctrl+Shift+Enter 会误发送；已改为与旧 `SendKey.sends` 相同的 `not shift && (enterSends <> ctrl)`，并由测试钉住两种模式的全部组合。
-3. **`libs/UiKit` 建立，36 份复制件合并成 1 份。** 控件库各自的 `Kit.fs`（18 份 309 行全量版 + 18 份 62 行 Follow/Spot 版 + `SkeletonList` 的 38 行版）、`PopupMenu`/`ToastStrip` 的 `InvokeBorder`、三个对话框页的 `Footer`、`ApprovalPanel`/`ExportSheet`/`ImportSheet` 的 `Tap`，以及 `MarkdownView`、`MessageCardView`、`MathFigure` 各自的 `Follow` 副本，统一归 `libs/UiKit`：这批准则复制件净删 7054 行（本次提交整体 +1888 / −9079 行）；`./x test` 对 37 个受影响库逐个通过。
+3. **UiKit 建立与退役。** 早期合并 36 份复制件为临时基库，后随全仓原生化改造完成全面退役清零。
 4. **工具与 CI。** `./x check` 增加两条：每个库必须有生产消费者（`UNWIRED.md` 是登记例外，模板 `tools/widget-template` 自带该文件），文档点名的 `libs/<名>` / `compose/<名>` 必须存在；`./x pack` 改为库与组合者统一按依赖顺序打包（`UiKit` 自然排在被依赖方前）；`./x all` 的逐库测试与组合者测试并行（`XJOBS`）；CI 的库测试矩阵与 widget-template 任务改为消费 pack 出的 feed 工件，新增 `published-smoke` 任务（自包含发布产物 + headless Chrome 冒烟，`release-publish.yml` 的 linux-x64 上传前也跑）；仓库根新增 `package.json`（只给 `tools/*.js` 用，`npm ci` 装 puppeteer-core），`.gitignore` 忽略 `node_modules/`。
 5. **例外清单同步。** `VersionOverride="0.0.0-local"` 一行补上新的使用方（库对 `UiKit` 的包引用）。
 6. **`ControlStroke`：输入类控件的边界描边过 WCAG 1.4.11。** `docs/ux/a11y-audit.md` §2 一直记着「以描边作唯一边界的输入框」不达标（`border` 浅 1.33~1.47、深 1.46~1.92）。实测确认边界只靠描边（`FieldSurface` 与 `Surface` 同值，没有填充差），于是 `libs/ThemePalette` 补 `ControlStroke`（浅 `#8D8A7E`、深 `#76767F`；对 Surface / SurfaceRaised / SurfaceContainer / Canvas 两套主题都 ≥ 3:1），22 处 `FieldEdge` 与 `ComposerBox` 的 `BoxInk.ControlStroke` 改用它，聚焦态仍是 `Accent`。机械断言 `compose/Theme/tests/A11yRegression.fs` 的 `控件边界描边在四种底上都过 1.4.11`；`ComposerDesk` / `Workspace` 整树金样里 7 行壳描边按新值改（有意偏离，已在这两个组合者的 AGENTS.md 记明）。`border` / `line` 数值不变，仍作装饰性分割。

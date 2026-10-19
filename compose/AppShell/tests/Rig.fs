@@ -16,6 +16,7 @@ open Wanxiang.Core
 open Wanxiang.Protocol
 open Wanxiang.Client
 open Wanxiang.UI
+open Wanxiang2.WorkspaceState
 open Wanxiang2.Theme
 open Wanxiang2.OverlayDesk
 open Wanxiang2.SidebarDesk
@@ -62,6 +63,7 @@ type FakePorts(prefs0: UiPrefs) =
     let copies = ResizeArray<string>()
     let downloads = ResizeArray<string * byte[]>()
     let connects = ResizeArray<string>()
+    let recordedEffects = ResizeArray<Wanxiang2.WorkspaceState.Effect>()
     let browserSucceeded = ref 0
     let restoreCalls = ref 0
     let posts = ref 0
@@ -88,6 +90,7 @@ type FakePorts(prefs0: UiPrefs) =
     member _.Copied = copies |> List.ofSeq
     member _.Downloads = downloads |> List.ofSeq
     member _.Connects = connects |> List.ofSeq
+    member _.RecordedEffects = recordedEffects |> List.ofSeq
     member _.BrowserSucceeded = browserSucceeded.Value
     member _.RestoreFocusCalls = restoreCalls.Value
     /// 已执行的 UI 线程投递次数（等后台续体落地用）。
@@ -119,7 +122,29 @@ type FakePorts(prefs0: UiPrefs) =
     /// 入口壳的连接关闭回调。
     member _.Close(detail: string option) = closedHandler |> Option.iter (fun handler -> handler detail)
 
-    member _.Ports(buildViews: unit -> ShellViews) : ShellPorts =
+    member this.Sink : Wanxiang.UI.EffectSink =
+        { Focus = fun f -> recordedEffects.Add(Effect.Focus f)
+          ScrollChat = fun s -> recordedEffects.Add(Effect.ScrollChat s)
+          SendWire = fun w -> recordedEffects.Add(Effect.SendWire w); events.Add w
+          After = fun (ms, msg) ->
+              match msg with
+              | :? Msg as m -> recordedEffects.Add(Effect.After(ms, m))
+              | _ -> ()
+          Every = fun (h, ms) -> recordedEffects.Add(Effect.Every(h, ms))
+          StopEvery = fun h -> recordedEffects.Add(Effect.StopEvery h)
+          ShowToast = fun (t, tone) -> recordedEffects.Add(Effect.ShowToast(t, tone)); toasts.Add(t, ShellToastTone.Info)
+          Clipboard = fun c -> recordedEffects.Add(Effect.Clipboard c); copies.Add c
+          OpenLink = fun u -> recordedEffects.Add(Effect.OpenLink u); links.Add u
+          SaveDownload = fun (n, b) -> recordedEffects.Add(Effect.SaveDownload(n, b)); downloads.Add(n, b)
+          ApplyTheme = fun t -> recordedEffects.Add(Effect.ApplyTheme t)
+          SetWindowBusy = fun b -> recordedEffects.Add(Effect.SetWindowBusy b)
+          CloseWindow = fun () -> recordedEffects.Add(Effect.CloseWindow)
+          PrefsSave = fun p -> recordedEffects.Add(Effect.PrefsSave p); savedPrefs.Add p
+          PrefsLoad = fun () -> recordedEffects.Add(Effect.PrefsLoad)
+          DraftWrite = fun dw -> recordedEffects.Add(Effect.DraftWrite dw); draftWrites.Add dw
+          BrowserHook = fun h -> recordedEffects.Add(Effect.BrowserHook h) }
+
+    member this.Ports(buildViews: unit -> ShellViews) : ShellPorts =
         { Connect =
             fun url ->
                 connects.Add url
@@ -181,11 +206,12 @@ type FakePorts(prefs0: UiPrefs) =
           CloseWindow = fun () -> false
           ClientName = fun () -> "测试客户端"
           MakeThumbnail = fun id bytes -> thumbnails.Add(id, bytes)
+          EffectSink = this.Sink
           BuildViews = buildViews }
 
 /// 浮层外观（与 OverlayDesk 自己的测试同值；这里只求能建树）。
 module Look =
-    let overlay () : OverlayDeskLook =
+    let overlay () : OverlayDeskMetrics =
         { Layer =
             { Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
               Surface = Brushes.White
@@ -299,7 +325,7 @@ module Rig =
             let brandLogo (size: float) = Border(Width = size, Height = size) :> Control
             let composer =
                 ComposerDesk(
-                    ComposerLooks.ofTheme theme styles,
+                    ComposerMetrics.ofTheme theme styles,
                     shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false)))
             let approval = ApprovalDesk(theme, overlay, ignore)
             let cards =
@@ -318,7 +344,7 @@ module Rig =
                       Now = fun () -> DateTimeOffset.UnixEpoch })
             let chat =
                 ChatScreen(
-                    ChatScreenLooks.ofTheme theme styles,
+                    ChatScreenMetrics.ofTheme theme styles,
                     cards,
                     composer,
                     approval,

@@ -9,9 +9,7 @@
     <Compile Include="ExchangeNav.Headless.fs" />
     <Compile Include="ExchangeNav.Tests.fs" />
     <Compile Include="SkeletonList.Headless.fs" />
-    <Compile Include="SkeletonList.Dump.fs" />
     <Compile Include="SkeletonList.Tests.fs" />
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />

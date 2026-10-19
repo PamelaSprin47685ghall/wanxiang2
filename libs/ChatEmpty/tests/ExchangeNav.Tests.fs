@@ -10,17 +10,10 @@ open Xunit
 open Wanxiang2.ExchangeNav
 open Wanxiang2.ExchangeNav.Tests
 
-let private look () =
-    { Ink = (fun _ -> Brushes.Gray :> IBrush)
-      Gauge = (fun _ -> Cell 8.0 :> _)
-      BodyFont = Cell FontFamily.Default
-      DressRetry = ignore
-      Shadow = fun () -> BoxShadows() }
-
 [<Fact>]
 let ``端点可用态可读写；换对话清掉`` () =
     Headless.run (fun () ->
-        let n = ExchangeNav(look ())
+        let n = ExchangeNav()
         n.SetJumpEnds(true, false)
         Assert.True n.CanJumpPrevious
         Assert.False n.CanJumpNext
@@ -31,7 +24,7 @@ let ``端点可用态可读写；换对话清掉`` () =
 [<Fact>]
 let ``更早一页失败横幅：读屏 Invoke 重试并隐藏`` () =
     Headless.run (fun () ->
-        let n = ExchangeNav(look ())
+        let n = ExchangeNav()
         let mutable retried = false
         n.ShowOlderFailure("加载超时", fun () -> retried <- true)
         Assert.True n.OlderFailureVisible

@@ -9,21 +9,12 @@ open Avalonia.Platform
 open Xunit
 open Wanxiang2.BrandMark
 
-let look () =
-    let ratio = Cell 0.22
-    ratio,
-    { Surface = SolidColorBrush(Colors.White)
-      Accent = SolidColorBrush(Colors.Teal)
-      RadiusRatio = ratio
-      GlyphRatio = Cell 0.42 }
-
 // 迁自旧 VisualPassR3Tests `品牌标有图时不垫白底`。
 [<Fact>]
 let ``品牌标有图时不垫白底`` () =
     Headless.run (fun () ->
-        let _, l = look ()
         let bitmap = new WriteableBitmap(PixelSize(4, 4), Vector(96.0, 96.0), Avalonia.Platform.PixelFormat.Bgra8888, AlphaFormat.Premul)
-        match BrandMark.tile l (Some(bitmap :> IImage)) 48.0 with
+        match BrandMark.tile (Some(bitmap :> IImage)) 48.0 with
         | :? Border as tile ->
             Assert.IsType<Image>(tile.Child) |> ignore
             Assert.Equal(Stretch.Uniform, (tile.Child :?> Image).Stretch)
@@ -33,17 +24,14 @@ let ``品牌标有图时不垫白底`` () =
 [<Fact>]
 let ``no image falls back to the glyph on the live surface`` () =
     Headless.run (fun () ->
-        let ratio, l = look ()
-        let tile = BrandMark.tile l None 48.0 :?> Border
+        let tile = BrandMark.tile None 48.0 :?> Border
         let glyph = tile.Child :?> TextBlock
         Assert.Equal("万", glyph.Text)
         Assert.Equal(48.0 * 0.42, glyph.FontSize, 3)
-        Assert.Same(l.Surface, tile.Background)
-        Assert.Same(l.Accent, glyph.Foreground)
+        Assert.True(tile.Classes.Contains "surface")
+        Assert.True(glyph.Classes.Contains "brand-glyph")
         Assert.Equal(48.0, tile.Width)
-        Assert.Equal(CornerRadius(48.0 * 0.22), tile.CornerRadius)
-        ratio.Set 0.5
-        Assert.Equal(CornerRadius 24.0, tile.CornerRadius))
+        Assert.Equal(CornerRadius(48.0 * 0.22), tile.CornerRadius))
 
 [<Fact>]
 let ``loading tries the asset then local files in order`` () =

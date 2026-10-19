@@ -2,7 +2,7 @@
 
 ComposerBox + AttachmentTray + ModelChip + BusyRing（上传中转圈，旧 Ui.spinner）+ ComposerSendState + ModelVision + ComposerDrafts（PendingAttachment、RestoredAttachments）+ MediaTypes + MessageView（AttachmentRef.formatSize）+ Theme = 旧 `Views/Composer.fs`。根规则见项目根目录 AGENTS.md。
 
-- 宿主入口：`ComposerDesk(ComposerLooks.ofTheme manager styles, actions: ComposerDeskActions)`；`ComposerDeskActions = { Submit: string -> bool; StopGeneration; PickAttachment; RemoveAttachment: Guid -> unit; OpenModelPicker: Control -> unit; DropFiles; PasteFromClipboard: unit -> bool; OpenSessionSettings }`。
+- 宿主入口：`ComposerDesk(ComposerMetrics.ofTheme manager styles, actions: ComposerDeskActions)`；`ComposerDeskActions = { Submit: string -> bool; StopGeneration; PickAttachment; RemoveAttachment: Guid -> unit; OpenModelPicker: Control -> unit; DropFiles; PasteFromClipboard: unit -> bool; OpenSessionSettings }`。
 - 成员：`Host`、`Box`、`Tray`、`Chip`、`Text`、`IsGenerating`、`ModelAnchor()`；`SetAttachments`、`SetThumbnail(id, IImage)`、`HasThumbnail`、`SetShrinkNote`、`ShrinkNote`、`SetModelVision(support, label)`、`SetCanStop`、`SetGenerating`、`SetEnabled(value, reason)`、`SetModelLabel`、`SetEnterSends`、`SetCompactMode`、`SetContext((label, detail) option, canEdit)`、`SetAccessory`、`SetText`、`Focus`、`SetImeProbe`、`SetKeyHook`。
 - 发送门控每次文本、附件、看图、生成、启用变化都经 `ComposerSendState.decide` 重算并 `ApplySend`；提交先过 `canSubmit`，宿主返回 true 才清空。
 - 外观全部取主题活实例（ThemeManager 的笔刷、度量、间距、减弱动效开关，ThemeStyles 的表面类），常量只来自 DesignRhythm 的 LayoutPolicy / ReadingRhythm。

@@ -1,4 +1,3 @@
-/// 金标准渲染：同一份源码分别对旧程序集与新库编译。旧侧在 WANXIANG_STARTUP_TRACE=exit 下运行；
 /// 输出行里的毫秒数不确定，只比对去重结果、模式与行格式（新侧的行用固定毫秒、旧侧取实际行后把数字换成 N）。
 module StartupTraceRender
 open System

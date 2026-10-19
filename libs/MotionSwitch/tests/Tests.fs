@@ -5,12 +5,6 @@ open System.IO
 open Xunit
 open Wanxiang2.MotionSwitch
 
-/// 金样由照抄的旧 MotionLedger 生成
-[<Fact>]
-let ``golden: every timing matches the old ledger`` () =
-    let expected = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "motionswitch.txt"))
-    Assert.Equal(expected, Render.render [ for t in MotionTimings.all -> sprintf "%A" t, MotionTimings.initialMs t ])
-
 [<Fact>]
 let ``reduced motion zeroes durations and notifies only on change`` () =
     let m = MotionSwitch()

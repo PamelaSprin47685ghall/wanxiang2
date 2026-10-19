@@ -7,19 +7,14 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
-open Wanxiang2.UiKit
+open Wanxiang2.WorkspaceState
 
 /// 提示条语气。Info 承载信息性进展播报，与 Neutral 的弱存在提示分开。
-[<RequireQualifiedAccess>]
-type ToastTone =
-    | Neutral
-    | Success
-    | Warning
-    | Failure
-    | Info
+/// 直接复用 WorkspaceState.ToastTone
+type ToastTone = Wanxiang2.WorkspaceState.ToastTone
 
 /// 提示条外观。全部由主题管理者提供活的实例；本库不写字面样式值。
-type ToastStripLook =
+type ToastStripAppearance =
     { Surface: IBrush
       Edge: IBrush
       Text: IBrush
@@ -47,7 +42,7 @@ type ToastStripLook =
 
 /// 提示条带（迁自旧 Controls/OverlayHost.fs 的提示条渲染部分）。
 /// 只管画与移除；去重、上限、停留计时由组合者用 ToastQueue / ToastDwell 接。
-type ToastStrip(look: ToastStripLook) =
+type ToastStrip(look: ToastStripAppearance) =
     let stack = StackPanel(Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom)
     let toasts = Collections.Generic.Dictionary<string, Control * Control option>()
     let buttons = ResizeArray<string * Control>()
@@ -111,26 +106,25 @@ type ToastStrip(look: ToastStripLook) =
         row.Children.Add scroller
         let actionButton =
             action
-            |> Option.map (fun label ->
+            |> Option.map (fun (label: string) ->
                 row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
-                // 外观由主题的 surface + button-secondary + hover-plain 类给（旧 Ui.button Secondary）。
-                let b = InvokeBorder(Child = TextBlock(Text = label), Focusable = true, IsTabStop = true, Name = "toast-action", VerticalAlignment = VerticalAlignment.Center, Cursor = new Cursor(StandardCursorType.Hand))
-                b.SetAction(fun () -> actionInvoked.Trigger message)
-                for c in [ "surface"; "button-secondary"; "hover-plain" ] do b.Classes.Add c
-                AutomationProperties.SetControlTypeOverride(b, Nullable Avalonia.Automation.Peers.AutomationControlType.Button)
+                // 原生 Button 承载动作；外观走 secondary 样式类
+                let b = Button(Content = label, Focusable = true, IsTabStop = true, Name = "toast-action", VerticalAlignment = VerticalAlignment.Center, Cursor = new Cursor(StandardCursorType.Hand))
+                b.Classes.Add "secondary"
+                b.Classes.Add "button-secondary"
+                b.Classes.Add "hover-plain"
+                b.Classes.Add "surface"
                 AutomationProperties.SetName(b, label)
                 // 读屏把快捷键念出来。
                 if label = "撤销" then
                     AutomationProperties.SetAcceleratorKey(b, "Ctrl+Z")
                     AutomationProperties.SetHelpText(b, "按 Ctrl / ⌘ + Z 直接撤销；按 F6 或 Tab 可移到这里")
-                b.PointerReleased.Add(fun e ->
-                    if e.InitialPressMouseButton = MouseButton.Left then
-                        e.Handled <- true
-                        actionInvoked.Trigger message)
+                let fire () = actionInvoked.Trigger message
+                b.Click.Add(fun _ -> fire ())
                 b.KeyDown.Add(fun e ->
                     if e.Key = Key.Enter || e.Key = Key.Space then
                         e.Handled <- true
-                        actionInvoked.Trigger message)
+                        fire ())
                 b.GotFocus.Add(fun _ -> actionFocused.Trigger message)
                 b.LostFocus.Add(fun _ -> actionUnfocused.Trigger message)
                 Grid.SetColumn(b, 2)
@@ -179,6 +173,20 @@ type ToastStrip(look: ToastStripLook) =
             stack.Children.Remove toast |> ignore
             if hadFocus then focusHome ()
         | _ -> ()
+
+    /// 契约单入口：幂等渲染当前活动 Toast 列表，增删由差异驱动
+    member this.Render(toastsList: ToastVS list) =
+        let activeTexts = toastsList |> List.map (fun t -> t.Text) |> Set.ofList
+        // 移除不在列表里的旧条
+        for msg in List.ofSeq toasts.Keys do
+            if not (Set.contains msg activeTexts) then
+                this.Remove msg
+        // 添加尚未显示的新条
+        for t in toastsList do
+            if not (toasts.ContainsKey t.Text) then
+                let actionParam =
+                    t.UndoAction |> Option.map (fun _ -> "撤销")
+                this.Add(t.Text, t.Tone, actionParam)
 
     member _.Contains(message: string) = toasts.ContainsKey message
     member _.Messages = stack.Children |> Seq.choose (fun c -> toasts |> Seq.tryFind (fun kv -> obj.ReferenceEquals(fst kv.Value, c)) |> Option.map (fun kv -> kv.Key)) |> List.ofSeq

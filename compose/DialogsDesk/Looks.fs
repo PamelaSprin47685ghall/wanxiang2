@@ -9,12 +9,6 @@ open Wanxiang2.ThemeMetrics
 open Wanxiang2.Theme
 open Wanxiang2.IconSet
 open Wanxiang2.FieldCheck
-open Wanxiang2.ConfirmPane
-open Wanxiang2.PromptPane
-open Wanxiang2.TextEditPane
-open Wanxiang2.ConnectPane
-open Wanxiang2.SessionPrefsPane
-open Wanxiang2.ShortcutHelpPane
 
 /// 对话框各面板的外观：全部取主题管理者的活实例，这里不写字面样式值。
 module DialogLooks =
@@ -67,95 +61,10 @@ module DialogLooks =
            MonoFont = t.MonoFontFamily
            Glyph = glyph |}
 
-    let fieldCheckOf (t: ThemeManager) : FieldCheckLook =
-        { ErrorForeground = t.Brush PaletteKey.Danger
+    let fieldCheckOf (t: ThemeManager) : FieldCheckAppearance =
+        { ErrorForeground = t.Brush PaletteKey.Danger :> IBrush
           InvalidStroke = t.Brush PaletteKey.Danger
           NormalStroke = t.Brush PaletteKey.Border
           MessageFontSize = t.Metric Metric.FontCaption
           MessageLineHeight = t.Metric Metric.CaptionLineHeight
           MessageMargin = Live.map (fun v -> Thickness(0.0, v, 0.0, 0.0)) (t.Space Space.XXs) }
-
-    let confirmOf (t: ThemeManager) : ConfirmPaneLook =
-        let c = common t (glyphOf t)
-        { Text = c.Text; Muted = c.Muted; Faint = c.Faint; Accent = c.Accent; Danger = c.Danger
-          Success = c.Success; Warning = c.Warning; FieldSurface = c.FieldSurface; FieldEdge = c.FieldEdge
-          BodyFontSize = c.BodyFontSize; SmallFontSize = c.SmallFontSize; CaptionFontSize = c.CaptionFontSize
-          MicroFontSize = c.MicroFontSize; HeadingFontSize = c.HeadingFontSize; TitleFontSize = c.TitleFontSize
-          DisplayFontSize = c.DisplayFontSize; CaptionLineHeight = c.CaptionLineHeight; LabelTracking = c.LabelTracking
-          SpaceXs = c.SpaceXs; SpaceSm = c.SpaceSm; SpaceMd = c.SpaceMd; SpaceXl = c.SpaceXl; Space2xl = c.Space2xl
-          Space4xl = c.Space4xl; RadiusMd = c.RadiusMd; RadiusLg = c.RadiusLg; BorderWidth = c.BorderWidth
-          FieldInsetX = c.FieldInsetX; TextFieldPaddingY = c.TextFieldPaddingY
-          TextFieldTextMinHeight = c.TextFieldTextMinHeight; SettingsRowMinHeight = c.SettingsRowMinHeight
-          MonoFont = c.MonoFont; Glyph = c.Glyph; BodyLineHeight = metric t Metric.UiBodyLineHeight }
-
-    let promptOf (t: ThemeManager) : PromptPaneLook =
-        let c = common t (glyphOf t)
-        { Text = c.Text; Muted = c.Muted; Faint = c.Faint; Accent = c.Accent; Danger = c.Danger
-          Success = c.Success; Warning = c.Warning; FieldSurface = c.FieldSurface; FieldEdge = c.FieldEdge
-          BodyFontSize = c.BodyFontSize; SmallFontSize = c.SmallFontSize; CaptionFontSize = c.CaptionFontSize
-          MicroFontSize = c.MicroFontSize; HeadingFontSize = c.HeadingFontSize; TitleFontSize = c.TitleFontSize
-          DisplayFontSize = c.DisplayFontSize; CaptionLineHeight = c.CaptionLineHeight; LabelTracking = c.LabelTracking
-          SpaceXs = c.SpaceXs; SpaceSm = c.SpaceSm; SpaceMd = c.SpaceMd; SpaceXl = c.SpaceXl; Space2xl = c.Space2xl
-          Space4xl = c.Space4xl; RadiusMd = c.RadiusMd; RadiusLg = c.RadiusLg; BorderWidth = c.BorderWidth
-          FieldInsetX = c.FieldInsetX; TextFieldPaddingY = c.TextFieldPaddingY
-          TextFieldTextMinHeight = c.TextFieldTextMinHeight; SettingsRowMinHeight = c.SettingsRowMinHeight
-          MonoFont = c.MonoFont; Glyph = c.Glyph; PendingMinWidth = metric t Metric.PendingActionMinWidth }
-
-    let textEditOf (t: ThemeManager) : TextEditPaneLook =
-        let c = common t (glyphOf t)
-        { Text = c.Text; Muted = c.Muted; Faint = c.Faint; Accent = c.Accent; Danger = c.Danger
-          Success = c.Success; Warning = c.Warning; FieldSurface = c.FieldSurface; FieldEdge = c.FieldEdge
-          BodyFontSize = c.BodyFontSize; SmallFontSize = c.SmallFontSize; CaptionFontSize = c.CaptionFontSize
-          MicroFontSize = c.MicroFontSize; HeadingFontSize = c.HeadingFontSize; TitleFontSize = c.TitleFontSize
-          DisplayFontSize = c.DisplayFontSize; CaptionLineHeight = c.CaptionLineHeight; LabelTracking = c.LabelTracking
-          SpaceXs = c.SpaceXs; SpaceSm = c.SpaceSm; SpaceMd = c.SpaceMd; SpaceXl = c.SpaceXl; Space2xl = c.Space2xl
-          Space4xl = c.Space4xl; RadiusMd = c.RadiusMd; RadiusLg = c.RadiusLg; BorderWidth = c.BorderWidth
-          FieldInsetX = c.FieldInsetX; TextFieldPaddingY = c.TextFieldPaddingY
-          TextFieldTextMinHeight = c.TextFieldTextMinHeight; SettingsRowMinHeight = c.SettingsRowMinHeight
-          MonoFont = c.MonoFont; Glyph = c.Glyph; TextAreaLongMinHeight = metric t Metric.TextAreaLongMinHeight }
-
-    let connectOf (t: ThemeManager) : ConnectPaneLook =
-        let c = common t (glyphOf t)
-        { Text = c.Text; Muted = c.Muted; Faint = c.Faint; Accent = c.Accent; Danger = c.Danger
-          Success = c.Success; Warning = c.Warning; FieldSurface = c.FieldSurface; FieldEdge = c.FieldEdge
-          BodyFontSize = c.BodyFontSize; SmallFontSize = c.SmallFontSize; CaptionFontSize = c.CaptionFontSize
-          MicroFontSize = c.MicroFontSize; HeadingFontSize = c.HeadingFontSize; TitleFontSize = c.TitleFontSize
-          DisplayFontSize = c.DisplayFontSize; CaptionLineHeight = c.CaptionLineHeight; LabelTracking = c.LabelTracking
-          SpaceXs = c.SpaceXs; SpaceSm = c.SpaceSm; SpaceMd = c.SpaceMd; SpaceXl = c.SpaceXl; Space2xl = c.Space2xl
-          Space4xl = c.Space4xl; RadiusMd = c.RadiusMd; RadiusLg = c.RadiusLg; BorderWidth = c.BorderWidth
-          FieldInsetX = c.FieldInsetX; TextFieldPaddingY = c.TextFieldPaddingY
-          TextFieldTextMinHeight = c.TextFieldTextMinHeight; SettingsRowMinHeight = c.SettingsRowMinHeight
-          MonoFont = c.MonoFont; Glyph = c.Glyph; SpaceXXs = space t Space.XXs; Hairline = brush t PaletteKey.Hairline }
-
-    let sessionOf (t: ThemeManager) : SessionPrefsPaneLook =
-        let c = common t (glyphOf t)
-        { Text = c.Text; Muted = c.Muted; Faint = c.Faint; Accent = c.Accent; Danger = c.Danger
-          Success = c.Success; Warning = c.Warning; FieldSurface = c.FieldSurface; FieldEdge = c.FieldEdge
-          BodyFontSize = c.BodyFontSize; SmallFontSize = c.SmallFontSize; CaptionFontSize = c.CaptionFontSize
-          MicroFontSize = c.MicroFontSize; HeadingFontSize = c.HeadingFontSize; TitleFontSize = c.TitleFontSize
-          DisplayFontSize = c.DisplayFontSize; CaptionLineHeight = c.CaptionLineHeight; LabelTracking = c.LabelTracking
-          SpaceXs = c.SpaceXs; SpaceSm = c.SpaceSm; SpaceMd = c.SpaceMd; SpaceXl = c.SpaceXl; Space2xl = c.Space2xl
-          Space4xl = c.Space4xl; RadiusMd = c.RadiusMd; RadiusLg = c.RadiusLg; BorderWidth = c.BorderWidth
-          FieldInsetX = c.FieldInsetX; TextFieldPaddingY = c.TextFieldPaddingY
-          TextFieldTextMinHeight = c.TextFieldTextMinHeight; SettingsRowMinHeight = c.SettingsRowMinHeight
-          MonoFont = c.MonoFont; Glyph = c.Glyph
-          TextAreaMinHeight = metric t Metric.TextAreaMinHeight
-          ContentMaxHeight = metric t Metric.DialogContentMaxHeight
-          PendingMinWidth = metric t Metric.PendingActionMinWidth }
-
-    let shortcutsOf (t: ThemeManager) : ShortcutHelpPaneLook =
-        let c = common t (glyphOf t)
-        { Text = c.Text; Muted = c.Muted; Faint = c.Faint; Accent = c.Accent; Danger = c.Danger
-          Success = c.Success; Warning = c.Warning; FieldSurface = c.FieldSurface; FieldEdge = c.FieldEdge
-          BodyFontSize = c.BodyFontSize; SmallFontSize = c.SmallFontSize; CaptionFontSize = c.CaptionFontSize
-          MicroFontSize = c.MicroFontSize; HeadingFontSize = c.HeadingFontSize; TitleFontSize = c.TitleFontSize
-          DisplayFontSize = c.DisplayFontSize; CaptionLineHeight = c.CaptionLineHeight; LabelTracking = c.LabelTracking
-          SpaceXs = c.SpaceXs; SpaceSm = c.SpaceSm; SpaceMd = c.SpaceMd; SpaceXl = c.SpaceXl; Space2xl = c.Space2xl
-          Space4xl = c.Space4xl; RadiusMd = c.RadiusMd; RadiusLg = c.RadiusLg; BorderWidth = c.BorderWidth
-          FieldInsetX = c.FieldInsetX; TextFieldPaddingY = c.TextFieldPaddingY
-          TextFieldTextMinHeight = c.TextFieldTextMinHeight; SettingsRowMinHeight = c.SettingsRowMinHeight
-          MonoFont = c.MonoFont; Glyph = c.Glyph
-          KeyCapMinWidth = metric t Metric.ShortcutKeyMinWidth
-          ContentMaxHeight = metric t Metric.DialogContentMaxHeight
-          SpaceXXs = space t Space.XXs
-          RadiusSm = space t Space.RadiusSm }

@@ -23,18 +23,6 @@ let rec descendants (control: Control) : seq<Control> =
         | _ -> ()
     }
 
-let look () =
-    { Text = Brushes.Black; Muted = Brushes.Gray; Faint = Brushes.LightGray; Accent = Brushes.Blue
-      TagText = Brushes.Gray; TagSurface = Brushes.Beige; FieldSurface = Brushes.White; FieldEdge = Brushes.Gray; Caret = Brushes.Blue
-      Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b))
-      BodyFontSize = Cell 14.0; SmallFontSize = Cell 12.0; CaptionFontSize = Cell 12.0; MicroFontSize = Cell 10.5
-      TagRadius = Cell(CornerRadius 999.0); TagPadding = Cell(Thickness(6.0, 1.0))
-      ItemPadding = Cell(Thickness(12.0, 6.0)); ItemRadius = Cell(CornerRadius 4.0); ItemMinHeight = Cell 32.0
-      ItemSpacing = Cell 2.0; ColumnSpacing = Cell 8.0; MarkSpacing = Cell 4.0; StackSpacing = Cell 4.0
-      HeaderMargin = Cell(Thickness 4.0); EmptyMargin = Cell(Thickness 4.0); HeadingMargin = Cell(Thickness 4.0)
-      NoteMargin = Cell(Thickness 4.0); FieldMargin = Cell(Thickness 4.0); ListMaxHeight = Cell 360.0; PanelWidth = Cell 300.0
-      FieldPadding = Cell(Thickness 6.0); FieldRadius = Cell(CornerRadius 8.0); FieldEdgeWidth = Cell(Thickness 1.0); FieldTextMinHeight = Cell 24.0 }
-
 let appliesNote = "从下一条回复开始生效"
 
 /// 组合者的筛选与分组：子串筛选；无查询且多组时显示组头（ModelPickerList.groups 的规则）
@@ -70,7 +58,7 @@ let enter (search: TextBox) = search.RaiseEvent(KeyEventArgs(RoutedEvent = Input
 [<Fact>]
 let ``switcher shows provider, default and current, plus the next reply note`` () =
     Headless.run (fun () ->
-        let root = ModelSwitchPanel.build (look ()) slots options "切换本对话的模型" ignore
+        let root = ModelSwitchPanel.build None slots options "切换本对话的模型" ignore
         let names = rowNames root
         Assert.Equal(3, names.Length)
         Assert.Contains("gpt-4o，OpenAI，当前", names)
@@ -84,7 +72,7 @@ let ``switcher shows provider, default and current, plus the next reply note`` (
 let ``typing filters rows and enter picks the first hit`` () =
     Headless.run (fun () ->
         let mutable picked: ModelChoice option = None
-        let root = ModelSwitchPanel.build (look ()) slots options "t" (picker (fun o -> picked <- Some o))
+        let root = ModelSwitchPanel.build None slots options "t" (picker (fun o -> picked <- Some o))
         let search = descendants root |> Seq.pick (function :? TextBox as t -> Some t | _ -> None)
         search.Text <- "deep"
         Dispatcher.UIThread.RunJobs()
@@ -97,7 +85,7 @@ let ``picking the current model is a no-op`` () =
     Headless.run (fun () ->
         let mutable picked = 0
         let mutable activated = 0
-        let root = ModelSwitchPanel.build (look ()) slots options "t" (fun o -> activated <- activated + 1; picker (fun _ -> picked <- picked + 1) o)
+        let root = ModelSwitchPanel.build None slots options "t" (fun o -> activated <- activated + 1; picker (fun _ -> picked <- picked + 1) o)
         let search = descendants root |> Seq.pick (function :? TextBox as t -> Some t | _ -> None)
         search.Text <- "gpt"
         Dispatcher.UIThread.RunJobs()
@@ -109,7 +97,7 @@ let ``picking the current model is a no-op`` () =
 [<Fact>]
 let ``模型切换器写明键盘路径且空结果会播报`` () =
     Headless.run (fun () ->
-        let root = ModelSwitchPanel.build (look ()) slots options "t" ignore
+        let root = ModelSwitchPanel.build None slots options "t" ignore
         let search = descendants root |> Seq.pick (function :? TextBox as t -> Some t | _ -> None)
         Assert.Equal(slots.SearchHelp, AutomationProperties.GetHelpText search)
         let empty = descendants root |> Seq.pick (function :? TextBlock as t when t.Text = slots.EmptyText -> Some t | _ -> None)
@@ -122,7 +110,7 @@ let ``模型切换器写明键盘路径且空结果会播报`` () =
 [<Fact>]
 let ``down from search enters the list and up from the top returns`` () =
     Headless.run (fun () ->
-        let root = ModelSwitchPanel.build (look ()) slots options "t" ignore
+        let root = ModelSwitchPanel.build None slots options "t" ignore
         let window = Window(Width = 400.0, Height = 500.0, Content = root)
         window.Show()
         Dispatcher.UIThread.RunJobs()

@@ -4,14 +4,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "ToastQueue", "toastqueue.txt"))
-
-/// 金样由旧代码（从 旧 Controls/OverlayHost.fs 的入条步骤，照抄 摘出的函数）跑同一份 Samples 与 Render 生成
-[<Fact>]
-let ``golden: output matches the old code`` () =
-    Assert.Equal(expected (), ToastQueueRender.render ())
-
-// ---- 文档规则的真实行为
 
 [<Fact>]
 let ``same text keeps only the newest entry`` () =

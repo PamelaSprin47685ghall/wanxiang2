@@ -8,18 +8,10 @@ open Xunit
 open Wanxiang2.FoldHeader
 open Wanxiang2.FoldHeader.Tests
 
-let private caption = Cell 12.0
-let private look =
-    { Muted = Brushes.Gray
-      Gauge = (function FoldGauge.CaptionSize -> caption :> IObservable<float> | FoldGauge.RotateMs -> Cell 160.0 | _ -> Cell 4.0)
-      Chevron = fun b -> Border(Background = b, Width = 10.0, Height = 10.0)
-      Dress = fun b -> b.Classes.Add "surface"
-      Reduced = Cell true }
-
 [<Fact>]
 let ``开合转箭头、报展开状态并通知`` () =
     Headless.run (fun () ->
-        let f = FoldHeader(look, false)
+        let f = FoldHeader(false)
         let seen = ResizeArray()
         f.Toggled.Add seen.Add
         Assert.Equal(0.0, f.Rotation.GetBaseValue(Avalonia.Media.RotateTransform.AngleProperty).Value)
@@ -33,7 +25,7 @@ let ``开合转箭头、报展开状态并通知`` () =
 [<Fact>]
 let ``前置件在箭头之后，尾随件在标题之后`` () =
     Headless.run (fun () ->
-        let f = FoldHeader(look, true)
+        let f = FoldHeader(true)
         let lead = Border()
         let tail = Border()
         f.AddLeading lead
@@ -46,27 +38,20 @@ let ``前置件在箭头之后，尾随件在标题之后`` () =
 [<Fact>]
 let ``键盘 Enter 也能开合`` () =
     Headless.run (fun () ->
-        let f = FoldHeader(look, false)
+        let f = FoldHeader(false)
         let w = Window(Content = f.Header)
         w.Show()
         f.Header.Focus() |> ignore
-        f.Header.RaiseEvent(Avalonia.Input.KeyEventArgs(RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Enter))
+        f.Header.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent, f.Header))
         Assert.True f.Expanded
         w.Close())
 
 [<Fact>]
-let ``标题字号是活的`` () =
+let ``标题字号与样式类设定正确`` () =
     Headless.run (fun () ->
-        let f = FoldHeader(look, false)
-        let w = Window(Content = f.Header)
-        w.Show()
-        caption.Set 14.0
-        Assert.Equal(14.0, f.Caption.FontSize)
-        Assert.Contains("surface", f.Header.Classes)
-        w.Content <- null
-        Assert.Equal(0, caption.Count)
-        caption.Set 12.0
-        w.Close())
+        let f = FoldHeader(false)
+        Assert.Equal(12.0, f.Caption.FontSize)
+        Assert.Contains("hover-bordered", f.Header.Classes))
 
 let private invokeVia (c: Avalonia.Controls.Control) =
     let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement c
@@ -78,6 +63,6 @@ let private invokeVia (c: Avalonia.Controls.Control) =
 [<Fact>]
 let ``折叠头有读屏 Invoke 且能开合`` () =
     Headless.run (fun () ->
-        let f = FoldHeader(look, false)
+        let f = FoldHeader(false)
         invokeVia f.Header
         Assert.True f.Expanded)

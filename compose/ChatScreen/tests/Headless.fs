@@ -46,7 +46,7 @@ module Desk =
     open Wanxiang2.OverlayDesk
 
     /// 测试用的浮层外观（与 OverlayDesk 自己的测试同值）。
-    let look () : OverlayDeskLook =
+    let look () : OverlayDeskMetrics =
         { Layer =
             { Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
               Surface = Brushes.White

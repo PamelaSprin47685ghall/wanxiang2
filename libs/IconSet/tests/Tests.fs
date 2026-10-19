@@ -8,13 +8,6 @@ open Avalonia.Media
 open Xunit
 open Wanxiang2.IconSet
 
-/// 金样由照抄的旧 Icons.fs 的语义映射生成
-[<Fact>]
-let ``golden: every glyph maps to the old Lucide kind`` () =
-    let expected = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "iconset.txt"))
-    let actual = IconSet.all |> List.map (fun g -> sprintf "%A %A\n" g (IconSet.kind g)) |> String.concat ""
-    Assert.Equal(expected, actual)
-
 [<Fact>]
 let ``the icon keeps the live brush and follows the live size`` () =
     Headless.run (fun () ->

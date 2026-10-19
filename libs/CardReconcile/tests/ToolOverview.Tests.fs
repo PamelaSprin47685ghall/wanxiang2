@@ -4,14 +4,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "ToolOverview", "tooloverview.txt"))
-
-/// 金样由旧代码（旧 Views/MessageCard.fs，照抄分支）跑同一份 Samples 与 Render 生成
-[<Fact>]
-let ``golden: output matches the old code`` () =
-    Assert.Equal(expected (), ToolOverviewRender.render ())
-
-// ---- 文档规则的真实行为
 
 let c r a s f u = { running = r; awaiting = a; success = s; failed = f; unknown = u }
 

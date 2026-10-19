@@ -120,10 +120,9 @@ let ``toast action is a secondary button that hovers and presses`` () =
         let strip = ToastStrip(toastLook m)
         let win = host m strip.View
         strip.Add("已删除", ToastTone.Neutral, Some "撤销")
-        let action = strip.ActionButtons.Head :?> Border
+        let action = strip.ActionButtons.Head :?> Button
         Assert.Same(m.Brush PaletteKey.Surface, action.Background)
         Assert.Same(m.Brush PaletteKey.Border, action.BorderBrush)
-        Assert.Same(m.Brush PaletteKey.Text, (action.Child :?> TextBlock).Foreground)
         Assert.Equal((m.Metric Metric.TextButtonMinHeight).Value, action.MinHeight)
         pseudo action ":pointerover" true
         Assert.Same(m.Brush PaletteKey.Hover, action.Background)

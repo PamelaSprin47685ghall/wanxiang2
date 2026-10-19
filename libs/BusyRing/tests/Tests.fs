@@ -1,46 +1,37 @@
 module Wanxiang2.BusyRing.Tests.Tests
 
-open System
 open Avalonia.Controls
-open Avalonia.Media
 open Xunit
 open Wanxiang2.BusyRing
 open Wanxiang2.BusyRing.Tests
 
-let private mk (reduced: Cell<bool>) =
-    { Ink = (function BusyInk.Track -> Brushes.Gray :> IBrush | BusyInk.Arc -> Brushes.Blue)
-      StrokeWidth = Cell 1.8
-      Frame = Cell(TimeSpan.FromMilliseconds 50.0)
-      Reduced = reduced }
-
 [<Fact>]
-let ``挂上才转，摘下停`` () =
+let ``BusyRing 具有 anim-spin 声明式动效类并随 Render(busy) 启停`` () =
     Headless.run (fun () ->
-        let r = BusyRing(mk (Cell false), 16.0)
-        Assert.False r.IsSpinning
+        let r = BusyRing(16.0)
+        Assert.True r.IsBusy
+        Assert.True (r.Host.Classes.Contains "anim-spin")
         let w = Window(Content = r.Host)
         w.Show()
         Assert.True r.IsSpinning
-        r.Step()
-        Assert.Equal(18.0, r.Angle)
-        w.Content <- null
+        r.Render false
+        Assert.False r.IsBusy
         Assert.False r.IsSpinning
+        Assert.False r.Host.IsVisible
+        r.Render true
+        Assert.True r.IsBusy
+        Assert.True r.IsSpinning
+        Assert.True r.Host.IsVisible
         w.Close())
 
 [<Fact>]
-let ``减弱动效停在零度并露出底轨，活值切换即时生效`` () =
+let ``BusyRing 尺寸通过构造指定，结构包含 Viewbox 与 Canvas`` () =
     Headless.run (fun () ->
-        let reduced = Cell false
-        let r = BusyRing(mk reduced, 12.0)
-        let w = Window(Content = r.Host)
-        w.Show()
-        r.Step()
-        reduced.Set true
-        Assert.False r.IsSpinning
-        Assert.Equal(0.0, r.Angle)
-        let canvas = (r.Host :?> Viewbox).Child :?> Canvas
-        Assert.True canvas.Children[0].IsVisible
-        reduced.Set false
-        Assert.True r.IsSpinning
-        Assert.False canvas.Children[0].IsVisible
-        w.Close())
+        let r = BusyRing(24.0)
+        let vb = r.Host :?> Viewbox
+        Assert.Equal(24.0, vb.Width)
+        Assert.Equal(24.0, vb.Height)
+        let canvas = vb.Child :?> Canvas
+        Assert.Equal(16.0, canvas.Width)
+        Assert.Equal(16.0, canvas.Height)
+        Assert.Equal(2, canvas.Children.Count))

@@ -1,4 +1,3 @@
-/// 金标准渲染：同一份源码分别对旧代码摘录与新库编译。固定时间与 id。
 module HostRequestsRender
 open System
 open Wanxiang.UI

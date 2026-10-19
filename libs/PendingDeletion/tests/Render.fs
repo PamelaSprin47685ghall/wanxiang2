@@ -1,4 +1,3 @@
-/// 金标准渲染：同一份源码分别对旧代码摘录与新库编译。
 module Render
 
 open System

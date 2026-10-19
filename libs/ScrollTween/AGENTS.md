@@ -1,5 +1,6 @@
 # ScrollTween（库）
 
+> **注意（P2/P3 清理）**：ScrollTween 包含旧手搓贝塞尔物理滚动补间与 DispatcherTimer 驱动逻辑。P2 滚动命令统一交由 Effect.ScrollChat 收敛由入口 Runner 执行，ScrollTween 将在 P3 随手搓动画退役删除。
 旧 `Views/ChatView.fs` 三处平滑滚动（365-400 smoothScrollToCard，1370-1450 SmoothScrollToBeginning 与 SmoothScrollToEnd）的补间记账迁入：`Start(now, offset, target, reduced)`、`Frame(now, target)` 返回 `ScrollFrame.Offset | Done`、`Cancel`、`Pin`、`IsOwnOffset`，以及旧 `MotionPolicy.EaseOutCubicEasing` 的曲线数学 `EaseOutCubic.ease`。时长 180 毫秒，帧 16 毫秒，离目标不到 5 像素不做动画。帧计时器、ScrollViewer、ScrollToEnd、跟随状态仍归 ChatView。不引用任何其他库。根规则见项目根目录 AGENTS.md。
 
 宿主分工：到顶补间每帧传目标 0；到底补间每帧传 `max 0 (extent - viewport)`，目标 ≤ 0 时宿主自己 `Cancel` 并收尾（旧判据 `target <= 0.0`）；对准卡片的补间 Done 后宿主调 `Pin target`（旧 `lastAnimatedOffset <- target`），另两种 Done 不 Pin，与旧代码相同。

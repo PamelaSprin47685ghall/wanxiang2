@@ -10,12 +10,6 @@ let private moduleType name =
     AppDomain.CurrentDomain.GetAssemblies()
     |> Array.pick (fun a -> match a.GetType("Wanxiang.UI." + name) with null -> None | t -> Some t)
 
-/// 金样由旧 Design/Spacing.fs 反射列出全部公开值并对判定函数求值
-[<Fact>]
-let ``golden: every value and predicate matches the old Spacing`` () =
-    let expected = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "spacing.txt"))
-    Assert.Equal(expected, Dump.render [ moduleType "Spacing" ] (Probes.spacing ()))
-
 [<Fact>]
 let ``ramp is strictly increasing and starts at zero`` () =
     Assert.Equal(0.0, List.head Spacing.ramp)

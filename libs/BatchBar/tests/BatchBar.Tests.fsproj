@@ -13,11 +13,9 @@
     <Compile Include="HostSwitcher.Tests.fs" />
     <Compile Include="ListEmptyCard.Headless.fs" />
     <Compile Include="ListEmptyCard.Probe.fs" />
-    <Compile Include="ListEmptyCard.Fixture.fs" />
     <Compile Include="ListEmptyCard.Tests.fs" />
     <Compile Include="SidebarBrand.Headless.fs" />
     <Compile Include="SidebarBrand.Probe.fs" />
-    <Compile Include="SidebarBrand.Fixture.fs" />
     <Compile Include="SidebarBrand.Tests.fs" />
     <Compile Include="SidebarSearch.Headless.fs" />
     <Compile Include="SidebarSearch.Probe.fs" />

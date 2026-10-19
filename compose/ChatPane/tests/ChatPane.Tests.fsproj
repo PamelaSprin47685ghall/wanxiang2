@@ -2,9 +2,7 @@
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
     <Compile Include="Headless.fs" />
-    <Compile Include="Dump.fs" />
     <Compile Include="Tests.fs" />
-    <Compile Include="GoldenTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

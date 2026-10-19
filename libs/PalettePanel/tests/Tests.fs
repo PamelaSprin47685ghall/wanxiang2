@@ -11,16 +11,6 @@ open Avalonia.VisualTree
 open Xunit
 open Wanxiang2.PalettePanel
 
-let look () =
-    { Text = Brushes.Black; Muted = Brushes.Gray; Faint = Brushes.LightGray; Selected = Brushes.Beige
-      FieldSurface = Brushes.White; FieldEdge = Brushes.Gray; Caret = Brushes.Blue
-      BodyFontSize = Cell 14.0; SmallFontSize = Cell 12.0; MicroFontSize = Cell 10.5; MonoFont = Cell(FontFamily "monospace")
-      ItemPadding = Cell(Thickness(12.0, 6.0)); ItemRadius = Cell(CornerRadius 4.0); ItemMinHeight = Cell 32.0
-      ItemSpacing = Cell 2.0; ColumnSpacing = Cell 8.0; StackSpacing = Cell 4.0
-      StatusMargin = Cell(Thickness(12.0, 4.0)); HeaderMargin = Cell(Thickness(12.0, 8.0, 12.0, 4.0)); HintMargin = Cell(Thickness(12.0, 0.0, 12.0, 4.0))
-      ListMaxHeight = Cell 380.0; FieldPadding = Cell(Thickness(12.0, 6.0)); FieldRadius = Cell(CornerRadius 8.0)
-      FieldEdgeWidth = Cell(Thickness 1.0); FieldTextMinHeight = Cell 24.0 }
-
 let item id kind title recent = { Id = id; Title = title; Subtitle = ""; KindLabel = kind; Shortcut = None; Recent = recent }
 
 let sample =
@@ -59,7 +49,7 @@ let press (c: Control) k =
 let ``376 面板键盘：方向键选择、回车执行所选项、全文交接在末尾`` () =
     Headless.run (fun () ->
         let mutable ran: (string * string) option = None
-        let content, search = PalettePanel.build (look ()) (slots []) (fun i q -> ran <- Some(i.Id, q))
+        let content, search = PalettePanel.build (slots []) (fun i q -> ran <- Some(i.Id, q))
         let window = Window(Width = 700.0, Height = 600.0, Content = content)
         window.Show()
         Dispatcher.UIThread.RunJobs()
@@ -80,7 +70,7 @@ let ``376 面板键盘：方向键选择、回车执行所选项、全文交接�
 [<Fact>]
 let ``selection announces position and wraps; rows carry kind and shortcut help`` () =
     Headless.run (fun () ->
-        let content, search = PalettePanel.build (look ()) (slots []) (fun _ _ -> ())
+        let content, search = PalettePanel.build (slots []) (fun _ _ -> ())
         let window = Window(Width = 700.0, Height = 600.0, Content = content)
         window.Show()
         search.Text <- "对话"
@@ -91,7 +81,6 @@ let ``selection announces position and wraps; rows carry kind and shortcut help`
         Assert.Equal("在全部消息中搜索「对话」，操作，第 2 项，共 2 项", status.Text)
         let rows = content.GetVisualDescendants() |> Seq.choose (function :? Border as b when b.Classes.Contains PalettePanel.rowClass -> Some b | _ -> None) |> List.ofSeq
         Assert.True(rows[1].Classes.Contains "selected")
-        Assert.Same(Brushes.Beige, rows[1].Background)
         Assert.False(rows[0].Classes.Contains "selected")
         Assert.Equal("操作，交给侧栏搜索，查找消息正文，快捷键 Ctrl / ⌘ + Shift + F", AutomationProperties.GetHelpText rows[1])
         Assert.Contains("Ctrl/⌘+Shift+F", texts content)
@@ -100,7 +89,7 @@ let ``selection announces position and wraps; rows carry kind and shortcut help`
 [<Fact>]
 let ``blank query groups recent before actions`` () =
     Headless.run (fun () ->
-        let content, _ = PalettePanel.build (look ()) (slots [ "conv:2" ]) (fun _ _ -> ())
+        let content, _ = PalettePanel.build (slots [ "conv:2" ]) (fun _ _ -> ())
         let window = Window(Width = 700.0, Height = 600.0, Content = content)
         window.Show()
         let all = texts content
@@ -114,7 +103,7 @@ let ``blank query groups recent before actions`` () =
 [<Fact>]
 let ``arrow keys inside the list move between rows and up from the first returns to search`` () =
     Headless.run (fun () ->
-        let content, search = PalettePanel.build (look ()) (slots []) (fun _ _ -> ())
+        let content, search = PalettePanel.build (slots []) (fun _ _ -> ())
         let window = Window(Width = 700.0, Height = 600.0, Content = content)
         window.Show()
         Dispatcher.UIThread.RunJobs()

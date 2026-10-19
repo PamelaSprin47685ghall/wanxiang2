@@ -1,10 +1,10 @@
 # CopyButton
 
-复制按钮的确认反馈（迁自旧 `Controls/CopyFeedback.fs`）。确认记账（淡出、保持、复位）由本控件自己持有；计时器指向下一个到点时刻。图标、提示文字、读屏名由使用方按 `StateChanged` 去换（旧 `show` 回调）。根规则见项目根目录 AGENTS.md。
+复制按钮的确认反馈（迁自旧 `Controls/CopyFeedback.fs`）。单入口幂等 `Render(CopyButtonVS)`，确认记账由 VS 状态驱动（update 记 expiresAt），移除内置 DispatcherTimer。图标、提示文字、读屏名支持按 `StateChanged` 或 VS 状态响应。根规则见项目根目录 AGENTS.md。
 
 ## 外观
 
-- `CopyButtonLook`：`FadeOpacity`（活的不透明度），`Hold`、`Fade`（活的时长）。时长也是主题给的可变值，不写死。
+- `CopyButtonAppearance`：`FadeOpacity`（活的不透明度），`Hold`、`Fade`（活的时长）。支持 Render(CopyButtonVS)。
 - 用到的样式类：无。
 
 ## 证据与旧测试

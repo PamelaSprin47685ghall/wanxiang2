@@ -1,16 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="BreadcrumbAction.Samples.fs" />
-    <Compile Include="BreadcrumbAction.Render.fs" />
     <Compile Include="BreadcrumbAction.Tests.fs" />
     <Compile Include="MountWindow.Samples.fs" />
-    <Compile Include="MountWindow.Render.fs" />
     <Compile Include="MountWindow.Tests.fs" />
-    <Compile Include="RevealFlash.Samples.fs" />
-    <Compile Include="RevealFlash.Render.fs" />
     <Compile Include="RevealFlash.Tests.fs" />
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

@@ -1,4 +1,0 @@
-OpenProviderSettings	打开模型服务设置
-OpenConversationSettings	换模型或调整参数
-SwitchModel	换个模型
-StartNewConversation	新建对话

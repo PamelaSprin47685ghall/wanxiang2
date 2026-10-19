@@ -58,8 +58,3 @@ module Probe =
         w.Show()
         Dispatcher.UIThread.RunJobs()
         w
-
-/// 测试用外观：公共字段全是 Cell，测试可改值验证活性
-module Looks =
-    let brush (c: Color) = SolidColorBrush(c) :> IBrush
-    let glyph (name: string) (b: IBrush) : Control = TextBlock(Text = "[" + name + "]", Foreground = b) :> Control

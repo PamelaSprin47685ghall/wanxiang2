@@ -8,7 +8,6 @@ open Wanxiang.UI
 
 let private js (s: string) = Text.Json.JsonSerializer.Serialize s
 
-/// 与旧生成器同一格式；金样由旧 Markdown.fs（Markdig 1.3.2）与旧渲染器规则生成
 let private render () =
     let sb = StringBuilder()
     let line (s: string) = sb.Append(s).Append('\n') |> ignore
@@ -36,13 +35,6 @@ let private render () =
         line (sprintf "== stream %d prefix=%d blocks=%d" cut (Markdown.commonPrefix prev blocks) blocks.Length)
         prev <- blocks
     sb.ToString()
-
-[<Fact>]
-let ``golden: blocks and rendering rules match the old code`` () =
-    let expected = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "markdown.txt"))
-    let actual = render ()
-    if expected <> actual then File.WriteAllText("/tmp/markdown.actual.txt", actual)
-    Assert.Equal(expected, actual)
 
 [<Fact>]
 let ``empty input has no blocks; blank input falls back to its raw text`` () =

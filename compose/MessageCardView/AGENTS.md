@@ -1,6 +1,6 @@
 # MessageCardView（组合，消息卡）
 
-把 MessageView 折成各消息卡控件库的数据，拼成一张卡（迁自旧 `Views/MessageCard.fs`）；外观全部由主题管理者的活实例填，按钮挂 ThemeStyles 的共享样式类。协作者（包）：RevealPane、FoldHeader、BusyRing、ThinkingBlock、ToolCallCard、AttachmentChip、ActionStrip、ErrorPanel、UserBubble、StreamCaret、UsageFoot、MarkdownView、ReadingLook、CodeTint、CopyButton、CountdownTicker、CardReconcile、CaretBreath、MessageMenu、MessageView、ToolCallState、ToolOverview、ToolSummary、ToolArgsPreview、ToolErrorSummary、DurationText、MessageTimestamp、GenerationErrorTitle、ErrorRecovery、ConversationRuns（RetryCountdown、ErrorRecovery.forKind）、Wire、Theme、ThemePalette、ThemeMetrics、MotionSwitch、IconSet、DesignRhythm。根规则见项目根目录 AGENTS.md。
+把 MessageView 折成各消息卡控件库的数据，拼成一张卡（迁自旧 `Views/MessageCard.fs`）；消息卡内部控件（ActionStrip、AttachmentChip、ErrorPanel、FoldHeader、RevealPane、StreamCaret、ThinkingBlock、ToolCallCard、UsageFoot、UserBubble）全量使用无 Look 原生控件与单入口 Render，外观由 Avalonia 主题样式与 DynamicResource 驱动，废除旧式 CardLooks 传参。协作者（包）：ActionStrip、BusyRing、MarkdownView、ReadingLook、CodeTint、CopyButton、CountdownTicker、CardReconcile、CaretBreath、MessageMenu、MessageView、ToolCallState、ToolOverview、ToolSummary、ToolArgsPreview、ToolErrorSummary、DurationText、MessageTimestamp、GenerationErrorTitle、ErrorRecovery、ConversationRuns、Wire、Theme、ThemePalette、ThemeMetrics、MotionSwitch、IconSet、DesignRhythm。根规则见项目根目录 AGENTS.md。
 
 ## 接口（给宿主）
 - `CardLooks.ofTheme manager styles`：全部外观。

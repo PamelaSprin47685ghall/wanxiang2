@@ -52,7 +52,7 @@ let ``不能发时不显示「搜索中」；词一变旧命中作废；断线�
     Assert.Equal("", s.Query)
 
 [<Fact>]
-let ``与 SearchRequery 的边界：Query 是上次已发出的词`` () =
+let ``SearchSession: Query 是上次已发出的词`` () =
     let s = SearchSession<string>()
     s.Begin("天气", true) |> ignore
     Assert.Equal("天气", s.Query)

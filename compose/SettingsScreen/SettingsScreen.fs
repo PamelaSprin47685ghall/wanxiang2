@@ -59,9 +59,12 @@ type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: Set
     let closeRequested = Event<unit>()
     let frame =
         SettingsFrame(
-            SettingsLooks.frameOf theme,
             [ for title, parts in SettingsPart.groups ->
-                  title, [ for p in parts -> { Key = SettingsPart.key p; Label = SettingsPart.label p; Glyph = SettingsPart.glyph p } ] ])
+                  title, [ for p in parts -> { Key = SettingsPart.key p; Label = SettingsPart.label p; Glyph = SettingsPart.glyph p } ] ],
+            SettingsLooks.glyphOf theme)
+    do
+        if not (frame.Resources.MergedDictionaries.Contains (theme.Resources :> Avalonia.Controls.IResourceDictionary)) then
+            frame.Resources.MergedDictionaries.Add (theme.Resources :> Avalonia.Controls.IResourceDictionary)
     let providers = ProvidersDesk(theme, overlay, (fun () -> hooks))
     let tools = ToolsDesk(theme, overlay, (fun () -> hooks))
     let general =

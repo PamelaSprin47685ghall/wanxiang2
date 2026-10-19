@@ -11,7 +11,6 @@ open Avalonia.Media
 open Avalonia.Threading
 open Wanxiang.Core
 open Wanxiang.UI
-open Wanxiang2.UiKit
 open Wanxiang2.ThemePalette
 open Wanxiang2.ThemeMetrics
 open Wanxiang2.Theme
@@ -21,6 +20,7 @@ open Wanxiang2.CopyButton
 open Wanxiang2.CodeTint
 open Wanxiang2.MarkdownView
 open Wanxiang2.RevealPane
+open Wanxiang2.BusyRing
 open Wanxiang2.FoldHeader
 open Wanxiang2.ThinkingBlock
 open Wanxiang2.ToolCallCard
@@ -60,6 +60,35 @@ type CardContext =
       /// 品牌头像（BrandMark 归宿主）
       BrandAvatar: unit -> Control }
 
+module private Follow =
+    let now (source: IObservable<'T>) =
+        let mutable v = Unchecked.defaultof<'T>
+        (source.Subscribe(fun x -> v <- x)).Dispose()
+        v
+
+    let attachLive (control: Control) (source: IObservable<'T>) (apply: 'T -> unit) =
+        apply (now source)
+        let mutable sub: IDisposable = null
+        control.AttachedToVisualTree.Add(fun _ -> if isNull sub then sub <- source.Subscribe apply)
+        control.DetachedFromVisualTree.Add(fun _ ->
+            if not (isNull sub) then
+                sub.Dispose()
+                sub <- null)
+
+    let attachLive2 control (a: IObservable<'A>) (b: IObservable<'B>) (apply: 'A -> 'B -> unit) =
+        let mutable va = now a
+        let mutable vb = now b
+        attachLive control a (fun x -> va <- x; apply va vb)
+        attachLive control b (fun y -> vb <- y; apply va vb)
+
+    let live3 control (a: IObservable<'A>) (b: IObservable<'B>) (c: IObservable<'C>) (apply: 'A -> 'B -> 'C -> unit) =
+        let mutable va = now a
+        let mutable vb = now b
+        let mutable vc = now c
+        attachLive control a (fun x -> va <- x; apply va vb vc)
+        attachLive control b (fun y -> vb <- y; apply va vb vc)
+        attachLive control c (fun z -> vc <- z; apply va vb vc)
+
 /// 流式光标的呼吸时钟：一段呼吸运行的原点跨卡片重建持久，流式卡每次重建也接得上同一段呼吸
 /// （旧 MessageCard 模块级 breathOriginTicks / breathRunLive）。时钟可注入，测试不靠墙钟。
 type CaretClock(ticks: unit -> int64, frequency: int64) =
@@ -95,7 +124,7 @@ type CardHost =
       Now: unit -> DateTimeOffset }
 
 /// 消息卡渲染（旧 Views/MessageCard.fs）：把 MessageView 折成各控件库的数据，拼成一张卡。
-type MessageCards(looks: CardLooks, host: CardHost) =
+type MessageCards(looks: CardAppearance, host: CardHost) =
     let brush = looks.Brush
     let hand () = new Cursor(StandardCursorType.Hand)
 
@@ -136,7 +165,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
         if isNull button.Transitions then button.Transitions <- Avalonia.Animation.Transitions()
         button.Transitions.Add fade
         let mutable reduced = false
-        Follow.live2 button (looks.Timing Timing.CopyConfirmationFade) looks.Reduced (fun ms r ->
+        Follow.attachLive2 button (looks.Timing Timing.CopyConfirmationFade) looks.Reduced (fun ms r ->
             reduced <- r
             fade.Duration <- (if r then TimeSpan.Zero else TimeSpan.FromMilliseconds ms))
         button.OnInvoke(fun () ->
@@ -148,14 +177,14 @@ type MessageCards(looks: CardLooks, host: CardHost) =
 
     member private _.Reveal(maxHeight: float) =
         fun (content: Control) (visible: bool) ->
-            let pane = RevealPane(looks.Reveal, content, maxHeight, visible)
+            let pane = RevealPane(content, maxHeight, visible)
             pane.Host, (fun v -> pane.SetVisible v)
 
     /// 思考过程（旧 reasoningBlock）
     member this.Thinking(ctx: CardContext, actions: CardActions, reasoning: string, durationMs: int64 option) : Control =
         let expanded = not (not ctx.Streaming && ctx.AutoCollapseReasoning)
-        let pane = RevealPane(looks.Reveal, ThinkingBlock.text looks.Thinking reasoning ctx.FontSize, LayoutPolicy.expandedDetailMaxHeight, expanded)
-        let fold = FoldHeader(looks.Fold, expanded)
+        let pane = RevealPane(ThinkingBlock.text reasoning ctx.FontSize, LayoutPolicy.expandedDetailMaxHeight, expanded)
+        let fold = FoldHeader(expanded)
         let muted = brush PaletteKey.TextMuted
         let titleRun = FoldHeader.run "" muted
         fold.Caption.Inlines.Add titleRun
@@ -178,7 +207,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
             pane.SetVisible open'
             sync open')
         sync expanded
-        ThinkingBlock(looks.Thinking, fold.Header, pane.Host).Host
+        ThinkingBlock(fold.Header, pane.Host).Host
 
     member private _.Status(ctx: CardContext, call: ToolCallView) =
         let outcome = call.result |> Option.map (fun r -> ToolErrorSummary.tryExtract (Some r))
@@ -217,7 +246,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
         let parts =
             { Copy = fun tip name get -> this.CopyButton(actions.CopyText, tip, name, get)
               Reveal = this.Reveal LayoutPolicy.expandedDetailMaxHeight }
-        ToolCallCard(looks.Tool, data, parts).Host
+        ToolCallCard(data, parts).Host
 
     /// 工具活动块（旧 toolActivityBlock）：概览头 + 工具卡列表
     member this.ToolActivity(ctx: CardContext, actions: CardActions, calls: ToolCallView list) : Control =
@@ -240,20 +269,20 @@ type MessageCards(looks: CardLooks, host: CardHost) =
         let icon =
             match ToolOverview.icon counts with
             | OverviewIcon.Info -> looks.Icon Glyph.Info tint
-            | OverviewIcon.Spinner -> looks.Tool.Glyph ToolGlyph.SpinnerCompact tint
+            | OverviewIcon.Spinner -> BusyRing(12.0).Host
             | OverviewIcon.Alert -> looks.Icon Glyph.Alert tint
             | OverviewIcon.Check -> looks.Icon Glyph.Check tint
         icon.VerticalAlignment <- VerticalAlignment.Center
         let cards = StackPanel(Orientation = Orientation.Vertical, Spacing = 0.0)
         for call in calls do cards.Children.Add(this.ToolCard(ctx, actions, call))
-        let fold = FoldHeader(looks.Fold, true)
+        let fold = FoldHeader(true)
         // 旧工具活动头不报展开状态
         fold.ReportState <- false
         fold.AddLeading icon
         let stateRun = FoldHeader.run "（收起）" (brush PaletteKey.TextMuted)
         fold.Caption.Inlines.Add(FoldHeader.run text tint)
         fold.Caption.Inlines.Add stateRun
-        Follow.live fold.Header (looks.Space Space.Md) (fun md -> fold.Header.Margin <- Thickness(0.0, 0.0, 0.0, md))
+        Follow.attachLive fold.Header (looks.Space Space.Md) (fun md -> fold.Header.Margin <- Thickness(0.0, 0.0, 0.0, md))
         AutomationProperties.SetName(fold.Header, text)
         AutomationProperties.SetHelpText(fold.Header, "点击收起工具活动列表")
         fold.Toggled.Add(fun open' ->
@@ -270,7 +299,6 @@ type MessageCards(looks: CardLooks, host: CardHost) =
     member _.Attachment(ctx: CardContext, actions: CardActions, a: AttachmentRef) : Control =
         let chip =
             AttachmentChip(
-                looks.Chip,
                 { FileName = a.fileName
                   SizeText = AttachmentRef.formatSize a.size
                   IsImage = AttachmentRef.isImage a
@@ -289,9 +317,9 @@ type MessageCards(looks: CardLooks, host: CardHost) =
                 Foreground = warn,
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center)
-        Follow.live label (looks.Metric Metric.FontCaption) (fun s -> label.FontSize <- s)
+        Follow.attachLive label (looks.Metric Metric.FontCaption) (fun s -> label.FontSize <- s)
         let row = StackPanel(Orientation = Orientation.Horizontal)
-        Follow.live row (looks.Space Space.Sm) (fun s -> row.Spacing <- s)
+        Follow.attachLive row (looks.Space Space.Sm) (fun s -> row.Spacing <- s)
         row.Children.Add icon
         row.Children.Add label
         AutomationProperties.SetName(row, "回复未完成")
@@ -303,7 +331,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
             { Copy = fun tip name get -> this.CopyButton(actions.CopyText, tip, name, get)
               Reveal = this.Reveal LayoutPolicy.expandedDetailMaxHeight
               CountdownText = ProviderRateLimit.countdownText }
-        let panel = ErrorPanel(looks.Error, parts, GenerationErrorTitle.ofMessage error.message, GenerationError.hint error)
+        let panel = ErrorPanel(parts, GenerationErrorTitle.ofMessage error.message, GenerationError.hint error)
         // 等待建议只跟可重试错误走；截止时刻挂在错误实例上，卡片重建不会让倒计时重来
         match RetryCountdown.tryGet error (host.Now()) with
         | Some info when error.retryable ->
@@ -360,7 +388,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
     member this.Actions(message: MessageView, ctx: CardContext, actions: CardActions, index: int option) : ActionStrip =
         let isUser = MessageView.isUser message
         let rest = if ctx.IsLastAssistant && not isUser then StripRest.Subtle else StripRest.Hidden
-        let strip = ActionStrip(looks.Strip, rest)
+        let strip = ActionStrip(rest)
         // 复制与编辑 / 重新生成 / 删除同门：流式进行中一律不挂
         if not (String.IsNullOrWhiteSpace message.text) && not ctx.Streaming then
             let name = ActionStrip.copyName isUser index
@@ -388,7 +416,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
             let fade = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty)
             if isNull button.Transitions then button.Transitions <- Avalonia.Animation.Transitions()
             button.Transitions.Add fade
-            Follow.live2 button (looks.Timing Timing.CopyConfirmationFade) looks.Reduced (fun ms r ->
+            Follow.attachLive2 button (looks.Timing Timing.CopyConfirmationFade) looks.Reduced (fun ms r ->
                 reduced <- r
                 fade.Duration <- (if r then TimeSpan.Zero else TimeSpan.FromMilliseconds ms))
             confirm <- Some c
@@ -419,7 +447,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
                   DurationMs = u.durationMs
                   Cached = GenerationUsage.cachedCount u
                   Detail = GenerationUsage.formatDetail u })
-        UsageFoot.line looks.Foot stamp figures (MessageView.isUser message)
+        UsageFoot.line stamp figures (MessageView.isUser message)
 
     /// 渲染一条消息（旧 renderWithStream）。第二项是流式正文的原位更新入口；非流式或没有正文时为 None
     member this.Render(message: MessageView, ctx: CardContext, actions: CardActions, index: int option) : Control * MarkdownStream option =
@@ -439,7 +467,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
         if not (String.IsNullOrWhiteSpace message.text) then
             if isUser then
                 // 长输入先收进小阅读窗：粘贴的大段提示词不把同屏回复推走
-                let pane = RevealPane(looks.Reveal, UserBubble.text looks.Bubble message.text ctx.FontSize, LayoutPolicy.expandedLongMessageMaxHeight, true)
+                let pane = RevealPane(UserBubble.text message.text ctx.FontSize, LayoutPolicy.expandedLongMessageMaxHeight, true)
                 body.Children.Add pane.Host
             elif ctx.Streaming then
                 let live = MarkdownStream view
@@ -459,16 +487,16 @@ type MessageCards(looks: CardLooks, host: CardHost) =
                 // 尚无运行中的段落时才开启新运行：进程内第一枚光标从峰值起步
                 if not clock.IsLive then clock.Begin()
                 CaretBreath.opacity lo hi half clock.Elapsed.TotalMilliseconds
-            body.Children.Add(StreamCaret(looks.Caret, breath).Host)
+            body.Children.Add(StreamCaret(breath).Host)
 
         let row: Control =
             if isUser then
-                UserBubble(looks.Bubble, body).Host
+                UserBubble(body).Host
             else
                 let bubble = Border(Background = Brushes.Transparent, Padding = Thickness 0.0, HorizontalAlignment = HorizontalAlignment.Stretch, Child = body)
                 let avatar = ctx.BrandAvatar()
                 avatar.VerticalAlignment <- VerticalAlignment.Top
-                Follow.live avatar (looks.Space Space.Xl) (fun xl -> avatar.Margin <- Thickness(0.0, 0.0, xl, 0.0))
+                Follow.attachLive avatar (looks.Space Space.Xl) (fun xl -> avatar.Margin <- Thickness(0.0, 0.0, xl, 0.0))
                 // 助手正文必须铺满阅读列：DockPanel 让头像靠左、正文填满
                 let dock = DockPanel(LastChildFill = true, HorizontalAlignment = HorizontalAlignment.Stretch)
                 DockPanel.SetDock(avatar, Dock.Left)
@@ -479,9 +507,9 @@ type MessageCards(looks: CardLooks, host: CardHost) =
         let strip = this.Actions(message, ctx, actions, index)
         let meta = if ctx.Streaming then None else this.Footer(message, (if ctx.IsLastAssistant then ctx.Usage else None))
         let line = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-        Follow.live line (looks.Space Space.Md) (fun md -> line.Spacing <- md)
+        Follow.attachLive line (looks.Space Space.Md) (fun md -> line.Spacing <- md)
         // 头像宽 + 间距：脚注缩进同样的量才与正文左缘对齐
-        Follow.live2 line (looks.Metric Metric.LogoAvatar) (looks.Space Space.Xl) (fun avatar xl ->
+        Follow.attachLive2 line (looks.Metric Metric.LogoAvatar) (looks.Space Space.Xl) (fun avatar xl ->
             let gutter = avatar + xl
             let md = Follow.now (looks.Space Space.Md)
             line.Margin <- (if isUser then Thickness(0.0, md, gutter, 0.0) else Thickness(gutter, md, 0.0, 0.0)))
@@ -515,7 +543,7 @@ type MessageCards(looks: CardLooks, host: CardHost) =
             Avalonia.Interactivity.RoutingStrategies.Tunnel,
             true)
         let show () = strip.SetShown true
-        let dim () = Dispatcher.UIThread.Post(fun () -> sync ())
+        let dim () = sync ()
         card.PointerEntered.Add(fun _ -> show ())
         card.PointerExited.Add(fun _ -> dim ())
         card.PointerPressed.Add(fun e ->
@@ -529,8 +557,29 @@ type MessageCards(looks: CardLooks, host: CardHost) =
         // 定位高亮的承载面：零边距圆角 Border，平时透明，不改列表占位
         let highlight =
             Border(Name = MessageCards.HighlightName, Background = Brushes.Transparent, Child = card, ContextMenu = this.Menu(message, ctx, actions))
-        Follow.live highlight (looks.Space Space.RadiusLg) (fun r -> highlight.CornerRadius <- CornerRadius r)
+        Follow.attachLive highlight (looks.Space Space.RadiusLg) (fun r -> highlight.CornerRadius <- CornerRadius r)
         (highlight :> Control), stream
+
+    /// 单入口：从 MessageRowVS 渲染
+    member this.Render(row: Wanxiang2.WorkspaceState.MessageRowVS, ctx: CardContext, actions: CardActions) : Control * MarkdownStream option =
+        let msg: MessageView =
+            { role = row.Role
+              text = row.Text
+              reasoning = row.Reasoning
+              toolCalls = row.ToolCalls
+              toolResults = []
+              attachments = row.Attachments
+              commitId = row.CommitId
+              committedAt = row.CommittedAt }
+        let effCtx =
+            { ctx with
+                Streaming = row.Streaming
+                IsLastAssistant = row.IsLastAssistant
+                AutoCollapseReasoning = row.AutoCollapseReasoning
+                Usage = (match row.Usage with Some u -> Some u | None -> ctx.Usage)
+                MissingAttachments = (if not (Set.isEmpty row.MissingAttachments) then row.MissingAttachments else ctx.MissingAttachments)
+                AwaitingApproval = (if not (Set.isEmpty row.AwaitingApproval) then row.AwaitingApproval else ctx.AwaitingApproval) }
+        this.Render(msg, effCtx, actions, (match row.Index with Some i -> Some i | None -> None))
 
     /// 消息卡外层高亮承载面的名字（列表定位高亮时按名查找）
     static member HighlightName = "reveal-highlight"

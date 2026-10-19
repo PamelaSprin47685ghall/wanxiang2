@@ -1,92 +1,68 @@
 namespace Wanxiang2.ModelChip
 
-open Wanxiang2.UiKit
-
 open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
+open Avalonia.Controls.Shapes
 open Avalonia.Input
 open Avalonia.Layout
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
 
-/// 用到的笔刷
-[<RequireQualifiedAccess>]
-type ChipInk =
-    | Text
-    | TextMuted
-    | Hairline
-    /// 下拉箭头（旧 Tokens.textFaint）
-    | TextFaint
+/// 动态资源绑定辅助
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
 
-/// 用到的活度量
-[<RequireQualifiedAccess>]
-type ChipGauge =
-    | FontSmall
-    | MaxWidth
-    | CompactMaxWidth
-    | PadX
-    | PadY
-    | RadiusSm
-    | BorderWidth
-    | CompactMinHeight
-    | SpaceXs
-
-/// 外观
-type ModelChipLook =
-    { Ink: ChipInk -> IBrush
-      Gauge: ChipGauge -> IObservable<float>
-      BodyFont: IObservable<FontFamily>
-      /// 下拉箭头图标（旧 Icons.chevronDown）
-      Chevron: IBrush -> Control
-      /// 描边表面反馈（旧 Ui.surfaceBorderedTransitions / Interaction.HoverVariant.bordered）
-      Dress: Border -> unit }
-
-/// 输入区模型芯片（旧 Composer.modelChip）：显示当前模型名，点开切换；未选时用 muted 色。
-type ModelChip(look: ModelChipLook) =
-    let ink = look.Ink
-    let gauge = look.Gauge
+/// 输入区模型芯片（原生 Button + 矢量箭头实现）：
+/// 单入口 Render(modelOption: string option, compact: bool)。
+/// 废除 Look 记录与 Spot。
+type ModelChip() =
     let caption =
         TextBlock(
             Text = "未选择模型",
-            Foreground = ink ChipInk.TextMuted,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis)
+    do caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+
+    let chevron =
+        Path(
+            Data = Geometry.Parse "M 3 5 L 7 9 L 11 5",
+            StrokeThickness = 1.2,
+            StrokeLineCap = PenLineCap.Round,
+            Fill = Brushes.Transparent,
+            VerticalAlignment = VerticalAlignment.Center,
+            Width = 14.0,
+            Height = 14.0)
+    do chevron.Bind(Path.StrokeProperty, Dyn.res "Palette.TextFaint") |> ignore
+
     let host =
-        Spot(
-            Background = Brushes.Transparent,
-            BorderBrush = ink ChipInk.Hairline,
-            Cursor = new Cursor(StandardCursorType.Hand),
-            Focusable = true,
-            VerticalAlignment = VerticalAlignment.Center)
+        let b = Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), VerticalAlignment = VerticalAlignment.Center)
+        b.Classes.Add "ghost"
+        b.Classes.Add "button-ghost"
+        b
+
     let mutable compact = false
     let mutable onOpen: Control -> unit = ignore
+
     let applyWidth () =
-        caption.MaxWidth <- Follow.now (gauge (if compact then ChipGauge.CompactMaxWidth else ChipGauge.MaxWidth))
-        host.MinHeight <- if compact then Follow.now (gauge ChipGauge.CompactMinHeight) else 0.0
+        caption.MaxWidth <- if compact then 120.0 else 240.0
+        host.MinHeight <- if compact then 32.0 else 26.0
 
     do
-        let row = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-        Follow.live row (gauge ChipGauge.SpaceXs) (fun s -> row.Spacing <- s)
+        let row = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0, VerticalAlignment = VerticalAlignment.Center)
         row.Children.Add caption
-        let chevron = look.Chevron(ink ChipInk.TextFaint)
-        chevron.VerticalAlignment <- VerticalAlignment.Center
         row.Children.Add chevron
-        host.Child <- row
-        look.Dress host
-        Follow.live caption (gauge ChipGauge.FontSmall) (fun s -> caption.FontSize <- s)
-        Follow.live caption look.BodyFont (fun f -> caption.FontFamily <- f)
-        Follow.live2 host (gauge ChipGauge.PadX) (gauge ChipGauge.PadY) (fun x y -> host.Padding <- Thickness(x, y))
-        Follow.live host (gauge ChipGauge.RadiusSm) (fun r -> host.CornerRadius <- CornerRadius r)
-        Follow.live host (gauge ChipGauge.BorderWidth) (fun w -> host.BorderThickness <- Thickness w)
-        Follow.live host (gauge ChipGauge.MaxWidth) (fun _ -> applyWidth ())
-        Follow.live host (gauge ChipGauge.CompactMaxWidth) (fun _ -> applyWidth ())
-        Follow.live host (gauge ChipGauge.CompactMinHeight) (fun _ -> applyWidth ())
+        host.Content <- row
+        applyWidth ()
         AutomationProperties.SetName(host, "未选择模型")
-        host.OnInvoke(fun () -> onOpen host)
+        host.Click.Add(fun _ -> onOpen host)
 
-    /// 放进布局的根
-    member _.Host: Border = host
+    /// 放进布局的原生 Button 宿主
+    member _.Host: Button = host
     member _.Text = caption.Text
 
     /// 点开时的去处（宿主注入模型切换器，锚点即本芯片）
@@ -100,5 +76,16 @@ type ModelChip(look: ModelChipLook) =
     member _.SetLabel(text: string) =
         let empty = String.IsNullOrWhiteSpace text || text = "未选择模型"
         caption.Text <- if String.IsNullOrWhiteSpace text then "未选择模型" else text
-        caption.Foreground <- ink (if empty then ChipInk.TextMuted else ChipInk.Text)
+        if empty then
+            caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+        else
+            caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
         AutomationProperties.SetName(host, caption.Text)
+
+    /// 单入口幂等渲染
+    member this.Render(model: string option, isCompact: bool) =
+        compact <- isCompact
+        applyWidth ()
+        match model with
+        | Some label when not (String.IsNullOrWhiteSpace label) -> this.SetLabel label
+        | _ -> this.SetLabel "未选择模型"

@@ -3,14 +3,14 @@
 工具审批卡与卡宿主（迁自旧 `Views/ToolApprovalCard.fs`：`ToolApprovalCard.build` → `ApprovalCard.build`，`ToolApprovalPanel` → `ApprovalPanel`）。根规则见项目根目录 AGENTS.md。
 
 - 批准 / 拒绝只发一次，随后两键不可用并在 polite 状态行显示「已发送」文案；参数默认收起，「查看参数」展开全文；没有参数（空或 `{}`）不显示该键。
-- 按钮用 `Wanxiang2.UiKit` 的 `Tap.TextButton`（可聚焦 Border，读屏 Button + Invoke，Enter / Space / 左键），命中高度不低于 Look 的触控下限，两键等宽、行宽封顶。
+- 原生 Avalonia `Button` 控件，命中高度不低于 44px（触控下限），两键等宽、行宽封顶。
 - 文案是插槽 `ApprovalTexts`，组合者填 ApprovalCardText 的 `policyNote`、`sentText`、`displayArguments`、`argsToggleText`；固定标题「模型想使用工具，需要你批准」与读屏名格式照旧。
 - AutomationId 与旧代码相同：`tool-approval-summary`、`-status`、`-approve`、`-deny`、`-args`、`-args-toggle`、`tool-approval-<id>`。
+- 单入口幂等渲染：`Render(items, currentConversation)`，单出口意图事件 `Decide(Guid * bool)`。
 
 ## 外观
 
-- `ApprovalPanelLook`：画笔 `Text`、`Muted`、`Faint`、`Warning`；图标插槽 `Wrench`；字号、行高、等宽字体、触控下限、按钮行最大宽度、间距、卡内边距与圆角都是活的值。
-- 用到的样式类（compose/Theme）：卡 `grouping-card`；批准 `surface button-primary hover-accent`；拒绝 `surface button-secondary hover-raised`；查看参数 `surface button-ghost hover-plain`。不可用态的透明度由主题 `:disabled` 给。
+- 样式类（compose/Theme）：卡 `grouping-card`；批准 `primary`；拒绝 `secondary`；查看参数 `ghost`。废除 `ApprovalPanelLook`，样式与主题全部由 Avalonia 样式类与主题系统提供。
 
 ## 证据与旧测试
 

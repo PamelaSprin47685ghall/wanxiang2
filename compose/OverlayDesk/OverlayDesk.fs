@@ -4,18 +4,20 @@ open System
 open Avalonia
 open Avalonia.Controls
 open Avalonia.LogicalTree
-open Avalonia.Threading
 open Wanxiang.UI
+open Wanxiang2.WorkspaceState
 open Wanxiang2.OverlayLayer
 open Wanxiang2.ToastStrip
 open Wanxiang2.PopupMenu
 open Wanxiang2.FocusOrigin
 
+type ToastTone = Wanxiang2.WorkspaceState.ToastTone
+
 /// 组合后的外观：各控件自己的 Look 加上只有组合层才用的值。
-type OverlayDeskLook =
-    { Layer: OverlayLayerLook
-      Toasts: ToastStripLook
-      Menu: PopupMenuLook
+type OverlayDeskMetrics =
+    { Layer: OverlayLayerAppearance
+      Toasts: ToastStripAppearance
+      Menu: PopupMenuAppearance
       /// 普通菜单浮层的最小宽度（旧代码 200）
       MenuMinWidth: IObservable<float>
       /// 分组菜单浮层的最小宽度（旧代码 240）
@@ -29,27 +31,19 @@ type OverlayDeskLook =
 
 /// 旧 OverlayHost + Menu 的组合：Escape 次序（浮层 → 对话框 → 最新提示条）、提示条去重与上限、
 /// 停留计时、菜单激活先关浮层再执行、Ctrl/⌘+Z 与 F6 的提示条动作入口都在这里协作。
-type OverlayDesk(root: Grid, look: OverlayDeskLook) =
+type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
     let layer = OverlayLayer(root, look.Layer, PopupPlacement.place)
     let strip = ToastStrip(look.Toasts)
     let queue = ToastQueue()
-    let timers = Collections.Generic.Dictionary<string, DispatcherTimer>()
     let actions = ResizeArray<string * string * (unit -> unit)>()
+    let mutable onUserMsg: (UserMsg -> unit) option = None
     let mutable inset = 0.0
     let mutable menuMin = 0.0
     let mutable groupedMin = 0.0
-    let mutable dwellFailure = 0.0
-    let mutable dwellWarning = 0.0
-    let mutable dwellDefault = 0.0
-
+    let mutable currentOverlayPhase = OverlayPhase.Closed
     let fit () = strip.Fit(root.Bounds.Width, root.Bounds.Height, inset)
 
     let remove (message: string) =
-        match timers.TryGetValue message with
-        | true, t ->
-            t.Stop()
-            timers.Remove message |> ignore
-        | _ -> ()
         queue.Remove message
         actions.RemoveAll(fun (m, _, _) -> m = message) |> ignore
         strip.Remove message
@@ -62,9 +56,6 @@ type OverlayDesk(root: Grid, look: OverlayDeskLook) =
         look.Layer.ViewportInset.Subscribe(fun v -> inset <- v; fit ()) |> ignore
         look.MenuMinWidth.Subscribe(fun v -> menuMin <- v) |> ignore
         look.GroupedMenuMinWidth.Subscribe(fun v -> groupedMin <- v) |> ignore
-        look.DwellFailureMs.Subscribe(fun v -> dwellFailure <- v) |> ignore
-        look.DwellWarningMs.Subscribe(fun v -> dwellWarning <- v) |> ignore
-        look.DwellDefaultMs.Subscribe(fun v -> dwellDefault <- v) |> ignore
         strip.Clicked.Add remove
         strip.ActionInvoked.Add(fun message ->
             match actions |> Seq.tryFind (fun (m, _, _) -> m = message) with
@@ -73,6 +64,13 @@ type OverlayDesk(root: Grid, look: OverlayDeskLook) =
 
     member _.Layer = layer
     member _.Toasts = strip
+
+    /// 注入单出口意图派发器（向 WorkspaceState 上报用户意图）
+    member _.SetDispatcher(dispatch: UserMsg -> unit) =
+        onUserMsg <- Some dispatch
+        layer.SetOnPopupClosed(fun () ->
+            dispatch (UserMsg.Overlay (OverlayUserMsg.PopupClosed ""))
+        )
 
     /// scrollWholeContent = false：内容自带滚动区与固定页脚（会话参数），卡片按视口封顶、页脚不被挤出。
     member _.ShowDialog(content: Control, width: float, ?onClosed: unit -> unit, ?canDismiss: unit -> bool, ?initialFocus: Control, ?scrollWholeContent: bool) =
@@ -85,6 +83,25 @@ type OverlayDesk(root: Grid, look: OverlayDeskLook) =
         layer.WireDismiss()
         root.PropertyChanged.Add(fun args -> if args.Property = Visual.BoundsProperty then fit ())
 
+    /// 单入口：幂等渲染 OverlayVS 状态
+    member this.Render(overlayVS: OverlayVS) =
+        match overlayVS with
+        | OverlayVS.Closed ->
+            if layer.IsPopupOpen then layer.ClosePopup()
+            if layer.IsDialogOpen then layer.CloseDialog()
+            currentOverlayPhase <- OverlayPhase.Closed
+        | OverlayVS.Drawer _ ->
+            currentOverlayPhase <- OverlayPhase.DrawerOpen
+        | OverlayVS.Dialog d ->
+            currentOverlayPhase <- OverlayPhase.DialogOpen d.Kind
+        | OverlayVS.Popup p ->
+            currentOverlayPhase <- OverlayPhase.PopupOpen p.Kind
+
+    /// 单入口：幂等渲染 ToastVS 列表（计时由 WorkspaceState 的 MsgTick / ExpiresAt 管）
+    member this.RenderToasts(toasts: ToastVS list) =
+        strip.Render toasts
+        fit ()
+
     member this.Toast(message: string, tone: ToastTone) = this.ToastWith(message, tone, None)
 
     /// 带一个行内动作的提示条；点动作先关条再执行动作。
@@ -92,31 +109,11 @@ type OverlayDesk(root: Grid, look: OverlayDeskLook) =
         if not (String.IsNullOrWhiteSpace message) then
             // 同文只留最新一条、新条挤掉最旧的：被撤下的由 ToastQueue 给出。
             for dismissed in queue.Admit message do
-                match timers.TryGetValue dismissed with
-                | true, t -> t.Stop(); timers.Remove dismissed |> ignore
-                | _ -> ()
                 actions.RemoveAll(fun (m, _, _) -> m = dismissed) |> ignore
                 strip.Remove dismissed
-            let dwell =
-                ToastDwell(
-                    (match tone with
-                     | ToastTone.Failure -> dwellFailure
-                     | ToastTone.Warning -> dwellWarning
-                     | _ -> dwellDefault),
-                    action.IsSome)
             action |> Option.iter (fun (label, run) -> actions.Add(message, label, run))
             strip.Add(message, tone, action |> Option.map fst)
             fit ()
-            let expire = DispatcherTimer(Interval = look.DismissTick)
-            timers[message] <- expire
-            expire.Tick.Add(fun _ -> if dwell.Tick expire.Interval.TotalMilliseconds then remove message)
-            expire.Start()
-            // 暂停规则在 ToastDwell：只把本条的指针与焦点事件转给它。
-            let mine f = fun m -> if m = message && timers.ContainsKey message && obj.ReferenceEquals(timers[message], expire) then f ()
-            strip.PointerEnteredToast.Add(mine dwell.PointerEntered)
-            strip.PointerExitedToast.Add(fun (m, focused) -> mine (fun () -> dwell.PointerExited focused) m)
-            strip.ActionFocused.Add(mine dwell.ActionFocused)
-            strip.ActionUnfocused.Add(mine dwell.ActionUnfocused)
 
     /// 触发最新一条仍可见、动作名为 label 的提示条动作；没有则 false。
     member _.TryInvokeToastAction(label: string) : bool =

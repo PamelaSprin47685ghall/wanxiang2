@@ -8,8 +8,8 @@
 
 ## 外观
 
-- `PalettePanelLook`：画笔 `Text`、`Muted`、`Faint`、`Selected`、`FieldSurface`、`FieldEdge`、`Caret`；字号、等宽字体、行与输入框的尺寸边距都是活的值。
-- 用到的样式类（compose/Theme）：行 `palette-row menu-item surface hover-plain`（选中时另挂 `selected` 并设 `Selected` 底）；分组标题 `section-label`；分隔 `hairline`；输入壳 `surface focus-soft`。
+- 废除 `PalettePanelLook`，外观全走 Avalonia 样式类与主题资源。
+- 用到的样式类（compose/Theme）：行 `palette-row menu-item surface hover-plain`（选中时挂 `selected`）；分组标题 `section-label`；分隔 `hairline`；输入壳 `surface control-stroke`；文本类 `muted`、`faint`、`code-box`。
 
 ## 证据与旧测试
 

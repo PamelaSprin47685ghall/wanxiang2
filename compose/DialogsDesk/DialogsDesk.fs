@@ -7,6 +7,7 @@ open Avalonia.Threading
 open Wanxiang.Core
 open Wanxiang.Client
 open Wanxiang.UI
+open Wanxiang2.WorkspaceState
 open Wanxiang2.ThemeMetrics
 open Wanxiang2.Theme
 open Wanxiang2.ToastStrip
@@ -31,6 +32,7 @@ type ConnectDeskHandle =
 /// 旧 Views/Dialogs.fs 的协作：把各面板摆进 OverlayDesk，接确认/取消/校验/保存往返。
 /// 界面全部在面板库里；这里只做关闭、焦点、提示条与领域换算。
 type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
+    let mutable onUserMsg: (UserMsg -> unit) option = None
     let check = FieldCheck(DialogLooks.fieldCheckOf theme)
     let width m = (theme.Metric m).Value
     let validationFor = fun (box: TextBox) -> Some(check.MessageFor box :> Control)
@@ -73,7 +75,7 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
 
     /// 单行输入（重命名等）。onConfirm 收到去空白的值与回执；回执 true 关闭，false 留在对话框。
     member _.Prompt(title: string, hint: string, initial: string, confirmLabel: string, onConfirm: string -> (bool -> unit) -> unit) =
-        let pane = PromptPane(DialogLooks.promptOf theme, title, hint, initial, confirmLabel, validationFor)
+        let pane = PromptPane(title, hint, initial, confirmLabel, validationFor)
         let mutable active = true
         pane.FieldError.Add(fun m ->
             match m with
@@ -90,14 +92,13 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
             pane.View, width Metric.ConfirmDialogWidth,
             onClosed = (fun () -> active <- false),
             canDismiss = (fun () -> not pane.IsPending))
-        Dispatcher.UIThread.Post(fun () ->
-            pane.Box.Focus() |> ignore
-            pane.Box.SelectAll())
+        pane.Box.Focus() |> ignore
+        pane.Box.SelectAll()
         pane
 
     /// 确认；dangerFirst 时首焦落在主按钮，否则落在取消（安全项）。
     member _.ConfirmWithFocus(title: string, body: string, confirmLabel: string, onConfirm: unit -> unit, dangerFirst: bool) =
-        let pane = ConfirmPane(DialogLooks.confirmOf theme, title, body, confirmLabel, dangerFirst)
+        let pane = ConfirmPane(title, body, confirmLabel, dangerFirst)
         pane.Cancelled.Add(fun () -> overlay.CloseDialog())
         pane.Confirmed.Add(fun () ->
             overlay.CloseDialog()
@@ -110,13 +111,13 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
 
     /// 长文本编辑（编辑消息并分叉）；确认即关闭，值原样交出（不去空白，与旧实现一致）。
     member _.EditText(title: string, initial: string, confirmLabel: string, onConfirm: string -> unit) =
-        let pane = TextEditPane(DialogLooks.textEditOf theme, title, initial, confirmLabel)
+        let pane = TextEditPane(title, initial, confirmLabel)
         pane.Cancelled.Add(fun () -> overlay.CloseDialog())
         pane.Submitted.Add(fun value ->
             overlay.CloseDialog()
             onConfirm value)
         overlay.ShowDialog(pane.View, width Metric.SessionDialogWidth)
-        Dispatcher.UIThread.Post(fun () -> pane.FocusEnd())
+        pane.FocusEnd()
         pane
 
     /// 连接对话框：地址 + 令牌，或配对码。重试按钮由 ConnectionIssue.retry 决定，与文案无关。
@@ -125,7 +126,7 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
             { Normalize = PairingCodeInput.normalize
               LetterSpacing = PairingCodeInput.letterSpacing
               Hint = PairingHint.codeHint }
-        let pane = ConnectPane(DialogLooks.connectOf theme, defaultUrl, rules)
+        let pane = ConnectPane(defaultUrl, rules)
         let autoSubmit = PairingAutoSubmit()
         let mutable pendingRetry: ConnectionRetry option = None
         let announce message =
@@ -201,7 +202,7 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
                         Source = (if tool.source = "mcp" then defaultArg tool.serverId "mcp" else "内置")
                         Enabled = List.contains tool.id current.tools } ]
               Customized = current.temperature.IsSome || current.topP.IsSome || current.maxTokens.IsSome || current.thinkingBudget.IsSome }
-        let pane = SessionPrefsPane(DialogLooks.sessionOf theme, select.View, init, validationFor)
+        let pane = SessionPrefsPane(select.View, init, validationFor)
         let boxes = [ pane.TemperatureBox; pane.TopPBox; pane.MaxTokensBox; pane.ThinkingBudgetBox ]
         FieldCheck.BindSummaryReset(Some pane.Summary, boxes)
         pane.Cancelled.Add(fun () -> overlay.CloseDialog())
@@ -262,9 +263,11 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
             scrollWholeContent = false)
         pane
 
+    member _.SetDispatcher(dispatch: UserMsg -> unit) = onUserMsg <- Some dispatch
+
     /// 快捷键帮助：唯一停留点是关闭键。
     member _.Shortcuts() =
-        let pane = ShortcutHelpPane(DialogLooks.shortcutsOf theme, DialogsDesk.ShortcutSections)
+        let pane = ShortcutHelpPane(DialogsDesk.ShortcutSections)
         pane.Closed.Add(fun () -> overlay.CloseDialog())
         overlay.ShowDialog(pane.View, width Metric.ConnectDialogWidth, initialFocus = pane.InitialFocus)
         pane

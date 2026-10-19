@@ -232,7 +232,7 @@ let ``卡上每个可点件都有读屏 Invoke 并报按钮`` () =
             let w = show card
             let spots =
                 all card
-                |> List.filter (fun c -> c :? Border && c.Focusable && not (isNull c.Cursor))
+                |> List.filter (fun c -> (c :? Border || c :? Button) && c.Focusable && not (isNull c.Cursor))
             Assert.NotEmpty spots
             for s in spots do
                 let peer = Automation.Peers.ControlAutomationPeer.CreatePeerForElement s

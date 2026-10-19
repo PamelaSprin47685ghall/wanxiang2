@@ -4,6 +4,7 @@ open System
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Media
+open Avalonia.Styling
 open Xunit
 open Wanxiang2.Theme
 open Wanxiang2.ThemePalette
@@ -161,3 +162,109 @@ let ``button classes carry the old geometry`` () =
         m.SetSpace(Space.RadiusMd, 10.0)
         Assert.Equal(CornerRadius 10.0, secondary.CornerRadius)
         win.Close())
+
+[<Fact>]
+let ``native Button recolors foreground and background when ThemePalette changes`` () =
+    Headless.run (fun () ->
+        let m, at = manual ()
+        let styles = ThemeStyles m
+        let btn = Button(Content = "测试按钮")
+        btn.Classes.Add StyleClass.primary
+        let win = Window(Content = btn)
+        styles.InstallAll win
+        win.Show()
+
+        // 初始为浅色模式 Accent
+        Assert.Same(m.Brush PaletteKey.Accent, btn.Background)
+        Assert.Same(m.Brush PaletteKey.TextOnAccent, btn.Foreground)
+        Assert.Equal(light PaletteKey.Accent, (btn.Background :?> SolidColorBrush).Color)
+        Assert.Equal(light PaletteKey.TextOnAccent, (btn.Foreground :?> SolidColorBrush).Color)
+
+        // 切换到深色模式
+        at 0.0
+        m.Apply PaletteMode.Dark
+        at 200.0
+        m.Pump()
+
+        Assert.Same(m.Brush PaletteKey.Accent, btn.Background)
+        Assert.Same(m.Brush PaletteKey.TextOnAccent, btn.Foreground)
+        Assert.Equal(dark PaletteKey.Accent, (btn.Background :?> SolidColorBrush).Color)
+        Assert.Equal(dark PaletteKey.TextOnAccent, (btn.Foreground :?> SolidColorBrush).Color)
+        win.Close())
+
+[<Fact>]
+let ``native Button focus-visible and focus adorner removal works`` () =
+    Headless.run (fun () ->
+        let m, _ = manual ()
+        let styles = ThemeStyles m
+        let btn = Button(Content = "操作")
+        btn.Classes.Add StyleClass.secondary
+        let win = Window(Content = btn)
+        styles.InstallAll win
+        win.Show()
+
+        // 默认无蓝框 FocusAdorner
+        Assert.Null btn.FocusAdorner
+
+        // 伪类 :focus-visible 激活后，描边变成 Accent
+        let pc: IPseudoClasses = btn.Classes
+        pc.Set(":focus-visible", true)
+        Assert.Same(m.Brush PaletteKey.Accent, btn.BorderBrush)
+
+        pc.Set(":focus-visible", false)
+        Assert.Same(m.Brush PaletteKey.Border, btn.BorderBrush)
+        win.Close())
+
+[<Fact>]
+let ``native TextBox uses ControlStroke and respects a11y 3:1 ratio`` () =
+    Headless.run (fun () ->
+        let m, _ = manual ()
+        let styles = ThemeStyles m
+        let tb = TextBox(Text = "输入内容")
+        let win = Window(Content = tb)
+        styles.InstallAll win
+        win.Show()
+
+        // 静止态描边为 ControlStroke
+        Assert.Same(m.Brush PaletteKey.ControlStroke, tb.BorderBrush)
+        Assert.Same(m.Brush PaletteKey.Surface, tb.Background)
+        Assert.Same(m.Brush PaletteKey.Text, tb.Foreground)
+
+        // 聚焦时描边切到 Accent
+        let pc: IPseudoClasses = tb.Classes
+        pc.Set(":focus", true)
+        Assert.Same(m.Brush PaletteKey.Accent, tb.BorderBrush)
+
+        pc.Set(":focus", false)
+        Assert.Same(m.Brush PaletteKey.ControlStroke, tb.BorderBrush)
+        win.Close())
+
+[<Fact>]
+let ``reduced motion sets declarative animations duration to zero`` () =
+    Headless.run (fun () ->
+        let m, _ = manual ()
+        let styles = ThemeStyles m
+        // 查找呼吸与旋转动效样式
+        let breathe =
+            styles.Styles
+            |> Seq.choose (function :? Style as s when s.Animations.Count > 0 && (string s.Selector).Contains(StyleClass.animBreathe) -> Some (s.Animations[0] :?> Animation.Animation) | _ -> None)
+            |> Seq.head
+        let spin =
+            styles.Styles
+            |> Seq.choose (function :? Style as s when s.Animations.Count > 0 && (string s.Selector).Contains(StyleClass.animSpin) -> Some (s.Animations[0] :?> Animation.Animation) | _ -> None)
+            |> Seq.head
+
+        Assert.True(breathe.Duration > TimeSpan.Zero)
+        Assert.True(spin.Duration > TimeSpan.Zero)
+
+        // 开启减弱动效
+        m.Motion.SetReduced true
+
+        Assert.Equal(TimeSpan.Zero, breathe.Duration)
+        Assert.Equal(TimeSpan.Zero, spin.Duration)
+
+        // 恢复正常动效
+        m.Motion.SetReduced false
+
+        Assert.True(breathe.Duration > TimeSpan.Zero)
+        Assert.True(spin.Duration > TimeSpan.Zero))

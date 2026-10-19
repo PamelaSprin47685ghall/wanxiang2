@@ -6,8 +6,9 @@ open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.WorkspaceState
 
-/// 卡的样式（与 SidebarEmptyKind 一一对应，由组合者换算）
+/// 卡的样式
 [<RequireQualifiedAccess>]
 type EmptyCardStyle =
     /// 一句说明 + 骨架 + 行动键
@@ -17,29 +18,25 @@ type EmptyCardStyle =
     /// 标题 + 说明
     | Plain
 
-/// 列表空态卡（迁自旧 Views/Sidebar.fs 的 emptyStateHost、emptySkeleton、emptyActionButton 与 Rebuild 末段的卡）。
-/// 只在样式翻转时换卡；骨架与行动键跨卡复用，焦点与读屏名连续。
-type ListEmptyCard(look: ListEmptyCardLook) =
-    let kit = Kit(look)
+/// 列表空态卡。
+/// 废除 Look 记录，采用原生 Button、样式类与语义化布局。
+type ListEmptyCard() =
     let action = Event<unit>()
     let mutable current: EmptyCardStyle option = None
 
     let host = Border(IsVisible = false, VerticalAlignment = VerticalAlignment.Center)
-    let mutable x3 = 0.0
-    let mutable x6 = 0.0
-    let margin () = host.Margin <- Thickness(x3, x6, x3, x6)
 
     let skeleton =
-        let panel = kit.VStack(look.SpaceMd, [])
+        let panel = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
         panel.HorizontalAlignment <- HorizontalAlignment.Center
         panel.IsVisible <- false
-        kit.Live(look.SpaceMd, fun v -> panel.Margin <- Thickness(0.0, v, 0.0, 0.0))
-        // 错落宽度：比例是形状，不是样式
+        panel.Margin <- Thickness(0.0, 8.0, 0.0, 0.0)
         for fraction in [ 0.85; 0.60; 0.72 ] do
-            let bar = Border(Background = look.SkeletonFill, HorizontalAlignment = HorizontalAlignment.Stretch)
-            kit.Live(look.SkeletonBarHeight, fun v -> bar.Height <- v)
-            kit.Live(look.RadiusSm, fun v -> bar.CornerRadius <- CornerRadius v)
-            kit.Live(look.SkeletonOpacity, fun v -> bar.Opacity <- v)
+            let bar = Border(HorizontalAlignment = HorizontalAlignment.Stretch)
+            bar.Classes.Add "surface"
+            bar.Height <- 14.0
+            bar.CornerRadius <- CornerRadius 4.0
+            bar.Opacity <- 0.6
             let row = Grid(HorizontalAlignment = HorizontalAlignment.Stretch)
             row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(fraction, GridUnitType.Star)))
             row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(max 0.01 (1.0 - fraction), GridUnitType.Star)))
@@ -48,10 +45,14 @@ type ListEmptyCard(look: ListEmptyCardLook) =
             panel.Children.Add row
         AutomationProperties.SetName(panel, "正在加载对话")
         panel
+
     let button =
-        let b = kit.Button(Tone.Primary, "", fun () -> action.Trigger())
+        let b = Button(Content = "")
+        b.Classes.Add "primary"
+        b.Classes.Add "button-primary"
         b.HorizontalAlignment <- HorizontalAlignment.Center
         b.IsVisible <- false
+        b.Click.Add(fun _ -> action.Trigger())
         b
 
     let detach (c: Control) =
@@ -70,25 +71,34 @@ type ListEmptyCard(look: ListEmptyCardLook) =
         detach button
         match style with
         | EmptyCardStyle.Note ->
-            let stack = kit.VStack(look.SpaceMd, [ centered (kit.Caption note) :> Control; skeleton :> Control; button :> Control ])
-            kit.Live(look.SpaceXl, fun v -> stack.Margin <- Thickness v)
+            let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
+            let noteBlock = TextBlock(Text = note)
+            stack.Children.Add(centered noteBlock)
+            stack.Children.Add skeleton
+            stack.Children.Add button
+            stack.Margin <- Thickness 16.0
             stack :> Control
         | EmptyCardStyle.Brand ->
-            let logo = Border(HorizontalAlignment = HorizontalAlignment.Center)
-            kit.Live(look.LogoSize, fun v -> logo.Child <- look.Logo v)
-            let parts: Control list =
-                [ yield logo :> Control
-                  if not (String.IsNullOrWhiteSpace title) then yield centered (kit.Heading title) :> Control
-                  if not (String.IsNullOrWhiteSpace note) then yield centered (kit.Caption note) :> Control
-                  yield skeleton :> Control
-                  yield button :> Control ]
-            kit.VStack(look.SpaceMd, parts) :> Control
+            let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
+            if not (String.IsNullOrWhiteSpace title) then
+                let titleBlock = TextBlock(Text = title, FontWeight = FontWeight.Bold)
+                stack.Children.Add(centered titleBlock)
+            if not (String.IsNullOrWhiteSpace note) then
+                let noteBlock = TextBlock(Text = note)
+                stack.Children.Add(centered noteBlock)
+            stack.Children.Add skeleton
+            stack.Children.Add button
+            stack :> Control
         | EmptyCardStyle.Plain ->
-            kit.VStack(look.SpaceMd, [ centered (kit.Label title) :> Control; centered (kit.Caption note) :> Control ]) :> Control
+            let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
+            let titleBlock = TextBlock(Text = title, FontWeight = FontWeight.SemiBold)
+            let noteBlock = TextBlock(Text = note)
+            stack.Children.Add(centered titleBlock)
+            stack.Children.Add(centered noteBlock)
+            stack :> Control
 
     do
-        kit.Live(look.Space3xl, fun v -> x3 <- v; margin ())
-        kit.Live(look.Space6xl, fun v -> x6 <- v; margin ())
+        host.Margin <- Thickness(24.0, 48.0, 24.0, 48.0)
 
     member _.View = host :> Control
     member _.ActionButton = button :> Control
@@ -109,7 +119,7 @@ type ListEmptyCard(look: ListEmptyCardLook) =
 
     /// 行动键文案（读屏名与提示同步）
     member _.SetAction(label: string) =
-        button.SetText label
+        button.Content <- label
         ToolTip.SetTip(button, label)
         AutomationProperties.SetHelpText(button, label)
 
@@ -120,5 +130,18 @@ type ListEmptyCard(look: ListEmptyCardLook) =
             button.Focus Avalonia.Input.NavigationMethod.Directional |> ignore
             true
         else false
+
+    /// 单入口渲染
+    member this.Render(kind: SidebarEmptyKind option) =
+        match kind with
+        | None -> this.Hide()
+        | Some (SidebarEmptyKind.NotConnected actionVis) ->
+            this.Show(EmptyCardStyle.Note, "", "连接主机后，对话记录会显示在这里。", false, actionVis)
+        | Some SidebarEmptyKind.Loading ->
+            this.Show(EmptyCardStyle.Brand, "正在加载对话…", "", true, false)
+        | Some SidebarEmptyKind.NoConversations ->
+            this.Show(EmptyCardStyle.Plain, "还没有对话", "发送第一条消息后，对话会显示在这里。", false, false)
+        | Some (SidebarEmptyKind.NoSearchResults _) ->
+            this.Hide()
 
     [<CLIEvent>] member _.ActionClicked = action.Publish

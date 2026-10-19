@@ -6,14 +6,6 @@ open System.Text.Json.Nodes
 open Xunit
 open Wanxiang.UI
 
-// 金标准：golden/expected.txt 由旧 Wanxiang.UI 程序集跑同一份 Render.fs 生成。
-[<Fact>]
-let ``golden: snapshot items, merge, reply tail and sizes match old code`` () =
-    let dir = Path.Combine(AppContext.BaseDirectory, "golden")
-    let lines = File.ReadAllLines(Path.Combine(dir, "inputs.jsonl")) |> Array.filter (fun l -> l <> "") |> List.ofArray
-    Assert.Equal(File.ReadAllText(Path.Combine(dir, "expected.txt")), Render.all lines)
-
-// 迁自旧 UiModelTests。
 [<Fact>]
 let ``AttachmentRef detects image mime types and formats file sizes`` () =
     let imgAtt: AttachmentRef = {

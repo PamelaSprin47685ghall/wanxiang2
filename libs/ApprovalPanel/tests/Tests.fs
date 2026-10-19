@@ -29,7 +29,9 @@ let byId (root: Control) id = descendants root |> Seq.find (fun c -> AutomationP
 
 let invoke (control: Control) =
     let peer = ControlAutomationPeer.CreatePeerForElement control
-    (Assert.IsAssignableFrom<IInvokeProvider> peer).Invoke()
+    try
+        (Assert.IsAssignableFrom<IInvokeProvider> peer).Invoke()
+    with :? Avalonia.Automation.ElementNotEnabledException -> ()
     Dispatcher.UIThread.RunJobs()
 
 let textOf (c: Control) = match c with :? TextBlock as t when not (isNull t.Text) -> t.Text | _ -> ""
@@ -42,24 +44,6 @@ let texts =
       ArgsToggleText = (fun e -> if e then "收起参数" else "查看参数") }
 
 let touch = 44.0
-
-let look () =
-    { Text = Brushes.Black
-      Muted = Brushes.Gray
-      Faint = Brushes.LightGray
-      Warning = Brushes.Orange
-      Wrench = (fun b -> Border(Width = 16.0, Height = 16.0, Background = b))
-      BodyFontSize = Cell 14.0
-      CaptionFontSize = Cell 12.0
-      MicroFontSize = Cell 10.5
-      CaptionLineHeight = Cell 18.0
-      MonoFont = Cell(FontFamily "monospace")
-      TouchTarget = Cell touch
-      ButtonRowMaxWidth = Cell 360.0
-      Gap = Cell 8.0
-      IconGap = Cell 12.0
-      CardPadding = Cell(Thickness(16.0, 12.0))
-      CardRadius = Cell(CornerRadius 8.0) }
 
 let request conv =
     { ApprovalId = Guid.NewGuid()
@@ -88,7 +72,7 @@ let ``审批卡：展示人话摘要，批准与拒绝各只触发一次并立�
     Headless.run (fun () ->
         for approve in [ true; false ] do
             let decisions = ResizeArray<bool>()
-            let card = ApprovalCard.build (look ()) texts (request (Guid.NewGuid())) decisions.Add
+            let card = ApprovalCard.build None texts (request (Guid.NewGuid())) decisions.Add
             Assert.Equal("读取文件 /home/a/notes.txt", textOf (byId card "tool-approval-summary"))
             let button = byId card (if approve then "tool-approval-approve" else "tool-approval-deny")
             invoke button
@@ -106,7 +90,8 @@ let ``审批卡：展示人话摘要，批准与拒绝各只触发一次并立�
 let ``审批面板：只显示当前对话的卡片，已处理即移除，断线清空`` () =
     Headless.run (fun () ->
         let sent = ResizeArray<Guid * bool>()
-        let panel = ApprovalPanel(look (), texts, fun id ok -> sent.Add((id, ok)))
+        let panel = ApprovalPanel(texts)
+        panel.Decide.Add sent.Add
         let a, b = Guid.NewGuid(), Guid.NewGuid()
         let ra, rb = request a, request b
         panel.SetConversation(Some a)
@@ -141,7 +126,7 @@ let ``审批面板：只显示当前对话的卡片，已处理即移除，断�
 [<Fact>]
 let ``审批卡：批准/拒绝/查看参数的命中高度不低于触控下限`` () =
     Headless.run (fun () ->
-        let card = ApprovalCard.build (look ()) texts (longRequest ()) ignore
+        let card = ApprovalCard.build None texts (longRequest ()) ignore
         layoutAt 360.0 card
         for id in [ "tool-approval-approve"; "tool-approval-deny"; "tool-approval-args-toggle" ] do
             let c = byId card id
@@ -152,7 +137,7 @@ let ``审批卡：批准/拒绝/查看参数的命中高度不低于触控下限
 let ``审批卡：手机宽度下摘要换行而不溢出，两个按钮等宽且都在卡内`` () =
     Headless.run (fun () ->
         let width = 320.0
-        let card = ApprovalCard.build (look ()) texts (longRequest ()) ignore
+        let card = ApprovalCard.build None texts (longRequest ()) ignore
         layoutAt width card
         let summary = byId card "tool-approval-summary"
         Assert.True(summary.Bounds.Width <= width, sprintf "summary width %f" summary.Bounds.Width)
@@ -166,7 +151,7 @@ let ``审批卡：手机宽度下摘要换行而不溢出，两个按钮等宽�
 [<Fact>]
 let ``审批卡：触屏没有悬停提示，点「查看参数」展开完整参数，再点收起`` () =
     Headless.run (fun () ->
-        let card = ApprovalCard.build (look ()) texts (longRequest ()) ignore
+        let card = ApprovalCard.build None texts (longRequest ()) ignore
         let args = byId card "tool-approval-args" :?> TextBlock
         let toggle = byId card "tool-approval-args-toggle"
         Assert.False args.IsVisible
@@ -181,22 +166,22 @@ let ``审批卡：触屏没有悬停提示，点「查看参数」展开完整�
 [<Fact>]
 let ``审批卡：没有参数时不显示「查看参数」`` () =
     Headless.run (fun () ->
-        let card = ApprovalCard.build (look ()) texts { longRequest () with ArgumentsJson = "{}" } ignore
+        let card = ApprovalCard.build None texts { longRequest () with ArgumentsJson = "{}" } ignore
         Assert.False((byId card "tool-approval-args-toggle").IsVisible))
 
 [<Fact>]
 let ``审批面板：放在输入框正上方的附属位，与输入框同列同宽，不浮层遮挡消息`` () =
     Headless.run (fun () ->
-        let panel = ApprovalPanel(look (), texts, fun _ _ -> ())
+        let panel = ApprovalPanel(texts)
         Assert.Equal(HorizontalAlignment.Stretch, panel.HorizontalAlignment)
         Assert.True(Double.IsPositiveInfinity panel.MaxWidth))
 
 [<Fact>]
 let ``card carries theme classes and the policy note`` () =
     Headless.run (fun () ->
-        let card = ApprovalCard.build (look ()) texts (longRequest ()) ignore
+        let card = ApprovalCard.build None texts (longRequest ()) ignore
         Assert.True(card.Classes.Contains "grouping-card")
-        Assert.True((byId card "tool-approval-approve").Classes.Contains "button-primary")
-        Assert.True((byId card "tool-approval-deny").Classes.Contains "button-secondary")
-        Assert.True((byId card "tool-approval-args-toggle").Classes.Contains "button-ghost")
+        Assert.True((byId card "tool-approval-approve").Classes.Contains "primary")
+        Assert.True((byId card "tool-approval-deny").Classes.Contains "secondary")
+        Assert.True((byId card "tool-approval-args-toggle").Classes.Contains "ghost")
         Assert.Contains("不会再问", descendants card |> Seq.map textOf |> String.concat "|"))

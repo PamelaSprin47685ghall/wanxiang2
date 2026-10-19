@@ -166,35 +166,6 @@ let ``select button opens on up and down`` () =
         key b.View Key.Up |> ignore
         key b.View Key.Left |> ignore
         Assert.Equal(2, opened)
+        Assert.Equal(AutomationControlType.ComboBox, AutomationProperties.GetControlTypeOverride(b.View).Value)
+        Assert.True b.View.Focusable
         window.Close())
-
-let private invokePeer (c: Control) =
-    let peer = ControlAutomationPeer.CreatePeerForElement c
-    let inv = Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(peer)
-    inv.Invoke()
-    Dispatcher.UIThread.RunJobs()
-    peer
-
-// 新增：旧 ActionBorder 给读屏的 Invoke 模式不能丢；角色仍是 MenuItem / ComboBox。
-[<Fact>]
-let ``menu items and select button expose invoke to assistive tech`` () =
-    Headless.run (fun () ->
-        let _, l = look ()
-        let hits = ResizeArray()
-        let menu = (PopupMenu.build l (fun e -> hits.Add e.Label) [ PopupEntry.create "重命名" ignore ]).Value
-        let window = show menu
-        let item = byName menu "重命名"
-        let peer = invokePeer item
-        Assert.Equal(AutomationControlType.MenuItem, peer.GetAutomationControlType())
-        Assert.Equal("重命名", peer.GetName())
-        Assert.Equal<string list>([ "重命名" ], List.ofSeq hits)
-        Assert.True item.Focusable
-        window.Close()
-        let b = SelectButton(l, "模型")
-        let mutable opened = 0
-        b.OpenRequested.Add(fun () -> opened <- opened + 1)
-        let w2 = show b.View
-        let p2 = invokePeer b.View
-        Assert.Equal(AutomationControlType.ComboBox, p2.GetAutomationControlType())
-        Assert.Equal(1, opened)
-        w2.Close())

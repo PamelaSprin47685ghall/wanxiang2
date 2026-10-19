@@ -9,6 +9,8 @@ open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.WorkspaceState
+open Wanxiang2.DevicesPane
 open Avalonia.Threading
 
 /// 一个分区入口
@@ -21,18 +23,17 @@ type SettingsNavItem =
 /// 设置页外框（迁自旧 Views/SettingsView.fs 的界面部分）：头部「设置 / 返回对话」、分组的分区导航（读屏 Tab / TabItem、
 /// 上下左右与 Home / End 循环移动）、范围说明、内容区（滚动、最宽封顶）、窄屏时导航转为顶部横条。
 /// 分区内容、缓存与滚动记忆（SectionMemory）、范围文字由组合者接。
-type SettingsFrame(look: SettingsFrameLook, groups: (string * SettingsNavItem list) list) as this =
+type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: string -> IBrush -> Control) as this =
     inherit Border()
-    let kit = Kit(look)
     let selectRequested = Event<string>()
     let close = Event<unit>()
     let all = groups |> List.collect snd
     let navPanel = StackPanel(Orientation = Orientation.Vertical)
     let groupLabels = ResizeArray<TextBlock>()
-    let scopeCaption = kit.SectionLabel "主机"
-    let targetCaption = kit.Caption "尚未连接主机"
+    let scopeCaption = Ui.sectionLabel "主机"
+    let targetCaption = Ui.caption "尚未连接主机"
     let contentHost = ContentControl()
-    let buttons = Collections.Generic.Dictionary<string, Tap>()
+    let buttons = Collections.Generic.Dictionary<string, Button>()
     let captions = Collections.Generic.Dictionary<string, TextBlock>()
     let glyphs = Collections.Generic.Dictionary<string, Control>()
     let accents = Collections.Generic.Dictionary<string, Border>()
@@ -41,7 +42,9 @@ type SettingsFrame(look: SettingsFrameLook, groups: (string * SettingsNavItem li
     let mutable subtle = 0.6
 
     let navScroll = ScrollViewer(Content = navPanel, HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden)
-    let nav = Border(Background = look.Rail, BorderBrush = look.Chrome, Child = navScroll)
+    let nav = Border(Child = navScroll)
+    do nav.Bind(Border.BackgroundProperty, Dyn.res "Palette.Rail") |> ignore
+    do nav.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
     let contentFrame = Border(HorizontalAlignment = HorizontalAlignment.Stretch)
     let content = ScrollViewer(Content = contentFrame, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalContentAlignment = HorizontalAlignment.Stretch)
 
@@ -49,12 +52,12 @@ type SettingsFrame(look: SettingsFrameLook, groups: (string * SettingsNavItem li
         for KeyValue(key, button) in buttons do
             let selected = key = current
             // 选中底是本地值；未选中时清掉，让主题的悬停样式生效
-            if selected then button.Background <- look.Selected else button.ClearValue Border.BackgroundProperty
+            if selected then button.Bind(Button.BackgroundProperty, Dyn.res "Palette.Selected") |> ignore else button.ClearValue Button.BackgroundProperty
             accents[key].IsVisible <- selected
             let label = captions[key].Text
             AutomationProperties.SetItemStatus(button, (if selected then "当前分区" else ""))
             AutomationProperties.SetHelpText(button, (if selected then label + "，当前分区" else label))
-            captions[key].Foreground <- (if selected then look.Text else look.Muted)
+            if selected then captions[key].Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore else captions[key].Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
             captions[key].FontWeight <- (if selected then FontWeight.Bold else FontWeight.Medium)
             glyphs[key].Opacity <- (if selected then 1.0 else subtle)
 
@@ -74,21 +77,32 @@ type SettingsFrame(look: SettingsFrameLook, groups: (string * SettingsNavItem li
         move all[((idx + dir) % n + n) % n].Key
 
     let navButton (item: SettingsNavItem) =
-        let glyph = look.Glyph item.Glyph look.Muted
+        let glyph =
+            match glyphOf with
+            | Some g -> g item.Glyph (SolidColorBrush(Colors.Gray) :> IBrush)
+            | None ->
+                let t = TextBlock(Text = "[" + item.Glyph + "]")
+                t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+                t :> Control
         glyph.VerticalAlignment <- VerticalAlignment.Center
-        let caption = kit.Text(item.Label, look.SmallFontSize, look.Text)
+        let caption = Ui.smallText item.Label
         caption.FontWeight <- FontWeight.Medium
         caption.VerticalAlignment <- VerticalAlignment.Center
         // 选中左缘强调条：独立元素叠画，不进布局流、不抢焦点
-        let accent = Border(HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Stretch, Background = look.Accent, IsHitTestVisible = false, Focusable = false, IsVisible = false)
-        kit.Live(look.SelectedEdgeWidth, fun v -> accent.Width <- v)
+        let accent = Border(HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Stretch, IsHitTestVisible = false, Focusable = false, IsVisible = false, Width = 2.0)
+        accent.Bind(Border.BackgroundProperty, Dyn.res "Palette.Accent") |> ignore
         let grid = Grid()
         grid.Children.Add accent
-        grid.Children.Add(kit.HStack(look.SpaceMd, [ glyph; caption ]))
-        let host = Tap(grid, item.Label, [ "surface"; "menu-item"; "hover-plain" ], (fun () -> selectRequested.Trigger item.Key))
-        kit.Live(Kit.Pair(look.SpaceXl, look.SpaceMd), fun (x, y) -> host.Padding <- Thickness(x, y))
-        kit.Live(look.RadiusMd, fun v -> host.CornerRadius <- CornerRadius v)
-        kit.Live(look.NavMinHeight, fun v -> host.MinHeight <- v)
+        let stack = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)
+        stack.Children.Add glyph
+        stack.Children.Add caption
+        grid.Children.Add stack
+        let host = Button(Content = grid, MinHeight = 38.0, Padding = Thickness(16.0, 12.0), CornerRadius = CornerRadius 8.0, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left)
+        host.Classes.Add "surface"
+        host.Classes.Add "menu-item"
+        host.Classes.Add "hover-plain"
+        host.Click.Add(fun _ -> selectRequested.Trigger item.Key)
+        AutomationProperties.SetName(host, item.Label)
         host.Tag <- item.Key
         AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.TabItem)
         host.KeyDown.Add(fun e ->
@@ -157,18 +171,15 @@ type SettingsFrame(look: SettingsFrameLook, groups: (string * SettingsNavItem li
                 compact <- Some next
                 applyLayout ()
                 applyPadding ()
-                // 断点切换改变 extent：恢复值先按新边界钳制再落位，免得错位后被拉回
-                Dispatcher.UIThread.Post(
-                    (fun () ->
-                        let maxY = max 0.0 (content.Extent.Height - content.Viewport.Height)
-                        content.Offset <- Vector(previous.X, min previous.Y maxY)),
-                    DispatcherPriority.Background)
+                let maxY = max 0.0 (content.Extent.Height - content.Viewport.Height)
+                content.Offset <- Vector(previous.X, min previous.Y maxY)
 
     do
-        this.Background <- look.Canvas
-        let closeButton = kit.Button(Tone.Ghost, "返回对话", close.Trigger)
+        this.Bind(Border.BackgroundProperty, Dyn.res "Palette.Canvas") |> ignore
+        let closeButton = Ui.button "ghost" "返回对话" close.Trigger
         AutomationProperties.SetHelpText(closeButton, "返回对话（Esc），未保存的草稿留在当前窗口")
-        let title = kit.Text("设置", look.DisplayFontSize, look.Text)
+        let title = TextBlock(Text = "设置", FontSize = 28.0)
+        title.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
         title.FontWeight <- FontWeight.Medium
         title.VerticalAlignment <- VerticalAlignment.Center
         let dock = DockPanel(LastChildFill = false, VerticalAlignment = VerticalAlignment.Center)
@@ -176,28 +187,28 @@ type SettingsFrame(look: SettingsFrameLook, groups: (string * SettingsNavItem li
         DockPanel.SetDock(closeButton, Dock.Right)
         dock.Children.Add title
         dock.Children.Add closeButton
-        let header = Border(BorderBrush = look.Chrome, Child = dock)
-        kit.Live(look.BarHeight, fun v -> header.Height <- v; barHeight <- v; applyLayout ())
-        kit.Live(look.SpaceXl, fun v -> header.Padding <- Thickness(v, 0.0, v, 0.0))
-        kit.Live(look.BorderWidth, fun v -> header.BorderThickness <- Thickness(0.0, 0.0, 0.0, v); border <- v; applyLayout ())
+        let header = Border(Child = dock, Height = 48.0, Padding = Thickness(16.0, 0.0, 16.0, 0.0), BorderThickness = Thickness(0.0, 0.0, 0.0, 1.0))
+        header.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
         for group, items in groups do
-            let label = kit.SectionLabel group
+            let label = Ui.sectionLabel group
             groupLabels.Add label
             navPanel.Children.Add label
             for item in items do navPanel.Children.Add(navButton item)
         AutomationProperties.SetName(nav, "设置分区导航")
         AutomationProperties.SetControlTypeOverride(nav, Nullable AutomationControlType.Tab)
-        contentFrame.Child <- kit.VStack(look.Space4xl, [ kit.VStack(look.SpaceXs, [ scopeCaption :> Control; targetCaption ]) :> Control; contentHost ])
-        kit.Live(look.ContentMaxWidth, fun v -> contentFrame.MaxWidth <- v)
-        kit.Live(look.SpaceXs, fun v -> let _, b, c, d, e, f = spaces in spaces <- (v, b, c, d, e, f); applyLayout ())
-        kit.Live(look.SpaceMd, fun v -> let a, _, c, d, e, f = spaces in spaces <- (a, v, c, d, e, f); applyLayout ())
-        kit.Live(look.SpaceXl, fun v -> let a, b, _, d, e, f = spaces in spaces <- (a, b, v, d, e, f); applyLayout ())
-        kit.Live(look.Space2xl, fun v -> let a, b, c, _, e, f = spaces in spaces <- (a, b, c, v, e, f); applyLayout (); applyPadding ())
-        kit.Live(look.Space4xl, fun v -> let a, b, c, d, _, f = spaces in spaces <- (a, b, c, d, v, f); applyPadding ())
-        kit.Live(look.Space6xl, fun v -> let a, b, c, d, e, _ = spaces in spaces <- (a, b, c, d, e, v); applyPadding ())
-        kit.Live(look.Space8xl, fun v -> s8 <- v; applyPadding ())
-        kit.Live(look.NavWidth, fun v -> navWidth <- v; applyLayout ())
-        kit.Live(look.SubtleOpacity, fun v -> subtle <- v; refreshStates ())
+        spaces <- (4.0, 12.0, 16.0, 20.0, 32.0, 40.0)
+        s8 <- 64.0
+        navWidth <- 196.0
+        barHeight <- 48.0
+        border <- 1.0
+        let topCap = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+        topCap.Children.Add scopeCaption
+        topCap.Children.Add targetCaption
+        let contentStack = StackPanel(Orientation = Orientation.Vertical, Spacing = 32.0)
+        contentStack.Children.Add topCap
+        contentStack.Children.Add contentHost
+        contentFrame.Child <- contentStack
+        contentFrame.MaxWidth <- 760.0
         let split = DockPanel()
         DockPanel.SetDock(nav, Dock.Left)
         split.Children.Add nav
@@ -207,7 +218,6 @@ type SettingsFrame(look: SettingsFrameLook, groups: (string * SettingsNavItem li
         layout.Children.Add header
         layout.Children.Add split
         this.Child <- layout
-        kit.Live(look.CompactBreakpoint, fun v -> breakpoint <- v; compact <- None; applyResponsive (); (if compact.IsNone then applyLayout ()))
         this.PropertyChanged.Add(fun a -> if a.Property = Visual.BoundsProperty then applyResponsive ())
         applyLayout ()
         applyPadding ()

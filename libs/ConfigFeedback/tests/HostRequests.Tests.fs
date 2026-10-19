@@ -4,11 +4,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-// 金标准：golden/expected.txt 由 tools/ 下原样摘出的旧代码跑同一份 HostRequestsRender.fs 生成。
-[<Fact>]
-let ``golden matches old code`` () =
-    Assert.Equal(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "HostRequests", "expected.txt")), HostRequestsRender.all ())
-
 [<Fact>]
 let ``W4 只认最近一次查询，迟到的旧结果丢掉`` () =
     let s = SearchInFlight()

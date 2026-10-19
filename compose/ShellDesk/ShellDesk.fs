@@ -12,35 +12,8 @@ open Wanxiang2.Theme
 open Wanxiang2.ShellLayout
 open Wanxiang2.BrandMark
 
-/// 从主题管理者取外壳与品牌标的外观。
-module ShellLook =
-    /// 经减弱动效门控的时长：时长改了或开关变了都重推
-    let duration (t: ThemeManager) (timing: Timing) : IObservable<TimeSpan> =
-        { new IObservable<TimeSpan> with
-            member _.Subscribe(o: IObserver<TimeSpan>) =
-                let live = t.Timing timing
-                let push () = o.OnNext(t.Motion.Duration live.Value)
-                let a = live.Subscribe(fun _ -> push ())
-                let b = t.Motion.Changed.Subscribe(fun _ -> push ())
-                { new IDisposable with member _.Dispose() = a.Dispose(); b.Dispose() } }
-
-    let layoutOf (t: ThemeManager) : ShellLayoutLook =
-        { Scrim = t.Brush PaletteKey.Scrim
-          ScrimFade = duration t Timing.ScrimFade
-          SidebarMinWidth = t.Metric Metric.SidebarMinWidth
-          SidebarMaxWidth = t.Metric Metric.SidebarMaxWidth
-          SplitterWidth = t.Metric Metric.SidebarSplitterWidth
-          ChatMinHeight = t.Metric Metric.BarHeight
-          StartMinHeight = t.Metric Metric.StartWorkspaceMinHeight }
-
-    let brandOf (t: ThemeManager) : BrandMarkLook =
-        { Surface = t.Brush PaletteKey.Surface
-          Accent = t.Brush PaletteKey.Accent
-          RadiusRatio = t.Metric Metric.LogoRadiusRatio
-          GlyphRatio = t.Metric Metric.LogoGlyphRatio }
-
 /// 品牌标（旧 Brand.logo）：图只找一次；找图顺序同旧代码。
-type ShellBrand(look: BrandMarkLook, image: IImage option) =
+type ShellBrand(image: IImage option) =
     /// 旧代码的找图顺序：内嵌资源 → 程序目录 logo.png → 程序目录 pwa/logo.png → WANXIANG_HOME（缺省 ~/.config/wanxiang）/logo.png
     static member LoadImage() : IImage option =
         let home =
@@ -54,10 +27,11 @@ type ShellBrand(look: BrandMarkLook, image: IImage option) =
               IO.Path.Combine(home, "logo.png") ]
         |> Option.map (fun b -> b :> IImage)
 
-    new(theme: ThemeManager) = ShellBrand(ShellLook.brandOf theme, ShellBrand.LoadImage())
+    new(_theme: ThemeManager) = ShellBrand(ShellBrand.LoadImage())
+    new() = ShellBrand(ShellBrand.LoadImage())
 
     /// 边长为 size 的品牌标（侧栏、空状态、头像都用它）
-    member _.Logo(size: float) : Control = BrandMark.tile look image size
+    member _.Logo(size: float) : Control = BrandMark.tile image size
 
 /// 宿主里还没迁出的控件（侧栏、对话视图、输入区）由组合者经这些插槽驱动。
 type ShellHooks =
@@ -73,8 +47,7 @@ type ShellHooks =
 /// 主工作区的接线：NavigationController 决定状态，ShellColumns 把状态投影到 Grid，WorkspaceStack 让起步与续聊共用输入区。
 /// 焦点归宿（D3/D4）在这里：窄屏抽屉打开进搜索框、收起回输入区；桌面折叠时焦点原在侧栏也回输入区；点遮罩与 Escape 同一路径收起抽屉。
 type ShellDesk
-    (look: ShellLayoutLook,
-     shellGrid: Grid,
+    (shellGrid: Grid,
      sidebar: Control,
      splitter: Control,
      chat: Control,
@@ -82,13 +55,15 @@ type ShellDesk
      hooks: ShellHooks,
      initialSidebarCollapsed: bool,
      sidebarWidth: unit -> float,
-     compactBreakpoint: IObservable<float>) =
+     compactBreakpoint: IObservable<float>,
+     splitterWidthOpt: IObservable<float> option) as this =
     let mutable breakpoint = 0.0
     do compactBreakpoint.Subscribe(fun v -> breakpoint <- v).Dispose()
     let mutable navigation = NavigationController(initialSidebarCollapsed, breakpoint)
     let mutable lastWidth = 0.0
-    let workspace = WorkspaceStack(chat, composer, look)
-    let columns = ShellColumns(shellGrid, sidebar, splitter, workspace, look, sidebarWidth)
+    let workspace = WorkspaceStack(chat, composer)
+    let initSplitterW = match splitterWidthOpt with Some opt -> (let mutable w = 6.0 in opt.Subscribe(fun v -> w <- v).Dispose(); w) | None -> 6.0
+    let columns = ShellColumns(shellGrid, sidebar, splitter, workspace, 220.0, 420.0, initSplitterW, sidebarWidth)
 
     let project (s: NavigationSnapshot) =
         columns.Apply { Compact = s.compactMode; DrawerOpen = s.compactNavigationOpen; SidebarCollapsed = s.sidebarCollapsed }
@@ -112,10 +87,15 @@ type ShellDesk
             shellGrid.ColumnDefinitions.Add(ColumnDefinition())
             shellGrid.ColumnDefinitions.Add(ColumnDefinition())
             shellGrid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
-        look.SidebarMaxWidth.Subscribe(fun v -> shellGrid.ColumnDefinitions[0].MaxWidth <- v) |> ignore
+        shellGrid.ColumnDefinitions[0].MaxWidth <- 420.0
         for c in [ sidebar; splitter; workspace :> Control ] do
             if not (shellGrid.Children.Contains c) then shellGrid.Children.Add c
         project navigation.State
+        splitterWidthOpt
+        |> Option.iter (fun opt ->
+            opt.Subscribe(fun w ->
+                if not this.State.compactMode && not this.State.sidebarCollapsed then
+                    shellGrid.ColumnDefinitions[1].Width <- GridLength w) |> ignore)
         // 断点改了：按当前折叠偏好换一个导航状态机，用上次视口宽度重投影（模式变了抽屉本就收起）
         compactBreakpoint.Subscribe(fun v ->
             if v <> breakpoint then
@@ -127,7 +107,10 @@ type ShellDesk
         |> ignore
 
     new(theme: ThemeManager, shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth) =
-        ShellDesk(ShellLook.layoutOf theme, shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth, theme.Metric Metric.CompactBreakpoint)
+        ShellDesk(shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth, theme.Metric Metric.CompactBreakpoint, Some(theme.Metric Metric.SidebarSplitterWidth))
+
+    new(shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth, compactBreakpoint) =
+        ShellDesk(shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth, compactBreakpoint, None)
 
     member _.State = navigation.State
     /// 对话区一列（对话视图 + 输入区）

@@ -1,31 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="GenerationDraft.Samples.fs" />
-    <Compile Include="GenerationDraft.Render.fs" />
     <Compile Include="GenerationDraft.Tests.fs" />
-    <Compile Include="GenerationForm.Samples.fs" />
-    <Compile Include="GenerationForm.Adapter.fs" />
-    <Compile Include="GenerationForm.Render.fs" />
     <Compile Include="GenerationForm.Tests.fs" />
     <Compile Include="LocalDraftControls.Tests.fs" />
-    <Compile Include="McpForm.Samples.fs" />
-    <Compile Include="McpForm.Render.fs" />
     <Compile Include="McpForm.Tests.fs" />
     <Compile Include="OnboardingFlow.Tests.fs" />
     <Compile Include="ProbeFailureKind.Tests.fs" />
     <Compile Include="ProbeSlot.Tests.fs" />
     <Compile Include="ProviderForm.Samples.fs" />
-    <Compile Include="ProviderForm.Render.fs" />
     <Compile Include="ProviderForm.Tests.fs" />
-    <Compile Include="ProviderProbeText.Samples.fs" />
-    <Compile Include="ProviderProbeText.Render.fs" />
     <Compile Include="ProviderProbeText.Tests.fs" />
     <Compile Include="SectionMemory.Tests.fs" />
-    <Compile Include="ToolsPolicy.Samples.fs" />
-    <Compile Include="ToolsPolicy.Render.fs" />
     <Compile Include="ToolsPolicy.Tests.fs" />
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

@@ -1,7 +1,5 @@
 namespace Wanxiang2.UsageFoot
 
-open Wanxiang2.UiKit
-
 open System
 open System.Globalization
 open Avalonia
@@ -9,25 +7,15 @@ open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Controls.Documents
 open Avalonia.Layout
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.WorkspaceState
 
-[<RequireQualifiedAccess>]
-type FootInk =
-    | Text
-    | TextMuted
-    | TextFaint
-
-[<RequireQualifiedAccess>]
-type FootGauge =
-    /// 旧 fontMicro
-    | Font
-    /// 时间与用量之间（旧 spaceXs）
-    | Gap
-
-type UsageFootLook =
-    { Ink: FootInk -> IBrush
-      Gauge: FootGauge -> IObservable<float>
-      MonoFont: IObservable<FontFamily> }
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
 
 /// 一次生成的用量（字段对应旧 GenerationUsage）
 type UsageFigures =
@@ -36,7 +24,6 @@ type UsageFigures =
       Total: int option
       DurationMs: int64 option
       Cached: int option
-      /// 悬停的完整明细（旧 GenerationUsage.formatDetail）
       Detail: string }
 
 /// 时间戳：脚注里的简短时刻与悬停 / 读屏的完整时间
@@ -60,23 +47,26 @@ module UsageFoot =
         sprintf "Token 使用情况：输入 %s，输出 %s，总计 %s" (s f.Prompt) (s f.Completion) (s (total f))
 
     /// 用量一行；没有任何 token 与耗时信息时为 None
-    let usage (look: UsageFootLook) (f: UsageFigures) : Control option =
+    let usage (f: UsageFigures) : Control option =
         let t = total f
         if t.IsNone && f.Prompt.IsNone && f.Completion.IsNone && f.DurationMs.IsNone then None
         else
-            let muted = look.Ink FootInk.TextMuted
-            let faint = look.Ink FootInk.TextFaint
-            let tb = TextBlock(VerticalAlignment = VerticalAlignment.Center)
-            Follow.live tb (look.Gauge FootGauge.Font) (fun s -> tb.FontSize <- s)
+            let tb = TextBlock(VerticalAlignment = VerticalAlignment.Center, FontSize = 11.0)
             let numbers = ResizeArray<Run>()
             let number (text: string) =
-                let r = Run(text, Foreground = muted)
-                Follow.live tb look.MonoFont (fun fam -> r.FontFamily <- fam)
+                let r = Run(text)
+                r.Bind(Run.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+                r.Bind(Run.FontFamilyProperty, Dyn.res "FontFamily.Mono") |> ignore
                 numbers.Add r
                 tb.Inlines.Add r
-            let sep () = tb.Inlines.Add(Run(" · ", Foreground = faint))
+            let sep () =
+                let r = Run(" · ")
+                r.Bind(Run.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
+                tb.Inlines.Add r
             let metric (label: string) (v: int) =
-                tb.Inlines.Add(Run(label + " ", Foreground = faint))
+                let r = Run(label + " ")
+                r.Bind(Run.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
+                tb.Inlines.Add r
                 number (n v)
             let mutable hasPrev = false
             match f.Prompt, f.Completion with
@@ -107,33 +97,29 @@ module UsageFoot =
                 if hasPrev then sep ()
                 number (if ms >= 1000L then sprintf "%.1fs" (float ms / 1000.0) else sprintf "%dms" ms)
             | None -> ()
-            // 缓存命中收尾：命中省钱，用户看得到才可能去开提示缓存
             match f.Cached with
             | Some cached ->
                 if hasPrev then sep ()
                 metric "缓存" cached
             | None -> ()
-            let text = look.Ink FootInk.Text
-            tb.PointerEntered.Add(fun _ -> for r in numbers do r.Foreground <- text)
-            tb.PointerExited.Add(fun _ -> for r in numbers do r.Foreground <- muted)
+            tb.PointerEntered.Add(fun _ -> for r in numbers do r.Bind(Run.ForegroundProperty, Dyn.res "Palette.Text") |> ignore)
+            tb.PointerExited.Add(fun _ -> for r in numbers do r.Bind(Run.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore)
             AutomationProperties.SetName(tb, speech f)
             ToolTip.SetTip(tb, f.Detail)
             Some(tb :> Control)
 
     /// 整条脚注：时间（可选）+ 用量（可选）；都没有时为 None。alignRight 用于用户消息
-    let line (look: UsageFootLook) (stamp: StampText option) (figures: UsageFigures option) (alignRight: bool) : Control option =
-        let faint = look.Ink FootInk.TextFaint
+    let line (stamp: StampText option) (figures: UsageFigures option) (alignRight: bool) : Control option =
         let small (text: string) =
-            let t = TextBlock(Text = text, Foreground = faint, VerticalAlignment = VerticalAlignment.Center)
-            Follow.live t (look.Gauge FootGauge.Font) (fun s -> t.FontSize <- s)
+            let t = TextBlock(Text = text, FontSize = 11.0, VerticalAlignment = VerticalAlignment.Center)
+            t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
             t
         let timeBlock (s: StampText) =
             let t = small s.Short
-            // 简短时刻悬停补完整时间戳，读屏取同一份完整文本
             ToolTip.SetTip(t, s.Full)
             AutomationProperties.SetName(t, s.Full)
             t
-        match stamp, figures |> Option.bind (usage look) with
+        match stamp, figures |> Option.bind usage with
         | None, None -> None
         | Some s, None ->
             let t = timeBlock s
@@ -141,9 +127,23 @@ module UsageFoot =
             Some(t :> Control)
         | None, Some u -> Some u
         | Some s, Some u ->
-            let panel = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-            Follow.live panel (look.Gauge FootGauge.Gap) (fun g -> panel.Spacing <- g)
+            let panel = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0, VerticalAlignment = VerticalAlignment.Center)
             panel.Children.Add(timeBlock s)
             panel.Children.Add(small " · ")
             panel.Children.Add u
             Some(panel :> Control)
+
+    /// 单入口：从 UsageFootVS 渲染
+    let Render(vs: UsageFootVS, alignRight: bool) : Control option =
+        let stamp =
+            match vs.Timestamp with
+            | Some short -> Some { Short = short; Full = defaultArg vs.TimestampFull short }
+            | None -> None
+        let figures =
+            { Prompt = vs.PromptTokens
+              Completion = vs.CompletionTokens
+              Total = vs.TotalTokens
+              DurationMs = vs.DurationMs
+              Cached = vs.CachedTokens
+              Detail = vs.Detail }
+        line stamp (Some figures) alignRight

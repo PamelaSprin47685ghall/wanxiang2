@@ -17,7 +17,7 @@ open Wanxiang2.ExportSheet
 /// 读满后同一次读取备好 Markdown（TranscriptMarkdown + 头部说明）与可再导入的 JSON；
 /// 保存窗口在点击回调里直接打开。读取中「取消导出」只中止本次读取并原地给「重新导出」。
 type ExportDesk
-    (look: ExportSheetLook,
+    (look: ExportSheetAppearance,
      timing: TransferTiming,
      overlay: OverlayDesk,
      conversationId: Guid,
@@ -35,8 +35,8 @@ type ExportDesk
     let mutable output: byte[] option = None
     let mutable outputJson: byte[] option = None
     let mutable savedKind = ""
-    let expiry = DispatcherTimer(Interval = timing.ExportExpiryCheckTick())
-    let tail = DispatcherTimer(Interval = timing.ProgressTextThrottle())
+    let mutable expirySub: IDisposable option = None
+    let mutable tailSub: IDisposable option = None
     let mutable throttle = ProgressThrottle()
 
     let toTranscript (m: MessageView) : TranscriptMessage =
@@ -50,7 +50,7 @@ type ExportDesk
 
     // 立即渲染一帧：记下刷新时刻，取消未落地的节流尾巴。
     let render () =
-        tail.Stop()
+        tailSub |> Option.iter (fun s -> s.Dispose()); tailSub <- None
         throttle.Rendered DateTimeOffset.UtcNow
         let phase =
             match controller.Status with
@@ -87,8 +87,10 @@ type ExportDesk
         match throttle.Request(DateTimeOffset.UtcNow, force, highFrequency) with
         | ProgressRefresh.Now -> render ()
         | ProgressRefresh.Schedule delayMs ->
-            tail.Interval <- TimeSpan.FromMilliseconds delayMs
-            tail.Start()
+            tailSub |> Option.iter (fun s -> s.Dispose())
+            tailSub <- Some (timing.After (TimeSpan.FromMilliseconds delayMs) (fun () ->
+                tailSub <- None
+                if throttle.TailFired() then render ()))
         | ProgressRefresh.Skip -> ()
 
     let fail (exportId: Guid) (message: string) =
@@ -172,14 +174,19 @@ type ExportDesk
         | _ -> ()
 
     do
-        expiry.Tick.Add(fun _ -> if controller.Expire(DateTimeOffset.UtcNow, TimeSpan.FromSeconds 30.0) then refresh true)
-        tail.Tick.Add(fun _ -> if throttle.TailFired() then render ())
         sheet.CloseClicked.Add(fun () ->
             match controller.Status with
             | ExportReading _ -> cancel ()
             | _ -> overlay.CloseDialog())
         sheet.RetryClicked.Add(fun () -> start ())
         sheet.SaveClicked.Add save
+
+    let rec scheduleExpiry () =
+        expirySub |> Option.iter (fun s -> s.Dispose())
+        expirySub <- Some (timing.After (timing.ExportExpiryCheckTick()) (fun () ->
+            if active then
+                if controller.Expire(DateTimeOffset.UtcNow, TimeSpan.FromSeconds 30.0) then refresh true
+                scheduleExpiry ()))
 
     new(theme: ThemeManager, overlay: OverlayDesk, conversationId: Guid, title: string, sendQuery: ConversationExportQuery -> Task<bool>, topLevel: unit -> TopLevel, ?lineage: ExportLineage) =
         ExportDesk(TransferLook.exportOf theme, TransferTiming.ofTheme theme, overlay, conversationId, title, sendQuery, topLevel, defaultArg lineage ConversationTransfer.rootLineage)
@@ -194,13 +201,13 @@ type ExportDesk
         active <- true
         overlay.ShowDialog(sheet.View, timing.DialogWidth(), onClosed = (fun () ->
             active <- false
-            expiry.Stop()
-            tail.Stop()
+            expirySub |> Option.iter (fun s -> s.Dispose()); expirySub <- None
+            tailSub |> Option.iter (fun s -> s.Dispose()); tailSub <- None
             throttle <- ProgressThrottle()
             controller.Cancel()
             output <- None
             outputJson <- None))
-        expiry.Start()
+        scheduleExpiry ()
         start ()
         sheet.FocusClose()
 

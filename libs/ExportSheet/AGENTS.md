@@ -17,7 +17,7 @@
 
 ### 外观
 
-- `ExportSheetLook`：画笔 `Text`、`Muted`、`Success`、`Danger`；字号、行高、间距是活的值。
+- `ExportSheetAppearance`：画笔 `Text`、`Muted`、`Success`、`Danger`；字号、行高、间距是活的值。
 - 用到的样式类（compose/Theme）：关闭 `surface button-ghost hover-plain`；重新导出与保存 JSON `surface button-secondary hover-raised`；保存 Markdown `surface button-primary hover-accent`；分隔 `hairline`。
 
 ### 证据与旧测试
@@ -29,7 +29,8 @@
 
 ### 与旧实现的差异
 
-- 无行为差异：四键用 `Wanxiang2.UiKit` 的 `Tap.TextButton`，关闭键文字变化时读屏名随之变化，与旧 `Ui.setButtonText` 相同。
+- 废除 UiKit 与 Tap，改用原生 Button 与样式类（primary / secondary / ghost），关闭键文字变化时读屏名随之变化。
+- `ExportSheet` 内部保留的焦点 Post（`FocusClose`）：布局首帧排队，非焦点竞态（与 `OverlayLayer` 同口径）。
 
 ## 成员 `ImportSheet`
 
@@ -43,7 +44,7 @@
 
 ### 外观
 
-- `ImportSheetLook`：画笔 `Text`、`Muted`、`Danger`；字号、行高、间距是活的值。
+- `ImportSheetAppearance`：画笔 `Text`、`Muted`、`Danger`；字号、行高、间距是活的值。
 - 用到的样式类（compose/Theme）：取消 `surface button-ghost hover-plain`；选择 `surface button-secondary hover-raised`；导入 `surface button-primary hover-accent`；分隔 `hairline`。
 
 ### 证据与旧测试
@@ -54,4 +55,5 @@
 
 ### 与旧实现的差异
 
-- 无行为差异：三键用 `Wanxiang2.UiKit` 的 `Tap.TextButton`；与旧代码一样，`SetChrome` 换「选择」键文字时读屏名随之变化（旧 `Ui.setButtonText`）。
+- 废除 UiKit 与 Tap，改用原生 Button 与样式类（primary / secondary / ghost）；换「选择」键文字时读屏名随之变化。
+- `ImportSheet` 内部保留的焦点 Post（`FocusPick`、`FocusImport`）：布局首帧排队，非焦点竞态（与 `OverlayLayer` 同口径）。

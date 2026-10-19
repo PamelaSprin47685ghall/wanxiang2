@@ -16,6 +16,9 @@ SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、Hos
   - 紧凑抽屉中按 Tab 只在侧栏内循环（OverlayDesk.TrapTab）。
 - 主题条目：新增 `Space.TrackingDisplay`、`DerivedBrush.HoverSelected`、`Metric.SidebarSkeletonBarHeight`。
 
+## P3 架构演进标记
+- `RowFocus`、`SearchSession`、`SidebarSelection`：目前在 SidebarDesk 内部维持实例以支撑行焦点还原、多选判定与消息搜索命中分页。P3 阶段将随单状态树收拢，其时序状态直接交由 `WorkspaceState` 的 `WorkspaceModel.Chrome` / `Effect.Focus` 接管，彻底废除组合者内部可变状态机。
+
 ## 证据与旧测试
 
 - CraftsmanshipPolishTests：`Sidebar conversation row right click invokes context menu`、`Sidebar search clear button has accessible tooltip and automation properties`、`Sidebar search navigation moves focus and handles escape`

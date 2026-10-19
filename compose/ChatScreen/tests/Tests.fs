@@ -46,7 +46,7 @@ let private rig () =
     let cards = MessageCards(CardLooks.ofTheme theme styles, host)
     let composer =
         ComposerDesk(
-            ComposerLooks.ofTheme theme styles,
+            ComposerMetrics.ofTheme theme styles,
             { Submit = (fun _ -> true); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
               OpenModelPicker = ignore; DropFiles = ignore; PasteFromClipboard = (fun () -> false); OpenSessionSettings = ignore })
     let approvals = ApprovalDesk(theme, overlay, ignore)
@@ -67,7 +67,7 @@ let private rig () =
           SiblingSelected = fun id -> log.Add(sprintf "sibling:%O" id)
           After = fun _ f -> timers.Add f; { new IDisposable with member _.Dispose() = () } }
     let screen =
-        ChatScreen(ChatScreenLooks.ofTheme theme styles, cards, composer, approvals, overlay,
+        ChatScreen(ChatScreenMetrics.ofTheme theme styles, cards, composer, approvals, overlay,
                    (fun s -> Border(Width = s, Height = s) :> Control), actions)
     let column = DockPanel()
     DockPanel.SetDock(composer.Host, Dock.Bottom)

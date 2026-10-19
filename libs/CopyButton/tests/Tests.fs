@@ -4,6 +4,7 @@ open System
 open Avalonia.Controls
 open Xunit
 open Wanxiang2.CopyButton
+open Wanxiang2.WorkspaceState
 
 let private setup () =
     let mutable now = DateTimeOffset(2026, 10, 14, 0, 0, 0, TimeSpan.Zero)
@@ -57,3 +58,21 @@ let ``离开可视树立即复位；淡出值随主题实时变`` () =
         Assert.Equal(CopyState.Default, c.State)
         Assert.Equal(1.0, b.Opacity)
         w.Close())
+
+[<Fact>]
+let ``单入口 Render(CopyButtonVS) 幂等生效`` () =
+    Headless.run (fun () ->
+        let b, c, _, _ = setup ()
+        let vs: CopyButtonVS =
+            { State = CopyButtonState.Confirmed
+              Text = "hi"
+              Tip = "已复制"
+              Name = "已复制"
+              ExpiresAt = None }
+        c.Render vs
+        Assert.Equal(CopyState.Confirmed, c.State)
+        Assert.Equal(1.0, b.Opacity)
+        Assert.Equal("已复制", string (ToolTip.GetTip b))
+        c.Render { vs with State = CopyButtonState.Idle; Tip = "复制"; Name = "复制" }
+        Assert.Equal(CopyState.Default, c.State)
+        Assert.Equal("复制", string (ToolTip.GetTip b)))

@@ -1,9 +1,9 @@
 # MathFigure（组合，公式控件与公式量尺）
 
-旧 `Rich/MathLayout.fs`（FormattedText 量尺、图元转成 Avalonia 类型）与 `Rich/MathVisual.fs`（`MathVisual` 控件、`MathRender.tryInline / inlineContainer / tryBlock`），extract-ledger@0c0b2a6。协作者（包）：MathTypeset（排版）、MathBaseline（基线规则）、ThemeFonts（KaTeX 字体）。KaTeX HTML 由调用方给（宿主 RichBackend 的 MathHtml），本组合不认识后端。根规则见项目根目录 AGENTS.md。
+旧 `Rich/MathLayout.fs`（FormattedText 量尺、图元转成 Avalonia 类型）与 `Rich/MathVisual.fs`（`MathVisual` 控件、`MathRender.tryInline / inlineContainer / tryBlock`），extract-ledger@0c0b2a6。协作者（包）：MathTypeset（排版）、MathBaseline（基线规则）、ThemeFonts（KaTeX 字体）。KaTeX HTML 由调用方给（宿主 RichBackend 的 MathHtml），本组合不认识后端。已移除 UiKit 依赖，活值由控件生命周期直接订阅。根规则见项目根目录 AGENTS.md。
 
 ## 外观
-- `MathFigureLook`：`Ink`（活画笔，原地改色不重排）、`BodyFont`（活字体，变了就重排）、`BlockPadding`（展示式公式上下留白的活值）。值由 ReadingLook 从主题管理者取。
+- `MathFigureMetrics`：`Ink`（活画笔，原地改色不重排）、`BodyFont`（活字体，变了就重排）、`BlockPadding`（展示式公式上下留白的活值）。值由 ReadingLook 从主题管理者取。
 - 用到的样式类：无。
 - 活值只在控件挂进可视树期间订阅，摘下即退订。
 

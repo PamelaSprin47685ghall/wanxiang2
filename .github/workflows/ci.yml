@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with: { global-json-file: global.json }
-      # 控件库经包引用基础库 UiKit；该包只从 pack 产出的 feed 取。
+      # 库与组合者都只从 pack 产出的本地 feed 取 Wanxiang2.* 交付包（UiKit 已退役；WorkspaceState 例外见根 AGENTS.md）。
       - uses: actions/download-artifact@v8
         with: { name: feed, path: artifacts/feed }
       # 失败时把日志尾部写成注解（与 check 任务同一理由：日志接口对普通权限不可读）。

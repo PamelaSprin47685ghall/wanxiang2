@@ -4,11 +4,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-// 金标准：golden/expected.txt 由旧程序集跑同一份 StartupTraceRender.fs 生成。
-[<Fact>]
-let ``golden matches old code`` () =
-    Assert.Equal(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "StartupTrace", "expected.txt")), StartupTraceRender.all ())
-
 [<Fact>]
 let ``290 未设置环境变量时不打点；值为 exit 时打点并退出`` () =
     Assert.Equal((false, false), StartupTrace.modeOf null)

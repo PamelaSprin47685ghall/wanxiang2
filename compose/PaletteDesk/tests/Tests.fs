@@ -99,7 +99,5 @@ let ``执行先关面板再在下一拍运行，已有对话框时不重复打�
         Assert.Single(root.GetVisualDescendants() |> Seq.filter (function :? TextBox as t -> t.Name = "CommandPaletteSearch" | _ -> false)) |> ignore
         press search Key.Enter
         Assert.False overlay.Layer.IsDialogOpen
-        Assert.Empty ran
-        Dispatcher.UIThread.RunJobs()
         Assert.Equal<(string * string) list>([ "act:theme", "" ], List.ofSeq ran)
         window.Close())

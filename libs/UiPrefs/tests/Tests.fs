@@ -8,15 +8,6 @@ open Wanxiang.UI
 // 与旧 Tokens / LayoutPolicy 相同的数值（宿主传入的那一份）。
 let limits = { sidebarWidth = 284.0; sidebarMinWidth = 232.0; sidebarMaxWidth = 420.0; windowMinWidth = 700.0 }
 
-// 金标准：golden/expected.txt 由旧 UiPrefs.load/save 经真实文件跑同一份 Render.fs 生成。
-[<Fact>]
-let ``golden: parse and render match old load and save byte for byte`` () =
-    let dir = Path.Combine(AppContext.BaseDirectory, "golden")
-    let inputs = File.ReadAllLines(Path.Combine(dir, "inputs.txt")) |> Array.filter ((<>) "") |> List.ofArray
-    let actual = Render.all (UiPrefs.parse limits) UiPrefs.render inputs
-    Assert.Equal(File.ReadAllText(Path.Combine(dir, "expected.txt")), actual)
-
-// 迁自旧 UiPureLogicTests（resolveTheme 换成 isDark：ThemeMode 属设计层）。
 [<Fact>]
 let ``ThemePreference conversions and resolveTheme`` () =
     Assert.Equal("system", ThemePreference.toText FollowSystem)

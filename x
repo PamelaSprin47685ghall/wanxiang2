@@ -32,14 +32,7 @@ need_lib() {
   [[ -n "${1:-}" && -d "libs/$1" ]] || { echo "unknown lib: ${1:-}" >&2; echo "libs: $(libs | tr '\n' ' ')" >&2; exit 2; }
 }
 
-# 基础库 UiKit 是控件库唯一允许的跨库依赖；单测一个库前先确保它的包在 feed 里
-#（控件库的 PackageReference 只从 artifacts/feed 还原，见根 NuGet.config）。
-ensure_base_packed() {
-  [[ -f artifacts/feed/Wanxiang2.UiKit.0.0.0-local.nupkg ]] || {
-    echo "== pack UiKit（控件库的基础依赖，feed 里还没有）"
-    dotnet pack libs/UiKit/UiKit.fsproj -c Release -p:Version=0.0.0-local -o artifacts/feed -v q -nologo
-  }
-}
+
 
 # 项目文件中的相对引用路径（ProjectReference / Import / Compile）
 refs() { grep -oE '(ProjectReference|Import|Compile)[^>]*(Include|Project)="[^"]*"' "$1" | sed -E 's/.*"([^"]*)"/\1/' || true; }
@@ -66,9 +59,9 @@ check() {
       if [[ "$proj" != */tests/* ]] && grep -q 'ProjectReference' "$proj"; then
         echo "FAIL $lib: main project must have no ProjectReference"; bad=1
       fi
-      # 库唯一允许的跨库依赖是声明的基础库 UiKit（根 AGENTS.md 例外清单）；其余 Wanxiang2.* 都是兄弟库。
+      # 库之间没有跨库依赖（根 AGENTS.md《布局与工具》）；WorkspaceState 作为单一状态树特例放行兄弟包（见《例外清单》）。
       local sibs
-      sibs="$(grep -oE 'Wanxiang2\.[A-Za-z0-9]+' "$proj" | sort -u | grep -v '^Wanxiang2\.UiKit$' || true)"
+      sibs="$([[ "$lib" == "WorkspaceState" ]] && true || grep -oE 'Wanxiang2\.[A-Za-z0-9]+' "$proj" | sort -u | grep -vE '^Wanxiang2\.WorkspaceState$' || true)"
       if [[ -n "$sibs" ]]; then echo "FAIL $lib: $proj uses sibling package(s): $(echo $sibs | tr '\n' ' ')"; bad=1; fi
     done < <(find "libs/$lib" \( -name '*.fsproj' -o -name '*.csproj' \) -not -path '*/obj/*' -not -path '*/bin/*')
   done
@@ -369,7 +362,7 @@ gen_sln() {
 }
 
 case "${1:-}" in
-  test)    need_lib "${2:-}"; ensure_base_packed; dotnet test --project "libs/$2/tests/$2.Tests.fsproj" ;;
+  test)    need_lib "${2:-}"; dotnet test --project "libs/$2/tests/$2.Tests.fsproj" ;;
   check)   check ;;
   pack)    pack ;;
   compose) compose ;;
@@ -385,7 +378,6 @@ case "${1:-}" in
     gen_sln > wanxiang2.slnx; echo "created libs/$2" ;;
   all)
     check
-    ensure_base_packed
     run_tests_parallel "逐库测试" "$(libs | sed 's#^\(.*\)$#libs/\1/tests/\1.Tests.fsproj#')" "$(test_jobs)"
     pack; compose; consume ;;
   # 用法块 = 开头连续的注释行；行数变化自动同步（末行是第一条非注释行，去掉）

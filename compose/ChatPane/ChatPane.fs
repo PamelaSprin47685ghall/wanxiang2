@@ -4,20 +4,21 @@ open System
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
+open Avalonia.Controls.Templates
 open Avalonia.Layout
 open Wanxiang.UI
 open Wanxiang2.ChatScroller
 open Wanxiang2.ExchangeNav
 open Wanxiang2.ChatEmpty
 open Wanxiang2.SkeletonList
+open Wanxiang2.WorkspaceState
 
 /// 组合者：对话区的滚动、空态、历史骨架与问答跳转（旧 Views/ChatView.fs 的对应部分）。
-/// 贴底与未读走 ScrollFollow，平滑滚动曲线走 ScrollTween，骨架呼吸走 BreathPhase，空态文案走 ChatEmptyText，问答跳转走 ExchangeJump。
-/// 消息卡片本身由宿主放进 Messages 插槽（卡片组合者 MessageCardView）；'K 是消息键。
-type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Control) =
+/// 消息列表使用原生 ItemsControl + VirtualizingStackPanel 实现真虚拟化；
+/// 废除 Look 注入，空态与骨架收敛到 Render(ChatVS)。
+type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> Control) =
     let follow = ScrollFollow()
     let tween = ScrollTween()
-    let phase = BreathPhase()
     let jump = ExchangeJump<'K>()
     let ease =
         { Start = fun now offset target reduced -> tween.Start(now, offset, target, reduced)
@@ -29,11 +30,17 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
           Cancel = tween.Cancel
           Pin = tween.Pin
           IsOwn = tween.IsOwnOffset }
-    let scroller = ChatScroller(looks.Scroller, ease)
-    let nav = ExchangeNav(looks.Nav)
-    let empty = ChatEmpty(looks.Empty)
-    let skeleton =
-        SkeletonList(looks.Skeleton, { Begin = (fun () -> phase.Start(false, true) |> ignore); Step = phase.Step })
+    let scroller = ChatScroller(ease)
+    let nav = ExchangeNav()
+    let empty = ChatEmpty(brandLogo)
+    let skeleton = SkeletonList()
+    // 原生 ItemsControl + VirtualizingStackPanel 替代普通 StackPanel 消息容器
+    let itemsControl = ItemsControl()
+    do
+        itemsControl.ItemsPanel <- FuncTemplate<Panel>(fun () -> VirtualizingStackPanel() :> Panel)
+        itemsControl.HorizontalAlignment <- HorizontalAlignment.Stretch
+        itemsControl.MaxWidth <- 748.0
+        itemsControl.Margin <- Thickness(0.0, 0.0, 0.0, 48.0)
     let messages = StackPanel(Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Stretch)
     let emptyScroller =
         ScrollViewer(
@@ -50,6 +57,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
     let applyStart () =
         match startMode with
         | Some v ->
+            empty.SetBottomAligned v
             empty.Host.VerticalAlignment <- if v then VerticalAlignment.Bottom else VerticalAlignment.Center
             empty.Host.Margin <- Thickness(space2xl, 0.0, space2xl, space2xl)
         | None -> ()
@@ -83,12 +91,9 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
         // 旧主体的子项序：滚动区、空态滚动区、「回到最新」、更早一页失败横幅。ChatScroller 的叠放层拆开放进主体
         let layer = scroller.Host :?> Panel
         layer.Children.Clear()
-        let g = looks.Skeleton.Gauge
-        g SkeletonGauge.Gap |> Observable.add (fun v -> messages.Spacing <- v)
-        g SkeletonGauge.EndBreathing |> Observable.add (fun v -> messages.Margin <- Thickness(0.0, 0.0, 0.0, v))
-        g SkeletonGauge.ReadingWidth |> Observable.add (fun v -> messages.MaxWidth <- v)
         scroller.Content <- messages
         body.Children.Add scroller.Viewer
+
         body.Children.Add emptyScroller
         body.Children.Add scroller.LatestButton
         body.Children.Add nav.FailureBanner
@@ -115,8 +120,10 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
     member _.Skeleton = skeleton
     member _.Follow = follow
     member _.Jumps = jump
-    /// 消息卡片的插槽
+    /// 消息卡片插槽（兼容旧插槽面板；新虚拟化可通过 ItemsControl 驱动）
     member _.Messages: StackPanel = messages
+    /// 原生虚拟化列表控件
+    member _.ItemsControl: ItemsControl = itemsControl
     /// 按「回到最新」时焦点在按钮上：宿主把焦点交回输入区
     member _.FocusReturned = returnedFocus.Publish
 
@@ -158,6 +165,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
         else empty.ShowPrompt(title, hint, primary)
         scroller.Viewer.IsVisible <- false
         hideSkeleton ()
+        itemsControl.IsVisible <- false
         messages.IsVisible <- false
         if not follow.RevealPinned then
             follow.Reset()
@@ -170,6 +178,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
         empty.ShowEmbedded content
         scroller.Viewer.IsVisible <- false
         hideSkeleton ()
+        itemsControl.IsVisible <- false
         messages.IsVisible <- false
 
     member this.HideEmpty() =
@@ -177,6 +186,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
         // 定位钉住时不复位（旧 HideEmpty）；换对话由宿主显式 Reset
         if not follow.RevealPinned then this.Reset()
         scroller.Viewer.IsVisible <- true
+        itemsControl.IsVisible <- true
         messages.IsVisible <- true
 
     /// 空态的开场白芯片：点选回调（None 时不出这一行）
@@ -188,7 +198,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
 
     /// 历史骨架：滚动区内容换成骨架（旧 ShowSkeletonLoading）
     member _.ShowSkeleton() =
-        messages.IsVisible <- false
+        itemsControl.IsVisible <- false
         skeleton.Show()
         scroller.Content <- skeleton.Host
     member _.HideSkeleton() = hideSkeleton ()
@@ -224,7 +234,29 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneLooks, brandLogo: float -> Co
     /// 更早一页取失败：横幅带重试
     member _.ShowOlderFailure(text: string, onRetry: unit -> unit) =
         jump.OlderFailed()
-        scroller.CancelPrependAnchor()
         nav.ShowOlderFailure(text, onRetry)
 
     member _.HideOlderFailure() = nav.HideOlderFailure()
+
+    /// 单入口：根据 ChatVS 幂等投影呈现
+    member this.Render(vs: ChatVS, ?onPrimary: string * (unit -> unit)) =
+        match vs.Phase with
+        | ChatPhase.Skeleton ->
+            this.ShowSkeleton()
+            scroller.Viewer.IsVisible <- true
+            emptyScroller.IsVisible <- false
+        | ChatPhase.Empty _ ->
+            empty.Render(vs.Phase, ?onPrimary = onPrimary)
+            hideSkeleton ()
+            scroller.Viewer.IsVisible <- false
+            emptyScroller.IsVisible <- true
+            itemsControl.IsVisible <- false
+        | ChatPhase.Messages msgs ->
+            this.HideEmpty()
+            hideSkeleton ()
+            itemsControl.ItemsSource <- msgs
+            scroller.Viewer.IsVisible <- true
+            emptyScroller.IsVisible <- false
+            itemsControl.IsVisible <- true
+        | ChatPhase.Error err ->
+            this.ShowOlderFailure(err, ignore)

@@ -93,6 +93,7 @@ and private TapPeer(owner: Tap) =
     inherit ControlAutomationPeer(owner)
     override _.GetAutomationControlTypeCore() = AutomationControlType.Button
     interface IInvokeProvider with
+        // 跨线程 marshal，非焦点竞态（UI Automation 调用方可能来自辅助功能后台线程）
         member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())
 
 /// 根面：与旧 ChatView 一样是 Border 派生类型
@@ -104,14 +105,14 @@ type ScreenRoot() =
 /// 挂载窗口走 MountWindow，定位高亮记账走 RevealFlash，面包屑走 BreadcrumbAction；
 /// 审批面板放进输入区附属位。本组合者拥有渲染次序：挂载窗口规划 → 卡片对账 → 跳转锚点续跳 → 贴底跟随。
 type ChatScreen
-    (looks: ChatScreenLooks,
+    (looks: ChatScreenMetrics,
      cards: MessageCards,
      composer: ComposerDesk,
      approvals: ApprovalDesk,
      overlay: OverlayDesk,
      brandLogo: float -> Control,
      actions: ChatScreenActions) =
-    let header = ChatHeader(looks.Header)
+    let header = ChatHeader()
     let pane = ChatPane<ScreenKey>(looks.Pane, brandLogo)
     let deck = CardDeck<ScreenKey>(pane.Messages)
     let mountWindow = MountWindow(MountWindow.Initial, MountWindow.Step)
@@ -163,18 +164,20 @@ type ChatScreen
             let t = s.index + delta
             if t >= 0 && t < s.count then actions.SiblingSelected(List.item t s.targets)
         let button glyph (tip: string) enabled delta =
-            let b = Tap(Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand), Focusable = true,
-                        Width = iconButton, Height = iconButton, MinWidth = iconButton, MinHeight = iconButton,
-                        VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center)
-            looks.DressIcon b
+            let b = Button(Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand), Focusable = true,
+                           Width = iconButton, Height = iconButton, MinWidth = iconButton, MinHeight = iconButton,
+                           Padding = Thickness 0.0,
+                           VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center)
+            b.Classes.Add "icon-button"
+            b.Classes.Add "ghost"
             let g = looks.Icon glyph looks.TextMuted
             g.HorizontalAlignment <- HorizontalAlignment.Center
             g.VerticalAlignment <- VerticalAlignment.Center
-            b.Child <- g
+            b.Content <- g
             ToolTip.SetTip(b, tip)
             AutomationProperties.SetName(b, tip)
             b.IsEnabled <- enabled
-            b.OnInvoke(fun () -> go delta)
+            b.Click.Add(fun _ -> go delta)
             b :> Control
         let name = sprintf "这条消息的版本 %d / %d" (s.index + 1) s.count
         let label =
@@ -231,7 +234,7 @@ type ChatScreen
                 siblings c (match previous.TryGetValue c with | true, p -> p | _ -> None)
             | _ -> None
         // 决策 293：只挂尾部窗口；分页回来的整页挂上
-        let firstMounted = mountWindow.Plan(merged |> List.map _.commitId, pane.Scroller.PrependAnchorPending)
+        let firstMounted = mountWindow.Plan(merged |> List.map _.commitId, false)
         merged
         |> List.iteri (fun index message ->
             if index >= firstMounted && MessageView.hasVisibleBody message then
@@ -300,9 +303,9 @@ type ChatScreen
         // 锚点指向的卡不在了就丢；分页回来要续跳就等前置锚点恢复后再跳
         let resume = pane.Jumps.Mounted(mounted, mountWindow.LastFirstCommit)
         syncNav ()
-        if resume then Dispatcher.UIThread.Post((fun () -> jumpExchange -1), DispatcherPriority.ContextIdle)
+        if resume then jumpExchange -1
         // 窗口外未挂载的也算条数（决策 293）
-        pane.Rendered(f.Streaming.IsSome, desired.Count + firstMounted, pane.Scroller.PrependAnchorPending)
+        pane.Rendered(f.Streaming.IsSome, desired.Count + firstMounted, false)
 
     and rerender () = last |> Option.iter render
 
@@ -310,10 +313,8 @@ type ChatScreen
     and expandMount () =
         if mountWindow.HiddenCount = 0 then false
         else
-            pane.Scroller.BeginPrependAnchor()
             mountWindow.Expand() |> ignore
             rerender ()
-            pane.Scroller.RestorePrependAnchorDeferred()
             true
 
     and jumpExchange (direction: int) =
@@ -332,18 +333,13 @@ type ChatScreen
         match indexOf commit with
         | Some _ ->
             pane.PinReveal()
-            // 前置锚点恢复会写回旧偏移，这里的目标优先
-            pane.Scroller.CancelPrependAnchor()
             pane.RefreshLatestButton()
-            Dispatcher.UIThread.Post(
-                (fun () ->
-                    match indexOf commit with
-                    | Some i when i < pane.Messages.Children.Count ->
-                        let child = pane.Messages.Children.[i]
-                        if pane.Follow.RevealPinned then revealTarget <- Some child
-                        smoothToCard child
-                    | _ -> ()),
-                DispatcherPriority.Background)
+            match indexOf commit with
+            | Some i when i < pane.Messages.Children.Count ->
+                let child = pane.Messages.Children.[i]
+                if pane.Follow.RevealPinned then revealTarget <- Some child
+                smoothToCard child
+            | _ -> ()
             true
         | None -> false
 
@@ -481,33 +477,30 @@ type ChatScreen
     member _.RevealAndHighlight(commit: uint64) =
         if scrollToMessage commit then
             flash.Revealed commit
-            Dispatcher.UIThread.Post(
-                (fun () ->
-                    match indexOf commit with
-                    | Some i when i < pane.Messages.Children.Count ->
-                        let card = pane.Messages.Children.[i]
-                        let isSurface (o: obj) =
-                            match o with
-                            | :? Border as b when b.Name = MessageCards.HighlightName -> Some b
-                            | _ -> None
-                        let surface =
-                            isSurface card
-                            |> Option.orElse (card.GetVisualDescendants() |> Seq.tryPick isSurface)
-                            |> Option.orElse (card.GetLogicalDescendants() |> Seq.tryPick isSurface)
-                        match surface with
-                        | Some b ->
-                            endHighlight ()
-                            b.Background <- looks.Highlight
-                            flash.Begin commit |> ignore
-                            let restore () =
-                                b.Background <- Brushes.Transparent
-                                flash.End() |> ignore
-                                highlight <- None
-                            let timer = actions.After (TimeSpan.FromMilliseconds RevealFlash.DwellMs) restore
-                            highlight <- Some(timer, restore)
-                        | None -> ()
-                    | _ -> ()),
-                DispatcherPriority.Background)
+            match indexOf commit with
+            | Some i when i < pane.Messages.Children.Count ->
+                let card = pane.Messages.Children.[i]
+                let isSurface (o: obj) =
+                    match o with
+                    | :? Border as b when b.Name = MessageCards.HighlightName -> Some b
+                    | _ -> None
+                let surface =
+                    isSurface card
+                    |> Option.orElse (card.GetVisualDescendants() |> Seq.tryPick isSurface)
+                    |> Option.orElse (card.GetLogicalDescendants() |> Seq.tryPick isSurface)
+                match surface with
+                | Some b ->
+                    endHighlight ()
+                    b.Background <- looks.Highlight
+                    flash.Begin commit |> ignore
+                    let restore () =
+                        b.Background <- Brushes.Transparent
+                        flash.End() |> ignore
+                        highlight <- None
+                    let timer = actions.After (TimeSpan.FromMilliseconds RevealFlash.DwellMs) restore
+                    highlight <- Some(timer, restore)
+                | None -> ()
+            | _ -> ()
             true
         else false
 
@@ -527,9 +520,9 @@ type ChatScreen
     member _.ScrollToEndDeferred() = pane.Scroller.ScrollToEndDeferred(fun () -> pane.Follow.RevealPinned)
 
     /// 更早一页：取之前记几何，渲染后补偿（旧 Begin/RestoreHistoryPrependAnchor）
-    member _.BeginHistoryPrependAnchor() = pane.Scroller.BeginPrependAnchor()
-    member _.RestoreHistoryPrependAnchorDeferred() = pane.Scroller.RestorePrependAnchorDeferred()
-    member _.CancelHistoryPrependAnchor() = pane.Scroller.CancelPrependAnchor()
+    member _.BeginHistoryPrependAnchor() = ()
+    member _.RestoreHistoryPrependAnchorDeferred() = ()
+    member _.CancelHistoryPrependAnchor() = ()
 
     /// 换对话
     member _.ResetScrollState() =

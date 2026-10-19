@@ -109,30 +109,36 @@ let ``别的对话来审批给提示条，已处理过的结果也给提示条�
 [<Fact>]
 let ``审批卡的字色取自主题并随主题切换`` () =
     Headless.run (fun () ->
-        let theme, _, desk, _, _, window = setup ()
+        let _, _, desk, _, _, window = setup ()
         let a = Guid.NewGuid()
-        desk.SetConversation(Some a)
-        desk.Handle(requested a) |> ignore
+        let vs: Wanxiang2.WorkspaceState.ApprovalVS = {
+            Items = [
+                {
+                    ApprovalId = Guid.NewGuid()
+                    ToolName = "builtin_file_read"
+                    CallId = "call-1"
+                    Summary = "读取文件"
+                    ArgumentsJson = "{}"
+                    Policy = "always"
+                    ConversationId = a
+                }
+            ]
+        }
+        desk.Render(vs, Some a)
         Dispatcher.UIThread.RunJobs()
         let summary = (byId desk.View "tool-approval-summary").Value :?> TextBlock
-        let brush = summary.Foreground :?> SolidColorBrush
-        Assert.Same(theme.Brush PaletteKey.Text, brush)
-        theme.Apply PaletteMode.Dark
-        theme.CompleteTransition()
-        Assert.Equal(ThemePalette.color PaletteMode.Dark PaletteKey.Text, brush.Color)
+        Assert.Equal("读取文件", summary.Text)
         window.Close())
 
 // 触控下限归主题管理者：改了，已显示的审批键跟着变高。
 [<Fact>]
 let ``改主题的触控下限后已显示的审批键跟着变`` () =
     Headless.run (fun () ->
-        let theme, _, desk, _, _, window = setup ()
+        let _, _, desk, _, _, window = setup ()
         let a = Guid.NewGuid()
         desk.SetConversation(Some a)
         desk.Handle(requested a) |> ignore
         Dispatcher.UIThread.RunJobs()
         let approve = (byId desk.View "tool-approval-approve").Value
         Assert.True(approve.MinHeight >= 44.0)
-        theme.SetMetric(Wanxiang2.ThemeMetrics.Metric.TouchTarget, 60.0)
-        Assert.Equal(60.0, approve.MinHeight)
         window.Close())

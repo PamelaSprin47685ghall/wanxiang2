@@ -1,12 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="BlockDiff.Samples.fs" />
-    <Compile Include="BlockDiff.Render.fs" />
     <Compile Include="BlockDiff.Tests.fs" />
-    <Compile Include="LinkChunks.Samples.fs" />
     <Compile Include="LinkChunks.Tests.fs" />
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

@@ -25,6 +25,7 @@
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <ProjectReference Include="../DevicesPane.fsproj" />
   </ItemGroup>
 </Project>

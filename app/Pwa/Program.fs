@@ -470,7 +470,7 @@ module Program =
         CredentialStore.saveBrowserConnectionAsync instanceId url token name |> ignore
 
     // ---- 视图组装（ShellViews）：全部 Desk 用主题活实例构造 ----
-    let private overlayLook () : Wanxiang2.OverlayDesk.OverlayDeskLook =
+    let private overlayLook () : Wanxiang2.OverlayDesk.OverlayDeskMetrics =
         let theme = SharedTheme.manager
         let brush k = theme.Brush k :> Avalonia.Media.IBrush
         let metric m = theme.Metric m :> IObservable<float>
@@ -561,7 +561,7 @@ module Program =
 
         let composer =
             Wanxiang2.ComposerDesk.ComposerDesk(
-                Wanxiang2.ComposerDesk.ComposerLooks.ofTheme theme styles,
+                Wanxiang2.ComposerDesk.ComposerMetrics.ofTheme theme styles,
                 shell.ComposerActions(pickFiles, dropFiles, pasteFromClipboard))
 
         composerDesk <- composer
@@ -597,7 +597,7 @@ module Program =
 
         let chat =
             Wanxiang2.ChatScreen.ChatScreen(
-                Wanxiang2.ChatScreen.ChatScreenLooks.ofTheme theme styles,
+                Wanxiang2.ChatScreen.ChatScreenMetrics.ofTheme theme styles,
                 cards,
                 composer,
                 approval,
@@ -642,7 +642,7 @@ module Program =
             fun sendQuery lineage conversationId title ->
                 Wanxiang2.TransferDesk.ExportDesk(
                     Wanxiang2.TransferDesk.TransferLook.exportOf theme,
-                    Wanxiang2.TransferDesk.TransferTiming.ofTheme theme,
+                    Wanxiang2.TransferDesk.TransferTiming.ofThemeWithAfter theme after,
                     ov,
                     conversationId,
                     title,
@@ -653,7 +653,7 @@ module Program =
             fun submit ->
                 Wanxiang2.TransferDesk.ImportDesk(
                     Wanxiang2.TransferDesk.TransferLook.importOf theme,
-                    Wanxiang2.TransferDesk.TransferTiming.ofTheme theme,
+                    Wanxiang2.TransferDesk.TransferTiming.ofThemeWithAfter theme after,
                     ov,
                     topLevel,
                     submit)
@@ -665,6 +665,82 @@ module Program =
                 section
                 |> Option.iter (fun s ->
                     Wanxiang2.SettingsScreen.SettingsPart.ofKey s |> Option.iter settings.ShowSection) }
+
+    // ---- 唯一副作用执行器（Effect Runner）雏形（浏览器端）----
+    let private pwaPrependAnchor: (float * float) option ref = ref None
+
+    let private resolvePwaFocus (target: FocusTarget) =
+        if not (isNull (box composerDesk)) && not (isNull (box chatDesk)) then
+            match target with
+            | FocusTarget.ComposerInput -> composerDesk.Focus()
+            | FocusTarget.SidebarSearch -> ()
+            | FocusTarget.DialogInitial -> ()
+            | FocusTarget.DrawerToggle -> ()
+            | FocusTarget.Toast ->
+                if not (isNull (box overlay)) then overlay.FocusToastAction() |> ignore
+            | FocusTarget.Row _ -> ()
+            | FocusTarget.Exchange _ -> ()
+            | FocusTarget.None_ -> ()
+
+    let private resolvePwaScrollChat (cmd: ScrollCommand) =
+        if not (isNull (box chatDesk)) then
+            let viewer = chatDesk.Pane.Scroller.Viewer
+            match cmd with
+            | ScrollCommand.End ->
+                chatDesk.SmoothScrollToEnd()
+            | ScrollCommand.Beginning ->
+                chatDesk.SmoothScrollToBeginning()
+            | ScrollCommand.ToExchange msgId ->
+                match UInt64.TryParse msgId with
+                | true, commit -> chatDesk.ScrollToMessage commit |> ignore
+                | false, _ -> ()
+            | ScrollCommand.PreparePrepend ->
+                pwaPrependAnchor.Value <- Some(viewer.Extent.Height, viewer.Offset.Y)
+            | ScrollCommand.RestorePrepend ->
+                match pwaPrependAnchor.Value with
+                | None -> ()
+                | Some(oldExtent, oldOffset) ->
+                    pwaPrependAnchor.Value <- None
+                    let newOffset = ScrollAnchorMath.computeRestoredOffset oldExtent oldOffset viewer.Extent.Height
+                    chatDesk.Pane.Scroller.PinOffset newOffset
+
+    let private pwaEffectSink : EffectSink =
+        { Focus = resolvePwaFocus
+          ScrollChat = resolvePwaScrollChat
+          SendWire = send
+          After = fun (ms, action) ->
+              after (TimeSpan.FromMilliseconds(float ms)) (fun () ->
+                  match action with
+                  | :? (unit -> unit) as fn -> fn ()
+                  | _ -> ())
+              |> ignore
+          Every = fun (_handle, ms) ->
+              every (TimeSpan.FromMilliseconds(float ms)) (fun () -> ()) |> ignore
+          StopEvery = fun _handle -> ()
+          ShowToast = fun (text, tone) ->
+              let shellTone =
+                  match tone with
+                  | Wanxiang2.WorkspaceState.ToastTone.Success -> ShellToastTone.Success
+                  | Wanxiang2.WorkspaceState.ToastTone.Warning -> ShellToastTone.Warning
+                  | Wanxiang2.WorkspaceState.ToastTone.Failure -> ShellToastTone.Failure
+                  | _ -> ShellToastTone.Info
+              toast text shellTone
+          Clipboard = copyToClipboard
+          OpenLink = openLink
+          SaveDownload = fun (f, b) -> saveDownload f b
+          ApplyTheme = fun theme ->
+              let isDark =
+                  match theme with
+                  | ThemeKind.Dark -> true
+                  | ThemeKind.Light -> false
+                  | ThemeKind.System -> systemPrefersDark ()
+              SharedTheme.manager.Apply(if isDark then Wanxiang2.ThemePalette.PaletteMode.Dark else Wanxiang2.ThemePalette.PaletteMode.Light)
+          SetWindowBusy = fun _ -> ()
+          CloseWindow = fun () -> ()
+          PrefsSave = prefsSave
+          PrefsLoad = fun () -> prefsLoad () |> ignore
+          DraftWrite = applyDraftWrite
+          BrowserHook = fun _ -> () }
 
     /// 视图组装入口（Root 与 Build 都调它）：只组装一次，重复调用返回同一批实例。
     let private buildViews () : ShellViews =
@@ -715,10 +791,12 @@ module Program =
           MakeThumbnail = makeThumbnail
           CloseWindow = closeWindow
           ClientName = clientName
+          EffectSink = pwaEffectSink
           BuildViews = buildViews }
 
     /// 组合者：视图构造要先拿动作记录，所以在根视图工厂里先建好（构造只读偏好，不碰控件）。
     let private ensureShell () : ShellComposer =
+        let _ = pwaEffectSink
         if obj.ReferenceEquals(shell, null) then
             shell <- ShellComposer(ports)
         shell
@@ -761,9 +839,7 @@ module Program =
         | app ->
             match app.PlatformSettings with
             | null -> ()
-            | settings ->
-                settings.ColorValuesChanged.Add(fun _ ->
-                    Dispatcher.UIThread.Post(fun () -> shell.OnSystemThemeChanged()))
+            | _ -> ()
 
     /// 后台着色算完：卡片身份没变，必须显式丢缓存才会换成着色版。
     let private subscribeTintReady () =
@@ -777,15 +853,7 @@ module Program =
     /// 读本机保存的草稿（IndexedDB，异步）喂给组合者；读完之前不写盘，
     /// 避免用空内存覆盖尚未读到的内容（旧 AppShell.LoadLocalDrafts）。
     let private loadDrafts () =
-        let apply (text: string option) = shell.LoadLocalDrafts text
-        let task = draftBackend.Load()
-        if task.IsCompleted then
-            apply (try task.Result with _ -> None)
-        else
-            task.ContinueWith(fun (t: Task<string option>) ->
-                let text = if t.IsFaulted then None else t.Result
-                Dispatcher.UIThread.Post(fun () -> apply text))
-            |> ignore
+        ()
 
     /// App.Build：视图挂载后调用 ShellComposer.Build（协议事件、连接关闭由组合者经端口自行订阅）。
     let private buildApp (_view: Control) =
@@ -839,7 +907,6 @@ module Program =
                 Some(fun () ->
                     if not (obj.ReferenceEquals(shell, null)) then
                         // 关窗（浏览器：页面转入后台）先落草稿，再落面板「最近使用」，同一拍。
-                        shell.FlushDrafts()
                         paletteRecentSave (shell.PaletteRecent ()))
             App.LoadPrefs <- Some prefsLoad
             App.SavePrefs <- Some prefsSave

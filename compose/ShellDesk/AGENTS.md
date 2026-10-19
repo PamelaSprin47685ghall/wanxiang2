@@ -6,7 +6,7 @@ ShellLayout + BrandMark + NavigationState + Theme = 旧 `Views/MainLayout.fs`（
 - 方法：`ApplyViewport(width)`、`ToggleSidebar()`、`SetCompactNavigation(opened)`、`EnsureSearchVisible()`、`SetStarting(bool)`、`NoteSidebarDragged() : float option`（桌面未折叠才写回，返回值存偏好）、`State`、`Workspace`、`Columns`。都返回或更新 NavigationSnapshot，宿主据此存偏好、做 Escape 链。
 - 焦点归宿（D3/D4）在这里：窄屏抽屉打开进搜索框（SetCompactNavigation 与视口自动打开在触屏下不聚焦）、收起回输入区；桌面折叠时焦点原在侧栏回输入区；遮罩按下与 Escape 同一路径收起抽屉。
 - 品牌标：`ShellBrand(theme)`，`Logo(size)`；找图顺序同旧代码（内嵌资源、程序目录、pwa、WANXIANG_HOME）。
-- `ShellLook.layoutOf / brandOf`：遮罩画笔与淡入（`Timing.ScrimFade` 经减弱动效门控）、侧栏宽度、分隔条宽（SidebarSplitterWidth）、对话区与起步最小高（BarHeight、StartWorkspaceMinHeight）、品牌标比例（LogoRadiusRatio、LogoGlyphRatio）都取主题可变度量；窄屏断点取 `Metric.CompactBreakpoint`，改了就换导航状态机并按上次视口宽重投影。用例 `改主题的布局度量后已显示的外壳跟着变`。
+- 废除 `ShellLook`，外观全走 Avalonia 样式类与主题资源；分隔条宽与窄屏断点取主题度量。用例 `改主题的布局度量后已显示的外壳跟着变`。
 
 ## 证据与旧测试
 - FocusRingTests：`窄屏不自动打开抽屉，显式打开后焦点留在抽屉内`（导航与焦点请求部分；Tab 包含在侧栏）

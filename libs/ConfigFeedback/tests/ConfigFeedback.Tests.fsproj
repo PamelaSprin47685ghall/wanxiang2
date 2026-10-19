@@ -8,7 +8,6 @@
     <Compile Include="HostRequests.Tests.fs" />
     <Compile Include="UploadFacts.Render.fs" />
     <Compile Include="UploadFacts.Tests.fs" />
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

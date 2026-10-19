@@ -24,10 +24,10 @@ type ComposerDeskActions =
       OpenSessionSettings: unit -> unit }
 
 /// 组合者：ComposerBox + AttachmentTray + ModelChip，发送门控走 ComposerSendState，看图判断走 ModelVision（旧 Views/Composer.fs）。
-type ComposerDesk(looks: ComposerLooks, actions: ComposerDeskActions) =
-    let box = ComposerBox(looks.Box)
-    let tray = AttachmentTray(looks.Tray)
-    let chip = ModelChip(looks.Chip)
+type ComposerDesk(looks: ComposerMetrics, actions: ComposerDeskActions) =
+    let box = ComposerBox()
+    let tray = AttachmentTray()
+    let chip = ModelChip()
     let pending = PendingPanel(looks.Pending)
     let thumbs = Collections.Generic.Dictionary<Guid, IImage>()
     let notes = Collections.Generic.Dictionary<Guid, string>()

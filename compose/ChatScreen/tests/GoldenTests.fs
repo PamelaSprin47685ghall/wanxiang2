@@ -42,11 +42,11 @@ let screen (theme: ThemeManager) (styles: ThemeStyles) =
           Now = fun () -> DateTimeOffset.UnixEpoch }
     let composer =
         ComposerDesk(
-            ComposerLooks.ofTheme theme styles,
+            ComposerMetrics.ofTheme theme styles,
             { Submit = (fun _ -> true); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
               OpenModelPicker = ignore; DropFiles = ignore; PasteFromClipboard = (fun () -> false); OpenSessionSettings = ignore })
     ChatScreen(
-        ChatScreenLooks.ofTheme theme styles,
+        ChatScreenMetrics.ofTheme theme styles,
         MessageCards(CardLooks.ofTheme theme styles, host),
         composer, ApprovalDesk(theme, overlay, ignore), overlay, logo,
         { Card =

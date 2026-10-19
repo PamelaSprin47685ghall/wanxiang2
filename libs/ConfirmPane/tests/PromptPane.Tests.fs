@@ -11,7 +11,6 @@ open Avalonia.Threading
 open Xunit
 open Wanxiang2.PromptPane
 open Wanxiang2.PromptPane.Tests.Probe
-open Wanxiang2.PromptPane.Tests.Fixture
 
 let private press (w: Window) k mods =
     w.KeyPress(k, mods, PhysicalKey.None, null)
@@ -21,8 +20,7 @@ let private press (w: Window) k mods =
 [<Fact>]
 let ``prompt dialog validates input and handles confirm and cancel`` () =
     Headless.run (fun () ->
-        let look, _ = make ()
-        let p = PromptPane(look, "重命名", "对话标题", "旧标题", "保存", fun _ -> Some(TextBlock() :> Control))
+        let p = PromptPane("重命名", "对话标题", "旧标题", "保存", fun _ -> Some(TextBlock() :> Control))
         let w = host p.View
         let sent = ResizeArray<string>()
         let errors = ResizeArray<string option>()
@@ -57,8 +55,7 @@ let ``prompt dialog validates input and handles confirm and cancel`` () =
 [<Fact>]
 let ``prompt footer arrows and row enter follow the old action row`` () =
     Headless.run (fun () ->
-        let look, _ = make ()
-        let p = PromptPane(look, "重命名", "对话标题", "标题", "保存", fun _ -> None)
+        let p = PromptPane("重命名", "对话标题", "标题", "保存", fun _ -> None)
         let w = host p.View
         let sent = ResizeArray<string>()
         let cancels = ref 0

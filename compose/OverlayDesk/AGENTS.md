@@ -1,9 +1,10 @@
 # OverlayDesk（组合者）
 
-OverlayLayer + ToastStrip + PopupMenu + ToastQueue + ToastDwell + PopupPlacement + FocusOrigin = 旧 `Controls/OverlayHost.fs` 与 `Controls/Menu.fs`。根规则见项目根目录 AGENTS.md。
+OverlayLayer + ToastStrip + PopupMenu + ToastQueue + FocusOrigin = 旧 `Controls/OverlayHost.fs` 与 `Controls/Menu.fs`。根规则见项目根目录 AGENTS.md。
 
-- 协作都在这里：Escape 次序（浮层 → 对话框 → 最新提示条）；提示条去重与上限（ToastQueue）；按语气停留与悬停或动作持焦时暂停（ToastDwell，每条一个 DispatcherTimer）；点动作或 `TryInvokeToastAction` 先关条再执行；菜单激活先关浮层再执行；菜单项挂 FocusOrigin；浮层落点填 PopupPlacement.place。
-- `OverlayDeskLook` 由各控件的 Look 加上组合层自己的值组成：菜单最小宽度、三档停留时长、计时步长。
+- 协作都在这里：Escape 次序（浮层 → 对话框 → 最新提示条）；提示条去重与上限（ToastQueue）；单入口幂等 `Render(OverlayVS)` 与 `RenderToasts(ToastVS list)`；点动作或 `TryInvokeToastAction` 先关条再执行；菜单激活先关浮层再执行；菜单项挂 FocusOrigin；浮层落点填 PopupPlacement.place。
+- 废除手写 DispatcherTimer 计时器与轮询，提示条生命周期受 WorkspaceState 的 MsgTick/ExpiresAt 统一调度。
+- 单出口意图流：关闭浮层上报 UserMsg.Overlay(PopupClosed)。
 
 ## 证据与旧测试
 

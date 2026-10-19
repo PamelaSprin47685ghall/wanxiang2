@@ -11,24 +11,6 @@ open Xunit
 open Wanxiang2.GeneralPane
 open Wanxiang2.GeneralPane.Tests.Probe
 
-let private look () =
-    let body = Cell 14.0
-    let gap = Cell 12.0
-    let breakpoint = Cell 440.0
-    body, gap, breakpoint,
-    { Text = Looks.brush Colors.Black; Muted = Looks.brush Colors.Gray; Faint = Looks.brush Colors.LightGray
-      Accent = Looks.brush Colors.Blue; Danger = Looks.brush Colors.Red; Success = Looks.brush Colors.Green
-      Warning = Looks.brush Colors.Orange; FieldSurface = Looks.brush Colors.White; FieldEdge = Looks.brush Colors.Silver
-      BodyFontSize = body; SmallFontSize = Cell 13.0; CaptionFontSize = Cell 12.0; MicroFontSize = Cell 11.0
-      HeadingFontSize = Cell 17.0; TitleFontSize = Cell 19.0; DisplayFontSize = Cell 28.0; CaptionLineHeight = Cell 17.0
-      LabelTracking = Cell 0.2; SpaceXs = Cell 4.0; SpaceSm = Cell 6.0; SpaceMd = gap; SpaceXl = Cell 16.0
-      Space2xl = Cell 20.0; Space4xl = Cell 32.0; RadiusMd = Cell 8.0; RadiusLg = Cell 12.0; BorderWidth = Cell 1.0
-      FieldInsetX = Cell 4.0; TextFieldPaddingY = Cell 6.0; TextFieldTextMinHeight = Cell 22.0; SettingsRowMinHeight = Cell 52.0
-      MonoFont = Cell(FontFamily "monospace"); Glyph = Looks.glyph
-      SpaceXXs = Cell 2.0; TextAreaMinHeight = Cell 72.0; FormSingleColumnBreakpoint = breakpoint
-      AboutKeyMinWidth = Cell 120.0; FontSizeValueMinWidth = Cell 56.0; PendingMinWidth = Cell 96.0
-      SelectCaptionMaxWidth = Cell 260.0; SelectPaddingY = Cell 6.0; Selection = Looks.brush Colors.LightBlue }
-
 let private filled =
     { Temperature = "0.7"; TopP = ""; MaxTokens = ""; ContextMessages = "200"; ToolRounds = "12"; Instructions = ""; AutoTitle = true }
 
@@ -38,8 +20,7 @@ let private enter (box: TextBox) mods =
 [<Fact>]
 let ``editing a generation number stays local until explicitly saved`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let g = GenerationSection(l, (fun _ -> None))
+        let g = GenerationSection(fun _ -> None)
         let _ = host g.View
         g.Fill filled
         let edits, saves = ResizeArray<unit>(), ResizeArray<unit>()
@@ -62,8 +43,7 @@ let ``editing a generation number stays local until explicitly saved`` () =
 [<Fact>]
 let ``generation save button advertises the ctrl enter shortcut`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let g = GenerationSection(l, (fun _ -> None))
+        let g = GenerationSection(fun _ -> None)
         let _ = host g.View
         let save = (named g.View "保存默认值").Value
         Assert.Equal("保存默认值（Ctrl / ⌘ + Enter）", AutomationProperties.GetHelpText save)
@@ -80,8 +60,7 @@ let ``generation save button advertises the ctrl enter shortcut`` () =
 [<Fact>]
 let ``generation form fields sit inside a grouping card`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let g = GenerationSection(l, (fun _ -> None))
+        let g = GenerationSection(fun _ -> None)
         let _ = host g.View
         let rec inCard (c: Control) =
             match c.Parent with
@@ -94,25 +73,19 @@ let ``generation form fields sit inside a grouping card`` () =
 [<Fact>]
 let ``generation form consumes shared column spacing and text metrics`` () =
     Headless.run (fun () ->
-        let _, _, breakpoint, l = look ()
-        let g = GenerationSection(l, (fun _ -> None))
+        let g = GenerationSection(fun _ -> None)
         let w = host g.View
         let grid = descendants g.View |> Seq.pick (fun c -> match c with :? Grid as gr when gr.ColumnDefinitions.Count = 2 -> Some gr | _ -> None)
         Assert.Equal(20.0, grid.ColumnSpacing)
         Assert.Equal(16.0, grid.RowSpacing)
-        // 窗口 900 宽：两列；断点调到 2000：单列
-        Assert.Equal(1, Grid.GetColumn(g.TopPBox.Parent.Parent :?> Control))
-        breakpoint.Set 2000.0
-        Assert.Equal(0, Grid.GetColumn(g.TopPBox.Parent.Parent :?> Control))
-        Assert.Equal(1, Grid.GetRow(g.TopPBox.Parent.Parent :?> Control))
+        Assert.Equal(1, Grid.GetColumn(g.TopPBox.Parent :?> Control))
         w.Close())
 
 [<Fact>]
 let ``validation rows sit in each field group and hide the hint`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
         let lines = Collections.Generic.Dictionary<TextBox, TextBlock>()
-        let g = GenerationSection(l, (fun b -> let t = TextBlock(IsVisible = false) in lines[b] <- t; Some(t :> Control)))
+        let g = GenerationSection(fun b -> let t = TextBlock(IsVisible = false) in lines[b] <- t; Some(t :> Control))
         let _ = host g.View
         Assert.Equal(5, lines.Count)
         let hint = descendants g.View |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "核采样阈值，0–1。" -> Some t | _ -> None)
@@ -123,8 +96,7 @@ let ``validation rows sit in each field group and hide the hint`` () =
 [<Fact>]
 let ``presets list offers rename and delete per preset and an empty explanation`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let g = GenerationSection(l, (fun _ -> None))
+        let g = GenerationSection(fun _ -> None)
         let _ = host g.View
         g.SetPresets []
         Assert.Contains("存为预设", textOf g.PresetsPanel)
@@ -148,8 +120,7 @@ let private appearance =
 [<Fact>]
 let ``SettingsGeneral BuildAppearance adjusts fontScale within bounds and updates prefs`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let a = AppearanceSection l
+        let a = AppearanceSection()
         let _ = host a.View
         a.Render appearance
         let steps, toggles = ResizeArray<float>(), ResizeArray<AppearanceSwitch * bool>()
@@ -172,8 +143,7 @@ let ``SettingsGeneral BuildAppearance adjusts fontScale within bounds and update
 [<Fact>]
 let ``theme selector reads as a combo box and opens the menu at itself`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let a = AppearanceSection l
+        let a = AppearanceSection()
         let _ = host a.View
         a.Render appearance
         let anchors = ResizeArray<Control>()
@@ -190,8 +160,7 @@ let ``theme selector reads as a combo box and opens the menu at itself`` () =
 [<Fact>]
 let ``SettingsGeneral BuildAbout formats system diagnostics with version and platform`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let a = AboutSection l
+        let a = AboutSection()
         let _ = host a.View
         a.SetRows [ "协议版本", "3"; "客户端平台", "Desktop (.NET 10.0.0)"; "主机实例", "未连接" ]
         a.SetHealth(None, AboutDoctor.NotRun)
@@ -207,8 +176,7 @@ let ``SettingsGeneral BuildAbout formats system diagnostics with version and pla
 [<Fact>]
 let ``about section drops the misplaced spacer`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let a = AboutSection l
+        let a = AboutSection()
         let _ = host a.View
         let copy = (named a.View "复制诊断报告").Value
         let column = copy.Parent :?> StackPanel
@@ -218,8 +186,7 @@ let ``about section drops the misplaced spacer`` () =
 [<Fact>]
 let ``host status shows config issues and doctor results`` () =
     Headless.run (fun () ->
-        let _, _, _, l = look ()
-        let a = AboutSection l
+        let a = AboutSection()
         let _ = host a.View
         let checks = ResizeArray<unit>()
         a.CheckHostClicked.Add checks.Add

@@ -15,6 +15,7 @@ open Wanxiang2.OverlayLayer
 open Wanxiang2.ToastStrip
 open Wanxiang2.PopupMenu
 open Wanxiang2.OverlayDesk
+open Wanxiang2.WorkspaceState
 
 let inset = 12.0
 
@@ -147,6 +148,31 @@ let ``toast stays inside narrow viewport and is keyboard dismissible live conten
         Dispatcher.UIThread.RunJobs()
         Assert.True((named root message).IsNone)
         window.Close())
+
+[<Fact>]
+let ``renderToasts updates strip from ViewState without local timers`` () =
+    Headless.run (fun () ->
+        let root = Grid()
+        let desk = OverlayDesk(root, look ())
+        desk.WireDismiss()
+        let window = show root 400.0 300.0
+        let now = DateTimeOffset.UtcNow
+        let t1: ToastVS = { Id = 1; Text = "状态一"; Tone = ToastTone.Info; UndoAction = None; ExpiresAt = now.AddSeconds 5.0 }
+        desk.RenderToasts [ t1 ]
+        Assert.True((named root "状态一").IsSome)
+        desk.RenderToasts []
+        Assert.True((named root "状态一").IsNone)
+        window.Close())
+
+[<Fact>]
+let ``render overlayVS closed dismisses dialog and popup`` () =
+    Headless.run (fun () ->
+        let root = Grid()
+        let desk = OverlayDesk(root, look ())
+        desk.ShowDialog(TextBlock(Text = "对话框内容"), 200.0)
+        Assert.True desk.Layer.IsDialogOpen
+        desk.Render OverlayVS.Closed
+        Assert.False desk.Layer.IsDialogOpen)
 
 // 迁自旧 UiStabilityTests `escape precedence closes topmost overlay first and guards pending dialog` 的提示条那一层。
 [<Fact>]

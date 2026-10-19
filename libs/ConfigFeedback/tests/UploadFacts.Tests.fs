@@ -4,11 +4,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-// 金标准：golden/expected.txt 由 tools/ 下原样摘出的旧代码跑同一份 UploadFactsRender.fs 生成。
-[<Fact>]
-let ``golden matches old code`` () =
-    Assert.Equal(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "UploadFacts", "expected.txt")), UploadFactsRender.all ())
-
 [<Fact>]
 let ``分块拼回去就是原文件，序号从 0 连续`` () =
     let bytes = Array.init (UploadFacts.chunkSize * 2 + 5) byte

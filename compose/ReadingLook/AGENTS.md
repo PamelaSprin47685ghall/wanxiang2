@@ -1,6 +1,6 @@
 # ReadingLook（组合，正文与公式的外观填写）
 
-用主题管理者的活实例填 `MarkdownLook` 与 `MathFigureLook`（旧 Tokens、ControlMetrics、Spacing、MotionLedger 的同名值），按钮挂 ThemeStyles 安装的共享样式类。协作者（包）：Theme、IconSet、MarkdownView、MathFigure、CopyButton、ThemePalette、ThemeMetrics、MotionSwitch、SpacingRamp。根规则见项目根目录 AGENTS.md。
+用主题管理者的活实例填 `MarkdownMetrics` 与 `MathFigureMetrics`（旧 Tokens、ControlMetrics、Spacing、MotionLedger 的同名值），按钮挂 ThemeStyles 安装的共享样式类。协作者（包）：Theme、IconSet、MarkdownView、MathFigure、CopyButton、ThemePalette、ThemeMetrics、MotionSwitch、SpacingRamp。根规则见项目根目录 AGENTS.md。
 
 ## 接口
 - `ReadingLook.markdown manager styles`、`ReadingLook.math manager`、`ReadingLook.copy manager`、`ReadingLook.reduced manager`。

@@ -1,11 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Render.fs" />
     <Compile Include="Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
     <ProjectReference Include="../MotionSwitch.fsproj" />
   </ItemGroup>

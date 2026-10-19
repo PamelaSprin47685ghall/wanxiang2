@@ -3,6 +3,7 @@
 桌面 / PWA 共用入口壳，迁自旧 `src/Wanxiang.UI/{App.fs, Views/MainWindow.fs, Views/Composer.fs, Design/SharedTheme.fs, Design/Icons.fs}`（旧仓库 bfdda85 删除）。命名空间与程序集名沿用 `Wanxiang.UI`，包 id 是 `Wanxiang2.EntryShells`；`app/Desktop` 与 `app/Pwa` 只经交付包消费它。根规则见项目根目录 AGENTS.md。
 
 公开面：
+- `Effects`（`EffectSink` / `Effect` / `FocusTarget` / `ScrollCommand` / `ScrollAnchorMath`）：全应用唯一的副作用执行器宿主接收面与 prepend 锚定偏移数学。
 - `SharedTheme`：全应用唯一的 `ThemeManager` / `ThemeStyles` / `InputSense` 与品牌标 `logo`（`Wanxiang2.Theme`、`Wanxiang2.ShellDesk`）。必须最先编译。
 - `App`（Avalonia `Application`）：把 Fluent 的强调色 / 选中色 / 输入框描边压成万象的活画笔，并给弹出层（ToolTip / ContextMenu / MenuFlyoutPresenter）套万象字体与底色；静态注入端口 `Root` / `Build` / `FlushDrafts` / `LoadPrefs` / `SavePrefs` / `MarkFirstFrame`。桌面分支组装 `MainWindow`，PWA 分支直接挂 `SingleView`。
 - `MainWindow(MainWindowPort)`：窗口尺寸 / 位置与几何持久化（Q195）；`Root` / `Build` / `FlushDrafts` / `LoadPrefs` / `SavePrefs` / `MarkFirstFrame` 全部由入口注入。

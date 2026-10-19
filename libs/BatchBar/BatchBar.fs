@@ -7,22 +7,11 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.WorkspaceState
 
-/// 两条批量条的呈现（文案与启用由组合者从多选状态算出）
-type BatchBarState =
-    { CountText: string
-      SelectAllText: string
-      SelectAllHelp: string
-      PinText: string
-      SelectAllEnabled: bool
-      /// 置顶、归档、删除三个键
-      BatchEnabled: bool
-      Visible: bool }
-
-/// 多选模式的头条与底部批量操作条（迁自旧 Views/Sidebar.fs 的 selectionHeader、selectionActionBar、
-/// RefreshSelectionChrome 的控件部分）。选中集合、批量动作与确认归组合者。
-type BatchBar(look: BatchBarLook) =
-    let kit = Kit(look)
+/// 多选模式的头条与底部批量操作条（单入口 Render(BatchBarVS option)）。
+/// 废除 Look 记录，采用原生 Button + 样式类 + 语义化布局。
+type BatchBar() =
     let exit = Event<unit>()
     let selectAll = Event<unit>()
     let pin = Event<unit>()
@@ -30,22 +19,56 @@ type BatchBar(look: BatchBarLook) =
     let delete = Event<unit>()
 
     let countText =
-        let t = kit.Text("已选 0 项", look.SmallFontSize, look.Text)
-        t.FontWeight <- FontWeight.Medium
-        t.VerticalAlignment <- VerticalAlignment.Center
-        t.TextTrimming <- TextTrimming.CharacterEllipsis
-        t
-    let cancelButton = kit.IconButton("close", "退出多选（Esc）", fun () -> exit.Trigger())
-    let selectAllButton = kit.Button(Tone.Ghost, "全选", fun () -> selectAll.Trigger())
-    let pinButton = kit.Button(Tone.Secondary, "置顶", fun () -> pin.Trigger())
-    let archiveButton = kit.Button(Tone.Secondary, "归档", fun () -> archive.Trigger())
-    let deleteButton = kit.Button(Tone.Danger, "删除", fun () -> delete.Trigger())
+        TextBlock(
+            Text = "已选 0 项",
+            FontWeight = FontWeight.Medium,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis)
+
+    let cancelButton =
+        let b = Button(Content = "✕")
+        b.Classes.Add "icon-button"
+        b.Classes.Add "ghost"
+        AutomationProperties.SetName(b, "退出多选（Esc）")
+        ToolTip.SetTip(b, "退出多选（Esc）")
+        b.Click.Add(fun _ -> exit.Trigger())
+        b
+
+    let selectAllButton =
+        let b = Button(Content = "全选")
+        b.Classes.Add "ghost"
+        b.Classes.Add "button-ghost"
+        b.Click.Add(fun _ -> selectAll.Trigger())
+        b
+
+    let pinButton =
+        let b = Button(Content = "置顶")
+        b.Classes.Add "secondary"
+        b.Classes.Add "button-secondary"
+        b.HorizontalAlignment <- HorizontalAlignment.Stretch
+        b.Click.Add(fun _ -> pin.Trigger())
+        b
+
+    let archiveButton =
+        let b = Button(Content = "归档")
+        b.Classes.Add "secondary"
+        b.Classes.Add "button-secondary"
+        b.HorizontalAlignment <- HorizontalAlignment.Stretch
+        b.Click.Add(fun _ -> archive.Trigger())
+        b
+
+    let deleteButton =
+        let b = Button(Content = "删除")
+        b.Classes.Add "danger"
+        b.Classes.Add "button-danger"
+        b.HorizontalAlignment <- HorizontalAlignment.Stretch
+        b.Click.Add(fun _ -> delete.Trigger())
+        b
 
     let header =
-        let b = Border(Background = look.HeaderSurface, BorderBrush = look.Hairline, IsVisible = false)
-        kit.Live(Kit.Pair(look.SpaceXl, look.SpaceMd), fun (x, y) -> b.Padding <- Thickness(x, y))
-        kit.Live(look.DividerWidth, fun v -> b.BorderThickness <- Thickness(0.0, 0.0, 0.0, v))
-        kit.Live(Kit.Pair(look.SpaceXl, look.SelectButtonPaddingY), fun (x, y) -> selectAllButton.Padding <- Thickness(x, y))
+        let b = Border(IsVisible = false)
+        b.Classes.Add "grouping-card"
+        b.Padding <- Thickness(16.0, 8.0)
         let dock = DockPanel(LastChildFill = false, VerticalAlignment = VerticalAlignment.Center)
         DockPanel.SetDock(cancelButton, Dock.Left)
         DockPanel.SetDock(selectAllButton, Dock.Right)
@@ -56,10 +79,9 @@ type BatchBar(look: BatchBarLook) =
         b
 
     let bar =
-        let b = Border(Background = look.BarSurface, BorderBrush = look.Hairline, IsVisible = false)
-        kit.Live(look.SpaceMd, fun v -> b.Padding <- Thickness(v, v))
-        kit.Live(look.DividerWidth, fun v -> b.BorderThickness <- Thickness(0.0, v, 0.0, 0.0))
-        // 横向工具条左右键走邻键；不可用的邻键不接焦点
+        let b = Border(IsVisible = false)
+        b.Classes.Add "surface"
+        b.Padding <- Thickness(8.0)
         let wire (left: Control) (right: Control) =
             left.KeyDown.Add(fun e ->
                 if e.Key = Key.Right && right.IsEnabled && right.IsEffectivelyVisible then
@@ -71,7 +93,19 @@ type BatchBar(look: BatchBarLook) =
                     left.Focus NavigationMethod.Directional |> ignore)
         wire pinButton archiveButton
         wire archiveButton deleteButton
-        b.Child <- kit.HStack(look.SpaceMd, [ pinButton :> Control; archiveButton :> Control; deleteButton :> Control ])
+        let grid = Grid()
+        grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(1.0, GridUnitType.Star)))
+        grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(8.0, GridUnitType.Pixel)))
+        grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(1.0, GridUnitType.Star)))
+        grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(8.0, GridUnitType.Pixel)))
+        grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(1.0, GridUnitType.Star)))
+        Grid.SetColumn(pinButton, 0)
+        Grid.SetColumn(archiveButton, 2)
+        Grid.SetColumn(deleteButton, 4)
+        grid.Children.Add pinButton
+        grid.Children.Add archiveButton
+        grid.Children.Add deleteButton
+        b.Child <- grid
         b
 
     /// 顶部：退出、计数、全选
@@ -84,17 +118,31 @@ type BatchBar(look: BatchBarLook) =
     member _.ArchiveButton = archiveButton :> Control
     member _.DeleteButton = deleteButton :> Control
 
-    member _.Render(s: BatchBarState) =
-        countText.Text <- s.CountText
-        selectAllButton.SetText s.SelectAllText
-        pinButton.SetText s.PinText
-        selectAllButton.SetEnabled s.SelectAllEnabled
-        pinButton.SetEnabled s.BatchEnabled
-        archiveButton.SetEnabled s.BatchEnabled
-        deleteButton.SetEnabled s.BatchEnabled
-        AutomationProperties.SetHelpText(selectAllButton, s.SelectAllHelp)
-        header.IsVisible <- s.Visible
-        bar.IsVisible <- s.Visible
+    /// 单入口幂等渲染：None 隐藏两条，Some 展开并更新状态
+    member _.Render(vs: BatchBarVS option) =
+        match vs with
+        | None ->
+            header.IsVisible <- false
+            bar.IsVisible <- false
+        | Some s ->
+            countText.Text <- sprintf "已选 %d 项" s.SelectedCount
+            let selAllTxt = if s.AllSelected then "取消全选" else "全选"
+            let pinTxt = if s.AllPinned then "取消置顶" else "置顶"
+            selectAllButton.Content <- box selAllTxt
+            pinButton.Content <- box pinTxt
+            AutomationProperties.SetName(selectAllButton, string selAllTxt)
+            AutomationProperties.SetName(pinButton, string pinTxt)
+            let hasSelection = s.SelectedCount > 0
+            selectAllButton.IsEnabled <- true
+            pinButton.IsEnabled <- hasSelection && not s.Busy
+            pinButton.Focusable <- hasSelection && not s.Busy
+            archiveButton.IsEnabled <- hasSelection && not s.Busy
+            archiveButton.Focusable <- hasSelection && not s.Busy
+            deleteButton.IsEnabled <- hasSelection && not s.Busy
+            deleteButton.Focusable <- hasSelection && not s.Busy
+            AutomationProperties.SetHelpText(selectAllButton, if s.AllSelected then "取消全选对话" else "全选可见对话")
+            header.IsVisible <- true
+            bar.IsVisible <- true
 
     [<CLIEvent>] member _.ExitClicked = exit.Publish
     [<CLIEvent>] member _.SelectAllClicked = selectAll.Publish

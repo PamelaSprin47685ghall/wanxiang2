@@ -8,12 +8,6 @@ open Xunit
 open Wanxiang2.RevealPane
 open Wanxiang2.RevealPane.Tests
 
-let private gap = Cell 4.0
-let private gutter = Cell 8.0
-let private look =
-    { Gauge = (function RevealGauge.Gap -> gap :> IObservable<float> | RevealGauge.Gutter -> gutter)
-      Dress = fun b -> b.Classes.Add "ghost" }
-
 let private show (c: Control) =
     let w = Window(Width = 400.0, Height = 800.0, Content = c)
     w.Show()
@@ -27,7 +21,7 @@ let private tall () = Border(Height = 900.0, Width = 100.0)
 [<Fact>]
 let ``短内容不出展开按钮`` () =
     Headless.run (fun () ->
-        let p = RevealPane(look, Border(Height = 50.0), 360.0, true)
+        let p = RevealPane(Border(Height = 50.0), 360.0, true)
         let w = show p.Host
         Assert.False p.Toggle.IsVisible
         w.Close())
@@ -35,7 +29,7 @@ let ``短内容不出展开按钮`` () =
 [<Fact>]
 let ``超高内容出按钮，展开后不限高，再按收起`` () =
     Headless.run (fun () ->
-        let p = RevealPane(look, tall (), 360.0, true)
+        let p = RevealPane(tall (), 360.0, true)
         let w = show p.Host
         Assert.True p.Toggle.IsVisible
         Assert.Equal(360.0, p.Scroller.MaxHeight)
@@ -50,7 +44,7 @@ let ``超高内容出按钮，展开后不限高，再按收起`` () =
 [<Fact>]
 let ``隐藏时退出全文态`` () =
     Headless.run (fun () ->
-        let p = RevealPane(look, tall (), 360.0, true)
+        let p = RevealPane(tall (), 360.0, true)
         let w = show p.Host
         p.ToggleFull()
         p.SetVisible false
@@ -62,7 +56,7 @@ let ``隐藏时退出全文态`` () =
 [<Fact>]
 let ``起始隐藏时首次布局也不亮按钮`` () =
     Headless.run (fun () ->
-        let p = RevealPane(look, tall (), 360.0, false)
+        let p = RevealPane(tall (), 360.0, false)
         let w = show p.Host
         Assert.False p.Toggle.IsVisible
         p.SetVisible true
@@ -72,17 +66,11 @@ let ``起始隐藏时首次布局也不亮按钮`` () =
         w.Close())
 
 [<Fact>]
-let ``度量是活的且摘下后退订`` () =
+let ``视口安全留白为 8.0`` () =
     Headless.run (fun () ->
-        let p = RevealPane(look, tall (), 360.0, true)
-        let w = show p.Host
-        gutter.Set 12.0
-        Assert.Equal(12.0, p.Scroller.Margin.Right)
-        Assert.Contains("ghost", p.Toggle.Classes)
-        w.Content <- null
-        Assert.Equal(0, gutter.Count)
-        gutter.Set 8.0
-        w.Close())
+        let p = RevealPane(tall (), 360.0, true)
+        Assert.Equal(8.0, p.Scroller.Margin.Right)
+        Assert.Contains("ghost", p.Toggle.Classes))
 
 let private invokeVia (c: Avalonia.Controls.Control) =
     let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement c
@@ -94,7 +82,7 @@ let private invokeVia (c: Avalonia.Controls.Control) =
 [<Fact>]
 let ``展开按钮有读屏 Invoke 且能切换`` () =
     Headless.run (fun () ->
-        let p = RevealPane(look, tall (), 360.0, true)
+        let p = RevealPane(tall (), 360.0, true)
         let w = show p.Host
         invokeVia p.Toggle
         Assert.True p.IsFull

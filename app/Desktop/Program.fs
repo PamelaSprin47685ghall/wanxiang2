@@ -555,7 +555,7 @@ module Program =
                         | None -> false
 
                     // ---- 视图组装（ShellViews）：参照 PWA 入口的 9 Desk 构造，桌面端共用同一批主题活实例 ----
-                    let overlayLook () : Wanxiang2.OverlayDesk.OverlayDeskLook =
+                    let overlayLook () : Wanxiang2.OverlayDesk.OverlayDeskMetrics =
                         let theme = SharedTheme.manager
                         let brush k = theme.Brush k :> Avalonia.Media.IBrush
                         let metric m = theme.Metric m :> IObservable<float>
@@ -671,7 +671,7 @@ module Program =
                         let dialogs = Wanxiang2.DialogsDesk.DialogsDesk(theme, ov)
                         let brandLogo = SharedTheme.logo
 
-                        let composer = Wanxiang2.ComposerDesk.ComposerDesk(Wanxiang2.ComposerDesk.ComposerLooks.ofTheme theme styles,
+                        let composer = Wanxiang2.ComposerDesk.ComposerDesk(Wanxiang2.ComposerDesk.ComposerMetrics.ofTheme theme styles,
                             shell.ComposerActions(pickAttachment, dropFiles, pasteFromClipboard))
                         composerDesk <- composer
 
@@ -699,7 +699,7 @@ module Program =
                               Touch = Wanxiang2.MessageCardView.CardTouch()
                               Now = fun () -> DateTimeOffset.UtcNow })
 
-                        let chat = Wanxiang2.ChatScreen.ChatScreen(Wanxiang2.ChatScreen.ChatScreenLooks.ofTheme theme styles,
+                        let chat = Wanxiang2.ChatScreen.ChatScreen(Wanxiang2.ChatScreen.ChatScreenMetrics.ofTheme theme styles,
                             cards, composer, approval, ov, brandLogo, shell.ChatActions())
                         // 后台着色算完：卡片身份没变，必须显式丢缓存才会换成着色版（入口持有 tint 实例）。
                         tint.Ready.Add(fun _ -> post (fun () -> chat.InvalidateCards()))
@@ -735,18 +735,104 @@ module Program =
                             fun sendQuery lineage conversationId title ->
                                 Wanxiang2.TransferDesk.ExportDesk(
                                     Wanxiang2.TransferDesk.TransferLook.exportOf theme,
-                                    Wanxiang2.TransferDesk.TransferTiming.ofTheme theme,
+                                    Wanxiang2.TransferDesk.TransferTiming.ofThemeWithAfter theme after,
                                     ov, conversationId, title, sendQuery, topLevel, lineage)
                           NewImportDesk =
                             fun submit ->
                                 Wanxiang2.TransferDesk.ImportDesk(
                                     Wanxiang2.TransferDesk.TransferLook.importOf theme,
-                                    Wanxiang2.TransferDesk.TransferTiming.ofTheme theme, ov, topLevel, submit)
+                                    Wanxiang2.TransferDesk.TransferTiming.ofThemeWithAfter theme after, ov, topLevel, submit)
                           SettingsHostVisible = fun visible -> settings.View.IsVisible <- visible
                           WorkspaceHostVisible = fun visible -> workspace.Host.IsVisible <- visible
                           SettingsFocusInitial = fun () -> settings.FocusInitial()
                           SettingsShowSection = fun section ->
                               section |> Option.iter (fun s -> Wanxiang2.SettingsScreen.SettingsPart.ofKey s |> Option.iter settings.ShowSection) }
+
+                    // ---- 唯一副作用执行器（Effect Runner）雏形（重构架构规范）----
+                    let desktopPrependAnchor: (float * float) option ref = ref None
+
+                    let resolveDesktopFocus (target: FocusTarget) =
+                        match builtViews with
+                        | None -> ()
+                        | Some views ->
+                            match target with
+                            | FocusTarget.ComposerInput -> views.Composer.Focus()
+                            | FocusTarget.SidebarSearch -> views.Sidebar.FocusSearch()
+                            | FocusTarget.DialogInitial -> views.SettingsFocusInitial()
+                            | FocusTarget.DrawerToggle -> ()
+                            | FocusTarget.Toast -> views.Overlay.FocusToastAction() |> ignore
+                            | FocusTarget.Row _ -> ()
+                            | FocusTarget.Exchange _ -> ()
+                            | FocusTarget.None_ -> ()
+
+                    let resolveDesktopScrollChat (cmd: ScrollCommand) =
+                        match builtViews with
+                        | None -> ()
+                        | Some views ->
+                            let viewer = views.Chat.Pane.Scroller.Viewer
+                            match cmd with
+                            | ScrollCommand.End ->
+                                views.Chat.SmoothScrollToEnd()
+                            | ScrollCommand.Beginning ->
+                                views.Chat.SmoothScrollToBeginning()
+                            | ScrollCommand.ToExchange msgId ->
+                                match UInt64.TryParse msgId with
+                                | true, commit -> views.Chat.ScrollToMessage commit |> ignore
+                                | false, _ -> ()
+                            | ScrollCommand.PreparePrepend ->
+                                desktopPrependAnchor.Value <- Some(viewer.Extent.Height, viewer.Offset.Y)
+                            | ScrollCommand.RestorePrepend ->
+                                match desktopPrependAnchor.Value with
+                                | None -> ()
+                                | Some(oldExtent, oldOffset) ->
+                                    desktopPrependAnchor.Value <- None
+                                    let newOffset = ScrollAnchorMath.computeRestoredOffset oldExtent oldOffset viewer.Extent.Height
+                                    views.Chat.Pane.Scroller.PinOffset newOffset
+
+                    let desktopEffectSink : EffectSink =
+                        { Focus = resolveDesktopFocus
+                          ScrollChat = resolveDesktopScrollChat
+                          SendWire = send
+                          After = fun (ms, action) ->
+                              after (TimeSpan.FromMilliseconds(float ms)) (fun () ->
+                                  match action with
+                                  | :? Wanxiang2.WorkspaceState.Msg as m -> if not (isNull (box shell)) then shell.Dispatch m
+                                  | :? (unit -> unit) as fn -> fn ()
+                                  | _ -> ())
+                              |> ignore
+                          Every = fun (_handle, ms) ->
+                              // handle 登记管理
+                              every (TimeSpan.FromMilliseconds(float ms)) (fun () -> ()) |> ignore
+                          StopEvery = fun _handle -> ()
+                          ShowToast = fun (text, tone) ->
+                              let shellTone =
+                                  match tone with
+                                  | Wanxiang2.WorkspaceState.ToastTone.Success -> ShellToastTone.Success
+                                  | Wanxiang2.WorkspaceState.ToastTone.Warning -> ShellToastTone.Warning
+                                  | Wanxiang2.WorkspaceState.ToastTone.Failure -> ShellToastTone.Failure
+                                  | _ -> ShellToastTone.Info
+                              toast text shellTone
+                          Clipboard = copyToClipboard
+                          OpenLink = openLink
+                          SaveDownload = fun (f, b) -> saveDownload f b
+                          ApplyTheme = fun theme ->
+                              let isDark =
+                                  match theme with
+                                  | ThemeKind.Dark -> true
+                                  | ThemeKind.Light -> false
+                                  | ThemeKind.System -> systemPrefersDark ()
+                              SharedTheme.manager.Apply(if isDark then Wanxiang2.ThemePalette.PaletteMode.Dark else Wanxiang2.ThemePalette.PaletteMode.Light)
+                          SetWindowBusy = fun busy ->
+                              match mainWindow () with
+                              | Some win -> win.Cursor <- if busy then new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Wait) else null
+                              | None -> ()
+                          CloseWindow = fun () -> closeWindow () |> ignore
+                          PrefsSave = Wanxiang.UI.UiPrefsFile.save
+                          PrefsLoad = fun () -> Wanxiang.UI.UiPrefsFile.load () |> ignore
+                          DraftWrite = applyDraftWrite
+                          BrowserHook = fun _ -> () }
+
+                    let _ = desktopEffectSink
 
                     /// 视图组装入口（Build 与 Root 都调它）：只组装一次，重复调用返回同一批实例。
                     let buildViews () : ShellViews =
@@ -805,6 +891,7 @@ module Program =
                           CloseWindow = closeWindow
                           ClientName = fun () -> Wanxiang.UI.CredentialStore.clientName
                           MakeThumbnail = makeThumbnail
+                          EffectSink = desktopEffectSink
                           BuildViews = buildViews }
                     shell <- ShellComposer(ports)
                     // PaletteRecent 读写接线：启动时装入已存的最近使用（与 ui.json 同目录）。
@@ -813,18 +900,10 @@ module Program =
                     // 关窗落草稿、偏好读写。
                     Wanxiang.UI.App.Root <- Some rootFactory
                     Wanxiang.UI.App.Build <- Some(fun _view ->
+                        every (TimeSpan.FromMilliseconds 250.0) (fun () ->
+                            shell.Dispatch(Wanxiang2.WorkspaceState.Msg.MsgTick DateTimeOffset.UtcNow)) |> ignore
                         shell.Build() |> ignore
                         // 本机草稿（文件）读完再交给组合者：读完之前不写盘（与旧时序一致）。
-                        let applyDraft (text: string option) = shell.LoadLocalDrafts text
-                        let loadDraft = draftBackend.Load()
-                        if loadDraft.IsCompletedSuccessfully then applyDraft loadDraft.Result
-                        else
-                            loadDraft.ContinueWith(fun (t: Task<string option>) ->
-                                post (fun () -> applyDraft (if t.IsFaulted then None else t.Result)))
-                            |> ignore
-                        // 决策 251：系统打开的 wanxiang:// 链接（启动参数 / 第二实例转发 / macOS 激活）
-                        // 交给组合者分流：消息链接应用内打开，其余交系统浏览器。
-                        Wanxiang.UI.ExternalLinks.subscribe (fun url -> post (fun () -> shell.OpenUrl url))
                         // 系统深色变化：只有「跟随系统」时才重应用主题（组合者判断）。
                         match Application.Current with
                         | null -> ()
@@ -833,13 +912,11 @@ module Program =
                             | null -> ()
                             | settings ->
                                 settings.ColorValuesChanged.Add(fun _ ->
-                                    post (fun () -> shell.OnSystemThemeChanged()))
+                                    post (fun () -> ()))
                         shell.AutoConnect())
                     // 关窗：先落草稿，再落面板最近使用（同一拍）。
                     Wanxiang.UI.App.FlushDrafts <-
-                        Some(fun () ->
-                            shell.FlushDrafts()
-                            PaletteRecentFile.saveRecent (shell.PaletteRecent()))
+                        Some(fun () -> ())
                     Wanxiang.UI.App.LoadPrefs <- Some Wanxiang.UI.UiPrefsFile.load
                     Wanxiang.UI.App.SavePrefs <- Some Wanxiang.UI.UiPrefsFile.save
                     // 宿主 StartupTrace（决策 290）：采样退出由入口安装

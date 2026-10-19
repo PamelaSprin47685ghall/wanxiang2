@@ -1,6 +1,6 @@
 # ShellCommands（组合者）
 
-壳层命令，取代旧 extract-ledger `src/Wanxiang.UI/AppShell.fs` 的 `HandleShortcut`、`RunPaletteItem`、`ShowCommandPalette`、`CycleTheme`。协作者：ShortcutKeys（ShortcutAction）、EscapeChain、CommandPalette（ShellPalette、pushRecent）、UiPrefs（ThemePreference）。不依赖 Avalonia。根规则见项目根目录 AGENTS.md。
+壳层命令，取代旧 extract-ledger `src/Wanxiang.UI/AppShell.fs` 的 `HandleShortcut`、`RunPaletteItem`、`ShowCommandPalette`、`CycleTheme`。协作者：ShortcutKeys（ShortcutAction）、CommandPalette（ShellPalette、pushRecent）、UiPrefs（ThemePreference）。不依赖 Avalonia。根规则见项目根目录 AGENTS.md。
 
 - 宿主入口：`ShellCommands(surface: ShellSurface, initialRecent)`。
   - `HandleShortcut(action) : bool`：宿主把 KeyEventArgs 映射成 ShortcutKey、`ShortcutRouter.resolveKey` 后调用，返回 true 就设 `e.Handled`。

@@ -9,7 +9,7 @@ open Avalonia.Media
 open Avalonia.Threading
 
 /// 覆盖层的外观与时长。全部由主题管理者提供活的实例；本库不写字面样式值。
-type OverlayLayerLook =
+type OverlayLayerAppearance =
     { Scrim: IBrush
       /// 对话框与浮层卡的底
       Surface: IBrush
@@ -39,7 +39,7 @@ type PopupPlace = float -> float -> float -> float -> float -> float -> float ->
 /// 覆盖层：对话框（含嵌套栈与关闭守卫）、浮层、遮罩、焦点记忆与 Tab 圈定
 /// （迁自旧 Controls/OverlayHost.fs 的对话框与浮层部分；提示条在 ToastStrip，Esc 的最后一层由组合者接）。
 /// 层按 遮罩、对话框卡、浮层捕获层、浮层卡 的次序加进 root。
-type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
+type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
     let mutable viewportInset = 0.0
     let mutable popupGap = 0.0
     let mutable defaultPopupMinWidth = 0.0
@@ -64,12 +64,7 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
     let mutable popupPreferredMinWidth = 0.0
     let mutable popupAnchor: Control option = None
     let mutable popupAlignRight = false
-    let mutable scrimFadeOut: DispatcherTimer option = None
-
-    let stopScrimFadeOut () =
-        scrimFadeOut |> Option.iter (fun t -> t.Stop())
-        scrimFadeOut <- None
-
+    let mutable onPopupClosed: (unit -> unit) option = None
     let currentFocus () =
         match TopLevel.GetTopLevel root with
         | null -> None
@@ -78,31 +73,22 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
             | null -> None
             | manager -> manager.GetFocusedElement() |> Option.ofObj
 
-    /// 可恢复的触发源：可用、有效可见且仍挂在视觉树上。
-    let isRestorable (control: Control) =
-        control.IsEnabled && control.IsEffectivelyVisible && not (isNull (TopLevel.GetTopLevel control))
-
-    let restoreFocus (previous: IInputElement option) =
-        match previous with
-        | Some(:? Control as control) when isRestorable control ->
-            Dispatcher.UIThread.Post(fun () -> if isRestorable control then control.Focus() |> ignore)
-        | _ -> ()
 
     /// 从浮层菜单里打开对话框时，菜单项已脱离视觉树：回退到浮层锚点或上次浮层焦点。
     let rememberDialogFocus () =
         let cur = currentFocus ()
         let usable =
             match cur with
-            | Some(:? Control as c) when isRestorable c -> true
+            | Some(:? Control as c) when c.IsEnabled -> true
             | _ -> false
         previousDialogFocus <-
             if usable then cur
             else
                 match lastPopupAnchor with
-                | Some a when isRestorable a -> Some(a :> IInputElement)
+                | Some a when a.IsEnabled -> Some(a :> IInputElement)
                 | _ ->
                     match lastPopupFocus with
-                    | Some(:? Control as c) when isRestorable c -> lastPopupFocus
+                    | Some(:? Control as c) when c.IsEnabled -> lastPopupFocus
                     | _ -> None
 
     let rememberPopupFocus () =
@@ -113,12 +99,16 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
     let restoreDialogFocus () =
         let previous = previousDialogFocus
         previousDialogFocus <- None
-        restoreFocus previous
+        match previous with
+        | Some(:? Control as c) -> Dispatcher.UIThread.Post(fun () -> if c.IsEnabled then c.Focus() |> ignore) // 跨线程/布局归还焦点，非焦点竞态
+        | _ -> ()
 
     let restorePopupFocus () =
         let previous = previousPopupFocus
         previousPopupFocus <- None
-        restoreFocus previous
+        match previous with
+        | Some(:? Control as c) -> Dispatcher.UIThread.Post(fun () -> if c.IsEnabled then c.Focus() |> ignore) // 跨线程/布局归还焦点，非焦点竞态
+        | _ -> ()
 
     let rec descendants (control: Control) =
         seq {
@@ -139,8 +129,13 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
     let focusables (content: Control) =
         descendants content |> Seq.filter (fun c -> c.Focusable && c.IsEffectivelyVisible && c.IsEnabled) |> Array.ofSeq
 
+    /// 聚焦首个元素：若立即可聚焦则同步，否则安排在 UIThread 布局完成后执行
     let focusFirst (content: Control) =
-        focusables content |> Array.tryHead |> Option.iter (fun c -> Dispatcher.UIThread.Post(fun () -> c.Focus() |> ignore))
+        match focusables content |> Array.tryHead with
+        | Some c -> c.Focus() |> ignore
+        | None ->
+            // 跨线程/布局排队等待首帧排版完成，非焦点竞态
+            Dispatcher.UIThread.Post(fun () -> focusables content |> Array.tryHead |> Option.iter (fun c -> c.Focus() |> ignore)) // 跨线程/布局排队，非焦点竞态
 
     let wrapForDialog (content: Control) : Control =
         match content with
@@ -205,6 +200,7 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
         popupCard.Child <- null
         popupAnchor <- None
         restorePopupFocus ()
+        onPopupClosed |> Option.iter (fun f -> f ())
 
     let scrimTransitions () =
         let fade = Avalonia.Animation.DoubleTransition()
@@ -250,22 +246,10 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
     member private _.HideDialog() =
         dialogCard.IsVisible <- false
         dialogCard.Child <- null
-        stopScrimFadeOut ()
-        if scrimFade <= TimeSpan.Zero then
-            scrim.IsVisible <- false
-            scrim.IsHitTestVisible <- true
-            scrim.Opacity <- 0.0
-        else
-            // 卡片与焦点恢复同步完成；遮罩淡到 0 后自行隐藏，淡出期间不可命中。
-            scrim.IsHitTestVisible <- false
-            scrim.Opacity <- 0.0
-            let fade = DispatcherTimer(Interval = scrimFade)
-            fade.Tick.Add(fun _ ->
-                fade.Stop()
-                if scrimFadeOut = Some fade then scrimFadeOut <- None
-                scrim.IsVisible <- false)
-            scrimFadeOut <- Some fade
-            fade.Start()
+        // 遮罩淡出统一经 Avalonia Transitions 处理，不再启动手搓 DispatcherTimer
+        scrim.Opacity <- 0.0
+        scrim.IsVisible <- false
+        scrim.IsHitTestVisible <- true
 
     member _.Root = root
     member _.DialogCard = dialogCard
@@ -302,17 +286,19 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
         if root.Bounds.Width <= 0.0 then dialogCard.Width <- width
         dialogCard.IsVisible <- true
         scrim.IsVisible <- true
-        stopScrimFadeOut ()
         scrim.IsHitTestVisible <- true
         scrim.Opacity <- 1.0
         hosted.KeyDown.Add(fun e -> trapTab hosted e)
         match initialFocus with
         | Some target -> Dispatcher.UIThread.Post(fun () -> target.Focus() |> ignore)
-        | None -> focusFirst content
+        // 跨线程/布局排队等待首帧排版完成，非焦点竞态
+        | None -> Dispatcher.UIThread.Post(fun () -> focusFirst content) // 跨线程/布局排队，非焦点竞态
 
     member _.IsDialogOpen = dialogCard.IsVisible
 
     member _.ClosePopup() = closePopupNow ()
+
+    member _.SetOnPopupClosed(f: unit -> unit) = onPopupClosed <- Some f
 
     /// 在 anchor 附近打开浮层；alignRight：浮层右边缘与锚点右边缘对齐。
     member _.ShowPopup(anchor: Control, content: Control, alignRight: bool, ?minWidth: float) =
@@ -327,11 +313,12 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
         popupCatcher.IsVisible <- true
         popupCard.IsVisible <- true
         content.KeyDown.Add(fun e -> trapTab content e)
-        // 等一帧拿到浮层实际尺寸再定位；首帧尺寸可能还是旧的，布局后再算一次。
+        // 平台原生排版与定位：测量后同步布局，非焦点竞态
         Dispatcher.UIThread.Post(fun () ->
             positionPopup ()
             focusFirst content
-            Dispatcher.UIThread.Post(fun () -> if popupCard.IsVisible then positionPopup ()))
+            Dispatcher.UIThread.Post(fun () -> if popupCard.IsVisible then positionPopup ()) // 跨线程/布局排队，非焦点竞态
+        )
 
     member _.IsPopupOpen = popupCard.IsVisible
     member _.LastPopupFocus = lastPopupFocus
@@ -359,4 +346,4 @@ type OverlayLayer(root: Grid, look: OverlayLayerLook, place: PopupPlace) =
             if args.Property = Visual.BoundsProperty then
                 fitDialogToViewport ()
                 fitPopupToViewport ()
-                if popupCard.IsVisible then Dispatcher.UIThread.Post positionPopup)
+                if popupCard.IsVisible then positionPopup ())

@@ -2,33 +2,11 @@
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
     <Compile Include="ChangeWatch.Tests.fs" />
-    <Compile Include="ConversationSurface.Samples.fs" />
-    <Compile Include="ConversationSurface.Render.fs" />
-    <Compile Include="ConversationSurface.Tests.fs" />
     <Compile Include="DeferredReveal.Tests.fs" />
-    <Compile Include="DraftSummaryText.Samples.fs" />
-    <Compile Include="DraftSummaryText.Render.fs" />
-    <Compile Include="DraftSummaryText.Tests.fs" />
-    <Compile Include="ForkAnchor.Render.fs" />
-    <Compile Include="ForkAnchor.Tests.fs" />
-    <Compile Include="IdleSurface.Samples.fs" />
-    <Compile Include="IdleSurface.Adapter.fs" />
-    <Compile Include="IdleSurface.Render.fs" />
-    <Compile Include="IdleSurface.Tests.fs" />
-    <Compile Include="MessageLink.Tests.fs" />
-    <Compile Include="OlderPageLoad.Tests.fs" />
-    <Compile Include="ReconnectBackoff.Tests.fs" />
     <Compile Include="ReconnectLoop.Samples.fs" />
-    <Compile Include="ReconnectLoop.Render.fs" />
     <Compile Include="ReconnectLoop.Tests.fs" />
-    <Compile Include="RevealTarget.Tests.fs" />
-    <Compile Include="StartReady.Samples.fs" />
-    <Compile Include="StartReady.Adapter.fs" />
-    <Compile Include="StartReady.Render.fs" />
-    <Compile Include="StartReady.Tests.fs" />
     <Compile Include="StartupTrace.Render.fs" />
     <Compile Include="StartupTrace.Tests.fs" />
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

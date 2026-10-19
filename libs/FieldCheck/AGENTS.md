@@ -8,7 +8,7 @@
 
 ## 外观
 
-- `FieldCheckLook`：`ErrorForeground`、`InvalidStroke`、`NormalStroke`（画笔），`MessageFontSize`、`MessageLineHeight`、`MessageMargin`（活的尺寸）。
+- `FieldCheckAppearance`：`ErrorForeground`、`InvalidStroke`、`NormalStroke`（画笔），`MessageFontSize`、`MessageLineHeight`、`MessageMargin`（活的尺寸）。
 - 用到的样式类：`invalid`。
 
 ## 证据与旧测试

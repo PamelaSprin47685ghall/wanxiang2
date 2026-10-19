@@ -6,6 +6,7 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.FocusOrigin" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupPlacement" VersionOverride="0.0.0-local" />

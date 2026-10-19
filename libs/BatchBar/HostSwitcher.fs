@@ -4,52 +4,74 @@ open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.WorkspaceState
 
-/// 侧栏页脚的主机状态行与周边动作（迁自旧 Views/Sidebar.fs 的 statusRow、serverCaption、statusDot、
-/// settingsButton、paletteButton、SetServerUrl、SetConnection）。重连 / 设置 / 命令面板的动作归组合者。
-type HostSwitcher(look: HostSwitcherLook) =
-    let kit = Kit(look)
+/// 侧栏页脚的主机状态行与周边动作。
+/// 废除 Look 记录，采用原生 Button、样式类与 DynamicResource。
+type HostSwitcher() =
     let reconnect = Event<unit>()
     let settings = Event<unit>()
     let palette = Event<unit>()
-    let mutable compact = false
-    let mutable iconSize = 0.0
-    let mutable compactSize = 0.0
     let mutable connected = false
 
     let caption =
-        let t = kit.Text("选择主机", look.SmallFontSize, look.Text)
-        t.TextTrimming <- TextTrimming.CharacterEllipsis
-        t
+        TextBlock(
+            Text = "选择主机",
+            FontWeight = FontWeight.Medium,
+            TextTrimming = TextTrimming.CharacterEllipsis)
+
     let status =
-        let t = kit.Text("未连接", look.CaptionFontSize, look.Muted)
-        t.VerticalAlignment <- VerticalAlignment.Center
-        t.TextTrimming <- TextTrimming.CharacterEllipsis
-        t
-    let mutable dot = kit.StatusDot(look.DotSize, look.Faint) :> Control
+        TextBlock(
+            Text = "未连接",
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis)
+
+    let dot =
+        Border(
+            Width = 8.0,
+            Height = 8.0,
+            CornerRadius = CornerRadius 4.0,
+            VerticalAlignment = VerticalAlignment.Center,
+            Background = Brushes.Gray)
+
     let statusRow =
-        let stack = kit.VStack(look.SpaceXs, [ caption :> Control; kit.HStack(look.SpaceMd, [ dot; status :> Control ]) :> Control ])
-        let t = Tap(stack, "重新连接主机", [ "surface"; "hover-plain" ], fun () -> reconnect.Trigger())
-        t.Background <- Brushes.Transparent
-        kit.Live(look.RadiusSm, fun v -> t.CornerRadius <- CornerRadius v)
-        ToolTip.SetTip(t, "切换或重新连接主机")
-        t
-    let settingsButton = kit.IconButton("gear", "设置（Ctrl / ⌘ + ,）", fun () -> settings.Trigger())
+        let statusStack = StackPanel(Orientation = Orientation.Horizontal, Spacing = 6.0)
+        statusStack.Children.Add dot
+        statusStack.Children.Add status
+        let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 2.0)
+        stack.Children.Add caption
+        stack.Children.Add statusStack
+        let b = Button(Content = stack)
+        b.Classes.Add "ghost"
+        b.Classes.Add "surface"
+        b.Classes.Add "hover-plain"
+        b.HorizontalAlignment <- HorizontalAlignment.Stretch
+        AutomationProperties.SetName(b, "重新连接主机")
+        ToolTip.SetTip(b, "切换或重新连接主机")
+        b.Click.Add(fun _ -> reconnect.Trigger())
+        b
+
+    let settingsButton =
+        let b = Button(Content = "⚙")
+        b.Classes.Add "icon-button"
+        b.Classes.Add "ghost"
+        AutomationProperties.SetName(b, "设置（Ctrl / ⌘ + ,）")
+        ToolTip.SetTip(b, "设置（Ctrl / ⌘ + ,）")
+        b.Click.Add(fun _ -> settings.Trigger())
+        b
+
     let paletteButton =
-        let b = kit.IconButton("search", "命令面板（Ctrl / ⌘ + K）", fun () -> palette.Trigger())
+        let b = Button(Content = "🔍")
+        b.Classes.Add "icon-button"
+        b.Classes.Add "ghost"
         b.IsVisible <- false
         b.Name <- "sidebar-palette"
         AutomationProperties.SetName(b, "命令面板")
         AutomationProperties.SetHelpText(b, "搜索对话、操作与设置（Ctrl / ⌘ + K）")
+        b.Click.Add(fun _ -> palette.Trigger())
         b
-
-    let square (b: Tap) =
-        let v = if compact then compactSize else iconSize
-        b.Width <- v
-        b.Height <- v
 
     let view =
         let dock = DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
@@ -58,17 +80,10 @@ type HostSwitcher(look: HostSwitcherLook) =
         DockPanel.SetDock(paletteButton, Dock.Right)
         dock.Children.Add paletteButton
         dock.Children.Add statusRow
-        let b = Border(Child = dock, BorderBrush = look.Hairline)
-        kit.Live(look.BarHeight, fun v -> b.Height <- v)
-        kit.Live(look.Space2xl, fun v -> b.Padding <- Thickness(v, 0.0, v, 0.0))
-        kit.Live(look.DividerWidth, fun v -> b.BorderThickness <- Thickness(0.0, v, 0.0, 0.0))
+        let b = Border(Child = dock)
+        b.Classes.Add "hairline"
+        b.Padding <- Thickness(16.0, 8.0)
         b
-
-    do
-        kit.Live(look.IconButtonSize, fun v -> iconSize <- v; square settingsButton; square paletteButton)
-        kit.Live(look.CompactTarget, fun v -> compactSize <- v; square settingsButton; square paletteButton)
-        square settingsButton
-        square paletteButton
 
     member _.View = view :> Control
     member _.StatusRow = statusRow :> Control
@@ -87,24 +102,16 @@ type HostSwitcher(look: HostSwitcherLook) =
     member _.SetConnection(isConnected: bool, text: string) =
         connected <- isConnected
         status.Text <- text
-        // 换圆点填充：StatusDot 的 Fill 是构造时定的，这里重建
-        let fill = if isConnected then look.Success else look.Faint
-        let next = kit.StatusDot(look.DotSize, fill) :> Control
-        match statusRow.Child with
-        | :? StackPanel as col when col.Children.Count >= 2 ->
-            match col.Children[1] with
-            | :? StackPanel as row when row.Children.Count >= 1 ->
-                row.Children[0] <- next
-                dot <- next
-            | _ -> ()
-        | _ -> ()
+        dot.Background <- if isConnected then Brushes.ForestGreen else Brushes.Gray
 
     member _.ConfigurePalette(visible: bool) = paletteButton.IsVisible <- visible
+    member _.SetCompact(_value: bool) = ()
 
-    member _.SetCompact(value: bool) =
-        compact <- value
-        square settingsButton
-        square paletteButton
+    /// 单入口渲染
+    member this.Render(vs: HostSwitcherVS) =
+        this.SetServerUrl vs.ServerUrl
+        this.SetConnection(vs.Connected, vs.StatusText)
+        paletteButton.IsVisible <- vs.PaletteVisible
 
     [<CLIEvent>] member _.ReconnectClicked = reconnect.Publish
     [<CLIEvent>] member _.SettingsClicked = settings.Publish

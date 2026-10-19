@@ -4,7 +4,6 @@
     <Compile Include="Render.fs" />
     <Compile Include="RestoreRender.fs" />
     <Compile Include="Tests.fs" />
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

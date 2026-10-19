@@ -4,37 +4,22 @@ open Avalonia.Automation
 open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
 open Avalonia.Controls
-open Avalonia.Media
 open Avalonia.Threading
 open Xunit
 open Wanxiang2.ModelChip
 open Wanxiang2.ModelChip.Tests
 
-let private look () =
-    { Ink =
-        function
-        | ChipInk.Text -> Brushes.Black :> IBrush
-        | ChipInk.TextMuted -> Brushes.Gray
-        | ChipInk.Hairline -> Brushes.Silver
-        | ChipInk.TextFaint -> Brushes.LightGray
-      Gauge = (fun _ -> Cell 12.0 :> _)
-      BodyFont = Cell FontFamily.Default
-      Chevron = (fun _ -> Border(Width = 8.0, Height = 8.0) :> Control)
-      Dress = ignore }
-
 [<Fact>]
 let ``标签换色；读屏 Invoke 打开切换器`` () =
     Headless.run (fun () ->
-        let c = ModelChip(look ())
+        let c = ModelChip()
         let mutable opened = false
         c.OnOpen(fun anchor ->
             opened <- true
             Assert.Same(c.Host, anchor))
         Assert.Equal("未选择模型", c.Text)
-        Assert.Same(Brushes.Gray, ((c.Host.Child :?> StackPanel).Children[0] :?> TextBlock).Foreground)
         c.SetLabel "gpt-test"
         Assert.Equal("gpt-test", c.Text)
-        Assert.Same(Brushes.Black, ((c.Host.Child :?> StackPanel).Children[0] :?> TextBlock).Foreground)
         let w = Window(Content = c.Host)
         w.Show()
         let peer = ControlAutomationPeer.CreatePeerForElement c.Host

@@ -15,8 +15,7 @@ open Wanxiang2.ToolsPane
 /// 设置 → 工具的协作（旧 Views/SettingsTools.fs）：工具审批方式、授权文件夹（空 / 非绝对 / 重复校验）、调试工具开关、
 /// MCP 服务编辑（McpForm 校验 + FieldCheck）与更多菜单。工具设置走 UpdateGeneration（ToolsPolicy 载荷）。界面归 ToolsPane。
 type ToolsDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> SettingsHooks) =
-    let look = SettingsLooks.toolsOf theme
-    let pane = ToolsPane(look)
+    let pane = ToolsPane(SettingsLooks.glyphOf theme)
     let check = FieldCheck(SettingsLooks.fieldCheckOf theme)
     let mutable catalog = Catalog.empty
     let mutable mcpEditor: McpEditor option = None
@@ -73,7 +72,7 @@ type ToolsDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setting
                   Url = s.url |> Option.defaultValue ""
                   Timeout = string s.callTimeoutSeconds
                   Enabled = s.enabled })
-        let editor = McpEditor(look, values, validation)
+        let editor = McpEditor(values, validation)
         let mutable active = true
         FieldCheck.BindSummaryReset(Some editor.Summary, editor.Boxes)
         let text (box: TextBox) = if isNull box.Text then "" else box.Text
@@ -111,7 +110,7 @@ type ToolsDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setting
             initialFocus = editor.InitialFocus)
 
     let showAddFolder () =
-        let editor = FolderEditor(look, validation)
+        let editor = FolderEditor(validation)
         let mutable pending = false
         editor.SaveRequested.Add(fun raw ->
             if not pending then

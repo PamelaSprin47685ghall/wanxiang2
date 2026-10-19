@@ -8,7 +8,6 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
-open Wanxiang2.UiKit
 
 /// 浮层菜单里的一项。
 type PopupEntry =
@@ -31,7 +30,7 @@ module PopupEntry =
     let asDanger (entry: PopupEntry) = { entry with Danger = true }
 
 /// 菜单与下拉选择器的外观。全部由主题管理者提供活的实例；本库不写字面样式值。
-type PopupMenuLook =
+type PopupMenuAppearance =
     { Text: IBrush
       Muted: IBrush
       Faint: IBrush
@@ -68,22 +67,10 @@ module PopupMenu =
 
     let private live (source: IObservable<'T>) (apply: 'T -> unit) = source.Subscribe apply |> ignore
 
-    /// Enter / Space / 左键松开都激活。
-    let private onInvoke (host: InvokeBorder) (action: unit -> unit) =
-        host.SetAction action
-        host.PointerReleased.Add(fun e ->
-            if host.IsEnabled && host.IsHitTestVisible && e.InitialPressMouseButton = MouseButton.Left then
-                e.Handled <- true
-                action ())
-        host.KeyDown.Add(fun e ->
-            if host.IsEnabled && (e.Key = Key.Enter || e.Key = Key.Space) then
-                e.Handled <- true
-                action ())
-
     /// 菜单项宿主上的样式类（只挂类名，样式由主题提供）。
     let itemClass = "menu-item"
 
-    let private renderEntry (look: PopupMenuLook) (activate: PopupEntry -> unit) (entry: PopupEntry) : Control =
+    let renderEntry (look: PopupMenuAppearance) (activate: PopupEntry -> unit) (entry: PopupEntry) : Control =
         let foreground = if entry.Danger then look.Danger else look.Text
         let iconSlot = Border(VerticalAlignment = VerticalAlignment.Center)
         live look.IconSlotWidth (fun v -> iconSlot.Width <- v)
@@ -125,7 +112,8 @@ module PopupMenu =
         Grid.SetColumn(rightSlot, 1)
         row.Children.Add left
         row.Children.Add rightSlot
-        let host = InvokeBorder(Cursor = handCursor, Focusable = true, Child = row)
+        // 原生交互宿主：Border 配合原生样式类，不再手搓 TapPeer
+        let host = Border(Cursor = handCursor, Focusable = true, Child = row)
         live look.ItemPadding (fun v -> host.Padding <- v)
         live look.ItemRadius (fun v -> host.CornerRadius <- v)
         live look.ItemMinHeight (fun v -> host.MinHeight <- v)
@@ -134,9 +122,17 @@ module PopupMenu =
         host.Classes.Add(if entry.Danger then "hover-danger" else "hover-plain")
         AutomationProperties.SetName(host, entry.Label)
         // 长文案被截断时补原生 tooltip。
-        ToolTip.SetTip(host, entry.Label)
+        ToolTip.SetTip(host, box entry.Label)
         AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.MenuItem)
-        onInvoke host (fun () -> activate entry)
+        let fire () = activate entry
+        host.PointerReleased.Add(fun e ->
+            if host.IsEnabled && host.IsHitTestVisible && e.InitialPressMouseButton = MouseButton.Left then
+                e.Handled <- true
+                fire ())
+        host.KeyDown.Add(fun e ->
+            if host.IsEnabled && (e.Key = Key.Enter || e.Key = Key.Space) then
+                e.Handled <- true
+                fire ())
         host :> Control
 
     /// 菜单方向键落点（在本文件内联）：Home/PageUp 到首、End/PageDown 到尾、Up/Down 首尾回绕。
@@ -165,7 +161,7 @@ module PopupMenu =
                 items[next].BringIntoView()
             | None -> ())
 
-    let private wrap (look: PopupMenuLook) (panel: StackPanel) : Control =
+    let private wrap (look: PopupMenuAppearance) (panel: StackPanel) : Control =
         live look.ItemSpacing (fun v -> panel.Spacing <- v)
         wireDirectionalNavigation panel
         let scroller =
@@ -176,8 +172,8 @@ module PopupMenu =
         live look.MaxHeight (fun v -> scroller.MaxHeight <- v)
         scroller
 
-    /// 菜单内容；`entries` 为空时 None（旧代码此时不打开）。
-    let build (look: PopupMenuLook) (activate: PopupEntry -> unit) (entries: PopupEntry list) : Control option =
+
+    let build (look: PopupMenuAppearance) (activate: PopupEntry -> unit) (entries: PopupEntry list) : Control option =
         if List.isEmpty entries then None
         else
             let panel = StackPanel(Orientation = Orientation.Vertical)
@@ -186,7 +182,7 @@ module PopupMenu =
             Some(wrap look panel)
 
     /// 带分组标题的菜单内容；空组跳过，全空时 None。
-    let buildGrouped (look: PopupMenuLook) (activate: PopupEntry -> unit) (groups: (string * PopupEntry list) list) : Control option =
+    let buildGrouped (look: PopupMenuAppearance) (activate: PopupEntry -> unit) (groups: (string * PopupEntry list) list) : Control option =
         let visible = groups |> List.filter (fun (_, items) -> not (List.isEmpty items))
         if List.isEmpty visible then None
         else
@@ -210,12 +206,12 @@ module PopupMenu =
             Some(wrap look panel)
 
 /// 下拉选择器按钮：显示当前值，点击或 Down/Up 发 `OpenRequested`，组合者据此弹出分组菜单。
-type SelectButton(look: PopupMenuLook, initialText: string) =
+type SelectButton(look: PopupMenuAppearance, initialText: string) =
     let openRequested = Event<unit>()
     let caption = TextBlock(Text = initialText, Foreground = look.Text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis)
     let chevron = look.Chevron look.Faint
     let row = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-    let host = InvokeBorder(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, Child = row)
+    let host = Border(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, Child = row)
     // 上一次由本按钮写入的显示文本：调用方另起了名就与它不同，此后不再覆盖。
     let mutable lastText = initialText
 
@@ -233,7 +229,6 @@ type SelectButton(look: PopupMenuLook, initialText: string) =
         host.Classes.Add "select-button"
         host.Classes.Add "hover-bordered"
         AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.ComboBox)
-        host.SetAction openRequested.Trigger
         host.PointerReleased.Add(fun e ->
             if host.IsEnabled && host.IsHitTestVisible && e.InitialPressMouseButton = MouseButton.Left then
                 e.Handled <- true
@@ -246,16 +241,16 @@ type SelectButton(look: PopupMenuLook, initialText: string) =
             elif e.Key = Key.Down || e.Key = Key.Up then
                 e.Handled <- true
                 openRequested.Trigger())
-        ToolTip.SetTip(host, initialText)
+        ToolTip.SetTip(host, box initialText)
         AutomationProperties.SetName(host, initialText)
 
-    member _.View: Border = host :> Border
+    member _.View: Border = host
     member _.Text = caption.Text
 
     /// 换显示文本；读屏名只在仍是自己上次写入的值时跟随。
     member _.SetText(text: string) =
         caption.Text <- text
-        ToolTip.SetTip(host, text)
+        ToolTip.SetTip(host, box text)
         if AutomationProperties.GetName host = lastText then
             AutomationProperties.SetName(host, text)
         lastText <- text

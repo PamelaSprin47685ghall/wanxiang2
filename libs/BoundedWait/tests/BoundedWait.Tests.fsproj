@@ -3,11 +3,8 @@
   <ItemGroup>
     <Compile Include="BoundedWait.Tests.fs" />
     <Compile Include="HostHealth.Tests.fs" />
-    <Compile Include="OnboardingRules.Samples.fs" />
-    <Compile Include="OnboardingRules.Render.fs" />
     <Compile Include="OnboardingRules.Tests.fs" />
     <Compile Include="ProviderPresets.Tests.fs" />
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

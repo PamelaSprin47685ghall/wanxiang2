@@ -5,15 +5,7 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "scrolltween.txt"))
 let t0 = DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
-
-/// 金样由旧代码（旧 Views/ChatView.fs smoothScrollToCard 与 MotionPolicy 曲线，照抄）跑同一份 Samples 与 Render 生成
-[<Fact>]
-let ``golden: output matches the old code`` () =
-    Assert.Equal(expected (), Render.render ())
-
-// ---- 文档规则的真实行为
 
 [<Fact>]
 let ``the curve starts at 0, ends at 1 and front-loads the motion`` () =

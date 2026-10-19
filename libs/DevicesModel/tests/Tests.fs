@@ -6,7 +6,6 @@ open System.Text
 open Xunit
 open Wanxiang.UI
 
-/// 金样由旧代码（从旧视图文件原样摘出的函数）在同一组输入上生成
 let render () =
     let sb = StringBuilder()
     let line (s: string) = sb.Append(s).Append('\n') |> ignore
@@ -31,16 +30,6 @@ let render () =
         let m = DevicesModel.qrMatrix t
         line (sprintf "qr %s %d %s" (js t) m.Length (String.Join("|", m |> Array.map (fun r -> String(r |> Array.map (fun b -> if b then '#' else '.'))))))
     sb.ToString()
-
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "devices.txt"))
-
-/// 日期文案用本地时区；金样在 UTC 下生成。非 UTC 机器上只比对不含日期的行
-[<Fact>]
-let ``golden: device texts, invite targets and qr matrices match the old DevicesModel`` () =
-    let utc = TimeZoneInfo.Local.GetUtcOffset(Samples.now) = TimeSpan.Zero
-    let keep (s: string) = utc || not (s.Contains "lastSeenText")
-    let lines (s: string) = s.Split('\n') |> Array.filter keep
-    Assert.Equal<string[]>(lines (expected ()), lines (render ()))
 
 
 [<Fact>]

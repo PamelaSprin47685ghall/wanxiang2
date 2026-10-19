@@ -26,6 +26,7 @@
 
 ## MountWindow（库）
 
+> **注意（P2/P3 清理）**：MountWindow 是为旧手动限制卡片挂载窗口（Initial=40/Step=60）设计的过度手搓逻辑。随着消息列表切换至 Avalonia 原生 `ItemsControl` + `VirtualizingStackPanel`，MountWindow 已经丧失继续存在的必要，将在 P3 阶段彻底删除。
 旧 `Views/ChatView.fs` 的挂载窗口记账（决策 293）迁入，成为一个对象：
 - `Plan`：每次渲染算出第一张要挂载的卡和被隐藏的提交；
 - `Expand`：向上扩一步；

@@ -1,6 +1,6 @@
 # RowFocus
 
-合并包：RowFocus、SearchHit、SearchRequery、SearchSegments、SearchSession、SidebarEmpty、SidebarSelection。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。
+合并包：RowFocus、SearchHit、SearchSegments、SearchSession、SidebarSelection。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。（注：SidebarEmpty 与 SearchRequery 的布尔判定已被 WorkspaceState 的 DU 状态树和事件循环取代，已退役）。
 
 测试工程 `<包名>.Tests.fsproj` 合并各成员用例（`<成员名>.<文件>.fs`），golden 目录按成员分目录；控件库的测试工程用 `AssemblySettings.fs` 关掉并行（Avalonia 平台状态是进程级全局量）。
 

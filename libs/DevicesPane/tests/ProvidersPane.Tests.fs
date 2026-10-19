@@ -12,22 +12,6 @@ open Xunit
 open Wanxiang2.ProvidersPane
 open Wanxiang2.ProvidersPane.Tests.Probe
 
-let private look () =
-    let body = Cell 14.0
-    let gap = Cell 12.0
-    body, gap,
-    { Text = Looks.brush Colors.Black; Muted = Looks.brush Colors.Gray; Faint = Looks.brush Colors.LightGray
-      Accent = Looks.brush Colors.Blue; Danger = Looks.brush Colors.Red; Success = Looks.brush Colors.Green
-      Warning = Looks.brush Colors.Orange; FieldSurface = Looks.brush Colors.White; FieldEdge = Looks.brush Colors.Silver
-      BodyFontSize = body; SmallFontSize = Cell 13.0; CaptionFontSize = Cell 12.0; MicroFontSize = Cell 11.0
-      HeadingFontSize = Cell 17.0; TitleFontSize = Cell 19.0; DisplayFontSize = Cell 28.0; CaptionLineHeight = Cell 17.0
-      LabelTracking = Cell 0.2; SpaceXs = Cell 4.0; SpaceSm = Cell 6.0; SpaceMd = gap; SpaceXl = Cell 16.0
-      Space2xl = Cell 20.0; Space4xl = Cell 32.0; RadiusMd = Cell 8.0; RadiusLg = Cell 12.0; BorderWidth = Cell 1.0
-      FieldInsetX = Cell 4.0; TextFieldPaddingY = Cell 6.0; TextFieldTextMinHeight = Cell 22.0; SettingsRowMinHeight = Cell 52.0
-      MonoFont = Cell(FontFamily "monospace"); Glyph = Looks.glyph
-      SpaceXXs = Cell 2.0; TextAreaMinHeight = Cell 72.0; EmptyLogoSize = Cell 40.0; PendingMinWidth = Cell 96.0
-      StatusDotSize = Cell 7.0; SelectCaptionMaxWidth = Cell 260.0; SelectPaddingY = Cell 6.0 }
-
 let private row id label : ProviderRow =
     { Id = id; Label = label; Meta = "https://api.openai.com/v1 · 2 个模型"; Enabled = true; Dot = ProviderDot.Configured; IsDefault = false }
 
@@ -37,8 +21,7 @@ let private enter (box: TextBox) =
 [<Fact>]
 let ``missing key reads as warning tag and disabled provider dims its text`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let p = ProvidersPane l
+        let p = ProvidersPane()
         let _ = host p.View
         p.Render
             [ { row "a" "缺钥" with Dot = ProviderDot.MissingKey; Meta = "x · 1 个模型 · 未设置密钥" }
@@ -50,17 +33,13 @@ let ``missing key reads as warning tag and disabled provider dims its text`` () 
         let disabled = tags |> List.find (fun t -> textOf t = "已停用")
         Assert.DoesNotContain("tag-warning", disabled.Classes)
         Assert.True(tags |> List.exists (fun t -> textOf t = "默认"))
-        let name = descendants p.View |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "停用" -> Some t | _ -> None)
-        Assert.Same(l.Muted, name.Foreground)
         let dots = descendants p.View |> Seq.choose (fun c -> match c with :? Ellipse as e -> Some e | _ -> None) |> List.ofSeq
-        Assert.Equal<IBrush list>([ l.Warning; l.Faint; l.Accent ], dots |> List.map (fun e -> e.Fill))
         Assert.All(dots, fun d -> Assert.Equal(7.0, d.Width)))
 
 [<Fact>]
 let ``empty provider list hands the add action to the empty state`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let p = ProvidersPane l
+        let p = ProvidersPane()
         let _ = host p.View
         let adds = ResizeArray<unit>()
         p.AddClicked.Add adds.Add
@@ -82,8 +61,7 @@ let ``empty provider list hands the add action to the empty state`` () =
 [<Fact>]
 let ``SettingsProviders two-tier form defaults to quick access and preserves drafts when toggling advanced settings`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let e = ProviderEditor(l, true, (fun _ -> None))
+        let e = ProviderEditor(true, fun _ -> None)
         let _ = host e.View
         Assert.False e.IsAdvanced
         Assert.True e.LabelBox.IsEffectivelyVisible
@@ -102,9 +80,8 @@ let ``SettingsProviders two-tier form defaults to quick access and preserves dra
 [<Fact>]
 let ``SettingsProviders ShowEditor validates required fields and default model existence`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
         let lines = Collections.Generic.Dictionary<TextBox, TextBlock>()
-        let e = ProviderEditor(l, true, (fun b -> let t = TextBlock(IsVisible = false) in lines[b] <- t; Some(t :> Control)))
+        let e = ProviderEditor(true, fun b -> let t = TextBlock(IsVisible = false) in lines[b] <- t; Some(t :> Control))
         let _ = host e.View
         Assert.Equal(10, lines.Count)
         let saves = ResizeArray<unit>()
@@ -128,14 +105,13 @@ let ``SettingsProviders ShowEditor validates required fields and default model e
 [<Fact>]
 let ``new provider cannot probe until saved and explains why`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let e = ProviderEditor(l, true, (fun _ -> None))
+        let e = ProviderEditor(true, fun _ -> None)
         let _ = host e.View
         e.SetAdvanced true
         let probe = (byId e.View "provider-probe-models").Value
         Assert.False probe.IsEnabled
         Assert.Contains("要先保存", textOf e.View)
-        let e2 = ProviderEditor(l, false, (fun _ -> None))
+        let e2 = ProviderEditor(false, fun _ -> None)
         let _ = host e2.View
         e2.SetAdvanced true
         let probes = ResizeArray<unit>()
@@ -154,8 +130,7 @@ let ``new provider cannot probe until saved and explains why`` () =
 [<Fact>]
 let ``SettingsProviders applyPreset updates endpoint, models and tracks divergence to custom`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let e = ProviderEditor(l, true, (fun _ -> None))
+        let e = ProviderEditor(true, fun _ -> None)
         let _ = host e.View
         let anchors, transports = ResizeArray<Control>(), ResizeArray<unit>()
         e.PresetClicked.Add anchors.Add
@@ -178,22 +153,11 @@ let ``SettingsProviders applyPreset updates endpoint, models and tracks divergen
         e.SetTransport None
         Assert.False (named e.View "改用兼容端点").Value.IsVisible)
 
-[<Fact>]
-let ``look values stay live in the editor`` () =
-    Headless.run (fun () ->
-        let body, gap, l = look ()
-        let e = ProviderEditor(l, false, (fun _ -> None))
-        let _ = host e.View
-        body.Set 18.0
-        gap.Set 9.0
-        Assert.Equal(18.0, e.LabelBox.FontSize))
-
 // 旧 Menu.selectButton：Down / Up 都能展开预设菜单（UiStabilityTests `preset dropdown marks exactly the current preset` 的展开路径）。
 [<Fact>]
 let ``预设选择器按 Down 或 Up 展开`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let e = ProviderEditor(l, true, (fun _ -> None))
+        let e = ProviderEditor(true, fun _ -> None)
         let _ = host e.View
         let anchors = ResizeArray<Control>()
         e.PresetClicked.Add anchors.Add

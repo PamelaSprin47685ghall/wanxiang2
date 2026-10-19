@@ -11,7 +11,6 @@ open Avalonia.Threading
 open Xunit
 open Wanxiang2.ConfirmPane
 open Wanxiang2.ConfirmPane.Tests.Probe
-open Wanxiang2.ConfirmPane.Tests.Fixture
 
 let private press (w: Window) k mods =
     w.KeyPress(k, mods, PhysicalKey.None, null)
@@ -21,18 +20,16 @@ let private press (w: Window) k mods =
 [<Fact>]
 let ``Dialogs confirm focuses the safe cancel action by default`` () =
     Headless.run (fun () ->
-        let look, _ = make ()
-        let p = ConfirmPane(look, "删除对话", "删除后无法恢复。", "删除", false)
+        let p = ConfirmPane("删除对话", "删除后无法恢复。", "删除", false)
         let _ = host p.View
         Assert.Same(p.CancelButton, p.InitialFocus)
-        let q = ConfirmPane(look, "删除对话", "删除后无法恢复。", "删除", true)
+        let q = ConfirmPane("删除对话", "删除后无法恢复。", "删除", true)
         Assert.Same(q.ConfirmButton, q.InitialFocus))
 
 [<Fact>]
 let ``confirm and confirmWithFocus dialog trigger callbacks correctly`` () =
     Headless.run (fun () ->
-        let look, cells = make ()
-        let p = ConfirmPane(look, "删除对话", "删除后无法恢复。", "删除", false)
+        let p = ConfirmPane("删除对话", "删除后无法恢复。", "删除", false)
         let w = host p.View
         let log = ResizeArray<string>()
         p.Confirmed.Add(fun () -> log.Add "ok")
@@ -46,6 +43,4 @@ let ``confirm and confirmWithFocus dialog trigger callbacks correctly`` () =
         Assert.True p.ConfirmButton.IsFocused
         press w Key.Enter RawInputModifiers.None
         click p.ConfirmButton
-        Assert.Equal<string list>([ "cancel"; "ok"; "ok" ], List.ofSeq log)
-        cells["BodyFontSize"].Set 18.0
-        Assert.Equal(18.0, (descendants p.View |> Seq.pick (function :? TextBlock as t when t.Text = "删除后无法恢复。" -> Some t | _ -> None)).FontSize))
+        Assert.Equal<string list>([ "cancel"; "ok"; "ok" ], List.ofSeq log))

@@ -11,7 +11,6 @@ open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
 open Wanxiang.UI
-open Wanxiang2.UiKit
 open Wanxiang2.MathFigure
 open Wanxiang2.CodeTint
 open Wanxiang2.CopyButton
@@ -32,7 +31,35 @@ type MarkdownHost =
 /// Markdown 块模型 → Avalonia 控件（旧 Controls/MarkdownRenderer.fs）。
 /// 标题有真实字号、引用有左缘、列表有悬挂缩进、表格是真表格、代码块是带语言标签和复制按钮的卡片。
 /// allowHighlight = false 用于流式进行中的消息：未写完的代码着不准，每个 token 重新着色一次会把机器点着。
-type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allowHighlight: bool) =
+type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, allowHighlight: bool) =
+
+    static let now (source: IObservable<'T>) =
+        let mutable v = Unchecked.defaultof<'T>
+        (source.Subscribe(fun x -> v <- x)).Dispose()
+        v
+
+    static let live (control: Control) (source: IObservable<'T>) (apply: 'T -> unit) =
+        apply (now source)
+        let mutable sub: IDisposable = null
+        control.AttachedToVisualTree.Add(fun _ -> if isNull sub then sub <- source.Subscribe apply)
+        control.DetachedFromVisualTree.Add(fun _ ->
+            if not (isNull sub) then
+                sub.Dispose()
+                sub <- null)
+
+    static let live2 control (a: IObservable<'A>) (b: IObservable<'B>) (apply: 'A -> 'B -> unit) =
+        let mutable va = now a
+        let mutable vb = now b
+        live control a (fun x -> va <- x; apply va vb)
+        live control b (fun y -> vb <- y; apply va vb)
+
+    static let live3 control (a: IObservable<'A>) (b: IObservable<'B>) (c: IObservable<'C>) (apply: 'A -> 'B -> 'C -> unit) =
+        let mutable va = now a
+        let mutable vb = now b
+        let mutable vc = now c
+        live control a (fun x -> va <- x; apply va vb vc)
+        live control b (fun y -> vb <- y; apply va vb vc)
+        live control c (fun z -> vc <- z; apply va vb vc)
 
     let handCursor = new Cursor(StandardCursorType.Hand)
     let ink = look.Ink
@@ -43,7 +70,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
     /// 外边距只有底边一段（段落节奏）：经 Margin 读写，末块清零规则照旧
     let bottomGap (c: Control) (gap: float) = c.Margin <- Thickness(0.0, 0.0, 0.0, gap)
 
-    let mono (owner: Control) (apply: FontFamily -> unit) = Follow.live owner look.MonoFont apply
+    let mono (owner: Control) (apply: FontFamily -> unit) = live owner look.MonoFont apply
 
     let setIcon (button: Border) (glyph: MarkdownGlyph) (brush: IBrush) =
         let g = look.Glyph glyph brush
@@ -118,7 +145,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                 let mathSize = if display then size + 1.0 else size
                 match MathFigures.tryInline look.Math (host.MathHtml(tex, false)) mathSize tex with
                 | Some figure ->
-                    Follow.live figure (gauge MarkdownGauge.SpaceXs) (fun x -> figure.Margin <- Thickness(x, 0.0))
+                    live figure (gauge MarkdownGauge.SpaceXs) (fun x -> figure.Margin <- Thickness(x, 0.0))
                     figure.VerticalAlignment <- VerticalAlignment.Center
                     let container = MathFigures.inlineContainer figure
                     container.BaselineAlignment <- BaselineAlignment.Center
@@ -201,7 +228,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                 LineHeight = ReadingRhythm.technicalLineHeight (fontSize - 1.5),
                 SelectionBrush = ink MarkdownInk.AccentSoft)
         mono block (fun f -> block.FontFamily <- f)
-        Follow.live2 block (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.BlockPaddingY) (fun x y -> block.Margin <- Thickness(x, y))
+        live2 block (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.BlockPaddingY) (fun x y -> block.Margin <- Thickness(x, y))
         let brushOf kind : IBrush =
             match kind with
             | CodeKeyword -> ink MarkdownInk.CodeKeyword
@@ -249,7 +276,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                 FontWeight = FontWeight.Medium,
                 Foreground = ink MarkdownInk.CodeMuted,
                 VerticalAlignment = VerticalAlignment.Center)
-        Follow.live2 langLabel (gauge MarkdownGauge.FontMicro) (gauge MarkdownGauge.TrackingEmphasis) (fun s t ->
+        live2 langLabel (gauge MarkdownGauge.FontMicro) (gauge MarkdownGauge.TrackingEmphasis) (fun s t ->
             langLabel.FontSize <- s
             langLabel.LetterSpacing <- t)
 
@@ -275,7 +302,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
         if isNull copyButton.Transitions then copyButton.Transitions <- Avalonia.Animation.Transitions()
         copyButton.Transitions.Add fade
         let mutable reduced = false
-        Follow.live2 copyButton (gauge MarkdownGauge.CopyFadeMs) look.Reduced (fun ms r ->
+        live2 copyButton (gauge MarkdownGauge.CopyFadeMs) look.Reduced (fun ms r ->
             reduced <- r
             fade.Duration <- if r then TimeSpan.Zero else TimeSpan.FromMilliseconds ms)
         copyButton.OnInvoke(fun () ->
@@ -300,7 +327,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
 
         let header =
             let actions = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-            Follow.live actions (gauge MarkdownGauge.SpaceXXs) (fun s -> actions.Spacing <- s)
+            live actions (gauge MarkdownGauge.SpaceXXs) (fun s -> actions.Spacing <- s)
             actions.Children.Add wrapButton
             actions.Children.Add copyButton
             let dock = DockPanel(LastChildFill = false)
@@ -309,7 +336,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
             dock.Children.Add langLabel
             dock.Children.Add actions
             let b = Border(Background = ink MarkdownInk.CodeHeaderBg, BorderBrush = ink MarkdownInk.CodeBorder, Child = dock)
-            Follow.live3 b (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.SpaceXs) (fun bw x xs ->
+            live3 b (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.SpaceXs) (fun bw x xs ->
                 b.BorderThickness <- Thickness(0.0, 0.0, 0.0, bw)
                 b.Padding <- Thickness(x, xs, xs, xs))
             b
@@ -322,7 +349,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
             let label = TextBlock(Text = "展开全部", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
             expand.Child <- label
             look.Dress MarkdownButton.Ghost expand
-            Follow.live2 expand (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.SpaceXs) (fun x xs -> expand.Margin <- Thickness(x, xs, 0.0, xs))
+            live2 expand (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.SpaceXs) (fun x xs -> expand.Margin <- Thickness(x, xs, 0.0, xs))
             AutomationProperties.SetName(expand, "展开全部")
             // 展开态报成标准 expander 语义（旧 SetExpanded：ItemStatus 已展开 / 已折叠）
             AutomationProperties.SetItemStatus(expand, "已折叠")
@@ -342,7 +369,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                 BorderBrush = ink MarkdownInk.CodeBorder,
                 ClipToBounds = true,
                 Child = stack)
-        Follow.live2 root (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.RadiusMd) (fun bw r ->
+        live2 root (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.RadiusMd) (fun bw r ->
             root.BorderThickness <- Thickness bw
             root.CornerRadius <- CornerRadius r)
         bottomGap root ReadingRhythm.paragraphGap
@@ -412,7 +439,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                     let notLast = gridRow < total - 1
                     let hostCell =
                         Border(BorderBrush = ink MarkdownInk.Hairline, Background = background, ClipToBounds = true, UseLayoutRounding = true, Child = cellContent)
-                    Follow.live3 hostCell (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.BlockPaddingY) (gauge MarkdownGauge.BorderWidth) (fun x y bw ->
+                    live3 hostCell (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.BlockPaddingY) (gauge MarkdownGauge.BorderWidth) (fun x y bw ->
                         hostCell.Padding <- Thickness(x, y)
                         hostCell.BorderThickness <- Thickness(0.0, 0.0, 0.0, (if notLast then bw else 0.0)))
                     Grid.SetRow(hostCell, gridRow)
@@ -428,7 +455,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                 else grid
             let frame =
                 Border(BorderBrush = ink MarkdownInk.HairlineStrong, ClipToBounds = true, UseLayoutRounding = true, HorizontalAlignment = HorizontalAlignment.Stretch, Child = content)
-            Follow.live2 frame (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.RadiusMd) (fun bw r ->
+            live2 frame (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.RadiusMd) (fun bw r ->
                 frame.BorderThickness <- Thickness bw
                 frame.CornerRadius <- CornerRadius r)
             bottomGap frame ReadingRhythm.paragraphGap
@@ -477,11 +504,11 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                                 MinWidth = ReadingRhythm.listMarkerWidth,
                                 TextAlignment = TextAlignment.Right,
                                 VerticalAlignment = VerticalAlignment.Top)
-                        Follow.live t (gauge MarkdownGauge.SpaceMd) (fun md -> t.Margin <- Thickness(float depth * ReadingRhythm.listIndentStep, 0.0, md, 0.0))
+                        live t (gauge MarkdownGauge.SpaceMd) (fun md -> t.Margin <- Thickness(float depth * ReadingRhythm.listIndentStep, 0.0, md, 0.0))
                         t
                     else
                         let dot = Border(Background = ink MarkdownInk.TextMuted, VerticalAlignment = VerticalAlignment.Center)
-                        Follow.live2 dot (gauge MarkdownGauge.ListMarkerDotSize) (gauge MarkdownGauge.ListMarkerDotRadius) (fun size r ->
+                        live2 dot (gauge MarkdownGauge.ListMarkerDotSize) (gauge MarkdownGauge.ListMarkerDotRadius) (fun size r ->
                             dot.Width <- size
                             dot.Height <- size
                             dot.CornerRadius <- CornerRadius r)
@@ -492,7 +519,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                                 VerticalAlignment = VerticalAlignment.Top,
                                 HorizontalAlignment = HorizontalAlignment.Left,
                                 Child = dot)
-                        Follow.live slot (gauge MarkdownGauge.SpaceMd) (fun md -> slot.Padding <- Thickness(0.0, 0.0, md, 0.0))
+                        live slot (gauge MarkdownGauge.SpaceMd) (fun md -> slot.Padding <- Thickness(0.0, 0.0, md, 0.0))
                         slot
                 let body = this.RenderInlineRow(content, fontSize, FontWeight.Normal, textColor, lineHeight = textLineHeight)
                 let row = DockPanel()
@@ -509,18 +536,18 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                         BorderBrush = (if isChecked then ink MarkdownInk.Accent else ink MarkdownInk.Line),
                         Background = (if isChecked then ink MarkdownInk.Accent else Brushes.Transparent :> IBrush),
                         VerticalAlignment = VerticalAlignment.Top)
-                Follow.live3 box (gauge MarkdownGauge.TaskBoxSize) (gauge MarkdownGauge.RadiusXs) (gauge MarkdownGauge.TaskBoxBorderWidth) (fun size r bw ->
+                live3 box (gauge MarkdownGauge.TaskBoxSize) (gauge MarkdownGauge.RadiusXs) (gauge MarkdownGauge.TaskBoxBorderWidth) (fun size r bw ->
                     box.Width <- size
                     box.Height <- size
                     box.CornerRadius <- CornerRadius r
                     box.BorderThickness <- Thickness bw)
-                Follow.live box (gauge MarkdownGauge.SpaceMd) (fun md -> box.Margin <- Thickness(0.0, 0.0, md, 0.0))
+                live box (gauge MarkdownGauge.SpaceMd) (fun md -> box.Margin <- Thickness(0.0, 0.0, md, 0.0))
                 // 自绘方框补 CheckBox 语义与状态名，读屏能听到任务是否完成
                 AutomationProperties.SetControlTypeOverride(box, Nullable Peers.AutomationControlType.CheckBox)
                 AutomationProperties.SetName(box, if isChecked then "已完成任务" else "未完成任务")
                 if isChecked then
                     let mark = look.Glyph MarkdownGlyph.Check (ink MarkdownInk.TextOnAccent)
-                    Follow.live mark (gauge MarkdownGauge.TaskCheckGlyphSize) (fun s ->
+                    live mark (gauge MarkdownGauge.TaskCheckGlyphSize) (fun s ->
                         mark.Width <- s
                         mark.Height <- s)
                     box.Child <- mark
@@ -546,14 +573,14 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                 last.Margin <- Thickness(lm.Left, lm.Top, lm.Right, 0.0)
             // 单层容器：左侧强调条 + 微底色；嵌套引用向左退一步
             let card = Border(Background = ink MarkdownInk.SurfaceContainer, BorderBrush = ink MarkdownInk.Accent, ClipToBounds = true, Child = stack)
-            Follow.live2 card (gauge MarkdownGauge.QuoteEdgeWidth) (gauge MarkdownGauge.RadiusSm) (fun edge r ->
+            live2 card (gauge MarkdownGauge.QuoteEdgeWidth) (gauge MarkdownGauge.RadiusSm) (fun edge r ->
                 card.BorderThickness <- Thickness(edge, 0.0, 0.0, 0.0)
                 card.CornerRadius <- CornerRadius(0.0, r, r, 0.0))
             // 外边距只在构造时取一次：父级（引用首末项、末块清零）会改写它，跟随活值会把改写冲掉
             card.Margin <-
-                if insideQuote then Thickness(Follow.now (gauge MarkdownGauge.SpaceMd), 0.0, 0.0, ReadingRhythm.paragraphGap)
+                if insideQuote then Thickness(now (gauge MarkdownGauge.SpaceMd), 0.0, 0.0, ReadingRhythm.paragraphGap)
                 else Thickness(0.0, 0.0, 0.0, ReadingRhythm.paragraphGap)
-            Follow.live2 card (gauge MarkdownGauge.SpaceMd) (gauge MarkdownGauge.SpaceSm) (fun md sm -> card.Padding <- Thickness(md, sm, md, sm))
+            live2 card (gauge MarkdownGauge.SpaceMd) (gauge MarkdownGauge.SpaceSm) (fun md sm -> card.Padding <- Thickness(md, sm, md, sm))
             [ card :> Control ]
         | MdCode(language, code) -> [ this.RenderCode(language, code) ]
         | MdRule ->
@@ -562,7 +589,7 @@ type MarkdownView(look: MarkdownLook, host: MarkdownHost, fontSize: float, allow
                     Background = ink MarkdownInk.BorderSoft,
                     Margin = Thickness(0.0, ReadingRhythm.headingBefore 3, 0.0, ReadingRhythm.headingBefore 3),
                     HorizontalAlignment = HorizontalAlignment.Stretch)
-            Follow.live rule (gauge MarkdownGauge.BorderWidth) (fun bw -> rule.Height <- bw)
+            live rule (gauge MarkdownGauge.BorderWidth) (fun bw -> rule.Height <- bw)
             [ rule :> Control ]
         | MdTable(header, rows) -> [ this.RenderTable(header, rows) ]
 

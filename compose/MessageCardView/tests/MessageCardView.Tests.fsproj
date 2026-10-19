@@ -3,13 +3,10 @@
   <ItemGroup>
     <Compile Include="Headless.fs" />
     <Compile Include="Samples.fs" />
-    <Compile Include="Dump.fs" />
     <Compile Include="Fixture.fs" />
-    <Compile Include="GoldenTests.fs" />
     <Compile Include="BehaviorTests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Skia" />

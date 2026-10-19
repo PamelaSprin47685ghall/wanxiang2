@@ -5,17 +5,17 @@ open Avalonia.Controls
 open Xunit
 open Wanxiang2.ListEmptyCard
 open Wanxiang2.ListEmptyCard.Tests.Probe
+open Wanxiang2.WorkspaceState
 
 let private make () =
-    let look, cells = Fixture.make ()
-    let c = ListEmptyCard look
+    let c = ListEmptyCard()
     host c.View |> ignore
-    c, cells
+    c
 
 [<Fact>]
 let ``card swaps only on style flip and keeps the shared action button`` () =
     Headless.run (fun () ->
-        let c, _ = make ()
+        let c = make ()
         Assert.False c.IsVisible
         c.SetAction "连接主机"
         c.Show(EmptyCardStyle.Note, "", "连接主机后，对话记录会显示在这里。", false, true)
@@ -37,11 +37,13 @@ let ``card swaps only on style flip and keeps the shared action button`` () =
         Assert.False c.IsVisible)
 
 [<Fact>]
-let ``skeleton bars follow theme cells`` () =
+let ``render SidebarEmptyKind shows corresponding card`` () =
     Headless.run (fun () ->
-        let c, cells = make ()
-        c.Show(EmptyCardStyle.Brand, "t", "", true, false)
-        cells["SkeletonBarHeight"].Set 12.0
-        let bars = descendants c.Skeleton |> Seq.choose (function :? Border as b when not (isNull b.Background) -> Some b | _ -> None) |> List.ofSeq
-        Assert.Equal(3, bars.Length)
-        Assert.All(bars, fun b -> Assert.Equal(12.0, b.Height)))
+        let c = make ()
+        c.Render(Some (SidebarEmptyKind.NotConnected true))
+        Assert.True c.IsVisible
+        Assert.Contains("连接主机后", textOf c.View)
+        c.Render(Some SidebarEmptyKind.Loading)
+        Assert.True c.Skeleton.IsVisible
+        c.Render(None)
+        Assert.False c.IsVisible)

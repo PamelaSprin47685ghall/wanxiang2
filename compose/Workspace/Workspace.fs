@@ -14,6 +14,7 @@ open Wanxiang2.SidebarDesk
 open Wanxiang2.ChatScreen
 open Wanxiang2.ComposerDesk
 open Wanxiang2.OverlayDesk
+open Wanxiang2.WorkspaceState
 
 /// 宿主给工作区的几样
 type WorkspaceHooks =
@@ -104,3 +105,12 @@ type Workspace
     member _.EnsureSearchVisible() = shell.EnsureSearchVisible()
     /// 起步页（新对话、无消息）与续聊切换
     member _.SetStarting(value: bool) = shell.SetStarting value
+
+    /// 单入口幂等渲染：以单一状态树的 ShellVS 为准（紧凑/抽屉/起步态/侧栏开合）
+    member this.Render(vs: ShellVS) =
+        shell.SetStarting vs.StartingPageVisible
+        if vs.Compact then
+            shell.SetCompactNavigation vs.SidebarOpen |> ignore
+        else
+            if vs.SidebarOpen = shell.State.sidebarCollapsed then
+                shell.ToggleSidebar() |> ignore

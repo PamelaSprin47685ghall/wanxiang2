@@ -12,29 +12,16 @@ type ShellState =
       DrawerOpen: bool
       SidebarCollapsed: bool }
 
-/// 外观。全部由主题管理者提供活的实例。
-type ShellLayoutLook =
-    { Scrim: IBrush
-      /// 遮罩淡入时长；减弱动效时主题给 0
-      ScrimFade: IObservable<TimeSpan>
-      SidebarMinWidth: IObservable<float>
-      SidebarMaxWidth: IObservable<float>
-      SplitterWidth: IObservable<float>
-      /// 对话区最小高度（旧 Tokens.barHeight）
-      ChatMinHeight: IObservable<float>
-      /// 起步居中所需的最小高度（旧 LayoutPolicy.startWorkspaceMinHeight）
-      StartMinHeight: IObservable<float> }
-
 /// 同一个输入控件贯穿起步和对话（迁自旧 Views/MainLayout.fs 的 ConversationWorkspace）。
 /// 起步且够高时输入区居中（末行取星号），否则贴底；每次重算都发 `StartModeChanged`，组合者转给对话视图。
-type WorkspaceStack(chat: Control, composer: Control, look: ShellLayoutLook) as this =
+type WorkspaceStack(chat: Control, composer: Control, startMinHeight: float) as this =
     inherit DockPanel()
 
-    let grid = Grid()
-    let head = RowDefinition(Height = GridLength.Star)
+    let head = RowDefinition(Height = GridLength.Star, MinHeight = 48.0)
     let tail = RowDefinition(Height = GridLength 0.0)
+    let grid = Grid()
     let mutable starting = false
-    let mutable minHeight = 0.0
+    let mutable minHeight = startMinHeight
     let startMode = Event<bool>()
 
     let apply () =
@@ -43,7 +30,6 @@ type WorkspaceStack(chat: Control, composer: Control, look: ShellLayoutLook) as 
         startMode.Trigger centered
 
     do
-        look.ChatMinHeight.Subscribe(fun v -> head.MinHeight <- v) |> ignore
         grid.RowDefinitions.Add head
         grid.RowDefinitions.Add(RowDefinition(Height = GridLength.Auto))
         grid.RowDefinitions.Add tail
@@ -52,8 +38,9 @@ type WorkspaceStack(chat: Control, composer: Control, look: ShellLayoutLook) as 
         grid.Children.Add chat
         grid.Children.Add composer
         this.Children.Add grid
-        look.StartMinHeight.Subscribe(fun v -> minHeight <- v; apply ()) |> ignore
         this.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty then apply ())
+
+    new(chat: Control, composer: Control) = WorkspaceStack(chat, composer, 560.0)
 
     member _.SetStarting(value: bool) =
         starting <- value
@@ -66,17 +53,17 @@ type WorkspaceStack(chat: Control, composer: Control, look: ShellLayoutLook) as 
 
 /// 主工作区的空间投影（迁自旧 MainLayoutController）：导航状态 → 三列宽度、各块所在列、抽屉 ZIndex 与遮罩。
 /// 列宽写操作只出自这里。紧凑模式每次 Apply 都发 `CompactApplied`，组合者转给输入区、侧栏、对话视图。
-type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColumn: Control, look: ShellLayoutLook, sidebarWidth: unit -> float) =
+type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColumn: Control, sidebarMinWidth: float, sidebarMaxWidth: float, splitterWidth: float, sidebarWidth: unit -> float) =
     let compactApplied = Event<bool>()
     let scrimPressed = Event<unit>()
     let focusHome = Event<unit>()
-    let mutable minWidth = 0.0
-    let mutable maxWidth = Double.PositiveInfinity
-    let mutable splitterWidth = 0.0
+    let mutable minWidth = sidebarMinWidth
+    let mutable maxWidth = sidebarMaxWidth
+    let mutable splitterW = splitterWidth
     let mutable last: ShellState option = None
 
     /// compact 抽屉遮罩：内容（ZIndex 0）与侧栏（2）之间一层，只做不透明度淡入，按下即收起抽屉。
-    let scrim = Border(Background = look.Scrim, IsVisible = false, Opacity = 0.0, ZIndex = 1)
+    let scrim = Border(IsVisible = false, Opacity = 0.0, ZIndex = 1)
 
     let apply (state: ShellState) =
         last <- Some state
@@ -98,7 +85,7 @@ type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColu
         else
             cols[0].MinWidth <- if state.SidebarCollapsed then 0.0 else minWidth
             cols[0].Width <- if state.SidebarCollapsed then GridLength 0.0 else GridLength(sidebarWidth ())
-            cols[1].Width <- if state.SidebarCollapsed then GridLength 0.0 else GridLength splitterWidth
+            cols[1].Width <- if state.SidebarCollapsed then GridLength 0.0 else GridLength splitterW
             cols[2].Width <- GridLength.Star
             Grid.SetColumn(sidebar, 0)
             Grid.SetColumn(splitter, 1)
@@ -122,8 +109,8 @@ type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColu
             scrim.Opacity <- 0.0
 
     do
-        let fade = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty)
-        look.ScrimFade.Subscribe(fun v -> fade.Duration <- v) |> ignore
+        scrim.Classes.Add "scrim"
+        let fade = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty, Duration = TimeSpan.FromMilliseconds 150.0)
         let ts = Avalonia.Animation.Transitions()
         ts.Add fade
         scrim.Transitions <- ts
@@ -132,14 +119,17 @@ type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColu
         scrim.PointerPressed.Add(fun e ->
             e.Handled <- true
             scrimPressed.Trigger())
-        // 尺寸改了，按上次状态重投影
-        look.SidebarMinWidth.Subscribe(fun v -> minWidth <- v; (last |> Option.iter apply)) |> ignore
-        look.SidebarMaxWidth.Subscribe(fun v -> maxWidth <- v) |> ignore
-        look.SplitterWidth.Subscribe(fun v -> splitterWidth <- v; (last |> Option.iter apply)) |> ignore
+
+    new(shellGrid: Grid, sidebar: Control, splitter: Control, chatColumn: Control, sidebarWidth: unit -> float) =
+        ShellColumns(shellGrid, sidebar, splitter, chatColumn, 220.0, 420.0, 6.0, sidebarWidth)
 
     member val Scrim: Border = scrim
 
     member _.Apply(state: ShellState) = apply state
+
+    member _.SetMinWidth(w: float) =
+        minWidth <- w
+        last |> Option.iter apply
 
     /// 用户拖拽后的宽度落定：钳进 [最小, 最大] 并写回第 0 列；返回值由组合者存进偏好。
     member _.NoteUserSidebarWidth(actual: float) : float =

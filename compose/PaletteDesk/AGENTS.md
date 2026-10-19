@@ -4,7 +4,7 @@ PalettePanel + CommandPalette + ImeShield + OverlayDesk + Theme = 旧 `Views/Com
 
 - 宿主入口：`PaletteDesk(theme: ThemeManager, overlay: OverlayDesk, prefersTouch: unit -> bool)`；`Show(items: unit -> PaletteItem list, recent: unit -> string list)`（Ctrl/⌘+K；已有对话框不开，有浮层先关）；事件 `Run`（条目, 当时输入）在面板关闭后的下一拍发出，宿主照旧用 `ShellPalette.commandOf` 分派并 `pushRecent`。`Build` 只建内容（测试用）。
 - 协作：每次输入重新取条目，经 `CommandPalette.rank` 排序，有查询时末尾追加全文交接行；对话层宽 560、搜索框初始焦点、不整体滚动；构造时 `ImeShield.install()`（幂等），输入法组合中回车 / 方向键归输入法。
-- `PaletteLook.ofTheme`：全是主题活值；列表最大高 `Metric.MenuMaxHeight`，对话层宽 `Metric.PaletteDialogWidth`（打开时取当前值）。
+- 废除 `PaletteLook`，外观全走 Avalonia 样式类与主题资源；删除内部 `Dispatcher.UIThread.Post`。
 
 ## 证据与旧测试
 - R20PaletteTests：`376 面板键盘：方向键选择、回车执行所选项、全文交接在末尾`

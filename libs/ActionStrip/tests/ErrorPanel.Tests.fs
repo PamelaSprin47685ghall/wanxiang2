@@ -7,42 +7,29 @@ open Avalonia.Media
 open Xunit
 open Wanxiang2.ErrorPanel
 open Wanxiang2.ErrorPanel.Tests
-
-let private look =
-    { Ink = (function ErrorInk.Success -> Brushes.Green :> IBrush | ErrorInk.Warning -> Brushes.Orange | _ -> Brushes.Gray)
-      Gauge = (function ErrorGauge.TickMs -> Cell 1000.0 :> IObservable<float> | _ -> Cell 4.0)
-      BodyFont = Cell(FontFamily "Body")
-      MonoFont = Cell(FontFamily "Mono")
-      Glyph = fun g b -> Border(Tag = g, Background = b)
-      Dress = fun secondary b -> b.Classes.Add(if secondary then "secondary" else "ghost")
-      DressFold = fun b -> b.Classes.Add "surface"
-      TechLineHeight = fun s -> s * 1.52
-      HelperLineHeight = 18.0
-      Reduced = Cell true }
-
 let private revealed = ResizeArray<bool>()
 let private parts =
     { Copy = fun tip _ _ -> Border(Tag = tip) :> Control
       Reveal = fun c v -> (Border(Child = c, IsVisible = v) :> Control), revealed.Add
       CountdownText = fun s -> if s = 0 then "现在可以重试了。" else sprintf "%d 秒后可重试。" s }
 
-let private label (b: Border) = (b.Child :?> TextBlock).Text
+let private label (b: Button) = b.Content.ToString()
 
 [<Fact>]
 let ``有半截回复时继续在前、重试降为幽灵档`` () =
     Headless.run (fun () ->
-        let p = ErrorPanel(look, parts, "生成失败", "稍后再试")
+        let p = ErrorPanel(parts, "生成失败", "稍后再试")
         let mutable go = 0
         p.AddContinue(fun () -> go <- go + 1) |> ignore
         let retry = p.AddRetry(true, ignore)
-        Assert.Equal("继续生成", label (p.Actions.Children[0] :?> Border))
+        Assert.Equal("继续生成", label (p.Actions.Children[0] :?> Button))
         Assert.Contains("ghost", retry.Classes)
         Assert.Equal("丢弃已写出的部分，重新生成", AutomationProperties.GetHelpText retry))
 
 [<Fact>]
 let ``倒计时未结束时重试不可按并显示剩余秒数`` () =
     Headless.run (fun () ->
-        let p = ErrorPanel(look, parts, "t", "h")
+        let p = ErrorPanel(parts, "t", "h")
         let retry = p.AddRetry(false, ignore)
         p.SetSeconds 12
         Assert.False retry.IsEnabled
@@ -54,13 +41,12 @@ let ``倒计时未结束时重试不可按并显示剩余秒数`` () =
         Assert.True retry.IsEnabled
         Assert.Equal("重试", label retry)
         Assert.True p.Countdown.IsVisible
-        Assert.Same(Brushes.Green, p.Countdown.Foreground)
         Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting p.Countdown))
 
 [<Fact>]
 let ``没有倒计时的重试照常可按`` () =
     Headless.run (fun () ->
-        let p = ErrorPanel(look, parts, "t", "h")
+        let p = ErrorPanel(parts, "t", "h")
         let mutable hits = 0
         let retry = p.AddRetry(false, fun () -> hits <- hits + 1)
         Assert.True retry.IsEnabled
@@ -71,10 +57,10 @@ let ``没有倒计时的重试照常可按`` () =
 let ``技术细节开合并改文案`` () =
     Headless.run (fun () ->
         revealed.Clear()
-        let p = ErrorPanel(look, parts, "t", "h")
+        let p = ErrorPanel(parts, "t", "h")
         let fold = p.AddDetail "stack"
         Assert.Equal("技术细节", AutomationProperties.GetName fold)
-        fold.RaiseEvent(Avalonia.Input.KeyEventArgs(RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Enter))
+        fold.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent, fold))
         Assert.Equal("收起技术细节", AutomationProperties.GetName fold)
         Assert.Equal("收起错误技术细节", AutomationProperties.GetHelpText fold)
         Assert.Equal<bool list>([ true ], List.ofSeq revealed))
@@ -82,7 +68,7 @@ let ``技术细节开合并改文案`` () =
 [<Fact>]
 let ``只在挂上且要求时按间隔回调`` () =
     Headless.run (fun () ->
-        let p = ErrorPanel(look, parts, "t", "h")
+        let p = ErrorPanel(parts, "t", "h")
         p.SetTicking true
         Assert.False p.IsTicking
         let w = Window(Content = p.Host)
@@ -105,7 +91,7 @@ let private invokeVia (c: Avalonia.Controls.Control) =
 [<Fact>]
 let ``错误卡各按钮有读屏 Invoke 且执行动作`` () =
     Headless.run (fun () ->
-        let p = ErrorPanel(look, parts, "t", "h")
+        let p = ErrorPanel(parts, "t", "h")
         let log = ResizeArray<string>()
         let c = p.AddContinue(fun () -> log.Add "c")
         let r = p.AddRetry(true, fun () -> log.Add "r")

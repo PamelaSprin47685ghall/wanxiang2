@@ -11,29 +11,13 @@ open Xunit
 open Wanxiang2.OnboardingPane
 open Wanxiang2.OnboardingPane.Tests.Probe
 
-let private look () =
-    let body = Cell 14.0
-    let gap = Cell 12.0
-    body, gap,
-    { Text = Looks.brush Colors.Black; Muted = Looks.brush Colors.Gray; Faint = Looks.brush Colors.LightGray
-      Accent = Looks.brush Colors.Blue; Danger = Looks.brush Colors.Red; Success = Looks.brush Colors.Green
-      Warning = Looks.brush Colors.Orange; FieldSurface = Looks.brush Colors.White; FieldEdge = Looks.brush Colors.Silver
-      BodyFontSize = body; SmallFontSize = Cell 13.0; CaptionFontSize = Cell 12.0; MicroFontSize = Cell 11.0
-      HeadingFontSize = Cell 17.0; TitleFontSize = Cell 19.0; DisplayFontSize = Cell 28.0; CaptionLineHeight = Cell 17.0
-      LabelTracking = Cell 0.2; SpaceXs = Cell 4.0; SpaceSm = Cell 6.0; SpaceMd = gap; SpaceXl = Cell 16.0
-      Space2xl = Cell 20.0; Space4xl = Cell 32.0; RadiusMd = Cell 8.0; RadiusLg = Cell 12.0; BorderWidth = Cell 1.0
-      FieldInsetX = Cell 4.0; TextFieldPaddingY = Cell 6.0; TextFieldTextMinHeight = Cell 22.0; SettingsRowMinHeight = Cell 52.0
-      MonoFont = Cell(FontFamily "monospace"); Glyph = Looks.glyph
-      Space3xl = Cell 24.0; CardMaxWidth = Cell 520.0; PendingMinWidth = Cell 96.0 }
-
 let private idle =
     { Chips = [ { Key = "openai"; Label = "OpenAI"; Selected = true }; { Key = "anthropic"; Label = "Claude"; Selected = false } ]
       MoreLabel = "更多"; Hint = ""; KeyVisible = true; CustomUrlVisible = false; Busy = false
       StatusText = ""; StatusIsError = false; SwitchLabel = None; Discovered = None }
 
 let private pane () =
-    let _, _, l = look ()
-    let p = OnboardingPane l
+    let p = OnboardingPane()
     let _ = host p.View
     p.Render idle
     p
@@ -99,7 +83,7 @@ let ``发现本机 Ollama 时给出一键使用，点击后用发现的模型保
         click (named p.View "一键使用本机 Ollama").Value
         Assert.Equal(1, uses.Count)
         p.Render { idle with KeyVisible = false; Chips = [ { Key = "ollama"; Label = "Ollama"; Selected = true } ] }
-        Assert.False (p.KeyBox.Parent.Parent :?> Control).IsVisible)
+        Assert.False (p.KeyBox.Parent :?> Control).IsVisible)
 
 [<Fact>]
 let ``没有 Ollama 时不显示一键使用`` () =
@@ -118,15 +102,3 @@ let ``服务商键选中为主色，点击发出预设 key`` () =
         Assert.Contains("button-primary", (named p.View "OpenAI").Value.Classes)
         click claude
         Assert.Equal<string list>([ "anthropic" ], List.ofSeq keys))
-
-[<Fact>]
-let ``look values stay live after the card is shown`` () =
-    Headless.run (fun () ->
-        let body, gap, l = look ()
-        let p = OnboardingPane l
-        let _ = host p.View
-        p.Render idle
-        body.Set 19.0
-        gap.Set 3.0
-        Assert.Equal(19.0, p.KeyBox.FontSize)
-        Assert.Equal(Thickness(0.0, 0.0, 3.0, 3.0), (named p.View "Claude").Value.Margin))

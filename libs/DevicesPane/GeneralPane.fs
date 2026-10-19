@@ -8,6 +8,8 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Wanxiang2.WorkspaceState
+open Wanxiang2.DevicesPane
 
 /// 生成默认值表单的文字（组合者由 GenerationForm.floatText 等得出）
 type GenerationText =
@@ -28,10 +30,10 @@ type PresetRow =
 
 module internal Layout =
     /// 两列表单：宽时并排，窄于断点退化为单列（旧 Ui.twoColumnForm）
-    let twoColumns (kit: Kit) (look: GeneralPaneLook) (fields: Control list) : Grid =
+    let twoColumns (fields: Control list) : Grid =
         let grid = Grid()
-        kit.Live(look.Space2xl, fun v -> grid.ColumnSpacing <- v)
-        kit.Live(look.SpaceXl, fun v -> grid.RowSpacing <- v)
+        grid.ColumnSpacing <- 20.0
+        grid.RowSpacing <- 16.0
         grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(1.0, GridUnitType.Star)))
         grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(1.0, GridUnitType.Star)))
         for _ in fields do grid.RowDefinitions.Add(RowDefinition(Height = GridLength.Auto))
@@ -45,14 +47,13 @@ module internal Layout =
             |> List.iteri (fun i c ->
                 Grid.SetRow(c, (if single then i else i / 2))
                 Grid.SetColumn(c, (if single then 0 else i % 2)))
-        kit.Live(look.FormSingleColumnBreakpoint, fun v -> breakpoint <- v; apply ())
+        apply ()
         grid.PropertyChanged.Add(fun a -> if a.Property = Visual.BoundsProperty then apply ())
         grid
 
 /// 设置 → 对话默认值（旧 SettingsGeneral.BuildGeneration 与预设列表、导入入口的界面部分）。
 /// 草稿状态（GenerationDraft）、校验（GenerationForm + FieldCheck）、写回、预设对话框由组合者接。
-type GenerationSection(look: GeneralPaneLook, validationFor: TextBox -> Control option) =
-    let kit = Kit(look)
+type GenerationSection(validationFor: TextBox -> Control option, ?_glyphOf: string -> IBrush -> Control) =
     let edited = Event<unit>()
     let save = Event<unit>()
     let discard = Event<unit>()
@@ -60,26 +61,26 @@ type GenerationSection(look: GeneralPaneLook, validationFor: TextBox -> Control 
     let delete = Event<string>()
     let import = Event<unit>()
     let field label hint placeholder =
-        let shell, box = kit.TextField placeholder
-        box, kit.FieldGroup(label, hint, shell, validationFor box)
+        let box = Ui.textField placeholder
+        box, Ui.fieldGroup label hint box (validationFor box)
     let temperatureBox, temperatureField = field "Temperature" "越高越发散。留空则用模型服务默认值。" "留空 = 使用模型服务默认"
     let topPBox, topPField = field "Top P" "核采样阈值，0–1。" "0–1，留空不设"
     let maxTokensBox, maxTokensField = field "最大输出 token" "限制单次回复长度。" "留空不限制"
     let contextBox, contextField = field "上下文消息上限" "每次请求最多携带多少条历史，防止长对话撞上模型上限。" "200"
     let toolRoundsBox, toolRoundsField = field "工具调用轮数上限" "模型连续调用工具超过这个轮数就中止本次生成。" "12"
-    let instructionsShell, instructionsBox = kit.TextArea("新对话的默认系统指令（可留空）", look.TextAreaMinHeight)
-    let summary = kit.Caption ""
-    let status = kit.Caption ""
+    let instructionsBox = Ui.textArea "新对话的默认系统指令（可留空）" 72.0
+    let summary = Ui.caption ""
+    let status = Ui.caption ""
     let autoTitleRow, readAutoTitle, writeAutoTitle =
-        kit.SwitchRow("自动生成对话标题", "首轮对话后用同一个模型起一个短标题；失败时回落到你的第一句话。", true, (fun _ -> edited.Trigger()))
-    let saveButton = kit.Button(Tone.Primary, "保存默认值", save.Trigger)
-    let discardButton = kit.Button(Tone.Ghost, "放弃修改", discard.Trigger)
+        Ui.switchRow "自动生成对话标题" "首轮对话后用同一个模型起一个短标题；失败时回落到你的第一句话。" true (fun _ -> edited.Trigger())
+    let saveButton = Ui.button "primary" "保存默认值" save.Trigger
+    let discardButton = Ui.button "ghost" "放弃修改" discard.Trigger
     let presetsPanel = StackPanel(Orientation = Orientation.Vertical, Name = "settings-presets")
     let importBlock = StackPanel(Orientation = Orientation.Vertical, IsVisible = false)
     let numberBoxes = [ temperatureBox; topPBox; maxTokensBox; contextBox; toolRoundsBox ]
 
     let view =
-        summary.Foreground <- look.Danger
+        summary.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
         summary.IsVisible <- false
         summary.Focusable <- true
         AutomationProperties.SetName(summary, "表单错误摘要")
@@ -90,38 +91,43 @@ type GenerationSection(look: GeneralPaneLook, validationFor: TextBox -> Control 
             box.PropertyChanged.Add(fun e -> if e.Property = TextBox.TextProperty then edited.Trigger())
         AutomationProperties.SetHelpText(saveButton, "保存默认值（Ctrl / ⌘ + Enter）")
         ToolTip.SetTip(saveButton, "保存默认值（Ctrl / ⌘ + Enter）")
-        kit.Live(look.PendingMinWidth, fun v -> saveButton.MinWidth <- v)
+        saveButton.MinWidth <- 96.0
         saveButton.HorizontalAlignment <- HorizontalAlignment.Left
-        kit.Live(look.SpaceMd, fun v -> presetsPanel.Spacing <- v; importBlock.Spacing <- v)
-        let grid = Layout.twoColumns kit look [ temperatureField; topPField; maxTokensField; contextField; toolRoundsField ]
-        let importButton = kit.Button(Tone.Secondary, "导入对话…", import.Trigger)
+        presetsPanel.Spacing <- 12.0
+        importBlock.Spacing <- 12.0
+        let grid = Layout.twoColumns [ temperatureField; topPField; maxTokensField; contextField; toolRoundsField ]
+        let importButton = Ui.button "secondary" "导入对话…" import.Trigger
         importButton.Name <- "settings-import"
         importButton.HorizontalAlignment <- HorizontalAlignment.Left
         AutomationProperties.SetName(importButton, "导入对话")
         AutomationProperties.SetHelpText(importButton, "从导出的 JSON 文件新建一个对话")
-        for c in [ kit.Hairline() :> Control; kit.Label "导入对话"; kit.Caption "从导出的 JSON 文件在这台主机上新建一个对话，先预览再确认。"; importButton ] do
+        for c in [ Ui.hairline() :> Control; Ui.label "导入对话"; Ui.caption "从导出的 JSON 文件在这台主机上新建一个对话，先预览再确认。"; importButton ] do
             importBlock.Children.Add c
-        let form =
-            kit.VStack(
-                look.Space4xl,
-                [ kit.VStack(look.SpaceXs, [ kit.Heading "对话默认值" :> Control; kit.Caption "保存到当前主机，供所有客户端新建对话时使用。不会改动已有对话。" ]) :> Control
-                  summary
-                  kit.Card(
-                      look.Space2xl,
-                      look.Space2xl,
-                      look.RadiusLg,
-                      kit.VStack(
-                          look.SpaceXs,
-                          [ grid :> Control
-                            kit.Hairline()
-                            kit.FieldGroup("默认系统指令", "会作为 system 消息随每次请求发送。", instructionsShell, None)
-                            kit.Hairline()
-                            autoTitleRow ]))
-                  kit.Hairline()
-                  status
-                  kit.HStack(look.SpaceMd, [ saveButton :> Control; discardButton ])
-                  kit.VStack(look.SpaceMd, [ kit.Hairline() :> Control; presetsPanel ])
-                  importBlock ])
+        let header = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+        header.Children.Add(Ui.heading "对话默认值")
+        header.Children.Add(Ui.caption "保存到当前主机，供所有客户端新建对话时使用。不会改动已有对话。")
+        let cardPanel = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+        cardPanel.Children.Add grid
+        cardPanel.Children.Add(Ui.hairline())
+        cardPanel.Children.Add(Ui.fieldGroup "默认系统指令" "会作为 system 消息随每次请求发送。" instructionsBox None)
+        cardPanel.Children.Add(Ui.hairline())
+        cardPanel.Children.Add autoTitleRow
+        let card = Ui.card cardPanel
+        let actions = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)
+        actions.Children.Add saveButton
+        actions.Children.Add discardButton
+        let presetsStack = StackPanel(Orientation = Orientation.Vertical, Spacing = 12.0)
+        presetsStack.Children.Add(Ui.hairline())
+        presetsStack.Children.Add presetsPanel
+        let form = StackPanel(Orientation = Orientation.Vertical, Spacing = 32.0)
+        form.Children.Add header
+        form.Children.Add summary
+        form.Children.Add card
+        form.Children.Add(Ui.hairline())
+        form.Children.Add status
+        form.Children.Add actions
+        form.Children.Add presetsStack
+        form.Children.Add importBlock
         let ctrl (e: KeyEventArgs) = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
         form.KeyDown.Add(fun e ->
             if e.Key = Key.Enter && ctrl e then
@@ -180,27 +186,32 @@ type GenerationSection(look: GeneralPaneLook, validationFor: TextBox -> Control 
 
     member _.SetPresets(presets: PresetRow list) =
         presetsPanel.Children.Clear()
-        presetsPanel.Children.Add(kit.Label "对话预设")
+        presetsPanel.Children.Add(Ui.label "对话预设")
         if presets.IsEmpty then
-            presetsPanel.Children.Add(kit.Caption "预设记下一段对话的模型、系统指令、生成参数和工具。在对话顶部的「⋯」里选「存为预设」，以后新建对话时一键套用。")
+            presetsPanel.Children.Add(Ui.caption "预设记下一段对话的模型、系统指令、生成参数和工具。在对话顶部的「⋯」里选「存为预设」，以后新建对话时一键套用。")
         else
-            presetsPanel.Children.Add(kit.Caption "保存在当前主机上，所有设备都能用。改动预设不会影响已经建好的对话。")
+            presetsPanel.Children.Add(Ui.caption "保存在当前主机上，所有设备都能用。改动预设不会影响已经建好的对话。")
             for p in presets do
-                let name = kit.Text(p.Name, look.BodyFontSize, look.Text)
+                let name = TextBlock(Text = p.Name, FontSize = 14.0)
+                name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
                 name.TextTrimming <- TextTrimming.CharacterEllipsis
-                let detail = kit.Caption p.Detail
+                let detail = Ui.caption p.Detail
                 detail.TextTrimming <- TextTrimming.CharacterEllipsis
                 detail.TextWrapping <- TextWrapping.NoWrap
-                let text = kit.VStack(look.SpaceXXs, [ name :> Control; detail ])
-                let r = kit.Button(Tone.Ghost, "重命名", (fun () -> rename.Trigger p.Id))
-                let d = kit.Button(Tone.Ghost, "删除", (fun () -> delete.Trigger p.Id))
+                let textStack = StackPanel(Orientation = Orientation.Vertical, Spacing = 2.0)
+                textStack.Children.Add name
+                textStack.Children.Add detail
+                let r = Ui.button "ghost" "重命名" (fun () -> rename.Trigger p.Id)
+                let d = Ui.button "ghost" "删除" (fun () -> delete.Trigger p.Id)
                 AutomationProperties.SetName(r, sprintf "重命名预设 %s" p.Name)
                 AutomationProperties.SetName(d, sprintf "删除预设 %s" p.Name)
-                let buttons = kit.HStack(look.SpaceXs, [ r :> Control; d ])
+                let buttons = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0)
+                buttons.Children.Add r
+                buttons.Children.Add d
                 let row = DockPanel(LastChildFill = true, Name = "preset-row")
                 DockPanel.SetDock(buttons, Dock.Right)
                 row.Children.Add buttons
-                row.Children.Add text
+                row.Children.Add textStack
                 presetsPanel.Children.Add row
 
     /// 宿主接了导入才显示「导入对话…」
@@ -243,14 +254,13 @@ type AppearanceState =
       DraftSummary: string }
 
 /// 设置 → 外观与交互、本机草稿（旧 SettingsGeneral.BuildAppearance / BuildLocalDrafts 的界面部分）
-type AppearanceSection(look: GeneralPaneLook) =
-    let kit = Kit(look)
+type AppearanceSection(?_glyphOf: string -> IBrush -> Control) =
     let themeClicked = Event<Control>()
     let fontStep = Event<float>()
     let toggled = Event<AppearanceSwitch * bool>()
     let clearDrafts = Event<unit>()
     let row which title hint =
-        let r, _, write = kit.SwitchRow(title, hint, false, (fun v -> toggled.Trigger((which, v))))
+        let r, _, write = Ui.switchRow title hint false (fun v -> toggled.Trigger((which, v)))
         r, write
     let enterRow, setEnter = row AppearanceSwitch.EnterSends "Enter 直接发送" "关闭后用 Ctrl / ⌘ + Enter 发送，Enter 换行。"
     let collapseRow, setCollapse = row AppearanceSwitch.CollapseReasoning "完成后收起思考过程" "生成结束时自动折叠模型的思维链。"
@@ -259,40 +269,71 @@ type AppearanceSection(look: GeneralPaneLook) =
     let motionRow, setMotion = row AppearanceSwitch.ReduceMotion "减少动态效果" "停止加载指示器等持续旋转；状态变化仍会即时显示。"
     let draftsRow, setDrafts =
         row AppearanceSwitch.PersistDrafts "保存未发送的草稿" "在这台设备上保存输入框里没发出的文字、附件名称和未确认的消息，重新打开后恢复。只存在本机，不会上传或同步。关闭后会立即删除已保存的内容。"
-    let themeCaption = kit.Text("", look.SmallFontSize, look.Text)
-    let fontSize = kit.Text("", look.SmallFontSize, look.Muted)
-    let draftSummary = kit.Caption ""
-    let mutable themeButton: Tap = Unchecked.defaultof<_>
-    let smaller = kit.IconButton("minus", "更小", (fun () -> fontStep.Trigger -0.5))
-    let larger = kit.IconButton("plus", "更大", (fun () -> fontStep.Trigger 0.5))
+    let themeCaption = Ui.smallText ""
+    let fontSize = TextBlock(Text = "", FontSize = 13.0)
+    do fontSize.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+    let draftSummary = Ui.caption ""
+    let smaller = Ui.iconButton "-" "更小" (fun () -> fontStep.Trigger -0.5)
+    let larger = Ui.iconButton "+" "更大" (fun () -> fontStep.Trigger 0.5)
+    let themeButton = Button()
 
     let view =
         themeCaption.VerticalAlignment <- VerticalAlignment.Center
         themeCaption.TextTrimming <- TextTrimming.CharacterEllipsis
-        kit.Live(look.SelectCaptionMaxWidth, fun v -> themeCaption.MaxWidth <- v)
-        let chevron = look.Glyph "chevron-down" look.Faint
-        chevron.VerticalAlignment <- VerticalAlignment.Center
-        themeButton <- Tap(kit.HStack(look.SpaceMd, [ themeCaption :> Control; chevron ]), "主题", [ "surface"; "select-button"; "hover-bordered" ], (fun () -> themeClicked.Trigger(themeButton :> Control)))
+        themeCaption.MaxWidth <- 260.0
+        let chevron = TextBlock(Text = "▼", FontSize = 10.0, VerticalAlignment = VerticalAlignment.Center)
+        chevron.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
+        let btnStack = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)
+        btnStack.Children.Add themeCaption
+        btnStack.Children.Add chevron
+        themeButton.Content <- btnStack
+        themeButton.Classes.Add "surface"
+        themeButton.Classes.Add "select-button"
+        themeButton.Classes.Add "hover-bordered"
+        themeButton.Click.Add(fun _ -> themeClicked.Trigger(themeButton :> Control))
+        AutomationProperties.SetName(themeButton, "主题")
         AutomationProperties.SetControlTypeOverride(themeButton, Nullable AutomationControlType.ComboBox)
-        kit.Live(look.BorderWidth, fun v -> themeButton.BorderThickness <- Thickness v)
-        kit.Live(look.RadiusLg, fun v -> themeButton.CornerRadius <- CornerRadius v)
-        kit.Live(Kit.Pair(look.SpaceXl, look.SelectPaddingY), fun (x, y) -> themeButton.Padding <- Thickness(x, y))
         themeButton.HorizontalAlignment <- HorizontalAlignment.Left
         fontSize.VerticalAlignment <- VerticalAlignment.Center
-        kit.Live(look.FontSizeValueMinWidth, fun v -> fontSize.MinWidth <- v)
-        let fontRow = kit.RowShell("消息字号", "影响对话正文与代码块。", kit.HStack(look.SpaceMd, [ smaller :> Control; fontSize; larger ]))
+        fontSize.MinWidth <- 56.0
+        let fontButtons = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0, VerticalAlignment = VerticalAlignment.Center)
+        fontButtons.Children.Add smaller
+        fontButtons.Children.Add fontSize
+        fontButtons.Children.Add larger
+        let fontDock = DockPanel(LastChildFill = true)
+        DockPanel.SetDock(fontButtons, Dock.Right)
+        fontDock.Children.Add fontButtons
+        let fontTextStack = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+        fontTextStack.Children.Add(Ui.label "消息字号")
+        fontTextStack.Children.Add(Ui.caption "影响对话正文与代码块。")
+        fontDock.Children.Add fontTextStack
+        let fontRow = Border(Child = fontDock, Padding = Thickness(12.0, 8.0), MinHeight = 52.0)
         AutomationProperties.SetAutomationId(draftSummary, "local-drafts-summary")
-        let clear = kit.Button(Tone.Secondary, "清除本地草稿", clearDrafts.Trigger)
+        let clear = Ui.button "secondary" "清除本地草稿" clearDrafts.Trigger
         clear.HorizontalAlignment <- HorizontalAlignment.Left
         AutomationProperties.SetAutomationId(clear, "clear-local-drafts")
-        let card children = kit.Card(look.Space2xl, look.Space2xl, look.RadiusLg, kit.VStack(look.SpaceXs, children)) :> Control
-        kit.VStack(
-            look.Space4xl,
-            [ kit.VStack(look.SpaceXs, [ kit.Heading "外观与交互" :> Control; kit.Caption "这些偏好只保存在本机，不会同步到主机。" ]) :> Control
-              card [ kit.FieldGroup("主题", "深色主题是同一套纸感在低光下的版本。", themeButton, None); kit.Hairline(); fontRow ]
-              card [ enterRow; kit.Hairline(); collapseRow; kit.Hairline(); wrapRow; kit.Hairline(); archivedRow; kit.Hairline(); motionRow ]
-              kit.VStack(look.SpaceXs, [ kit.Heading "本机草稿" :> Control; kit.Caption "草稿只保存在这台设备上，不会上传，也不会出现在对话记录里。" ])
-              kit.Card(look.Space2xl, look.Space2xl, look.RadiusLg, kit.VStack(look.SpaceMd, [ draftsRow; kit.Hairline(); draftSummary; clear ])) ])
+        let makeCard (children: Control list) =
+            let p = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+            for c in children do p.Children.Add c
+            Ui.card p :> Control
+        let p1 = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+        p1.Children.Add(Ui.heading "外观与交互")
+        p1.Children.Add(Ui.caption "这些偏好只保存在本机，不会同步到主机。")
+        let p2 = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+        p2.Children.Add(Ui.heading "本机草稿")
+        p2.Children.Add(Ui.caption "草稿只保存在这台设备上，不会上传，也不会出现在对话记录里。")
+        let draftsCardPanel = StackPanel(Orientation = Orientation.Vertical, Spacing = 12.0)
+        draftsCardPanel.Children.Add draftsRow
+        draftsCardPanel.Children.Add(Ui.hairline())
+        draftsCardPanel.Children.Add draftSummary
+        draftsCardPanel.Children.Add clear
+        let main = StackPanel(Orientation = Orientation.Vertical, Spacing = 32.0)
+        main.Children.Add p1
+        main.Children.Add(makeCard [ Ui.fieldGroup "主题" "深色主题是同一套纸感在低光下的版本。" themeButton None; Ui.hairline(); fontRow ])
+        main.Children.Add(makeCard [ enterRow; Ui.hairline(); collapseRow; Ui.hairline(); wrapRow; Ui.hairline(); archivedRow; Ui.hairline(); motionRow ])
+        main.Children.Add p2
+        main.Children.Add(Ui.card draftsCardPanel)
+        main
 
     member _.View = view :> Control
 
@@ -335,27 +376,36 @@ type AboutDoctor =
     | Report of ok: bool * checks: AboutCheck list * timeText: string
 
 /// 设置 → 关于与系统诊断（旧 SettingsGeneral.BuildAbout / BuildHostStatus 的界面部分）
-type AboutSection(look: GeneralPaneLook) =
-    let kit = Kit(look)
+type AboutSection(?glyphOf: string -> IBrush -> Control) =
     let copy = Event<unit>()
     let check = Event<unit>()
     let rows = StackPanel(Orientation = Orientation.Vertical)
     let body = StackPanel(Orientation = Orientation.Vertical)
 
     let view =
-        kit.Live(look.SpaceMd, fun v -> rows.Spacing <- v; body.Spacing <- v)
-        let copyButton = kit.Button(Tone.Secondary, "复制诊断报告", copy.Trigger)
+        rows.Spacing <- 12.0
+        body.Spacing <- 12.0
+        let copyButton = Ui.button "secondary" "复制诊断报告" copy.Trigger
         copyButton.HorizontalAlignment <- HorizontalAlignment.Left
-        let card children = kit.Card(look.Space2xl, look.Space2xl, look.RadiusLg, kit.VStack(look.SpaceMd, children)) :> Control
-        kit.VStack(
-            look.Space4xl,
-            [ kit.VStack(look.SpaceXs, [ kit.Heading "关于与系统诊断" :> Control ]) :> Control
-              card [ rows; kit.Hairline(); copyButton ]
-              card [ kit.Label "主机状态"; body ]
-              card [ kit.Label "设计与实现"
-                     kit.Caption "万象是独立实现的对等 C/S 聊天客户端：每个实例既是主机也是客户端，"
-                     kit.Caption "对话以 NDJSON 事件日志为唯一权威，界面只是投影的一个视图。" ]
-              card [ kit.Label "致谢"; kit.Caption "界面思路受 Kelivo 启发，代码与数据模型均为独立实现。"; kit.Caption "内嵌字体 Sarasa Term SC 采用 OFL-1.1 许可。" ] ])
+        let makeCard (children: Control list) =
+            let p = StackPanel(Orientation = Orientation.Vertical, Spacing = 12.0)
+            for c in children do p.Children.Add c
+            Ui.card p :> Control
+        let header = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+        header.Children.Add(Ui.heading "关于与系统诊断")
+        let main = StackPanel(Orientation = Orientation.Vertical, Spacing = 32.0)
+        main.Children.Add header
+        main.Children.Add(makeCard [ rows; Ui.hairline(); copyButton ])
+        main.Children.Add(makeCard [ Ui.label "主机状态"; body ])
+        main.Children.Add(
+            makeCard [ Ui.label "设计与实现"
+                       Ui.caption "万象是独立实现的对等 C/S 聊天客户端：每个实例既是主机也是客户端，"
+                       Ui.caption "对话以 NDJSON 事件日志为唯一权威，界面只是投影的一个视图。" ])
+        main.Children.Add(
+            makeCard [ Ui.label "致谢"
+                       Ui.caption "界面思路受 Kelivo 启发，代码与数据模型均为独立实现。"
+                       Ui.caption "内嵌字体 Sarasa Term SC 采用 OFL-1.1 许可。" ])
+        main
 
     member _.View = view :> Control
 
@@ -363,53 +413,75 @@ type AboutSection(look: GeneralPaneLook) =
     member _.SetRows(items: (string * string) list) =
         rows.Children.Clear()
         for key, value in items do
-            let k = kit.Text(key, look.SmallFontSize, look.Muted)
-            kit.Live(look.AboutKeyMinWidth, fun v -> k.MinWidth <- v)
-            let v = SelectableTextBlock(Text = value, Foreground = look.Text, TextWrapping = TextWrapping.Wrap, SelectionBrush = look.Selection)
-            kit.Live(look.SmallFontSize, fun s -> v.FontSize <- s)
-            kit.Live(look.MonoFont, fun f -> v.FontFamily <- f)
-            rows.Children.Add(kit.HStack(look.SpaceXl, [ k :> Control; v ]))
+            let k = TextBlock(Text = key, FontSize = 13.0, MinWidth = 120.0)
+            k.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+            let v = SelectableTextBlock(Text = value, TextWrapping = TextWrapping.Wrap, FontSize = 13.0)
+            v.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+            v.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono") |> ignore
+            v.Bind(SelectableTextBlock.SelectionBrushProperty, Dyn.res "Palette.AccentSoft") |> ignore
+            let row = StackPanel(Orientation = Orientation.Horizontal, Spacing = 16.0)
+            row.Children.Add k
+            row.Children.Add v
+            rows.Children.Add row
 
     /// 主机状态：配置问题（摘要, 明细）与检查结果
     member _.SetHealth(configIssue: (string * string list) option, doctor: AboutDoctor) =
         body.Children.Clear()
         match configIssue with
         | Some(summary, errors) ->
-            let s = kit.Caption summary
-            s.Foreground <- look.Danger
+            let s = Ui.caption summary
+            s.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
             AutomationProperties.SetAutomationId(s, "host-config-issue")
-            let d = kit.Caption(String.concat "\n" errors)
+            let d = Ui.caption(String.concat "\n" errors)
             AutomationProperties.SetAutomationId(d, "host-config-issue-detail")
-            body.Children.Add(kit.VStack(look.SpaceXs, [ kit.Label "配置有误" :> Control; s; d; kit.Caption "修好配置文件后，这条提示会自动消失。" ]))
+            let p = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+            p.Children.Add(Ui.label "配置有误")
+            p.Children.Add s
+            p.Children.Add d
+            p.Children.Add(Ui.caption "修好配置文件后，这条提示会自动消失。")
+            body.Children.Add p
         | None ->
-            let t = kit.Caption "配置正常，主机正在使用最新一份配置。"
+            let t = Ui.caption "配置正常，主机正在使用最新一份配置。"
             AutomationProperties.SetAutomationId(t, "host-config-ok")
             body.Children.Add t
-        body.Children.Add(kit.Hairline())
+        body.Children.Add(Ui.hairline())
         let running = (doctor = AboutDoctor.Running)
-        let button = kit.Button(Tone.Secondary, (if running then "正在检查…" else "检查主机"), (fun () -> if not running then check.Trigger()))
+        let button = Ui.button "secondary" (if running then "正在检查…" else "检查主机") (fun () -> if not running then check.Trigger())
         button.HorizontalAlignment <- HorizontalAlignment.Left
         AutomationProperties.SetAutomationId(button, "check-host")
         if running then button.SetEnabled false
         body.Children.Add button
         match doctor with
-        | AboutDoctor.NotRun -> body.Children.Add(kit.Caption "只读检查：配置、磁盘、数据目录、事件日志与附件。不会修改任何内容。")
-        | AboutDoctor.Running -> body.Children.Add(kit.Caption "正在检查，可能需要几秒…")
-        | AboutDoctor.Unavailable reason -> body.Children.Add(kit.Caption reason)
+        | AboutDoctor.NotRun -> body.Children.Add(Ui.caption "只读检查：配置、磁盘、数据目录、事件日志与附件。不会修改任何内容。")
+        | AboutDoctor.Running -> body.Children.Add(Ui.caption "正在检查，可能需要几秒…")
+        | AboutDoctor.Unavailable reason -> body.Children.Add(Ui.caption reason)
         | AboutDoctor.Report(ok, checks, at) ->
-            let headline = kit.Label(if ok then "全部通过" else "有项目需要处理")
+            let headline = Ui.label(if ok then "全部通过" else "有项目需要处理")
             AutomationProperties.SetAutomationId(headline, "doctor-headline")
             body.Children.Add headline
             for c in checks do
-                let icon = if c.Ok then look.Glyph "check-circle" look.Success else look.Glyph "alert" look.Danger
-                let name = kit.Label c.Label
-                kit.Live(look.AboutKeyMinWidth, fun v -> name.MinWidth <- v)
-                let detail = SelectableTextBlock(Text = c.Detail, Foreground = (if c.Ok then look.Muted else look.Danger), TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center)
-                kit.Live(look.CaptionFontSize, fun v -> detail.FontSize <- v)
-                let line = kit.HStack(look.SpaceMd, [ icon; name :> Control; detail ])
+                let icon =
+                    match glyphOf with
+                    | Some g ->
+                        let b = SolidColorBrush(if c.Ok then Colors.Green else Colors.Red) :> IBrush
+                        g (if c.Ok then "check-circle" else "alert") b
+                    | None ->
+                        let t = TextBlock(Text = (if c.Ok then "✓" else "⚠"), VerticalAlignment = VerticalAlignment.Center)
+                        if c.Ok then t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Success") |> ignore
+                        else t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
+                        t :> Control
+                let name = Ui.label c.Label
+                name.MinWidth <- 120.0
+                let detail = SelectableTextBlock(Text = c.Detail, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, FontSize = 12.0)
+                if c.Ok then detail.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+                else detail.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
+                let line = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)
+                line.Children.Add icon
+                line.Children.Add name
+                line.Children.Add detail
                 AutomationProperties.SetAutomationId(line, sprintf "doctor-check-%s" c.Name)
                 body.Children.Add line
-            body.Children.Add(kit.Caption(sprintf "检查时间 %s" at))
+            body.Children.Add(Ui.caption(sprintf "检查时间 %s" at))
 
     /// 「复制诊断报告」（剪贴板与提示由组合者做）
     member _.CopyDiagnosticsClicked = copy.Publish

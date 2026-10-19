@@ -12,8 +12,8 @@ open Wanxiang2.DevicesPane
 /// 设置 → 设备的协作（旧 Views/SettingsDevices.fs 的状态部分）：设备列表的有界等待、配对码倒计时、
 /// 地址与二维码推断、重命名空名提示。界面归 DevicesPane；读取、邀请、改名、吊销以事件交给宿主。
 /// 邀请码只存在于内存与界面里：不入日志、不写文件、不上传。
-type DevicesDesk(theme: ThemeManager, overlay: OverlayDesk) =
-    let pane = DevicesPane(SettingsLooks.devicesOf theme)
+type DevicesDesk(_theme: ThemeManager, overlay: OverlayDesk) =
+    let pane = DevicesPane()
     let requested = Event<unit>()
     let inviteRequested = Event<unit>()
     let renameRequested = Event<string * string>()
@@ -30,8 +30,6 @@ type DevicesDesk(theme: ThemeManager, overlay: OverlayDesk) =
     let mutable lan: unit -> string list = DevicesModel.lanAddresses
     let mutable now = DateTimeOffset.UtcNow
     let mutable editing: string option = None
-    let mutable countdownTimer: DispatcherTimer option = None
-    let mutable loadTimer: DispatcherTimer option = None
 
     let remaining () =
         match invite with
@@ -99,16 +97,7 @@ type DevicesDesk(theme: ThemeManager, overlay: OverlayDesk) =
 
     let render () = pane.Render { Invite = inviteState (); List = listState (); Editing = editing }
 
-    let stopCountdown () =
-        countdownTimer |> Option.iter (fun t -> t.Stop())
-        countdownTimer <- None
-
-    let stopLoadTimer () =
-        loadTimer |> Option.iter (fun t -> t.Stop())
-        loadTimer <- None
-
     let timeOut () =
-        stopLoadTimer ()
         if loadWait.TimeOut() then
             loadNote <- Some BoundedWaits.devicesTimeoutText
             render ()
@@ -116,11 +105,6 @@ type DevicesDesk(theme: ThemeManager, overlay: OverlayDesk) =
     let beginLoad () =
         loadWait.Begin DateTimeOffset.UtcNow
         loadNote <- None
-        stopLoadTimer ()
-        let t = DispatcherTimer(Interval = loadWait.Limit)
-        t.Tick.Add(fun _ -> timeOut ())
-        t.Start()
-        loadTimer <- Some t
 
     let refresh () =
         beginLoad ()
@@ -130,7 +114,7 @@ type DevicesDesk(theme: ThemeManager, overlay: OverlayDesk) =
     do
         pane.AddClicked.Add(fun () -> inviteRejected <- None; inviteRequested.Trigger())
         pane.RegenerateClicked.Add(fun () -> inviteRequested.Trigger())
-        pane.CloseInviteClicked.Add(fun () -> invite <- None; stopCountdown (); render ())
+        pane.CloseInviteClicked.Add(fun () -> invite <- None; render ())
         pane.RefreshClicked.Add(fun () -> refresh ())
         pane.RenameClicked.Add(fun id -> editing <- Some id; render ())
         pane.RenameCancelled.Add(fun _ -> editing <- None; render ())
@@ -165,7 +149,6 @@ type DevicesDesk(theme: ThemeManager, overlay: OverlayDesk) =
         devices <- items
         canInvite <- canInviteNow
         now <- DateTimeOffset.UtcNow
-        stopLoadTimer ()
         loadWait.Settle() |> ignore
         loadNote <- None
         render ()
@@ -176,33 +159,25 @@ type DevicesDesk(theme: ThemeManager, overlay: OverlayDesk) =
         inviteRejected <- None
         now <- nowUtc
         render ()
-        stopCountdown ()
-        let t = DispatcherTimer(Interval = TimeSpan.FromSeconds 1.0)
-        t.Tick.Add(fun _ ->
-            now <- DateTimeOffset.UtcNow
-            render ()
-            if remaining () <= TimeSpan.Zero then stopCountdown ())
-        t.Start()
-        countdownTimer <- Some t
 
     member _.SetInviteRejected(reason: string) =
         invite <- None
         inviteRejected <- Some reason
-        stopCountdown ()
         render ()
 
     /// 外部推进时钟（测试与定时器共用）
     member _.Tick(nowUtc: DateTimeOffset) =
         now <- nowUtc
-        render ()
+        if loadWait.Tick nowUtc then
+            timeOut ()
+        else
+            render ()
 
     /// 读取设备列表期间连接断开：旧版主机不认识设备事件时会直接断开
     member _.NotifyDisconnected() =
-        stopLoadTimer ()
         if loadWait.Settle() then
             loadNote <- Some "读取设备列表时连接断开了。如果主机版本较旧，可能还不支持设备管理，请先升级主机。"
         invite <- None
-        stopCountdown ()
         render ()
 
     member _.CurrentInvite = invite

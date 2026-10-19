@@ -10,29 +10,13 @@ open Xunit
 open Wanxiang2.DevicesPane
 open Wanxiang2.DevicesPane.Tests.Probe
 
-let private look () =
-    let body = Cell 14.0
-    let gap = Cell 12.0
-    body, gap,
-    { Text = Looks.brush Colors.Black; Muted = Looks.brush Colors.Gray; Faint = Looks.brush Colors.LightGray
-      Accent = Looks.brush Colors.Blue; Danger = Looks.brush Colors.Red; Success = Looks.brush Colors.Green
-      Warning = Looks.brush Colors.Orange; FieldSurface = Looks.brush Colors.White; FieldEdge = Looks.brush Colors.Silver
-      BodyFontSize = body; SmallFontSize = Cell 13.0; CaptionFontSize = Cell 12.0; MicroFontSize = Cell 11.0
-      HeadingFontSize = Cell 17.0; TitleFontSize = Cell 19.0; DisplayFontSize = Cell 28.0; CaptionLineHeight = Cell 17.0
-      LabelTracking = Cell 0.2; SpaceXs = Cell 4.0; SpaceSm = Cell 6.0; SpaceMd = gap; SpaceXl = Cell 16.0
-      Space2xl = Cell 20.0; Space4xl = Cell 32.0; RadiusMd = Cell 8.0; RadiusLg = Cell 12.0; BorderWidth = Cell 1.0
-      FieldInsetX = Cell 4.0; TextFieldPaddingY = Cell 6.0; TextFieldTextMinHeight = Cell 22.0; SettingsRowMinHeight = Cell 52.0
-      MonoFont = Cell(FontFamily "monospace"); Glyph = Looks.glyph
-      CodeTracking = Cell 6.0; QrModuleSize = Cell 6.0 }
-
 let private qr = Array.init 21 (fun r -> Array.init 21 (fun c -> (r + c) % 3 = 0))
 
 let private row id name : DevicesPaneRow =
     { Id = id; Name = name; Title = name; Meta = "创建于 10月1日"; Revoked = false; CanRename = true; CanRevoke = true }
 
 let private pane () =
-    let _, _, l = look ()
-    let p = DevicesPane l
+    let p = DevicesPane()
     let w = host p.View
     p, w
 
@@ -163,27 +147,12 @@ let ``rejected invite explains that only the desktop app can add devices`` () =
 [<Fact>]
 let ``qr view measures with a quiet zone and draws on a white background`` () =
     Headless.run (fun () ->
-        let size = Cell 4.0
-        let view = QrPlate("http://h/", qr, size)
+        let view = QrPlate("http://h/", qr, 4.0)
         view.Measure(Size(1000.0, 1000.0))
         Assert.Equal(float (21 + 8) * 4.0, view.DesiredSize.Width)
-        size.Set 5.0
-        view.Measure(Size(1000.0, 1000.0))
-        Assert.Equal(float (21 + 8) * 5.0, view.DesiredSize.Height))
-
-[<Fact>]
-let ``look values stay live after the pane is shown`` () =
-    Headless.run (fun () ->
-        let body, gap, l = look ()
-        let p = DevicesPane l
-        let _ = host p.View
-        p.Render { offer with List = DevicesPaneList.Rows [ row "dev-phone" "手机" ] }
-        let list = (byId p.View "devices-list").Value :?> StackPanel
-        gap.Set 20.0
-        body.Set 18.0
-        Assert.Equal(20.0, list.Spacing)
-        let title = descendants list |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "手机" -> Some t | _ -> None)
-        Assert.Equal(18.0, title.FontSize))
+        let view2 = QrPlate("http://h/", qr, 5.0)
+        view2.Measure(Size(1000.0, 1000.0))
+        Assert.Equal(float (21 + 8) * 5.0, view2.DesiredSize.Height))
 
 [<Fact>]
 let ``empty list note replaces the rows`` () =

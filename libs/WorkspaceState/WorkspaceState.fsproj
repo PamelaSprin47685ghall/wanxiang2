@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Compile Include="Types.fs" />
+    <Compile Include="Model.fs" />
+    <Compile Include="ViewState.fs" />
+    <Compile Include="ReconnectBackoff.fs" />
+    <Compile Include="MessageLink.fs" />
+    <Compile Include="DraftSummaryText.fs" />
+    <Compile Include="ForkAnchor.fs" />
+    <Compile Include="RevealTarget.fs" />
+    <Compile Include="OlderPageLoad.fs" />
+    <Compile Include="Project.fs" />
+    <Compile Include="Update.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConnectionIssue" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.NavigationState" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

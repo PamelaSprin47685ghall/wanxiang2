@@ -11,7 +11,6 @@ open Avalonia.Threading
 open Xunit
 open Wanxiang2.ConnectPane
 open Wanxiang2.ConnectPane.Tests.Probe
-open Wanxiang2.ConnectPane.Tests.Fixture
 
 let private rules =
     { Normalize = fun s -> String(s.ToCharArray() |> Array.filter Char.IsDigit)
@@ -19,8 +18,7 @@ let private rules =
       Hint = fun url -> "在 " + url + " 上查看配对码" }
 
 let private make url =
-    let look, _ = make ()
-    let p = ConnectPane(look, url, rules)
+    let p = ConnectPane(url, rules)
     let _ = host p.View
     p
 

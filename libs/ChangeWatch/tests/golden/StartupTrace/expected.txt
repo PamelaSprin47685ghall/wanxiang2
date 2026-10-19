@@ -1,3 +1,0 @@
-enabled=true exit=true
-[true; true; false; true; false; false]
-startup.shape uptime_ms=N

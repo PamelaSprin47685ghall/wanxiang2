@@ -10,7 +10,6 @@ open Avalonia.Threading
 open Xunit
 open Wanxiang2.SessionPrefsPane
 open Wanxiang2.SessionPrefsPane.Tests.Probe
-open Wanxiang2.SessionPrefsPane.Tests.Fixture
 
 let private init =
     { Instructions = "简洁"; Temperature = "0.7"; TopP = ""; MaxTokens = ""; ThinkingBudget = ""
@@ -18,15 +17,14 @@ let private init =
       Customized = true }
 
 let private make () =
-    let look, cells = make ()
-    let p = SessionPrefsPane(look, Button(Content = "OpenAI · gpt-4o"), init, fun _ -> None)
+    let p = SessionPrefsPane(Button(Content = "OpenAI · gpt-4o"), init, fun _ -> None)
     let w = host p.View
-    p, w, cells
+    p, w
 
 [<Fact>]
 let ``sessionSettings dialog validates numeric bounds and updates config`` () =
     Headless.run (fun () ->
-        let p, w, _ = make ()
+        let p, w = make ()
         let drafts = ResizeArray<SessionPrefsDraft>()
         p.SaveRequested.Add drafts.Add
         Assert.Contains("生成参数 · 已自定义", textOf p.View)
@@ -55,7 +53,7 @@ let ``sessionSettings dialog validates numeric bounds and updates config`` () =
 [<Fact>]
 let ``tool toggles change the saved set and the header counts on expand`` () =
     Headless.run (fun () ->
-        let p, _, cells = make ()
+        let p, _ = make ()
         let drafts = ResizeArray<SessionPrefsDraft>()
         p.SaveRequested.Add drafts.Add
         p.ToolsExpander.IsExpanded <- true
@@ -69,6 +67,4 @@ let ``tool toggles change the saved set and the header counts on expand`` () =
         p.ToolsExpander.IsExpanded <- true
         Assert.Contains("工具 · 已启用 2 项", textOf p.View)
         click p.SaveButton
-        Assert.Equal<string list>([ "time"; "srv_x" ], drafts[0].Tools)
-        cells["ContentMaxHeight"].Set 400.0
-        Assert.Equal(400.0, (p.View :?> DockPanel).MaxHeight))
+        Assert.Equal<string list>([ "time"; "srv_x" ], drafts[0].Tools))

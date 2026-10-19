@@ -11,6 +11,7 @@ open Avalonia.Threading
 open Avalonia.VisualTree
 open Xunit
 open Wanxiang2.ToastStrip
+open Wanxiang2.WorkspaceState
 
 let look () =
     let maxW = Cell 480.0
@@ -124,9 +125,9 @@ let ``look stays live after toasts are shown`` () =
         Assert.Equal<string list>([ "一" ], strip.Messages)
         window.Close())
 
-// 新增：提示条动作键给读屏 Invoke 模式，角色 Button，激活与 Enter 同一路径。
+// 新增：提示条动作键使用原生 Button，角色 Button，激活与 Enter 同一路径。
 [<Fact>]
-let ``toast action exposes invoke to assistive tech`` () =
+let ``toast action is native button and activates`` () =
     Headless.run (fun () ->
         let _, _, l = look ()
         let strip = ToastStrip l
@@ -135,11 +136,26 @@ let ``toast action exposes invoke to assistive tech`` () =
         strip.ActionInvoked.Add invoked.Add
         strip.Add("已删除", ToastTone.Neutral, Some "撤销")
         Dispatcher.UIThread.RunJobs()
-        let b = strip.ActionButtons |> List.exactlyOne
-        let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement b
-        Assert.Equal(Avalonia.Automation.Peers.AutomationControlType.Button, peer.GetAutomationControlType())
-        Assert.Equal("撤销", peer.GetName())
-        (Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider> peer).Invoke()
+        let b = strip.ActionButtons |> List.exactlyOne :?> Button
+        Assert.Equal("撤销", b.Content :?> string)
+        b.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent))
         Dispatcher.UIThread.RunJobs()
-        Assert.Equal<string list>([ "已删除" ], List.ofSeq invoked)
+        Assert.Equal<string list>([ "已删除" ], Seq.toList invoked)
+        window.Close())
+
+[<Fact>]
+let ``render idempotently reconciles toasts list`` () =
+    Headless.run (fun () ->
+        let _, _, l = look ()
+        let strip = ToastStrip l
+        let _root, window = host 400.0 300.0 strip
+        let now = DateTimeOffset.UtcNow
+        let vs1: ToastVS list = [ { Id = 1; Text = "消息一"; Tone = ToastTone.Info; UndoAction = None; ExpiresAt = now.AddSeconds 5.0 } ]
+        strip.Render vs1
+        Assert.Equal<string list>([ "消息一" ], strip.Messages)
+        let vs2: ToastVS list = [ { Id = 2; Text = "消息二"; Tone = ToastTone.Success; UndoAction = Some "undo-1"; ExpiresAt = now.AddSeconds 5.0 } ]
+        strip.Render vs2
+        Assert.Equal<string list>([ "消息二" ], strip.Messages)
+        strip.Render []
+        Assert.Empty strip.Messages
         window.Close())

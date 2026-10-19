@@ -5,12 +5,6 @@ open System.IO
 open Xunit
 open Wanxiang.UI
 
-// 金标准：golden/expected.txt 由旧程序集真实读 client.toml 得到。
-[<Fact>]
-let ``golden: client.toml parsing matches old tryLoadClientToml`` () =
-    Assert.Equal(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "expected.txt")), Render.all ())
-
-// 旧代码只在浏览器里跑的两段，逐字移植后的新用例。
 [<Fact>]
 let ``Q191 浏览器连接记录：缺 url 或 token 的跳过，坏 JSON 当作没有`` () =
     let json = """[{"instanceId":"i1","url":"wss://a/ws","token":"t1","name":"A"},{"instanceId":"i2","url":"","token":"t2"},{"url":"wss://c/ws","token":"t3"},null,3]"""

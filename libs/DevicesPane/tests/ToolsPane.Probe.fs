@@ -50,7 +50,25 @@ module Probe =
     /// 经读屏 Invoke 点击（与读屏用户同一路径），再跑完排队的工作
     let click (c: Control) =
         let peer = ControlAutomationPeer.CreatePeerForElement c
-        ((box peer) :?> IInvokeProvider).Invoke()
+        match box peer with
+        | :? IInvokeProvider as ip -> ip.Invoke()
+        | :? IToggleProvider as tp -> tp.Toggle()
+        | _ ->
+            match descendants c |> Seq.tryPick (fun d ->
+                match d with
+                | :? ToggleSwitch as ts ->
+                    let p = ControlAutomationPeer.CreatePeerForElement ts
+                    match box p with
+                    | :? IToggleProvider as tp -> Some (fun () -> tp.Toggle())
+                    | _ -> Some (fun () -> ts.IsChecked <- Nullable (not (ts.IsChecked.GetValueOrDefault())))
+                | :? Button as b ->
+                    let p = ControlAutomationPeer.CreatePeerForElement b
+                    match box p with
+                    | :? IInvokeProvider as ip -> Some (fun () -> ip.Invoke())
+                    | _ -> None
+                | _ -> None) with
+            | Some act -> act()
+            | None -> ((box peer) :?> IInvokeProvider).Invoke()
         Dispatcher.UIThread.RunJobs()
 
     let host (c: Control) =

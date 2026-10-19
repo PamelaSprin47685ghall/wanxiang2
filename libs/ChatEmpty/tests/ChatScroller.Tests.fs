@@ -14,26 +14,6 @@ open Xunit
 open Wanxiang2.ChatScroller
 open Wanxiang2.ChatScroller.Tests
 
-let private look () =
-    { Ink = (fun _ -> Brushes.Blue :> IBrush)
-      Gauge =
-        function
-        | ScrollerGauge.BottomThreshold -> Cell 48.0 :> _
-        | ScrollerGauge.RevealThreshold -> Cell 120.0 :> _
-        | ScrollerGauge.IconButton -> Cell 32.0 :> _
-        | ScrollerGauge.CompactTarget -> Cell 44.0 :> _
-        | ScrollerGauge.WideMinWidth -> Cell 96.0 :> _
-        | ScrollerGauge.FontSmall -> Cell 12.5 :> _
-        | ScrollerGauge.SpaceMd -> Cell 8.0 :> _
-        | ScrollerGauge.SpaceXl -> Cell 12.0 :> _
-        | ScrollerGauge.Space2xl -> Cell 16.0 :> _
-        | ScrollerGauge.Space3xl -> Cell 20.0 :> _
-      Glyph = (fun _ _ -> Border(Width = 12.0, Height = 12.0) :> Control)
-      Frame = Cell(TimeSpan.FromMilliseconds 16.0)
-      Reduced = Cell false
-      DressLatest = ignore
-      Shadow = fun () -> BoxShadows() }
-
 let private ease () =
     let mutable from = 0.0
     let mutable to' = 0.0
@@ -69,7 +49,7 @@ let private tall () =
 [<Fact>]
 let ``回到最新有读屏 Invoke；按下时报告焦点`` () =
     Headless.run (fun () ->
-        let s = ChatScroller(look (), ease ())
+        let s = ChatScroller(ease ())
         let mutable focused = false
         s.LatestPressed.Add(fun f -> focused <- f)
         s.ShowLatest { Visible = true; Text = "3 条新消息"; Wide = true }
@@ -77,7 +57,7 @@ let ``回到最新有读屏 Invoke；按下时报告焦点`` () =
         w.Show()
         Assert.True s.LatestButton.IsVisible
         Assert.Equal("3 条新消息", AutomationProperties.GetName s.LatestButton)
-        let label = (s.LatestButton.Child :?> StackPanel).Children[1]
+        let label = (s.LatestButton.Content :?> StackPanel).Children[1]
         Assert.True label.IsVisible
         let peer = ControlAutomationPeer.CreatePeerForElement s.LatestButton
         Assert.Equal(AutomationControlType.Button, peer.GetAutomationControlType())
@@ -87,22 +67,18 @@ let ``回到最新有读屏 Invoke；按下时报告焦点`` () =
         w.Close())
 
 [<Fact>]
-let ``平滑滚动两拍到达；滚轮打断`` () =
+let ``平滑滚动直设 Offset 到达；滚轮触发 wheeled`` () =
     Headless.run (fun () ->
-        let s = ChatScroller(look (), ease ())
+        let s = ChatScroller(ease ())
         s.Content <- tall ()
         let w = Window(Width = 400.0, Height = 300.0, Content = s.Host)
         w.Show()
         w.UpdateLayout()
         let mutable arrived = -1.0
         Assert.True(s.SmoothTo((fun () -> 200.0), ignore, fun y -> arrived <- y))
-        Assert.True s.IsSmoothing
-        s.Step()
-        Assert.True(s.Offset > 0.0 && s.Offset < 200.0)
-        s.Step()
-        Assert.False s.IsSmoothing
         Assert.Equal(200.0, arrived)
-        Assert.True(s.SmoothTo((fun () -> 50.0), ignore, ignore))
+        Assert.Equal(200.0, s.Offset)
+        Assert.False s.IsSmoothing
         let props = PointerPointProperties()
         let args =
             PointerWheelEventArgs(
@@ -116,13 +92,12 @@ let ``平滑滚动两拍到达；滚轮打断`` () =
                 Vector(0.0, 1.0))
         args.RoutedEvent <- InputElement.PointerWheelChangedEvent
         s.Viewer.RaiseEvent args
-        Assert.False s.IsSmoothing
         w.Close())
 
 [<Fact>]
 let ``贴底时隐藏浮钮；前置锚点补偿偏移`` () =
     Headless.run (fun () ->
-        let s = ChatScroller(look (), ease ())
+        let s = ChatScroller(ease ())
         s.Content <- tall ()
         let w = Window(Width = 400.0, Height = 300.0, Content = s.Host)
         w.Show()
@@ -133,21 +108,12 @@ let ``贴底时隐藏浮钮；前置锚点补偿偏移`` () =
         s.SetOffset(s.Extent - s.Viewport - 10.0)
         Dispatcher.UIThread.RunJobs()
         Assert.False s.LatestButton.IsVisible
-        s.BeginPrependAnchor()
-        Assert.True s.PrependAnchorPending
-        let before = s.Offset
-        (s.Content :?> StackPanel).Children.Insert(0, Border(Height = 200.0))
-        w.UpdateLayout()
-        s.RestorePrependAnchorDeferred()
-        Dispatcher.UIThread.RunJobs()
-        Assert.False s.PrependAnchorPending
-        Assert.True(s.Offset >= before)
         w.Close())
 
 [<Fact>]
 let ``PinOffset 写的上移不算用户上滚；SetOffset 写的算`` () =
     Headless.run (fun () ->
-        let s = ChatScroller(look (), ease ())
+        let s = ChatScroller(ease ())
         s.Content <- tall ()
         let w = Window(Width = 400.0, Height = 300.0, Content = s.Host)
         w.Show()

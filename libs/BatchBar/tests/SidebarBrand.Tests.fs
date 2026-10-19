@@ -5,17 +5,17 @@ open Avalonia.Controls
 open Xunit
 open Wanxiang2.SidebarBrand
 open Wanxiang2.SidebarBrand.Tests.Probe
+open Wanxiang2.WorkspaceState
 
 let private make () =
-    let look, cells = Fixture.make ()
-    let b = SidebarBrand look
+    let b = SidebarBrand()
     host b.View |> ignore
-    b, cells
+    b
 
 [<Fact>]
 let ``brand row fires new, preset with anchor and back`` () =
     Headless.run (fun () ->
-        let b, _ = make ()
+        let b = make ()
         Assert.Contains("万象", textOf b.View)
         Assert.False b.PresetButton.IsVisible
         Assert.False b.BackButton.IsVisible
@@ -31,16 +31,11 @@ let ``brand row fires new, preset with anchor and back`` () =
         Assert.Equal<string list>([ "new"; "preset"; "back" ], List.ofSeq log))
 
 [<Fact>]
-let ``compact raises targets and theme cells update them`` () =
+let ``render SidebarBrandVS controls preset visibility`` () =
     Headless.run (fun () ->
-        let b, cells = make ()
-        cells["IconButtonSize"].Set 30.0
-        cells["CompactTarget"].Set 44.0
-        cells["TextButtonMinHeight"].Set 36.0
-        Assert.Equal(30.0, b.PresetButton.Width)
-        Assert.Equal(36.0, b.NewButton.MinHeight)
-        b.SetCompact true
-        Assert.Equal(44.0, b.PresetButton.Width)
-        Assert.Equal(44.0, b.NewButton.MinHeight)
-        cells["CompactTarget"].Set 48.0
-        Assert.Equal(48.0, b.BackButton.Height))
+        let b = make ()
+        Assert.False b.PresetButton.IsVisible
+        b.Render { PresetsVisible = true }
+        Assert.True b.PresetButton.IsVisible
+        b.Render { PresetsVisible = false }
+        Assert.False b.PresetButton.IsVisible)

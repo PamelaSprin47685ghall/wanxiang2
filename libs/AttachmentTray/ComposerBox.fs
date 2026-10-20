@@ -13,7 +13,8 @@ open Avalonia.Media
 open Avalonia.Platform.Storage
 open Wanxiang2.WorkspaceState
 
-/// 「发送 / 停止 / 排队」呈现视图（保留兼容定义）
+/// 「发送 / 停止 / 排队」呈现视图：由门控决策（ComposerSendState.ComposerSendView 的派生成员）
+/// 在呈现边界落成的一次性记录，无判定逻辑。
 type SendView =
     { VisionBlocked: bool
       VisionMessage: string
@@ -248,6 +249,25 @@ type ComposerBox() =
         queue.Height <- size
         context.IsVisible <- contextShown && not compact
 
+    // 以下四个投影动作只在 Render 内部使用（测试改走 Render(vs)），不作为对外入口。
+    let setEnterSends (value: bool) = enterSends <- value
+
+    let setCompact (value: bool) =
+        compact <- value
+        applySizes ()
+
+    let setGenerating (value: bool) =
+        generating <- value
+        setSendIcon value
+
+    let setEnabled (value: bool) (reason: string) =
+        enabled <- value
+        disabledReason <- reason
+        attach.IsEnabled <- value
+        disabledText.Text <- reason
+        disabledNotice.IsVisible <- not value && not (String.IsNullOrWhiteSpace reason)
+        updateShell ()
+
     do
         setSendIcon false
         setQueueIcon ()
@@ -369,36 +389,39 @@ type ComposerBox() =
     member _.Dropped = dropped.Publish
     member _.ContextOpened = contextOpened.Publish
 
-    member _.SetPaste(f: unit -> bool) = paste <- f
+    /// 宿主注入的剪贴板回调（非每帧投影）
+    member _.WirePaste(f: unit -> bool) = paste <- f
 
-    member _.SetTray(c: Control) =
+    /// 附件托盘控件插槽（宿主直注，非每帧投影）
+    member _.SlotTray(c: Control) =
         trayCtl |> Option.iter (column.Children.Remove >> ignore)
         column.Children.Insert(0, c)
         trayCtl <- Some c
 
-    member _.SetModel(c: Control) =
+    /// 模型芯片控件插槽（宿主直注，非每帧投影）
+    member _.SlotModel(c: Control) =
         modelCtl |> Option.iter (request.Children.Remove >> ignore)
         request.Children.Insert(0, c)
         modelCtl <- Some c
 
-    member _.SetPending(c: Control) =
+    /// 未确认消息面板插槽（宿主直注，非每帧投影）
+    member _.SlotPending(c: Control) =
         pendingCtl |> Option.iter (outer.Children.Remove >> ignore)
         outer.Children.Insert(outer.Children.IndexOf shell, c)
         pendingCtl <- Some c
 
-    member _.SetAccessory(c: Control) =
+    /// 附属视图插槽（审批卡等，宿主直注，非每帧投影）
+    member _.SlotAccessory(c: Control) =
         accessory.Children.Clear()
         accessory.Children.Add c
 
-    member _.SetEnterSends(value: bool) = enterSends <- value
-    member _.SetImeProbe(f: TextBox -> bool) = composing <- f
-    member _.SetKeyHook(f: KeyEventArgs -> bool) = keyHook <- f
+    /// 宿主注入的输入法组合探针（回调注入，非每帧投影）
+    member _.WireImeProbe(f: TextBox -> bool) = composing <- f
+    /// 宿主注入的按键钩子（回调注入，非每帧投影）
+    member _.WireKeyHook(f: KeyEventArgs -> bool) = keyHook <- f
 
-    member _.SetCompact(value: bool) =
-        compact <- value
-        applySizes ()
-
-    member _.SetText(text: string) =
+    /// 草稿回填命令（宿主一次性命令，非每帧投影）
+    member _.ApplyDraftText(text: string) =
         input.Text <- text
         input.CaretIndex <- if isNull text then 0 else text.Length
 
@@ -426,18 +449,6 @@ type ComposerBox() =
             AutomationProperties.SetHelpText(queue, tip)
         | None -> ()
 
-    member this.SetGenerating(value: bool) =
-        generating <- value
-        setSendIcon value
-
-    member _.SetEnabled(value: bool, reason: string) =
-        enabled <- value
-        disabledReason <- reason
-        attach.IsEnabled <- value
-        disabledText.Text <- reason
-        disabledNotice.IsVisible <- not value && not (String.IsNullOrWhiteSpace reason)
-        updateShell ()
-
     member _.ShowContext(label: string, detail: string, canEdit: bool) =
         contextLabel.Text <- label
         contextShown <- true
@@ -454,30 +465,29 @@ type ComposerBox() =
 
     /// 单入口幂等渲染：由 ComposerVS 投影全量刷新输入区
     member this.Render(vs: ComposerVS) =
-        this.SetEnabled(vs.Enabled, vs.DisabledReason |> Option.defaultValue "")
+        setEnabled vs.Enabled (vs.DisabledReason |> Option.defaultValue "")
         if input.Text <> vs.Text then
             input.Text <- vs.Text
             match vs.Caret with
             | Some c -> input.CaretIndex <- c
             | None -> input.CaretIndex <- if isNull vs.Text then 0 else vs.Text.Length
-        enterSends <- vs.EnterSends
-        compact <- vs.Compact
-        applySizes ()
+        setEnterSends vs.EnterSends
+        setCompact vs.Compact
 
         // 发送按钮态
         match vs.Send.State with
         | SendButtonState.GeneratingStop ->
-            this.SetGenerating true
+            setGenerating true
             send.IsEnabled <- true
             ToolTip.SetTip(send, "停止生成（Esc）")
             AutomationProperties.SetName(send, vs.Send.Label)
         | SendButtonState.Sending ->
-            this.SetGenerating false
+            setGenerating false
             send.IsEnabled <- false
             ToolTip.SetTip(send, vs.Send.Label)
             AutomationProperties.SetName(send, vs.Send.Label)
         | SendButtonState.Idle ->
-            this.SetGenerating false
+            setGenerating false
             send.IsEnabled <- vs.Enabled
             ToolTip.SetTip(send, vs.Send.Label)
             AutomationProperties.SetName(send, vs.Send.Label)

@@ -34,8 +34,8 @@ let private rig (collapsed: bool) =
     let composer = TextBox()
     let calls = ResizeArray<string>()
     let hooks =
-        { SetCompactMode = fun c -> calls.Add(sprintf "compact:%b" c)
-          SetStartMode = fun s -> calls.Add(sprintf "start:%b" s)
+        { ApplyCompactMode = fun c -> calls.Add(sprintf "compact:%b" c)
+          ApplyStartMode = fun s -> calls.Add(sprintf "start:%b" s)
           FocusComposer = fun () -> calls.Add "focus:composer"
           FocusSidebarSearch = fun () -> calls.Add "focus:search"
           PrefersTouch = fun () -> false }
@@ -106,7 +106,7 @@ let ``按下抽屉遮罩收起抽屉并把焦点交回输入区`` () =
     Headless.run (fun () ->
         let r = rig false
         r.Desk.ApplyViewport 360.0 |> ignore
-        r.Desk.SetCompactNavigation true |> ignore
+        r.Desk.ApplyCompactNavigation true |> ignore
         Assert.True r.Desk.Columns.Scrim.IsVisible
         r.Calls.Clear()
         let args = PointerPressedEventArgs(r.Desk.Columns.Scrim, new Pointer(1, PointerType.Mouse, true), r.Window, Point(1.0, 1.0), 0UL, PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed), KeyModifiers.None)
@@ -124,7 +124,7 @@ let ``起步模式经插槽同步，拖分隔条只在桌面写回宽度`` () =
         let r = rig false
         r.Desk.ApplyViewport 1000.0 |> ignore
         r.Calls.Clear()
-        r.Desk.SetStarting true
+        r.Desk.RenderStarting true
         Assert.Contains("start:true", r.Calls)
         Assert.True(r.Desk.NoteSidebarDragged().IsSome)
         r.Desk.ApplyViewport 360.0 |> ignore
@@ -149,10 +149,10 @@ let ``改主题的布局度量后已显示的外壳跟着变`` () =
         let r = rig false
         r.Desk.ApplyViewport 1000.0 |> ignore
         Assert.Equal(4.0, r.Grid.ColumnDefinitions[1].Width.Value)
-        r.Theme.SetMetric(Wanxiang2.ThemeMetrics.Metric.SidebarSplitterWidth, 9.0)
+        r.Theme.ApplyMetric(Wanxiang2.ThemeMetrics.Metric.SidebarSplitterWidth, 9.0)
         Assert.Equal(9.0, r.Grid.ColumnDefinitions[1].Width.Value)
         Assert.False r.Desk.State.compactMode
-        r.Theme.SetMetric(Wanxiang2.ThemeMetrics.Metric.CompactBreakpoint, 1200.0)
+        r.Theme.ApplyMetric(Wanxiang2.ThemeMetrics.Metric.CompactBreakpoint, 1200.0)
         Assert.True r.Desk.State.compactMode
         Assert.False r.Sidebar.IsVisible
         r.Window.Close())

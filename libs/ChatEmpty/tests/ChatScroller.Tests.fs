@@ -105,13 +105,13 @@ let ``贴底时隐藏浮钮；前置锚点补偿偏移`` () =
         s.ScrollToEndNow()
         Dispatcher.UIThread.RunJobs()
         s.ShowLatest { Visible = true; Text = "回到最新"; Wide = false }
-        s.SetOffset(s.Extent - s.Viewport - 10.0)
+        s.ApplyOffset(s.Extent - s.Viewport - 10.0)
         Dispatcher.UIThread.RunJobs()
         Assert.False s.LatestButton.IsVisible
         w.Close())
 
 [<Fact>]
-let ``PinOffset 写的上移不算用户上滚；SetOffset 写的算`` () =
+let ``PinOffset 写的上移不算用户上滚；ApplyOffset 写的算`` () =
     Headless.run (fun () ->
         let s = ChatScroller(ease ())
         s.Content <- tall ()
@@ -124,7 +124,7 @@ let ``PinOffset 写的上移不算用户上滚；SetOffset 写的算`` () =
         s.Scrolled.Add(fun n -> notes.Add n.UserUp)
         s.PinOffset(s.Offset - 300.0)
         Dispatcher.UIThread.RunJobs()
-        s.SetOffset(s.Offset - 300.0)
+        s.ApplyOffset(s.Offset - 300.0)
         Dispatcher.UIThread.RunJobs()
         Assert.Equal<bool list>([ false; true ], List.ofSeq notes)
         w.Close())

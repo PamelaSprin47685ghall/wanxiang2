@@ -8,6 +8,7 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Avalonia.Markup.Xaml.MarkupExtensions
 
 /// 浮层菜单里的一项。
 type PopupEntry =
@@ -29,7 +30,20 @@ module PopupEntry =
     let markSelected selected (entry: PopupEntry) = { entry with Selected = selected }
     let asDanger (entry: PopupEntry) = { entry with Danger = true }
 
-/// 菜单与下拉选择器的外观。全部由主题管理者提供活的实例；本库不写字面样式值。
+/// 动态资源绑定辅助：主题管理者把活值写进 ResourceDictionary，控件绑定即随主题资源生效。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
+
+/// 菜单与下拉选择器的外观：画笔、图标插槽与组合者自定的静态参数（普通记录，无活值字段）。
+/// 主题管得住的排版走资源键声明式绑定：字号 Metric.FontBody / Metric.FontCaption、
+/// 图标高 Metric.IconGlyph、右侧槽宽 Metric.MenuRightSlotMinWidth、
+/// 列间距 Space.Sm、项间距 Space.XXs、内边距 Padding.MenuItem、
+/// 圆角 CornerRadius.RadiusXs、提示外边距 Margin.MenuHint、
+/// 分隔外边距 Margin.MenuDivider、标题外边距 Margin.MenuHeader、
+/// 下拉标题最大宽 Metric.SelectCaptionMaxWidth。本库不再有 IObservable 字段与手工 Subscribe。
 type PopupMenuAppearance =
     { Text: IBrush
       Muted: IBrush
@@ -40,24 +54,12 @@ type PopupMenuAppearance =
       Check: IBrush -> Control
       /// 下拉箭头图标（插槽）
       Chevron: IBrush -> Control
-      FontSize: IObservable<float>
-      HintFontSize: IObservable<float>
-      IconSlotWidth: IObservable<float>
-      IconHeight: IObservable<float>
-      RightSlotMinWidth: IObservable<float>
-      HintMargin: IObservable<Thickness>
-      ColumnSpacing: IObservable<float>
-      ItemPadding: IObservable<Thickness>
-      ItemRadius: IObservable<CornerRadius>
-      ItemMinHeight: IObservable<float>
-      ItemSpacing: IObservable<float>
-      MaxHeight: IObservable<float>
-      DividerMargin: IObservable<Thickness>
-      HeaderMargin: IObservable<Thickness>
-      SelectPadding: IObservable<Thickness>
-      SelectRadius: IObservable<CornerRadius>
-      SelectEdgeWidth: IObservable<Thickness>
-      SelectCaptionMaxWidth: IObservable<float> }
+      /// 图标槽宽
+      IconSlotWidth: float
+      /// 菜单项最小高
+      ItemMinHeight: float
+      /// 菜单最大高（滚动上限）
+      MaxHeight: float }
 
 /// 浮层菜单内容（迁自旧 Controls/Menu.fs）。只造内容；放进浮层、关浮层由组合者做：
 /// 激活时调用 `activate`，组合者先关浮层再执行条目动作。
@@ -65,16 +67,14 @@ module PopupMenu =
 
     let private handCursor = new Cursor(StandardCursorType.Hand)
 
-    let private live (source: IObservable<'T>) (apply: 'T -> unit) = source.Subscribe apply |> ignore
-
     /// 菜单项宿主上的样式类（只挂类名，样式由主题提供）。
     let itemClass = "menu-item"
 
     let renderEntry (look: PopupMenuAppearance) (activate: PopupEntry -> unit) (entry: PopupEntry) : Control =
         let foreground = if entry.Danger then look.Danger else look.Text
         let iconSlot = Border(VerticalAlignment = VerticalAlignment.Center)
-        live look.IconSlotWidth (fun v -> iconSlot.Width <- v)
-        live look.IconHeight (fun v -> iconSlot.Height <- v)
+        iconSlot.Width <- look.IconSlotWidth
+        iconSlot.Bind(Layoutable.HeightProperty, Dyn.res "Metric.IconGlyph") |> ignore
         entry.Icon
         |> Option.iter (fun icon ->
             let glyph = icon (if entry.Danger then look.Danger else look.Muted)
@@ -83,9 +83,9 @@ module PopupMenu =
             iconSlot.Child <- glyph)
         let caption =
             TextBlock(Text = entry.Label, Foreground = foreground, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis)
-        live look.FontSize (fun v -> caption.FontSize <- v)
+        caption.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontBody") |> ignore
         let left = Grid(VerticalAlignment = VerticalAlignment.Center)
-        live look.ColumnSpacing (fun v -> left.ColumnSpacing <- v)
+        left.Bind(Grid.ColumnSpacingProperty, Dyn.res "Space.Sm") |> ignore
         left.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
         left.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
         Grid.SetColumn(iconSlot, 0)
@@ -93,7 +93,7 @@ module PopupMenu =
         left.Children.Add iconSlot
         left.Children.Add caption
         let rightSlot = Border(VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right)
-        live look.RightSlotMinWidth (fun v -> rightSlot.MinWidth <- v)
+        rightSlot.Bind(Layoutable.MinWidthProperty, Dyn.res "Metric.MenuRightSlotMinWidth") |> ignore
         if entry.Selected then
             let mark = look.Check look.Accent
             mark.VerticalAlignment <- VerticalAlignment.Center
@@ -101,11 +101,11 @@ module PopupMenu =
             rightSlot.Child <- mark
         elif not (String.IsNullOrWhiteSpace entry.Hint) then
             let hint = TextBlock(Text = entry.Hint, Foreground = look.Faint, VerticalAlignment = VerticalAlignment.Center)
-            live look.HintFontSize (fun v -> hint.FontSize <- v)
-            live look.HintMargin (fun v -> hint.Margin <- v)
+            hint.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
+            hint.Bind(Layoutable.MarginProperty, Dyn.res "Margin.MenuHint") |> ignore
             rightSlot.Child <- hint
         let row = Grid(VerticalAlignment = VerticalAlignment.Center)
-        live look.ColumnSpacing (fun v -> row.ColumnSpacing <- v)
+        row.Bind(Grid.ColumnSpacingProperty, Dyn.res "Space.Sm") |> ignore
         row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
         row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
         Grid.SetColumn(left, 0)
@@ -114,9 +114,9 @@ module PopupMenu =
         row.Children.Add rightSlot
         // 原生交互宿主：Border 配合原生样式类，不再手搓 TapPeer
         let host = Border(Cursor = handCursor, Focusable = true, Child = row)
-        live look.ItemPadding (fun v -> host.Padding <- v)
-        live look.ItemRadius (fun v -> host.CornerRadius <- v)
-        live look.ItemMinHeight (fun v -> host.MinHeight <- v)
+        host.Bind(Decorator.PaddingProperty, Dyn.res "Padding.MenuItem") |> ignore
+        host.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusXs") |> ignore
+        host.MinHeight <- look.ItemMinHeight
         host.Classes.Add itemClass
         host.Classes.Add "surface"
         host.Classes.Add(if entry.Danger then "hover-danger" else "hover-plain")
@@ -162,14 +162,14 @@ module PopupMenu =
             | None -> ())
 
     let private wrap (look: PopupMenuAppearance) (panel: StackPanel) : Control =
-        live look.ItemSpacing (fun v -> panel.Spacing <- v)
+        panel.Bind(StackPanel.SpacingProperty, Dyn.res "Space.XXs") |> ignore
         wireDirectionalNavigation panel
         let scroller =
             ScrollViewer(
                 Content = panel,
                 HorizontalScrollBarVisibility = Primitives.ScrollBarVisibility.Disabled,
                 VerticalScrollBarVisibility = Primitives.ScrollBarVisibility.Auto)
-        live look.MaxHeight (fun v -> scroller.MaxHeight <- v)
+        scroller.MaxHeight <- look.MaxHeight
         scroller
 
 
@@ -193,66 +193,60 @@ module PopupMenu =
                     // 外观由主题的 hairline 类给（旧 Ui.hairline）。
                     let divider = Border(HorizontalAlignment = HorizontalAlignment.Stretch)
                     divider.Classes.Add "hairline"
-                    live look.DividerMargin (fun v -> divider.Margin <- v)
+                    divider.Bind(Layoutable.MarginProperty, Dyn.res "Margin.MenuDivider") |> ignore
                     panel.Children.Add divider
                 if not (String.IsNullOrWhiteSpace groupLabel) then
                     // 字号、字重、颜色、字距由主题的 section-label 类给（旧 Ui.sectionLabel）。
                     let header = TextBlock(Text = groupLabel)
                     header.Classes.Add "section-label"
-                    live look.HeaderMargin (fun v -> header.Margin <- v)
+                    header.Bind(Layoutable.MarginProperty, Dyn.res "Margin.MenuHeader") |> ignore
                     panel.Children.Add header
                 for entry in items do
                     panel.Children.Add(renderEntry look activate entry))
             Some(wrap look panel)
 
-/// 下拉选择器按钮：显示当前值，点击或 Down/Up 发 `OpenRequested`，组合者据此弹出分组菜单。
+/// 原生下拉选择器：基于 Button + MenuFlyout 构成。
+/// 显示当前选项标签，外观经样式类走主题（surface select-button hover-bordered），不再逐属性订阅 appearance。
 type SelectButton(look: PopupMenuAppearance, initialText: string) =
     let openRequested = Event<unit>()
-    let caption = TextBlock(Text = initialText, Foreground = look.Text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis)
+    let caption = TextBlock(Text = initialText, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis)
     let chevron = look.Chevron look.Faint
     let row = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-    let host = Border(Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center, Child = row)
-    // 上一次由本按钮写入的显示文本：调用方另起了名就与它不同，此后不再覆盖。
+    let button = Button(Content = row, Cursor = new Cursor(StandardCursorType.Hand), Focusable = true, VerticalAlignment = VerticalAlignment.Center)
+    let menuFlyout = MenuFlyout()
     let mutable lastText = initialText
 
     do
         chevron.VerticalAlignment <- VerticalAlignment.Center
         row.Children.Add caption
         row.Children.Add chevron
-        look.FontSize.Subscribe(fun v -> caption.FontSize <- v) |> ignore
-        look.SelectCaptionMaxWidth.Subscribe(fun v -> caption.MaxWidth <- v) |> ignore
-        look.ColumnSpacing.Subscribe(fun v -> row.Spacing <- v) |> ignore
-        look.SelectEdgeWidth.Subscribe(fun v -> host.BorderThickness <- v) |> ignore
-        look.SelectRadius.Subscribe(fun v -> host.CornerRadius <- v) |> ignore
-        look.SelectPadding.Subscribe(fun v -> host.Padding <- v) |> ignore
-        host.Classes.Add "surface"
-        host.Classes.Add "select-button"
-        host.Classes.Add "hover-bordered"
-        AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.ComboBox)
-        host.PointerReleased.Add(fun e ->
-            if host.IsEnabled && host.IsHitTestVisible && e.InitialPressMouseButton = MouseButton.Left then
-                e.Handled <- true
-                openRequested.Trigger())
-        host.KeyDown.Add(fun e ->
-            if host.IsEnabled && (e.Key = Key.Enter || e.Key = Key.Space) then
+        caption.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontBody") |> ignore
+        caption.Bind(Layoutable.MaxWidthProperty, Dyn.res "Metric.SelectCaptionMaxWidth") |> ignore
+        row.Bind(StackPanel.SpacingProperty, Dyn.res "Space.Sm") |> ignore
+        button.Classes.Add "surface"
+        button.Classes.Add "select-button"
+        button.Classes.Add "hover-bordered"
+        button.Flyout <- menuFlyout
+        button.AddHandler(InputElement.KeyDownEvent, (fun (_sender: obj) (e: KeyEventArgs) ->
+            if button.IsEnabled && (e.Key = Key.Down || e.Key = Key.Up) then
                 e.Handled <- true
                 openRequested.Trigger()
-            // Down / Up 都能展开，与菜单内 Up/Down 对称。
-            elif e.Key = Key.Down || e.Key = Key.Up then
-                e.Handled <- true
-                openRequested.Trigger())
-        ToolTip.SetTip(host, box initialText)
-        AutomationProperties.SetName(host, initialText)
+                if not menuFlyout.IsOpen then menuFlyout.ShowAt button
+        ), Interactivity.RoutingStrategies.Tunnel)
+        button.Click.Add(fun _ -> openRequested.Trigger())
+        ToolTip.SetTip(button, box initialText)
+        AutomationProperties.SetName(button, initialText)
 
-    member _.View: Border = host
+    member _.View: Button = button
     member _.Text = caption.Text
+    member _.Flyout = menuFlyout
 
     /// 换显示文本；读屏名只在仍是自己上次写入的值时跟随。
-    member _.SetText(text: string) =
+    member _.ApplyText(text: string) =
         caption.Text <- text
-        ToolTip.SetTip(host, box text)
-        if AutomationProperties.GetName host = lastText then
-            AutomationProperties.SetName(host, text)
+        ToolTip.SetTip(button, box text)
+        if AutomationProperties.GetName button = lastText then
+            AutomationProperties.SetName(button, text)
         lastText <- text
 
     [<CLIEvent>] member _.OpenRequested = openRequested.Publish

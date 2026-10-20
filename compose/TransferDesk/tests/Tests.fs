@@ -166,7 +166,7 @@ let ``cancel stays in the dialog and offers the retry entry`` () =
 let ``export progress bar is determinate under reduced motion`` () =
     Headless.run (fun () ->
         let t = theme ()
-        t.Motion.SetReduced true
+        t.Motion.ApplyReduced true
         let root = Grid()
         let window = Desk.show root 480.0 600.0
         let overlay = OverlayDesk(root, Desk.look ())

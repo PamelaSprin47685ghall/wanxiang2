@@ -18,7 +18,7 @@ let ``标签换色；读屏 Invoke 打开切换器`` () =
             opened <- true
             Assert.Same(c.Host, anchor))
         Assert.Equal("未选择模型", c.Text)
-        c.SetLabel "gpt-test"
+        c.ApplyLabel "gpt-test"
         Assert.Equal("gpt-test", c.Text)
         let w = Window(Content = c.Host)
         w.Show()

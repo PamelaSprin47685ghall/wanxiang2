@@ -12,23 +12,19 @@ open Wanxiang2.OverlayLayer
 
 let inset = 12.0
 
+/// 主题把视口留白写进资源字典（层按它钳位）；测试改它即模拟主题改值。
+let setInset (value: float) =
+    Application.Current.Resources["Margin.OverlayInset"] <- box (Thickness value)
+
 let look () =
-    let i = Cell inset
-    i,
     { Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
       Surface = SolidColorBrush(Colors.White)
       Edge = SolidColorBrush(Colors.Gray)
-      EdgeWidth = Cell(Thickness 1.0)
-      DialogRadius = Cell(CornerRadius 8.0)
-      PopupRadius = Cell(CornerRadius 6.0)
-      DialogPadding = Cell(Thickness 16.0)
-      PopupPadding = Cell(Thickness 2.0)
-      DialogShadow = Cell(BoxShadows())
-      PopupShadow = Cell(BoxShadows())
-      ViewportInset = i
-      PopupGap = Cell 4.0
-      PopupMinWidth = Cell 180.0
-      ScrimFade = Cell TimeSpan.Zero
+      DialogShadow = BoxShadows()
+      PopupShadow = BoxShadows()
+      PopupGap = 4.0
+      PopupMinWidth = 180.0
+      ScrimFade = TimeSpan.Zero
       ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut() }
 
 /// 浮层落点规则（下方放不下翻到上方，再钳进视口）；组合者实际填入该函数。
@@ -51,10 +47,11 @@ let button text = Button(Content = text)
 [<Fact>]
 let ``dialog is constrained to the live viewport and restores focus`` () =
     Headless.run (fun () ->
+        setInset inset
         let root = Grid()
         let trigger = button "打开"
         root.Children.Add trigger
-        let _, l = look ()
+        let l = look ()
         let overlay = OverlayLayer(root, l, place)
         overlay.WireDismiss()
         let window = show root 320.0 240.0
@@ -83,13 +80,14 @@ let ``dialog is constrained to the live viewport and restores focus`` () =
 [<Fact>]
 let ``popup flips and clamps inside the viewport then restores anchor focus`` () =
     Headless.run (fun () ->
+        setInset inset
         let root = Grid()
         let anchor = button "锚点"
         anchor.HorizontalAlignment <- HorizontalAlignment.Right
         anchor.VerticalAlignment <- VerticalAlignment.Bottom
         anchor.Margin <- Thickness 6.0
         root.Children.Add anchor
-        let _, l = look ()
+        let l = look ()
         let overlay = OverlayLayer(root, l, place)
         overlay.WireDismiss()
         let window = show root 320.0 220.0
@@ -119,8 +117,9 @@ let ``popup flips and clamps inside the viewport then restores anchor focus`` ()
 [<Fact>]
 let ``escape precedence closes topmost overlay first and guards pending dialog`` () =
     Headless.run (fun () ->
+        setInset inset
         let root = Grid()
-        let _, l = look ()
+        let l = look ()
         let overlay = OverlayLayer(root, l, place)
         overlay.WireDismiss()
         let window = show root 360.0 260.0
@@ -170,9 +169,10 @@ let private wheelAt (target: Control) (root: Control) =
 [<Fact>]
 let ``wheel outside an open popup dismisses it without scrolling the content`` () =
     Headless.run (fun () ->
+        setInset inset
         let root = Grid()
         root.Children.Add(Border(Width = 400.0, Height = 300.0))
-        let _, l = look ()
+        let l = look ()
         let overlay = OverlayLayer(root, l, place)
         overlay.WireDismiss()
         let anchor = Border(Width = 120.0, Height = 40.0, HorizontalAlignment = HorizontalAlignment.Right)
@@ -188,9 +188,10 @@ let ``wheel outside an open popup dismisses it without scrolling the content`` (
 [<Fact>]
 let ``wheel inside an open popup is left to the popup itself`` () =
     Headless.run (fun () ->
+        setInset inset
         let root = Grid()
         root.Children.Add(Border(Width = 400.0, Height = 300.0))
-        let _, l = look ()
+        let l = look ()
         let overlay = OverlayLayer(root, l, place)
         overlay.WireDismiss()
         let anchor = Border(Width = 120.0, Height = 40.0, HorizontalAlignment = HorizontalAlignment.Right)
@@ -207,8 +208,9 @@ let ``wheel inside an open popup is left to the popup itself`` () =
 [<Fact>]
 let ``对话框里 Tab 圈在内容里循环；嵌套对话框关闭后恢复外层`` () =
     Headless.run (fun () ->
+        setInset inset
         let root = Grid()
-        let _, l = look ()
+        let l = look ()
         let overlay = OverlayLayer(root, l, place)
         let window = show root 400.0 300.0
         let a, b = button "甲", button "乙"
@@ -238,13 +240,15 @@ let ``对话框里 Tab 圈在内容里循环；嵌套对话框关闭后恢复外
 [<Fact>]
 let ``视口留白是活的：主题改值后重新钳位`` () =
     Headless.run (fun () ->
+        setInset inset
         let root = Grid()
-        let i, l = look ()
+        let l = look ()
         let overlay = OverlayLayer(root, l, place)
         overlay.WireDismiss()
         let window = show root 320.0 240.0
         overlay.ShowDialog(Border(Width = 900.0, Height = 900.0), 900.0)
         Dispatcher.UIThread.RunJobs()
-        i.Set 40.0
+        // 主题改留白：层随即按新留白重新钳位。
+        setInset 40.0
         Assert.True(overlay.DialogCard.MaxWidth <= root.Bounds.Width - 80.0 + 0.5)
         window.Close())

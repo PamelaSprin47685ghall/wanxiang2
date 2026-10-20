@@ -1,10 +1,10 @@
 # ReadingLook（组合，正文与公式的外观填写）
 
-用主题管理者的活实例填 `MarkdownMetrics` 与 `MathFigureMetrics`（旧 Tokens、ControlMetrics、Spacing、MotionLedger 的同名值），按钮挂 ThemeStyles 安装的共享样式类。协作者（包）：Theme、IconSet、MarkdownView、MathFigure、CopyButton、ThemePalette、ThemeMetrics、MotionSwitch、SpacingRamp。根规则见项目根目录 AGENTS.md。
+用主题管理者的活画笔与静态参数填 `MarkdownMetrics` 与 `MathFigureMetrics`（W7 外观退役：记录里没有 IObservable 字段；尺寸/字体/减弱动效由控件直接绑主题资源键），按钮挂 ThemeStyles 安装的共享样式类。协作者（包）：Theme、IconSet、MarkdownView、MathFigure、CopyButton、ThemePalette、ThemeMetrics、MotionSwitch、SpacingRamp。根规则见项目根目录 AGENTS.md。
 
 ## 接口
-- `ReadingLook.markdown manager styles`、`ReadingLook.math manager`、`ReadingLook.copy manager`、`ReadingLook.reduced manager`。
-- 字距强调档没有对应的度量项，取 SpacingRamp 的值作为本组合自己的活值。
+- `ReadingLook.markdown manager styles`、`ReadingLook.math manager`、`ReadingLook.copy manager`。
+- 字距强调档（`Tracking.Emphasis`）与正文派生几何档由 ThemeManager 预置进资源字典；本组合不再持有活值。
 
 # LEMMA
 1. **用真实主题填好的 MarkdownView，渲染出的控件树与旧 MarkdownRenderer 逐行相同。** [根 AXIOM: 5]

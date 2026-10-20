@@ -36,9 +36,9 @@ type ShellBrand(image: IImage option) =
 /// 宿主里还没迁出的控件（侧栏、对话视图、输入区）由组合者经这些插槽驱动。
 type ShellHooks =
     { /// 紧凑模式同步给输入区、侧栏、对话视图
-      SetCompactMode: bool -> unit
+      ApplyCompactMode: bool -> unit
       /// 起步居中同步给对话视图
-      SetStartMode: bool -> unit
+      ApplyStartMode: bool -> unit
       FocusComposer: unit -> unit
       FocusSidebarSearch: unit -> unit
       /// 触屏优先时不自动聚焦搜索框（软键盘会盖住列表）
@@ -63,14 +63,14 @@ type ShellDesk
     let mutable lastWidth = 0.0
     let workspace = WorkspaceStack(chat, composer)
     let initSplitterW = match splitterWidthOpt with Some opt -> (let mutable w = 6.0 in opt.Subscribe(fun v -> w <- v).Dispose(); w) | None -> 6.0
-    let columns = ShellColumns(shellGrid, sidebar, splitter, workspace, 220.0, 420.0, initSplitterW, sidebarWidth)
+    let columns = ShellColumns(shellGrid, sidebar, splitter, workspace, 420.0, initSplitterW, sidebarWidth)
 
     let project (s: NavigationSnapshot) =
         columns.Apply { Compact = s.compactMode; DrawerOpen = s.compactNavigationOpen; SidebarCollapsed = s.sidebarCollapsed }
 
-    let setCompactNavigation (opened: bool) =
+    let applyCompactNavigation (opened: bool) =
         let before = navigation.State
-        let state = navigation.SetCompactNavigation opened
+        let state = navigation.ApplyCompactNavigation opened
         if state.compactMode then
             project state
             if opened then (if not (hooks.PrefersTouch()) then hooks.FocusSidebarSearch())
@@ -78,10 +78,10 @@ type ShellDesk
         state
 
     do
-        columns.CompactApplied.Add hooks.SetCompactMode
+        columns.CompactApplied.Add hooks.ApplyCompactMode
         columns.FocusHomeRequested.Add(fun () -> hooks.FocusComposer())
-        columns.ScrimPressed.Add(fun () -> setCompactNavigation false |> ignore)
-        workspace.StartModeChanged.Add hooks.SetStartMode
+        columns.ScrimPressed.Add(fun () -> applyCompactNavigation false |> ignore)
+        workspace.StartModeChanged.Add hooks.ApplyStartMode
         // 列定义只建空的，初值由第一次投影落定
         if shellGrid.ColumnDefinitions.Count = 0 then
             shellGrid.ColumnDefinitions.Add(ColumnDefinition())
@@ -117,8 +117,8 @@ type ShellDesk
     member _.Workspace = workspace
     member _.Columns = columns
 
-    /// 起步页（新对话、无消息）与续聊切换
-    member _.SetStarting(value: bool) = workspace.SetStarting value
+    /// 起步页（新对话、无消息）与续聊切换（投影）
+    member _.RenderStarting(value: bool) = workspace.RenderStarting value
 
     /// 视口宽度变化；抽屉因此刚打开时把焦点送进搜索框（触屏除外）
     member _.ApplyViewport(width: float) =
@@ -139,7 +139,7 @@ type ShellDesk
         state
 
     /// 窄屏抽屉开合（Escape、侧栏行、遮罩都走这里）
-    member _.SetCompactNavigation(opened: bool) = setCompactNavigation opened
+    member _.ApplyCompactNavigation(opened: bool) = applyCompactNavigation opened
 
     /// 聚焦侧栏搜索前确保侧栏可见
     member _.EnsureSearchVisible() =

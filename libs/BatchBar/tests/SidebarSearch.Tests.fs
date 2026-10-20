@@ -73,7 +73,7 @@ let ``search input reports changes and the empty hint clears on click, enter and
         Assert.Equal<string list>([ "a"; "ab" ], List.ofSeq fired)
         let cleared = ref 0
         s.ClearRequested.Add(fun () -> cleared.Value <- cleared.Value + 1)
-        s.SetEmptyHint true
+        s.ApplyEmptyHint true
         w.UpdateLayout()
         click s.EmptyHint
         s.FocusEmptyHint()

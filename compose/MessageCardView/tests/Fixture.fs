@@ -19,8 +19,9 @@ let themed () =
     let manager = new ThemeManager((fun () -> DateTimeOffset.UnixEpoch), false)
     let styles = ThemeStyles manager
     styles.Install Application.Current.Styles
-    for KeyValue(k, v) in manager.Resources do
-        Application.Current.Resources[k] <- v
+    // 合并活字典本体（不是拷贝值）：ThemeManager 改值即触达所有 DynamicResource 绑定
+    if not (Application.Current.Resources.MergedDictionaries.Contains (manager.Resources :> Avalonia.Controls.IResourceDictionary)) then
+        Application.Current.Resources.MergedDictionaries.Add (manager.Resources :> Avalonia.Controls.IResourceDictionary)
     manager, styles
 
 let mutable now = DateTimeOffset(2026, 10, 14, 12, 0, 0, TimeSpan.Zero)

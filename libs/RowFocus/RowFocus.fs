@@ -20,7 +20,7 @@ type RowFocus() =
     let mutable pending: Guid option = None
 
     /// 列表重建后的可见行顺序。
-    member _.SetVisible(ids: Guid array) = visible <- Array.copy ids
+    member _.ApplyVisible(ids: Guid array) = visible <- Array.copy ids
 
     member _.Visible: Guid list = List.ofArray visible
 
@@ -60,7 +60,7 @@ type RowFocus() =
             RowFocusTarget.Row(idx, id)
         | None -> RowFocusTarget.Search
 
-    /// 重建后该聚焦哪一行（在 SetVisible 之后调用）。删除流记下的意图优先，且只消费一次；
+    /// 重建后该聚焦哪一行（在 ApplyVisible 之后调用）。删除流记下的意图优先，且只消费一次；
     /// 否则还给重建前正聚焦、仍可见的那一行（restoreId 由宿主按控件焦点给出）。
     member _.RestoreAfterRebuild(restoreId: Guid option) : Guid option =
         let intent =

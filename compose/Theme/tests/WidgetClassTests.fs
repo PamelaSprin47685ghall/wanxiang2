@@ -12,38 +12,24 @@ open Wanxiang2.ThemeMetrics
 open Wanxiang2.PopupMenu
 open Wanxiang2.ToastStrip
 
-let fixed' (v: 'T) =
-    { new IObservable<'T> with
-        member _.Subscribe o =
-            o.OnNext v
-            { new IDisposable with member _.Dispose() = () } }
-
 let manager () =
     let m = new ThemeManager((fun () -> DateTimeOffset.UnixEpoch), false)
-    m.Motion.SetReduced true
+    m.Motion.ApplyReduced true
     m
 
 let menuLook (m: ThemeManager) =
     let b k = m.Brush k :> IBrush
     { Text = b PaletteKey.Text; Muted = b PaletteKey.TextMuted; Faint = b PaletteKey.TextFaint; Danger = b PaletteKey.Danger; Accent = b PaletteKey.Accent
       Check = (fun br -> Border(Background = br)); Chevron = (fun br -> Border(Background = br))
-      FontSize = m.Metric Metric.FontSmall; HintFontSize = m.Metric Metric.FontMicro
-      IconSlotWidth = fixed' 16.0; IconHeight = fixed' 16.0; RightSlotMinWidth = fixed' 16.0
-      HintMargin = fixed' (Thickness 0.0); ColumnSpacing = m.Space Space.Md
-      ItemPadding = fixed' (Thickness 4.0); ItemRadius = fixed' (CornerRadius 4.0); ItemMinHeight = fixed' 28.0
-      ItemSpacing = m.Space Space.XXs; MaxHeight = fixed' 300.0
-      DividerMargin = fixed' (Thickness 2.0); HeaderMargin = fixed' (Thickness 2.0)
-      SelectPadding = fixed' (Thickness 4.0); SelectRadius = fixed' (CornerRadius 4.0)
-      SelectEdgeWidth = fixed' (Thickness 1.0); SelectCaptionMaxWidth = fixed' 260.0 }
+      IconSlotWidth = 16.0; ItemMinHeight = 28.0; MaxHeight = 300.0 }
 
 let toastLook (m: ThemeManager) =
     let b k = m.Brush k :> IBrush
     { Surface = b PaletteKey.SurfaceRaised; Edge = b PaletteKey.Hairline; Text = b PaletteKey.Text; Accent = (fun _ -> b PaletteKey.TextMuted)
-      AccentWidth = fixed' 2.0; AccentRadius = fixed' (CornerRadius 1.0); AccentOpacity = fixed' 1.0; EdgeWidth = fixed' (Thickness 1.0)
-      Radius = fixed' (CornerRadius 4.0); Padding = fixed' (Thickness 4.0); Shadow = fixed' (BoxShadows())
-      FontSize = m.Metric Metric.FontSmall; LineHeight = fixed' 18.0; ColumnSpacing = fixed' 8.0; Spacing = fixed' 8.0
-      Margin = fixed' (Thickness 0.0); MaxWidth = fixed' 400.0; BodyMaxHeight = fixed' 100.0
-      Fade = fixed' TimeSpan.Zero; FadeEasing = EaseOutCubicEasing() }
+      AccentOpacity = 1.0; Padding = Thickness 4.0; Shadow = BoxShadows()
+      LineHeight = 18.0; ColumnSpacing = 8.0; Spacing = 8.0
+      Margin = Thickness 0.0; MaxWidth = 400.0; BodyMaxHeight = 100.0
+      Fade = TimeSpan.Zero; FadeEasing = EaseOutCubicEasing() }
 
 let pseudo (c: Control) (name: string) (on: bool) =
     let pc: IPseudoClasses = c.Classes
@@ -54,6 +40,9 @@ let color (b: IBrush) = (b :?> SolidColorBrush).Color
 let host (m: ThemeManager) (content: Control) =
     let win = Window(Width = 400.0, Height = 300.0, Content = content)
     (ThemeStyles m).Install win.Styles
+    // 活字典合并进窗口资源：ToastStrip 等的 DynamicResource 绑定沿树取值
+    if not (win.Resources.MergedDictionaries.Contains (m.Resources :> Avalonia.Controls.IResourceDictionary)) then
+        win.Resources.MergedDictionaries.Add (m.Resources :> Avalonia.Controls.IResourceDictionary)
     win.Show()
     win
 

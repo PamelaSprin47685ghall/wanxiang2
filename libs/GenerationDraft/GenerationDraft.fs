@@ -49,7 +49,7 @@ type GenerationDraft<'T when 'T: equality>(initial: 'T) =
             status <- "主机默认值已变化。草稿已保留；请核对后保存，或放弃修改。"
 
     /// 切换目标主机：作废在途保存的确认。
-    member _.SetScope(instance: string) =
+    member _.ApplyScope(instance: string) =
         if scope <> instance then
             epoch <- epoch + 1
             scope <- instance

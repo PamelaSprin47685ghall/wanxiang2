@@ -8,18 +8,21 @@ open Wanxiang.UI
 [<Fact>]
 let ``reading shows progress and the close key cancels`` () =
     let v = ExportView.decide (ExportPhase.Reading(3, Some 12)) ExportView.idleSave ExportOutputKind.None false
-    Assert.True v.progressVisible
-    Assert.Equal(25.0, v.progressValue)
+    match v.progress with
+    | ExportProgress.Determinate p -> Assert.Equal(25.0, p)
+    | other -> Assert.Fail(sprintf "Expected Determinate, got %A" other)
     Assert.Equal("取消导出", v.closeText)
-    Assert.True (ExportView.decide (ExportPhase.Reading(3, None)) ExportView.idleSave ExportOutputKind.None false).indeterminate
-    Assert.False (ExportView.decide (ExportPhase.Reading(3, None)) ExportView.idleSave ExportOutputKind.None true).indeterminate
+    Assert.Equal(ExportProgress.Indeterminate, (ExportView.decide (ExportPhase.Reading(3, None)) ExportView.idleSave ExportOutputKind.None false).progress)
+    Assert.Equal(ExportProgress.Determinate 0.0, (ExportView.decide (ExportPhase.Reading(3, None)) ExportView.idleSave ExportOutputKind.None true).progress)
 
 [<Fact>]
 let ``ready with output can save both formats; empty or saving cannot`` () =
     let v = ExportView.decide (ExportPhase.Ready 4) ExportView.idleSave ExportOutputKind.Both false
-    Assert.True(v.saveEnabled && v.saveJsonEnabled)
-    Assert.False (ExportView.decide (ExportPhase.Ready 0) ExportView.idleSave ExportOutputKind.Both false).saveEnabled
-    Assert.False (ExportView.decide (ExportPhase.Ready 4) { ExportView.idleSave with saving = true } ExportOutputKind.Both false).saveEnabled
+    Assert.Equal(ExportAction.Save(SaveGate.Enabled, true), v.action)
+    let empty = ExportView.decide (ExportPhase.Ready 0) ExportView.idleSave ExportOutputKind.Both false
+    Assert.Equal(ExportAction.Save(SaveGate.Disabled, true), empty.action)
+    let saving = ExportView.decide (ExportPhase.Ready 4) { ExportView.idleSave with saving = true } ExportOutputKind.Both false
+    Assert.Equal(ExportAction.Save(SaveGate.Disabled, true), saving.action)
     Assert.Equal(ExportTone.Success, (ExportView.decide (ExportPhase.Ready 4) { ExportView.idleSave with saved = true; savedKind = "JSON" } ExportOutputKind.Both false).tone)
 
 [<Fact>]

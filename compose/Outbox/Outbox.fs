@@ -114,7 +114,7 @@ type MessageOutbox() =
         items <- items |> Map.filter (fun _ item ->
             not (item.instanceId = instanceId && PendingMessage.canRetry item))
 
-    member _.SetState(id: Guid, state: DeliveryState) =
+    member _.ApplyState(id: Guid, state: DeliveryState) =
         items <- items |> Map.change id (Option.map (fun item ->
             { item with state = state
                         lastAttemptAt =
@@ -138,7 +138,7 @@ type MessageOutbox() =
             else item)
 
     member this.Accept(id: Guid) =
-        if items.ContainsKey id then this.SetState(id, QueuedMessage)
+        if items.ContainsKey id then this.ApplyState(id, QueuedMessage)
 
     member _.Commit(id: Guid) = items <- items.Remove id
 

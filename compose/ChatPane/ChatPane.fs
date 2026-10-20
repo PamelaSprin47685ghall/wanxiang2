@@ -15,8 +15,11 @@ open Wanxiang2.WorkspaceState
 
 /// 组合者：对话区的滚动、空态、历史骨架与问答跳转（旧 Views/ChatView.fs 的对应部分）。
 /// 消息列表使用原生 ItemsControl + VirtualizingStackPanel 实现真虚拟化；
-/// 废除 Look 注入，空态与骨架收敛到 Render(ChatVS)。
-type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> Control) =
+/// 废除 Look 注入（W7 外观退役）：主题浮点值在用量时刻从应用资源现读（改值即生效，无订阅），
+/// 空态与骨架收敛到 Render(ChatVS)。
+/// onStarter：起手式芯片点选回调（None 则不画起手式行）；起手式表取自 ChatStarters。
+type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (string -> unit) option) =
+
     let follow = ScrollFollow()
     let mutable lastAnimatedOffset = Double.NaN
     let jump = ExchangeJump<'K>()
@@ -32,7 +35,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
           IsOwn = fun y -> not (Double.IsNaN lastAnimatedOffset) && abs (y - lastAnimatedOffset) < 1.0 }
     let scroller = ChatScroller(ease)
     let nav = ExchangeNav()
-    let empty = ChatEmpty(brandLogo)
+    let empty = ChatEmpty(ChatStarters.items, onStarter, brandLogo = brandLogo)
     let skeleton = SkeletonList()
     // 原生 ItemsControl + VirtualizingStackPanel 替代普通 StackPanel 消息容器
     let itemsControl = ItemsControl()
@@ -52,14 +55,19 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
     let mutable compact = false
     let mutable overflows = false
     let returnedFocus = Event<unit>()
-    let mutable space2xl = 0.0
     let mutable startMode: bool option = None
+    /// 主题资源字典的浮点值现读：未安装主题时用旧初值兜底。
+    let resFloat (key: string) (fallback: float) =
+        match Application.Current with
+        | null -> fallback
+        | app ->
+            match app.TryFindResource(box key) with
+            | true, v -> unbox v
+            | _ -> fallback
     let applyStart () =
         match startMode with
         | Some v ->
-            empty.SetBottomAligned v
-            empty.Host.VerticalAlignment <- if v then VerticalAlignment.Bottom else VerticalAlignment.Center
-            empty.Host.Margin <- Thickness(space2xl, 0.0, space2xl, space2xl)
+            empty.ApplyBottomAligned v
         | None -> ()
 
     let hideSkeleton () =
@@ -83,11 +91,11 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
     /// 水平留白按自身宽度取档（旧 ChatView.ApplyHorizontalInsets 的滚动区部分）
     let mutable top = 0.0
     let applyInsets () =
+        top <- resFloat "Space.X3l" Wanxiang.UI.Spacing.space3xl
         let inset = LayoutPolicy.horizontalInset body.Bounds.Width
         scroller.Viewer.Padding <- Thickness(inset, top, inset, 0.0)
 
     do
-        empty.SetStarters ChatStarters.items
         // 旧主体的子项序：滚动区、空态滚动区、「回到最新」、更早一页失败横幅。ChatScroller 的叠放层拆开放进主体
         let layer = scroller.Host :?> Panel
         layer.Children.Clear()
@@ -97,9 +105,10 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
         body.Children.Add emptyScroller
         body.Children.Add scroller.LatestButton
         body.Children.Add nav.FailureBanner
-        looks.Space2xl |> Observable.add (fun v -> space2xl <- v; applyStart ())
-        looks.Space3xl |> Observable.add (fun v -> top <- v; applyInsets ())
         body.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty then applyInsets ())
+        // 主题资源改值会顶开一次重排：借 Bounds 变化之外的口子在可见性变化时重取留白
+        empty.Host.PropertyChanged.Add(fun e ->
+            if e.Property = Visual.IsVisibleProperty && empty.Host.IsVisible then applyStart ())
         empty.Host.PropertyChanged.Add(fun e ->
             if e.Property = Visual.IsVisibleProperty then emptyScroller.IsVisible <- empty.Host.IsVisible)
         scroller.Scrolled.Add(fun note ->
@@ -140,7 +149,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
 
     member _.ApplyCompact(value: bool) =
         compact <- value
-        scroller.SetCompact value
+        scroller.ApplyCompact value
         refreshButton ()
 
     /// 一次渲染之后（newCount 含窗口外未挂载的）
@@ -159,7 +168,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
     member _.ShowEmpty(state: ChatEmptyState, primary: (string * (unit -> unit)) option) =
         let title, hint = ChatEmptyText.text state
         if ChatEmptyState.showsBrand state then
-            let logo = brandLogo looks.LogoEmpty.Value
+            let logo = brandLogo (resFloat "Metric.LogoEmpty" 68.0)
             logo.HorizontalAlignment <- HorizontalAlignment.Center
             empty.ShowBrand(logo, title, hint, primary)
         else empty.ShowPrompt(title, hint, primary)
@@ -189,11 +198,6 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
         itemsControl.IsVisible <- true
         messages.IsVisible <- true
 
-    /// 空态的开场白芯片：点选回调插槽（None 时不出这一行）
-    member _.WireStarterPick(pick: (string -> unit) option) = empty.SetStarterPick pick
-    /// 空态的预设芯片插槽（名称, 说明, 套用）
-    member _.WirePresets(items: (string * string * (unit -> unit)) list) = empty.SetPresets items
-
     member _.IsEmptyShown = emptyScroller.IsVisible
 
     /// 历史骨架：滚动区内容换成骨架（旧 ShowSkeletonLoading）
@@ -216,7 +220,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
     /// 刷新上一轮 / 下一轮端点
     member _.RefreshJumps(mounted: 'K option[], cards: int list, viewportIndex: int, hasHidden: bool) =
         let prev, next = jump.NavState(mounted, cards, viewportIndex, follow.AtBottom, hasHidden)
-        nav.SetJumpEnds(prev, next)
+        nav.ApplyJumpEnds(prev, next)
 
     /// 问答跳转；返回 ScrollTo 时宿主把那张卡滚进视口
     member _.Jump(direction: int, mounted: 'K option[], cards: int list, viewportIndex: int, hasHidden: bool, lastFirstCommit: uint64 option) =
@@ -229,7 +233,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
         | _ -> ()
         step
 
-    member _.ApplyOlderAvailable(value: bool) = jump.SetOlderAvailable value
+    member _.ApplyOlderAvailable(value: bool) = jump.ApplyOlderAvailable value
 
     /// 更早一页取失败：横幅带重试
     member _.ShowOlderFailure(text: string, onRetry: unit -> unit) =

@@ -41,4 +41,4 @@ type SectionMemory<'section, 'built when 'section: equality>(initial: 'section) 
         | true, y -> y
         | _ -> 0.0
 
-    member _.SetOffset(section: 'section, y: float) = offsets[section] <- y
+    member _.ApplyOffset(section: 'section, y: float) = offsets[section] <- y

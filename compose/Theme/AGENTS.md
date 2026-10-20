@@ -6,12 +6,14 @@
 - `ThemeManager.Brush key`：每个配色项一支 `SolidColorBrush`，生命周期内同一实例，切主题原地改色。`Derived HoverRaised | HoverDanger | HoverSelected`：叠色画笔，基础画笔每次改色都重算。
 - `Metric m`、`Space s`、`Timing t`、`FontFamily`、`MonoFontFamily`：`LiveValue<'T>`（实现 `IObservable<'T>`，订阅先给当前值），与控件模板 Look 里的 `IObservable<_>` 直接相容，模板不用改。
 - `Apply mode`：经 ThemeTween 补间（200 毫秒，帧间隔 1/12），后来的切换接管；减弱动效或同主题同步到位。代次计数 `Generation`：过期帧只画不停帧。`CompleteTransition`、`Pump`（`autoFrames = false` 时由调用方推帧，测试据此控制时间）、`Changed`、`ShadowPopup` / `ShadowDialog`、`StateTransitions`。
+- `ApplyMetric m v` / `ApplySpace s v`：幂等单槽写接口，直接改该度量/间距的活值（订阅者随即跟着变）；不提供 `Set*` 名字。
 
 ## 资源字典与原生控件 ControlTheme（新 UI 规则底座）
 - `ThemeManager.Resources`：Avalonia `ResourceDictionary`，包含：
   - `Palette.<Key>` 与 `Brush.<Key>`：管理者的活画笔实例（原地改色，DynamicResource 获取）。
   - `ThemeDictionaries[ThemeVariant.Light / Dark]`：Light/Dark ThemeVariant 的标准调色板映射。
   - `Metric.<Name>`、`Space.<Name>`、`Timing.<Name>`、`FontFamily.Body`、`FontFamily.Mono` 以及预置派生值 `CornerRadius.Radius*` / `Thickness.BorderThin`：LiveValue 改值时自动同步字典值。
+  - 覆盖层与浮层菜单的复合几何档（W7 外观退役后控件侧 DynamicResource 直取）：`Padding.OverlayDialog`、`Padding.OverlayPopup`、`Margin.OverlayInset`（视口留白，同时是钳位基准）、`Padding.MenuItem`、`Margin.MenuHint`、`Margin.MenuDivider`、`Margin.MenuHeader`。
 - 原生控件样式与 ControlTheme（`ThemeStyles.InstallControlThemes` / `ThemeStyles.InstallAll`）：
   - `Button` / `ToggleButton`：去默认聚焦蓝框（`FocusAdorner = null`），支持 `primary` / `secondary` / `ghost` / `danger` 及对应 `button-*` 别名，`:focus-visible` 挂统一 Accent 描边（≥ 3:1），`:pointerover` / `:pressed` / `:disabled` 伪类齐备。
   - `TextBox` / `TextArea`（`text-area`）：边界描边统一接入 `ControlStroke`（WCAG 1.4.11 对四种底色均 ≥ 3:1），聚焦切 Accent 描边；支持 `code-box` 等宽代码输入。

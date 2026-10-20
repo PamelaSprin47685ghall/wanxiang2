@@ -307,6 +307,16 @@ module Catalog =
         | Some(id, _) -> id = providerId && catalog.generation.defaultProvider = Some providerId
         | None -> false
 
+    /// 决策 330/331：某模型能否看图。用户指定 > 模型服务信息 > 名字推断。
+    /// （自 compose/Catalog 下沉：发送门控要把看图能力投影进 ComposerVS，状态库不能反向依赖组合者；
+    /// 模块名不变，F# 按名合并同名模块，旧调用方（含 compose/Catalog 的 idleModelChip）无需改动。）
+    let visionOf (providerId: string) (model: string) (catalog: Catalog) : VisionSupport * VisionSource =
+        let ofBool (b: bool) = if b then VisionYes else VisionNo
+        match tryProvider providerId catalog with
+        | Some p when p.visionOverrides.ContainsKey model -> ofBool p.visionOverrides[model], VisionFromUser
+        | Some p when p.visionDetected.ContainsKey model -> ofBool p.visionDetected[model], VisionFromProvider
+        | _ -> ModelVision.classify model, VisionFromName
+
 /// 探测结果（`provider.probe.result`）里的模型名：只取字符串项，跳过 null 与其他类型，保持顺序。
 /// 迁自旧 AppShell 的 ProviderProbeResult 分支。
 module ProbeModels =

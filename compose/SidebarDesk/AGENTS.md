@@ -3,9 +3,10 @@
 SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、HostSwitcher 这些控件，加上 SearchSession、SearchRequery、RowFocus、SidebarSelection、SidebarEmpty、ConversationSummary、ForkLineage（ConversationList）、SearchSegments、SearchHit 这些协作库，一起构成旧 `Views/Sidebar.fs`。根规则见项目根目录 AGENTS.md。
 
 - 宿主入口是 `SidebarDesk(theme, overlay, actions: SidebarDeskActions, brandLogo)`，`View` 放进主布局。`SidebarDeskActions` 的字段与旧 `SidebarActions` 一一对应。
-- 成员名与旧 Sidebar 相同：`ResetSearch`、`SearchHandler`、`OpenSearchHit`、`BeginMessageSearch`、`ApplySearchResults`、`ApplySearchFailure`、`SearchQueryText`、`MessageHits`、`ConfigureImport`（空实现）、`ConfigurePalette`、`PaletteButton`、`SetPresets`、`PresetMenuButton`、`SetSearchText`、`SetLineage`、`SetConversations`、`SetActive`、`SetShowArchived`、`ConnectionText`、`SetConnection`、`SetConversationListLoading`、`SetCompactMode`、`FocusSearch`、`SetServerUrl`、`GetVisibleOrder`、`NeighborAfterDelete`、`FocusAfterDelete`、`EnterSelection`、`ToggleSelected`、`ExitSelection`、`ToggleSelectAllVisible`、`SelectedIds`、`IsSelectionMode`。另外暴露 `Rows`、`Search`、`Batch`、`Host`、`Brand`、`EmptyCard`，供宿主和测试读取状态。
-- 渲染入口已收拢为 `Render(vs: SidebarVS, ?activeConversationId, ?customSummaries)`，实现单入口幂等投影。
-- 例外插槽/命令（命名避开 Set*，非每帧投影）：`SlotPresets`（预设下拉插槽）、`ApplySearchText`（命令面板全文搜索命令）、`SlotLineage`（谱系映射插槽）、`ApplyServerUrl`（服务器 URL 命令）。
+- 成员名：`ResetSearch`、`SearchHandler`、`OpenSearchHit`、`BeginMessageSearch`、`ApplySearchResults`、`ApplySearchFailure`、`SearchQueryText`、`MessageHits`、`ConfigureImport`（空实现）、`PaletteButton`、`PresetMenuButton`、`ConnectionText`、`FocusSearch`、`GetVisibleOrder`、`NeighborAfterDelete`、`FocusAfterDelete`、`EnterSelection`、`ToggleSelected`、`ExitSelection`、`ToggleSelectAllVisible`、`SelectedIds`、`IsSelectionMode`。另外暴露 `Rows`、`Search`、`Batch`、`Host`、`Brand`、`EmptyCard`，供宿主和测试读取状态。
+- 渲染入口已收拢为 `Render(vs: SidebarVS)`，实现单入口幂等投影；品牌行与页脚都经各自的 `Render`（`brand.Render(vs.Brand)` / `hostBar.Render(vs.Host)`），组合者不再旁路写这两个控件。
+- 例外插槽/命令（命名避开 Set*，非每帧投影）：`SlotPresets`（预设下拉插槽：改 `lastVS.Brand.PresetsVisible` 后重渲染品牌行）、`SlotPalette`（命令面板入口插槽）、`ApplySearchText`（命令面板全文搜索命令）、`ApplyServerUrl`（服务器 URL 命令：改投影值后重渲染页脚）。
+  谱系不再走旁路插槽：分叉谱系随 `SidebarVS.Lineage` 一起进（`Render` 是唯一入口），旧的 `SlotLineage` 已删。
 - 在这里完成的协作：
   - 每次重建时按 ConversationSummary 分组筛选，组装行模型（搜索高亮分段、预览去重、分叉前缀、同名区分、谱系提示），追加消息命中区和状态行。
   - 重建后的焦点还原走 RowFocus。

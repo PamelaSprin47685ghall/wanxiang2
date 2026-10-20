@@ -790,9 +790,15 @@ type WsConnection(
         let me = lock cursorLock (fun () -> tokenHash)
         let items = JsonArray()
         for c in cfg.authClients do
+            let facts =
+                [ if c.revoked then Some DeviceFact.Revoked else None
+                  if online.Contains c.tokenHash then Some DeviceFact.Online else None
+                  if me = Some c.tokenHash then Some DeviceFact.Current else None
+                  if DesktopClient.DesktopClient.isReservedName c.name then Some DeviceFact.Desktop else None ]
+                |> List.choose id
+                |> Set.ofList
             let o =
-                DeviceListJson.item (ClientToken.ClientToken.deviceId c.tokenHash) c.name c.createdAtUtc (sightings.LastSeen c.tokenHash)
-                    c.revoked (online.Contains c.tokenHash) (me = Some c.tokenHash) (DesktopClient.DesktopClient.isReservedName c.name)
+                DeviceListJson.item (ClientToken.ClientToken.deviceId c.tokenHash) c.name c.createdAtUtc (sightings.LastSeen c.tokenHash) facts
             items.Add o
         let canInvite = (match this.CurrentClientRecord() with Some r -> DesktopClient.DesktopClient.isDesktop r.name r.revoked remoteAddress | None -> false)
         this.TrySend(DevicesSnapshot {| items = items; canInvite = canInvite |}) |> ignore

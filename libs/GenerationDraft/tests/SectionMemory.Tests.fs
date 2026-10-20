@@ -15,7 +15,7 @@ let ``切走记位置，切回恢复；没变不动`` () =
 [<Fact>]
 let ``位置为 0 不覆盖已记下的位置（内容还没布局好时读到的 0）`` () =
     let m = SectionMemory<string, obj>("a")
-    m.SetOffset("a", 50.0)
+    m.ApplyOffset("a", 50.0)
     m.Select("b", Some 0.0) |> ignore
     Assert.Equal(50.0, m.Offset "a")
     m.Select("a", Some 0.0) |> ignore

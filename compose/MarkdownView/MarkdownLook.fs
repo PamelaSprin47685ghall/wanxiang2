@@ -41,30 +41,6 @@ type MarkdownInk =
     | CodeAddition
     | CodeDeletion
 
-/// 正文用到的尺寸槽位（旧 Tokens / ControlMetrics / Spacing 同名值）。
-[<RequireQualifiedAccess>]
-type MarkdownGauge =
-    | FontMicro
-    | BorderWidth
-    | QuoteEdgeWidth
-    | BlockPaddingX
-    | BlockPaddingY
-    | SpaceXXs
-    | SpaceXs
-    | SpaceSm
-    | SpaceMd
-    | RadiusXs
-    | RadiusSm
-    | RadiusMd
-    | ListMarkerDotSize
-    | ListMarkerDotRadius
-    | TaskBoxSize
-    | TaskBoxBorderWidth
-    | TaskCheckGlyphSize
-    | TrackingEmphasis
-    /// 复制确认淡出时长（毫秒）
-    | CopyFadeMs
-
 /// 正文用到的图标
 [<RequireQualifiedAccess>]
 type MarkdownGlyph =
@@ -78,17 +54,14 @@ type MarkdownButton =
     | Icon
     | Ghost
 
-/// Markdown 正文的外观。全部是主题管理者的活实例，由组合者填：
-/// 画笔原地改色；尺寸与字体是活值，控件挂在可视树上期间跟随；
+/// Markdown 正文的外观：画笔与回调（普通记录，没有活值字段）。
+/// 画笔是主题管理者的活实例（原地改色）；尺寸、字体、间距一律走主题资源键
+/// （Metric.* / Space.* / CornerRadius.* / Thickness.* / Padding.* / Margin.* / Tracking.* / FontFamily.Mono / Timing.* /
+/// Motion.Reduced），由控件声明式绑定，主题切换即时生效由资源系统保证。
 /// Glyph 给定画笔造一个图标（尺寸由填写方决定）；Dress 给按钮挂上主题安装的共享样式类。
 type MarkdownMetrics =
     { Ink: MarkdownInk -> IBrush
-      Gauge: MarkdownGauge -> IObservable<float>
-      BodyFont: IObservable<FontFamily>
-      MonoFont: IObservable<FontFamily>
       Glyph: MarkdownGlyph -> IBrush -> Control
       Dress: MarkdownButton -> Button -> unit
-      /// 减弱动效（复制确认不淡出）
-      Reduced: IObservable<bool>
       Copy: CopyButtonAppearance
       Math: MathFigureMetrics }

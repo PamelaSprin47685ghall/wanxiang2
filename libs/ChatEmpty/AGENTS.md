@@ -8,8 +8,14 @@
 
 ## ChatEmpty
 
-对话区空态（迁自旧 `Views/ChatView.fs` 的 `emptyPanel` / `ShowEmpty` / `ShowEmbeddedEmpty` / `HideEmpty`）：对话起点提示、品牌空态卡、起手式与预设芯片、或内嵌内容。
+对话区空态（迁自旧 `Views/ChatView.fs` 的 `emptyPanel` / `ShowEmpty` / `ShowEmbeddedEmpty` / `HideEmpty`）：对话起点提示、品牌空态卡、起手式芯片、或内嵌内容。
 P2 去脑化：废除 Look 记录与 Spot 仿制件，改用原生 Button（样式类 primary/secondary）；单入口 `Render(ChatPhase)` 幂等渲染。
+
+W7-G1 收尾（Set* 写入成员清零）：
+- 构造入口 `ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) option, ?brandLogo)`：起手式表与点选回调是构造期事实，不再有 `SetStarters` / `SetStarterPick` 写入成员；没有宿主回调就不画起手式行。
+- 删除 `SetPresets` 与预设芯片整条路径：唯一调用方（ChatPane.WirePresets）自身无调用方，预设芯片在生产零消费，且 `ShowPrompt` 里 `if not (List.isEmpty presets)` 恒假。
+- `SetBottomAligned` 更名 `ApplyBottomAligned`：贴底的垂直对齐与外边距只由 ChatEmpty 一处归属（ChatPane 不再直写 `empty.Host.VerticalAlignment` / `Margin`）。
+- 判定口径：本库 `member *.Set[A-Z]` 归零；`grep -rn "WireStarterPick\|WirePresets\|starterPick" libs compose --include='*.fs'` 归零（设置页 `SettingsScreen.WirePresets` 是预设重命名，异义保留）。
 
 ### 外观
 
@@ -17,7 +23,7 @@ P2 去脑化：废除 Look 记录与 Spot 仿制件，改用原生 Button（样�
 
 ### 证据与旧测试
 
-覆盖旧空态渲染分支（对话起点 / 品牌卡 / 起手式与预设 / 内嵌 / 起步贴底）。本库无头行为用例覆盖显隐、重复显示不重建、主按钮与芯片的读屏 Invoke、无起手式回调时不画行。
+覆盖旧空态渲染分支（对话起点 / 品牌卡 / 起手式 / 内嵌 / 起步贴底）。本库无头行为用例覆盖显隐、重复显示不重建、主按钮与起手式芯片的读屏 Invoke、无起手式回调时不画行。
 
 ## 成员 `ChatScroller`
 
@@ -33,6 +39,8 @@ P2 去脑化：废除 Look 记录与 Spot 仿制件，改用原生 Button（样�
 覆盖旧用例：`CraftsmanshipPolishTests` 回到最新显隐与读屏名、`EndpointScrollTests` / `InteractabilityPolishTests` 平滑滚动与滚轮打断、分页前置锚点。本库无头行为用例覆盖 Invoke、两拍到达、滚轮打断、前置补偿。
 
 - PinOffset(y)：立即写偏移并经 ease.Pin 记为自己写的（旧 tween.Pin），钉住期间宿主重新对齐不会报 UserUp。
+- ApplyCompact(value)：窄屏档（触控目标放大、不画宽按钮）。
+- ApplyOffset(y)：立即写偏移（不记为自己写的）。
 
 ## 成员 `ExchangeNav`
 
@@ -47,6 +55,8 @@ P2 去脑化：废除 Look 记录与 Spot 仿制件，改用原生 Button（样�
 ### 证据与旧测试
 
 覆盖旧用例：`WindowedNavigationTests` / `ExchangeNavTests` 中失败横幅与端点态部分。本库无头行为用例覆盖端点读写、重试 Invoke 后隐藏。
+
+- ApplyJumpEnds(previous, next)：写「更早 / 更晚」端点可用态。
 
 ## 成员 `SkeletonList`
 

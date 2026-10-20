@@ -10,7 +10,6 @@ open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
-open Wanxiang2.WorkspaceState
 
 /// 一条附件的呈现事实
 type TrayItem =
@@ -34,7 +33,7 @@ module private Dyn =
         ext.ProvideValue sp
 
 /// 输入区附件托盘（原生 Button / WrapPanel / ScrollViewer 实现）：
-/// 单入口 Render(items: AttachmentVS list, compact: bool)；
+/// 呈现事实全部由调用方经 Render(items: TrayItem list, compact: bool) 一次给全（含缩略图与缩小说明）；
 /// 上传进度 chip 动画改声明式 anim-breathe / anim-spin，废除 Look 与 DispatcherTimer。
 type AttachmentTray() =
     let strip = WrapPanel(Orientation = Orientation.Horizontal, Focusable = true, ItemSpacing = 6.0, LineSpacing = 6.0)
@@ -227,37 +226,9 @@ type AttachmentTray() =
 
     member _.OnRemove(f: Guid -> unit) = onRemove <- f
 
-    member _.SetCompact(value: bool) =
-        compact <- value
-        applyCompact ()
-
-    member _.SetItems(next: TrayItem list) =
+    /// 单入口幂等投影：附件事实与窄屏密度一次给全
+    member this.Render(next: TrayItem list, isCompact: bool) =
         items <- next
-        renderItems ()
-
-    /// 单入口幂等渲染：由 AttachmentVS 列表投影刷新
-    member this.Render(tray: AttachmentVS list, isCompact: bool) =
         compact <- isCompact
         applyCompact ()
-        let converted =
-            tray
-            |> List.map (fun a ->
-                let sizeStr = sprintf "%d KB" (max 1L (a.Size / 1024L))
-                let stateStr =
-                    if a.Failed then "失败"
-                    elif a.Ready then sizeStr
-                    else sprintf "%d%%" a.ProgressPercent
-                {
-                    Id = a.Id
-                    FileName = a.FileName
-                    SizeText = sizeStr
-                    StateText = stateStr
-                    Tip = if a.Failed then "上传失败" elif a.Ready then sizeStr else "正在上传..."
-                    Name = sprintf "附件：%s（%s）" a.FileName sizeStr
-                    Failed = a.Failed
-                    Ready = a.Ready
-                    IsImage = a.MediaType.StartsWith "image/"
-                    ShrinkNote = None
-                    Thumbnail = None
-                })
-        this.SetItems converted
+        renderItems ()

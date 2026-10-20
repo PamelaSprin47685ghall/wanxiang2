@@ -5,7 +5,8 @@ ShellDesk + SidebarDesk + ChatScreen + ComposerDesk + OverlayDesk = 旧 `AppShel
 - 宿主入口：`Workspace(theme, overlayRoot: Grid, sidebar, chat, composer, hooks: WorkspaceHooks)`；`WorkspaceHooks = { PrefersTouch; SidebarWidth; InitialSidebarCollapsed }`。构造时把工作区插到浮层根最底层。
 - 紧凑模式同步给输入区、侧栏、对话屏；起步模式同步给对话屏；焦点归宿走 ComposerDesk.Focus 与 SidebarDesk.FocusSearch。
 - 响应式：默认按自身宽度投影；浏览器宿主用 `ObserveViewport(cssWidth)` 喂 CSS 视口宽（轮询计时器留宿主），此后以它为准。`ApplyResponsiveLayout()` 立即重投影。
-- 方法：`ToggleSidebar()`、`SetCompactNavigation(opened)`、`EnsureSearchVisible()`、`SetStarting(bool)`、`State`、`Shell`、`Splitter`；事件 `SidebarResized(width)`（拖完分隔条，宿主写偏好）。
+- 方法：`ToggleSidebar()`、`EnsureSearchVisible()`、`Render(vs: ShellVS)`（单入口幂等投影，涵盖抽屉开合与起步态）、`State`、`Shell`、`Splitter`；事件 `SidebarResized(width)`（拖完分隔条，宿主写偏好）。
+- 命名规约：单入口走 `Render*`，单槽走 `Apply*`；无 `Set*` 成员。
 
 ## 证据与旧测试
 - 无头行为用例两条：宽窗桌面 / CSS 视口进紧凑并放大顶栏触控目标、顶栏侧栏按钮在桌面折叠与紧凑抽屉开合。

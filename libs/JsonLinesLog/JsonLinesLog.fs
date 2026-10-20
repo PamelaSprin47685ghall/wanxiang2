@@ -18,7 +18,7 @@ type JsonLinesLog(emit: string -> unit, now: unit -> DateTimeOffset, recentLimit
     let idLock = obj ()
     let mutable instanceId: string option = None
 
-    member _.SetInstanceId(id: string) =
+    member _.ApplyInstanceId(id: string) =
         lock idLock (fun () -> instanceId <- if String.IsNullOrEmpty id then None else Some id)
 
     /// 登记密钥原值（幂等；空白和短于 8 个字符的忽略）。

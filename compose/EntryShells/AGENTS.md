@@ -7,10 +7,10 @@
 - `SharedTheme`：全应用唯一的 `ThemeManager` / `ThemeStyles` / `InputSense` 与品牌标 `logo`（`Wanxiang2.Theme`、`Wanxiang2.ShellDesk`）。必须最先编译。
 - `App`（Avalonia `Application`）：把 Fluent 的强调色 / 选中色 / 输入框描边压成万象的活画笔，并给弹出层（ToolTip / ContextMenu / MenuFlyoutPresenter）套万象字体与底色；静态注入端口 `Root` / `Build` / `FlushDrafts` / `LoadPrefs` / `SavePrefs` / `MarkFirstFrame`。桌面分支组装 `MainWindow`，PWA 分支直接挂 `SingleView`。
 - `MainWindow(MainWindowPort)`：窗口尺寸 / 位置与几何持久化（Q195）；`Root` / `Build` / `FlushDrafts` / `LoadPrefs` / `SavePrefs` / `MarkFirstFrame` 全部由入口注入。
-- `Composer(ComposerActions)`：输入区适配器（发送历史召回、IME 守护、缩略图、上下文摘要）；控件本体与载荷在 `Wanxiang2.ComposerDesk`，看图徽标经 `Wanxiang2.ModelVision` / `Wanxiang2.MediaTypes`。
+- `Composer(ComposerActions)`：输入区适配器（发送历史召回、IME 守护、缩略图、上下文摘要）；控件本体与载荷在 `Wanxiang2.ComposerDesk`，看图徽标经 `Wanxiang2.ComposerDesk` / `Wanxiang2.MediaTypes`（看图判断 `ModelVision` 已并入 `Wanxiang2.HostCatalog`，本壳不直接引用）。
 - `Icons`：宿主语义名 → `Wanxiang2.IconSet`（Lucide 官方集）的映射，三档尺寸 14 / 16 / 20。
 
-引用的包：组合者 `Wanxiang2.Theme`、`Wanxiang2.ShellDesk`、`Wanxiang2.ComposerDesk`、`Wanxiang2.DesignRhythm`、`Wanxiang2.Outbox`；库 `Wanxiang2.ThemePalette`、`Wanxiang2.ThemeMetrics`、`Wanxiang2.InputSense`、`Wanxiang2.ImeShield`、`Wanxiang2.IconSet`、`Wanxiang2.PromptHistory`、`Wanxiang2.UiPrefs`、`Wanxiang2.ComposerDrafts`、`Wanxiang2.ModelVision`、`Wanxiang2.MediaTypes`、`Wanxiang2.Wire`；外加 `Avalonia` / `Avalonia.Themes.Fluent`（见 `EntryShells.fsproj`）。
+引用的包：组合者 `Wanxiang2.Theme`、`Wanxiang2.ShellDesk`、`Wanxiang2.ComposerDesk`、`Wanxiang2.DesignRhythm`、`Wanxiang2.Outbox`；库 `Wanxiang2.ThemePalette`、`Wanxiang2.ThemeMetrics`、`Wanxiang2.InputSense`、`Wanxiang2.ImeShield`、`Wanxiang2.IconSet`、`Wanxiang2.PromptHistory`、`Wanxiang2.UiPrefs`、`Wanxiang2.ComposerDrafts`、`Wanxiang2.MediaTypes`、`Wanxiang2.Wire`；外加 `Avalonia` / `Avalonia.Themes.Fluent`（见 `EntryShells.fsproj`）。
 
 本壳不持 DispatcherTimer、不做文件 IO、不执行进程退出：计时器（`After` / `Every`）、偏好与草稿落盘、剪贴板、链接打开、`StartupTrace.requestExit` 都由入口注入（`app/Desktop/Program.fs`、`app/Pwa/Program.fs` 的接线）。
 
@@ -30,7 +30,7 @@
 
 # 迁入或覆盖的旧测试
 - 旧入口壳没有独立单元测试；驱动这些文件的用例挂在旧整套 UI 测试上（如 `IconCenteringTests` 读 `src/Wanxiang.UI/Design/Icons.fs` 的墨迹断言、`FocusRingTests` 经 `Icons.*`、`CloseWindowTests` 走 `MainWindow.Closing` 的几何持久化），随旧壳退役（旧仓库 16904f0 删 `src/` 与 `tests/`）。
-- 行为面由各自的库 / 组合者测试覆盖：`libs/IconSet`（尺寸活值跟随、图像复用、画笔实例）、`compose/ComposerDesk`（金样 + headless）、`libs/PromptHistory`、`libs/ModelVision`、`libs/MediaTypes`、`libs/ImeShield`、`libs/InputSense`、`compose/Theme`（控件类样式与无障碍）。
+- 行为面由各自的库 / 组合者测试覆盖：`libs/IconSet`（尺寸活值跟随、图像复用、画笔实例）、`compose/ComposerDesk`（金样 + headless）、`libs/PromptHistory`、`libs/HostCatalog`（含看图判断 ModelVision 的用例）、`libs/MediaTypes`、`libs/ImeShield`、`libs/InputSense`、`compose/Theme`（控件类样式与无障碍）。
 - 旧 `IconCenteringTests` 要整套旧视图，留在旧仓库（`libs/IconSet/AGENTS.md` 同结论）。
 
 # 拆分与复核

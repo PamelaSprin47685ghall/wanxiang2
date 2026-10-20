@@ -35,9 +35,9 @@
 主窗口外壳布局（迁自旧 `Views/MainLayout.fs` 的界面部分）。根规则见项目根目录 AGENTS.md。
 
 - `ShellState { Compact; DrawerOpen; SidebarCollapsed }`：一帧布局状态，替代旧 NavigationSnapshot 中与布局有关的部分。
-- `ShellColumns.Apply state`：按状态投影侧栏列宽、分隔条、抽屉遮罩；窄屏抽屉打开时遮罩可见并可点；`NoteUserSidebarWidth` 记住用户拖出的宽度并夹在最小最大之间。
+- `ShellColumns.Apply state`：按状态投影侧栏列宽、分隔条、抽屉遮罩；窄屏抽屉打开时遮罩可见并可点；`NoteUserSidebarWidth` 记住用户拖出的宽度并夹在最小最大之间。侧栏最小宽写死 220.0，无独立的设宽接口。
 - 事件：`CompactApplied`、`ScrimPressed`（遮罩按下，组合者关抽屉）、`FocusHomeRequested`。
-- `WorkspaceStack(chat, composer, look)`：开始页与续聊共用同一个输入区；`StartModeChanged` 告知组合者。
+- `WorkspaceStack(chat, composer, look)`：开始页与续聊共用同一个输入区；`RenderStarting(bool)` 投影起步态（幂等，每帧可调）；`StartModeChanged` 告知组合者。
 - Look 中尺寸变化时按上次状态重新投影。
 
 ### 外观
@@ -54,3 +54,4 @@
 ### 与旧实现的差异
 
 - 状态记录替代 NavigationSnapshot；旧代码直接调 SetCompactMode / SetStartMode / composer.Focus，现改为事件由组合者接；OnScrimPressed 回调改为事件。
+- 命名规约：起步态投影走 `RenderStarting`，窄屏抽屉单槽走 `ApplyCompactNavigation`（NavigationState），不再有 `Set*` 成员。

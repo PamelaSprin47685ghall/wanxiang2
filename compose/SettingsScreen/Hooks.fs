@@ -12,7 +12,9 @@ type SettingsHooks =
       UpsertMcp: JsonObject -> (bool -> unit) -> unit
       DeleteMcp: string -> unit
       UpdateGeneration: JsonObject -> (bool -> unit) -> unit
-      SavePrefs: UiPrefs -> unit }
+      SavePrefs: UiPrefs -> unit
+      /// 「检查主机」：设置页点按钮后，宿主向主机发 doctor 请求（纯读）。
+      RequestDoctorCheck: unit -> unit }
 
 module SettingsHooks =
     /// 全部空操作（测试与尚未接线时）
@@ -23,4 +25,5 @@ module SettingsHooks =
           UpsertMcp = fun _ _ -> ()
           DeleteMcp = ignore
           UpdateGeneration = fun _ _ -> ()
-          SavePrefs = ignore }
+          SavePrefs = ignore
+          RequestDoctorCheck = ignore }

@@ -133,9 +133,8 @@ type SidebarSearch() =
         box.Focus() |> ignore
         if selectAll || String.IsNullOrEmpty box.Text then box.SelectAll()
 
-    member _.SetEmptyHint(visible: bool) = hint.IsVisible <- visible
+    member _.ApplyEmptyHint(visible: bool) = hint.IsVisible <- visible
     member _.FocusEmptyHint() = hint.Focus NavigationMethod.Directional |> ignore
-    member _.SetCompact(_value: bool) = ()
 
     /// 每次输入即时上报
     [<CLIEvent>] member _.Changed = changed.Publish

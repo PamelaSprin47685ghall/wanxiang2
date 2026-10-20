@@ -12,33 +12,19 @@ open Wanxiang2.ExportSheet
 
 /// 从主题管理者取两张对话框的外观与时长。
 module TransferLook =
+    /// 画笔由主题管理者给（同一实例，切主题原地改色）；字号、行高、间距由对话框控件侧走动态资源键。
     let importOf (t: ThemeManager) : ImportSheetAppearance =
         let brush k = t.Brush k :> IBrush
-        let metric m = t.Metric m :> IObservable<float>
         { Text = brush PaletteKey.Text
           Muted = brush PaletteKey.TextMuted
-          Danger = brush PaletteKey.Danger
-          TitleFontSize = metric Metric.FontTitle
-          BodyFontSize = metric Metric.FontBody
-          SmallFontSize = metric Metric.FontSmall
-          CaptionFontSize = metric Metric.FontCaption
-          CaptionLineHeight = t.Metric Metric.CaptionLineHeight
-          StackSpacing = t.Space Space.Xl
-          ButtonSpacing = t.Space Space.Md }
+          Danger = brush PaletteKey.Danger }
 
     let exportOf (t: ThemeManager) : ExportSheetAppearance =
         let brush k = t.Brush k :> IBrush
-        let metric m = t.Metric m :> IObservable<float>
         { Text = brush PaletteKey.Text
           Muted = brush PaletteKey.TextMuted
           Success = brush PaletteKey.Success
-          Danger = brush PaletteKey.Danger
-          TitleFontSize = metric Metric.FontTitle
-          BodyFontSize = metric Metric.FontBody
-          CaptionFontSize = metric Metric.FontCaption
-          CaptionLineHeight = t.Metric Metric.CaptionLineHeight
-          StackSpacing = t.Space Space.Xl
-          ButtonSpacing = t.Space Space.Md }
+          Danger = brush PaletteKey.Danger }
 
 /// 导入导出用到的时长与减弱动效（主题管理者拥有）
 type TransferTiming =

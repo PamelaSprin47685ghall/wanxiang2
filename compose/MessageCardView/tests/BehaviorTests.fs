@@ -120,6 +120,51 @@ let ``262 没有倒计时的可重试错误照常可按`` () =
         press retry
         Assert.Equal(1, hits))
 
+/// 语义钉桩（一）：卡片重建不重置倒计时——同一错误实例重建错误卡，剩余秒数只往下走，不回跳
+[<Fact>]
+let ``错误卡重建不重置倒计时，剩余秒数不回跳`` () =
+    Headless.run (fun () ->
+        let cards, _ = Fixture.cards ()
+        let err = { GenerationError.create GenerationErrorKind.ProviderRateLimited "限流" with retryAfterSeconds = Some 5 }
+        let card = cards.ErrorCard(err, ignore, Fixture.actions, None)
+        let retry = named "重试生成，5 秒后可用" card
+        Assert.False retry.IsEnabled
+        // 时间走过两秒后重建错误卡（同一错误实例，截止时刻不变）
+        Fixture.now <- Fixture.now.AddSeconds 2.0
+        let rebuilt = cards.ErrorCard(err, ignore, Fixture.actions, None)
+        let retry2 = named "重试生成，3 秒后可用" rebuilt
+        Assert.False retry2.IsEnabled
+        // 再重建一次，剩余秒数不回跳到 5
+        let rebuilt2 = cards.ErrorCard(err, ignore, Fixture.actions, None)
+        let retry3 = named "重试生成，3 秒后可用" rebuilt2
+        Assert.False retry3.IsEnabled
+        Fixture.now <- Fixture.now.AddSeconds -2.0)
+
+/// 语义钉桩（二）：播报（读屏 polite）只在倒计时第一次走完时发生一次
+[<Fact>]
+let ``错误卡倒计时走完只播报一次`` () =
+    Headless.run (fun () ->
+        let cards, _ = Fixture.cards ()
+        let err = { GenerationError.create GenerationErrorKind.ProviderRateLimited "限流" with retryAfterSeconds = Some 5 }
+        let card = cards.ErrorCard(err, ignore, Fixture.actions, None)
+        let countdown =
+            all card
+            |> List.find (fun c ->
+                let n = AutomationProperties.GetName c
+                not (isNull n) && n.StartsWith "重试倒计时")
+        Assert.Equal(AutomationLiveSetting.Off, AutomationProperties.GetLiveSetting countdown)
+        // 时间走过截止时刻：重新挂上时刷新，倒计时走完
+        let w = show (Border())
+        Fixture.now <- Fixture.now.AddSeconds 6.0
+        (w.Content :?> Border).Child <- card
+        Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting countdown)
+        // 再挂一次（模拟重建）不重复播报
+        (w.Content :?> Border).Child <- null
+        (w.Content :?> Border).Child <- card
+        Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting countdown)
+        Fixture.now <- Fixture.now.AddSeconds -6.0
+        w.Close())
+
 [<Fact>]
 let ``error card toggles technical detail and triggers retry action`` () =
     Headless.run (fun () ->
@@ -216,9 +261,9 @@ let ``外观来自主题管理者的活值`` () =
     Headless.run (fun () ->
         let _, manager, card, _ = render "assistant-plain"
         let w = show card
-        manager.SetSpace(Space.RadiusLg, 20.0)
+        manager.ApplySpace(Space.RadiusLg, 20.0)
         Assert.Equal(CornerRadius 20.0, (card :?> Border).CornerRadius)
-        manager.SetSpace(Space.RadiusLg, 12.0)
+        manager.ApplySpace(Space.RadiusLg, 12.0)
         w.Close())
 
 [<Fact>]

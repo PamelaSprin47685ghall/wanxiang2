@@ -51,7 +51,7 @@
 
 单行输入对话框的内容（迁自旧 `Views/Dialogs.fs` 的 prompt，用于重命名等）。根规则见项目根目录 AGENTS.md。
 
-- `PromptPane(title, hint, initial, confirmLabel, validationFor)`：`View`、`Box`、`CancelButton`、`ConfirmButton`；`SetPending`。
+- `PromptPane(title, hint, initial, confirmLabel, validationFor)`：`View`、`Box`、`CancelButton`、`ConfirmButton`；`ApplyPending`。
 - 事件：`Submitted`（去空白的值；空白或保存中不发）、`Cancelled`、`FieldError`（全空白字符时的行内错误，None 为清除，组合者写进 FieldCheck）。
 - 空输入时禁用确认并显示「内容不能为空，请输入有效文本。」；回车、确认键、页脚行级 Enter 都提交；焦点在取消上的行级 Enter/Space 只取消。
 
@@ -71,7 +71,7 @@
 对话设置的内容（迁自旧 `Views/Dialogs.fs` 的 sessionSettings）。模型选择键由组合者给（OverlayDesk.SelectButton）；数字校验、载荷、保存往返与提示条归组合者。根规则见项目根目录 AGENTS.md。
 
 - `SessionPrefsPane(modelPicker, init, validationFor)`：`View`、四个参数框与系统指令框、`SaveButton`、`CancelButton`、`Parameters`、`ToolsExpander`、`Summary`。
-  - 动作：`ShowSummary`（多错摘要，任一参数框改动即收起）、`RevealParameters`、`SetPending`。
+  - 动作：`ShowSummary`（多错摘要，任一参数框改动即收起）、`RevealParameters`、`ApplyPending`（保存往返；幂等单槽）。
   - 事件：`SaveRequested SessionPrefsDraft`（原始输入 + 选中工具 id）、`Cancelled`。Ctrl/⌘ + Enter 与页脚行级 Enter 保存。
 - 工具折叠头「工具 · 已启用 N 项」在展开 / 收起时更新，不重建开关。
 

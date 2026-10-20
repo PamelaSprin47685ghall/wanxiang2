@@ -17,7 +17,7 @@ let render () =
             match act with
             | "nav" -> sprintf "%A" (j.NavState(mounted, cards (), vp (), atBottom, hidden))
             | "jump" -> sprintf "%A" (j.Jump(arg, mounted, cards (), vp (), hidden, first ()))
-            | "older" -> j.SetOlderAvailable((arg = 1)); "-"
+            | "older" -> j.ApplyOlderAvailable((arg = 1)); "-"
             | "hidden" -> hidden <- (arg = 1); "-"
             | "atbottom" -> atBottom <- (arg = 1); "-"
             | "fail" -> j.OlderFailed(); "-"

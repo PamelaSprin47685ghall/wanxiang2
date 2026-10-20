@@ -223,3 +223,68 @@ module WorkspaceStateTests =
 
         // 6. OlderPageLoad
         Assert.True(OlderPageLoad.timedOut true (Some DateTimeOffset.UtcNow) (DateTimeOffset.UtcNow.AddSeconds 10.0) (TimeSpan.FromSeconds 5.0))
+
+    [<Fact>]
+    let ``对话列表快照同时带出分叉谱系：侧栏投影按它给分叉行标记`` () =
+        let m0 = Workspace.init ()
+        let fork = Guid.NewGuid()
+        let parent = Guid.NewGuid()
+        let item = JsonObject()
+        item["conversationId"] <- string fork
+        item["parentId"] <- string parent
+        item["title"] <- "分叉出来的对话"
+        item["isFork"] <- true
+        let ev = WireEvent.ConversationListSnapshot {| lastCommitId = 0UL; items = JsonArray([| item :> JsonNode |]) |}
+        let m1, _ = Workspace.update now0 (Msg.WireRecv ev) m0
+        let vs = Workspace.project m1
+        Assert.Equal(1, vs.Sidebar.Rows.Length)
+        Assert.True(vs.Sidebar.Rows.[0].IsFork)
+        // 谱系随侧栏投影携带（不再恒空，也不再靠旁路插槽）
+        Assert.True(vs.Sidebar.Lineage.ContainsKey fork)
+        Assert.Equal(parent, vs.Sidebar.Lineage[fork].parentId)
+
+    [<Fact>]
+    let ``定位目标：搜索命中进模型，快照到达且消息已加载时统一发滚动 Effect`` () =
+        let m0 = Workspace.init ()
+        let convId = Guid.NewGuid()
+        // 搜索命中：登记定位目标（对话 + 消息）
+        let m1, _ =
+            Workspace.update
+                now0
+                (Msg.User (UserMsg.Sidebar (SidebarUserMsg.SearchHitSelect(convId, Some "7"))))
+                m0
+        let vs1 = Workspace.project m1
+        Assert.Equal(Some "7", vs1.Chat.RevealTarget)
+        // 快照到达但目标消息没加载：不发定位 Effect（滚不到就不假装）
+        let snapshotEv = WireEvent.ConversationSnapshot {|
+            conversationId = convId
+            title = "对话"
+            lastCommitId = 0UL
+            runtimeState = "idle"
+            generationId = None
+            messages = JsonArray()
+            snapshotEarliestCommitId = 0UL
+            snapshotHasMore = false
+            config = SessionConfig.empty
+        |}
+        let ready = { m1 with Conn = ConnPhase.Authed("inst-1", CatalogPhase.Ready(Catalog.empty, WorkspacePhase.IdleEmpty)) }
+        let m2, effs2 = Workspace.update now0 (Msg.WireRecv snapshotEv) ready
+        Assert.DoesNotContain(Effect.ScrollChat (ScrollCommand.ToExchange "7"), effs2)
+        // 目标消息在快照里：统一 Effect（宿主执行滚动与高亮），目标随即消费
+        let msg = JsonObject()
+        msg["commitId"] <- 7UL
+        msg["role"] <- "assistant"
+        let snapshotEv2 = WireEvent.ConversationSnapshot {|
+            conversationId = convId
+            title = "对话"
+            lastCommitId = 7UL
+            runtimeState = "idle"
+            generationId = None
+            messages = JsonArray([| msg :> JsonNode |])
+            snapshotEarliestCommitId = 0UL
+            snapshotHasMore = false
+            config = SessionConfig.empty
+        |}
+        let m3, effs3 = Workspace.update now0 (Msg.WireRecv snapshotEv2) m2
+        Assert.Contains(Effect.ScrollChat (ScrollCommand.ToExchange "7"), effs3)
+        Assert.Equal(None, (Workspace.project m3).Chat.RevealTarget)

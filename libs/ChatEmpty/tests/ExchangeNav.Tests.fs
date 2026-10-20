@@ -14,7 +14,7 @@ open Wanxiang2.ExchangeNav.Tests
 let ``端点可用态可读写；换对话清掉`` () =
     Headless.run (fun () ->
         let n = ExchangeNav()
-        n.SetJumpEnds(true, false)
+        n.ApplyJumpEnds(true, false)
         Assert.True n.CanJumpPrevious
         Assert.False n.CanJumpNext
         n.Reset()

@@ -3,9 +3,9 @@
 旧 `Controls/MarkdownRenderer.fs` 的 `MarkdownRenderer` 与 `StreamingMarkdown`（extract-ledger@0c0b2a6），改名 `MarkdownView` 与 `MarkdownStream`。协作者（包）：MarkdownBlocks（块模型）、LinkChunks（长链接分段）、BlockDiff（流式增量，只在 MarkdownStream 里用）、DesignRhythm（阅读节奏与布局规则）、MathFigure（公式）、CodeTint（着色）、CopyButton（复制确认）。已移除 UiKit 依赖。不认识主题管理者，外观全部经 `MarkdownMetrics` 由调用方（ReadingLook）给。根规则见项目根目录 AGENTS.md。
 
 ## 外观
-- `MarkdownMetrics`：`Ink`（`MarkdownInk` 画笔槽，活实例原地改色）、`Gauge`（`MarkdownGauge` 尺寸槽，活值）、`BodyFont`、`MonoFont`、`Glyph`（按画笔造图标）、`Dress`（给按钮挂共享样式类）、`Reduced`、`Copy`（CopyButtonAppearance）、`Math`（MathFigureMetrics）。
+- `MarkdownMetrics`（W7 外观退役后的普通记录）：`Ink`（`MarkdownInk` 画笔槽，活实例原地改色）、`Glyph`（按画笔造图标）、`Dress`（给按钮挂共享样式类）、`Copy`（CopyButtonAppearance，静态参数）、`Math`（MathFigureMetrics）。尺寸与字体不再经活值注入：走主题资源键的声明式绑定（`Metric.*`、`Space.*`、`CornerRadius.*`、`Thickness.*`、`Padding.*`/`Margin.*` 派生档、`Tracking.Emphasis`、`FontFamily.Mono`、`StackPanel.Spacing` 类键 `Space.XXs`），减弱动效在复制激活时刻读资源键 `Motion.Reduced`。
 - 用到的样式类：由 `Dress MarkdownButton.Icon | Ghost` 决定；ReadingLook 挂 `surface hover-plain icon-button` 与 `surface hover-plain button-ghost`。
-- 活值只在控件挂进可视树期间订阅，摘下即退订。会被父级改写的外边距（引用卡）只在构造时取一次。
+- 无 IObservable 字段、无手工 Subscribe。会被父级改写的外边距（引用卡嵌套档 `Margin.QuoteNested`）只在构造时读一次资源，不挂活绑定。
 - 字号、行高、段距、列表缩进、表格最小列宽、代码 120 行限高仍是规则（DesignRhythm 与本组合的内容策略），不是外观值。
 
 ## 接口

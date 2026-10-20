@@ -17,9 +17,6 @@ open Wanxiang2.MarkdownView
 /// 共享外观（图标按钮、幽灵按钮、表面状态反馈）走 ThemeStyles 安装的样式类。
 module ReadingLook =
 
-    let private ofMetric (manager: ThemeManager) m = manager.Metric m :> IObservable<float>
-    let private ofSpace (manager: ThemeManager) s = manager.Space s :> IObservable<float>
-
     let private ink (manager: ThemeManager) (slot: MarkdownInk) : IBrush =
         let key =
             match slot with
@@ -56,56 +53,19 @@ module ReadingLook =
             | MarkdownInk.CodeDeletion -> PaletteKey.CodeDeletion
         manager.Brush key :> IBrush
 
-    /// 字距档没有对应的度量项：取 SpacingRamp 的强调档作为本外观自己的活值
-    let private tracking = LiveValue(Spacing.Tracking.emphasis)
-
-    let private gauge (manager: ThemeManager) (slot: MarkdownGauge) : IObservable<float> =
-        match slot with
-        | MarkdownGauge.FontMicro -> ofMetric manager Metric.FontMicro
-        | MarkdownGauge.BorderWidth -> ofMetric manager Metric.BorderWidth
-        | MarkdownGauge.QuoteEdgeWidth -> ofMetric manager Metric.QuoteEdgeWidth
-        | MarkdownGauge.BlockPaddingX -> ofMetric manager Metric.BlockPaddingX
-        | MarkdownGauge.BlockPaddingY -> ofMetric manager Metric.BlockPaddingY
-        | MarkdownGauge.SpaceXXs -> ofSpace manager Space.XXs
-        | MarkdownGauge.SpaceXs -> ofSpace manager Space.Xs
-        | MarkdownGauge.SpaceSm -> ofSpace manager Space.Sm
-        | MarkdownGauge.SpaceMd -> ofSpace manager Space.Md
-        | MarkdownGauge.RadiusXs -> ofSpace manager Space.RadiusXs
-        | MarkdownGauge.RadiusSm -> ofSpace manager Space.RadiusSm
-        | MarkdownGauge.RadiusMd -> ofSpace manager Space.RadiusMd
-        | MarkdownGauge.ListMarkerDotSize -> ofMetric manager Metric.ListMarkerDotSize
-        | MarkdownGauge.ListMarkerDotRadius -> ofMetric manager Metric.ListMarkerDotRadius
-        | MarkdownGauge.TaskBoxSize -> ofMetric manager Metric.TaskBoxSize
-        | MarkdownGauge.TaskBoxBorderWidth -> ofMetric manager Metric.TaskBoxBorderWidth
-        | MarkdownGauge.TaskCheckGlyphSize -> ofMetric manager Metric.TaskCheckGlyphSize
-        | MarkdownGauge.TrackingEmphasis -> tracking :> IObservable<float>
-        | MarkdownGauge.CopyFadeMs -> manager.Timing Timing.CopyConfirmationFade :> IObservable<float>
-
-    /// 减弱动效开关的活值（MotionSwitch 实例改了就推送）
-    let reduced (manager: ThemeManager) : IObservable<bool> =
-        let v = LiveValue(manager.Motion.IsReduced)
-        manager.Motion.Changed.Add(fun _ -> v.Set manager.Motion.IsReduced)
-        v :> IObservable<bool>
-
-    /// 公式外观
+    /// 公式外观：活画笔实例；字体与留白走资源键（FontFamily.Body / Padding.MathBlock）。
     let math (manager: ThemeManager) : MathFigureMetrics =
-        { Ink = manager.Brush PaletteKey.Text
-          BodyFont = manager.FontFamily
-          BlockPadding = ofSpace manager Space.Md }
+        { Ink = manager.Brush PaletteKey.Text }
 
-    /// 复制确认外观
+    /// 复制确认外观：静态参数（度量常量 + MotionLedger 时长档）。
     let copy (manager: ThemeManager) : CopyButtonAppearance =
-        let ms t = Live.map (fun (v: float) -> TimeSpan.FromMilliseconds v) (manager.Timing t)
-        { FadeOpacity = ofMetric manager Metric.OpacityCopyConfirmFade
-          Hold = ms Timing.CopyConfirmationHold
-          Fade = ms Timing.CopyConfirmationFade }
+        { FadeOpacity = (manager.Metric Metric.OpacityCopyConfirmFade).Value
+          Hold = TimeSpan.FromMilliseconds (manager.Timing Timing.CopyConfirmationHold).Value
+          Fade = TimeSpan.FromMilliseconds (manager.Timing Timing.CopyConfirmationFade).Value }
 
-    /// Markdown 正文外观
+    /// Markdown 正文外观：画笔与回调；尺寸字体全部经主题资源键声明式送达。
     let markdown (manager: ThemeManager) (styles: ThemeStyles) : MarkdownMetrics =
         { Ink = ink manager
-          Gauge = gauge manager
-          BodyFont = manager.FontFamily
-          MonoFont = manager.MonoFontFamily
           Glyph =
             fun glyph brush ->
                 let g =
@@ -121,6 +81,5 @@ module ReadingLook =
                     match role with
                     | MarkdownButton.Icon -> StyleClass.iconButton
                     | MarkdownButton.Ghost -> StyleClass.buttonGhost)
-          Reduced = reduced manager
           Copy = copy manager
           Math = math manager }

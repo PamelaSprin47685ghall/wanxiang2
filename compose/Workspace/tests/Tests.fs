@@ -35,7 +35,6 @@ let private rig (collapsed: bool) =
           Now = fun () -> DateTimeOffset.UnixEpoch }
     let composer =
         ComposerDesk(
-            ComposerMetrics.ofTheme theme styles,
             { Submit = (fun _ -> true); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
               OpenModelPicker = ignore; DropFiles = ignore; PasteFromClipboard = (fun () -> false); OpenSessionSettings = ignore })
     let ws: Workspace option ref = ref None

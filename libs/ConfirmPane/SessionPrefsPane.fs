@@ -290,7 +290,7 @@ type SessionPrefsPane(?modelPicker: Control, ?init: SessionPrefsInit, ?validatio
     /// 有错时展开生成参数
     member _.RevealParameters() = advanced.IsExpanded <- true
 
-    member _.SetPending(value: bool) =
+    member _.ApplyPending(value: bool) =
         pending <- value
         let text = if value then "正在保存…" else "保存"
         confirmButton.Content <- text
@@ -313,7 +313,7 @@ type SessionPrefsPane(?modelPicker: Control, ?init: SessionPrefsInit, ?validatio
             advancedHeader.Text <- if sp.Customized then "生成参数 · 已自定义" else "生成参数 · 跟随默认值"
             toolsHeader.Text <- sprintf "工具 · 已启用 %d 项" selected.Count
             this.ShowSummary sp.SummaryError
-            this.SetPending sp.IsPending
+            this.ApplyPending sp.IsPending
         | None -> ()
 
     [<CLIEvent>] member _.SaveRequested = save.Publish

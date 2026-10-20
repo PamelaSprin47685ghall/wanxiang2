@@ -79,7 +79,7 @@ type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: S
 
     member _.DataDir = dataDir
     /// 先打开（启动检查即用这次打开的结论），稍后再接上广播。
-    member _.SetOnCommitted(f: Events.Commit -> unit) = onCommitted <- f
+    member _.WireOnCommitted(f: Events.Commit -> unit) = onCommitted <- f
     member _.Health = store.Health
     member _.Startup = store.Startup
     member _.LastSnapshotError = store.LastSnapshotError

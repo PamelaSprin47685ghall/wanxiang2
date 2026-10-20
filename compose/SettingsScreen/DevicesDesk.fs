@@ -8,7 +8,12 @@ open Wanxiang2.Theme
 open Wanxiang2.ToastStrip
 open Wanxiang2.OverlayDesk
 open Wanxiang2.DevicesPane
+open Wanxiang2.WorkspaceState
 
+/// 命令类操作登记：
+/// - WireLanSource: 测试注入局域网地址来源
+/// - ApplyLoadTimeout: 等待超时（定时器与测试共用）通知
+/// - ApplyDisconnected: 断开连接时通知
 /// 设置 → 设备的协作（旧 Views/SettingsDevices.fs 的状态部分）：设备列表的有界等待、配对码倒计时、
 /// 地址与二维码推断、重命名空名提示。界面归 DevicesPane；读取、邀请、改名、吊销以事件交给宿主。
 /// 邀请码只存在于内存与界面里：不入日志、不写文件、不上传。
@@ -130,39 +135,28 @@ type DevicesDesk(_theme: ThemeManager, overlay: OverlayDesk) =
     member _.View = pane.View
     member _.Pane = pane
 
+    /// 单入口幂等渲染：由 SettingsDevicesVS 投影驱动
+    member this.Render(vs: SettingsDevicesVS) =
+        wsUrl <- vs.ServerUrl
+        devices <- vs.Devices
+        canInvite <- vs.CanInvite
+        invite <- vs.Invite
+        inviteRejected <- vs.InviteRejected
+        loadNote <- vs.LoadNote
+        now <- vs.Now
+        if not vs.IsLoading then
+            loadWait.Settle() |> ignore
+        render ()
+
     /// 切进设备分区时：读取最新列表（开始有界等待）
     member _.Refresh() = refresh ()
 
     /// 等待超时（定时器与测试共用）：仍在读取则结束等待并提示主机可能较旧
-    member _.NotifyLoadTimeout() = timeOut ()
+    member _.ApplyLoadTimeout() = timeOut ()
 
     /// 测试注入局域网地址来源
-    member _.SetLanSource(source: unit -> string list) =
+    member _.WireLanSource(source: unit -> string list) =
         lan <- source
-        render ()
-
-    member _.SetConnection(url: string) =
-        wsUrl <- url
-        render ()
-
-    member _.SetDevices(items: DeviceInfo list, canInviteNow: bool) =
-        devices <- items
-        canInvite <- canInviteNow
-        now <- DateTimeOffset.UtcNow
-        loadWait.Settle() |> ignore
-        loadNote <- None
-        render ()
-
-    /// 主机下发了邀请：以主机给的到期时间倒计时
-    member _.SetInvite(code: string, expiresAtUtc: DateTimeOffset, nowUtc: DateTimeOffset) =
-        invite <- Some { code = code; expiresAtUtc = expiresAtUtc }
-        inviteRejected <- None
-        now <- nowUtc
-        render ()
-
-    member _.SetInviteRejected(reason: string) =
-        invite <- None
-        inviteRejected <- Some reason
         render ()
 
     /// 外部推进时钟（测试与定时器共用）
@@ -174,7 +168,7 @@ type DevicesDesk(_theme: ThemeManager, overlay: OverlayDesk) =
             render ()
 
     /// 读取设备列表期间连接断开：旧版主机不认识设备事件时会直接断开
-    member _.NotifyDisconnected() =
+    member _.ApplyDisconnected() =
         if loadWait.Settle() then
             loadNote <- Some "读取设备列表时连接断开了。如果主机版本较旧，可能还不支持设备管理，请先升级主机。"
         invite <- None

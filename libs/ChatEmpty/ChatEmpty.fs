@@ -17,10 +17,21 @@ module private Dyn =
         let sp = { new IServiceProvider with member _.GetService _ = null }
         ext.ProvideValue sp
 
+/// 主题资源字典的浮点值现读：用量时刻取值，主题改值后下一次应用即生效。
+module private Res =
+    let float (key: string) (fallback: float) =
+        match Application.Current with
+        | null -> fallback
+        | app ->
+            match app.TryFindResource(box key) with
+            | true, v -> unbox v
+            | _ -> fallback
+
 /// 对话区空态（旧 ChatView.emptyPanel / ShowEmpty / ShowEmbeddedEmpty / HideEmpty）：
-/// 对话起点提示、品牌空态卡、起手式与预设芯片、或内嵌内容。
+/// 对话起点提示、品牌空态卡、起手式芯片、或内嵌内容。
 /// 统一为 Render(ChatPhase) 单入口，废除 Look 记录与 Spot 仿制件，改用原生 Button 与样式类。
-type ChatEmpty(?brandLogo: (float -> Control)) =
+/// starters 与 onStarter 是构造期事实（不再有 Set* 写入成员）：有起手式且有宿主回调时才画起手式行。
+type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) option, ?brandLogo: (float -> Control)) =
     let panel =
         StackPanel(
             Orientation = Orientation.Vertical,
@@ -31,10 +42,13 @@ type ChatEmpty(?brandLogo: (float -> Control)) =
             IsVisible = false)
     let mutable primary: unit -> unit = ignore
     let mutable lastKey: (string * string * string option) option = None
-    let mutable presets: (string * string * (unit -> unit)) list = []
-    let mutable starterPick: (string -> unit) option = None
-    let mutable starters: (string * string) list = []
     let mutable bottom = false
+
+    /// 起手式芯片（标签、种子、回调）：没有宿主回调就没有可用的芯片
+    let starterChips =
+        match onStarter with
+        | Some pick -> starters |> List.map (fun (label, seed) -> label, seed, pick)
+        | None -> []
 
     let textButton (label: string) (primaryTone: bool) (name: string) (help: string option) (tip: string) (action: unit -> unit) =
         let b = Button(Content = label)
@@ -112,34 +126,19 @@ type ChatEmpty(?brandLogo: (float -> Control)) =
         card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
         card :> Control
 
-    let presetRow () =
-        let row = WrapPanel(Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center)
-        for name, detail, run in presets do
-            let chip = textButton name false (sprintf "套用预设 %s" name) (Some detail) detail (fun () -> run ())
-            chip.Name <- "preset-chip"
-            chip.Margin <- Thickness 4.0
-            row.Children.Add chip
-        let caption =
-            TextBlock(Text = "从预设开始", TextWrapping = TextWrapping.Wrap, HorizontalAlignment = HorizontalAlignment.Center, FontSize = 12.0)
-        caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
-        let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0, Margin = Thickness(0.0, 12.0, 0.0, 0.0))
-        column.Children.Add caption
-        column.Children.Add row
-        column :> Control
-
     let starterRow () =
         let row = WrapPanel(Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = Thickness(0.0, 12.0, 0.0, 0.0))
-        for label, seed in starters do
-            let chip = textButton label false label None (sprintf "填入「%s」" seed) (fun () ->
-                starterPick |> Option.iter (fun pick -> pick seed))
+        for label, seed, pick in starterChips do
+            let chip = textButton label false label None (sprintf "填入「%s」" seed) (fun () -> pick seed)
             chip.Name <- "starter-chip"
             chip.Margin <- Thickness 4.0
             row.Children.Add chip
         row :> Control
 
     let applyMargin () =
-        let side = 16.0
-        let bottomPad = if bottom then 16.0 else 40.0
+        // 空态留白只由这里归属：左右取主题 Space.X2l；贴底时底部收紧到同档，否则留宽
+        let side = Res.float "Space.X2l" 16.0
+        let bottomPad = if bottom then side else 40.0
         panel.Margin <- Thickness(side, 0.0, side, bottomPad)
 
     do
@@ -149,17 +148,8 @@ type ChatEmpty(?brandLogo: (float -> Control)) =
     member _.Host: Control = panel
     member _.IsShown = panel.IsVisible
 
-    /// 起手式芯片列表（标签 → 填入输入框的开头）；空则不画行
-    member _.SetStarters(items: (string * string) list) = starters <- items; lastKey <- None
-
-    /// 选中起手式时把半句话交给宿主（旧 SetStarterHandler）
-    member _.SetStarterPick(pick: (string -> unit) option) = starterPick <- pick; lastKey <- None
-
-    /// 预设芯片（名、说明、动作）；空则不画行
-    member _.SetPresets(items: (string * string * (unit -> unit)) list) = presets <- items; lastKey <- None
-
-    /// 紧凑起步：空态贴底（旧 SetStartMode）
-    member _.SetBottomAligned(value: bool) =
+    /// 紧凑起步：空态贴底（旧 SetMode）；垂直对齐与外边距只由这里一处归属
+    member _.ApplyBottomAligned(value: bool) =
         bottom <- value
         panel.VerticalAlignment <- if value then VerticalAlignment.Bottom else VerticalAlignment.Center
         applyMargin ()
@@ -175,8 +165,7 @@ type ChatEmpty(?brandLogo: (float -> Control)) =
             let action = onPrimary |> Option.map (fun (label, _) -> actionButton label)
             panel.Children.Clear()
             panel.Children.Add(prompt title hint action)
-            if not (List.isEmpty presets) then panel.Children.Add(presetRow ())
-            if starterPick.IsSome && not (List.isEmpty starters) then panel.Children.Add(starterRow ())
+            if not (List.isEmpty starterChips) then panel.Children.Add(starterRow ())
         panel.HorizontalAlignment <- HorizontalAlignment.Center
         panel.IsVisible <- true
 

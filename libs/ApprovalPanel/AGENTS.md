@@ -6,7 +6,7 @@
 - 原生 Avalonia `Button` 控件，命中高度不低于 44px（触控下限），两键等宽、行宽封顶。
 - 文案是插槽 `ApprovalTexts`，组合者填 ApprovalCardText 的 `policyNote`、`sentText`、`displayArguments`、`argsToggleText`；固定标题「模型想使用工具，需要你批准」与读屏名格式照旧。
 - AutomationId 与旧代码相同：`tool-approval-summary`、`-status`、`-approve`、`-deny`、`-args`、`-args-toggle`、`tool-approval-<id>`。
-- 单入口幂等渲染：`Render(items, currentConversation)`，单出口意图事件 `Decide(Guid * bool)`。
+- 单入口幂等渲染：`Render(items, currentConversation)`，单出口意图事件 `Decide(Guid * bool)`；切换当前对话走幂等单槽 `ApplyConversation(Guid option)`（仅在值变化时刷新）。
 
 ## 外观
 

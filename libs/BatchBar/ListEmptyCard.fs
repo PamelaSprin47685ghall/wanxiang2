@@ -117,14 +117,6 @@ type ListEmptyCard() =
 
     member _.Hide() = host.IsVisible <- false
 
-    /// 行动键文案（读屏名与提示同步）
-    member _.SetAction(label: string) =
-        button.Content <- label
-        ToolTip.SetTip(button, label)
-        AutomationProperties.SetHelpText(button, label)
-
-    member _.SetActionVisible(visible: bool) = button.IsVisible <- visible
-
     member _.FocusAction() =
         if button.IsEffectivelyVisible && button.IsEnabled then
             button.Focus Avalonia.Input.NavigationMethod.Directional |> ignore

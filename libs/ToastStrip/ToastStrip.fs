@@ -7,37 +7,44 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Wanxiang2.WorkspaceState
 
 /// 提示条语气。Info 承载信息性进展播报，与 Neutral 的弱存在提示分开。
 /// 直接复用 WorkspaceState.ToastTone
 type ToastTone = Wanxiang2.WorkspaceState.ToastTone
 
-/// 提示条外观。全部由主题管理者提供活的实例；本库不写字面样式值。
+/// 动态资源绑定辅助：主题管理者把活值写进 ResourceDictionary，控件绑定即随主题资源生效。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
+
+/// 提示条外观：画笔与静态布局参数由组合者填（普通记录，无活值字段）。
+/// 主题管得住的尺寸走资源键声明式绑定：强调条宽 Metric.ToastAccentWidth、
+/// 圆角 CornerRadius.RadiusPill、描边 Thickness.BorderThin、外壳 CornerRadius.RadiusMd、
+/// 字号 Metric.FontBody。本库不再有 IObservable 字段与手工 Subscribe。
 type ToastStripAppearance =
     { Surface: IBrush
       Edge: IBrush
       Text: IBrush
       /// 各语气的强调条画笔
       Accent: ToastTone -> IBrush
-      AccentWidth: IObservable<float>
-      AccentRadius: IObservable<CornerRadius>
-      AccentOpacity: IObservable<float>
-      EdgeWidth: IObservable<Thickness>
-      Radius: IObservable<CornerRadius>
-      Padding: IObservable<Thickness>
-      Shadow: IObservable<BoxShadows>
-      FontSize: IObservable<float>
-      LineHeight: IObservable<float>
-      ColumnSpacing: IObservable<float>
+      /// 强调条不透明度
+      AccentOpacity: float
+      Padding: Thickness
+      Shadow: BoxShadows
+      LineHeight: float
+      ColumnSpacing: float
       /// 条与条的间距
-      Spacing: IObservable<float>
+      Spacing: float
       /// 整条带离视口边的外边距
-      Margin: IObservable<Thickness>
-      MaxWidth: IObservable<float>
-      BodyMaxHeight: IObservable<float>
+      Margin: Thickness
+      MaxWidth: float
+      BodyMaxHeight: float
       /// 进场淡入时长；减弱动效时主题给 0
-      Fade: IObservable<TimeSpan>
+      Fade: TimeSpan
       FadeEasing: Avalonia.Animation.Easings.Easing }
 
 /// 提示条带（迁自旧 Controls/OverlayHost.fs 的提示条渲染部分）。
@@ -48,7 +55,6 @@ type ToastStrip(look: ToastStripAppearance) =
     let buttons = ResizeArray<string * Control>()
     let mutable maxWidth = Double.PositiveInfinity
     let mutable viewportMaxWidth = Double.PositiveInfinity
-    let mutable fade = TimeSpan.Zero
     let mutable focusHome: unit -> unit = ignore
     let clicked = Event<string>()
     let actionInvoked = Event<string>()
@@ -63,10 +69,10 @@ type ToastStrip(look: ToastStripAppearance) =
         for c in stack.Children do c.MaxWidth <- w
 
     do
-        look.Spacing.Subscribe(fun v -> stack.Spacing <- v) |> ignore
-        look.Margin.Subscribe(fun v -> stack.Margin <- v) |> ignore
-        look.MaxWidth.Subscribe(fun v -> maxWidth <- v; applyWidth ()) |> ignore
-        look.Fade.Subscribe(fun v -> fade <- v) |> ignore
+        maxWidth <- look.MaxWidth
+        stack.Spacing <- look.Spacing
+        stack.Margin <- look.Margin
+        applyWidth ()
 
     /// 整条带（组合者把它加进最外层 Grid）
     member _.View: StackPanel = stack
@@ -83,21 +89,21 @@ type ToastStrip(look: ToastStripAppearance) =
     /// 加一条。同文条目由组合者先移除；本方法不去重。
     member _.Add(message: string, tone: ToastTone, action: string option) =
         let bar = Border(Background = look.Accent tone)
-        look.AccentWidth.Subscribe(fun v -> bar.Width <- v) |> ignore
-        look.AccentRadius.Subscribe(fun v -> bar.CornerRadius <- v) |> ignore
-        look.AccentOpacity.Subscribe(fun v -> bar.Opacity <- v) |> ignore
+        bar.Bind(Layoutable.WidthProperty, Dyn.res "Metric.ToastAccentWidth") |> ignore
+        bar.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusPill") |> ignore
+        bar.Opacity <- look.AccentOpacity
         let body =
             TextBlock(Text = message, Foreground = look.Text, TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center)
-        look.FontSize.Subscribe(fun v -> body.FontSize <- v) |> ignore
-        look.LineHeight.Subscribe(fun v -> body.LineHeight <- v) |> ignore
+        body.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontBody") |> ignore
+        body.LineHeight <- look.LineHeight
         let scroller =
             ScrollViewer(
                 Content = body,
                 HorizontalScrollBarVisibility = Primitives.ScrollBarVisibility.Disabled,
                 VerticalScrollBarVisibility = Primitives.ScrollBarVisibility.Auto)
-        look.BodyMaxHeight.Subscribe(fun v -> scroller.MaxHeight <- v) |> ignore
+        scroller.MaxHeight <- look.BodyMaxHeight
         let row = Grid()
-        look.ColumnSpacing.Subscribe(fun v -> row.ColumnSpacing <- v) |> ignore
+        row.ColumnSpacing <- look.ColumnSpacing
         row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
         row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
         Grid.SetColumn(bar, 0)
@@ -133,12 +139,12 @@ type ToastStrip(look: ToastStripAppearance) =
                 b :> Control)
         // 瞬态提示条不进 Tab 序：读屏经由 live region 公告，键盘关闭走全局 Escape。
         let toast = Border(Background = look.Surface, BorderBrush = look.Edge, Child = row, Focusable = false, MaxWidth = stack.MaxWidth)
-        look.EdgeWidth.Subscribe(fun v -> toast.BorderThickness <- v) |> ignore
-        look.Radius.Subscribe(fun v -> toast.CornerRadius <- v) |> ignore
-        look.Padding.Subscribe(fun v -> toast.Padding <- v) |> ignore
-        look.Shadow.Subscribe(fun v -> toast.BoxShadow <- v) |> ignore
+        toast.Bind(Border.BorderThicknessProperty, Dyn.res "Thickness.BorderThin") |> ignore
+        toast.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusMd") |> ignore
+        toast.Padding <- look.Padding
+        toast.BoxShadow <- look.Shadow
         // 只补间 Opacity，不做位移/尺寸动画。
-        let t = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty, Duration = fade, Easing = look.FadeEasing)
+        let t = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty, Duration = look.Fade, Easing = look.FadeEasing)
         let ts = Avalonia.Animation.Transitions()
         ts.Add t
         toast.Transitions <- ts
@@ -197,7 +203,8 @@ type ToastStrip(look: ToastStripAppearance) =
         | Some(_, b) when b.IsEffectivelyVisible -> b.Focus(NavigationMethod.Tab) |> ignore; true
         | _ -> false
 
-    member _.SetFocusHome(home: unit -> unit) = focusHome <- home
+    /// 动作按钮持焦的条被移除时，焦点回到归宿（组合者填）。
+    member _.WireFocusHome(home: unit -> unit) = focusHome <- home
     member _.ActionButtons = buttons |> Seq.map snd |> List.ofSeq
 
     /// 点了条身（组合者关条）

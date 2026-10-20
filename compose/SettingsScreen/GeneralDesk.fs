@@ -13,11 +13,15 @@ open Wanxiang2.OverlayDesk
 open Wanxiang2.FieldCheck
 open Wanxiang2.GeneralPane
 
+/// 命令类操作登记：
+/// - WireImportHandler: 注入导入回调
+/// - WirePresetHandlers: 注入预设重命名与删除回调
+/// - SaveGeneration / DiscardGenerationChanges: 表单保存/放弃一次性命令
 /// 设置 → 对话默认值、外观与交互、关于的协作（旧 Views/SettingsGeneral.fs）：生成参数草稿（GenerationDraft）与校验保存
 /// （GenerationForm + FieldCheck）、对话预设列表、本机偏好（UiPrefs）、本机草稿（LocalDraftControls）、主机状态（HostHealth）、
 /// 诊断报告复制。界面归 GeneralPane 的三个分区。
 type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> SettingsHooks, initialPrefs: UiPrefs, onPrefsChanged: UiPrefs -> unit) =
-    let check = FieldCheck(SettingsLooks.fieldCheckOf theme)
+    let check = FieldCheck()
     let generation = GenerationSection((fun box -> Some(check.MessageFor box :> Control)), SettingsLooks.glyphOf theme)
     let appearance = AppearanceSection(SettingsLooks.glyphOf theme)
     let about = AboutSection(SettingsLooks.glyphOf theme)
@@ -30,11 +34,45 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
     let mutable serverUrl = ""
     let mutable presetRename: PresetInfo -> unit = ignore
     let mutable presetDelete: PresetInfo -> unit = ignore
-    let mutable importHandler: (unit -> unit) option = None
     let toast msg tone = overlay.Toast(msg, tone)
 
-    let syncStatus () = generation.SetStatus draft.Status
-    let setPending (pending: bool) = generation.SetPending(pending, draft.CanSave)
+    let platformText () =
+        if OperatingSystem.IsBrowser() then "WebAssembly (PWA)" else sprintf "Desktop (.NET %s)" (Environment.Version.ToString())
+
+    let orUnset (s: string) = if String.IsNullOrWhiteSpace s then "未连接" else s
+
+    let aboutRows () =
+        [ "协议版本", string Constants.ProtocolVersion
+          "日志格式版本", string Constants.FormatVersion
+          "客户端平台", platformText ()
+          "操作系统", Environment.OSVersion.ToString()
+          "主机实例", orUnset instanceId
+          "连接地址", orUnset serverUrl ]
+
+    let generalVS () : GeneralSectionVS =
+        { Status = draft.Status
+          Pending = draft.Saving
+          CanSave = draft.CanSave
+          Presets = [ for p in catalog.presets -> { Id = p.id; Name = p.name; Detail = Presets.describe catalog p } ]
+          AboutRows = aboutRows ()
+          Health =
+            { ConfigIssue = health.ConfigIssue
+              Doctor =
+                match health.Doctor with
+                | NotRun -> AboutDoctor.NotRun
+                | Running -> AboutDoctor.Running
+                | Unavailable reason -> AboutDoctor.Unavailable reason
+                | Report(ok, checks, at) ->
+                    AboutDoctor.Report(
+                        ok,
+                        [ for c in checks -> { Name = c.name; Label = DoctorCheck.label c.name; Ok = c.ok; Detail = c.detail } ],
+                        at.ToString "HH:mm:ss") } }
+
+    /// 两块分区各取自己关心的字段，一次性投影（单入口 Render）
+    let renderGeneral () =
+        let vs = generalVS ()
+        generation.Render vs
+        about.Render vs
 
     let fill (g: GenerationInfo) =
         generation.Fill
@@ -45,10 +83,7 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
               ToolRounds = string g.maxToolRounds
               Instructions = g.instructions |> Option.defaultValue ""
               AutoTitle = g.autoTitle }
-        syncStatus ()
-
-    let renderPresets () =
-        generation.SetPresets [ for p in catalog.presets -> { Id = p.id; Name = p.name; Detail = Presets.describe catalog p } ]
+        renderGeneral ()
 
     let saveGeneration () =
         if draft.CanSave then
@@ -70,15 +105,13 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
                         maxToolRounds = values.maxToolRounds
                         autoTitle = t.AutoTitle }
                 let save = draft.BeginSave submitted
-                setPending true
-                syncStatus ()
+                renderGeneral ()
                 (hooks ()).UpdateGeneration payload (fun ok ->
                     let failed = draft.Finish(save, ok)
                     // 成功且未过期时 Baseline 就是这次提交的那份
                     if ok && obj.ReferenceEquals(draft.Baseline, save.submitted) then
                         catalog <- { catalog with generation = submitted }
-                    setPending draft.Saving
-                    syncStatus ()
+                    renderGeneral ()
                     if failed then toast "保存失败，请重试。" ToastTone.Failure)
             | Error errs ->
                 let boxOf field =
@@ -89,17 +122,15 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
                     | GenerationField.ContextMessages -> generation.ContextBox
                     | GenerationField.ToolRounds -> generation.ToolRoundsBox
                 let errors = errs |> List.map (fun (f, m) -> boxOf f, m)
-                for box, m in errors do check.SetError(box, m)
+                for box, m in errors do check.ApplyError(box, m)
                 FieldCheck.Apply(errors, Some generation.Summary) |> Option.iter (fun m -> toast m ToastTone.Warning)
 
     let discard () =
         if not draft.Saving then
-            renderPresets ()
             draft.Discard(catalog.generation, fun () -> fill catalog.generation) |> ignore
             for box in generation.NumberBoxes do check.Clear box
             generation.Summary.IsVisible <- false
-            syncStatus ()
-            setPending false
+            renderGeneral ()
 
     let renderAppearance () =
         appearance.Render
@@ -119,33 +150,6 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
         prefs <- next
         renderAppearance ()
         onPrefsChanged prefs
-
-    let platformText () =
-        if OperatingSystem.IsBrowser() then "WebAssembly (PWA)" else sprintf "Desktop (.NET %s)" (Environment.Version.ToString())
-
-    let orUnset (s: string) = if String.IsNullOrWhiteSpace s then "未连接" else s
-
-    let renderAbout () =
-        about.SetRows
-            [ "协议版本", string Constants.ProtocolVersion
-              "日志格式版本", string Constants.FormatVersion
-              "客户端平台", platformText ()
-              "操作系统", Environment.OSVersion.ToString()
-              "主机实例", orUnset instanceId
-              "连接地址", orUnset serverUrl ]
-
-    let renderHealth () =
-        about.SetHealth(
-            health.ConfigIssue,
-            match health.Doctor with
-            | NotRun -> AboutDoctor.NotRun
-            | Running -> AboutDoctor.Running
-            | Unavailable reason -> AboutDoctor.Unavailable reason
-            | Report(ok, checks, at) ->
-                AboutDoctor.Report(
-                    ok,
-                    [ for c in checks -> { Name = c.name; Label = DoctorCheck.label c.name; Ok = c.ok; Detail = c.detail } ],
-                    at.ToString "HH:mm:ss"))
 
     let diagnostics () =
         sprintf "万象系统诊断报告\n- 协议版本: %d\n- 日志格式: %d\n- 运行环境: %s\n- 操作系统: %s\n- 实例标识: %s\n- 连接端点: %s\n- 报告时间: %s"
@@ -180,13 +184,11 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
         // 回填也会发 Edited；GenerationDraft 在回填回调里忽略它（与旧实现相同）
         generation.Edited.Add(fun () ->
             draft.Edited()
-            syncStatus ())
+            renderGeneral ())
         generation.SaveRequested.Add saveGeneration
         generation.DiscardRequested.Add discard
         generation.PresetRenameClicked.Add(fun id -> catalog.presets |> List.tryFind (fun p -> p.id = id) |> Option.iter (fun p -> presetRename p))
         generation.PresetDeleteClicked.Add(fun id -> catalog.presets |> List.tryFind (fun p -> p.id = id) |> Option.iter (fun p -> presetDelete p))
-        generation.ImportClicked.Add(fun () -> importHandler |> Option.iter (fun h -> h ()))
-        generation.SetImportVisible false
         appearance.ThemeClicked.Add(fun anchor ->
             overlay.ShowGroupedMenu(
                 anchor,
@@ -218,13 +220,11 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
             match health.Doctor with
             | Running -> ()
             | _ -> health.BeginCheck())
-        health.Changed.Add(fun () -> renderHealth ())
-        syncStatus ()
-        setPending false
-        renderPresets ()
+        // 「检查主机」：对象只宣告要检查，发请求由宿主做（宿主订阅这个事件）。
+        health.CheckRequested.Add(fun () -> (hooks ()).RequestDoctorCheck ())
+        health.Changed.Add(fun () -> renderGeneral ())
+        renderGeneral ()
         renderAppearance ()
-        renderAbout ()
-        renderHealth ()
 
     member _.GenerationView = generation.View
     member _.AppearanceView = appearance.View
@@ -241,31 +241,23 @@ type GeneralDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setti
     member _.Prefs = prefs
     member _.DiagnosticsText = diagnostics ()
 
-    member _.SetCatalog(next: Catalog) =
-        catalog <- next
-        renderPresets ()
-        // 目录更新也会由其它设置操作触发；不能覆盖尚未提交的表单
-        draft.CatalogArrived(next.generation, fun () -> fill next.generation)
-        syncStatus ()
-
-    /// 只保留一份可见草稿；切换目标后阻止把旧主机的表单误写给新主机
-    member _.SetConnection(instance: string, url: string) =
-        instanceId <- instance
-        serverUrl <- url
-        draft.SetScope instance
-        setPending draft.Saving
-        syncStatus ()
-        renderAbout ()
-
-    member _.SetPrefs(next: UiPrefs) =
-        prefs <- next
+    /// 单入口幂等渲染：由 SettingsGeneralVS 投影全量驱动
+    member this.Render(vs: SettingsGeneralVS) =
+        let instanceChanged = instanceId <> vs.InstanceId
+        instanceId <- vs.InstanceId
+        serverUrl <- vs.ServerUrl
+        catalog <- vs.Catalog
+        prefs <- vs.Prefs
+        if instanceChanged then
+            draft.ApplyScope vs.InstanceId
+        draft.CatalogArrived(vs.Catalog.generation, fun () -> fill vs.Catalog.generation)
+        renderGeneral ()
         renderAppearance ()
 
-    member _.SetImportHandler(handler: unit -> unit) =
-        importHandler <- Some handler
-        generation.SetImportVisible true
+    member _.WireImportHandler(handler: unit -> unit) =
+        generation.WireImportHandler handler
 
-    member _.SetPresetHandlers(rename: PresetInfo -> unit, delete: PresetInfo -> unit) =
+    member _.WirePresetHandlers(rename: PresetInfo -> unit, delete: PresetInfo -> unit) =
         presetRename <- rename
         presetDelete <- delete
 

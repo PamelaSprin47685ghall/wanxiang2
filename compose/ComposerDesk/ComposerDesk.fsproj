@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 组合者：ComposerBox + AttachmentTray + ModelChip + ComposerSendState + ModelVision + Theme = 旧 Views/Composer.fs。协作者见 PackageReference。 -->
+  <!-- 组合者：ComposerBox + AttachmentTray + ModelChip + ComposerSendState + HostCatalog（看图判断 ModelVision）+ Theme = 旧 Views/Composer.fs。协作者见 PackageReference。 -->
   <ItemGroup>
+    <Compile Include="Dyn.fs" />
     <Compile Include="Pending.fs" />
-    <Compile Include="Looks.fs" />
     <Compile Include="ComposerDesk.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -10,16 +10,13 @@
     <PackageReference Include="Wanxiang2.AttachmentTray" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerSendState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ModelVision" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerDrafts" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.SpacingRamp" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
   </ItemGroup>

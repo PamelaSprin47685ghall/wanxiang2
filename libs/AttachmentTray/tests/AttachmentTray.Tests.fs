@@ -31,8 +31,8 @@ let ``移除按钮有读屏 Invoke；移除后发事件`` () =
         let mutable gone = Guid.Empty
         t.OnRemove(fun id ->
             gone <- id
-            t.SetItems [ b ])
-        t.SetItems [ a; b ]
+            t.Render([ b ], false))
+        t.Render([ a; b ], false)
         Assert.True t.IsShown
         let w = Window(Width = 600.0, Height = 400.0, Content = t.Host)
         w.Show()
@@ -51,8 +51,8 @@ let ``失败态与缩小提示；清空后隐藏`` () =
     Headless.run (fun () ->
         let t = AttachmentTray()
         let f = { item "x.png" with Failed = true; Ready = false; StateText = "失败"; ShrinkNote = Some "已缩小到 1024px" }
-        t.SetItems [ f ]
+        t.Render([ f ], false)
         Assert.NotNull(named t.Host "已缩小到 1024px")
         Assert.NotNull(named t.Host "附件：x.png（1 KB）")
-        t.SetItems []
+        t.Render([], false)
         Assert.False t.IsShown)

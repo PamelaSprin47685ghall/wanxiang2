@@ -104,6 +104,9 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
         (fontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Body"] <- box f) |> ignore
         resources[box "FontFamily.Mono"] <- box monoFontFamily.Value
         (monoFontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Mono"] <- box f) |> ignore
+        // 减弱动效开关的资源化：控件在动作时刻经 TryFindResource 取值，不再挂 IObservable
+        resources[box "Motion.Reduced"] <- box motion.IsReduced
+        motion.Changed.Subscribe(fun r -> resources[box "Motion.Reduced"] <- box r) |> ignore
         // 常用派生度量（Thickness / CornerRadius）预置
         let updateDerivedMetrics () =
             resources[box "CornerRadius.RadiusXs"] <- box (CornerRadius spaces[Space.RadiusXs].Value)
@@ -112,11 +115,57 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             resources[box "CornerRadius.RadiusLg"] <- box (CornerRadius spaces[Space.RadiusLg].Value)
             resources[box "CornerRadius.RadiusPill"] <- box (CornerRadius spaces[Space.RadiusPill].Value)
             resources[box "Thickness.BorderThin"] <- box (Thickness metrics[Metric.BorderWidth].Value)
+            resources[box "Thickness.None"] <- box (Thickness 0.0)
+            // 复合几何档：控件用 DynamicResource 键即可吃到「非均匀」的主题几何，
+            // 不用再手写 Subscribe 拼 Thickness/CornerRadius（W7 外观退役）。
+            resources[box "CornerRadius.QuoteRight"] <- box (CornerRadius(0.0, spaces[Space.RadiusSm].Value, spaces[Space.RadiusSm].Value, 0.0))
+            resources[box "CornerRadius.ListMarkerDot"] <- box (CornerRadius metrics[Metric.ListMarkerDotRadius].Value)
+            resources[box "Thickness.BorderBottom"] <- box (Thickness(0.0, 0.0, 0.0, metrics[Metric.BorderWidth].Value))
+            resources[box "Thickness.TaskBoxEdge"] <- box (Thickness metrics[Metric.TaskBoxBorderWidth].Value)
+            resources[box "Thickness.QuoteEdge"] <- box (Thickness(metrics[Metric.QuoteEdgeWidth].Value, 0.0, 0.0, 0.0))
+            resources[box "Thickness.GapRightMd"] <- box (Thickness(0.0, 0.0, spaces[Space.Md].Value, 0.0))
+            resources[box "Margin.GapRightMd"] <- box (Thickness(0.0, 0.0, spaces[Space.Md].Value, 0.0))
+            resources[box "Thickness.GapBottomMd"] <- box (Thickness(0.0, 0.0, 0.0, spaces[Space.Md].Value))
+            resources[box "Padding.Block"] <- box (Thickness(metrics[Metric.BlockPaddingX].Value, metrics[Metric.BlockPaddingY].Value))
+            resources[box "Margin.Block"] <- box (Thickness(metrics[Metric.BlockPaddingX].Value, metrics[Metric.BlockPaddingY].Value))
+            // 覆盖层两档卡：对话框卡与浮层卡的均匀内边距。
+            resources[box "Padding.OverlayDialog"] <- box (Thickness(spaces[Space.Xl].Value))
+            resources[box "Padding.OverlayPopup"] <- box (Thickness(spaces[Space.Xs].Value))
+            // 覆盖层视口留白：对话框卡的外边距，同时也是钳位基准（宽 = 视口 − 2×留白）。
+            resources[box "Margin.OverlayInset"] <- box (Thickness(spaces[Space.Xl].Value))
+            // 浮层菜单的排版档：项内边距、提示左边距、分隔留白、组标题留白。
+            resources[box "Padding.MenuItem"] <- box (Thickness(spaces[Space.Md].Value, spaces[Space.Xs].Value))
+            resources[box "Margin.MenuHint"] <- box (Thickness(spaces[Space.Xl].Value, 0.0, 0.0, 0.0))
+            resources[box "Margin.MenuDivider"] <- box (Thickness(spaces[Space.Sm].Value, spaces[Space.XXs].Value))
+            resources[box "Margin.MenuHeader"] <- box (Thickness(spaces[Space.Md].Value, spaces[Space.Sm].Value, spaces[Space.Md].Value, spaces[Space.XXs].Value))
+            resources[box "Padding.CodeHeader"] <- box (Thickness(metrics[Metric.BlockPaddingX].Value, spaces[Space.Xs].Value, spaces[Space.Xs].Value, spaces[Space.Xs].Value))
+            resources[box "Margin.CodeExpand"] <- box (Thickness(metrics[Metric.BlockPaddingX].Value, spaces[Space.Xs].Value, 0.0, spaces[Space.Xs].Value))
+            resources[box "Padding.Quote"] <- box (Thickness(spaces[Space.Md].Value, spaces[Space.Sm].Value, spaces[Space.Md].Value, spaces[Space.Sm].Value))
+            resources[box "Margin.QuoteNested"] <- box (Thickness(spaces[Space.Md].Value, 0.0, 0.0, Wanxiang.UI.Spacing.spaceMd))
+            resources[box "Padding.MathBlock"] <- box (Thickness(0.0, spaces[Space.Md].Value))
+            resources[box "Margin.AvatarRight"] <- box (Thickness(0.0, 0.0, spaces[Space.Xl].Value, 0.0))
+            resources[box "Margin.MathInline"] <- box (Thickness(spaces[Space.Xs].Value, 0.0))
+            resources[box "Margin.FieldError"] <- box (Thickness(0.0, spaces[Space.XXs].Value, 0.0, 0.0))
+            resources[box "Margin.GapBottomMd"] <- box (Thickness(0.0, 0.0, 0.0, spaces[Space.Md].Value))
+            // 脚注缩进 = 头像宽 + 头像右间距；左右两档与 isUser 对应
+            let gutter = metrics[Metric.LogoAvatar].Value + spaces[Space.Xl].Value
+            let md = spaces[Space.Md].Value
+            resources[box "Margin.AssistantIndent"] <- box (Thickness(gutter, md, 0.0, 0.0))
+            resources[box "Margin.UserIndent"] <- box (Thickness(0.0, md, gutter, 0.0))
+            // 输入区留白：宽屏顶=Space.X2l、底=Space.Xl；窄屏固定收紧（左右=Space.Xl、底=Space.Md）。
+            // 水平档（窄屏 16 / 中 24 / 桌面 32 / 宽屏 48）随自身宽度取，不在主题里（见 LayoutPolicy.horizontalInset）。
+            resources[box "Margin.Composer"] <- box (Thickness(0.0, spaces[Space.X2l].Value, 0.0, spaces[Space.Xl].Value))
+            resources[box "Margin.ComposerCompact"] <- box (Thickness(spaces[Space.Xl].Value, spaces[Space.Xl].Value, 0.0, spaces[Space.Md].Value))
+            // 强调字距档（正文语言标签等）：静态常量，来自 SpacingRamp
+            resources[box "Tracking.Emphasis"] <- box Wanxiang.UI.Spacing.Tracking.emphasis
         updateDerivedMetrics ()
-        (metrics[Metric.BorderWidth] :> IObservable<float>).Subscribe(fun _ -> updateDerivedMetrics ()) |> ignore
-        (spaces[Space.RadiusMd] :> IObservable<float>).Subscribe(fun _ -> updateDerivedMetrics ()) |> ignore
-        (spaces[Space.RadiusLg] :> IObservable<float>).Subscribe(fun _ -> updateDerivedMetrics ()) |> ignore
-        (spaces[Space.RadiusPill] :> IObservable<float>).Subscribe(fun _ -> updateDerivedMetrics ()) |> ignore
+        // 派生档的唯一刷新点：任何来源活值改动都重算全部复合几何（幂等、开销为常数）。
+        let refresh () = updateDerivedMetrics ()
+        for m in [ Metric.BorderWidth; Metric.ListMarkerDotRadius; Metric.TaskBoxBorderWidth
+                   Metric.QuoteEdgeWidth; Metric.BlockPaddingX; Metric.BlockPaddingY; Metric.LogoAvatar ] do
+            (metrics[m] :> IObservable<float>).Subscribe(fun _ -> refresh ()) |> ignore
+        for s in [ Space.RadiusXs; Space.RadiusMd; Space.RadiusLg; Space.RadiusPill; Space.RadiusSm; Space.Md; Space.Sm; Space.Xs; Space.XXs; Space.Xl; Space.X2l ] do
+            (spaces[s] :> IObservable<float>).Subscribe(fun _ -> refresh ()) |> ignore
     do initResources ()
 
     new() = new ThemeManager((fun () -> DateTimeOffset.UtcNow), true)
@@ -145,9 +194,9 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
     member _.MergedDictionary = resources
     member _.MonoFontFamily = monoFontFamily
 
-    member _.SetMetric(m: Metric, v: float) =
+    member _.ApplyMetric(m: Metric, v: float) =
         metrics[m].Set v
-    member _.SetSpace(s: Space, v: float) =
+    member _.ApplySpace(s: Space, v: float) =
         spaces[s].Set v
 
     /// 推进一帧（帧计时器调；autoFrames = false 时由调用方调）。forGeneration 不是当前代次时只画不停帧

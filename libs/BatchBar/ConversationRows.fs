@@ -454,14 +454,12 @@ type ConversationRows() =
         | true, fi -> list.ScrollIntoView fi
         | _ -> ()
 
-    member _.SetMarks(active: Guid option, selected: Guid -> bool, inSelection: bool) =
+    member _.ApplyMarks(active: Guid option, selected: Guid -> bool, inSelection: bool) =
         activeId <- active
         isSelected <- selected
         selectionActive <- inSelection
         for kv in rowHosts do applyState kv.Key kv.Value
         for b in moreButtons.Values do applyMore b
-
-    member _.SetCompact(_value: bool) = ()
 
     [<CLIEvent>] member _.RowActivated = rowActivated.Publish
     [<CLIEvent>] member _.RowFocused = rowFocused.Publish

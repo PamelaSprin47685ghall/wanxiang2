@@ -48,13 +48,13 @@ let ``generation save button advertises the ctrl enter shortcut`` () =
         let save = (named g.View "保存默认值").Value
         Assert.Equal("保存默认值（Ctrl / ⌘ + Enter）", AutomationProperties.GetHelpText save)
         Assert.Equal(96.0, save.MinWidth)
-        g.SetPending(true, true)
+        g.Render { GeneralSectionVS.empty with Pending = true; CanSave = true }
         Assert.False save.IsEnabled
         Assert.Equal("正在保存…", AutomationProperties.GetName save)
         Assert.False (named g.View "放弃修改").Value.IsEnabled
-        g.SetPending(false, false)
+        g.Render { GeneralSectionVS.empty with CanSave = false }
         Assert.False save.IsEnabled
-        g.SetPending(false, true)
+        g.Render { GeneralSectionVS.empty with CanSave = true }
         Assert.True save.IsEnabled)
 
 [<Fact>]
@@ -98,18 +98,18 @@ let ``presets list offers rename and delete per preset and an empty explanation`
     Headless.run (fun () ->
         let g = GenerationSection(fun _ -> None)
         let _ = host g.View
-        g.SetPresets []
+        g.Render { GeneralSectionVS.empty with Presets = [] }
         Assert.Contains("存为预设", textOf g.PresetsPanel)
         let renames, deletes = ResizeArray<string>(), ResizeArray<string>()
         g.PresetRenameClicked.Add renames.Add
         g.PresetDeleteClicked.Add deletes.Add
-        g.SetPresets [ { Id = "p1"; Name = "写作"; Detail = "gpt · 2 个工具" } ]
+        g.Render { GeneralSectionVS.empty with Presets = [ { Id = "p1"; Name = "写作"; Detail = "gpt · 2 个工具" } ] }
         click (named g.View "重命名预设 写作").Value
         click (named g.View "删除预设 写作").Value
         Assert.Equal<string list>([ "p1" ], List.ofSeq renames)
         Assert.Equal<string list>([ "p1" ], List.ofSeq deletes)
         Assert.False (named g.View "导入对话").Value.IsEffectivelyVisible
-        g.SetImportVisible true
+        g.WireImportHandler(fun () -> ())
         Assert.True (named g.View "导入对话").Value.IsEffectivelyVisible)
 
 let private appearance =
@@ -162,8 +162,9 @@ let ``SettingsGeneral BuildAbout formats system diagnostics with version and pla
     Headless.run (fun () ->
         let a = AboutSection()
         let _ = host a.View
-        a.SetRows [ "协议版本", "3"; "客户端平台", "Desktop (.NET 10.0.0)"; "主机实例", "未连接" ]
-        a.SetHealth(None, AboutDoctor.NotRun)
+        a.Render
+            { GeneralSectionVS.empty with
+                AboutRows = [ "协议版本", "3"; "客户端平台", "Desktop (.NET 10.0.0)"; "主机实例", "未连接" ] }
         let text = textOf a.View
         Assert.Contains("协议版本", text)
         Assert.Contains("Desktop (.NET 10.0.0)", text)
@@ -190,14 +191,14 @@ let ``host status shows config issues and doctor results`` () =
         let _ = host a.View
         let checks = ResizeArray<unit>()
         a.CheckHostClicked.Add checks.Add
-        a.SetHealth(Some("config.toml 第 3 行", [ "未知键 foo" ]), AboutDoctor.NotRun)
+        a.Render { GeneralSectionVS.empty with Health = { GeneralHealth.empty with ConfigIssue = Some("config.toml 第 3 行", [ "未知键 foo" ]) } }
         Assert.Equal("config.toml 第 3 行", textOf (byId a.View "host-config-issue").Value)
         click (byId a.View "check-host").Value
         Assert.Single checks |> ignore
-        a.SetHealth(None, AboutDoctor.Running)
+        a.Render { GeneralSectionVS.empty with Health = { GeneralHealth.empty with Doctor = AboutDoctor.Running } }
         Assert.True((byId a.View "host-config-ok").IsSome)
         Assert.False (byId a.View "check-host").Value.IsEnabled
-        a.SetHealth(None, AboutDoctor.Report(false, [ { Name = "disk"; Label = "磁盘"; Ok = false; Detail = "剩余 1%" } ], "10:00:00"))
+        a.Render { GeneralSectionVS.empty with Health = { GeneralHealth.empty with Doctor = AboutDoctor.Report(false, [ { Name = "disk"; Label = "磁盘"; Ok = false; Detail = "剩余 1%" } ], "10:00:00") } }
         Assert.Equal("有项目需要处理", textOf (byId a.View "doctor-headline").Value)
         Assert.Contains("剩余 1%", textOf (byId a.View "doctor-check-disk").Value)
         Assert.Contains("检查时间 10:00:00", textOf a.View))

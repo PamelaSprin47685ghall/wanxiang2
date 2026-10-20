@@ -84,8 +84,25 @@ let private emptySidebarVS () =
 
 let private setup () = setupWith (fun _ -> false)
 
+/// SidebarRowVS 是侧栏唯一输入：测试直接构造投影行，不再走旁路参数。
+let private rowVS (s: ConversationSummary) : Wanxiang2.WorkspaceState.SidebarRowVS =
+    { Id = s.id
+      Title = s.title
+      Preview = s.preview
+      Pinned = s.pinned
+      Archived = s.archived
+      Running = s.running
+      MessageCount = s.messageCount
+      CreatedAt = s.createdAt
+      UpdatedAt = s.updatedAt
+      IsFork = s.isFork
+      ProviderId = s.providerId
+      Model = s.model
+      LastCommitId = s.lastCommitId
+      Busy = false }
+
 let private load r (items: ConversationSummary list) =
-    r.desk.Render(emptySidebarVS (), None, items)
+    r.desk.Render { emptySidebarVS () with Rows = items |> List.map rowVS }
     pump ()
     r.window.UpdateLayout()
     pump ()
@@ -147,7 +164,7 @@ let ``Sidebar search navigation moves focus and handles escape`` () =
         pump ()
         key r.desk.Search.Box Key.Escape
         Assert.Equal("", r.desk.Search.Text)
-        r.desk.Render(emptySidebarVS (), Some b.id)
+        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a; rowVS b ]; ActiveId = Some b.id }
         key r.desk.Search.Box Key.Escape
         Assert.Same(row r b, focused r))
 
@@ -272,7 +289,7 @@ let ``setting the active conversation scrolls it into view`` () =
         let items = [ for i in 1..80 -> conv (sprintf "对话 %d" i) ]
         load r items
         let last = r.desk.Rows.VisibleIds |> List.last
-        r.desk.Render(emptySidebarVS (), Some last)
+        r.desk.Render { emptySidebarVS () with Rows = items |> List.map rowVS; ActiveId = Some last }
         pump ()
         r.window.UpdateLayout()
         pump ()
@@ -405,8 +422,8 @@ let ``changing active sidebar row does not rebuild the conversation list`` () =
         load r [ a; b ]
         let source = r.desk.Rows.List.ItemsSource
         let hostA = row r a
-        r.desk.Render(emptySidebarVS (), Some a.id)
-        r.desk.Render(emptySidebarVS (), Some b.id)
+        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a; rowVS b ]; ActiveId = Some a.id }
+        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a; rowVS b ]; ActiveId = Some b.id }
         Assert.Same(source, r.desk.Rows.List.ItemsSource)
         Assert.Same(hostA, row r a)
         Assert.Equal("当前对话", AutomationProperties.GetItemStatus(row r b)))
@@ -440,7 +457,7 @@ let ``title and preview both highlight while searching`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.Render(emptySidebarVS (), None, [ a ])
+        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a ] }
         pump ()
         let lit = highlighted (row r a) |> List.map (fun x -> x.Text)
         Assert.True(lit.Length >= 2, sprintf "%A" lit))
@@ -453,7 +470,7 @@ let ``clearing the query removes every highlight`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.Render(emptySidebarVS (), None, [ a ])
+        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a ] }
         pump ()
         r.desk.ResetSearch false
         pump ()
@@ -469,9 +486,9 @@ let ``recycled rows keep their highlight after a snapshot refresh`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.Render(emptySidebarVS (), None, [ a ])
+        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a ] }
         pump ()
-        r.desk.Render(emptySidebarVS (), None, [ { a with messageCount = 9 } ])
+        r.desk.Render { emptySidebarVS () with Rows = [ rowVS { a with messageCount = 9 } ] }
         pump ()
         r.window.UpdateLayout()
         Assert.NotEmpty(highlighted (row r a)))
@@ -486,8 +503,60 @@ let ``两万行带分叉与同名对话的重建在一秒内完成`` () =
             items |> List.chunkBySize 2 |> List.choose (function
                 | [ p; c ] -> Some(c.id, { parentId = p.id; forkBaseMessageId = None; forkFirstMessageId = None; parentTitle = None; parentDeleted = false; forkOrdinal = Some 1 })
                 | _ -> None) |> Map.ofList
-        r.desk.SlotLineage lineage
         let sw = Diagnostics.Stopwatch.StartNew()
-        load r items
+        // 谱系随 SidebarVS 一起进（单一入口，不再有旁路插槽）
+        r.desk.Render { emptySidebarVS () with Rows = items |> List.map rowVS; Lineage = lineage }
+        pump ()
+        r.window.UpdateLayout()
+        pump ()
         sw.Stop()
         Assert.True(sw.ElapsedMilliseconds < 1000L, sprintf "重建用了 %d ms" sw.ElapsedMilliseconds))
+
+// ---- 单一权威：品牌行与页脚只经各自的 Render，组合者不旁路写控件 ----
+
+[<Fact>]
+let ``紧凑态经投影驱动品牌行返回键，不靠旁路写控件`` () =
+    Headless.run (fun () ->
+        let r = setup ()
+        Assert.False r.desk.Brand.BackButton.IsVisible
+        r.desk.Render { emptySidebarVS () with Compact = true }
+        pump ()
+        Assert.True r.desk.Brand.BackButton.IsVisible
+        r.desk.Render { emptySidebarVS () with Compact = false }
+        pump ()
+        Assert.False r.desk.Brand.BackButton.IsVisible)
+
+[<Fact>]
+let ``页脚主机状态经投影渲染，服务器地址命令改投影后重渲染`` () =
+    Headless.run (fun () ->
+        let r = setup ()
+        r.desk.Render { emptySidebarVS () with Host = { (emptySidebarVS ()).Host with ServerUrl = "https://example.com:8443/x" } }
+        pump ()
+        Assert.Contains("example.com:8443", String.Join("\n", Desk.texts r.desk.Host.View))
+        r.desk.ApplyServerUrl "http://localhost:9000"
+        pump ()
+        Assert.Contains("localhost:9000", String.Join("\n", Desk.texts r.desk.Host.View)))
+
+[<Fact>]
+let ``预设插槽改品牌行投影的可见性`` () =
+    Headless.run (fun () ->
+        let r = setup ()
+        Assert.False r.desk.Brand.PresetButton.IsVisible
+        r.desk.SlotPresets([ "writer", "写作助手", (fun () -> ()) ], fun _ _ -> ())
+        pump ()
+        Assert.True r.desk.Brand.PresetButton.IsVisible
+        r.desk.SlotPresets([], fun _ _ -> ())
+        pump ()
+        Assert.False r.desk.Brand.PresetButton.IsVisible)
+
+[<Fact>]
+let ``预设插槽接上后，模型重投影不夺走可见性`` () =
+    Headless.run (fun () ->
+        let r = setup ()
+        r.desk.SlotPresets([ "writer", "写作助手", (fun () -> ()) ], fun _ _ -> ())
+        pump ()
+        Assert.True r.desk.Brand.PresetButton.IsVisible
+        // 模型投影里没有预设（空目录），但宿主接了下拉插槽：按钮仍该在
+        r.desk.Render { emptySidebarVS () with Brand = { (emptySidebarVS ()).Brand with PresetsVisible = false } }
+        pump ()
+        Assert.True r.desk.Brand.PresetButton.IsVisible)

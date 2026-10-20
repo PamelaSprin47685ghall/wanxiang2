@@ -14,29 +14,31 @@ open Wanxiang2.ToastStrip
 open Wanxiang2.WorkspaceState
 
 let look () =
-    let maxW = Cell 480.0
-    let pad = Cell(Thickness(16.0, 12.0))
-    maxW, pad,
     { Surface = SolidColorBrush(Colors.White)
       Edge = SolidColorBrush(Colors.Gray)
       Text = SolidColorBrush(Colors.Black)
       Accent = (fun tone -> if tone = ToastTone.Failure then Brushes.Red else Brushes.Gray)
-      AccentWidth = Cell 2.0
-      AccentRadius = Cell(CornerRadius 999.0)
-      AccentOpacity = Cell 0.6
-      EdgeWidth = Cell(Thickness 1.0)
-      Radius = Cell(CornerRadius 8.0)
-      Padding = pad
-      Shadow = Cell(BoxShadows())
-      FontSize = Cell 12.0
-      LineHeight = Cell 18.0
-      ColumnSpacing = Cell 12.0
-      Spacing = Cell 8.0
-      Margin = Cell(Thickness(24.0, 0.0, 24.0, 32.0))
-      MaxWidth = maxW
-      BodyMaxHeight = Cell 160.0
-      Fade = Cell TimeSpan.Zero
+      AccentOpacity = 0.6
+      Padding = Thickness(16.0, 12.0)
+      Shadow = BoxShadows()
+      LineHeight = 18.0
+      ColumnSpacing = 12.0
+      Spacing = 8.0
+      Margin = Thickness(24.0, 0.0, 24.0, 32.0)
+      MaxWidth = 480.0
+      BodyMaxHeight = 160.0
+      Fade = TimeSpan.Zero
       FadeEasing = Avalonia.Animation.Easings.CubicEaseOut() }
+
+/// 主题资源字典的替身：控件绑定资源键，这里只往应用资源写值。
+let seedResources () =
+    let r = Application.Current.Resources
+    r["Metric.ToastAccentWidth"] <- box 2.0
+    r["CornerRadius.RadiusPill"] <- box (CornerRadius 999.0)
+    r["CornerRadius.RadiusMd"] <- box (CornerRadius 8.0)
+    r["Thickness.BorderThin"] <- box (Thickness 1.0)
+    r["Metric.FontBody"] <- box 12.0
+
 
 let host w h (strip: ToastStrip) =
     let root = Grid()
@@ -54,7 +56,8 @@ let byName (root: Visual) name =
 [<Fact>]
 let ``toast stays non focusable and removal is synchronous`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
+        seedResources ()
+        let l = look ()
         let strip = ToastStrip l
         let root, window = host 400.0 300.0 strip
         strip.Add("已保存", ToastTone.Neutral, None)
@@ -69,7 +72,8 @@ let ``toast stays non focusable and removal is synchronous`` () =
 [<Fact>]
 let ``toast stays inside narrow viewport as assertive live content`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
+        seedResources ()
+        let l = look ()
         let strip = ToastStrip l
         let root, window = host 320.0 220.0 strip
         let message = String.replicate 20 "很长的错误说明，需要在窄窗口内保持可访问。"
@@ -84,12 +88,13 @@ let ``toast stays inside narrow viewport as assertive live content`` () =
 [<Fact>]
 let ``undo action carries accelerator help and focus returns home on removal`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
+        seedResources ()
+        let l = look ()
         let strip = ToastStrip l
         let root, window = host 400.0 300.0 strip
         let home = Button(Content = "home")
         root.Children.Add home
-        strip.SetFocusHome(fun () -> home.Focus() |> ignore)
+        strip.WireFocusHome(fun () -> home.Focus() |> ignore)
         let invoked = ResizeArray()
         let focused = ResizeArray()
         strip.ActionInvoked.Add invoked.Add
@@ -111,17 +116,23 @@ let ``undo action carries accelerator help and focus returns home on removal`` (
         window.Close())
 
 [<Fact>]
-let ``look stays live after toasts are shown`` () =
+let ``theme resources reach shown toasts and static layout values apply at construction`` () =
     Headless.run (fun () ->
-        let maxW, pad, l = look ()
+        seedResources ()
+        let l = look ()
         let strip = ToastStrip l
         let root, window = host 800.0 300.0 strip
         strip.Add("一", ToastTone.Info, None)
         let toast = (byName root "一").Value :?> Border
-        pad.Set(Thickness 3.0)
-        maxW.Set 200.0
-        Assert.Equal(Thickness 3.0, toast.Padding)
-        Assert.Equal(200.0, toast.MaxWidth)
+        // 静态参数在构造时落地
+        Assert.Equal(Thickness(16.0, 12.0), toast.Padding)
+        Assert.Equal(480.0, toast.MaxWidth)
+        // 主题几何走资源键：改字典值即随动（声明式，无手工订阅）
+        Assert.Equal(CornerRadius 8.0, toast.CornerRadius)
+        Application.Current.Resources["CornerRadius.RadiusMd"] <- box (CornerRadius 6.0)
+        Assert.Equal(CornerRadius 6.0, toast.CornerRadius)
+        Application.Current.Resources["Thickness.BorderThin"] <- box (Thickness 2.0)
+        Assert.Equal(Thickness 2.0, toast.BorderThickness)
         Assert.Equal<string list>([ "一" ], strip.Messages)
         window.Close())
 
@@ -129,7 +140,8 @@ let ``look stays live after toasts are shown`` () =
 [<Fact>]
 let ``toast action is native button and activates`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
+        seedResources ()
+        let l = look ()
         let strip = ToastStrip l
         let _, window = host 400.0 300.0 strip
         let invoked = ResizeArray()
@@ -146,7 +158,8 @@ let ``toast action is native button and activates`` () =
 [<Fact>]
 let ``render idempotently reconciles toasts list`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
+        seedResources ()
+        let l = look ()
         let strip = ToastStrip l
         let _root, window = host 400.0 300.0 strip
         let now = DateTimeOffset.UtcNow

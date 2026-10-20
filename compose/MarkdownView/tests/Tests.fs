@@ -7,21 +7,51 @@ open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
+open Avalonia.LogicalTree
 open Avalonia.Input
 open Avalonia.Media
 open Avalonia.Threading
-open Avalonia.LogicalTree
 open Xunit
 open Wanxiang.UI
 open Wanxiang2.CodeTint
 open Wanxiang2.MarkdownView
 
-/// 测试外观：每个槽位一支独立画笔、一个可改的活值；图标用带底色的 Border 代替（记下画笔）。
+/// 主题资源字典的替身：正文几何与字体全部来自资源键。
+let seedResources () =
+    let r = Application.Current.Resources
+    r["Margin.Block"] <- box (Thickness(4.0, 4.0))
+    r["Padding.Block"] <- box (Thickness(4.0, 4.0))
+    r["Thickness.BorderThin"] <- box (Thickness 4.0)
+    r["Thickness.BorderBottom"] <- box (Thickness(0.0, 0.0, 4.0, 4.0))
+    r["Thickness.None"] <- box (Thickness 0.0)
+    r["Thickness.TaskBoxEdge"] <- box (Thickness 4.0)
+    r["Thickness.QuoteEdge"] <- box (Thickness(4.0, 0.0, 0.0, 0.0))
+    r["Thickness.GapRightMd"] <- box (Thickness(0.0, 0.0, 4.0, 0.0))
+    r["Margin.GapRightMd"] <- box (Thickness(0.0, 0.0, 4.0, 0.0))
+    r["Margin.MathInline"] <- box (Thickness(4.0, 0.0))
+    r["Margin.CodeExpand"] <- box (Thickness(4.0, 4.0, 0.0, 4.0))
+    r["Margin.QuoteNested"] <- box (Thickness(4.0, 0.0, 0.0, 4.0))
+    r["Padding.Quote"] <- box (Thickness(4.0, 4.0))
+    r["Padding.CodeHeader"] <- box (Thickness(4.0, 4.0, 4.0, 4.0))
+    r["Padding.MathBlock"] <- box (Thickness(0.0, 4.0))
+    r["CornerRadius.RadiusXs"] <- box (CornerRadius 4.0)
+    r["CornerRadius.RadiusMd"] <- box (CornerRadius 4.0)
+    r["CornerRadius.QuoteRight"] <- box (CornerRadius(0.0, 4.0, 4.0, 0.0))
+    r["CornerRadius.ListMarkerDot"] <- box (CornerRadius 4.0)
+    r["Metric.FontMicro"] <- box 4.0
+    r["Metric.BorderWidth"] <- box 4.0
+    r["Metric.ListMarkerDotSize"] <- box 4.0
+    r["Metric.TaskBoxSize"] <- box 4.0
+    r["Metric.TaskCheckGlyphSize"] <- box 4.0
+    r["Tracking.Emphasis"] <- box 4.0
+    r["Space.XXs"] <- box 4.0
+    r["FontFamily.Mono"] <- box (FontFamily "monospace")
+    r["FontFamily.Body"] <- box FontFamily.Default
+    r["Motion.Reduced"] <- box false
+
+/// 测试外观：每个槽位一支独立画笔；图标用带底色的 Border 代替（记下画笔）。
 type private Kit() =
     let brushes = Collections.Generic.Dictionary<MarkdownInk, SolidColorBrush>()
-    let gauges = Collections.Generic.Dictionary<MarkdownGauge, Cell<float>>()
-    let reduced = Cell false
-    let opacity = Cell 0.6
     member _.Brush k =
         match brushes.TryGetValue k with
         | true, b -> b
@@ -29,36 +59,21 @@ type private Kit() =
             let b = SolidColorBrush(Color.FromUInt32(0xff000000u ||| uint32 (brushes.Count + 1)))
             brushes[k] <- b
             b
-    member _.Gauge k =
-        match gauges.TryGetValue k with
-        | true, c -> c
-        | _ ->
-            let c = Cell(match k with MarkdownGauge.CopyFadeMs -> 150.0 | _ -> 4.0)
-            gauges[k] <- c
-            c
-    member _.Reduced = reduced
-    member _.FadeOpacity = opacity
     member this.Look : MarkdownMetrics =
         { Ink = fun k -> this.Brush k :> IBrush
-          Gauge = fun k -> this.Gauge k :> IObservable<float>
-          BodyFont = Cell(FontFamily.Default)
-          MonoFont = Cell(FontFamily "monospace")
           Glyph = fun g brush -> Border(Background = brush, Tag = g) :> Control
           Dress = fun role b -> b.Classes.Add(match role with MarkdownButton.Icon -> "icon" | MarkdownButton.Ghost -> "ghost")
-          Reduced = reduced
           Copy =
-            { FadeOpacity = opacity
-              Hold = Cell(TimeSpan.FromSeconds 1.5)
-              Fade = Cell(TimeSpan.FromMilliseconds 150.0) }
-          Math =
-            { Ink = this.Brush MarkdownInk.Text
-              BodyFont = Cell(FontFamily.Default)
-              BlockPadding = Cell 8.0 } }
+            { FadeOpacity = 0.6
+              Hold = TimeSpan.FromSeconds 1.5
+              Fade = TimeSpan.FromMilliseconds 150.0 }
+          Math = { Ink = this.Brush MarkdownInk.Text } }
 
 let private tint () =
     CodeTint { HighlightHtml = (fun _ -> None); Background = (fun f -> f ()); After = (fun _ f -> f ()); Synchronous = true }
 
 let private make (kit: Kit) (copy: string -> unit) (openLink: string -> unit) (wrap: CodeWrapMemory) =
+    seedResources ()
     MarkdownView(kit.Look, { CopyText = copy; OpenLink = openLink; MathHtml = (fun _ -> None); Tint = tint (); Wrap = wrap }, 14.5, false)
 
 let rec private descendants (c: Control) : Control seq =
@@ -158,10 +173,11 @@ let ``code block copy confirmation dips toward fade opacity and keeps the confir
     Headless.run (fun () ->
         let run reduced =
             let kit = Kit()
-            kit.Reduced.Set reduced
             let view = make kit ignore ignore (CodeWrapMemory false)
             let controls = view.RenderText "```fsharp\nlet x = 42\n```"
             let w = show controls
+            // 减弱动效走资源键：激活时刻现读，无订阅
+            Application.Current.Resources["Motion.Reduced"] <- box reduced
             let button = byTip "复制代码" controls
             invoke button
             // 过渡在跑时 Opacity 读到的是补间中的值，目标值看本地基值
@@ -175,8 +191,9 @@ let ``code block copy confirmation dips toward fade opacity and keeps the confir
         Assert.Equal(0.6, normal, 3)
         Assert.Equal(TimeSpan.FromMilliseconds 150.0, fade)
         let reduced, reducedFade = run true
+        // 减弱动效：激活时刻不淡出（Opacity 基值满格），补间本身仍在但不发生颜色差
         Assert.Equal(1.0, reduced, 3)
-        Assert.Equal(TimeSpan.Zero, reducedFade))
+        Assert.Equal(TimeSpan.FromMilliseconds 150.0, reducedFade))
 
 [<Fact>]
 let ``wrap toggle flips the block and is remembered for later blocks`` () =
@@ -234,6 +251,7 @@ let ``MarkdownRenderer task boxes expose checkbox automation state`` () =
 [<Fact>]
 let ``markdown renderer renders complex markdown with code, tables and math without error`` () =
     Headless.run (fun () ->
+        seedResources ()
         let view = MarkdownView((Kit()).Look, { CopyText = ignore; OpenLink = ignore; MathHtml = (fun _ -> None); Tint = tint (); Wrap = CodeWrapMemory false }, 14.0, true)
         let doc =
             "# 标题一\n正文包含 **粗体**、*斜体*、`行内代码` 和 [链接](https://example.com)。\n\n> 引用块测试\n\n- [x] 任务完成\n- [ ] 任务待办\n\n| 列 A | 列 B |\n|---|---|\n| 1 | 2 |\n\n```fsharp\nlet x = 42\n```\n\n$$E = mc^2$$\n"
@@ -241,7 +259,7 @@ let ``markdown renderer renders complex markdown with code, tables and math with
         w.Close())
 
 [<Fact>]
-let ``live gauges follow while shown and stop after removal`` () =
+let ``theme resource changes reach shown blocks without any manual wiring`` () =
     Headless.run (fun () ->
         let kit = Kit()
         let view = make kit ignore ignore (CodeWrapMemory false)
@@ -249,14 +267,11 @@ let ``live gauges follow while shown and stop after removal`` () =
         let root = control :?> StackPanel
         let card = root.Children[0] :?> Border
         let w = show control
-        kit.Gauge(MarkdownGauge.RadiusMd).Set 11.0
+        Application.Current.Resources["CornerRadius.RadiusMd"] <- box (CornerRadius 11.0)
         Assert.Equal(CornerRadius 11.0, card.CornerRadius)
-        let before = kit.Gauge(MarkdownGauge.RadiusMd).Count
-        w.Content <- null
-        Assert.True(kit.Gauge(MarkdownGauge.RadiusMd).Count < before)
-        kit.Gauge(MarkdownGauge.RadiusMd).Set 2.0
-        Assert.Equal(CornerRadius 11.0, card.CornerRadius)
-        Assert.Equal(0, kit.Gauge(MarkdownGauge.RadiusMd).Count)
+        // 代码壳描边与内衬同源：改 Thickness.BorderThin 即随动
+        Application.Current.Resources["Thickness.BorderThin"] <- box (Thickness 2.0)
+        Assert.Equal(Thickness 2.0, card.BorderThickness)
         w.Close())
 
 [<Fact>]
@@ -306,11 +321,14 @@ let ``inline math without html falls back to italic mono source`` () =
         let kit = Kit()
         let view = make kit ignore ignore (CodeWrapMemory false)
         let block = view.RenderText "a $x^2$ b" :?> StackPanel
+        // 资源查找要挂在可视树上：先上屏再读字体
+        let w = show block
         let text = block.Children[0] :?> SelectableTextBlock
         let run = text.Inlines |> Seq.pick (function :? Documents.Run as r when r.Text = "x^2" -> Some r | _ -> None)
         Assert.Equal(FontStyle.Italic, run.FontStyle)
         Assert.Same(kit.Brush MarkdownInk.InlineCode, run.Background)
-        Assert.Equal("monospace", run.FontFamily.Name))
+        Assert.Equal("monospace", run.FontFamily.Name)
+        w.Close())
 
 [<Fact>]
 let ``every clickable in markdown exposes Invoke as a button and activates`` () =

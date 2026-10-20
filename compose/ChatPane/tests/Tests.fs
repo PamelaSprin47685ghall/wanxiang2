@@ -3,6 +3,7 @@ module Wanxiang2.ChatPane.Tests.Tests
 // 真实组合：主题外观 + ChatScroller / ExchangeNav / ChatEmpty / SkeletonList + ScrollFollow / ExchangeJump / ChatEmptyText。
 
 open System
+open Avalonia
 open Avalonia.Controls
 open Avalonia.Threading
 open Xunit
@@ -14,8 +15,9 @@ open Wanxiang2.WorkspaceState
 
 let private rig () =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
-    let styles = ThemeStyles(theme)
-    let pane = ChatPane<string>(ChatPaneMetrics.ofTheme theme styles, fun s -> Border(Width = s, Height = s) :> Control)
+    if not (Application.Current.Resources.MergedDictionaries.Contains (theme.Resources :> Avalonia.Controls.IResourceDictionary)) then
+        Application.Current.Resources.MergedDictionaries.Add (theme.Resources :> Avalonia.Controls.IResourceDictionary)
+    let pane = ChatPane<string>((fun s -> Border(Width = s, Height = s) :> Control), None)
     let w = Window(Width = 800.0, Height = 600.0, Content = pane.Host)
     w.Show()
     Dispatcher.UIThread.RunJobs()
@@ -51,7 +53,7 @@ let ``贴底跟随与回到最新`` () =
         for _ in 1 .. 4 do Dispatcher.UIThread.RunJobs()
         Assert.True(pane.Follow.AtBottom, "after render")
         // 用户向上：记未读，露钮
-        pane.Scroller.SetOffset 0.0
+        pane.Scroller.ApplyOffset 0.0
         Dispatcher.UIThread.RunJobs()
         // 直接走记账：模拟 Scrolled 观察
         pane.Follow.Scrolled(true, false) |> ignore

@@ -22,6 +22,9 @@ let private themed () =
     let manager = new ThemeManager((fun () -> DateTimeOffset.UnixEpoch), false)
     let styles = ThemeStyles manager
     styles.Install Application.Current.Styles
+    // 合并活字典本体：正文控件的 DynamicResource 绑定要沿树查到主题资源（W7 外观退役）
+    if not (Application.Current.Resources.MergedDictionaries.Contains (manager.Resources :> Avalonia.Controls.IResourceDictionary)) then
+        Application.Current.Resources.MergedDictionaries.Add (manager.Resources :> Avalonia.Controls.IResourceDictionary)
     manager, styles
 
 let private view (manager, styles) (math: string * bool -> string option) =
@@ -74,7 +77,7 @@ let ``theme switch recolors shown code in place and metric edits reach shown blo
         manager.CompleteTransition()
         Assert.Equal(ThemePalette.color PaletteMode.Dark PaletteKey.CodeBg, (card.Background :?> ISolidColorBrush).Color)
         Assert.NotEqual(light, (card.Background :?> ISolidColorBrush).Color)
-        manager.SetMetric(Wanxiang2.ThemeMetrics.Metric.BlockPaddingX, 21.0)
+        manager.ApplyMetric(Wanxiang2.ThemeMetrics.Metric.BlockPaddingX, 21.0)
         Assert.Equal(21.0, code.Margin.Left)
         win.Close())
 
@@ -90,6 +93,6 @@ let ``code header buttons wear the shared icon button classes from the theme`` (
         Assert.Contains(StyleClass.surface, copy.Classes)
         // 命中区按布局规则取方形（本地值），圆角来自主题样式
         Assert.Equal(30.0, copy.Width)
-        manager.SetSpace(Space.RadiusMd, 5.0)
+        manager.ApplySpace(Space.RadiusMd, 5.0)
         Assert.Equal(CornerRadius 5.0, copy.CornerRadius)
         win.Close())

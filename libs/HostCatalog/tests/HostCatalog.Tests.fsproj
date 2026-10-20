@@ -3,6 +3,7 @@
   <ItemGroup>
     <Compile Include="Render.fs" />
     <Compile Include="Tests.fs" />
+    <Compile Include="ModelVision.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

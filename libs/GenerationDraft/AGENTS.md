@@ -8,7 +8,7 @@
 
 ## GenerationDraft（库）
 
-旧 `Views/SettingsGeneral.fs` 里「生成」草稿的状态（`generationDirty`、`generationSaving`、`generationSyncing`、`generationRevision`、`generationBaseline`、`generationScope`、`draftScope`、`scopeEpoch`）与状态文案迁入，成为泛型对象 `GenerationDraft<'T>`（'T 为生成设置的值，旧代码里是 Catalog.generation）：`Edited`、`CatalogArrived`、`SetScope`、`Discard`、`CanSave`、`BeginSave`、`Finish`、`Status`。表单回填由调用方传入的 fill 完成，期间的编辑不算修改。不引用任何其他库。根规则见项目根目录 AGENTS.md。
+旧 `Views/SettingsGeneral.fs` 里「生成」草稿的状态（`generationDirty`、`generationSaving`、`generationSyncing`、`generationRevision`、`generationBaseline`、`generationScope`、`draftScope`、`scopeEpoch`）与状态文案迁入，成为泛型对象 `GenerationDraft<'T>`（'T 为生成设置的值，旧代码里是 Catalog.generation）：`Edited`、`CatalogArrived`、`ApplyScope`、`Discard`、`CanSave`、`BeginSave`、`Finish`、`Status`。表单回填由调用方传入的 fill 完成，期间的编辑不算修改。不引用任何其他库。根规则见项目根目录 AGENTS.md。
 
 ## LEMMA
 1. **同一串事件，脏、保存中、基线、能否保存与状态文案和旧实现相同。** [根 AXIOM: 5]
@@ -86,7 +86,10 @@
 
 ## OnboardingFlow
 
-首次运行「添加一个模型服务」卡片的步骤机（迁自旧 `Views/OnboardingCard.fs`：`step`、`attemptId`、`connected`、`useAlternate`、`discovered`、`discoveryStarted`，以及 `connect`、`applyProbed`、`fail`、`ApplyProbe`、`TakeConnected`、`StartDiscovery`、`ShowDiscovered`、一键 Ollama、`Reset` 里的转移与状态文字）。全部原文逐字保留。只依赖 BCL；命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
+首次运行「添加一个模型服务」卡片的步骤机（迁自旧 `Views/OnboardingCard.fs`：`step`、`attemptId`、`connected`、`useAlternate`、`discoveryStarted`，以及 `connect`、`applyProbed`、`fail`、`ApplyProbe`、`TakeConnected`、`StartDiscovery`、`ShowDiscovered`、一键 Ollama、`Reset` 里的转移与状态文字）。只依赖 BCL；命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
+
+W7-B3：`discovered`（本机发现的模型清单）已从本对象移除——该事实归 `WorkspaceModel.Onboarding`，
+引导卡经端口回报、宿主投影回来；本对象只回答「要不要显示一键使用」。
 
 宿主仍负责：预设选择与载荷（ProviderPresets）、默认模型挑选（OnboardingRules.pickDefaultModel）、失败原因解析（ProbeFailureKind）、保存与探测命令、目录就绪判断、控件。本库不认识这些类型。
 
@@ -187,7 +190,7 @@
 
 ## SectionMemory
 
-分区的构建缓存与滚动位置（迁自旧 `Views/SettingsView.fs` 的 `builtSections`、`scrollPositions`、`current`、`Select` 里的记位/恢复规则、`Get/SetSectionScrollOffset`）。控件、滚动容器与导航按钮仍归宿主。分区与构建结果都是类型参数，不认识 SettingsSection。只依赖 BCL；命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
+分区的构建缓存与滚动位置（迁自旧 `Views/SettingsView.fs` 的 `builtSections`、`scrollPositions`、`current`、`Select` 里的记位/恢复规则、`Get/SetSectionScrollOffset`）。控件、滚动容器与导航按钮仍归宿主。分区与构建结果都是类型参数，不认识 SettingsSection。公开成员：`Current`、`TryBuilt`、`Keep`、`Invalidate`、`Select`、`Offset`、`ApplyOffset`。只依赖 BCL；命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
 
 ## LEMMA
 1. **每个分区只构建一次**，失效后才重建（重复构建会把同一控件挂到两个父级上）。

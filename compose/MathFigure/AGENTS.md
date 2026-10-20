@@ -1,11 +1,11 @@
 # MathFigure（组合，公式控件与公式量尺）
 
-旧 `Rich/MathLayout.fs`（FormattedText 量尺、图元转成 Avalonia 类型）与 `Rich/MathVisual.fs`（`MathVisual` 控件、`MathRender.tryInline / inlineContainer / tryBlock`），extract-ledger@0c0b2a6。协作者（包）：MathTypeset（排版）、MathBaseline（基线规则）、ThemeFonts（KaTeX 字体）。KaTeX HTML 由调用方给（宿主 RichBackend 的 MathHtml），本组合不认识后端。已移除 UiKit 依赖，活值由控件生命周期直接订阅。根规则见项目根目录 AGENTS.md。
+旧 `Rich/MathLayout.fs`（FormattedText 量尺、图元转成 Avalonia 类型）与 `Rich/MathVisual.fs`（`MathVisual` 控件、`MathRender.tryInline / inlineContainer / tryBlock`），extract-ledger@0c0b2a6。协作者（包）：MathTypeset（排版）、MathBaseline（基线规则）、ThemeFonts（KaTeX 字体）。KaTeX HTML 由调用方给（宿主 RichBackend 的 MathHtml），本组合不认识后端。已移除 UiKit 依赖；外观值经主题资源键声明式送达（W7 外观退役），不再有活值订阅。根规则见项目目录 AGENTS.md。
 
 ## 外观
-- `MathFigureMetrics`：`Ink`（活画笔，原地改色不重排）、`BodyFont`（活字体，变了就重排）、`BlockPadding`（展示式公式上下留白的活值）。值由 ReadingLook 从主题管理者取。
+- `MathFigureMetrics`：只剩 `Ink`（主题管理者的活画笔实例，原地改色不重排）。字体走资源键 `FontFamily.Body`（构造时先从应用资源取初值，保证 `HasLayout` 判定在挂树前就可用；之后经可继承的 `TextElement.FontFamily` 资源绑定随主题重排）；展示式上下留白走派生档 `Padding.MathBlock`。值由 ReadingLook 从主题管理者取。
 - 用到的样式类：无。
-- 活值只在控件挂进可视树期间订阅，摘下即退订。
+- 无 IObservable 字段、无手工 Subscribe：主题改动由资源系统即时送达。
 
 ## 接口
 - `MathDraw.tryLayout body brush size html` → `MathPicture`（`MathMark.Glyph | Rule | Path`，RequireQualifiedAccess）。

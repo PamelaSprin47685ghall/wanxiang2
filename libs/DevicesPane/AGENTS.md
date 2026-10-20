@@ -2,6 +2,8 @@
 
 合并包：DevicesPane、GeneralPane、OnboardingPane、ProvidersPane、SettingsFrame、ToolsPane。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。
 
+接口命名（根规则）：本库对外只暴露单入口 `Render(viewState)` 与事件；一次性写投影走 `Apply*`、插槽走 `Wire*`，并在各成员的接口节逐条登记。库内没有公开的 `Set*` 状态修改器。
+
 测试工程 `<包名>.Tests.fsproj` 合并各成员用例（`<成员名>.<文件>.fs`），golden 目录按成员分目录；控件库的测试工程用 `AssemblySettings.fs` 关掉并行（Avalonia 平台状态是进程级全局量）。
 
 ## 成员 `DevicesPane`
@@ -40,10 +42,10 @@
 设置里的三块通用分区（迁自旧 `Views/SettingsGeneral.fs` 的界面部分）：对话默认值、外观与交互（含本机草稿）、关于与系统诊断（含主机状态）。根规则见项目根目录 AGENTS.md。
 
 - `GenerationSection(look, validationFor)`：五个数值框（两列表单，窄于 `FormSingleColumnBreakpoint` 退化为单列）、多行系统指令、「自动生成对话标题」开关、错误摘要（`Summary`）、保存状态行（polite）、保存 / 放弃、对话预设列表、导入入口。
-  - `Read()` / `Fill GenerationText`；`SetStatus`；`SetPending(pending, canSave)`；`SetPresets`；`SetImportVisible`。
-  - 事件：`Edited`（任一字段或开关变化，填表时也发）、`SaveRequested`（保存键、任意处 Ctrl/⌘+Enter、数值框回车；指令框回车是换行）、`DiscardRequested`、`PresetRenameClicked id`、`PresetDeleteClicked id`、`ImportClicked`。
+  - `Read()` / `Fill GenerationText`；单入口 `Render(vs: GeneralSectionVS)`（状态行、保存往返 `Pending` + `CanSave`、对话预设 `Presets`）；插槽 `WireImportHandler(handler)`（注入即显示「导入对话…」，可见性归这里独占）。
+  - 事件：`Edited`（任一字段或开关变化，填表时也发）、`SaveRequested`（保存键、任意处 Ctrl/⌘+Enter、数值框回车；指令框回车是换行）、`DiscardRequested`、`PresetRenameClicked id`、`PresetDeleteClicked id`。「导入对话…」的回调走插槽 `WireImportHandler`，没有单独事件。
 - `AppearanceSection(look)`：主题选择器（读屏 ComboBox，`ThemeClicked anchor`）、字号 −/+（`FontStepped ±0.5`；到边界由 `Render` 禁用）、五个交互开关与「保存未发送的草稿」（`Toggled(AppearanceSwitch, 值)`，只在用户拨动时发）、本机草稿概况与「清除本地草稿」（`ClearDraftsClicked`）。`Render AppearanceState`。
-- `AboutSection(look)`：`SetRows [(键, 值)]`（等宽、可选中）、复制诊断报告（`CopyDiagnosticsClicked`）、`SetHealth(配置问题, AboutDoctor)`（检查中按钮禁用，`CheckHostClicked`）、设计与致谢卡。
+- `AboutSection(look)`：单入口 `Render(vs: GeneralSectionVS)`（信息行 `AboutRows`（等宽、可选中）、主机状态 `Health(ConfigIssue, Doctor)`；检查中按钮禁用，`CheckHostClicked`）、复制诊断报告（`CopyDiagnosticsClicked`）、设计与致谢卡。
 - 草稿状态（GenerationDraft）、校验（GenerationForm + FieldCheck）、写回、偏好（UiPrefs）、主题菜单、剪贴板、确认框、HostHealth 订阅都由组合者接。
 - 自动化：`settings-presets`、`preset-row`、`settings-import`、`local-drafts-summary`、`clear-local-drafts`、`host-config-issue`、`host-config-issue-detail`、`host-config-ok`、`check-host`、`doctor-headline`、`doctor-check-<name>`，与旧实现相同。
 
@@ -99,8 +101,15 @@
 
 - `ProvidersPane(look)`：`View`；`Render ProviderRow list`（状态点 + 名称 + 状态标签「已配置 / 缺少密钥（警示）/ 已停用」+「默认」标签 + 地址行；停用时名称弱化，编辑与更多仍可点）。列表为空时显示空态卡，「添加模型服务」由空态里的主按钮接管、顶部同名键隐藏。
   - 事件：`AddClicked`、`EditClicked id`、`MoreClicked(id, 键)`。
-- `ProviderEditor(look, isNew, validationFor)`：预设选择器（读屏 ComboBox，`PresetClicked anchor`）、传输说明（`SetKindText`）、预设说明（`SetPresetHint`，空则隐藏）、错误摘要（`Summary`）、快速区（名称、密钥 ●、地址）、「高级设置 ▼ / 收起高级设置 ▲」（`IsAdvanced`、`SetAdvanced`）、高级区（传输切换 `SetTransport` / `TransportClicked`、标识、模型列表、默认模型、获取模型列表 `ProbeClicked` / `SetProbePending` / `SetProbeStatus`、看图能力 `SetVisionCurrent` 与两框、超时、重试、启用开关 `Enabled` / `SetEnabledValue`）、取消 / 添加（或保存）。
-  - 单行框回车、任意处 Ctrl/⌘+Enter 发 `SaveRequested`；多行框回车是换行。`SetPending true` 时保存键换「正在保存…」并禁用、取消也禁用、不再发 `SaveRequested`。页脚左右方向键在两键间移动。
+- `ProviderEditor(look, isNew, validationFor)`：预设选择器（读屏 ComboBox，`PresetClicked anchor`）、错误摘要（`Summary`）、快速区（名称、密钥 ●、地址）、「高级设置 ▼ / 收起高级设置 ▲」（`IsAdvanced`；展开/收起由控件自己在途态持有，外部强制展开走命令 `ApplyAdvanced`）、高级区（标识、模型列表、默认模型、获取模型列表 `ProbeClicked`、看图能力、超时、重试、启用开关 `Enabled`）、取消 / 添加（或保存）。
+  - 命令类操作登记（一次性写投影，无先后依赖）：
+    - `ApplyPresetCaption(label, hint, kind, transport)`：预设标题、预设说明（空则隐藏）、传输说明与传输切换键（`transport` 为 `None` 时隐藏）。
+    - `ApplyVisionCurrent(text, inheritOverride, customOverride)`：看图能力的当前判断与手动指定的两框。
+    - `ApplyProbeState(pending, status)`：获取模型列表往返（换「正在获取…」并禁用）与探活失败的常驻行（空则隐藏）。
+    - `ApplyPending(value)`：保存往返（换「正在保存…」并禁用、取消也禁用、不再发 `SaveRequested`）。
+    - `ApplyEnabledValue(v)`：「启用这个模型服务」开关的值。
+    - `ApplyAdvanced(expanded)`：强制展开高级区（表单错误落在收起的高级区时，组合者先展开）。
+  - 单行框回车、任意处 Ctrl/⌘+Enter 发 `SaveRequested`；多行框回车是换行。页脚左右方向键在两键间移动。
   - 新建时「获取模型列表」禁用并就地说明要先保存。`InitialFocus` 是名称框。`LockId()` 让编辑时标识只读。`AdvancedBoxes` 是高级区里的框（出错时组合者先展开）。
 - 预设套用与分歧判定（ProviderPresets）、传输切换、探活（ProbeSlot、ProviderProbeText）、校验（ProviderForm + FieldCheck）、写回、菜单与对话框都由组合者接。
 - 自动化：`provider-probe-models`、`provider-vision-yes`、`provider-vision-no`、`provider-vision-current`，与旧实现相同。
@@ -129,7 +138,7 @@
 
 - `SettingsFrame(look, groups)`：本身是 Border。`groups` 是 `(分组名, SettingsNavItem list)`，项为 `{ Key; Label; Glyph }`。
 - `Select key`：标出选中分区（选中底、左缘强调条、标题加粗、图标不透明度、读屏 ItemStatus「当前分区」与帮助文字「<名>，当前分区」）并把键滚进视野。
-- `SetCaptions(范围, 说明)`、`SetContent(control, restoreY)`、`ContentOffset`、`ScrollTo`、`FocusNav key`、`Current`、`IsCompact`。
+- 命令类操作登记：`ApplyCaptions(范围, 说明)`、`ApplyContent(control, restoreY)`（换内容；`restoreY` 有值时滚到该位置）。其余：`ContentOffset`、`ScrollTo`、`FocusNav key`、`Current`、`IsCompact`。
 - 事件：`SelectRequested key`（点击，或在导航键上按上 / 左 / 下 / 右循环移动、Home / End 跳首尾；键盘移动后焦点跟到目标键）、`CloseClicked`。组合者收到后切内容并回调 `Select`。
 - 读屏：导航轴是 Tab「设置分区导航」，每个键是 TabItem。
 - 窄于 `CompactBreakpoint`：导航转为顶部横条（分组名隐藏、横向滚动），内容内边距收紧；切换时按新边界钳制滚动位置再落位。断点是活值，改了立即重排。
@@ -160,8 +169,9 @@
   - 事件：`PolicyClicked(toolId, 键)`、`RemoveFolderClicked path`、`DebugToggled 新值`（只在用户拨动时发；`Render` 写值不发）、`AddFolderClicked`、`AddServerClicked`、`EditServerClicked id`、`ServerMoreClicked(id, 键)`。
   - 自动化：`tool-policy-<id>`（读屏名「<名> 的审批方式：<方式>」）、`tools-add-folder`、「移除文件夹授权 <路径>」。
 - `McpEditor(look, existing, validationFor)`：六个输入框（`IdBox` … `TimeoutBox`、`Boxes`）、启用开关（`Enabled`）、错误摘要（`Summary`，assertive、可聚焦）、取消 / 添加（或保存）键。
-  - 单行框回车、任意处 Ctrl/⌘+Enter 发 `SaveRequested`；参数框回车是换行。保存往返中 `SetPending true`：保存键换「正在保存…」并禁用、取消也禁用、不再发 `SaveRequested`。
-  - 页脚左右方向键在两键间移动。`InitialFocus`：新建是标识，编辑是名称（标识只读）。`SetMaxHeight` 给对话框内容的上限。
+  - 单行框回车、任意处 Ctrl/⌘+Enter 发 `SaveRequested`；参数框回车是换行。
+  - 命令类操作登记：`ApplyPending(value)`（保存往返：换「正在保存…」并禁用、取消也禁用、不再发 `SaveRequested`）、`ApplyMaxHeight(h)`（给对话框内容的上限）。
+  - 页脚左右方向键在两键间移动。`InitialFocus`：新建是标识，编辑是名称（标识只读）。
   - `validationFor` 是每个框的校验行（组合者的 FieldCheck.MessageFor），放进对应字段组，可见时说明让位。
 - `FolderEditor(look, validationFor)`：路径框（`PathBox`）、取消 / 授权；回车或「授权」发 `SaveRequested 去空白的路径`。
 - 校验（McpForm、路径规则）、写回（ToolsPolicy.payload、McpForm.payload）、审批与服务菜单、对话框开关、Esc 守卫都由组合者接。

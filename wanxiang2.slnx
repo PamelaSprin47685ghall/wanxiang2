@@ -91,9 +91,9 @@
     <Project Path="libs/Canonical/Canonical.fsproj" />
     <Project Path="libs/Canonical/tests/Canonical.Tests.fsproj" />
   </Folder>
-  <Folder Name="/CardReconcile/">
-    <Project Path="libs/CardReconcile/CardReconcile.fsproj" />
-    <Project Path="libs/CardReconcile/tests/CardReconcile.Tests.fsproj" />
+  <Folder Name="/CardBits/">
+    <Project Path="libs/CardBits/CardBits.fsproj" />
+    <Project Path="libs/CardBits/tests/CardBits.Tests.fsproj" />
   </Folder>
   <Folder Name="/ChangeWatch/">
     <Project Path="libs/ChangeWatch/ChangeWatch.fsproj" />
@@ -355,10 +355,6 @@
     <Project Path="libs/ModelSwitcher/ModelSwitcher.fsproj" />
     <Project Path="libs/ModelSwitcher/tests/ModelSwitcher.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ModelVision/">
-    <Project Path="libs/ModelVision/ModelVision.fsproj" />
-    <Project Path="libs/ModelVision/tests/ModelVision.Tests.fsproj" />
-  </Folder>
   <Folder Name="/MotionSwitch/">
     <Project Path="libs/MotionSwitch/MotionSwitch.fsproj" />
     <Project Path="libs/MotionSwitch/tests/MotionSwitch.Tests.fsproj" />
@@ -562,10 +558,6 @@
   <Folder Name="/CredentialStore/">
     <Project Path="compose/CredentialStore/CredentialStore.fsproj" />
   </Folder>
-  <Folder Name="/DeletionDesk/">
-    <Project Path="compose/DeletionDesk/DeletionDesk.fsproj" />
-    <Project Path="compose/DeletionDesk/tests/DeletionDesk.Tests.fsproj" />
-  </Folder>
   <Folder Name="/DesignRhythm/">
     <Project Path="compose/DesignRhythm/DesignRhythm.fsproj" />
     <Project Path="compose/DesignRhythm/tests/DesignRhythm.Tests.fsproj" />
@@ -581,10 +573,6 @@
   <Folder Name="/Doctor/">
     <Project Path="compose/Doctor/Doctor.fsproj" />
     <Project Path="compose/Doctor/tests/Doctor.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/DraftSession/">
-    <Project Path="compose/DraftSession/DraftSession.fsproj" />
-    <Project Path="compose/DraftSession/tests/DraftSession.Tests.fsproj" />
   </Folder>
   <Folder Name="/EntryShells/">
     <Project Path="compose/EntryShells/EntryShells.fsproj" />

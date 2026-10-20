@@ -7,7 +7,15 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Threading
+
+/// 动态资源绑定辅助：主题管理者把活值写进 ResourceDictionary，控件绑定即随主题资源生效。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
 
 /// 可点的原生 Button，继承 Button 获得原生自动化、键盘导航与悬停反馈。
 type internal Tap(child: Control, name: string, classes: string list, action: unit -> unit) as this =
@@ -24,13 +32,13 @@ type internal Tap(child: Control, name: string, classes: string list, action: un
 
     member _.Invoke() = if this.IsEnabled then action ()
 
-    member _.SetText(value: string) =
+    member _.ApplyText(value: string) =
         match this.Content with
         | :? TextBlock as t -> t.Text <- value
         | _ -> ()
         AutomationProperties.SetName(this, value)
 
-    member _.SetEnabled(enabled: bool) =
+    member _.ApplyEnabled(enabled: bool) =
         this.IsEnabled <- enabled
 
     static member TextButton(text: string, classes: string list, action: unit -> unit) : Tap =
@@ -50,25 +58,32 @@ type ImportTone =
     | Text
     | Danger
 
-/// 外观。全部由主题管理者提供活的实例。
+[<RequireQualifiedAccess>]
+type ImportGate =
+    | Hidden
+    | Disabled
+    | Enabled
+
+/// 导入对话框按键门控呈现（对齐 ImportView.chrome / 状态）
+type ImportSheetVS =
+    { StatusText: string
+      Tone: ImportTone
+      Details: string list option
+      ImportGate: ImportGate
+      PickEnabled: bool
+      PickText: string }
+
+/// 外观。画笔由主题管理者给（同一实例，切主题原地改色）；
+/// 字号、行高、间距走主题动态资源键（Metric.FontTitle / Metric.FontBody / Metric.FontSmall /
+/// Metric.FontCaption / Metric.CaptionLineHeight / Space.Xl / Space.Md），本记录不再有 IObservable 字段。
 type ImportSheetAppearance =
     { Text: IBrush
       Muted: IBrush
-      Danger: IBrush
-      TitleFontSize: IObservable<float>
-      BodyFontSize: IObservable<float>
-      SmallFontSize: IObservable<float>
-      CaptionFontSize: IObservable<float>
-      CaptionLineHeight: IObservable<float>
-      /// 段间距（旧 spaceXl）
-      StackSpacing: IObservable<float>
-      /// 按钮间距（旧 spaceMd）
-      ButtonSpacing: IObservable<float> }
+      Danger: IBrush }
 
 /// 导入对话框的内容（迁自旧 Views/ImportDialog.fs 的界面部分）：标题、说明、状态、预览详情、隐私说明、三键。
 /// 解析、读文件、提交与超时由组合者接（ImportView、ImportAttempt、ConversationTransfer）；本控件只呈现并发事件。
 type ImportSheet(look: ImportSheetAppearance, privacyNote: string) =
-    let live (o: IObservable<'T>) f = o.Subscribe(fun v -> f v) |> ignore
     let cancel = Event<unit>()
     let pick = Event<unit>()
     let import = Event<unit>()
@@ -76,8 +91,8 @@ type ImportSheet(look: ImportSheetAppearance, privacyNote: string) =
     let heading = TextBlock(Text = "导入对话", FontWeight = FontWeight.Medium, Foreground = look.Text)
     let caption (text: string) =
         let t = TextBlock(Text = text, Foreground = look.Muted, TextWrapping = TextWrapping.Wrap)
-        live look.CaptionFontSize (fun v -> t.FontSize <- v)
-        live look.CaptionLineHeight (fun v -> t.LineHeight <- v)
+        t.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
+        t.Bind(TextBlock.LineHeightProperty, Dyn.res "Metric.CaptionLineHeight") |> ignore
         t
     let intro = caption "选择从万象「导出（Markdown / JSON）」里保存的 JSON 文件。导入后是这台主机上的一个新对话，不会自动生成回复。"
     let status = TextBlock(TextWrapping = TextWrapping.Wrap, Foreground = look.Muted, Name = "import-status")
@@ -89,9 +104,9 @@ type ImportSheet(look: ImportSheetAppearance, privacyNote: string) =
     let content = StackPanel(Orientation = Orientation.Vertical)
 
     do
-        live look.TitleFontSize (fun v -> heading.FontSize <- v)
-        live look.BodyFontSize (fun v -> status.FontSize <- v)
-        live look.SmallFontSize (fun v -> details.FontSize <- v)
+        heading.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontTitle") |> ignore
+        status.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontBody") |> ignore
+        details.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontSmall") |> ignore
         privacy.Name <- "import-privacy-note"
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)
         AutomationProperties.SetName(pickButton, "选择要导入的 JSON 文件")
@@ -99,11 +114,11 @@ type ImportSheet(look: ImportSheetAppearance, privacyNote: string) =
         AutomationProperties.SetHelpText(importButton, "在这台主机上新建一个对话并写入文件里的消息")
         importButton.IsVisible <- false
         let buttons = StackPanel(Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center)
-        live look.ButtonSpacing (fun v -> buttons.Spacing <- v)
+        buttons.Bind(StackPanel.SpacingProperty, Dyn.res "Space.Md") |> ignore
         for b in [ closeButton; pickButton; importButton ] do buttons.Children.Add b
         let divider = Border(HorizontalAlignment = HorizontalAlignment.Stretch)
         divider.Classes.Add "hairline"
-        live look.StackSpacing (fun v -> content.Spacing <- v)
+        content.Bind(StackPanel.SpacingProperty, Dyn.res "Space.Xl") |> ignore
         for c in [ heading :> Control; intro; status; details; divider; privacy; buttons ] do content.Children.Add c
 
     /// 对话框内容（组合者交给 OverlayLayer.ShowDialog，旧宽 480）
@@ -114,29 +129,30 @@ type ImportSheet(look: ImportSheetAppearance, privacyNote: string) =
     member _.PickButton: Control = pickButton
     member _.CloseButton: Control = closeButton
 
-    /// 按键门控（组合者从 ImportView.chrome 得出）
-    member _.SetChrome(importVisible: bool, importEnabled: bool, pickEnabled: bool, pickText: string) =
-        importButton.IsVisible <- importVisible
-        importButton.SetEnabled importEnabled
-        pickButton.SetEnabled pickEnabled
-        // 与旧 Ui.setButtonText 相同：读屏名随按钮文字
-        pickButton.SetText pickText
-
-    member _.SetStatus(text: string, tone: ImportTone) =
-        status.Text <- text
+    /// 单入口幂等渲染
+    member _.Render(vs: ImportSheetVS) =
+        status.Text <- vs.StatusText
         status.Foreground <-
-            match tone with
+            match vs.Tone with
             | ImportTone.Muted -> look.Muted
             | ImportTone.Text -> look.Text
             | ImportTone.Danger -> look.Danger
-
-    /// 预览详情：Some 行 → 显示；None → 隐藏
-    member _.SetDetails(lines: string list option) =
-        match lines with
+        match vs.Details with
         | Some ls ->
             details.Text <- String.Join("\n", ls)
             details.IsVisible <- true
         | None -> details.IsVisible <- false
+        match vs.ImportGate with
+        | ImportGate.Hidden ->
+            importButton.IsVisible <- false
+        | ImportGate.Disabled ->
+            importButton.IsVisible <- true
+            importButton.ApplyEnabled false
+        | ImportGate.Enabled ->
+            importButton.IsVisible <- true
+            importButton.ApplyEnabled true
+        pickButton.ApplyEnabled vs.PickEnabled
+        pickButton.ApplyText vs.PickText
 
     /// 打开后与预览就绪后的初始焦点（投递到下一轮，按钮可见才聚焦）
     member _.FocusPick() = Dispatcher.UIThread.Post(fun () -> if pickButton.IsEffectivelyVisible then pickButton.Focus() |> ignore) // 布局首帧排队，非焦点竞态

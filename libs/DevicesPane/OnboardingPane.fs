@@ -9,6 +9,7 @@ open Avalonia.Layout
 open Avalonia.Media
 open Wanxiang2.WorkspaceState
 open Wanxiang2.DevicesPane
+open Wanxiang2.DevicesPane.ButtonExtensions
 
 /// 一枚服务商选择键
 type OnboardingChip =
@@ -123,8 +124,8 @@ type OnboardingPane() =
         keyBox.IsEnabled <- not state.Busy
         // 异步提交键保持同一几何，只换文字与可用（旧 Ui.setButtonPending）
         let text = if state.Busy then "正在连接…" else "连接"
-        connectButton.SetText text
-        connectButton.SetEnabled(not state.Busy)
+        connectButton.ApplyText text
+        connectButton.ApplyEnabled(not state.Busy)
         AutomationProperties.SetHelpText(connectButton, (if state.Busy then text else ""))
         AutomationProperties.SetName(connectButton, "连接")
         statusText.Text <- state.StatusText
@@ -135,7 +136,7 @@ type OnboardingPane() =
         statusText.IsVisible <- not (String.IsNullOrWhiteSpace state.StatusText)
         match state.SwitchLabel with
         | Some label ->
-            switchButton.SetText label
+            switchButton.ApplyText label
             switchButton.IsVisible <- true
         | None -> switchButton.IsVisible <- false
         match state.Discovered with

@@ -6,6 +6,7 @@ ConfirmPane + PromptPane + TextEditPane + ConnectPane + SessionPrefsPane + Short
 - 协作都在这里：保存往返与 pending 守卫（canDismiss）；空白校验和数字范围校验写入 FieldCheck；多处出错时显示摘要并弹提示条，同时展开生成参数；连接失败的重试键由 `ConnectionIssue.retry` 决定，码输错时不给重试键，而是全选重输；6 位码只自动提交一次（PairingAutoSubmit）；模型选择用 OverlayDesk.SelectButton。
 - 宽度取自主题度量：ConfirmDialogWidth 用于确认和单行输入；ConnectDialogWidth 用于连接和快捷键帮助；SessionDialogWidth 用于对话设置和长文本编辑。
 - 与旧实现的差别：Ctrl/⌘+Enter 在多行框里也能保存（面板用隧道处理）。
+- 本组合者**不持有**意图派发器：没有 `SetDispatcher` 一类成员，对话框不向上报 `UserMsg`（关闭与焦点归还原生层与组合者）。
 
 ## 证据与旧测试
 

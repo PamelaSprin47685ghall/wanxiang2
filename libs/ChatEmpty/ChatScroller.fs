@@ -161,7 +161,7 @@ type ChatScroller(ease: ScrollEase) =
     member _.LatestPressed = latestPressed.Publish
 
     /// 窄屏（触控目标放大，不画宽按钮）
-    member _.SetCompact(value: bool) =
+    member _.ApplyCompact(value: bool) =
         compact <- value
         applyLatestSize ()
 
@@ -176,7 +176,7 @@ type ChatScroller(ease: ScrollEase) =
         applyLatestSize ()
 
     /// 立即写偏移
-    member _.SetOffset(y: float) = viewer.Offset <- Vector(viewer.Offset.X, y)
+    member _.ApplyOffset(y: float) = viewer.Offset <- Vector(viewer.Offset.X, y)
 
     /// 立即写偏移并记为自己写的（旧 tween.Pin + 写 Offset）：钉住期间宿主重新对齐不被当成用户上滚
     member _.PinOffset(y: float) =
@@ -190,7 +190,7 @@ type ChatScroller(ease: ScrollEase) =
         if not (ease.Start DateTimeOffset.UtcNow viewer.Offset.Y (target ()) reduced) then false
         else
             let dest = target ()
-            this.SetOffset dest
+            this.ApplyOffset dest
             onArrived dest
             true
 

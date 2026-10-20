@@ -26,12 +26,32 @@ type ErrorPanelParts =
       CountdownText: int -> string }
 
 /// 生成失败卡（旧 MessageCard.errorCardWith）：标题、说明、可选倒计时、继续 / 重试 / 恢复与技术细节披露。
-type ErrorPanel(parts: ErrorPanelParts, title: string, hint: string) =
+/// 单入口 `Render(vs)`：标题、说明、按钮族、倒计时与回调都在 ErrorPanelVS 里。
+/// 幂等：同一实例重复渲染时按钮不被重建（控件身份稳定），剩余秒数只往下走（卡片重建不回跳），读屏播报只发生一次。
+type ErrorPanel(parts: ErrorPanelParts) =
     let tick = Event<unit>()
+    let announced = Event<unit>()
     let mutable attached = false
     let mutable wanted = false
     let mutable left = 0
+    /// 当前是否处在倒计时这一段（false = 没有倒计时）
+    let mutable countdownActive = false
+    /// 这一段倒计时是否已经播报过（只播一次）
+    let mutable announceDone = false
+    /// 重试按钮的剩余秒数回写
     let mutable onLeft: int -> unit = ignore
+    /// 三个动作的最新回调（按钮建好后随 Render 更新，控件身份不变）
+    let mutable continueSink: unit -> unit = ignore
+    let mutable retrySink: unit -> unit = ignore
+    let mutable recoverySink: string -> unit = fun _ -> ()
+    /// 已建好的按钮（按动作族缓存，形状不变就不重建）
+    let mutable continueButton: Button option = None
+    let mutable retryButton: Button option = None
+    /// 重试按钮当前是不是次要档（有「继续生成」时是幽灵档）
+    let mutable retrySecondary: bool option = None
+    let mutable recoveryButtons: Map<string, Button> = Map.empty
+    let mutable detailButton: Button option = None
+    let mutable detailText: string option = None
 
     let icon =
         Path(
@@ -43,10 +63,10 @@ type ErrorPanel(parts: ErrorPanelParts, title: string, hint: string) =
             VerticalAlignment = VerticalAlignment.Top,
             Margin = Thickness(0.0, 0.0, 12.0, 0.0))
     let titleBlock =
-        TextBlock(Text = title, FontWeight = FontWeight.Medium, FontSize = 14.0, TextWrapping = TextWrapping.Wrap)
+        TextBlock(Text = "", FontWeight = FontWeight.Medium, FontSize = 14.0, TextWrapping = TextWrapping.Wrap)
     let hintBlock =
         TextBlock(
-            Text = hint,
+            Text = "",
             FontSize = 12.0,
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 18.0)
@@ -75,86 +95,8 @@ type ErrorPanel(parts: ErrorPanelParts, title: string, hint: string) =
         b.Click.Add(fun _ -> action ())
         b
 
-    do
-        icon.Bind(Path.StrokeProperty, Dyn.res "Palette.Danger") |> ignore
-        titleBlock.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
-        hintBlock.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
-        countdown.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Warning") |> ignore
-        card.Classes.Add "grouping-card"
-        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer") |> ignore
-        card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
-        column.Children.Add titleBlock
-        column.Children.Add hintBlock
-        DockPanel.SetDock(icon, Dock.Left)
-        top.Children.Add icon
-        top.Children.Add column
-        AutomationProperties.SetName(countdown, "重试倒计时")
-        layout.Children.Add top
-        card.AttachedToVisualTree.Add(fun _ ->
-            attached <- true
-            if wanted then tick.Trigger())
-        card.DetachedFromVisualTree.Add(fun _ ->
-            attached <- false)
-
-    member _.Host: Control = card
-    member _.Title = titleBlock
-    member _.Hint = hintBlock
-    member _.Countdown = countdown
-    member _.Actions = actionRow
-    member _.Left = left
-    member _.Tick = tick.Publish
-    member _.IsTicking = wanted && attached
-
-    member _.SetTicking(value: bool) =
-        wanted <- value
-
-    member _.SetHint(text: string) = hintBlock.Text <- text
-
-    member _.SetSeconds(seconds: int, ?announce: bool) =
-        left <- max 0 seconds
-        let ready = left = 0
-        countdown.Text <- parts.CountdownText left
-        AutomationProperties.SetName(countdown, sprintf "重试倒计时：%s" countdown.Text)
-        if defaultArg announce false then
-            AutomationProperties.SetLiveSetting(countdown, AutomationLiveSetting.Polite)
-        if ready then
-            countdown.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Success") |> ignore
-        else
-            countdown.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Warning") |> ignore
-        countdown.IsVisible <- ready
-        if not (column.Children.Contains countdown) then column.Children.Add countdown
-        onLeft left
-
-    member _.AddContinue(action: unit -> unit) =
-        let b = textButton "继续生成" true "继续生成" (Some "保留已写出的部分，从中断处接着生成") action
-        actionRow.Children.Add b
-        if not (layout.Children.Contains actionRow) then layout.Children.Add actionRow
-        b
-
-    member this.AddRetry(hasContinue: bool, action: unit -> unit) =
-        let b =
-            textButton "重试" (not hasContinue) "重试生成"
-                (Some(if hasContinue then "丢弃已写出的部分，重新生成" else "重新尝试生成"))
-                action
-        b.MinWidth <- 80.0
-        let apply left =
-            let waiting = left > 0
-            b.IsEnabled <- not waiting
-            b.Content <- (if waiting then sprintf "重试（%d 秒）" left else "重试")
-            AutomationProperties.SetName(b, (if waiting then sprintf "重试生成，%d 秒后可用" left else "重试生成"))
-        onLeft <- apply
-        apply left
-        actionRow.Children.Add b
-        if not (layout.Children.Contains actionRow) then layout.Children.Add actionRow
-        b
-
-    member _.AddRecovery(label: string, action: unit -> unit) =
-        let b = textButton label true label None action
-        actionRow.Children.Add b
-        if not (layout.Children.Contains actionRow) then layout.Children.Add actionRow
-        b
-
-    member _.AddDetail(detail: string) =
+    /// 技术细节披露（旧 AddDetail）：限高视口 + 复制 + 折叠切换。
+    let buildDetail (detail: string) : Button =
         let content =
             SelectableTextBlock(
                 ContextFlyout = null,
@@ -230,22 +172,167 @@ type ErrorPanel(parts: ErrorPanelParts, title: string, hint: string) =
             open' <- not open'
             setVisible open'
             sync ())
-        actionRow.Children.Add toggle
-        if not (layout.Children.Contains actionRow) then layout.Children.Add actionRow
         detailContainer.Children.Add host
-        if not (layout.Children.Contains detailContainer) then layout.Children.Add detailContainer
         toggle
 
-    /// 单入口：从 ErrorPanelVS 渲染
-    member this.Render(vs: ErrorPanelVS, onRetry: unit -> unit, ?onContinue: unit -> unit, ?onRecovery: string -> unit) =
-        this.SetHint vs.Hint
+    /// 倒计时呈现：剩余秒数写进读屏名，走完时改成功色并播报一次。
+    let applyCountdown (announce: bool) =
+        let ready = left = 0
+        countdown.Text <- parts.CountdownText left
+        AutomationProperties.SetName(countdown, sprintf "重试倒计时：%s" countdown.Text)
+        if ready then
+            countdown.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Success") |> ignore
+        else
+            countdown.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Warning") |> ignore
+        countdown.IsVisible <- ready
+        if not (column.Children.Contains countdown) then column.Children.Add countdown
+        if announce && ready && not announceDone then
+            announceDone <- true
+            AutomationProperties.SetLiveSetting(countdown, AutomationLiveSetting.Polite)
+            announced.Trigger()
+        onLeft left
+
+    do
+        icon.Bind(Path.StrokeProperty, Dyn.res "Palette.Danger") |> ignore
+        titleBlock.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+        hintBlock.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+        countdown.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Warning") |> ignore
+        card.Classes.Add "grouping-card"
+        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer") |> ignore
+        card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
+        column.Children.Add titleBlock
+        column.Children.Add hintBlock
+        DockPanel.SetDock(icon, Dock.Left)
+        top.Children.Add icon
+        top.Children.Add column
+        AutomationProperties.SetName(countdown, "重试倒计时")
+        layout.Children.Add top
+        card.AttachedToVisualTree.Add(fun _ ->
+            attached <- true
+            if wanted then tick.Trigger())
+        card.DetachedFromVisualTree.Add(fun _ ->
+            attached <- false)
+
+    member _.Host: Control = card
+    member _.Title = titleBlock
+    member _.Hint = hintBlock
+    member _.Countdown = countdown
+    member _.Actions = actionRow
+    /// 当前剩余秒数（没有倒计时时为 0）
+    member _.Left = left
+    /// 挂上且要求时按间隔发 `Tick`，组合者据此用 CountdownTicker 与宿主的 RetryCountdown 算下一帧。
+    member _.Tick = tick.Publish
+    /// 倒计时走完时发一次（读屏 polite 播报的同一时刻）。
+    member _.Announced = announced.Publish
+    member _.IsTicking = wanted && attached
+
+    /// 单入口：从 ErrorPanelVS 渲染。
+    /// 幂等：重复渲染不重建按钮（控件身份稳定），倒计时只往下走（卡片重建不回跳），播报只发生一次。
+    member this.Render(vs: ErrorPanelVS) =
+        titleBlock.Text <- vs.Title
+        hintBlock.Text <- vs.Hint
+
+        // 倒计时：只在更小的时候往下走，绝不回跳到更大的剩余秒数
+        let announce = vs.Announce
         if vs.CountdownSeconds >= 0 then
-            this.SetSeconds(vs.CountdownSeconds, vs.CountdownSeconds = 0)
-        if vs.CanContinue then
-            onContinue |> Option.iter (fun f -> this.AddContinue f |> ignore)
-        if vs.CanRetry then
-            this.AddRetry(vs.CanContinue, onRetry) |> ignore
-        match vs.RecoveryLabel, onRecovery with
-        | Some label, Some sink -> this.AddRecovery(label, fun () -> sink label) |> ignore
-        | _ -> ()
-        vs.Detail |> Option.iter (this.AddDetail >> ignore)
+            if not countdownActive then
+                countdownActive <- true
+                announceDone <- false
+                left <- vs.CountdownSeconds
+            elif vs.CountdownSeconds < left then
+                left <- vs.CountdownSeconds
+        else
+            countdownActive <- false
+            announceDone <- false
+            left <- 0
+
+        // 回调更新（按钮已建好时不重建控件）
+        continueSink <- vs.OnContinue |> Option.defaultValue ignore
+        retrySink <- vs.OnRetry
+        recoverySink <- vs.OnRecovery |> Option.defaultValue (fun _ -> ())
+
+        let hasContinue =
+            vs.Actions |> List.exists (function ErrorPanelAction.Continue -> true | _ -> false)
+        // 按钮区：形状不变就只换回调，形状变了才重建（幂等）
+        actionRow.Children.Clear()
+        for action in vs.Actions do
+            match action with
+            | ErrorPanelAction.Continue ->
+                let b =
+                    match continueButton with
+                    | Some b -> b
+                    | None ->
+                        let b = textButton "继续生成" true "继续生成" (Some "保留已写出的部分，从中断处接着生成") (fun () -> continueSink ())
+                        continueButton <- Some b
+                        b
+                actionRow.Children.Add b
+            | ErrorPanelAction.Retry ->
+                // 动作形状变了（有/无「继续生成」决定重试是幽灵档还是次要档）才重建按钮
+                let secondary = not hasContinue
+                let b =
+                    match retryButton with
+                    | Some b when retrySecondary = Some secondary -> b
+                    | _ ->
+                        let b =
+                            textButton
+                                "重试"
+                                secondary
+                                "重试生成"
+                                (Some(if hasContinue then "丢弃已写出的部分，重新生成" else "重新尝试生成"))
+                                (fun () -> retrySink ())
+                        b.MinWidth <- 80.0
+                        let apply (l: int) =
+                            let waiting = l > 0
+                            b.IsEnabled <- not waiting
+                            b.Content <- (if waiting then sprintf "重试（%d 秒）" l else "重试")
+                            AutomationProperties.SetName(b, (if waiting then sprintf "重试生成，%d 秒后可用" l else "重试生成"))
+                        onLeft <- apply
+                        retrySecondary <- Some secondary
+                        retryButton <- Some b
+                        b
+                actionRow.Children.Add b
+            | ErrorPanelAction.Recovery label ->
+                let b =
+                    match Map.tryFind label recoveryButtons with
+                    | Some b -> b
+                    | None ->
+                        let b = textButton label true label None (fun () -> recoverySink label)
+                        recoveryButtons <- Map.add label b recoveryButtons
+                        b
+                actionRow.Children.Add b
+
+        // 技术细节：文本不变就沿用旧按钮（展开状态不丢）
+        match vs.Detail with
+        | Some d when detailText = Some d ->
+            detailButton |> Option.iter (fun b -> actionRow.Children.Add b)
+        | Some d ->
+            detailContainer.Children.Clear()
+            let b = buildDetail d
+            detailButton <- Some b
+            detailText <- Some d
+            actionRow.Children.Add b
+        | None ->
+            detailContainer.Children.Clear()
+            detailButton <- None
+            detailText <- None
+
+        if actionRow.Children.Count > 0 then
+            if not (layout.Children.Contains actionRow) then layout.Children.Add actionRow |> ignore
+        elif layout.Children.Contains actionRow then
+            layout.Children.Remove actionRow |> ignore
+        if detailContainer.Children.Count > 0 then
+            if not (layout.Children.Contains detailContainer) then layout.Children.Add detailContainer |> ignore
+        elif layout.Children.Contains detailContainer then
+            layout.Children.Remove detailContainer |> ignore
+
+        // 倒计时呈现（在按钮区之后，让重试按钮拿到最新剩余秒数）
+        if vs.CountdownSeconds >= 0 then applyCountdown announce
+        else
+            countdown.Text <- ""
+            countdown.IsVisible <- false
+            onLeft 0
+
+        // 是否走表：只在从「不要求」变成「要求」时催一次，避免与组合者的回写互相递归
+        let wasWanted = wanted
+        wanted <- vs.Ticking
+        if wanted && not wasWanted && attached then tick.Trigger()

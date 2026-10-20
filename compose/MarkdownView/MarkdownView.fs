@@ -10,10 +10,26 @@ open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Wanxiang.UI
 open Wanxiang2.MathFigure
 open Wanxiang2.CodeTint
 open Wanxiang2.CopyButton
+
+/// 动态资源绑定辅助：外观值全部经主题资源键声明式送达（Metric.* / Space.* /
+/// CornerRadius.* / Thickness.* / Padding.* / Margin.* / Tracking.* / FontFamily.* / Motion.Reduced），
+/// 主题切换即时生效由资源系统保证，本文件不再挂活值、不再手工订阅。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
+
+    /// 动作时刻读减弱动效资源（无订阅）；缺省按不减弱。
+    let reduced (c: Control) : bool =
+        match c.TryFindResource(box "Motion.Reduced") with
+        | true, (:? bool as r) -> r
+        | _ -> false
 
 /// 代码块折行的当前默认值（旧 MarkdownRenderer.DefaultCodeWrap 静态量改为宿主持有的对象）：
 /// 初值来自 UI 偏好，块内切换也会更新它，同一屏后续渲染的代码块跟着用户刚做的选择。
@@ -33,44 +49,17 @@ type MarkdownHost =
 /// allowHighlight = false 用于流式进行中的消息：未写完的代码着不准，每个 token 重新着色一次会把机器点着。
 type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, allowHighlight: bool) =
 
-    static let now (source: IObservable<'T>) =
-        let mutable v = Unchecked.defaultof<'T>
-        (source.Subscribe(fun x -> v <- x)).Dispose()
-        v
-
-    static let live (control: Control) (source: IObservable<'T>) (apply: 'T -> unit) =
-        apply (now source)
-        let mutable sub: IDisposable = null
-        control.AttachedToVisualTree.Add(fun _ -> if isNull sub then sub <- source.Subscribe apply)
-        control.DetachedFromVisualTree.Add(fun _ ->
-            if not (isNull sub) then
-                sub.Dispose()
-                sub <- null)
-
-    static let live2 control (a: IObservable<'A>) (b: IObservable<'B>) (apply: 'A -> 'B -> unit) =
-        let mutable va = now a
-        let mutable vb = now b
-        live control a (fun x -> va <- x; apply va vb)
-        live control b (fun y -> vb <- y; apply va vb)
-
-    static let live3 control (a: IObservable<'A>) (b: IObservable<'B>) (c: IObservable<'C>) (apply: 'A -> 'B -> 'C -> unit) =
-        let mutable va = now a
-        let mutable vb = now b
-        let mutable vc = now c
-        live control a (fun x -> va <- x; apply va vb vc)
-        live control b (fun y -> vb <- y; apply va vb vc)
-        live control c (fun z -> vc <- z; apply va vb vc)
-
     let handCursor = new Cursor(StandardCursorType.Hand)
     let ink = look.Ink
-    let gauge = look.Gauge
 
     let headingSize (level: int) = ReadingRhythm.headingFontSize fontSize level
 
     /// 外边距只有底边一段（段落节奏）：经 Margin 读写，末块清零规则照旧
     let bottomGap (c: Control) (gap: float) = c.Margin <- Thickness(0.0, 0.0, 0.0, gap)
 
-    let mono (owner: Control) (apply: FontFamily -> unit) = live owner look.MonoFont apply
+    /// 等宽字体走资源键：Run 不是 Control，走它自己的绑定重载
+    let monoText (owner: TextBlock) = owner.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono")
+    let monoRun (run: Run) = run.Bind(Run.FontFamilyProperty, Dyn.res "FontFamily.Mono")
 
     let setIcon (button: Button) (glyph: MarkdownGlyph) (brush: IBrush) =
         let g = look.Glyph glyph brush
@@ -105,13 +94,13 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                 Foreground = brush,
                 LineHeight = lh,
                 SelectionBrush = ink MarkdownInk.AccentSoft)
-        if defaultArg monoFamily false then mono block (fun f -> block.FontFamily <- f)
+        if defaultArg monoFamily false then monoText block |> ignore
         match textAlignment with
         | Some align -> block.TextAlignment <- align
         | None -> ()
         let codeRun (text: string) (italic: bool) =
             let run = Run text
-            mono block (fun f -> run.FontFamily <- f)
+            monoRun run |> ignore
             if italic then run.FontStyle <- FontStyle.Italic
             run.Foreground <- ink MarkdownInk.Text
             run.Background <- ink MarkdownInk.InlineCode
@@ -145,7 +134,7 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                 let mathSize = if display then size + 1.0 else size
                 match MathFigures.tryInline look.Math (host.MathHtml(tex, false)) mathSize tex with
                 | Some figure ->
-                    live figure (gauge MarkdownGauge.SpaceXs) (fun x -> figure.Margin <- Thickness(x, 0.0))
+                    figure.Bind(Layoutable.MarginProperty, Dyn.res "Margin.MathInline") |> ignore
                     figure.VerticalAlignment <- VerticalAlignment.Center
                     let container = MathFigures.inlineContainer figure
                     container.BaselineAlignment <- BaselineAlignment.Center
@@ -188,7 +177,7 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                         Foreground = ink MarkdownInk.Accent,
                         TextDecorations = TextDecorations.Underline,
                         VerticalAlignment = VerticalAlignment.Center)
-                if defaultArg monoFamily false then mono linkText (fun f -> linkText.FontFamily <- f)
+                if defaultArg monoFamily false then monoText linkText |> ignore
                 let link =
                     ActionSpot(
                         Background = Brushes.Transparent,
@@ -227,8 +216,8 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                 Foreground = ink MarkdownInk.CodeText,
                 LineHeight = ReadingRhythm.technicalLineHeight (fontSize - 1.5),
                 SelectionBrush = ink MarkdownInk.AccentSoft)
-        mono block (fun f -> block.FontFamily <- f)
-        live2 block (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.BlockPaddingY) (fun x y -> block.Margin <- Thickness(x, y))
+        monoText block |> ignore
+        block.Bind(Layoutable.MarginProperty, Dyn.res "Margin.Block") |> ignore
         let brushOf kind : IBrush =
             match kind with
             | CodeKeyword -> ink MarkdownInk.CodeKeyword
@@ -276,9 +265,8 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                 FontWeight = FontWeight.Medium,
                 Foreground = ink MarkdownInk.CodeMuted,
                 VerticalAlignment = VerticalAlignment.Center)
-        live2 langLabel (gauge MarkdownGauge.FontMicro) (gauge MarkdownGauge.TrackingEmphasis) (fun s t ->
-            langLabel.FontSize <- s
-            langLabel.LetterSpacing <- t)
+        langLabel.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontMicro") |> ignore
+        langLabel.Bind(TextBlock.LetterSpacingProperty, Dyn.res "Tracking.Emphasis") |> ignore
 
         let copyButton = iconButton MarkdownGlyph.Copy "复制代码"
         let copyName = sprintf "复制%s代码" langName
@@ -301,13 +289,11 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
         let fade = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty)
         if isNull copyButton.Transitions then copyButton.Transitions <- Avalonia.Animation.Transitions()
         copyButton.Transitions.Add fade
-        let mutable reduced = false
-        live2 copyButton (gauge MarkdownGauge.CopyFadeMs) look.Reduced (fun ms r ->
-            reduced <- r
-            fade.Duration <- if r then TimeSpan.Zero else TimeSpan.FromMilliseconds ms)
+        // 淡出时长是主题的静态时长档；减弱动效在激活时刻读资源键（无订阅）
+        fade.Duration <- look.Copy.Fade
         copyButton.OnInvoke(fun () ->
             host.CopyText code
-            confirm.Copied reduced)
+            confirm.Copied(Dyn.reduced copyButton))
 
         // 长行折行是逐块开关，初值取自折行记忆
         let wrapButton = iconButton MarkdownGlyph.TextWrap "长行折行 / 横向滚动"
@@ -327,7 +313,7 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
 
         let header =
             let actions = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-            live actions (gauge MarkdownGauge.SpaceXXs) (fun s -> actions.Spacing <- s)
+            actions.Bind(StackPanel.SpacingProperty, Dyn.res "Space.XXs") |> ignore
             actions.Children.Add wrapButton
             actions.Children.Add copyButton
             let dock = DockPanel(LastChildFill = false)
@@ -336,9 +322,8 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
             dock.Children.Add langLabel
             dock.Children.Add actions
             let b = Border(Background = ink MarkdownInk.CodeHeaderBg, BorderBrush = ink MarkdownInk.CodeBorder, Child = dock)
-            live3 b (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.SpaceXs) (fun bw x xs ->
-                b.BorderThickness <- Thickness(0.0, 0.0, 0.0, bw)
-                b.Padding <- Thickness(x, xs, xs, xs))
+            b.Bind(Border.BorderThicknessProperty, Dyn.res "Thickness.BorderBottom") |> ignore
+            b.Bind(Border.PaddingProperty, Dyn.res "Padding.CodeHeader") |> ignore
             b
 
         let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 0.0)
@@ -349,7 +334,7 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
             let label = TextBlock(Text = "展开全部", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
             expand.Content <- label
             look.Dress MarkdownButton.Ghost expand
-            live2 expand (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.SpaceXs) (fun x xs -> expand.Margin <- Thickness(x, xs, 0.0, xs))
+            expand.Bind(Layoutable.MarginProperty, Dyn.res "Margin.CodeExpand") |> ignore
             AutomationProperties.SetName(expand, "展开全部")
             // 展开态报成标准 expander 语义（旧 SetExpanded：ItemStatus 已展开 / 已折叠）
             AutomationProperties.SetItemStatus(expand, "已折叠")
@@ -369,9 +354,8 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                 BorderBrush = ink MarkdownInk.CodeBorder,
                 ClipToBounds = true,
                 Child = stack)
-        live2 root (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.RadiusMd) (fun bw r ->
-            root.BorderThickness <- Thickness bw
-            root.CornerRadius <- CornerRadius r)
+        root.Bind(Border.BorderThicknessProperty, Dyn.res "Thickness.BorderThin") |> ignore
+        root.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusMd") |> ignore
         bottomGap root ReadingRhythm.paragraphGap
         root :> Control
 
@@ -439,9 +423,8 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                     let notLast = gridRow < total - 1
                     let hostCell =
                         Border(BorderBrush = ink MarkdownInk.Hairline, Background = background, ClipToBounds = true, UseLayoutRounding = true, Child = cellContent)
-                    live3 hostCell (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.BlockPaddingY) (gauge MarkdownGauge.BorderWidth) (fun x y bw ->
-                        hostCell.Padding <- Thickness(x, y)
-                        hostCell.BorderThickness <- Thickness(0.0, 0.0, 0.0, (if notLast then bw else 0.0)))
+                    hostCell.Bind(Border.PaddingProperty, Dyn.res "Padding.Block") |> ignore
+                    hostCell.Bind(Border.BorderThicknessProperty, Dyn.res (if notLast then "Thickness.BorderBottom" else "Thickness.None")) |> ignore
                     Grid.SetRow(hostCell, gridRow)
                     Grid.SetColumn(hostCell, col)
                     grid.Children.Add hostCell
@@ -455,9 +438,8 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                 else grid
             let frame =
                 Border(BorderBrush = ink MarkdownInk.HairlineStrong, ClipToBounds = true, UseLayoutRounding = true, HorizontalAlignment = HorizontalAlignment.Stretch, Child = content)
-            live2 frame (gauge MarkdownGauge.BorderWidth) (gauge MarkdownGauge.RadiusMd) (fun bw r ->
-                frame.BorderThickness <- Thickness bw
-                frame.CornerRadius <- CornerRadius r)
+            frame.Bind(Border.BorderThicknessProperty, Dyn.res "Thickness.BorderThin") |> ignore
+            frame.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusMd") |> ignore
             bottomGap frame ReadingRhythm.paragraphGap
             frame :> Control
 
@@ -504,14 +486,17 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                                 MinWidth = ReadingRhythm.listMarkerWidth,
                                 TextAlignment = TextAlignment.Right,
                                 VerticalAlignment = VerticalAlignment.Top)
-                        live t (gauge MarkdownGauge.SpaceMd) (fun md -> t.Margin <- Thickness(float depth * ReadingRhythm.listIndentStep, 0.0, md, 0.0))
-                        t
+                        let markerBody: Control =
+                            t.Bind(Layoutable.MarginProperty, Dyn.res "Margin.GapRightMd") |> ignore
+                            if depth = 0 then t :> Control
+                            // 层级缩进是每行的静态量：套一层左边距壳，右间距仍走资源键
+                            else Border(Margin = Thickness(float depth * ReadingRhythm.listIndentStep, 0.0, 0.0, 0.0), Child = t) :> Control
+                        markerBody
                     else
                         let dot = Border(Background = ink MarkdownInk.TextMuted, VerticalAlignment = VerticalAlignment.Center)
-                        live2 dot (gauge MarkdownGauge.ListMarkerDotSize) (gauge MarkdownGauge.ListMarkerDotRadius) (fun size r ->
-                            dot.Width <- size
-                            dot.Height <- size
-                            dot.CornerRadius <- CornerRadius r)
+                        dot.Bind(Layoutable.WidthProperty, Dyn.res "Metric.ListMarkerDotSize") |> ignore
+                        dot.Bind(Layoutable.HeightProperty, Dyn.res "Metric.ListMarkerDotSize") |> ignore
+                        dot.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.ListMarkerDot") |> ignore
                         let slot =
                             Border(
                                 Width = ReadingRhythm.listMarkerWidth + float depth * ReadingRhythm.listIndentStep,
@@ -519,7 +504,7 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                                 VerticalAlignment = VerticalAlignment.Top,
                                 HorizontalAlignment = HorizontalAlignment.Left,
                                 Child = dot)
-                        live slot (gauge MarkdownGauge.SpaceMd) (fun md -> slot.Padding <- Thickness(0.0, 0.0, md, 0.0))
+                        slot.Bind(Border.PaddingProperty, Dyn.res "Thickness.GapRightMd") |> ignore
                         slot
                 let body = this.RenderInlineRow(content, fontSize, FontWeight.Normal, textColor, lineHeight = textLineHeight)
                 let row = DockPanel()
@@ -536,20 +521,18 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                         BorderBrush = (if isChecked then ink MarkdownInk.Accent else ink MarkdownInk.Line),
                         Background = (if isChecked then ink MarkdownInk.Accent else Brushes.Transparent :> IBrush),
                         VerticalAlignment = VerticalAlignment.Top)
-                live3 box (gauge MarkdownGauge.TaskBoxSize) (gauge MarkdownGauge.RadiusXs) (gauge MarkdownGauge.TaskBoxBorderWidth) (fun size r bw ->
-                    box.Width <- size
-                    box.Height <- size
-                    box.CornerRadius <- CornerRadius r
-                    box.BorderThickness <- Thickness bw)
-                live box (gauge MarkdownGauge.SpaceMd) (fun md -> box.Margin <- Thickness(0.0, 0.0, md, 0.0))
+                box.Bind(Layoutable.WidthProperty, Dyn.res "Metric.TaskBoxSize") |> ignore
+                box.Bind(Layoutable.HeightProperty, Dyn.res "Metric.TaskBoxSize") |> ignore
+                box.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusXs") |> ignore
+                box.Bind(Border.BorderThicknessProperty, Dyn.res "Thickness.TaskBoxEdge") |> ignore
+                box.Bind(Layoutable.MarginProperty, Dyn.res "Margin.GapRightMd") |> ignore
                 // 自绘方框补 CheckBox 语义与状态名，读屏能听到任务是否完成
                 AutomationProperties.SetControlTypeOverride(box, Nullable Peers.AutomationControlType.CheckBox)
                 AutomationProperties.SetName(box, if isChecked then "已完成任务" else "未完成任务")
                 if isChecked then
                     let mark = look.Glyph MarkdownGlyph.Check (ink MarkdownInk.TextOnAccent)
-                    live mark (gauge MarkdownGauge.TaskCheckGlyphSize) (fun s ->
-                        mark.Width <- s
-                        mark.Height <- s)
+                    mark.Bind(Layoutable.WidthProperty, Dyn.res "Metric.TaskCheckGlyphSize") |> ignore
+                    mark.Bind(Layoutable.HeightProperty, Dyn.res "Metric.TaskCheckGlyphSize") |> ignore
                     box.Child <- mark
                 let body = this.RenderInlineRow(content, fontSize, FontWeight.Normal, (if isChecked then ink MarkdownInk.TextMuted else textColor), lineHeight = textLineHeight)
                 let row = DockPanel()
@@ -573,14 +556,16 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                 last.Margin <- Thickness(lm.Left, lm.Top, lm.Right, 0.0)
             // 单层容器：左侧强调条 + 微底色；嵌套引用向左退一步
             let card = Border(Background = ink MarkdownInk.SurfaceContainer, BorderBrush = ink MarkdownInk.Accent, ClipToBounds = true, Child = stack)
-            live2 card (gauge MarkdownGauge.QuoteEdgeWidth) (gauge MarkdownGauge.RadiusSm) (fun edge r ->
-                card.BorderThickness <- Thickness(edge, 0.0, 0.0, 0.0)
-                card.CornerRadius <- CornerRadius(0.0, r, r, 0.0))
-            // 外边距只在构造时取一次：父级（引用首末项、末块清零）会改写它，跟随活值会把改写冲掉
+            card.Bind(Border.BorderThicknessProperty, Dyn.res "Thickness.QuoteEdge") |> ignore
+            card.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.QuoteRight") |> ignore
+            card.Bind(Border.PaddingProperty, Dyn.res "Padding.Quote") |> ignore
+            // 外边距只在构造时读一次资源：父级（引用首末项、末块清零）会改写它，活绑定会把改写冲掉
             card.Margin <-
-                if insideQuote then Thickness(now (gauge MarkdownGauge.SpaceMd), 0.0, 0.0, ReadingRhythm.paragraphGap)
+                if insideQuote then
+                    match card.TryFindResource(box "Margin.QuoteNested") with
+                    | true, (:? Thickness as m) -> m
+                    | _ -> Thickness(ReadingRhythm.paragraphGap, 0.0, 0.0, ReadingRhythm.paragraphGap)
                 else Thickness(0.0, 0.0, 0.0, ReadingRhythm.paragraphGap)
-            live2 card (gauge MarkdownGauge.SpaceMd) (gauge MarkdownGauge.SpaceSm) (fun md sm -> card.Padding <- Thickness(md, sm, md, sm))
             [ card :> Control ]
         | MdCode(language, code) -> [ this.RenderCode(language, code) ]
         | MdRule ->
@@ -589,7 +574,7 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                     Background = ink MarkdownInk.BorderSoft,
                     Margin = Thickness(0.0, ReadingRhythm.headingBefore 3, 0.0, ReadingRhythm.headingBefore 3),
                     HorizontalAlignment = HorizontalAlignment.Stretch)
-            live rule (gauge MarkdownGauge.BorderWidth) (fun bw -> rule.Height <- bw)
+            rule.Bind(Layoutable.HeightProperty, Dyn.res "Metric.BorderWidth") |> ignore
             [ rule :> Control ]
         | MdTable(header, rows) -> [ this.RenderTable(header, rows) ]
 

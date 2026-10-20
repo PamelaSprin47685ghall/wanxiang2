@@ -80,10 +80,10 @@ let ``a second switch mid-tween takes over from the current color`` () =
 let ``reduced motion and complete transition land at once`` () =
     Headless.run (fun () ->
         let m, _ = manual ()
-        m.Motion.SetReduced true
+        m.Motion.ApplyReduced true
         m.Apply PaletteMode.Dark
         Assert.Equal(dark PaletteKey.Text, (m.Brush PaletteKey.Text).Color)
-        m.Motion.SetReduced false
+        m.Motion.ApplyReduced false
         m.Apply PaletteMode.Light
         m.CompleteTransition()
         Assert.Equal(light PaletteKey.Text, (m.Brush PaletteKey.Text).Color))
@@ -93,7 +93,7 @@ let ``hover over a raised surface follows the theme`` () =
     Headless.run (fun () ->
         let m, _ = manual ()
         let before = (m.Derived DerivedBrush.HoverRaised).Color
-        m.Motion.SetReduced true
+        m.Motion.ApplyReduced true
         m.Apply PaletteMode.Dark
         Assert.NotEqual(before, (m.Derived DerivedBrush.HoverRaised).Color))
 
@@ -108,7 +108,7 @@ let ``changing a metric restyles controls already on screen`` () =
         styles.Install win.Styles
         win.Show()
         Assert.Equal(ThemeMetrics.initial Metric.ToggleTrackWidth, track.Width)
-        m.SetMetric(Metric.ToggleTrackWidth, 40.0)
+        m.ApplyMetric(Metric.ToggleTrackWidth, 40.0)
         Assert.Equal(40.0, track.Width)
         track.Classes.Add StyleClass.toggleOn
         Assert.Same(m.Brush PaletteKey.Accent, track.Background)
@@ -121,7 +121,7 @@ let ``live values push to bound controls`` () =
         let b = Border()
         b.Bind(Layout.Layoutable.WidthProperty, m.Metric Metric.IconButton) |> ignore
         Assert.Equal(30.0, b.Width)
-        m.SetMetric(Metric.IconButton, 32.0)
+        m.ApplyMetric(Metric.IconButton, 32.0)
         Assert.Equal(32.0, b.Width))
 
 [<Fact>]
@@ -131,7 +131,7 @@ let ``state transitions are zero under reduced motion`` () =
         let normal = m.StateTransitions false
         Assert.Equal(1, normal.Count)
         Assert.Equal(TimeSpan.FromMilliseconds 200.0, (normal[0] :?> Animation.BrushTransition).Duration)
-        m.Motion.SetReduced true
+        m.Motion.ApplyReduced true
         Assert.Equal(TimeSpan.Zero, ((m.StateTransitions true)[1] :?> Animation.BrushTransition).Duration))
 
 [<Fact>]
@@ -159,7 +159,7 @@ let ``button classes carry the old geometry`` () =
         Assert.Equal(12.5, (secondary.Child :?> TextBlock).FontSize)
         // 旧 Ui.iconButton：30 见方
         Assert.Equal(30.0, icon.Width)
-        m.SetSpace(Space.RadiusMd, 10.0)
+        m.ApplySpace(Space.RadiusMd, 10.0)
         Assert.Equal(CornerRadius 10.0, secondary.CornerRadius)
         win.Close())
 
@@ -258,13 +258,13 @@ let ``reduced motion sets declarative animations duration to zero`` () =
         Assert.True(spin.Duration > TimeSpan.Zero)
 
         // 开启减弱动效
-        m.Motion.SetReduced true
+        m.Motion.ApplyReduced true
 
         Assert.Equal(TimeSpan.Zero, breathe.Duration)
         Assert.Equal(TimeSpan.Zero, spin.Duration)
 
         // 恢复正常动效
-        m.Motion.SetReduced false
+        m.Motion.ApplyReduced false
 
         Assert.True(breathe.Duration > TimeSpan.Zero)
         Assert.True(spin.Duration > TimeSpan.Zero))

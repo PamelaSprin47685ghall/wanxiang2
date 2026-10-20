@@ -9,6 +9,7 @@ open Xunit
 open Wanxiang.Core
 open Wanxiang.Protocol
 open Wanxiang.Client
+open Wanxiang.UI
 open Wanxiang2.WorkspaceState
 open Wanxiang2.AppShell.Tests
 
@@ -274,5 +275,114 @@ let ``旅程 6：切换对话、搜索与批量删除恢复`` () =
         match toastUndoAction with
         | Some actionId ->
             rig.Shell.Dispatch(User(Overlay(OverlayUserMsg.ToastUndo actionId)))
-            Assert.Empty(rig.Shell.Model.Feedback.PendingDeletions)
+            Assert.Empty rig.Shell.Model.Feedback.PendingDeletions
         | None -> ())
+
+// ---- W7-B3 接线补全：定位目标与引导卡投影 ----
+
+[<Fact>]
+let ``搜索命中：定位目标进模型，对话快照到达后统一 Effect 滚到那条消息`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
+        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
+        let convId = Guid.NewGuid()
+        // 搜索命中：打开那段对话并登记定位目标
+        rig.Shell.Dispatch(User(Sidebar(SidebarUserMsg.SearchHitSelect(convId, Some "7"))))
+        Assert.Equal(Some "7", (Workspace.project rig.Shell.Model).Chat.RevealTarget)
+        // 对话快照到达：目标消息已加载 → 统一 Effect（宿主执行滚动与高亮）
+        let msg = JsonObject()
+        msg["commitId"] <- 7UL
+        msg["role"] <- "assistant"
+        rig.Shell.Dispatch(WireRecv(ConversationSnapshot {|
+            conversationId = convId
+            title = "对话"
+            lastCommitId = 7UL
+            runtimeState = "idle"
+            generationId = None
+            messages = JsonArray([| msg :> JsonNode |])
+            snapshotEarliestCommitId = 0UL
+            snapshotHasMore = false
+            config = SessionConfig.empty
+        |}))
+        // 滚动 Effect 经 UI 调度器落地（宿主统一 Effect 的执行点）
+        Pump.settle()
+        Assert.Contains(rig.Fake.RecordedEffects, fun e ->
+            match e with
+            | Effect.ScrollChat(ScrollCommand.ToExchange "7") -> true
+            | _ -> false)
+        // 目标消费后清空：不再重复滚
+        Assert.Equal(None, (Workspace.project rig.Shell.Model).Chat.RevealTarget))
+
+[<Fact>]
+let ``引导分支：目录里没有可用模型服务时，引导卡按模型事实投影`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
+        // 目录里只有一个没启用的服务：正是首次运行、引导卡出场的时候
+        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
+        // 卡片回报的事实进模型
+        rig.Shell.Dispatch(User(Onboarding(OnboardingUserMsg.SelectPreset "ollama")))
+        rig.Shell.Dispatch(User(Onboarding(OnboardingUserMsg.Discovered (Some [ "qwen3" ]))))
+        rig.Shell.Dispatch(User(Onboarding(OnboardingUserMsg.SwitchOffered true)))
+        // 宿主按单一入口把模型事实投影回引导卡
+        Assert.Equal("ollama", rig.Views.Onboarding.SelectedPreset.key)
+        Assert.Equal(Some [ "qwen3" ], rig.Views.Onboarding.Discovered)
+        Assert.True rig.Views.Onboarding.SwitchOffered)
+
+// ---- W7-G2：「检查主机」接线 ----
+
+[<Fact>]
+let ``点检查主机发出 doctor 请求，报告回来后填进健康状态`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        authenticate rig
+        // 设置页点「检查主机」：对象转成 Running 并宣告要检查，宿主据此发请求。
+        rig.Views.Settings.Health.BeginCheck()
+        let request =
+            rig.Fake.Events
+            |> List.tryPick (function
+                | DoctorRequest d -> Some d.requestId
+                | _ -> None)
+        Assert.True(request.IsSome)
+        // 报告未到之前是「正在检查」
+        match rig.Views.Settings.Health.Doctor with
+        | Running -> ()
+        | other -> Assert.Fail(sprintf "发请求后应是检查中: %A" other)
+        // 报告到达：填进健康状态
+        let checks = JsonObject()
+        checks["name"] <- "config"
+        checks["ok"] <- true
+        checks["detail"] <- "ok"
+        rig.Fake.Deliver(DoctorReport {| requestId = request.Value; ok = true; checks = JsonArray([| checks :> JsonNode |]) |})
+        match rig.Views.Settings.Health.Doctor with
+        | Report(true, [ c ], _) ->
+            Assert.Equal("config", c.name)
+            Assert.Equal("配置文件", DoctorCheck.label c.name)
+        | other -> Assert.Fail(sprintf "报告到达后应是结果: %A" other))
+
+[<Fact>]
+let ``迟到的 doctor 报告被丢掉，不覆盖当前状态`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        authenticate rig
+        rig.Views.Settings.Health.BeginCheck()
+        let requestId = Guid.NewGuid()
+        rig.Fake.Deliver(DoctorReport {| requestId = requestId; ok = true; checks = JsonArray() |})
+        match rig.Views.Settings.Health.Doctor with
+        | Running -> ()
+        | other -> Assert.Fail(sprintf "迟到的报告不该改状态: %A" other))
+
+[<Fact>]
+let ``主机拒绝配置时健康状态记下配置有误，config.changed 后清除`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        authenticate rig
+        rig.Fake.Deliver(HostConfigRejected {| summary = "配置有误"; errors = [ "第 3 行" ] |})
+        match rig.Views.Settings.Health.ConfigIssue with
+        | Some(summary, errors) ->
+            Assert.Equal("配置有误", summary)
+            Assert.Equal<string list>([ "第 3 行" ], errors)
+        | None -> Assert.Fail("应记下配置有误")
+        rig.Fake.Deliver(ConfigChanged {| reason = "reloaded" |})
+        Assert.Equal(None, rig.Views.Settings.Health.ConfigIssue))

@@ -5,7 +5,6 @@ namespace Wanxiang2.AppShell.Tests
 // 提示条文案、偏好扇出、能力表闸门。计时器与 UI 线程投递都在这里被替换成确定性实现。
 
 open System
-open System.Collections.Generic
 open System.Threading
 open System.Threading.Tasks
 open Avalonia
@@ -30,21 +29,6 @@ open Wanxiang2.SettingsScreen
 open Wanxiang2.PaletteDesk
 open Wanxiang2.ModelSwitchDesk
 open Wanxiang2.DialogsDesk
-
-/// 测试用的活度量：主题管理者改值时通知（与 Workspace 测试同一件小工具）。
-type Cell<'T>(initial: 'T) =
-    let mutable value = initial
-    let subs = List<IObserver<'T>>()
-
-    member _.Set v =
-        value <- v
-        for s in List.ofSeq subs do s.OnNext v
-
-    interface IObservable<'T> with
-        member _.Subscribe o =
-            subs.Add o
-            o.OnNext value
-            { new IDisposable with member _.Dispose() = subs.Remove o |> ignore }
 
 /// 假端口：记录组合者发出去的东西，并给出确定的时机（Post 走 Dispatcher，测试自己跑消息循环）。
 type FakePorts(prefs0: UiPrefs) =
@@ -216,38 +200,28 @@ module Look =
             { Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
               Surface = Brushes.White
               Edge = Brushes.Gray
-              EdgeWidth = Cell(Thickness 1.0)
-              DialogRadius = Cell(CornerRadius 8.0)
-              PopupRadius = Cell(CornerRadius 6.0)
-              DialogPadding = Cell(Thickness 16.0)
-              PopupPadding = Cell(Thickness 2.0)
-              DialogShadow = Cell(BoxShadows())
-              PopupShadow = Cell(BoxShadows())
-              ViewportInset = Cell 12.0
-              PopupGap = Cell 4.0
-              PopupMinWidth = Cell 180.0
-              ScrimFade = Cell TimeSpan.Zero
+              DialogShadow = BoxShadows()
+              PopupShadow = BoxShadows()
+              PopupGap = 4.0
+              PopupMinWidth = 180.0
+              ScrimFade = TimeSpan.Zero
               ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut() }
           Toasts =
             { Surface = Brushes.White
               Edge = Brushes.Gray
               Text = Brushes.Black
               Accent = (fun _ -> Brushes.Gray)
-              AccentWidth = Cell 2.0
-              AccentRadius = Cell(CornerRadius 999.0)
-              AccentOpacity = Cell 0.6
-              EdgeWidth = Cell(Thickness 1.0)
-              Radius = Cell(CornerRadius 8.0)
-              Padding = Cell(Thickness(16.0, 12.0))
-              Shadow = Cell(BoxShadows())
-              FontSize = Cell 12.0
-              LineHeight = Cell 18.0
-              ColumnSpacing = Cell 12.0
-              Spacing = Cell 8.0
-              Margin = Cell(Thickness(24.0, 0.0, 24.0, 32.0))
-              MaxWidth = Cell 480.0
-              BodyMaxHeight = Cell 160.0
-              Fade = Cell TimeSpan.Zero
+              AccentOpacity = 0.6
+              Padding = Thickness(16.0, 12.0)
+              Shadow = BoxShadows()
+              LineHeight = 18.0
+              ColumnSpacing = 12.0
+              Spacing = 8.0
+              Margin = Thickness(24.0, 0.0, 24.0, 32.0)
+              MaxWidth = 480.0
+              BodyMaxHeight = 160.0
+              // 减弱动效：主题给 0
+              Fade = TimeSpan.Zero
               FadeEasing = Avalonia.Animation.Easings.CubicEaseOut() }
           Menu =
             { Text = Brushes.Black
@@ -257,29 +231,14 @@ module Look =
               Accent = Brushes.Blue
               Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b))
               Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
-              FontSize = Cell 12.0
-              HintFontSize = Cell 10.0
-              IconSlotWidth = Cell 16.0
-              IconHeight = Cell 16.0
-              RightSlotMinWidth = Cell 16.0
-              HintMargin = Cell(Thickness(12.0, 0.0, 0.0, 0.0))
-              ColumnSpacing = Cell 6.0
-              ItemPadding = Cell(Thickness(8.0, 4.0))
-              ItemRadius = Cell(CornerRadius 4.0)
-              ItemMinHeight = Cell 32.0
-              ItemSpacing = Cell 2.0
-              MaxHeight = Cell 200.0
-              DividerMargin = Cell(Thickness(6.0, 2.0))
-              HeaderMargin = Cell(Thickness(8.0, 6.0, 8.0, 2.0))
-              SelectPadding = Cell(Thickness(8.0, 4.0))
-              SelectRadius = Cell(CornerRadius 8.0)
-              SelectEdgeWidth = Cell(Thickness 1.0)
-              SelectCaptionMaxWidth = Cell 260.0 }
-          MenuMinWidth = Cell 200.0
-          GroupedMenuMinWidth = Cell 240.0
-          DwellFailureMs = Cell 9000.0
-          DwellWarningMs = Cell 6500.0
-          DwellDefaultMs = Cell 4000.0
+              IconSlotWidth = 16.0
+              ItemMinHeight = 32.0
+              MaxHeight = 200.0 }
+          MenuMinWidth = 200.0
+          GroupedMenuMinWidth = 240.0
+          DwellFailureMs = 9000.0
+          DwellWarningMs = 6500.0
+          DwellDefaultMs = 4000.0
           DismissTick = TimeSpan.FromMilliseconds 100.0 }
 
 /// 测试台：一个组合者 + 真实视图树 + 假端口。
@@ -325,7 +284,6 @@ module Rig =
             let brandLogo (size: float) = Border(Width = size, Height = size) :> Control
             let composer =
                 ComposerDesk(
-                    ComposerMetrics.ofTheme theme styles,
                     shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false)))
             let approval = ApprovalDesk(theme, overlay, ignore)
             let cards =

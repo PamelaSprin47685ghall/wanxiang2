@@ -10,6 +10,7 @@ open Avalonia.Layout
 open Avalonia.Media
 open Wanxiang2.WorkspaceState
 open Wanxiang2.DevicesPane
+open Wanxiang2.DevicesPane.ButtonExtensions
 
 /// 生成默认值表单的文字（组合者由 GenerationForm.floatText 等得出）
 type GenerationText =
@@ -27,6 +28,58 @@ type PresetRow =
       Name: string
       /// Presets.describe 的一行说明
       Detail: string }
+
+/// 一项主机检查
+type AboutCheck =
+    { Name: string
+      Label: string
+      Ok: bool
+      Detail: string }
+
+/// 「检查主机」的状态
+[<RequireQualifiedAccess>]
+type AboutDoctor =
+    | NotRun
+    | Running
+    | Unavailable of reason: string
+    | Report of ok: bool * checks: AboutCheck list * timeText: string
+
+/// 「对话默认值 + 关于与系统诊断」两块分区的一帧（单入口 Render 的输入）。
+/// 分区各取自己关心的字段：GenerationSection 用 Status / Pending / CanSave / Presets，
+/// AboutSection 用 AboutRows / ConfigIssue / Doctor。
+type GeneralHealth =
+    { /// 主机配置问题（摘要, 明细）
+      ConfigIssue: (string * string list) option
+      /// 「检查主机」的状态
+      Doctor: AboutDoctor }
+
+module GeneralHealth =
+    let empty: GeneralHealth =
+        { ConfigIssue = None
+          Doctor = AboutDoctor.NotRun }
+
+type GeneralSectionVS =
+    { /// 生成设置的状态行
+      Status: string
+      /// 保存往返中
+      Pending: bool
+      /// 当前是否可以保存
+      CanSave: bool
+      /// 对话预设行
+      Presets: PresetRow list
+      /// 关于页信息行（键, 值）
+      AboutRows: (string * string) list
+      /// 主机状态
+      Health: GeneralHealth }
+
+module GeneralSectionVS =
+    let empty: GeneralSectionVS =
+        { Status = ""
+          Pending = false
+          CanSave = false
+          Presets = []
+          AboutRows = []
+          Health = GeneralHealth.empty }
 
 module internal Layout =
     /// 两列表单：宽时并排，窄于断点退化为单列（旧 Ui.twoColumnForm）
@@ -59,7 +112,11 @@ type GenerationSection(validationFor: TextBox -> Control option, ?_glyphOf: stri
     let discard = Event<unit>()
     let rename = Event<string>()
     let delete = Event<string>()
-    let import = Event<unit>()
+    /// 宿主注入的导入回调：注入即显示「导入对话…」
+    let mutable importHandler: (unit -> unit) option = None
+    /// 上一帧的预设行：内容没变就不重建（保住用户在预设行上的焦点）
+    let mutable lastPresets: PresetRow list = []
+    let mutable presetsBuilt = false
     let field label hint placeholder =
         let box = Ui.textField placeholder
         box, Ui.fieldGroup label hint box (validationFor box)
@@ -96,7 +153,8 @@ type GenerationSection(validationFor: TextBox -> Control option, ?_glyphOf: stri
         presetsPanel.Spacing <- 12.0
         importBlock.Spacing <- 12.0
         let grid = Layout.twoColumns [ temperatureField; topPField; maxTokensField; contextField; toolRoundsField ]
-        let importButton = Ui.button "secondary" "导入对话…" import.Trigger
+        let importButton =
+            Ui.button "secondary" "导入对话…" (fun () -> importHandler |> Option.iter (fun h -> h ()))
         importButton.Name <- "settings-import"
         importButton.HorizontalAlignment <- HorizontalAlignment.Left
         AutomationProperties.SetName(importButton, "导入对话")
@@ -174,48 +232,53 @@ type GenerationSection(validationFor: TextBox -> Control option, ?_glyphOf: stri
         instructionsBox.Text <- v.Instructions
         writeAutoTitle v.AutoTitle
 
-    member _.SetStatus(text: string) = status.Text <- text
-
-    /// 保存往返中：保存键换「正在保存…」并禁用；结束后按 canSave 决定可用；放弃键往返中禁用
-    member _.SetPending(pending: bool, canSave: bool) =
+    /// 单入口幂等渲染：状态行、保存往返、对话预设一次性投影
+    member _.Render(vs: GeneralSectionVS) =
+        status.Text <- vs.Status
+        // 保存往返中：保存键换「正在保存…」并禁用；结束后按 canSave 决定可用；放弃键往返中禁用
+        let pending = vs.Pending
         let text = if pending then "正在保存…" else "保存默认值"
-        saveButton.SetText text
-        saveButton.SetEnabled(not pending && canSave)
+        saveButton.ApplyText text
+        saveButton.ApplyEnabled(not pending && vs.CanSave)
         AutomationProperties.SetHelpText(saveButton, (if pending then text else "保存默认值（Ctrl / ⌘ + Enter）"))
-        discardButton.SetEnabled(not pending)
+        discardButton.ApplyEnabled(not pending)
+        let presets = vs.Presets
+        if not presetsBuilt || presets <> lastPresets then (
+            presetsBuilt <- true
+            lastPresets <- presets
+            presetsPanel.Children.Clear()
+            presetsPanel.Children.Add(Ui.label "对话预设")
+            if presets.IsEmpty then
+                presetsPanel.Children.Add(Ui.caption "预设记下一段对话的模型、系统指令、生成参数和工具。在对话顶部的「⋯」里选「存为预设」，以后新建对话时一键套用。")
+            else
+                presetsPanel.Children.Add(Ui.caption "保存在当前主机上，所有设备都能用。改动预设不会影响已经建好的对话。")
+                for p in presets do
+                    let name = TextBlock(Text = p.Name, FontSize = 14.0)
+                    name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+                    name.TextTrimming <- TextTrimming.CharacterEllipsis
+                    let detail = Ui.caption p.Detail
+                    detail.TextTrimming <- TextTrimming.CharacterEllipsis
+                    detail.TextWrapping <- TextWrapping.NoWrap
+                    let textStack = StackPanel(Orientation = Orientation.Vertical, Spacing = 2.0)
+                    textStack.Children.Add name
+                    textStack.Children.Add detail
+                    let r = Ui.button "ghost" "重命名" (fun () -> rename.Trigger p.Id)
+                    let d = Ui.button "ghost" "删除" (fun () -> delete.Trigger p.Id)
+                    AutomationProperties.SetName(r, sprintf "重命名预设 %s" p.Name)
+                    AutomationProperties.SetName(d, sprintf "删除预设 %s" p.Name)
+                    let buttons = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0)
+                    buttons.Children.Add r
+                    buttons.Children.Add d
+                    let row = DockPanel(LastChildFill = true, Name = "preset-row")
+                    DockPanel.SetDock(buttons, Dock.Right)
+                    row.Children.Add buttons
+                    row.Children.Add textStack
+                    presetsPanel.Children.Add row)
 
-    member _.SetPresets(presets: PresetRow list) =
-        presetsPanel.Children.Clear()
-        presetsPanel.Children.Add(Ui.label "对话预设")
-        if presets.IsEmpty then
-            presetsPanel.Children.Add(Ui.caption "预设记下一段对话的模型、系统指令、生成参数和工具。在对话顶部的「⋯」里选「存为预设」，以后新建对话时一键套用。")
-        else
-            presetsPanel.Children.Add(Ui.caption "保存在当前主机上，所有设备都能用。改动预设不会影响已经建好的对话。")
-            for p in presets do
-                let name = TextBlock(Text = p.Name, FontSize = 14.0)
-                name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
-                name.TextTrimming <- TextTrimming.CharacterEllipsis
-                let detail = Ui.caption p.Detail
-                detail.TextTrimming <- TextTrimming.CharacterEllipsis
-                detail.TextWrapping <- TextWrapping.NoWrap
-                let textStack = StackPanel(Orientation = Orientation.Vertical, Spacing = 2.0)
-                textStack.Children.Add name
-                textStack.Children.Add detail
-                let r = Ui.button "ghost" "重命名" (fun () -> rename.Trigger p.Id)
-                let d = Ui.button "ghost" "删除" (fun () -> delete.Trigger p.Id)
-                AutomationProperties.SetName(r, sprintf "重命名预设 %s" p.Name)
-                AutomationProperties.SetName(d, sprintf "删除预设 %s" p.Name)
-                let buttons = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0)
-                buttons.Children.Add r
-                buttons.Children.Add d
-                let row = DockPanel(LastChildFill = true, Name = "preset-row")
-                DockPanel.SetDock(buttons, Dock.Right)
-                row.Children.Add buttons
-                row.Children.Add textStack
-                presetsPanel.Children.Add row
-
-    /// 宿主接了导入才显示「导入对话…」
-    member _.SetImportVisible(visible: bool) = importBlock.IsVisible <- visible
+    /// 宿主接了导入才显示「导入对话…」：注入即显示，可见性归这里独占
+    member _.WireImportHandler(handler: unit -> unit) =
+        importHandler <- Some handler
+        importBlock.IsVisible <- true
 
     member _.PresetsPanel = presetsPanel
     /// 任一字段或开关被改
@@ -225,7 +288,6 @@ type GenerationSection(validationFor: TextBox -> Control option, ?_glyphOf: stri
     member _.DiscardRequested = discard.Publish
     member _.PresetRenameClicked = rename.Publish
     member _.PresetDeleteClicked = delete.Publish
-    member _.ImportClicked = import.Publish
 
 /// 外观页的开关
 [<RequireQualifiedAccess>]
@@ -341,8 +403,8 @@ type AppearanceSection(?_glyphOf: string -> IBrush -> Control) =
         themeCaption.Text <- s.ThemeLabel
         fontSize.Text <- s.FontSizeText
         // 边界即禁用：到上下限时对应方向的键不可点
-        smaller.SetEnabled s.CanShrink
-        larger.SetEnabled s.CanGrow
+        smaller.ApplyEnabled s.CanShrink
+        larger.ApplyEnabled s.CanGrow
         setEnter s.EnterSends
         setCollapse s.CollapseReasoning
         setWrap s.CodeWrap
@@ -360,27 +422,18 @@ type AppearanceSection(?_glyphOf: string -> IBrush -> Control) =
     /// 「清除本地草稿」（确认框由组合者弹）
     member _.ClearDraftsClicked = clearDrafts.Publish
 
-/// 一项主机检查
-type AboutCheck =
-    { Name: string
-      Label: string
-      Ok: bool
-      Detail: string }
-
-/// 「检查主机」的状态
-[<RequireQualifiedAccess>]
-type AboutDoctor =
-    | NotRun
-    | Running
-    | Unavailable of reason: string
-    | Report of ok: bool * checks: AboutCheck list * timeText: string
-
 /// 设置 → 关于与系统诊断（旧 SettingsGeneral.BuildAbout / BuildHostStatus 的界面部分）
 type AboutSection(?glyphOf: string -> IBrush -> Control) =
     let copy = Event<unit>()
     let check = Event<unit>()
     let rows = StackPanel(Orientation = Orientation.Vertical)
     let body = StackPanel(Orientation = Orientation.Vertical)
+    /// 上一帧的信息行与主机状态：内容没变就不重建
+    let mutable lastRows: (string * string) list = []
+    let mutable lastConfigIssue: (string * string list) option = None
+    let mutable lastDoctor: AboutDoctor = AboutDoctor.NotRun
+    let mutable rowsBuilt = false
+    let mutable healthBuilt = false
 
     let view =
         rows.Spacing <- 12.0
@@ -407,25 +460,8 @@ type AboutSection(?glyphOf: string -> IBrush -> Control) =
                        Ui.caption "内嵌字体 Sarasa Term SC 采用 OFL-1.1 许可。" ])
         main
 
-    member _.View = view :> Control
-
-    /// 信息行（键, 值）：协议版本、日志格式版本、客户端平台、操作系统、主机实例、连接地址
-    member _.SetRows(items: (string * string) list) =
-        rows.Children.Clear()
-        for key, value in items do
-            let k = TextBlock(Text = key, FontSize = 13.0, MinWidth = 120.0)
-            k.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
-            let v = SelectableTextBlock(Text = value, TextWrapping = TextWrapping.Wrap, FontSize = 13.0)
-            v.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
-            v.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono") |> ignore
-            v.Bind(SelectableTextBlock.SelectionBrushProperty, Dyn.res "Palette.AccentSoft") |> ignore
-            let row = StackPanel(Orientation = Orientation.Horizontal, Spacing = 16.0)
-            row.Children.Add k
-            row.Children.Add v
-            rows.Children.Add row
-
     /// 主机状态：配置问题（摘要, 明细）与检查结果
-    member _.SetHealth(configIssue: (string * string list) option, doctor: AboutDoctor) =
+    let renderHealth (configIssue: (string * string list) option) (doctor: AboutDoctor) =
         body.Children.Clear()
         match configIssue with
         | Some(summary, errors) ->
@@ -449,7 +485,7 @@ type AboutSection(?glyphOf: string -> IBrush -> Control) =
         let button = Ui.button "secondary" (if running then "正在检查…" else "检查主机") (fun () -> if not running then check.Trigger())
         button.HorizontalAlignment <- HorizontalAlignment.Left
         AutomationProperties.SetAutomationId(button, "check-host")
-        if running then button.SetEnabled false
+        if running then button.ApplyEnabled false
         body.Children.Add button
         match doctor with
         | AboutDoctor.NotRun -> body.Children.Add(Ui.caption "只读检查：配置、磁盘、数据目录、事件日志与附件。不会修改任何内容。")
@@ -482,6 +518,34 @@ type AboutSection(?glyphOf: string -> IBrush -> Control) =
                 AutomationProperties.SetAutomationId(line, sprintf "doctor-check-%s" c.Name)
                 body.Children.Add line
             body.Children.Add(Ui.caption(sprintf "检查时间 %s" at))
+
+    member _.View = view :> Control
+
+    /// 单入口幂等渲染：信息行（键, 值）与主机状态（配置问题、检查结果）一次性投影
+    member _.Render(vs: GeneralSectionVS) =
+        let items = vs.AboutRows
+        if not rowsBuilt || items <> lastRows then (
+            rowsBuilt <- true
+            lastRows <- items
+            rows.Children.Clear()
+            for key, value in items do
+                let k = TextBlock(Text = key, FontSize = 13.0, MinWidth = 120.0)
+                k.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+                let v = SelectableTextBlock(Text = value, TextWrapping = TextWrapping.Wrap, FontSize = 13.0)
+                v.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+                v.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono") |> ignore
+                v.Bind(SelectableTextBlock.SelectionBrushProperty, Dyn.res "Palette.AccentSoft") |> ignore
+                let row = StackPanel(Orientation = Orientation.Horizontal, Spacing = 16.0)
+                row.Children.Add k
+                row.Children.Add v
+                rows.Children.Add row)
+        let configIssue = vs.Health.ConfigIssue
+        let doctor = vs.Health.Doctor
+        if not healthBuilt || configIssue <> lastConfigIssue || doctor <> lastDoctor then (
+            healthBuilt <- true
+            lastConfigIssue <- configIssue
+            lastDoctor <- doctor
+            renderHealth configIssue doctor)
 
     /// 「复制诊断报告」（剪贴板与提示由组合者做）
     member _.CopyDiagnosticsClicked = copy.Publish

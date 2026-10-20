@@ -20,7 +20,10 @@
 
 ### 与旧实现的差异
 
-旧代码用模块级可变量记触屏选中的那一条；本库只提供 `SetShown`，选中与悬停的联动放在组合者。
+旧代码用模块级可变量记触屏选中的那一条；本库只提供 `ApplyShown`，选中与悬停的联动放在组合者。
+
+- ApplyShown(value)：写显隐（只改不透明度，不动几何）。
+- ApplyIcon(button, glyph, ?brush)：一次性命令，换按钮图标（复制确认时换成对勾）。
 
 ## 成员 `AttachmentChip`
 
@@ -51,15 +54,17 @@
 
 - `ErrorPanelLook`：`Ink`（`ErrorInk`）、`Gauge`（`ErrorGauge` 间距、圆角、字号、按钮内边距与重试最小宽、箭头、阅读宽、倒计时间隔毫秒）、`BodyFont` / `MonoFont`、`Glyph`（警示、箭头）、`Dress secondary`（次要 / 幽灵按钮样式类）、`DressFold`（披露头状态反馈）、`TechLineHeight`、`HelperLineHeight`、`Reduced`。
 - `ErrorPanelParts`：复制按钮、限高视口、倒计时文案（旧 `ProviderRateLimit.countdownText`）。
-- 倒计时：`SetSeconds left announce` 推送剩余秒数（>0 时重试不可按、按钮写「重试（N 秒）」、读屏名带剩余时间；=0 时显示「现在可以重试了」并在 announce 时以 polite 播报一次）。`SetTicking true` 后挂在树上才按间隔发 `Tick`，组合者据此用 CountdownTicker 与宿主的 RetryCountdown 算下一帧。
+- 单入口：`ErrorPanel(parts)` + `Render(vs: ErrorPanelVS)`。VS（WorkspaceState）带全部输入：`Title` / `Hint` / `Detail` / `CountdownSeconds`（-1 = 无倒计时）/ `Ticking` / `Announce` / `Actions: ErrorPanelAction list`（`Continue` / `Retry` / `Recovery of label`）/ `OnRetry` / `OnContinue` / `OnRecovery`。没有 `Set*` / `Add*` 公开面。
+- 幂等：重复 `Render` 不重建按钮（控件身份稳定，回调随 Render 更新），动作形状变了（有无「继续生成」决定重试是幽灵档还是次要档）才重建重试按钮；技术细节文本不变时沿用旧披露头（展开状态不丢）。
+- 倒计时：`CountdownSeconds` 只往下走，绝不回跳到更大的剩余秒数（卡片重建不重置倒计时）；>0 时重试不可按、按钮写「重试（N 秒）」、读屏名带剩余时间；=0 时显示「现在可以重试了」，`Announce` 为真且本段倒计时尚未播报过时以 polite 播报一次（`Announced` 事件同一刻发一次）。`Ticking` 为真且挂在树上时按间隔发 `Tick`，组合者据此用 CountdownTicker 与宿主的 RetryCountdown 算下一帧。
 
 ### 证据与旧测试
 
-覆盖旧用例：`JourneyR9Tests.262 限流倒计时未结束时重试按钮不可按并显示剩余秒数`、`JourneyR9Tests.262 没有倒计时的可重试错误照常可按`、`A11yRegressionTests.限流倒计时读屏名带剩余时间、走完才播报一次`、`ContinueLinkUndoTests.230 错误卡有半截回复时先给「继续生成」，没有时不给`（按钮排序部分）、`DeliveryPolishingTests.error card toggles technical detail and triggers retry action`。本库在 headless 下验证上述行为与计时器只在挂上且要求时运行。
+覆盖旧用例：`JourneyR9Tests.262 限流倒计时未结束时重试按钮不可按并显示剩余秒数`、`JourneyR9Tests.262 没有倒计时的可重试错误照常可按`、`A11yRegressionTests.限流倒计时读屏名带剩余时间、走完才播报一次`、`ContinueLinkUndoTests.230 错误卡有半截回复时先给「继续生成」，没有时不给`（按钮排序部分）、`DeliveryPolishingTests.error card toggles technical detail and triggers retry action`。本库在 headless 下验证上述行为与计时器只在挂上且要求时运行。另加两条语义用例：同一面板实例先后渲染两次剩余秒数不回跳；播报只在倒计时第一次走完时发生一次。
 
 ### 与旧实现的差异
 
-旧代码在卡里直接读 `RetryCountdown` 与模块级 `recoverySink`；现在倒计时由 `SetSeconds` 推、恢复动作由 `AddRecovery label action` 加，是否出某个按钮由组合者按 `GenerationError.retryable`、`ErrorRecovery.forKind` 决定。披露头照旧写控件类型覆盖（按钮）与 ItemStatus（旧 `SetRole / SetExpanded` 扩展的实际效果）。
+旧代码在卡里直接读 `RetryCountdown` 与模块级 `recoverySink`；现在倒计时、按钮族与恢复动作都由组合者折成一份 `ErrorPanelVS`，一次 `Render` 进去；是否出某个按钮由组合者按 `GenerationError.retryable`、`ErrorRecovery.forKind` 决定。披露头照旧写控件类型覆盖（按钮）与 ItemStatus（旧 `SetRole / SetExpanded` 扩展的实际效果）。
 
 ## 成员 `FoldHeader`
 
@@ -96,7 +101,9 @@
 
 ### 与旧实现的差异
 
-旧代码返回 `(Control * (bool -> unit))` 二元组，现在是一个对象（`Host`、`SetVisible`、`ToggleFull`）。
+旧代码返回 `(Control * (bool -> unit))` 二元组，现在是一个对象（`Host`、`ApplyVisible`、`ToggleFull`）。
+
+- ApplyVisible(value)：展开 / 收起整块（收起时顺带退出全文态）。
 
 ## 成员 `StreamCaret`
 

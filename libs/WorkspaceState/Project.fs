@@ -62,24 +62,24 @@ module Project =
         let rowsVS =
             model.Summaries
             |> List.map (fun s ->
-                let isSelected =
-                    match currentWorkspace with
-                    | Some (WorkspacePhase.Active(conv, _)) when conv.ConversationId = s.Id -> true
-                    | Some (WorkspacePhase.LoadingConversation id) when id = s.Id -> true
-                    | _ -> false
                 let isBusy =
                     model.Feedback.PendingDeletions
-                    |> Map.exists (fun _ b -> List.contains s.Id b.Ids)
+                    |> Map.exists (fun _ b -> List.contains s.id b.Ids)
                 {
-                    Id = s.Id
-                    Title = s.Title
-                    Preview = s.Preview
-                    Selected = isSelected
-                    Pinned = s.Pinned
-                    Archived = s.Archived
-                    Running = s.Running
+                    Id = s.id
+                    Title = s.title
+                    Preview = s.preview
+                    Pinned = s.pinned
+                    Archived = s.archived
+                    Running = s.running
+                    MessageCount = s.messageCount
+                    CreatedAt = s.createdAt
+                    UpdatedAt = s.updatedAt
+                    IsFork = s.isFork
+                    ProviderId = s.providerId
+                    Model = s.model
+                    LastCommitId = s.lastCommitId
                     Busy = isBusy
-                    MessageCount = s.MessageCount
                 }
             )
 
@@ -119,16 +119,25 @@ module Project =
             Rows = rowsVS
             Empty = emptyKind
             Search = searchBoxVS
-            Brand = { PresetsVisible = false }
+            Brand = {
+                PresetsVisible = currentCatalog |> Option.exists (fun c -> not (List.isEmpty c.presets))
+                Compact = model.Nav.CompactMode
+            }
             Batch = batchBarVS
             Host = {
-                ServerUrl = ""
+                ServerUrl = model.ServerUrl
                 Connected = isAuthed
                 StatusText = if isAuthed then "已连接" else "未连接"
-                PaletteVisible = false
             }
             Compact = model.Nav.CompactMode
             BusyRows = busyRows
+            ActiveId =
+                match currentWorkspace with
+                | Some (WorkspacePhase.Active(conv, _)) -> Some conv.ConversationId
+                | Some (WorkspacePhase.LoadingConversation id) -> Some id
+                | _ -> None
+            ShowArchived = model.Prefs.showArchived
+            Lineage = model.Lineage
         }
 
         // 不变式 1 & 2：
@@ -221,7 +230,7 @@ module Project =
             Phase = chatPhase
             Streaming = isStreaming
             ScrollHint = Some { CanScrollDown = true; CanLoadOlder = false }
-            RevealTarget = model.Chrome.RevealTarget
+            RevealTarget = model.Chrome.RevealTarget |> Option.map snd
         }
 
         let composerEnabled, disabledReason =
@@ -260,6 +269,20 @@ module Project =
             model.Composer.SelectedModel
             |> Option.map (fun (p, m) -> sprintf "%s / %s" p m)
 
+        // 决策 320/330/331：看图能力按「当前所选模型」判定；未选时用目录默认（与空闲页芯片同一口径）。
+        // 没有目录（未连接/加载中）时未知：门控放行，主机决定。
+        let visionVS, visionLabel =
+            match currentCatalog with
+            | None -> VisionUnknown, ""
+            | Some cat ->
+                let sel =
+                    model.Composer.SelectedModel
+                    |> Option.orElse (Catalog.defaultSelection cat)
+                match sel with
+                | Some(providerId, modelId) ->
+                    fst (Catalog.visionOf providerId modelId cat), Catalog.describeModel providerId modelId cat
+                | None -> VisionUnknown, ""
+
         let composerContextVS =
             match currentWorkspace with
             | Some (WorkspacePhase.Active(conv, _)) ->
@@ -281,6 +304,8 @@ module Project =
             ModelChip = modelChip
             Context = composerContextVS
             Compact = model.Nav.CompactMode
+            Vision = visionVS
+            VisionLabel = visionLabel
         }
 
         let overlayVS: OverlayVS =
@@ -423,14 +448,37 @@ module Project =
                     )
             }
 
+        // 设置页的唯一投影（W7-B）：每个字段都来自模型事实，无壳参数、无旁路。
+        let instanceId =
+            match model.Conn with
+            | ConnPhase.Authed(inst, _) -> inst
+            | _ -> ""
+
+        let settingsVS: SettingsVS = {
+            ActiveSection = model.Settings.ActiveSection
+            Catalog = currentCatalog
+            InstanceId = instanceId
+            ServerUrl = model.ServerUrl
+            Prefs = model.Prefs
+            Devices = {
+                ServerUrl = model.ServerUrl
+                Devices = model.Settings.Devices
+                CanInvite = model.Settings.CanInvite
+                Invite = model.Settings.Invite
+                InviteRejected = model.Settings.InviteRejected
+                LoadNote = model.Settings.DeviceLoadNote
+                IsLoading = model.Settings.DeviceLoadDue.IsSome
+                Now = model.Now
+            }
+        }
+
         {
             Shell = shellVS
             Header = headerVS
             Sidebar = sidebarVS
             Chat = chatVS
             Composer = composerVS
-            Settings = None
-            Onboarding = None
+            Settings = if model.Settings.Open then Some settingsVS else None
             Overlay = overlayVS
             Palette = None
             ModelSwitch = None

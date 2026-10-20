@@ -92,12 +92,12 @@ let ``SettingsProviders ShowEditor validates required fields and default model e
         // 多行模型框的回车是换行
         enter e.ModelsBox
         Assert.Equal(2, saves.Count)
-        e.SetPending true
+        e.ApplyPending true
         Assert.False (named e.View "正在保存…").Value.IsEnabled
         Assert.False (named e.View "取消").Value.IsEnabled
         e.Summary.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control))
         Assert.Equal(2, saves.Count)
-        e.SetPending false
+        e.ApplyPending false
         e.Summary.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control))
         Assert.Equal(3, saves.Count)
         Assert.Equal('●', e.KeyBox.PasswordChar))
@@ -107,23 +107,23 @@ let ``new provider cannot probe until saved and explains why`` () =
     Headless.run (fun () ->
         let e = ProviderEditor(true, fun _ -> None)
         let _ = host e.View
-        e.SetAdvanced true
+        e.ApplyAdvanced true
         let probe = (byId e.View "provider-probe-models").Value
         Assert.False probe.IsEnabled
         Assert.Contains("要先保存", textOf e.View)
         let e2 = ProviderEditor(false, fun _ -> None)
         let _ = host e2.View
-        e2.SetAdvanced true
+        e2.ApplyAdvanced true
         let probes = ResizeArray<unit>()
         e2.ProbeClicked.Add probes.Add
         let probe2 = (byId e2.View "provider-probe-models").Value
         click probe2
         Assert.Single probes |> ignore
-        e2.SetProbePending true
+        e2.ApplyProbeState(true, "")
         Assert.False probe2.IsEnabled
         Assert.Equal("正在获取…", AutomationProperties.GetName probe2)
-        e2.SetProbePending false
-        e2.SetProbeStatus "密钥无效"
+        e2.ApplyProbeState(false, "")
+        e2.ApplyProbeState(false, "密钥无效")
         Assert.Contains("密钥无效", textOf e2.View)
         Assert.True((named e2.View "保存").IsSome))
 
@@ -135,22 +135,19 @@ let ``SettingsProviders applyPreset updates endpoint, models and tracks divergen
         let anchors, transports = ResizeArray<Control>(), ResizeArray<unit>()
         e.PresetClicked.Add anchors.Add
         e.TransportClicked.Add transports.Add
-        e.SetPresetLabel "OpenAI"
-        e.SetPresetHint "去 platform.openai.com 生成密钥。"
-        e.SetKindText "传输：OpenAI 兼容 · /v1/chat/completions"
+        e.ApplyPresetCaption("OpenAI", "去 platform.openai.com 生成密钥。", "传输：OpenAI 兼容 · /v1/chat/completions", None)
         let selector = (named e.View "预设").Value
         Assert.Contains("OpenAI", textOf selector)
         click selector
         Assert.Same(selector, anchors[0])
         Assert.Contains("platform.openai.com", textOf e.View)
-        e.SetPresetLabel "自定义"
-        e.SetPresetHint ""
+        e.ApplyPresetCaption("自定义", "", "传输：OpenAI 兼容 · /v1/chat/completions", None)
         Assert.DoesNotContain("platform.openai.com", textOf e.View)
-        e.SetAdvanced true
-        e.SetTransport(Some "改用兼容端点")
+        e.ApplyAdvanced true
+        e.ApplyPresetCaption("OpenAI", "", "传输：OpenAI 兼容 · /v1/chat/completions", Some "改用兼容端点")
         click (named e.View "改用兼容端点").Value
         Assert.Single transports |> ignore
-        e.SetTransport None
+        e.ApplyPresetCaption("OpenAI", "", "传输：OpenAI 兼容 · /v1/chat/completions", None)
         Assert.False (named e.View "改用兼容端点").Value.IsVisible)
 
 // 旧 Menu.selectButton：Down / Up 都能展开预设菜单（UiStabilityTests `preset dropdown marks exactly the current preset` 的展开路径）。

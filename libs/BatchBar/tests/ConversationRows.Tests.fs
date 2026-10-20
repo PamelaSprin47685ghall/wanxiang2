@@ -61,10 +61,9 @@ let ``sidebar running pin and idle states keep status updated`` () =
         Assert.Equal("已置顶", AutomationProperties.GetItemStatus(hostOf r 1)))
 
 [<Fact>]
-let ``Sidebar row more action stays reachable in compact mode`` () =
+let ``Sidebar row more action stays reachable`` () =
     Headless.run (fun () ->
         let r, _ = make ()
-        r.SetCompact true
         let more = (r.MoreButton ids[2]).Value
         Assert.True(more.IsVisible && more.IsHitTestVisible && more.Focusable)
         let menus = ResizeArray()
@@ -79,14 +78,14 @@ let ``Sidebar row more action stays reachable in compact mode`` () =
 let ``row more button leaves the hit tree in selection mode`` () =
     Headless.run (fun () ->
         let r, _ = make ()
-        r.SetMarks(None, (fun id -> id = ids[1]), true)
+        r.ApplyMarks(None, (fun id -> id = ids[1]), true)
         let more = (r.MoreButton ids[2]).Value
         Assert.False more.IsVisible
         Assert.False more.IsHitTestVisible
         Assert.False more.Focusable
         Assert.Equal(AccessibilityView.Raw, AutomationProperties.GetAccessibilityView more)
         Assert.Equal("当前对话", AutomationProperties.GetItemStatus(hostOf r 1))
-        r.SetMarks(None, (fun _ -> false), false)
+        r.ApplyMarks(None, (fun _ -> false), false)
         Assert.True more.IsVisible
         Assert.True more.IsHitTestVisible
         Assert.True more.Focusable)
@@ -112,7 +111,7 @@ let ``active or selected rows highlight and update screen reader item status`` (
         Assert.Equal("", AutomationProperties.GetItemStatus(hostOf r 2))
         Assert.Equal("已归档", AutomationProperties.GetItemStatus(hostOf r 3))
         // 高亮 = 当前对话或多选中
-        r.SetMarks(Some ids[0], (fun id -> id = ids[2]), true)
+        r.ApplyMarks(Some ids[0], (fun id -> id = ids[2]), true)
         Assert.True(btn(0).Classes.Contains "selected")
         Assert.Equal("当前对话，生成中", AutomationProperties.GetItemStatus(hostOf r 0))
         Assert.False(btn(1).Classes.Contains "selected")
@@ -139,7 +138,7 @@ let ``Sidebar conversation row right click invokes context menu`` () =
         Assert.Same(h, anchor)
         Assert.False right
         // 多选模式下不开单条菜单
-        r.SetMarks(None, (fun _ -> false), true)
+        r.ApplyMarks(None, (fun _ -> false), true)
         h.Focus() |> ignore
         key w Key.Apps RawInputModifiers.None
         Assert.Single menus |> ignore)

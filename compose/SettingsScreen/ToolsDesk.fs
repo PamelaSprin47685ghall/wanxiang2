@@ -16,7 +16,7 @@ open Wanxiang2.ToolsPane
 /// MCP 服务编辑（McpForm 校验 + FieldCheck）与更多菜单。工具设置走 UpdateGeneration（ToolsPolicy 载荷）。界面归 ToolsPane。
 type ToolsDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> SettingsHooks) =
     let pane = ToolsPane(SettingsLooks.glyphOf theme)
-    let check = FieldCheck(SettingsLooks.fieldCheckOf theme)
+    let check = FieldCheck()
     let mutable catalog = Catalog.empty
     let mutable mcpEditor: McpEditor option = None
     let mutable folderEditor: FolderEditor option = None
@@ -91,16 +91,16 @@ type ToolsDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setting
                 | McpField.Timeout -> editor.TimeoutBox
             let errors = fieldErrors |> List.map (fun (f, m) -> boxOf f, m)
             if errors.IsEmpty then
-                editor.SetPending true
+                editor.ApplyPending true
                 (hooks ()).UpsertMcp (McpForm.payload v editor.Enabled) (fun ok ->
-                    editor.SetPending false
+                    editor.ApplyPending false
                     if ok && active then overlay.CloseDialog()
                     elif not ok then toast "保存失败，请重试。" ToastTone.Failure)
             else
-                for box, m in errors do check.SetError(box, m)
+                for box, m in errors do check.ApplyError(box, m)
                 FieldCheck.Apply(errors, Some editor.Summary) |> Option.iter (fun m -> toast m ToastTone.Warning))
         editor.CancelRequested.Add(fun () -> overlay.CloseDialog())
-        let height = (theme.Metric Metric.DialogContentMaxHeight).Subscribe(fun h -> editor.SetMaxHeight h)
+        let height = (theme.Metric Metric.DialogContentMaxHeight).Subscribe(fun h -> editor.ApplyMaxHeight h)
         mcpEditor <- Some editor
         overlay.ShowDialog(
             editor.View,
@@ -116,9 +116,9 @@ type ToolsDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setting
             if not pending then
                 check.Clear editor.PathBox
                 let roots = catalog.generation.fileReadRoots
-                if String.IsNullOrWhiteSpace raw then check.SetError(editor.PathBox, "请填写文件夹路径。")
-                elif not (IO.Path.IsPathRooted raw) then check.SetError(editor.PathBox, "需要绝对路径，例如 /home/me/文档。")
-                elif List.contains raw roots then check.SetError(editor.PathBox, "这个文件夹已经授权过了。")
+                if String.IsNullOrWhiteSpace raw then check.ApplyError(editor.PathBox, "请填写文件夹路径。")
+                elif not (IO.Path.IsPathRooted raw) then check.ApplyError(editor.PathBox, "需要绝对路径，例如 /home/me/文档。")
+                elif List.contains raw roots then check.ApplyError(editor.PathBox, "这个文件夹已经授权过了。")
                 else
                     pending <- true
                     let g = catalog.generation
@@ -177,6 +177,7 @@ type ToolsDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Setting
     member _.FolderEditor = folderEditor
     member _.Catalog = catalog
 
-    member _.SetCatalog(next: Catalog) =
-        catalog <- next
+    /// 单入口幂等渲染：由 SettingsToolsVS 投影全量驱动
+    member this.Render(vs: SettingsToolsVS) =
+        catalog <- vs.Catalog
         render ()

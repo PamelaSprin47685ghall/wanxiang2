@@ -76,7 +76,7 @@ consume：仓库外消费者提交后重开得到 Used 1UL
 | # | 消费者 | 外部依赖 | Wanxiang2 依赖 | 成员(合并为一个包) |
 |---|---|---|---|---|
 | 1 | AppShell | — | — | ChangeWatch, ConversationSurface, DeferredReveal, DraftSummaryText, ForkAnchor, IdleSurface, MessageLink, OlderPageLoad, ReconnectBackoff, ReconnectLoop, RevealTarget, StartReady, StartupTrace |
-| 2 | MessageCardView | — | — | CardReconcile, CaretBreath, CountdownTicker, DurationText, GenerationErrorTitle, MessageMenu, MessageTimestamp, ToolArgsPreview, ToolCallState, ToolErrorSummary, ToolOverview |
+| 2 | MessageCardView | — | — | CardBits, CaretBreath, CountdownTicker, DurationText, GenerationErrorTitle, MessageMenu, MessageTimestamp, ToolArgsPreview, ToolCallState, ToolErrorSummary, ToolOverview |
 | 3 | SettingsScreen | — | — | GenerationDraft, GenerationForm, LocalDraftControls, McpForm, OnboardingFlow, ProbeFailureKind, ProbeSlot, ProviderForm, ProviderProbeText, SectionMemory, ToolsPolicy |
 | 4 | MessageCardView | Avalonia | UiKit | ActionStrip, AttachmentChip, ErrorPanel, FoldHeader, RevealPane, StreamCaret, ThinkingBlock, ToolCallCard, UsageFoot, UserBubble |
 | 5 | SidebarDesk | — | — | RowFocus, SearchHit, SearchRequery, SearchSegments, SearchSession, SidebarEmpty, SidebarSelection |
@@ -133,3 +133,27 @@ consume：仓库外消费者提交后重开得到 Used 1UL
 - `libs` 242 → 123，`dotnet pack` 的工程数同比例下降;
 - 每少一个包 = 少一次 fsc 进程启动 + 少一份 obj/bin + 少一个 nupkg 的解包与还原;
 - 配合已落地的波次 solution 打包(每波一次 restore/pack,而非每包一个 dotnet 进程),pack 的固定开销从 316 次进程级降到约 18 次 solution 级。
+
+## 后续合并（2026-10-20 W7-B2）：ModelVision → HostCatalog
+
+`libs/ModelVision` 并入 `libs/HostCatalog`（与本文同一条物理并库的先例）。
+
+**起因**：`Catalog.visionOf` 从 `compose/Catalog` 下沉到 `libs/HostCatalog` 后，
+它的名字推断分支要用 `ModelVision.classify`，多出一条兄弟包依赖边
+（根 AGENTS.md《布局与工具》：库之间零依赖边，唯一例外是登记在册的 WorkspaceState）。
+看图判断本身也是「模型能不能看图」这一件事的派生事实，与主机目录同属一处。
+
+**做法**：
+
+1. `ModelVision.fs` 落盘为 `libs/HostCatalog/ModelVision.fs`，编译序在 `HostCatalog.fs` 之前；
+2. `libs/ModelVision` 整个目录删除（含 `AGENTS.md` 与测试工程），`Wanxiang2.ModelVision` 包不再交付；
+3. 测试用例并入 `libs/HostCatalog/tests/ModelVision.Tests.fs`（按本文「测试工程的合并约定」的文件命名，顶层模块改名 `ModelVisionTests`，避免与既有 `Tests` 撞名），断言口径原样保留；
+4. 消费方的 `PackageReference` 从 `Wanxiang2.ModelVision` 换成 `Wanxiang2.HostCatalog`：
+   `libs/WorkspaceState`（状态树投影看图判定）、`compose/Catalog`、`compose/ComposerDesk`（新增 HostCatalog 引用）、
+   `compose/SettingsScreen`；`compose/EntryShells` 只引用过该包、代码不用，直接删引用；
+5. 命名空间与类型名不变（仍是 `Wanxiang.UI` 下的 `ModelVision` 模块、`VisionSupport` / `VisionSource` 类型），
+   消费方源码零改，只是装配进了 `HostCatalog.dll`；
+6. `./x sln` 重新生成；`./x check` 通过。
+
+**结果**：`libs` 由 119 个减到 **118** 个包（本文执行时为 123 个，其后各波继续并库）；
+HostCatalog 仍是零兄弟依赖的库。

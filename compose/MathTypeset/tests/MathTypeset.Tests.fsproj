@@ -1,12 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
-    <Compile Include="Replay.fs" />
+    <Compile Include="KatexSource.fs" />
     <Compile Include="Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="golden/**" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="xunit.v3" />
+    <!-- 公式的 KaTeX HTML 走生产用的脚本后端现场产出，测试因此断言真实排版事实。 -->
+    <PackageReference Include="Wanxiang2.RichJint" VersionOverride="0.0.0-local" />
     <ProjectReference Include="../MathTypeset.fsproj" />
   </ItemGroup>
 </Project>

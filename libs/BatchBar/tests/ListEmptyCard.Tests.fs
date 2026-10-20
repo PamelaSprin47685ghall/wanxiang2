@@ -17,7 +17,6 @@ let ``card swaps only on style flip and keeps the shared action button`` () =
     Headless.run (fun () ->
         let c = make ()
         Assert.False c.IsVisible
-        c.SetAction "连接主机"
         c.Show(EmptyCardStyle.Note, "", "连接主机后，对话记录会显示在这里。", false, true)
         Assert.Contains("连接主机后", textOf c.View)
         let n = ref 0

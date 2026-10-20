@@ -63,9 +63,9 @@ type ApprovalDesk(wrenchIcon: (unit -> Control) option, overlay: OverlayDesk, se
         sync ()
 
     /// 切换当前对话：只显示它的卡片
-    member _.SetConversation(convId: Guid option) =
+    member _.ApplyConversation(convId: Guid option) =
         active <- convId
-        panel.SetConversation convId
+        panel.ApplyConversation convId
 
     /// 主机事件入口；是审批事件就处理并返回 true
     member _.Handle(ev: WireEvent) : bool =

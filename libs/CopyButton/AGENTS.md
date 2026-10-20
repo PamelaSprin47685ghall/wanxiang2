@@ -4,12 +4,12 @@
 
 ## 外观
 
-- `CopyButtonAppearance`：`FadeOpacity`（活的不透明度），`Hold`、`Fade`（活的时长）。支持 Render(CopyButtonVS)。
+- `CopyButtonAppearance`（W7 外观退役后的普通记录）：`FadeOpacity`（度量常量 `Metric.OpacityCopyConfirmFade` 的当前值）、`Hold`、`Fade`（MotionLedger 时长档的当前值）。支持 Render(CopyButtonVS)。
 - 用到的样式类：无。
 
 ## 证据与旧测试
 
-旧仓库没有直接测 CopyFeedback 的用例（MessageCard 复制用例经整张卡片）。本库在 headless 下用可控时钟验证：淡出→保持→复位、减弱动效、重新起算、离开可视树复位、外观实时生效。
+旧仓库没有直接测 CopyFeedback 的用例（MessageCard 复制用例经整张卡片）。本库在 headless 下用可控时钟验证：淡出→保持→复位、减弱动效、重新起算、离开可视树复位、淡出到期回到确认态。
 
 ## 与旧实现的差异
 

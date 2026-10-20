@@ -47,7 +47,7 @@ let ``隐藏时退出全文态`` () =
         let p = RevealPane(tall (), 360.0, true)
         let w = show p.Host
         p.ToggleFull()
-        p.SetVisible false
+        p.ApplyVisible false
         Assert.False p.IsFull
         Assert.False p.Host.IsVisible
         Assert.Equal(360.0, p.Scroller.MaxHeight)
@@ -59,7 +59,7 @@ let ``起始隐藏时首次布局也不亮按钮`` () =
         let p = RevealPane(tall (), 360.0, false)
         let w = show p.Host
         Assert.False p.Toggle.IsVisible
-        p.SetVisible true
+        p.ApplyVisible true
         w.UpdateLayout()
         Avalonia.Threading.Dispatcher.UIThread.RunJobs()
         Assert.True p.Toggle.IsVisible

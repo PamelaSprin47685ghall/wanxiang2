@@ -160,7 +160,7 @@ type ProtocolDispatch(parts: ProtocolParts, surface: ProtocolSurface) =
             surface.Render()
         | CommandRejected d ->
             parts.Commands.Reject d.invocationId |> Option.iter (fun feedback -> feedback.onCompleted false)
-            parts.Outbox.SetState(d.invocationId, RejectedMessage d.message)
+            parts.Outbox.ApplyState(d.invocationId, RejectedMessage d.message)
             parts.Outbox.RejectCreation(d.invocationId, d.message)
             // 拒绝只报一次：未确认行已内联呈现原因与重试，不叠 toast。
             surface.Render()

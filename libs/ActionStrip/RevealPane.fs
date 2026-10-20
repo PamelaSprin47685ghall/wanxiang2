@@ -69,7 +69,7 @@ type RevealPane(content: Control, maxHeight: float, initiallyVisible: bool) =
     member _.IsFull = full
     member _.IsShown = visible
     /// 展开 / 收起整块；收起时顺带退出全文态
-    member _.SetVisible(value: bool) =
+    member _.ApplyVisible(value: bool) =
         visible <- value
         scroller.IsVisible <- value
         host.IsVisible <- value
@@ -84,5 +84,5 @@ type RevealPane(content: Control, maxHeight: float, initiallyVisible: bool) =
 
     /// 单入口：Render(RevealPaneVS)
     member this.Render(vs: RevealPaneVS) =
-        this.SetVisible vs.Visible
+        this.ApplyVisible vs.Visible
         if vs.Expanded <> full then this.ToggleFull()

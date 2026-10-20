@@ -42,7 +42,7 @@ let ``SettingsView navigates sections, remembers scroll positions and invalidate
         let providers = (named f "模型服务").Value
         Assert.Equal("", AutomationProperties.GetItemStatus providers)
         let content = StackPanel(Height = 3000.0)
-        f.SetContent(content, Some 200.0)
+        f.ApplyContent(content, Some 200.0)
         Dispatcher.UIThread.RunJobs()
         Assert.Equal(200.0, f.ContentOffset))
 
@@ -100,5 +100,5 @@ let ``narrow window turns the nav into a top strip and hides group labels`` () =
 let ``scope captions follow the composer`` () =
     Headless.run (fun () ->
         let f, _ = frame ()
-        f.SetCaptions("这台客户端", "仅在这台客户端即时生效，不修改主机配置。")
+        f.ApplyCaptions("这台客户端", "仅在这台客户端即时生效，不修改主机配置。")
         Assert.Contains("仅在这台客户端即时生效", textOf f))

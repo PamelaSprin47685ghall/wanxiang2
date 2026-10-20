@@ -1,5 +1,6 @@
 module Wanxiang2.FieldCheck.Tests.Tests
 
+open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
@@ -8,18 +9,18 @@ open Avalonia.Threading
 open Xunit
 open Wanxiang2.FieldCheck
 
-let private look () =
-    let danger = SolidColorBrush(Colors.Red)
-    let normal = SolidColorBrush(Colors.Gray)
-    let size = Cell 11.0
-    danger,
-    size,
-    { ErrorForeground = danger
-      InvalidStroke = danger
-      NormalStroke = normal
-      MessageFontSize = size
-      MessageLineHeight = Cell 16.0
-      MessageMargin = Cell(Thickness 2.0) }
+let private brushes () =
+    SolidColorBrush(Colors.Red), SolidColorBrush(Colors.Gray)
+
+/// 主题资源字典的替身：FieldCheck 绑资源键，这里只往应用资源写值。
+/// 返回错误前景画笔，供改色断言。
+let private seedResources (danger: SolidColorBrush) (normal: SolidColorBrush) =
+    let r = Application.Current.Resources
+    r["Palette.Danger"] <- box danger
+    r["Palette.Border"] <- box normal
+    r["Metric.FontCaption"] <- box 11.0
+    r["Metric.CaptionLineHeight"] <- box 16.0
+    r["Margin.FieldError"] <- box (Thickness 2.0)
 
 let private field () =
     let box = TextBox()
@@ -30,8 +31,9 @@ let private field () =
 [<Fact>]
 let ``field validation is local and does not change geometry`` () =
     Headless.run (fun () ->
-        let danger, _, l = look ()
-        let check = FieldCheck l
+        let danger, normal = brushes ()
+        seedResources danger normal
+        let check = FieldCheck()
         let shell, box = field ()
         let panel = StackPanel()
         panel.Children.Add shell
@@ -39,10 +41,10 @@ let ``field validation is local and does not change geometry`` () =
         let w = Window(Width = 420.0, Height = 130.0, Content = panel)
         w.Show()
         let before = shell.BorderThickness
-        check.SetError(box, "端点地址不能为空。")
+        check.ApplyError(box, "端点地址不能为空。")
         Dispatcher.UIThread.RunJobs()
         Assert.Equal(before, shell.BorderThickness)
-        Assert.Same(danger, shell.BorderBrush)
+        Assert.Same(danger :> IBrush, shell.BorderBrush)
         Assert.True(FieldCheck.IsInvalid shell)
         Assert.Contains(FieldCheck.InvalidClass, shell.Classes)
         let message = check.MessageFor box
@@ -54,7 +56,7 @@ let ``field validation is local and does not change geometry`` () =
         Assert.False message.IsVisible
         Assert.Equal("", AutomationProperties.GetHelpText box)
         Assert.False(FieldCheck.IsInvalid shell)
-        check.SetError(box, "再次验证错误")
+        check.ApplyError(box, "再次验证错误")
         check.Clear box
         Dispatcher.UIThread.RunJobs()
         Assert.False message.IsVisible
@@ -64,11 +66,12 @@ let ``field validation is local and does not change geometry`` () =
 [<Fact>]
 let ``文本没变（聚焦重放）不清错误`` () =
     Headless.run (fun () ->
-        let _, _, l = look ()
-        let check = FieldCheck l
+        let danger, normal = brushes ()
+        seedResources danger normal
+        let check = FieldCheck()
         let _, box = field ()
         box.Text <- "x"
-        check.SetError(box, "错")
+        check.ApplyError(box, "错")
         box.Text <- "x"
         Assert.True(check.HasError box))
 
@@ -110,12 +113,26 @@ let ``摘要在用户改任一字段时收起`` () =
         Assert.Equal("", summary.Text))
 
 [<Fact>]
-let ``外观实例改值后错误行跟着变`` () =
+let ``资源键改值后错误行与输入壳描边跟着变`` () =
     Headless.run (fun () ->
-        let danger, size, l = look ()
-        let check = FieldCheck l
-        let line = check.MessageFor(TextBox())
-        size.Set 13.0
+        let danger, normal = brushes ()
+        seedResources danger normal
+        let check = FieldCheck()
+        let shell, fieldBox = field ()
+        // 资源查找沿可视树向上：壳必须挂在窗口里才吃得到应用资源
+        let panel = StackPanel()
+        panel.Children.Add shell
+        panel.Children.Add(check.MessageFor fieldBox)
+        let w = Window(Width = 420.0, Height = 130.0, Content = panel)
+        w.Show()
+        let line = check.MessageFor fieldBox
+        check.ApplyError(fieldBox, "错")
+        // 输入壳错误态描边随资源改色（声明式，无手工订阅）
         danger.Color <- Colors.Orange
+        Assert.Equal(Colors.Orange, (shell.BorderBrush :?> SolidColorBrush).Color)
+        Application.Current.Resources["Metric.FontCaption"] <- box 13.0
         Assert.Equal(13.0, line.FontSize)
-        Assert.Equal(Colors.Orange, (line.Foreground :?> SolidColorBrush).Color))
+        // 清错后回到常态描边资源
+        check.Clear fieldBox
+        Assert.Same(normal :> IBrush, shell.BorderBrush)
+        w.Close())

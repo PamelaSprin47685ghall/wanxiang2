@@ -9,31 +9,30 @@ open Wanxiang2.FoldHeader
 open Wanxiang2.FoldHeader.Tests
 
 [<Fact>]
-let ``开合转箭头、报展开状态并通知`` () =
+let ``开合报展开状态并通知`` () =
     Headless.run (fun () ->
         let f = FoldHeader(false)
         let seen = ResizeArray()
         f.Toggled.Add seen.Add
-        Assert.Equal(0.0, f.Rotation.GetBaseValue(Avalonia.Media.RotateTransform.AngleProperty).Value)
+        Assert.False f.Expanded
         f.Toggle()
         Assert.True f.Expanded
-        Assert.Equal(90.0, f.Rotation.GetBaseValue(Avalonia.Media.RotateTransform.AngleProperty).Value)
         Assert.Equal("已展开", AutomationProperties.GetItemStatus f.Header)
         f.Toggle()
         Assert.Equal<bool list>([ true; false ], List.ofSeq seen))
 
 [<Fact>]
-let ``前置件在箭头之后，尾随件在标题之后`` () =
+let ``前置件在标题之前，尾随件在标题之后`` () =
     Headless.run (fun () ->
         let f = FoldHeader(true)
         let lead = Border()
         let tail = Border()
         f.AddLeading lead
         f.AddTrailing tail
-        Assert.Same(lead, f.Row.Children[1])
-        Assert.Same(f.Caption, f.Row.Children[2])
-        Assert.Same(tail, f.Row.Children[3])
-        Assert.Equal(90.0, f.Rotation.GetBaseValue(Avalonia.Media.RotateTransform.AngleProperty).Value))
+        Assert.Same(lead, f.Row.Children[0])
+        Assert.Same(f.Caption, f.Row.Children[1])
+        Assert.Same(tail, f.Row.Children[2])
+        Assert.True f.Expanded)
 
 [<Fact>]
 let ``键盘 Enter 也能开合`` () =

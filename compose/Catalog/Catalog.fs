@@ -3,21 +3,13 @@ namespace Wanxiang.UI
 open System
 open System.Text.Json.Nodes
 
-// 组合者：主机目录（HostCatalog）与看图判断（ModelVision）、会话配置（Wire）、模型切换（ModelSwitcher）的关联。
+// 组合者：主机目录（HostCatalog，visionOf 已下沉进该库）与看图判断（ModelVision）、会话配置（Wire）、模型切换（ModelSwitcher）的关联。
 // 模块名与库里相同，F# 按名合并同名模块，旧调用方不用改。
 
 /// 空闲页（没有打开对话）输入框上的模型标签与看图提示。vision = None 表示不改看图提示（只换标签）。
 type IdleModelChip = { label: string; vision: (VisionSupport * string) option }
 
 module Catalog =
-
-    /// 决策 330/331：某模型能否看图。用户指定 > 模型服务信息 > 名字推断。
-    let visionOf (providerId: string) (model: string) (catalog: Catalog) : VisionSupport * VisionSource =
-        let ofBool b = if b then VisionYes else VisionNo
-        match Catalog.tryProvider providerId catalog with
-        | Some p when p.visionOverrides.ContainsKey model -> ofBool p.visionOverrides[model], VisionFromUser
-        | Some p when p.visionDetected.ContainsKey model -> ofBool p.visionDetected[model], VisionFromProvider
-        | _ -> ModelVision.classify model, VisionFromName
 
     /// 迁自旧 AppShell.Render 空闲分支：页面已给出标签就只用它；否则用起步输入里选的模型，再退到默认模型；
     /// 都没有时显示「未选择模型」、看图未知。
@@ -28,7 +20,7 @@ module Catalog =
             match draftSelection |> Option.orElse (Catalog.defaultSelection catalog) with
             | Some(providerId, model) ->
                 let text = Catalog.describeModel providerId model catalog
-                { label = text; vision = Some(fst (visionOf providerId model catalog), text) }
+                { label = text; vision = Some(fst (Catalog.visionOf providerId model catalog), text) }
             | None -> { label = "未选择模型"; vision = Some(VisionUnknown, "") }
 
 

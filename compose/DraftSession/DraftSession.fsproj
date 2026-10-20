@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <!-- 组合者：本地草稿会话（已存快照、读完标志、已恢复主机、认得的对话、未确认消息的保存时刻）与 DraftStore 落盘闸门。协作者：DraftStore。命名空间沿用 Wanxiang.UI。 -->
-  <ItemGroup>
-    <Compile Include="DraftSession.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
-  </ItemGroup>
-</Project>

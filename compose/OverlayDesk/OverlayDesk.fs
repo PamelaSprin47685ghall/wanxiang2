@@ -19,13 +19,13 @@ type OverlayDeskMetrics =
       Toasts: ToastStripAppearance
       Menu: PopupMenuAppearance
       /// 普通菜单浮层的最小宽度（旧代码 200）
-      MenuMinWidth: IObservable<float>
+      MenuMinWidth: float
       /// 分组菜单浮层的最小宽度（旧代码 240）
-      GroupedMenuMinWidth: IObservable<float>
+      GroupedMenuMinWidth: float
       /// 停留时长（毫秒）：失败、警告、其他（旧 MotionLedger 9000 / 6500 / 4000）
-      DwellFailureMs: IObservable<float>
-      DwellWarningMs: IObservable<float>
-      DwellDefaultMs: IObservable<float>
+      DwellFailureMs: float
+      DwellWarningMs: float
+      DwellDefaultMs: float
       /// 停留计时器的步长
       DismissTick: TimeSpan }
 
@@ -44,12 +44,9 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
     let strip = ToastStrip(look.Toasts)
     let queue = ToastQueue()
     let actions = ResizeArray<string * string * (unit -> unit)>()
-    let mutable onUserMsg: (UserMsg -> unit) option = None
-    let mutable inset = 0.0
-    let mutable menuMin = 0.0
-    let mutable groupedMin = 0.0
     let mutable currentOverlayPhase = OverlayPhase.Closed
-    let fit () = strip.Fit(root.Bounds.Width, root.Bounds.Height, inset)
+    // 提示条带的留白跟覆盖层走：留白是层的主题资源，层变了这里重排。
+    let fit () = strip.Fit(root.Bounds.Width, root.Bounds.Height, layer.ViewportInset)
 
     let remove (message: string) =
         queue.Remove message
@@ -61,9 +58,7 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
         Grid.SetColumnSpan(strip.View, 8)
         Grid.SetRowSpan(strip.View, 8)
         root.Children.Add strip.View
-        look.Layer.ViewportInset.Subscribe(fun v -> inset <- v; fit ()) |> ignore
-        look.MenuMinWidth.Subscribe(fun v -> menuMin <- v) |> ignore
-        look.GroupedMenuMinWidth.Subscribe(fun v -> groupedMin <- v) |> ignore
+        layer.InsetChanged.Add(fun () -> fit ())
         strip.Clicked.Add remove
         strip.ActionInvoked.Add(fun message ->
             match actions |> Seq.tryFind (fun (m, _, _) -> m = message) with
@@ -72,13 +67,6 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
 
     member _.Layer = layer
     member _.Toasts = strip
-
-    /// 注入单出口意图派发器（向 WorkspaceState 上报用户意图）
-    member _.SetDispatcher(dispatch: UserMsg -> unit) =
-        onUserMsg <- Some dispatch
-        layer.SetOnPopupClosed(fun () ->
-            dispatch (UserMsg.Overlay (OverlayUserMsg.PopupClosed ""))
-        )
 
     /// scrollWholeContent = false：内容自带滚动区与固定页脚（会话参数），卡片按视口封顶、页脚不被挤出。
     member _.ShowDialog(content: Control, width: float, ?onClosed: unit -> unit, ?canDismiss: unit -> bool, ?initialFocus: Control, ?scrollWholeContent: bool) =
@@ -131,7 +119,8 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
 
     member _.HasToastAction(label: string) = actions |> Seq.exists (fun (_, l, _) -> l = label)
     member _.FocusToastAction() = strip.FocusAction()
-    member _.SetToastFocusHome(home: unit -> unit) = strip.SetFocusHome home
+    /// 提示条动作按钮失焦后的归宿（组合者填：通常是输入区）。
+    member _.WireFocusHome(home: unit -> unit) = strip.WireFocusHome home
     member _.ToastActionButtons = strip.ActionButtons
 
     /// 唯一的 Escape 归属（topmost-first：浮层 → 对话框 → 最新提示条）。
@@ -156,12 +145,12 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
     /// 打开一个菜单；条目为空时不打开。
     member this.ShowMenu(anchor: Control, alignRight: bool, entries: PopupEntry list) =
         match PopupMenu.build look.Menu this.Activate entries with
-        | Some content -> this.Mark content; layer.ShowPopup(anchor, content, alignRight, menuMin)
+        | Some content -> this.Mark content; layer.ShowPopup(anchor, content, alignRight, look.MenuMinWidth)
         | None -> ()
 
     member this.ShowGroupedMenu(anchor: Control, alignRight: bool, groups: (string * PopupEntry list) list) =
         match PopupMenu.buildGrouped look.Menu this.Activate groups with
-        | Some content -> this.Mark content; layer.ShowPopup(anchor, content, alignRight, groupedMin)
+        | Some content -> this.Mark content; layer.ShowPopup(anchor, content, alignRight, look.GroupedMenuMinWidth)
         | None -> ()
 
     /// 下拉选择器：点击或 Down/Up 弹出分组候选。

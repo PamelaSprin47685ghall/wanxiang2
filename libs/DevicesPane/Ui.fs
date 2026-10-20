@@ -15,13 +15,13 @@ module internal Dyn =
         let sp = { new IServiceProvider with member _.GetService _ = null }
         ext.ProvideValue sp
 
-[<AutoOpen>]
-module ButtonExtensions =
+/// 按钮的文案与可用性写入口（命令类，非公开接口：只在库内使用）
+module internal ButtonExtensions =
     type Button with
-        member this.SetText(text: string) =
+        member internal this.ApplyText(text: string) =
             this.Content <- text
             AutomationProperties.SetName(this, text)
-        member this.SetEnabled(enabled: bool) =
+        member internal this.ApplyEnabled(enabled: bool) =
             this.IsEnabled <- enabled
 
 [<RequireQualifiedAccess>]

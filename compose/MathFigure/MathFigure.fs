@@ -3,28 +3,31 @@ namespace Wanxiang2.MathFigure
 open System
 open Avalonia
 open Avalonia.Controls
+open Avalonia.Controls.Documents
 open Avalonia.Media
+open Avalonia.Markup.Xaml.MarkupExtensions
+open Avalonia.Layout
 open Avalonia.VisualTree
 open Wanxiang.UI
 
-/// 公式控件的外观。全部是主题管理者的活实例：
-/// Ink 是可变画笔（改色不重排）；BodyFont 变了就重排；BlockPadding 是展示式公式上下留白。
+/// 动态资源绑定辅助：字体与留白走主题资源键（FontFamily.Body / Padding.MathBlock），
+/// 主题切换与资源改值由资源系统即时送达，本库不挂活值、不手工订阅。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
+
+/// 公式控件的外观。Ink 是主题管理者的活画笔实例（原地改色不重排），普通记录没有活值字段。
 type MathFigureMetrics =
-    { Ink: IBrush
-      BodyFont: IObservable<FontFamily>
-      BlockPadding: IObservable<float> }
+    { Ink: IBrush }
 
 /// 画一条公式（旧 Rich/MathVisual.fs）。KaTeX HTML 由调用方给（宿主的 RichBackend 产出），本控件只排版与绘制。
 /// lineHeight 是所在段落的行高（0 = 未设置）。
 type MathFigure(html: string option, displayMode: bool, fontSize: float, look: MathFigureMetrics) as this =
     inherit Control()
 
-    static let now (source: IObservable<'T>) =
-        let mutable v = Unchecked.defaultof<'T>
-        (source.Subscribe(fun x -> v <- x)).Dispose()
-        v
-
-    let mutable body: FontFamily = null
+    let mutable body: FontFamily = FontFamily.Default
     let mutable picture: MathPicture option = None
 
     let relayout () =
@@ -37,20 +40,27 @@ type MathFigure(html: string option, displayMode: bool, fontSize: float, look: M
             | _ -> None
 
     do
-        let applyFont f =
-            if not (obj.ReferenceEquals(f, body)) then
+        // 正文字体：把主题资源键接到可继承的 TextElement.FontFamily attached 属性上。
+        let applyFont (f: FontFamily) =
+            if not (obj.ReferenceEquals(f, body)) && not (isNull f) then
                 body <- f
                 relayout ()
                 this.InvalidateMeasure()
                 this.InvalidateVisual()
-        applyFont (now look.BodyFont)
-        let mutable fontSub: IDisposable = null
-        this.AttachedToVisualTree.Add(fun _ ->
-            if isNull fontSub then fontSub <- look.BodyFont.Subscribe applyFont)
-        this.DetachedFromVisualTree.Add(fun _ ->
-            if not (isNull fontSub) then (
-                fontSub.Dispose()
-                fontSub <- null))
+        // 构造时先从应用级资源取初值（未上屏也要能量版，调用方凭 HasLayout 决定退化）；
+        // 之后资源改值 → 属性变化 → PropertyChanged 回调重排（声明式，无活值订阅）。
+        body <-
+            match Application.Current with
+            | null -> FontFamily.Default
+            | app ->
+                match app.TryFindResource(box "FontFamily.Body") with
+                | true, (:? FontFamily as f) -> f
+                | _ -> FontFamily.Default
+        relayout ()
+        this.Bind(TextElement.FontFamilyProperty, Dyn.res "FontFamily.Body") |> ignore
+        this.PropertyChanged.Add(fun e ->
+            if e.Property = TextElement.FontFamilyProperty then
+                applyFont (e.NewValue :?> FontFamily))
 
     member _.HasLayout = picture.IsSome
 
@@ -125,18 +135,6 @@ module MathFigures =
             describe figure tex
             figure.HorizontalAlignment <- Layout.HorizontalAlignment.Center
             let host = Border(Child = figure, HorizontalAlignment = Layout.HorizontalAlignment.Stretch)
-            let now (source: IObservable<'T>) =
-                let mutable v = Unchecked.defaultof<'T>
-                (source.Subscribe(fun x -> v <- x)).Dispose()
-                v
-            let applyPad v = host.Padding <- Thickness(0.0, v)
-            applyPad (now look.BlockPadding)
-            let mutable padSub: IDisposable = null
-            host.AttachedToVisualTree.Add(fun _ ->
-                if isNull padSub then
-                    padSub <- look.BlockPadding.Subscribe applyPad)
-            host.DetachedFromVisualTree.Add(fun _ ->
-                if not (isNull padSub) then
-                    padSub.Dispose()
-                    padSub <- null)
+            // 展示式上下留白：主题资源键直达 Padding，随主题即时生效
+            host.Bind(Border.PaddingProperty, Dyn.res "Padding.MathBlock") |> ignore
             Some(host :> Control)

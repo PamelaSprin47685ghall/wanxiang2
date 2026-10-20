@@ -105,7 +105,7 @@ type MotionSwitch() =
     [<CLIEvent>]
     member _.Changed = changed.Publish
 
-    member _.SetReduced(value: bool) =
+    member _.ApplyReduced(value: bool) =
         if reduced <> value then
             reduced <- value
             changed.Trigger value

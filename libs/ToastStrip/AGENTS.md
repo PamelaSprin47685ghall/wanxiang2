@@ -5,17 +5,18 @@
 - 只管画与移除。去重与上限（ToastQueue）、停留计时（ToastDwell）、Escape 关最新一条、Ctrl/⌘+Z 触发动作都由组合者 compose/OverlayDesk 接。
 - 单入口幂等渲染：`Render(ToastVS list)`，由差异驱动新增与移除，废除条内定时器与轮询。
 - 条身 `Focusable=false`；Failure / Warning 为 Assertive，其余 Polite；动作「撤销」带 `Ctrl+Z` 快捷键与帮助文字。
+- 动作按钮持焦的条被移除时焦点回到归宿：`WireFocusHome(home)`（组合者填，回调槽；不填则不归还焦点）。
 -- 动作按钮使用原生 `Button` 配合 `secondary` / `button-secondary` 样式类，废除手搓 InvokeBorder / AutomationPeer。
 - 用到的样式类（compose/Theme 安装）：动作按钮 `secondary`、`button-secondary`、`hover-plain`、`surface`。
 
 ## 外观
 
-- `ToastStripAppearance`：`Surface`、`Edge`、`Text`（画笔）、`Accent`（语气 → 画笔）；其余尺寸、阴影、淡入时长都是活的值；`FadeEasing`。
+- `ToastStripAppearance`（W7 外观退役后的普通记录）：`Surface`、`Edge`、`Text`（画笔）、`Accent`（语气 → 画笔）、`AccentOpacity`、`Padding`、`Shadow`、`LineHeight`、`ColumnSpacing`、`Spacing`、`Margin`、`MaxWidth`、`BodyMaxHeight`、`Fade`、`FadeEasing` —— 全是静态值。主题管的尺寸走资源键声明式绑定：强调条宽 `Metric.ToastAccentWidth`、圆角 `CornerRadius.RadiusPill`、描边 `Thickness.BorderThin`、外壳圆角 `CornerRadius.RadiusMd`、字号 `Metric.FontBody`。
 
 - OverlayMenuTests：`toast_stays_non_focusable_and_escape_dismisses_it`（非焦点与同步移除部分）
 - UiStabilityTests：`toast stays inside narrow viewport and is keyboard dismissible live content`（宽度钳位与 live 部分）
 - Escape、减弱动效即时移除（`toast_removes_immediately_under_reduced_motion`）在 compose/OverlayDesk 测。
-- 新增：撤销按钮的读屏属性与焦点归宿、Look 实时生效。
+- 新增：撤销按钮的读屏属性与焦点归宿、主题资源键改值即时随动（Padding/MaxWidth 为构造期静态值）。
 
 ## 与旧实现的差异
 

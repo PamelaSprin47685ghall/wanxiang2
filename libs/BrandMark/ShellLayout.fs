@@ -42,7 +42,8 @@ type WorkspaceStack(chat: Control, composer: Control, startMinHeight: float) as 
 
     new(chat: Control, composer: Control) = WorkspaceStack(chat, composer, 560.0)
 
-    member _.SetStarting(value: bool) =
+    /// 起步态投影（幂等，每帧可调）：置位并立即重算居中。
+    member _.RenderStarting(value: bool) =
         starting <- value
         apply ()
 
@@ -53,20 +54,19 @@ type WorkspaceStack(chat: Control, composer: Control, startMinHeight: float) as 
 
 /// 主工作区的空间投影（迁自旧 MainLayoutController）：导航状态 → 三列宽度、各块所在列、抽屉 ZIndex 与遮罩。
 /// 列宽写操作只出自这里。紧凑模式每次 Apply 都发 `CompactApplied`，组合者转给输入区、侧栏、对话视图。
-type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColumn: Control, sidebarMinWidth: float, sidebarMaxWidth: float, splitterWidth: float, sidebarWidth: unit -> float) =
+type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColumn: Control, sidebarMaxWidth: float, splitterWidth: float, sidebarWidth: unit -> float) =
     let compactApplied = Event<bool>()
     let scrimPressed = Event<unit>()
     let focusHome = Event<unit>()
-    let mutable minWidth = sidebarMinWidth
-    let mutable maxWidth = sidebarMaxWidth
-    let mutable splitterW = splitterWidth
-    let mutable last: ShellState option = None
+    // 侧栏最小宽写死：列宽只从这里投影，不再有单独的写接口。
+    let minWidth = 220.0
+    let maxWidth = sidebarMaxWidth
+    let splitterW = splitterWidth
 
     /// compact 抽屉遮罩：内容（ZIndex 0）与侧栏（2）之间一层，只做不透明度淡入，按下即收起抽屉。
     let scrim = Border(IsVisible = false, Opacity = 0.0, ZIndex = 1)
 
     let apply (state: ShellState) =
-        last <- Some state
         compactApplied.Trigger state.Compact
         let cols = shellGrid.ColumnDefinitions
         if state.Compact then
@@ -121,15 +121,11 @@ type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColu
             scrimPressed.Trigger())
 
     new(shellGrid: Grid, sidebar: Control, splitter: Control, chatColumn: Control, sidebarWidth: unit -> float) =
-        ShellColumns(shellGrid, sidebar, splitter, chatColumn, 220.0, 420.0, 6.0, sidebarWidth)
+        ShellColumns(shellGrid, sidebar, splitter, chatColumn, 420.0, 6.0, sidebarWidth)
 
     member val Scrim: Border = scrim
 
     member _.Apply(state: ShellState) = apply state
-
-    member _.SetMinWidth(w: float) =
-        minWidth <- w
-        last |> Option.iter apply
 
     /// 用户拖拽后的宽度落定：钳进 [最小, 最大] 并写回第 0 列；返回值由组合者存进偏好。
     member _.NoteUserSidebarWidth(actual: float) : float =

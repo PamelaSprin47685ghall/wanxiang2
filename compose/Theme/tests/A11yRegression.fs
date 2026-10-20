@@ -255,8 +255,9 @@ let ``r7-r12 新增控件的文字在浅色与深色主题下都过 AA`` () =
 [<Fact>]
 let ``模型选择不再保留隐藏顶栏入口`` () =
     // 旧宿主 AppShell 的隐藏顶栏入口已随壳退役；模型切换走 ComposerDesk 的 ModelAnchor
-    // （EntryShells/Composer.fs 暴露给宿主）。验证旧入口符号不存在、新入口在。
-    let composer = read "compose/EntryShells/Composer.fs"
+    // （W7-B 收口：EntryShells/Composer.fs 死壳已删，这里读它真正的现居处）。
+    // 验证旧入口符号不存在、新入口在。
+    let composer = read "compose/ComposerDesk/ComposerDesk.fs"
     Assert.DoesNotContain("HeaderModelAnchor", composer)
     Assert.DoesNotContain("SetHeaderModel", composer)
     Assert.Contains("ModelAnchor()", composer)

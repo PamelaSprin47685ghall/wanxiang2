@@ -24,9 +24,9 @@ let ``闲置档：隐去或淡显，显示时全不透明`` () =
         let subtle = ActionStrip(StripRest.Subtle)
         Assert.Equal(0.0, opacity hidden.Host)
         Assert.Equal(0.55, opacity subtle.Host)
-        hidden.SetShown true
+        hidden.ApplyShown true
         Assert.Equal(1.0, opacity hidden.Host)
-        hidden.SetShown false
+        hidden.ApplyShown false
         Assert.Equal(0.0, opacity hidden.Host))
 
 [<Fact>]
@@ -41,7 +41,7 @@ let ``按钮是方形命中区、带读屏名并执行动作`` () =
         Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement b) |> ignore
         b.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent, b))
         Assert.Equal(1, hits)
-        s.SetIcon(b, StripGlyph.Check, Brushes.Green)
+        s.ApplyIcon(b, StripGlyph.Check, Brushes.Green)
         Assert.Equal(box StripGlyph.Check, (b.Content :?> Control).Tag))
 
 [<Fact>]

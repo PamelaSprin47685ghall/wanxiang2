@@ -38,10 +38,3 @@ module SettingsLooks =
             | "info" -> pick Glyph.Info
             | _ -> pick Glyph.Info
 
-    let fieldCheckOf (t: ThemeManager) : FieldCheckAppearance =
-        { ErrorForeground = t.Brush PaletteKey.Danger :> IBrush
-          InvalidStroke = t.Brush PaletteKey.Danger
-          NormalStroke = t.Brush PaletteKey.Border
-          MessageFontSize = t.Metric Metric.FontCaption
-          MessageLineHeight = t.Metric Metric.CaptionLineHeight
-          MessageMargin = Live.map (fun v -> Thickness(0.0, v, 0.0, 0.0)) (t.Space Space.XXs) }

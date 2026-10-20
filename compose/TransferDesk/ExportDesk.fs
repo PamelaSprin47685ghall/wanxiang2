@@ -69,6 +69,21 @@ type ExportDesk
             ExportView.decide phase
                 { saving = saving; saved = saved; savedKind = savedKind; error = saveError }
                 outputKind (timing.ReducedMotion())
+        let progress =
+            match v.progress with
+            | ExportProgress.Hidden -> ExportSheetProgress.Hidden
+            | ExportProgress.Indeterminate -> ExportSheetProgress.Indeterminate
+            | ExportProgress.Determinate p -> ExportSheetProgress.Determinate p
+        let action =
+            match v.action with
+            | ExportAction.None -> ExportSheetAction.None
+            | ExportAction.Retry -> ExportSheetAction.Retry
+            | ExportAction.Save(gate, hasJson) ->
+                let g =
+                    match gate with
+                    | SaveGate.Disabled -> ExportSaveGate.Disabled
+                    | SaveGate.Enabled -> ExportSaveGate.Enabled
+                ExportSheetAction.Save(g, hasJson)
         sheet.Render
             { StatusText = v.statusText
               Tone =
@@ -77,14 +92,8 @@ type ExportDesk
                  | ExportTone.Success -> ExportSheetTone.Success
                  | ExportTone.Danger -> ExportSheetTone.Danger
                  | ExportTone.Text -> ExportSheetTone.Text)
-              ProgressVisible = v.progressVisible
-              Indeterminate = v.indeterminate
-              ProgressValue = v.progressValue
-              RetryVisible = v.retryVisible
-              SaveVisible = v.saveVisible
-              SaveJsonVisible = v.saveJsonVisible
-              SaveEnabled = v.saveEnabled
-              SaveJsonEnabled = v.saveJsonEnabled
+              Progress = progress
+              Action = action
               CloseText = v.closeText }
 
     // 刷新入口：force 走急件通道；只有读取中是高频态。

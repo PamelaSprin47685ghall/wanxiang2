@@ -13,6 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
-    <ProjectReference Include="../CardReconcile.fsproj" />
+    <ProjectReference Include="../CardBits.fsproj" />
   </ItemGroup>
 </Project>

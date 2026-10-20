@@ -94,7 +94,7 @@ let ``审批面板：只显示当前对话的卡片，已处理即移除，断�
         panel.Decide.Add sent.Add
         let a, b = Guid.NewGuid(), Guid.NewGuid()
         let ra, rb = request a, request b
-        panel.SetConversation(Some a)
+        panel.ApplyConversation(Some a)
         panel.Upsert ra
         panel.Upsert rb
         Assert.Equal(2, panel.Pending.Length)
@@ -105,7 +105,7 @@ let ``审批面板：只显示当前对话的卡片，已处理即移除，断�
         panel.Upsert ra
         Assert.Equal(2, panel.Pending.Length)
         Assert.Single(panel.Children) |> ignore
-        panel.SetConversation(Some b)
+        panel.ApplyConversation(Some b)
         let shownIds =
             descendants panel
             |> Seq.map (fun c -> match AutomationProperties.GetAutomationId c with null -> "" | id -> id)
@@ -115,7 +115,7 @@ let ``审批面板：只显示当前对话的卡片，已处理即移除，断�
         panel.Remove rb.ApprovalId
         Assert.Empty(panel.Children)
         Assert.False panel.IsVisible
-        panel.SetConversation(Some a)
+        panel.ApplyConversation(Some a)
         Assert.Single(panel.Children) |> ignore
         Assert.Equal<Set<string>>(set [ "call-1" ], panel.AwaitingCallIds)
         panel.Clear()

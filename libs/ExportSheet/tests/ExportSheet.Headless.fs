@@ -22,16 +22,3 @@ module Headless =
     /// 在 Avalonia UI 线程上同步执行测试体。
     let run (body: unit -> unit) : unit =
         session.Value.Dispatch(Action body, CancellationToken.None).GetAwaiter().GetResult()
-
-/// 测试用的活尺寸：模拟主题管理者改值。
-type Cell<'T>(initial: 'T) =
-    let mutable value = initial
-    let subs = Collections.Generic.List<IObserver<'T>>()
-    member _.Set v =
-        value <- v
-        for s in List.ofSeq subs do s.OnNext v
-    interface IObservable<'T> with
-        member _.Subscribe o =
-            subs.Add o
-            o.OnNext value
-            { new IDisposable with member _.Dispose() = subs.Remove o |> ignore }

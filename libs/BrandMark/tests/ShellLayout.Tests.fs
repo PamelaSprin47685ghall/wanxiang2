@@ -44,7 +44,7 @@ let ``main layout controller projects navigation state onto the shell grid`` () 
         let window = Window(Width = 1000.0, Height = 640.0, Content = shell)
         window.Show()
         let savedWidth = sidebarDefault
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMin, sidebarMax, splitterW, fun () -> savedWidth)
+        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> savedWidth)
         let compactSeen = ResizeArray<bool>()
         controller.CompactApplied.Add compactSeen.Add
         let collapsed = { wide with SidebarCollapsed = true }
@@ -90,7 +90,7 @@ let ``collapsing the sidebar moves focus from the sidebar to the composer`` () =
         let shell, sidebar, list, splitter, chatColumn, composer, input = fixture ()
         let window = Window(Width = 1000.0, Height = 640.0, Content = shell)
         window.Show()
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMin, sidebarMax, splitterW, fun () -> sidebarDefault)
+        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> sidebarDefault)
         controller.FocusHomeRequested.Add(fun () -> input.Focus() |> ignore)
         controller.Apply wide
         list.Focus() |> ignore
@@ -112,7 +112,7 @@ let ``compact drawer scrim follows drawer state and dismisses on press`` () =
         let shell, sidebar, _, splitter, chatColumn, _, _ = fixture ()
         let window = Window(Width = 600.0, Height = 640.0, Content = shell)
         window.Show()
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMin, sidebarMax, splitterW, fun () -> sidebarDefault)
+        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> sidebarDefault)
         let mutable dismissed = 0
         controller.ScrimPressed.Add(fun () -> dismissed <- dismissed + 1)
         controller.Apply compact
@@ -129,8 +129,6 @@ let ``compact drawer scrim follows drawer state and dismisses on press`` () =
         Assert.False sidebar.IsVisible
         controller.Apply wide
         Assert.False controller.Scrim.IsVisible
-        controller.SetMinWidth 250.0
-        Assert.Equal(250.0, shell.ColumnDefinitions[0].MinWidth)
         window.Close())
 
 // 迁自旧 ConversationWorkspaceTests `starting and continuing share the same focused draft and attachment controls`（布局部分）。
@@ -145,7 +143,7 @@ let ``starting and continuing share the same focused draft and attachment contro
         surface.StartModeChanged.Add modes.Add
         let window = Window(Width = 1000.0, Height = 820.0, Content = surface)
         window.Show()
-        surface.SetStarting true
+        surface.RenderStarting true
         input.Focus() |> ignore
         Dispatcher.UIThread.RunJobs()
         let parent = composer.Parent
@@ -153,7 +151,7 @@ let ``starting and continuing share the same focused draft and attachment contro
         Assert.True(modes[modes.Count - 1])
         let before = composer.TranslatePoint(Point(), surface).Value.Y
         Assert.True(before < surface.Bounds.Height * 0.75, "起步输入应在画面中部，而非底边")
-        surface.SetStarting false
+        surface.RenderStarting false
         Dispatcher.UIThread.RunJobs()
         Assert.False(modes[modes.Count - 1])
         Assert.Same(parent, composer.Parent)
@@ -162,7 +160,7 @@ let ``starting and continuing share the same focused draft and attachment contro
         let after = composer.TranslatePoint(Point(), surface).Value.Y
         Assert.True(after > before)
         window.Height <- 460.0
-        surface.SetStarting true
+        surface.RenderStarting true
         Dispatcher.UIThread.RunJobs()
         // 不够高：不居中，输入区仍完整可见
         Assert.False(modes[modes.Count - 1])

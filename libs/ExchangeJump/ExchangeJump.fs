@@ -81,7 +81,7 @@ type ExchangeJump<'K when 'K: equality>() =
         else false
 
     /// 主机上是否还有更早一页；没有了就撤掉挂起
-    member _.SetOlderAvailable(value: bool) =
+    member _.ApplyOlderAvailable(value: bool) =
         olderOnHost <- value
         if not value then pending <- false
 
@@ -91,7 +91,7 @@ type ExchangeJump<'K when 'K: equality>() =
     /// 回到开头（ScrollToBeginning / SmoothScrollToBeginning）：只丢锚点，挂起的「上一轮」保留
     member _.ClearAnchor() = anchor <- None
 
-    /// 换对话：锚点与挂起一起丢（olderOnHost 由下一次 SetOlderAvailable 给）
+    /// 换对话：锚点与挂起一起丢（olderOnHost 由下一次 ApplyOlderAvailable 给）
     member _.Reset() =
         anchor <- None
         pending <- false

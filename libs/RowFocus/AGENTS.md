@@ -8,7 +8,7 @@
 
 ## RowFocus
 
-侧栏行焦点（迁自旧 `Views/Sidebar.fs` 的 `visibleRowIds`、`focusedRowId`、`focusedRowIndex`、`pendingFocusId`，方法 `NeighborIndexAfterDelete`、`NeighborAfterDelete`、`FocusAfterDelete`，行 GotFocus 的记录与 `Rebuild` 的焦点还原）。控件聚焦与 `GetVisibleOrder` 的字符串化归宿主。只依赖 BCL；命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
+侧栏行焦点（迁自旧 `Views/Sidebar.fs` 的 `visibleRowIds`、`focusedRowId`、`focusedRowIndex`、`pendingFocusId`，方法 `NeighborIndexAfterDelete`、`NeighborAfterDelete`、`FocusAfterDelete`，行 GotFocus 的记录与 `Rebuild` 的焦点还原）。公开成员：`ApplyVisible`、`Visible`、`FocusedId`、`Focused`、`NeighborIndexAfterDelete`、`NeighborAfterDelete`、`FocusAfterDelete`、`RestoreAfterRebuild`。控件聚焦与 `GetVisibleOrder` 的字符串化归宿主。只依赖 BCL；命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
 
 ## LEMMA
 1. **打开谁与焦点落谁同一个答案**（契约 C3）：下一行优先，其次上一行；只剩一行时没有邻位。

@@ -1,4 +1,4 @@
-module Tests
+module ModelVisionTests
 
 open Xunit
 open Wanxiang.UI

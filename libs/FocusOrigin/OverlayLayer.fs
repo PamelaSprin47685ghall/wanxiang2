@@ -6,30 +6,37 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Threading
 
-/// 覆盖层的外观与时长。全部由主题管理者提供活的实例；本库不写字面样式值。
+/// 动态资源绑定辅助：主题管理者把活值写进 ResourceDictionary，控件绑定即随主题资源生效。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
+
+/// 覆盖层的外观：画笔与组合者自定的静态参数（普通记录，无活值字段）。
+/// 主题管得住的均匀几何走资源键声明式绑定：描边 Thickness.BorderThin、
+/// 对话框圆角 CornerRadius.RadiusLg、浮层圆角 CornerRadius.RadiusMd、
+/// 对话框内边距 Padding.OverlayDialog、浮层内边距 Padding.OverlayPopup、
+/// 视口留白 Margin.OverlayInset。本库不再有 IObservable 字段与手工 Subscribe。
 type OverlayLayerAppearance =
     { Scrim: IBrush
       /// 对话框与浮层卡的底
       Surface: IBrush
       /// 卡片描边（最轻 hairline）
       Edge: IBrush
-      EdgeWidth: IObservable<Thickness>
-      DialogRadius: IObservable<CornerRadius>
-      PopupRadius: IObservable<CornerRadius>
-      DialogPadding: IObservable<Thickness>
-      PopupPadding: IObservable<Thickness>
-      DialogShadow: IObservable<BoxShadows>
-      PopupShadow: IObservable<BoxShadows>
-      /// 视口留白：对话框、浮层钳位的唯一依据
-      ViewportInset: IObservable<float>
+      /// 对话框卡的阴影
+      DialogShadow: BoxShadows
+      /// 浮层卡的阴影
+      PopupShadow: BoxShadows
       /// 浮层与锚点的间距
-      PopupGap: IObservable<float>
+      PopupGap: float
       /// 浮层默认最小宽度
-      PopupMinWidth: IObservable<float>
+      PopupMinWidth: float
       /// 遮罩淡入淡出时长；减弱动效时由主题给 0
-      ScrimFade: IObservable<TimeSpan>
+      ScrimFade: TimeSpan
       ScrimEasing: Avalonia.Animation.Easings.Easing }
 
 /// 浮层落点（插槽）：锚点左上角 x、y、锚点宽高、浮层宽高、视口宽高、留白、间距、是否右对齐 → 浮层左上角。
@@ -40,11 +47,6 @@ type PopupPlace = float -> float -> float -> float -> float -> float -> float ->
 /// （迁自旧 Controls/OverlayHost.fs 的对话框与浮层部分；提示条在 ToastStrip，Esc 的最后一层由组合者接）。
 /// 层按 遮罩、对话框卡、浮层捕获层、浮层卡 的次序加进 root。
 type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
-    let mutable viewportInset = 0.0
-    let mutable popupGap = 0.0
-    let mutable defaultPopupMinWidth = 0.0
-    let mutable scrimFade = TimeSpan.Zero
-
     let scrim = Border(Background = look.Scrim, IsVisible = false, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch)
     let dialogCard =
         Border(Background = look.Surface, BorderBrush = look.Edge, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, IsVisible = false)
@@ -64,7 +66,12 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
     let mutable popupPreferredMinWidth = 0.0
     let mutable popupAnchor: Control option = None
     let mutable popupAlignRight = false
-    let mutable onPopupClosed: (unit -> unit) option = None
+    let insetChanged = Event<unit>()
+
+    /// 视口留白：对话框卡的均匀外边距就是留白（主题资源 Margin.OverlayInset），也是钳位基准。
+    /// 留白随主题资源变，层随即重新钳位——不再靠外观活值订阅。
+    let viewportInset () = dialogCard.Margin.Left
+
     let currentFocus () =
         match TopLevel.GetTopLevel root with
         | null -> None
@@ -162,16 +169,18 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
                 items[next].Focus(NavigationMethod.Tab) |> ignore
 
     let fitDialogToViewport () =
-        let width = max 0.0 (root.Bounds.Width - viewportInset * 2.0)
-        let height = max 0.0 (root.Bounds.Height - viewportInset * 2.0)
+        let inset = viewportInset ()
+        let width = max 0.0 (root.Bounds.Width - inset * 2.0)
+        let height = max 0.0 (root.Bounds.Height - inset * 2.0)
         if width > 0.0 then
             dialogCard.MaxWidth <- width
             if dialogPreferredWidth > 0.0 then dialogCard.Width <- min dialogPreferredWidth width
         if height > 0.0 then dialogCard.MaxHeight <- height
 
     let fitPopupToViewport () =
-        let width = max 0.0 (root.Bounds.Width - viewportInset * 2.0)
-        let height = max 0.0 (root.Bounds.Height - viewportInset * 2.0)
+        let inset = viewportInset ()
+        let width = max 0.0 (root.Bounds.Width - inset * 2.0)
+        let height = max 0.0 (root.Bounds.Height - inset * 2.0)
         if width > 0.0 then
             popupCard.MaxWidth <- width
             popupCard.MinWidth <- min popupPreferredMinWidth width
@@ -181,15 +190,15 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
         match popupAnchor with
         | Some anchor when popupCard.IsVisible ->
             try
-                let point = anchor.TranslatePoint(Point(0.0, anchor.Bounds.Height + popupGap), root)
+                let point = anchor.TranslatePoint(Point(0.0, anchor.Bounds.Height + look.PopupGap), root)
                 if point.HasValue then
                     let p = point.Value
                     fitPopupToViewport ()
                     let width = min popupCard.MaxWidth (max popupCard.Bounds.Width popupCard.MinWidth)
                     let height = min popupCard.MaxHeight popupCard.Bounds.Height
                     let x, y =
-                        place p.X (p.Y - anchor.Bounds.Height - popupGap) anchor.Bounds.Width anchor.Bounds.Height
-                            width height root.Bounds.Width root.Bounds.Height viewportInset popupGap popupAlignRight
+                        place p.X (p.Y - anchor.Bounds.Height - look.PopupGap) anchor.Bounds.Width anchor.Bounds.Height
+                            width height root.Bounds.Width root.Bounds.Height (viewportInset ()) look.PopupGap popupAlignRight
                     popupCard.Margin <- Thickness(x, y, 0.0, 0.0)
             with _ -> ()
         | _ -> ()
@@ -200,35 +209,33 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
         popupCard.Child <- null
         popupAnchor <- None
         restorePopupFocus ()
-        onPopupClosed |> Option.iter (fun f -> f ())
 
     let scrimTransitions () =
         let fade = Avalonia.Animation.DoubleTransition()
         fade.Property <- Visual.OpacityProperty
-        fade.Duration <- scrimFade
+        fade.Duration <- look.ScrimFade
         fade.Easing <- look.ScrimEasing
         let t = Avalonia.Animation.Transitions()
         t.Add fade
         t
 
     do
-        look.ViewportInset.Subscribe(fun v ->
-            viewportInset <- v
-            dialogCard.Margin <- Thickness v
-            fitDialogToViewport ()
-            fitPopupToViewport ()) |> ignore
-        look.PopupGap.Subscribe(fun v -> popupGap <- v) |> ignore
-        look.PopupMinWidth.Subscribe(fun v -> defaultPopupMinWidth <- v) |> ignore
-        look.ScrimFade.Subscribe(fun v ->
-            scrimFade <- v
-            scrim.Transitions <- scrimTransitions ()) |> ignore
-        for card, radius, padding, shadow in
-            [ dialogCard, look.DialogRadius, look.DialogPadding, look.DialogShadow
-              popupCard, look.PopupRadius, look.PopupPadding, look.PopupShadow ] do
-            card.Bind(Border.BorderThicknessProperty, look.EdgeWidth) |> ignore
-            card.Bind(Border.CornerRadiusProperty, radius) |> ignore
-            card.Bind(Decorator.PaddingProperty, padding) |> ignore
-            card.Bind(Border.BoxShadowProperty, shadow) |> ignore
+        for card in [ dialogCard; popupCard ] do
+            card.Bind(Border.BorderThicknessProperty, Dyn.res "Thickness.BorderThin") |> ignore
+        dialogCard.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusLg") |> ignore
+        popupCard.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusMd") |> ignore
+        dialogCard.Bind(Decorator.PaddingProperty, Dyn.res "Padding.OverlayDialog") |> ignore
+        popupCard.Bind(Decorator.PaddingProperty, Dyn.res "Padding.OverlayPopup") |> ignore
+        dialogCard.BoxShadow <- look.DialogShadow
+        popupCard.BoxShadow <- look.PopupShadow
+        // 视口留白走资源键：对话框卡的均匀外边距即留白，也是钳位基准；主题改留白即重新钳位。
+        dialogCard.Bind(Layoutable.MarginProperty, Dyn.res "Margin.OverlayInset") |> ignore
+        dialogCard.PropertyChanged.Add(fun args ->
+            if args.Property = Layoutable.MarginProperty then
+                fitDialogToViewport ()
+                fitPopupToViewport ()
+                insetChanged.Trigger ())
+        scrim.Transitions <- scrimTransitions ()
         scrim.Opacity <- 0.0
         for layer in [ scrim :> Control; dialogCard :> Control; popupCatcher :> Control; popupCard :> Control ] do
             Grid.SetColumnSpan(layer, 8)
@@ -254,6 +261,13 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
     member _.Root = root
     member _.DialogCard = dialogCard
     member _.PopupCard = popupCard
+
+    /// 当前视口留白（对话框卡均匀外边距）：组合者据此钳住随留白变化的部分（如提示条带）。
+    member _.ViewportInset = viewportInset ()
+
+    /// 留白变了（主题改了 Margin.OverlayInset）：组合者可据此重排随留白变化的部分。
+    [<CLIEvent>]
+    member _.InsetChanged = insetChanged.Publish
 
     member this.CloseDialog() =
         let callback = onDialogClosed
@@ -298,8 +312,6 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
 
     member _.ClosePopup() = closePopupNow ()
 
-    member _.SetOnPopupClosed(f: unit -> unit) = onPopupClosed <- Some f
-
     /// 在 anchor 附近打开浮层；alignRight：浮层右边缘与锚点右边缘对齐。
     member _.ShowPopup(anchor: Control, content: Control, alignRight: bool, ?minWidth: float) =
         if not popupCard.IsVisible then rememberPopupFocus ()
@@ -307,7 +319,7 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
         popupAnchor <- Some anchor
         lastPopupAnchor <- Some anchor
         popupAlignRight <- alignRight
-        popupPreferredMinWidth <- defaultArg minWidth defaultPopupMinWidth
+        popupPreferredMinWidth <- defaultArg minWidth look.PopupMinWidth
         fitPopupToViewport ()
         if root.Bounds.Width <= 0.0 then popupCard.MinWidth <- popupPreferredMinWidth
         popupCatcher.IsVisible <- true

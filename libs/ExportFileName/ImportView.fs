@@ -1,14 +1,23 @@
 namespace Wanxiang.UI
 
+[<RequireQualifiedAccess>]
+type ImportGate =
+    | Hidden
+    | Disabled
+    | Enabled
+
 /// 导入对话框按键的呈现
-type ImportChrome = { importVisible: bool; importEnabled: bool; pickEnabled: bool; pickText: string }
+type ImportChrome = { gate: ImportGate; pickEnabled: bool; pickText: string }
 
 /// 旧 Views/ImportDialog.fs 的按键门控、提交尝试与文案。预览解析、文件读取仍归 ImportDialog
 module ImportView =
 
     let chrome (hasPreview: bool) (busy: bool) =
-        { importVisible = hasPreview
-          importEnabled = hasPreview && not busy
+        let gate =
+            if not hasPreview then ImportGate.Hidden
+            elif busy then ImportGate.Disabled
+            else ImportGate.Enabled
+        { gate = gate
           pickEnabled = not busy
           pickText = (if hasPreview then "换一个文件…" else "选择 JSON 文件…") }
 

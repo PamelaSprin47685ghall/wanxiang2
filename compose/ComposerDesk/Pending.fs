@@ -8,26 +8,16 @@ open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
-open Avalonia.Threading
 open Wanxiang.UI
-open Wanxiang2.Theme
-open Wanxiang2.ThemePalette
-open Wanxiang2.ThemeMetrics
-
-/// 未确认消息区的外观：主题管理者的活实例
-type PendingAppearance =
-    { Brush: PaletteKey -> IBrush
-      Metric: Metric -> IObservable<float>
-      Space: Space -> IObservable<float>
-      BodyFont: IObservable<FontFamily>
-      /// 次要按钮样式类（旧 Ui.Secondary）
-      DressSecondary: Border -> unit }
 
 /// 未确认消息区（旧 Composer.SetPendingMessages）：当前对话的每条未确认消息一张分组卡，
 /// 别的对话的按对话给一个「查看」按钮，末尾一句保存提醒。
-type PendingPanel(look: PendingAppearance) =
-    let live (o: IObservable<'T>) (f: 'T -> unit) = o |> Observable.add f
+/// 外观全部走主题动态资源（Palette.* / Metric.* / Space.* / CornerRadius.* / Thickness.* / FontFamily.Body）
+/// 与样式类（secondary / button-secondary，尺寸与留白由 ThemeStyles 给），无常驻 IObservable 字段、无手工订阅。
+type PendingPanel() =
     let panel = StackPanel()
+    do
+        panel.Bind(StackPanel.SpacingProperty, Dyn.res "Space.Md") |> ignore
     let scroller =
         ScrollViewer(
             Content = panel,
@@ -38,12 +28,15 @@ type PendingPanel(look: PendingAppearance) =
             Margin = Thickness(0.0, 0.0, LayoutPolicy.nestedScrollGutter, 0.0))
     let host =
         Border(Background = Brushes.Transparent, BorderThickness = Thickness 0.0, Padding = Thickness 0.0, IsVisible = false, Child = scroller)
+    do
+        host.Bind(Layoutable.MarginProperty, Dyn.res "Thickness.GapBottomMd") |> ignore
     let mutable keys: (Guid * DeliveryState * bool * bool) list = []
 
     let caption (text: string) =
-        let t = TextBlock(Text = text, Foreground = look.Brush PaletteKey.TextMuted, TextWrapping = TextWrapping.Wrap, LineHeight = ReadingRhythm.captionLineHeight)
-        live (look.Metric Metric.FontCaption) (fun s -> t.FontSize <- s)
-        live look.BodyFont (fun f -> t.FontFamily <- f)
+        let t = TextBlock(Text = text, TextWrapping = TextWrapping.Wrap, LineHeight = ReadingRhythm.captionLineHeight)
+        t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+        t.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
+        t.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Body") |> ignore
         t
 
     let button (label: string) (onClick: unit -> unit) =
@@ -52,19 +45,14 @@ type PendingPanel(look: PendingAppearance) =
         b.Classes.Add "secondary"
         b.Classes.Add "button-secondary"
         AutomationProperties.SetName(b, label)
-        live (look.Metric Metric.TextButtonMinHeight) (fun h -> b.MinHeight <- h)
-        live (look.Space Space.RadiusMd) (fun r -> b.CornerRadius <- CornerRadius r)
-        b.Padding <- Thickness(Spacing.space2xl, Spacing.spaceSm)
         b.Click.Add(fun _ -> onClick ())
         b
-
-    do
-        live (look.Space Space.Md) (fun s -> panel.Spacing <- s; host.Margin <- Thickness(0.0, 0.0, 0.0, s))
 
     member _.Host: Control = host
     member _.IsShown = host.IsVisible
 
-    member _.Set(items: PendingMessage list, activeConversationId: Guid option, canRetry: bool, retry: Guid -> unit, openConversation: Guid -> unit) =
+    /// 单入口幂等渲染：内容变了才重排分组卡
+    member _.Render(items: PendingMessage list, activeConversationId: Guid option, canRetry: bool, retry: Guid -> unit, openConversation: Guid -> unit) =
         let next = items |> List.map (fun item -> PendingMessage.invocationId item, item.state, canRetry, activeConversationId = Some item.conversationId)
         if next <> keys then
             keys <- next
@@ -72,10 +60,12 @@ type PendingPanel(look: PendingAppearance) =
             let current, elsewhere = items |> List.partition (fun item -> activeConversationId = Some item.conversationId)
             for item in current do
                 let body = StackPanel()
-                live (look.Space Space.Xs) (fun s -> body.Spacing <- s)
+                body.Bind(StackPanel.SpacingProperty, Dyn.res "Space.Xs") |> ignore
                 if not (String.IsNullOrEmpty item.text) then
-                    let text = SelectableTextBlock(Text = item.text, TextWrapping = TextWrapping.Wrap, Foreground = look.Brush PaletteKey.Text)
-                    live (look.Metric Metric.FontSmall) (fun s -> text.FontSize <- s)
+                    let text = SelectableTextBlock(Text = item.text, TextWrapping = TextWrapping.Wrap)
+                    text.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+                    text.Bind(SelectableTextBlock.SelectionBrushProperty, Dyn.res "Palette.AccentSoft") |> ignore
+                    text.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontSmall") |> ignore
                     body.Children.Add(
                         ScrollViewer(
                             MaxHeight = LayoutPolicy.pendingMessagePreviewMaxHeight,
@@ -85,8 +75,9 @@ type PendingPanel(look: PendingAppearance) =
                             Content = text))
                 if not (List.isEmpty item.attachments) then
                     body.Children.Add(caption (item.attachments |> List.map _.fileName |> String.concat "、"))
-                let status = TextBlock(Text = PendingMessage.status item, TextWrapping = TextWrapping.Wrap, Foreground = look.Brush PaletteKey.TextMuted)
-                live (look.Metric Metric.FontMicro) (fun s -> status.FontSize <- s)
+                let status = TextBlock(Text = PendingMessage.status item, TextWrapping = TextWrapping.Wrap)
+                status.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+                status.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontMicro") |> ignore
                 AutomationProperties.SetName(status, PendingMessage.status item)
                 let row = DockPanel(LastChildFill = true)
                 if PendingMessage.canRetry item then
@@ -96,9 +87,11 @@ type PendingPanel(look: PendingAppearance) =
                     row.Children.Add b
                 row.Children.Add status
                 body.Children.Add row
-                let card = Border(Background = look.Brush PaletteKey.SurfaceContainer, BorderBrush = look.Brush PaletteKey.Hairline, Child = body)
-                live (look.Metric Metric.BorderWidth) (fun w -> card.BorderThickness <- Thickness w)
-                live (look.Space Space.RadiusMd) (fun r -> card.CornerRadius <- CornerRadius r)
+                let card = Border(Child = body)
+                card.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer") |> ignore
+                card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
+                card.Bind(Border.BorderThicknessProperty, Dyn.res "Thickness.BorderThin") |> ignore
+                card.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusMd") |> ignore
                 card.Padding <- Thickness(Spacing.spaceXl, Spacing.spaceMd)
                 panel.Children.Add card
             for conversationId, pending in elsewhere |> List.groupBy _.conversationId do

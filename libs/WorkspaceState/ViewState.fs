@@ -38,12 +38,17 @@ type SidebarRowVS = {
     Id: Guid
     Title: string
     Preview: string
-    Selected: bool
     Pinned: bool
     Archived: bool
     Running: bool
-    Busy: bool
     MessageCount: int
+    CreatedAt: DateTimeOffset
+    UpdatedAt: DateTimeOffset
+    IsFork: bool
+    ProviderId: string
+    Model: string
+    LastCommitId: uint64
+    Busy: bool
 }
 
 type SidebarEmptyKind =
@@ -70,11 +75,12 @@ type HostSwitcherVS = {
     ServerUrl: string
     Connected: bool
     StatusText: string
-    PaletteVisible: bool
 }
 
 type SidebarBrandVS = {
     PresetsVisible: bool
+    /// 紧凑态：品牌行出现返回键
+    Compact: bool
 }
 
 type SidebarVS = {
@@ -86,6 +92,9 @@ type SidebarVS = {
     Host: HostSwitcherVS
     Compact: bool
     BusyRows: Set<Guid>
+    ActiveId: Guid option
+    ShowArchived: bool
+    Lineage: Map<Guid, Wanxiang.UI.ForkLineage>
 }
 
 type IdleEmptyKind =
@@ -196,14 +205,30 @@ type ToolCallCardVS = {
     Expanded: bool
 }
 
+/// 错误卡的动作行成员
+type ErrorPanelAction =
+    | Continue
+    | Retry
+    | Recovery of label: string
+
 type ErrorPanelVS = {
     Title: string
     Hint: string
     Detail: string option
+    /// 剩余秒数；-1 表示没有倒计时
     CountdownSeconds: int
-    CanContinue: bool
-    CanRetry: bool
-    RecoveryLabel: string option
+    /// 倒计时是否还在走（组合者据此驱动 Tick）
+    Ticking: bool
+    /// 本帧是否播报「可以重试了」（只在第一次走完时为真）
+    Announce: bool
+    /// 动作行（顺序即显示顺序）
+    Actions: ErrorPanelAction list
+    /// 「重试」动作
+    OnRetry: unit -> unit
+    /// 「继续生成」动作；None 时不出这个按钮
+    OnContinue: (unit -> unit) option
+    /// 恢复动作（打开设置等）；None 时不出恢复按钮。参数是按钮上的标签。
+    OnRecovery: (string -> unit) option
 }
 
 type UsageFootVS = {
@@ -267,6 +292,10 @@ type ComposerVS = {
     ModelChip: string option
     Context: ComposerContextVS option
     Compact: bool
+    /// 决策 320/330/331：当前所选模型能否看图（用户指定 > 模型服务信息 > 名字推断），发送门控的直接输入。
+    Vision: VisionSupport
+    /// 受阻提示里念的模型展示名；VisionUnknown/VisionYes 时为空串。
+    VisionLabel: string
 }
 
 type DrawerVS = {
@@ -383,72 +412,28 @@ type OverlayVS =
     | Dialog of DialogVS
     | Popup of PopupVS
 
+/// 设置页的唯一视图状态归属（W7-B）：AppShell→SettingsScreen.Render 的单一输入。
+/// 分区键是字符串（palette/线协议概念）；SettingsPart 是设置页自己的导航概念，由 SettingsScreen 换算。
 type SettingsVS = {
-    ActiveSection: string
+    /// 宿主直达的分区键；None = 保持设置页当前分区
+    ActiveSection: string option
     Catalog: Catalog option
-    HasUnsavedChanges: bool
-    Scope: string
-    ScopeHint: string
+    InstanceId: string
     ServerUrl: string
-    ProbeResult: (string * bool * string list * string option) option
+    Prefs: UiPrefs
     Devices: SettingsDevicesVS
-    General: SettingsGeneralVS
-    Tools: SettingsToolsVS
-    Providers: SettingsProvidersVS
 }
 
+/// 设备分区的投影；行数据与邀请直接用 DevicesModel 的事实类型（Editing 内联改名是设置桌瞬态，不在此列）
 and SettingsDevicesVS = {
     ServerUrl: string
+    Devices: DeviceInfo list
     CanInvite: bool
-    InviteCode: string option
-    InviteExpiresAtUtc: DateTimeOffset option
-    InviteRejectedReason: string option
-    DeviceRows: SettingsDeviceRowVS list
+    Invite: PairingInviteView option
+    InviteRejected: string option
     LoadNote: string option
-    EditingDeviceId: string option
+    IsLoading: bool
     Now: DateTimeOffset
-}
-
-and SettingsDeviceRowVS = {
-    Id: string
-    Name: string
-    Title: string
-    Meta: string
-    Revoked: bool
-    CanRename: bool
-    CanRevoke: bool
-}
-
-and SettingsGeneralVS = {
-    Temperature: string
-    TopP: string
-    MaxTokens: string
-    ContextMessages: string
-    ToolRounds: string
-    Instructions: string
-    AutoTitle: bool
-    Status: string
-    IsPending: bool
-    CanSave: bool
-    Presets: (string * string * string) list
-    ShowImport: bool
-    UiPrefs: UiPrefs option
-    DraftSummary: string
-}
-
-and SettingsToolsVS = {
-    ExposeDebug: bool
-}
-
-and SettingsProvidersVS = {
-    EditingProviderId: string option
-}
-
-type OnboardingVS = {
-    StepText: string
-    DiscoveredLocalModels: string list
-    IsBusy: bool
-    ErrorMessage: string option
 }
 
 type PaletteItemVS = {
@@ -503,7 +488,6 @@ type WorkspaceViewState = {
     Chat: ChatVS
     Composer: ComposerVS
     Settings: SettingsVS option
-    Onboarding: OnboardingVS option
     Overlay: OverlayVS
     Palette: PaletteVS option
     ModelSwitch: ModelSwitchVS option

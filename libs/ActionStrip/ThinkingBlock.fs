@@ -68,6 +68,6 @@ type ThinkingBlock(header: Control, body: Control) =
         fold.Render vs.Header
         let textControl = ThinkingBlock.text vs.Body vs.FontSize
         let pane = Wanxiang2.RevealPane.RevealPane(textControl, 200.0, vs.Header.Expanded)
-        fold.Toggled.Add(fun open' -> pane.SetVisible open')
+        fold.Toggled.Add(fun open' -> pane.ApplyVisible open')
         ThinkingBlock(fold.Header, pane.Host).Host
 

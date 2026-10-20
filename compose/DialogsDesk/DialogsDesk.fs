@@ -7,7 +7,6 @@ open Avalonia.Threading
 open Wanxiang.Core
 open Wanxiang.Client
 open Wanxiang.UI
-open Wanxiang2.WorkspaceState
 open Wanxiang2.ThemeMetrics
 open Wanxiang2.Theme
 open Wanxiang2.ToastStrip
@@ -32,8 +31,7 @@ type ConnectDeskHandle =
 /// 旧 Views/Dialogs.fs 的协作：把各面板摆进 OverlayDesk，接确认/取消/校验/保存往返。
 /// 界面全部在面板库里；这里只做关闭、焦点、提示条与领域换算。
 type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
-    let mutable onUserMsg: (UserMsg -> unit) option = None
-    let check = FieldCheck(DialogLooks.fieldCheckOf theme)
+    let check = FieldCheck()
     let width m = (theme.Metric m).Value
     let validationFor = fun (box: TextBox) -> Some(check.MessageFor box :> Control)
 
@@ -79,14 +77,14 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
         let mutable active = true
         pane.FieldError.Add(fun m ->
             match m with
-            | Some message -> check.SetError(pane.Box, message)
+            | Some message -> check.ApplyError(pane.Box, message)
             | None -> check.Clear pane.Box)
         pane.Cancelled.Add(fun () -> overlay.CloseDialog())
         pane.Submitted.Add(fun value ->
-            pane.SetPending true
+            pane.ApplyPending true
             onConfirm value (fun ok ->
                 if active then
-                    pane.SetPending false
+                    pane.ApplyPending false
                     if ok then overlay.CloseDialog()))
         overlay.ShowDialog(
             pane.View, width Metric.ConfirmDialogWidth,
@@ -181,7 +179,7 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
                         PopupEntry.create candidate (fun () ->
                             providerId <- provider.id
                             model <- candidate
-                            picker |> Option.iter (fun p -> p.SetText(sprintf "%s · %s" provider.label candidate)))
+                            picker |> Option.iter (fun p -> p.ApplyText(sprintf "%s · %s" provider.label candidate)))
                         |> PopupEntry.markSelected (provider.id = providerId && candidate = model) ] ]
         let select = overlay.SelectButton(Catalog.describeModel providerId model catalog, options)
         picker <- Some select
@@ -211,7 +209,7 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
             pane.ShowSummary None
             let errors = ResizeArray<TextBox * string>()
             let invalid box message =
-                check.SetError(box, message)
+                check.ApplyError(box, message)
                 errors.Add(box, message)
             let parseFloat (box: TextBox) (raw: string) valid message =
                 let raw = raw.Trim()
@@ -234,7 +232,7 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
             let instructions = let t = draft.Instructions.Trim() in if String.IsNullOrWhiteSpace t then None else Some t
             if errors.Count = 0 then
                 if not pane.IsPending then
-                    pane.SetPending true
+                    pane.ApplyPending true
                     onSave
                         { current with
                             provider = providerId
@@ -247,7 +245,7 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
                             tools = draft.Tools }
                         (fun ok ->
                             if active then
-                                pane.SetPending false
+                                pane.ApplyPending false
                                 if ok then overlay.CloseDialog()
                                 else overlay.Toast("保存失败，请重试。", ToastTone.Failure))
             else
@@ -262,8 +260,6 @@ type DialogsDesk(theme: ThemeManager, overlay: OverlayDesk) =
             // 内容自带滚动区与固定页脚：卡片按视口封顶，矮窗口里「保存」不被挤出（旧 scrollWholeContent = false）。
             scrollWholeContent = false)
         pane
-
-    member _.SetDispatcher(dispatch: UserMsg -> unit) = onUserMsg <- Some dispatch
 
     /// 快捷键帮助：唯一停留点是关闭键。
     member _.Shortcuts() =

@@ -55,11 +55,25 @@ module Workspace =
                 Attachments = []
             }
             Summaries = []
+            Lineage = Map.empty
+            Onboarding = OnboardingFacts.empty
             Toasts = []
             NextToastId = 1
             NextTimerToken = 1
             PendingApprovals = Map.empty
             PaletteRecent = []
+            Settings = {
+                Open = false
+                ActiveSection = None
+                Devices = []
+                CanInvite = false
+                Invite = None
+                InviteRejected = None
+                DeviceLoadDue = None
+                DeviceLoadNote = None
+            }
+            ServerUrl = ""
+            Now = DateTimeOffset.UnixEpoch
         }
 
     let private addToast (text: string) (tone: ToastTone) (undo: string option) (now: DateTimeOffset) (model: WorkspaceModel) : WorkspaceModel * Effect list =
@@ -121,7 +135,17 @@ module Workspace =
                 | Some exp when tickNow >= exp ->
                     { modelAfterDeletions with Chrome = { modelAfterDeletions.Chrome with RevealTarget = None; RevealTargetExpiresAt = None } }
                 | _ -> modelAfterDeletions
-            finalModel, searchEffects @ deleteEffects
+            // 5. 设备列表有界等待到点：旧主机不认识 devices.request 时不会回应，不能一直「正在读取」
+            let modelAfterDeviceWait =
+                match finalModel.Settings.DeviceLoadDue with
+                | Some due when tickNow >= due ->
+                    { finalModel with
+                        Settings =
+                            { finalModel.Settings with
+                                DeviceLoadDue = None
+                                DeviceLoadNote = Some BoundedWaits.devicesTimeoutText } }
+                | _ -> finalModel
+            { modelAfterDeviceWait with Now = tickNow }, searchEffects @ deleteEffects
 
         | WireRecv wireEvent ->
             match wireEvent with
@@ -157,34 +181,32 @@ module Workspace =
                     { model with Conn = ConnPhase.Authed(instId, nextCatalog) }, []
                 | _ -> model, []
             | WireEvent.ConversationListSnapshot d ->
-                let summaries =
-                    d.items
-                    |> Seq.choose (fun node ->
-                        match node with
-                        | :? JsonObject as o ->
-                            let idStr = o.["conversationId"] |> string
-                            match Guid.TryParse idStr with
-                            | true, g ->
-                                let title = if isNull o.["title"] then "对话" else o.["title"].GetValue<string>()
-                                let preview = if isNull o.["preview"] then "" else o.["preview"].GetValue<string>()
-                                Some {
-                                    Id = g
-                                    Title = title
-                                    Preview = preview
-                                    Running = false
-                                    Pinned = false
-                                    Archived = false
-                                    UpdatedAt = now
-                                    MessageCount = 0
-                                    ProviderId = ""
-                                    Model = ""
-                                    LastCommitId = d.lastCommitId
-                                }
-                            | _ -> None
-                        | _ -> None
-                    )
-                    |> Seq.toList
-                { model with Summaries = summaries }, []
+                // 全量解析归 ConversationSummary 库（坏 id 行如实丢弃，见 D6）；
+                // 谱系出自同一份快照（有 parentId 的行才入表），不另造数据源。
+                { model with
+                    Summaries = ConversationSummary.parseList d.items
+                    Lineage = ForkLineage.parse d.items }, []
+            | WireEvent.DevicesSnapshot d ->
+                { model with
+                    Now = now
+                    Settings =
+                        { model.Settings with
+                            Devices = DevicesModel.parse d.items
+                            CanInvite = d.canInvite
+                            DeviceLoadDue = None
+                            DeviceLoadNote = None } }, []
+            | WireEvent.PairingInviteIssued d ->
+                { model with
+                    Now = now
+                    Settings =
+                        { model.Settings with
+                            Invite = Some { code = d.code; expiresAtUtc = d.expiresAtUtc }
+                            InviteRejected = None } }, []
+            | WireEvent.PairingInviteRejected d ->
+                { model with
+                    Now = now
+                    Settings =
+                        { model.Settings with Invite = None; InviteRejected = Some d.reason } }, []
             | WireEvent.ConversationSnapshot d ->
                 let msgs =
                     d.messages
@@ -205,7 +227,23 @@ module Workspace =
                 match model.Conn with
                 | ConnPhase.Authed(instId, CatalogPhase.Ready(cat, _)) ->
                     let nextCatalog = CatalogPhase.Ready(cat, WorkspacePhase.Active(activeConv, RunState.Idle None))
-                    { model with Conn = ConnPhase.Authed(instId, nextCatalog) }, [ Effect.ScrollChat ScrollCommand.End ]
+                    let nextModel = { model with Conn = ConnPhase.Authed(instId, nextCatalog) }
+                    // 定位目标（搜索命中 / 消息链接）：消息已加载时统一发 Effect，宿主执行滚动与高亮。
+                    let loaded =
+                        match model.Chrome.RevealTarget with
+                        | Some (targetConv, messageId) when targetConv = d.conversationId ->
+                            msgs
+                            |> List.exists (fun m -> m.commitId |> Option.exists (fun c -> string c = messageId))
+                        | _ -> false
+                    if loaded then
+                        // 定位优先：滚到那条消息并高亮（不再滚到末尾）
+                        let target =
+                            match model.Chrome.RevealTarget with
+                            | Some (_, messageId) -> messageId
+                            | None -> ""
+                        let cleared = { nextModel with Chrome = { nextModel.Chrome with RevealTarget = None; RevealTargetExpiresAt = None } }
+                        cleared, [ Effect.ScrollChat (ScrollCommand.ToExchange target) ]
+                    else nextModel, [ Effect.ScrollChat ScrollCommand.End ]
                 | _ -> model, []
             | WireEvent.GenerationStarted d ->
                 match model.Conn with
@@ -282,7 +320,23 @@ module Workspace =
             }
             // 不变式 2：ConnPhase <> Authed 时不存在 Active 对话数据（切走即整体丢弃）
             let nextConn = ConnPhase.Connecting 1
-            { model with Conn = nextConn; Feedback = resetFeedback; PendingApprovals = Map.empty }, [ Effect.ShowToast("已断开连接", ToastTone.Warning) ]
+            // 设备事实随连接作废（设备数据只属于这台主机）；设置页本身保持打开。
+            let resetDevices = {
+                model.Settings with
+                    Devices = []
+                    CanInvite = false
+                    Invite = None
+                    InviteRejected = None
+                    DeviceLoadDue = None
+                    DeviceLoadNote =
+                        if model.Settings.DeviceLoadDue.IsSome then
+                            Some "读取设备列表时连接断开了。如果主机版本较旧，可能还不支持设备管理，请先升级主机。"
+                        else None
+            }
+            { model with Conn = nextConn; Feedback = resetFeedback; PendingApprovals = Map.empty; Settings = resetDevices }, [ Effect.ShowToast("已断开连接", ToastTone.Warning) ]
+
+        | ConnectionRequested url ->
+            { model with ServerUrl = url }, []
 
         | TimerFired _ ->
             model, []
@@ -339,6 +393,21 @@ module Workspace =
                     { model with Chrome = { model.Chrome with SearchActive = true } }, [ Effect.Focus FocusTarget.SidebarSearch ]
                 | SidebarUserMsg.SearchClear ->
                     { model with Chrome = { model.Chrome with SearchQuery = ""; SearchActive = false; SearchDebouncingUntil = None } }, []
+                | SidebarUserMsg.SearchHitSelect(convId, messageId) ->
+                    // 打开命中所在对话，并把「滚到哪条」登记为定位目标（到期自动清除，见 MsgTick）
+                    let nextChrome =
+                        { model.Chrome with
+                            RevealTarget = messageId |> Option.map (fun m -> convId, m)
+                            RevealTargetExpiresAt = Some(now.AddSeconds 15.0) }
+                    match model.Conn with
+                    | ConnPhase.Authed(instId, CatalogPhase.Ready(cat, _)) ->
+                        let nextCatalog = CatalogPhase.Ready(cat, WorkspacePhase.LoadingConversation convId)
+                        { model with Conn = ConnPhase.Authed(instId, nextCatalog); Chrome = nextChrome },
+                        [ Effect.SendWire(WireEvent.ObserveConversation {| conversationId = convId |}) ]
+                    | _ -> { model with Chrome = nextChrome }, []
+                | SidebarUserMsg.ToggleShowArchived ->
+                    let nextPrefs = { model.Prefs with showArchived = not model.Prefs.showArchived }
+                    { model with Prefs = nextPrefs }, [ Effect.PrefsSave nextPrefs ]
                 | _ -> model, []
 
             | UserMsg.Composer compMsg ->
@@ -447,6 +516,42 @@ module Workspace =
                 | PaletteUserMsg.SetRecent recent ->
                     { model with PaletteRecent = List.truncate 8 recent }, []
                 | _ -> model, []
+
+            | UserMsg.Settings settingsMsg ->
+                match settingsMsg with
+                | SettingsUserMsg.OpenSection key ->
+                    { model with Settings = { model.Settings with Open = true; ActiveSection = key } }, []
+                | SettingsUserMsg.Close ->
+                    { model with Settings = { model.Settings with Open = false } }, []
+                | SettingsUserMsg.PrefsChanged prefs ->
+                    { model with Prefs = prefs }, [ Effect.PrefsSave prefs ]
+
+            | UserMsg.Devices deviceMsg ->
+                match deviceMsg with
+                | DeviceUserMsg.LoadDevices ->
+                    let next =
+                        { model.Settings with
+                            DeviceLoadDue = Some(now + BoundedWaits.devicesLimit)
+                            DeviceLoadNote = None }
+                    { model with Now = now; Settings = next }, [ Effect.SendWire WireEvent.DevicesRequest ]
+                | DeviceUserMsg.RequestInvite ->
+                    model, [ Effect.SendWire WireEvent.PairingInvite ]
+                | DeviceUserMsg.RenameDevice(deviceId, newName) ->
+                    let cmd = WireEvent.DeviceRename {| requestId = Guid.NewGuid(); deviceId = deviceId; name = newName |}
+                    model, [ Effect.SendWire cmd ]
+                | DeviceUserMsg.RevokeDevice deviceId ->
+                    let cmd = WireEvent.DeviceRevoke {| requestId = Guid.NewGuid(); deviceId = deviceId |}
+                    model, [ Effect.SendWire cmd ]
+
+            | UserMsg.Onboarding onboardingMsg ->
+                // 引导卡回话的三项在途事实：进模型，宿主再投影回卡片
+                match onboardingMsg with
+                | OnboardingUserMsg.SelectPreset key ->
+                    { model with Onboarding = { model.Onboarding with SelectedPresetKey = Some key } }, []
+                | OnboardingUserMsg.Discovered models ->
+                    { model with Onboarding = { model.Onboarding with DiscoveredModels = models } }, []
+                | OnboardingUserMsg.SwitchOffered flag ->
+                    { model with Onboarding = { model.Onboarding with SwitchOffered = flag } }, []
 
             | _ -> model, []
 

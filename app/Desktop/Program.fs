@@ -559,43 +559,31 @@ module Program =
                         let theme = SharedTheme.manager
                         let brush k = theme.Brush k :> Avalonia.Media.IBrush
                         let metric m = theme.Metric m :> IObservable<float>
-                        let space s = theme.Space s :> IObservable<float>
                         { Layer =
                             { Scrim = brush Wanxiang2.ThemePalette.PaletteKey.Scrim
                               Surface = brush Wanxiang2.ThemePalette.PaletteKey.Surface
                               Edge = brush Wanxiang2.ThemePalette.PaletteKey.Border
-                              EdgeWidth = Wanxiang2.Theme.Live.map Thickness (metric Wanxiang2.ThemeMetrics.Metric.BorderWidth)
-                              DialogRadius = Wanxiang2.Theme.Live.map CornerRadius (space Wanxiang2.Theme.Space.RadiusLg)
-                              PopupRadius = Wanxiang2.Theme.Live.map CornerRadius (space Wanxiang2.Theme.Space.RadiusMd)
-                              DialogPadding = Wanxiang2.Theme.Live.map (fun v -> Thickness(v)) (space Wanxiang2.Theme.Space.Xl)
-                              PopupPadding = Wanxiang2.Theme.Live.map (fun v -> Thickness(v)) (space Wanxiang2.Theme.Space.Xs)
-                              DialogShadow = Wanxiang2.Theme.LiveValue(Avalonia.Media.BoxShadows()) :> IObservable<_>
-                              PopupShadow = Wanxiang2.Theme.LiveValue(Avalonia.Media.BoxShadows()) :> IObservable<_>
-                              ViewportInset = Wanxiang2.Theme.LiveValue 12.0 :> IObservable<_>
-                              PopupGap = Wanxiang2.Theme.LiveValue 4.0 :> IObservable<_>
-                              PopupMinWidth = Wanxiang2.Theme.LiveValue 180.0 :> IObservable<_>
-                              ScrimFade = Wanxiang2.Theme.LiveValue TimeSpan.Zero :> IObservable<_>
+                              DialogShadow = Avalonia.Media.BoxShadows()
+                              PopupShadow = Avalonia.Media.BoxShadows()
+                              PopupGap = 4.0
+                              PopupMinWidth = 180.0
+                              ScrimFade = TimeSpan.Zero
                               ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut() }
                           Toasts =
                             { Surface = brush Wanxiang2.ThemePalette.PaletteKey.SurfaceRaised
                               Edge = brush Wanxiang2.ThemePalette.PaletteKey.Border
                               Text = brush Wanxiang2.ThemePalette.PaletteKey.Text
                               Accent = fun _ -> brush Wanxiang2.ThemePalette.PaletteKey.Accent
-                              AccentWidth = Wanxiang2.Theme.LiveValue 2.0 :> IObservable<_>
-                              AccentRadius = Wanxiang2.Theme.LiveValue(CornerRadius 999.0) :> IObservable<_>
-                              AccentOpacity = Wanxiang2.Theme.LiveValue 0.6 :> IObservable<_>
-                              EdgeWidth = Wanxiang2.Theme.Live.map Thickness (metric Wanxiang2.ThemeMetrics.Metric.BorderWidth)
-                              Radius = Wanxiang2.Theme.LiveValue(CornerRadius 8.0) :> IObservable<_>
-                              Padding = Wanxiang2.Theme.LiveValue(Thickness(16.0, 12.0)) :> IObservable<_>
-                              Shadow = Wanxiang2.Theme.LiveValue(Avalonia.Media.BoxShadows()) :> IObservable<_>
-                              FontSize = metric Wanxiang2.ThemeMetrics.Metric.FontBody
-                              LineHeight = Wanxiang2.Theme.LiveValue 18.0 :> IObservable<_>
-                              ColumnSpacing = Wanxiang2.Theme.LiveValue 12.0 :> IObservable<_>
-                              Spacing = Wanxiang2.Theme.LiveValue 8.0 :> IObservable<_>
-                              Margin = Wanxiang2.Theme.LiveValue(Thickness(24.0, 0.0, 24.0, 32.0)) :> IObservable<_>
-                              MaxWidth = Wanxiang2.Theme.LiveValue 480.0 :> IObservable<_>
-                              BodyMaxHeight = Wanxiang2.Theme.LiveValue 160.0 :> IObservable<_>
-                              Fade = Wanxiang2.Theme.LiveValue TimeSpan.Zero :> IObservable<_>
+                              AccentOpacity = 0.6
+                              Padding = Thickness(16.0, 12.0)
+                              Shadow = Avalonia.Media.BoxShadows()
+                              LineHeight = 18.0
+                              ColumnSpacing = 12.0
+                              Spacing = 8.0
+                              Margin = Thickness(24.0, 0.0, 24.0, 32.0)
+                              MaxWidth = 480.0
+                              BodyMaxHeight = 160.0
+                              Fade = TimeSpan.Zero
                               FadeEasing = Avalonia.Animation.Easings.CubicEaseOut() }
                           Menu =
                             { Text = brush Wanxiang2.ThemePalette.PaletteKey.Text
@@ -605,29 +593,14 @@ module Program =
                               Accent = brush Wanxiang2.ThemePalette.PaletteKey.Accent
                               Check = fun b -> Wanxiang2.IconSet.IconSet.image Wanxiang2.IconSet.Glyph.Check b (metric Wanxiang2.ThemeMetrics.Metric.IconGlyph)
                               Chevron = fun b -> Wanxiang2.IconSet.IconSet.image Wanxiang2.IconSet.Glyph.ChevronRight b (metric Wanxiang2.ThemeMetrics.Metric.IconGlyph)
-                              FontSize = metric Wanxiang2.ThemeMetrics.Metric.FontBody
-                              HintFontSize = metric Wanxiang2.ThemeMetrics.Metric.FontCaption
-                              IconSlotWidth = Wanxiang2.Theme.LiveValue 16.0 :> IObservable<_>
-                              IconHeight = Wanxiang2.Theme.LiveValue 16.0 :> IObservable<_>
-                              RightSlotMinWidth = Wanxiang2.Theme.LiveValue 16.0 :> IObservable<_>
-                              HintMargin = Wanxiang2.Theme.LiveValue(Thickness(12.0, 0.0, 0.0, 0.0)) :> IObservable<_>
-                              ColumnSpacing = Wanxiang2.Theme.LiveValue 6.0 :> IObservable<_>
-                              ItemPadding = Wanxiang2.Theme.LiveValue(Thickness(8.0, 4.0)) :> IObservable<_>
-                              ItemRadius = Wanxiang2.Theme.LiveValue(CornerRadius 4.0) :> IObservable<_>
-                              ItemMinHeight = Wanxiang2.Theme.LiveValue 32.0 :> IObservable<_>
-                              ItemSpacing = Wanxiang2.Theme.LiveValue 2.0 :> IObservable<_>
-                              MaxHeight = Wanxiang2.Theme.LiveValue 200.0 :> IObservable<_>
-                              DividerMargin = Wanxiang2.Theme.LiveValue(Thickness(6.0, 2.0)) :> IObservable<_>
-                              HeaderMargin = Wanxiang2.Theme.LiveValue(Thickness(8.0, 6.0, 8.0, 2.0)) :> IObservable<_>
-                              SelectPadding = Wanxiang2.Theme.LiveValue(Thickness(8.0, 4.0)) :> IObservable<_>
-                              SelectRadius = Wanxiang2.Theme.LiveValue(CornerRadius 8.0) :> IObservable<_>
-                              SelectEdgeWidth = Wanxiang2.Theme.LiveValue(Thickness 1.0) :> IObservable<_>
-                              SelectCaptionMaxWidth = Wanxiang2.Theme.LiveValue 260.0 :> IObservable<_> }
-                          MenuMinWidth = Wanxiang2.Theme.LiveValue 200.0 :> IObservable<_>
-                          GroupedMenuMinWidth = Wanxiang2.Theme.LiveValue 240.0 :> IObservable<_>
-                          DwellFailureMs = Wanxiang2.Theme.LiveValue 9000.0 :> IObservable<_>
-                          DwellWarningMs = Wanxiang2.Theme.LiveValue 6500.0 :> IObservable<_>
-                          DwellDefaultMs = Wanxiang2.Theme.LiveValue 4000.0 :> IObservable<_>
+                              IconSlotWidth = 16.0
+                              ItemMinHeight = 32.0
+                              MaxHeight = 200.0 }
+                          MenuMinWidth = 200.0
+                          GroupedMenuMinWidth = 240.0
+                          DwellFailureMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellFailure).Value
+                          DwellWarningMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellWarning).Value
+                          DwellDefaultMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellDefault).Value
                           DismissTick = TimeSpan.FromMilliseconds 100.0 }
 
                     /// 真正的组装（只跑一次；由 buildViews 记下结果）。
@@ -671,9 +644,12 @@ module Program =
                         let dialogs = Wanxiang2.DialogsDesk.DialogsDesk(theme, ov)
                         let brandLogo = SharedTheme.logo
 
-                        let composer = Wanxiang2.ComposerDesk.ComposerDesk(Wanxiang2.ComposerDesk.ComposerMetrics.ofTheme theme styles,
+                        let composer = Wanxiang2.ComposerDesk.ComposerDesk(
                             shell.ComposerActions(pickAttachment, dropFiles, pasteFromClipboard))
                         composerDesk <- composer
+                        // 提示条的动作按钮持焦时条被移除（点动作、F6 后撤销、过期）：
+                        // 焦点回输入区，别丢在已销毁的按钮上。
+                        ov.WireFocusHome(fun () -> composerDesk.Focus())
 
                         let approval = Wanxiang2.ApprovalDesk.ApprovalDesk(theme, ov, send)
 
@@ -776,8 +752,9 @@ module Program =
                             | ScrollCommand.Beginning ->
                                 views.Chat.SmoothScrollToBeginning()
                             | ScrollCommand.ToExchange msgId ->
+                                // 定位目标（搜索命中 / 消息链接）：滚到那条消息并短暂高亮
                                 match UInt64.TryParse msgId with
-                                | true, commit -> views.Chat.ScrollToMessage commit |> ignore
+                                | true, commit -> views.Chat.RevealAndHighlight commit |> ignore
                                 | false, _ -> ()
                             | ScrollCommand.PreparePrepend ->
                                 desktopPrependAnchor.Value <- Some(viewer.Extent.Height, viewer.Offset.Y)
@@ -880,7 +857,7 @@ module Program =
                           SystemPrefersDark = systemPrefersDark
                           DefaultServerUrl = Wanxiang.UI.CredentialStore.defaultServerUrl
                           ApplyTheme = fun dark -> SharedTheme.manager.Apply(if dark then Wanxiang2.ThemePalette.PaletteMode.Dark else Wanxiang2.ThemePalette.PaletteMode.Light)
-                          SetReducedMotion = fun reduced -> SharedTheme.manager.Motion.SetReduced reduced
+                          SetReducedMotion = fun reduced -> SharedTheme.manager.Motion.ApplyReduced reduced
                           SetCodeWrap = fun wrapped -> codeWrap.Wrapped <- wrapped
                           CaptureFocus = captureFocus
                           IsEditingText = isEditingText
@@ -895,7 +872,7 @@ module Program =
                           BuildViews = buildViews }
                     shell <- ShellComposer(ports)
                     // PaletteRecent 读写接线：启动时装入已存的最近使用（与 ui.json 同目录）。
-                    shell.SetPaletteRecent(PaletteRecentFile.loadRecent ())
+                    shell.ApplyPaletteRecent(PaletteRecentFile.loadRecent ())
                     // App 静态端口（EntryShells）：Root 创建根视图、Build 调 ShellComposer.Build 并接事件、
                     // 关窗落草稿、偏好读写。
                     Wanxiang.UI.App.Root <- Some rootFactory

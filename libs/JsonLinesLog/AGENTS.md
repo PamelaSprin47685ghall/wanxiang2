@@ -2,7 +2,7 @@
 
 结构化 JSON Lines 日志：公共字段 level、event、utc 和可选的 instanceId；已登记的密钥原值会被精确替换成 ***；最近的错误行保存在有上限的缓冲里。不懂具体事件。只依赖 BCL。根规则见项目根目录 AGENTS.md。
 
-公开面：`JsonLinesLog(emit, now, recentLimit)`，成员 SetInstanceId、RegisterSecrets、ClearSecrets、Redact、Error、Info、RecentErrors。
+公开面：`JsonLinesLog(emit, now, recentLimit)`，成员 ApplyInstanceId、RegisterSecrets、ClearSecrets、Redact、Error、Info、RecentErrors。
 
 # LEMMA
 1. **只按已知的值精确替换，不猜测打码。** [根 AXIOM: 4, 5]

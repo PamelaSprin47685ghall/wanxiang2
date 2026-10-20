@@ -1,6 +1,6 @@
-# CardReconcile
+# CardBits
 
-合并包（原 CardReconcile 包，手搓 DOM 对账器 Reconciler 已按 Clean-break 架构铁律退役删除，仅保留其余纯函数/纯状态工具模块）：CountdownTicker、DurationText、GenerationErrorTitle、MessageMenu、MessageTimestamp、ToolArgsPreview、ToolCallState、ToolErrorSummary、ToolOverview。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。手搓光标呼吸 CaretBreath 已退役删除，改由 Avalonia 声明式动效类 anim-breathe 原生驱动。
+合并包（前身是含手搓 DOM 对账器 Reconciler 的对账包；对账器已按 Clean-break 架构铁律退役删除，包随之更名为 CardBits——消息卡用到的纯函数/纯状态小库集合）：CountdownTicker、DurationText、GenerationErrorTitle、MessageMenu、MessageTimestamp、ToolArgsPreview、ToolCallState、ToolErrorSummary、ToolOverview。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。手搓光标呼吸 CaretBreath 已退役删除，改由 Avalonia 声明式动效类 anim-breathe 原生驱动。
 
 测试工程 `<包名>.Tests.fsproj` 合并各成员用例（`<成员名>.<文件>.fs`），golden 目录按成员分目录；控件库的测试工程用 `AssemblySettings.fs` 关掉并行（Avalonia 平台状态是进程级全局量）。
 
@@ -62,7 +62,7 @@
 
 ## MessageMenu（库）
 
-旧 `Views/MessageCard.fs` messageMenuEntries 的门控迁入：`entries` 给出菜单项（`MessageMenuItem` 加了 RequireQualifiedAccess），`label`、`hint`、`isDanger` 给文案。执行体、图标、ContextMenu 仍归 MessageCard。不引用任何其他库。根规则见项目根目录 AGENTS.md。
+旧 `Views/MessageCard.fs` messageMenuEntries 的门控迁入：`entries` 吃 `MessageMenuFacts`（`MenuGeneration`/`MessageRole`/`ReplyPosition`/`LinkSink` 四个事实 DU，零裸布尔）给出菜单项（`MessageMenuItem` 加了 RequireQualifiedAccess），`roleOfText` 归一线上 role 字符串，`label`、`hint`、`isDanger` 给文案。执行体、图标、ContextMenu 仍归 MessageCard。不引用任何其他库。根规则见项目根目录 AGENTS.md。
 
 ## LEMMA
 1. **同一组状态，菜单项、次序、文案与旧实现相同。** [根 AXIOM: 5]

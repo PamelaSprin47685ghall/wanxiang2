@@ -176,7 +176,7 @@ type ApprovalPanel(texts: ApprovalTexts, wrenchIcon: (unit -> Control) option) a
         pending.Clear()
         refresh ()
 
-    member _.SetConversation(convId: Guid option) =
+    member _.ApplyConversation(convId: Guid option) =
         if conversation <> convId then
             conversation <- convId
             refresh ()

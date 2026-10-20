@@ -240,10 +240,125 @@ let ``366 限流只给「换个模型」并直达切换器`` () =
     Assert.Equal("换个模型", ErrorRecovery.label SwitchModel)
     Assert.Equal(Some OpenConversationSettings, ErrorRecovery.forKind ConfigInvalid)
 
-// 金标准：golden/expected.txt 由旧 AppShell GenerationFinished 分支的原样摘录跑同一份 Render.fs 生成。
+// ---- 生成结束（generation.finished）的结局判定与提示 ----
+
 [<Fact>]
-let ``golden: generation finished outcome matches old AppShell`` () =
-    Assert.Equal(IO.File.ReadAllText(IO.Path.Combine(AppContext.BaseDirectory, "golden", "expected.txt")), Render.all ())
+let ``生成结束：完成与取消都不算失败`` () =
+    Assert.True((GenerationOutcome.errorOf "completed" None).IsNone)
+    Assert.True((GenerationOutcome.errorOf "cancelled" None).IsNone)
+    // 结束状态自带错误详情时也按状态走：完成 / 取消没有失败。
+    let err = GenerationError.create ProviderTimeout "超时"
+    Assert.True((GenerationOutcome.errorOf "completed" (Some err)).IsNone)
+    Assert.True((GenerationOutcome.errorOf "cancelled" (Some err)).IsNone)
+
+[<Fact>]
+let ``生成结束：失败带详情就沿用主机的错误`` () =
+    let err = GenerationError.create ProviderRateLimited "限流了"
+    let outcome = GenerationOutcome.errorOf "failed" (Some err)
+    Assert.True(outcome.IsSome)
+    Assert.Equal(ProviderRateLimited, outcome.Value.kind)
+    Assert.Equal("限流了", outcome.Value.message)
+    Assert.Equal(None, outcome.Value.detail)
+
+[<Fact>]
+let ``生成结束：失败没有详情落成可重试的通用失败`` () =
+    let outcome = GenerationOutcome.errorOf "failed" None
+    Assert.True(outcome.IsSome)
+    Assert.Equal(GenerationErrorKind.UnknownFailure, outcome.Value.kind)
+    Assert.True(outcome.Value.retryable)
+    Assert.Equal("生成失败，主机没有说明原因。可以重试；反复出现时请在设置里「检查主机」。", outcome.Value.message)
+
+[<Fact>]
+let ``生成结束：未知状态按失败处理并记下原始状态`` () =
+    for status in [ "exploded"; "" ] do
+        let outcome = GenerationOutcome.errorOf status None
+        Assert.True(outcome.IsSome)
+        Assert.Equal(GenerationErrorKind.UnknownFailure, outcome.Value.kind)
+        Assert.True(outcome.Value.retryable)
+        Assert.Equal("生成结束状态未知，已按失败处理。", outcome.Value.message)
+        Assert.Equal(Some(sprintf "未知状态：%s" status), outcome.Value.detail)
+
+[<Fact>]
+let ``生成结束：当前对话的失败只进卡片，不叠提示`` () =
+    let err = GenerationError.create ProviderRateLimited "限流了"
+    let outcome = GenerationOutcome.errorOf "failed" (Some err)
+    Assert.Equal(FinishNotice.Quiet, GenerationOutcome.notice "failed" outcome true)
+
+[<Fact>]
+let ``生成结束：非当前对话的失败只给一句提示`` () =
+    let err = GenerationError.create ProviderRateLimited "限流了"
+    let outcome = GenerationOutcome.errorOf "failed" (Some err)
+    match GenerationOutcome.notice "failed" outcome false with
+    | FinishNotice.FailureToast text ->
+        // 提示是面向用户的一句话：错误说明加上该类别的行动建议。
+        Assert.Contains("限流了", text)
+        Assert.Contains("换个模型", text)
+    | other -> Assert.Fail(sprintf "expected a failure toast, got %A" other)
+
+[<Fact>]
+let ``生成结束：当前对话被停止时提示已停止`` () =
+    let outcome = GenerationOutcome.errorOf "cancelled" None
+    Assert.Equal(FinishNotice.Stopped, GenerationOutcome.notice "cancelled" outcome true)
+    // 非当前对话的取消看不见：不出提示。
+    Assert.Equal(FinishNotice.Quiet, GenerationOutcome.notice "cancelled" outcome false)
+
+[<Fact>]
+let ``生成结束：正常完成没有提示`` () =
+    let outcome = GenerationOutcome.errorOf "completed" None
+    Assert.Equal(FinishNotice.Quiet, GenerationOutcome.notice "completed" outcome true)
+    Assert.Equal(FinishNotice.Quiet, GenerationOutcome.notice "completed" outcome false)
+
+[<Fact>]
+let ``生成结束：一次真实的生成序列走完，状态从生成中退回空闲`` () =
+    let runs = ConversationRuns()
+    let conv, gen = Guid.NewGuid(), Guid.NewGuid()
+
+    // 1. 开始生成：运行中，没有消息、没有错误。
+    runs.Start(conv, gen)
+    let running = runs.Get(Some conv)
+    Assert.True(running.running)
+    Assert.Equal(Some gen, running.generationId)
+    Assert.True(running.message.IsNone)
+    Assert.True(running.error.IsNone)
+
+    // 2. 流式增量：消息进状态，错误仍空。
+    Assert.True(runs.Delta(conv, gen, { MessageView.empty with role = "assistant"; text = "生成中" }))
+    Assert.Equal(Some "生成中", runs.Get(Some conv).message |> Option.map _.text)
+    Assert.True(runs.Get(Some conv).error.IsNone)
+
+    // 3. 结束（成功）：回到空闲，消息清空，错误仍空，用量记下。
+    let usage = { GenerationUsage.empty with totalTokens = Some 42; durationMs = Some 1200L }
+    Assert.True(runs.Finish(conv, gen, None, Some usage))
+    let finished = runs.Get(Some conv)
+    Assert.False(finished.running)
+    Assert.True(finished.generationId.IsNone)
+    Assert.True(finished.message.IsNone)
+    Assert.True(finished.error.IsNone)
+    Assert.Equal(Some usage, finished.usage)
+
+[<Fact>]
+let ``生成结束：一次失败的生成序列把错误落进状态，提示由结局判定给出`` () =
+    let runs = ConversationRuns()
+    let conv, gen = Guid.NewGuid(), Guid.NewGuid()
+    runs.Start(conv, gen)
+    runs.Delta(conv, gen, { MessageView.empty with role = "assistant"; text = "半句" }) |> ignore
+
+    // 主机报限流：错误原样落进状态，结局判定说是失败。
+    let err = GenerationError.create ProviderRateLimited "限流了"
+    Assert.True(runs.Finish(conv, gen, Some err, None))
+    let failed = runs.Get(Some conv)
+    Assert.False(failed.running)
+    Assert.True(failed.generationId.IsNone)
+    Assert.Equal(Some err, failed.error)
+    Assert.Equal(ProviderRateLimited, (GenerationOutcome.errorOf "failed" (Some err)).Value.kind)
+    // 有正文的半截回复留下，供「继续生成」接着写。
+    Assert.Equal(Some "半句", failed.partial |> Option.map _.text)
+
+    // 清掉错误卡：半截也一并清掉。
+    runs.ClearError(conv)
+    let cleared = runs.Get(Some conv)
+    Assert.True(cleared.error.IsNone)
+    Assert.True(cleared.partial.IsNone)
 
 [<Fact>]
 let ``D2 无错误详情的失败与未知状态都落成可重试的通用失败`` () =

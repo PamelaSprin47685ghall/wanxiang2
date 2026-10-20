@@ -96,6 +96,10 @@ type App() =
         // 交互状态（:focus-visible / :pointerover / :pressed / :disabled）也由它提供（旧 Interaction.register）。
         SharedTheme.styles.Install this.Styles
         SharedTheme.styles.InstallControlThemes this.Resources
+        // 主题资源字典（Palette.* / Metric.* / Space.* / 派生档）装进应用资源：
+        // 控件的 DynamicResource 声明式绑定沿可视树查到 Application 才吃得值（W7 外观退役的通路）。
+        if not (this.Resources.MergedDictionaries.Contains (SharedTheme.manager.Resources :> Avalonia.Controls.IResourceDictionary)) then
+            this.Resources.MergedDictionaries.Add (SharedTheme.manager.Resources :> Avalonia.Controls.IResourceDictionary)
         Wanxiang2.ImeShield.ImeShield.install ()
         // 画布主题固定为浅色变体：万象自己的深色由 Tokens 提供，
         // 若让 Fluent 也切深色，两套配色会互相打架。

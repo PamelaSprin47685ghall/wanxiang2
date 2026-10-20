@@ -7,7 +7,15 @@ open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Threading
+
+/// 动态资源绑定辅助：主题管理者把活值写进 ResourceDictionary，控件绑定即随主题资源生效。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+        let sp = { new IServiceProvider with member _.GetService _ = null }
+        ext.ProvideValue sp
 
 /// 可点的原生 Button，继承 Button 获得原生自动化、键盘导航与悬停反馈。
 type internal Tap(child: Control, name: string, classes: string list, action: unit -> unit) as this =
@@ -24,13 +32,13 @@ type internal Tap(child: Control, name: string, classes: string list, action: un
 
     member _.Invoke() = if this.IsEnabled then action ()
 
-    member _.SetText(value: string) =
+    member _.ApplyText(value: string) =
         match this.Content with
         | :? TextBlock as t -> t.Text <- value
         | _ -> ()
         AutomationProperties.SetName(this, value)
 
-    member _.SetEnabled(enabled: bool) =
+    member _.ApplyEnabled(enabled: bool) =
         this.IsEnabled <- enabled
 
     static member TextButton(text: string, classes: string list, action: unit -> unit) : Tap =
@@ -51,46 +59,52 @@ type ExportSheetTone =
     | Success
     | Danger
 
+[<RequireQualifiedAccess>]
+type ExportSheetProgress =
+    | Hidden
+    | Indeterminate
+    | Determinate of percent: float
+
+[<RequireQualifiedAccess>]
+type ExportSaveGate =
+    | Disabled
+    | Enabled
+
+[<RequireQualifiedAccess>]
+type ExportSheetAction =
+    | None
+    | Retry
+    | Save of gate: ExportSaveGate * hasJson: bool
+
 /// 一帧呈现（组合者从 ExportView.decide 得出，字段一一对应）。
 type ExportSheetState =
     { StatusText: string
       Tone: ExportSheetTone
-      ProgressVisible: bool
-      Indeterminate: bool
-      ProgressValue: float
-      RetryVisible: bool
-      SaveVisible: bool
-      SaveJsonVisible: bool
-      SaveEnabled: bool
-      SaveJsonEnabled: bool
+      Progress: ExportSheetProgress
+      Action: ExportSheetAction
       CloseText: string }
 
-/// 外观。全部由主题管理者提供活的实例。
+/// 外观。画笔由主题管理者给（同一实例，切主题原地改色）；
+/// 字号、行高、间距走主题动态资源键（Metric.FontTitle / Metric.FontBody / Metric.FontCaption /
+/// Metric.CaptionLineHeight / Space.Xl / Space.Md），本记录不再有 IObservable 字段。
 type ExportSheetAppearance =
     { Text: IBrush
       Muted: IBrush
       Success: IBrush
-      Danger: IBrush
-      TitleFontSize: IObservable<float>
-      BodyFontSize: IObservable<float>
-      CaptionFontSize: IObservable<float>
-      CaptionLineHeight: IObservable<float>
-      StackSpacing: IObservable<float>
-      ButtonSpacing: IObservable<float> }
+      Danger: IBrush }
 
 /// 导出对话框的内容（迁自旧 Views/ExportDialog.fs 的界面部分）：标题、对话名、assertive 状态行、进度条、说明、
 /// 「取消导出 / 重新导出 / 保存 JSON / 保存 Markdown」四键与左右方向键接线。
 /// 分页读取、节流、到期、生成文件与保存窗口由组合者接（ConversationExport、ExportView、ProgressThrottle、ConversationTransfer）。
 type ExportSheet(look: ExportSheetAppearance, conversationTitle: string, privacyNote: string) =
-    let live (o: IObservable<'T>) f = o.Subscribe(fun v -> f v) |> ignore
     let close = Event<unit>()
     let retry = Event<unit>()
     let save = Event<bool>()
 
     let caption (text: string) =
         let t = TextBlock(Text = text, Foreground = look.Muted, TextWrapping = TextWrapping.Wrap)
-        live look.CaptionFontSize (fun v -> t.FontSize <- v)
-        live look.CaptionLineHeight (fun v -> t.LineHeight <- v)
+        t.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
+        t.Bind(TextBlock.LineHeightProperty, Dyn.res "Metric.CaptionLineHeight") |> ignore
         t
     let heading = TextBlock(Text = "导出对话", FontWeight = FontWeight.Medium, Foreground = look.Text)
     let status = TextBlock(TextWrapping = TextWrapping.Wrap, Foreground = look.Text)
@@ -111,8 +125,8 @@ type ExportSheet(look: ExportSheetAppearance, conversationTitle: string, privacy
             order |> List.tryPick (fun i -> let b = rowButtons[i] in if b.IsEnabled && b.IsEffectivelyVisible then Some b else None)
 
     do
-        live look.TitleFontSize (fun v -> heading.FontSize <- v)
-        live look.BodyFontSize (fun v -> status.FontSize <- v)
+        heading.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontTitle") |> ignore
+        status.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontBody") |> ignore
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Assertive)
         AutomationProperties.SetHelpText(closeButton, "读取中取消导出（对话框保持打开，可重新导出）；取消后此按钮为关闭 (Esc 随时关闭)")
         AutomationProperties.SetHelpText(retryButton, "重新读取并导出当前对话")
@@ -127,13 +141,13 @@ type ExportSheet(look: ExportSheetAppearance, conversationTitle: string, privacy
                     next.Focus(NavigationMethod.Directional) |> ignore
                 | None -> ())
         let buttons = StackPanel(Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center)
-        live look.ButtonSpacing (fun v -> buttons.Spacing <- v)
+        buttons.Bind(StackPanel.SpacingProperty, Dyn.res "Space.Md") |> ignore
         for b in rowButtons do buttons.Children.Add b
         let divider = Border(HorizontalAlignment = HorizontalAlignment.Stretch)
         divider.Classes.Add "hairline"
         let privacy = caption privacyNote
         privacy.Name <- "export-privacy-note"
-        live look.StackSpacing (fun v -> content.Spacing <- v)
+        content.Bind(StackPanel.SpacingProperty, Dyn.res "Space.Xl") |> ignore
         for c in
             [ heading :> Control
               caption conversationTitle
@@ -164,17 +178,38 @@ type ExportSheet(look: ExportSheetAppearance, conversationTitle: string, privacy
             | ExportSheetTone.Success -> look.Success
             | ExportSheetTone.Danger -> look.Danger
             | ExportSheetTone.Text -> look.Text
-        if s.ProgressVisible then
-            progress.IsIndeterminate <- s.Indeterminate
-            progress.Value <- s.ProgressValue
-        progress.IsVisible <- s.ProgressVisible
-        retryButton.IsVisible <- s.RetryVisible
-        saveButton.IsVisible <- s.SaveVisible
-        saveJsonButton.IsVisible <- s.SaveJsonVisible
-        saveButton.SetEnabled s.SaveEnabled
-        saveJsonButton.SetEnabled s.SaveJsonEnabled
-        closeButton.SetText s.CloseText
-        if not (s.SaveVisible && s.SaveEnabled) then
+        match s.Progress with
+        | ExportSheetProgress.Hidden ->
+            progress.IsVisible <- false
+        | ExportSheetProgress.Indeterminate ->
+            progress.IsVisible <- true
+            progress.IsIndeterminate <- true
+        | ExportSheetProgress.Determinate p ->
+            progress.IsVisible <- true
+            progress.IsIndeterminate <- false
+            progress.Value <- p
+        let canSave =
+            match s.Action with
+            | ExportSheetAction.None ->
+                retryButton.IsVisible <- false
+                saveButton.IsVisible <- false
+                saveJsonButton.IsVisible <- false
+                false
+            | ExportSheetAction.Retry ->
+                retryButton.IsVisible <- true
+                saveButton.IsVisible <- false
+                saveJsonButton.IsVisible <- false
+                false
+            | ExportSheetAction.Save(gate, hasJson) ->
+                let enabled = gate = ExportSaveGate.Enabled
+                retryButton.IsVisible <- false
+                saveButton.IsVisible <- true
+                saveButton.ApplyEnabled enabled
+                saveJsonButton.IsVisible <- hasJson
+                saveJsonButton.ApplyEnabled (enabled && hasJson)
+                enabled
+        closeButton.ApplyText s.CloseText
+        if not canSave then
             match TopLevel.GetTopLevel content with
             | null -> ()
             | top when isNull top.FocusManager -> ()

@@ -34,14 +34,14 @@ type OnboardingProbe =
 type OnboardingStatus = { text: string; isError: bool }
 
 /// 首次运行「添加一个模型服务」卡片的步骤机（迁自旧 Views/OnboardingCard.fs 的 step、attemptId、connected、
-/// useAlternate、discovered、discoveryStarted 及其转移）。保存、探测、发现本机 Ollama 的调用和控件都归宿主；
+/// useAlternate、discoveryStarted 及其转移）。保存、探测、发现本机 Ollama 的调用和控件都归宿主；
+/// 发现的模型清单归模型（引导卡事实），本对象不存副本。
 /// 本对象只回答「现在在哪一步、下一步是什么、该显示什么」。不认识预设类型：宿主给出 id、名称与检查所需的事实。
 type OnboardingFlow() =
     let mutable step = OnboardingStep.Idle
     let mutable attempt: string option = None
     let mutable connected: (string * string) option = None
     let mutable useAlternate = false
-    let mutable discovered: string list option = None
     let mutable discoveryStarted = false
     let mutable status = { text = ""; isError = false }
 
@@ -58,7 +58,6 @@ type OnboardingFlow() =
     member _.Attempt = attempt
     member _.UseAlternate = useAlternate
     member _.Status = status
-    member _.Discovered = discovered
 
     /// 选了另一家（只在空闲时生效）：回到原生传输，清掉状态。
     member _.Select() : bool =
@@ -172,7 +171,6 @@ type OnboardingFlow() =
 
     /// 发现结果到达。返回是否应显示「一键使用」（有至少一个模型）。
     member _.ShowDiscovered(result: string list option) : bool =
-        discovered <- result
         match result with
         | Some models -> not (List.isEmpty models)
         | None -> false

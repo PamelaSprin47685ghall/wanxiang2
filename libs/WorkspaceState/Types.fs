@@ -64,6 +64,8 @@ and Msg =
     | WireRecv of WireEvent
     | ConnectionUp of instanceId: string
     | ConnectionDown of reason: ConnectionIssue option
+    /// 用户/宿主发起了到某个地址的连接：ServerUrl 的唯一来源（设置页设备分区与侧栏主机条都读它）。
+    | ConnectionRequested of url: string
     | TimerFired of token: int
     | EveryFired of handle: string
     | PrefsLoaded of UiPrefs
@@ -94,6 +96,8 @@ and SidebarUserMsg =
     | SearchActivate
     | SearchClear
     | SearchHitSelect of convId: Guid * messageId: string option
+    /// 归档可见性切换（偏好的一部分：模型改一次、落盘一次，投影随之更新）
+    | ToggleShowArchived
 
 and ChatUserMsg =
     | JumpBeginning
@@ -136,16 +140,17 @@ and OverlayUserMsg =
 and SettingsUserMsg =
     | OpenSection of sectionKey: string option
     | Close
-    | FormChanged of sectionKey: string * values: Map<string, string>
-    | SaveProvider of requestId: Guid * data: JsonObject
-    | DeleteProvider of providerId: string
-    | ProbeProvider of providerId: string
+    /// 本机偏好已改（外观/归档可见性等）：模型改一次、落盘一次，投影随下次渲染更新各分区
+    | PrefsChanged of prefs: UiPrefs
 
+/// 引导卡回给宿主的在途事实（W7-B3）：卡片不自己留副本，事实进模型，宿主投影回来。
 and OnboardingUserMsg =
-    | StartDiscovery
-    | SelectPreset of providerId: string * model: string
-    | ConnectDirect of url: string * apiKey: string option
-    | CompleteOnboarding
+    /// 用户在卡片上选了预设（预设键，如 openai / ollama / custom）
+    | SelectPreset of key: string
+    /// 本机发现的结果（None = 没有本机服务或还没发现）
+    | Discovered of models: string list option
+    /// 探测失败后建议改用兼容端点
+    | SwitchOffered of flag: bool
 
 and PaletteUserMsg =
     | Open

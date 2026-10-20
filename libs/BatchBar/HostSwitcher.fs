@@ -92,26 +92,19 @@ type HostSwitcher() =
     member _.ConnectionText = status.Text
     member _.IsConnected = connected
 
-    /// 主机地址 → 显示权限部分；非法则「选择主机」
-    member _.SetServerUrl(url: string) =
-        caption.Text <-
-            match Uri.TryCreate(url, UriKind.Absolute) with
-            | true, uri -> uri.Authority
-            | _ -> "选择主机"
-
-    member _.SetConnection(isConnected: bool, text: string) =
-        connected <- isConnected
-        status.Text <- text
-        dot.Background <- if isConnected then Brushes.ForestGreen else Brushes.Gray
-
-    member _.ConfigurePalette(visible: bool) = paletteButton.IsVisible <- visible
-    member _.SetCompact(_value: bool) = ()
+    /// 命令面板入口：宿主是否提供面板由宿主自己知道，故走插槽而非每帧投影。
+    member _.SlotPalette(visible: bool) = paletteButton.IsVisible <- visible
 
     /// 单入口渲染
-    member this.Render(vs: HostSwitcherVS) =
-        this.SetServerUrl vs.ServerUrl
-        this.SetConnection(vs.Connected, vs.StatusText)
-        paletteButton.IsVisible <- vs.PaletteVisible
+    member _.Render(vs: HostSwitcherVS) =
+        // 主机地址 → 显示权限部分；非法则「选择主机」
+        caption.Text <-
+            match Uri.TryCreate(vs.ServerUrl, UriKind.Absolute) with
+            | true, uri -> uri.Authority
+            | _ -> "选择主机"
+        connected <- vs.Connected
+        status.Text <- vs.StatusText
+        dot.Background <- if vs.Connected then Brushes.ForestGreen else Brushes.Gray
 
     [<CLIEvent>] member _.ReconnectClicked = reconnect.Publish
     [<CLIEvent>] member _.SettingsClicked = settings.Publish

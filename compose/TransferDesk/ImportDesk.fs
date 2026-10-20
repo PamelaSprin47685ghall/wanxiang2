@@ -23,22 +23,36 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
     let mutable preview: ImportPreview option = None
     let mutable active = false
     /// 状态行当前的色档：「正在导入…」沿用上一档（与旧代码只改文字一致）
-    let mutable tone = ImportTone.Muted
-    let setStatus text t =
-        tone <- t
-        sheet.SetStatus(text, t)
+    let mutable currentTone = ImportTone.Muted
+    let mutable currentStatus = ImportView.noFile
+    let mutable currentDetails: string list option = None
 
-    let refresh () =
+    let sync () =
         let chrome = ImportView.chrome preview.IsSome attempts.Busy
-        sheet.SetChrome(chrome.importVisible, chrome.importEnabled, chrome.pickEnabled, chrome.pickText)
+        let gate =
+            match chrome.gate with
+            | Wanxiang.UI.ImportGate.Hidden -> ImportGate.Hidden
+            | Wanxiang.UI.ImportGate.Disabled -> ImportGate.Disabled
+            | Wanxiang.UI.ImportGate.Enabled -> ImportGate.Enabled
+        sheet.Render
+            { StatusText = currentStatus
+              Tone = currentTone
+              Details = currentDetails
+              ImportGate = gate
+              PickEnabled = chrome.pickEnabled
+              PickText = chrome.pickText }
+
+    let setStatus text t =
+        currentStatus <- text
+        currentTone <- t
+        sync ()
 
     let loadText (fileName: string) (byteCount: int64) (text: string) =
         if active then
             match ConversationTransfer.parseImportWithin ImportLimits.maxMessages byteCount text with
             | Ok p ->
                 preview <- Some p
-                setStatus (ImportView.previewStatus p.title p.messages.Length) ImportTone.Text
-                sheet.SetDetails(
+                currentDetails <-
                     Some
                         [ yield sprintf "文件：%s" fileName
                           match p.exportedAt with
@@ -52,13 +66,13 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
                           match ImportView.skippedNote p.skipped with
                           | Some note -> yield note
                           | None -> ()
-                          yield "模型使用这台主机的对话默认值，导入后可以在对话顶部更换。" ])
+                          yield "模型使用这台主机的对话默认值，导入后可以在对话顶部更换。" ]
+                setStatus (ImportView.previewStatus p.title p.messages.Length) ImportTone.Text
                 sheet.FocusImport()
             | Error message ->
                 preview <- None
+                currentDetails <- None
                 setStatus (message) ImportTone.Danger
-                sheet.SetDetails None
-            refresh ()
 
     let pick () =
         match topLevel () with
@@ -99,14 +113,11 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
             match attempts.Begin() with
             | None -> ()
             | Some attempt ->
-                sheet.SetStatus(ImportView.importing, tone)
-                refresh ()
+                setStatus ImportView.importing currentTone
                 let finish ok (message: string) =
                     if attempts.Finish attempt then
                         if ok then overlay.CloseDialog()
-                        elif active then
-                            setStatus (message) ImportTone.Danger
-                            refresh ()
+                        elif active then setStatus (message) ImportTone.Danger
                 // 旧主机不认识 conversation.import 时不会回应：等待有上限。
                 timing.After (timing.ImportResponseTimeout()) (fun () -> finish false ImportView.timedOut) |> ignore
                 submit p (fun ok -> finish ok ImportView.rejected)
@@ -132,10 +143,9 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
     member _.Show() =
         active <- true
         preview <- None
+        currentDetails <- None
         attempts.Reset()
         setStatus (ImportView.noFile) ImportTone.Muted
-        sheet.SetDetails None
-        refresh ()
         overlay.ShowDialog(sheet.View, timing.DialogWidth(), onClosed = (fun () -> active <- false; preview <- None))
         sheet.FocusPick()
 

@@ -72,7 +72,8 @@ type HostHealth() =
     member _.ConfigIssue = configIssue
     member _.Doctor = doctor
 
-    member _.SetConfigIssue(summary: string, errors: string list) =
+    /// 主机拒绝了一份配置：写入「配置有误」槽位（幂等覆盖，只存最新一份）。
+    member _.ApplyConfigIssue(summary: string, errors: string list) =
         configIssue <- Some(summary, errors)
         changed.Trigger()
 
@@ -88,11 +89,13 @@ type HostHealth() =
         changed.Trigger()
         checkRequested.Trigger()
 
-    member _.SetReport(ok: bool, checks: DoctorCheck list) =
+    /// 写回 doctor 报告（幂等覆盖，只存最新一次结果）。
+    member _.ApplyReport(ok: bool, checks: DoctorCheck list) =
         doctor <- Report(ok, checks, DateTimeOffset.Now)
         changed.Trigger()
 
-    member _.SetUnavailable(reason: string) =
+    /// 这次检查拿不到结果（幂等覆盖，只存最新一次说明）。
+    member _.ApplyUnavailable(reason: string) =
         doctor <- Unavailable reason
         changed.Trigger()
 

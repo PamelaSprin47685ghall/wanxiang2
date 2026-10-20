@@ -40,12 +40,13 @@
   - 项：`RowItem.Header` / `Conversation` / `Hit` / `Status` / `ArchivedToggle`。
   - 焦点：`FocusRowAt` / `FocusRow` / `FocusArchivedToggle` / `ScrollTo` / `LeaveTop`（首行再 Up）/ `FocusedRow` / `VisibleIds`。
   - 事件：`RowActivated`、`RowFocused`、`MenuRequested(id, 锚点, 右对齐)`、`RenameKey`/`DeleteKey`/`PinKey`/`SelectAllKey`、`Escape`（`RowsEscapeArgs`，组合者置 `Handled`）、`HitClicked`、`StatusActionClicked`、`ArchivedToggleClicked`。
+  - ApplyMarks(active, selected, inSelection)：写当前对话高亮、多选高亮与多选态。
   - 去脑化：废除内部 Dispatcher.UIThread.Post 争夺焦点，所有按钮用原生 Button 与样式类。
 
 ### 外观
 
 - 样式类：行与更多键 `surface` + `hover-plain`；状态钮 `button-ghost`。
-- CraftsmanshipPolishTests：`Sidebar conversation row activates on Enter and Space keys`、`Sidebar conversation row right click invokes context menu`、`Sidebar row more action stays reachable in compact mode`
+- CraftsmanshipPolishTests：`Sidebar conversation row activates on Enter and Space keys`、`Sidebar conversation row right click invokes context menu`、`Sidebar row more action stays reachable`
 - UiStabilityTests：`sidebar running pin and idle states keep the same title origin`
 - InteractabilityPolishTests：`row more button leaves the hit tree in selection mode`（本库呈现部分）
 - 新增：行键盘上下/Home/End、归档开关读屏与重建后焦点、命中行与状态动作、主题改行高
@@ -59,11 +60,12 @@
 
 ## HostSwitcher
 
-侧栏页脚的主机状态行与设置/命令面板入口（迁自旧 `Views/Sidebar.fs` 的 statusRow、serverCaption、statusDot、settingsButton、paletteButton、SetServerUrl、SetConnection）。重连与打开设置/面板的动作归组合者。根规则见项目根目录 AGENTS.md。
+侧栏页脚的主机状态行与设置/命令面板入口（迁自旧 `Views/Sidebar.fs` 的 statusRow、serverCaption、statusDot、settingsButton、paletteButton）。重连与打开设置/面板的动作归组合者。根规则见项目根目录 AGENTS.md。
 
-- `HostSwitcher()`：`View`；单入口 `Render(HostSwitcherVS)`，并保留 `SetServerUrl`、`SetConnection` 等接口。
+- `HostSwitcher()`：`View`；单入口 `Render(HostSwitcherVS)`（`ServerUrl` / `Connected` / `StatusText`）。
   - 事件：`ReconnectClicked`、`SettingsClicked`、`PaletteClicked`。
   - 原生 `Button` 与 `Classes`。
+- 例外插槽（命名避开 Set*）：`SlotPalette(visible)`（命令面板键是否出现，由宿主自己知道，不在每帧投影里）。
 
 ### 外观
 
@@ -86,7 +88,7 @@
 
 列表空态卡，迁自旧 `Views/Sidebar.fs` 的 emptyStateHost、emptySkeleton、emptyActionButton，以及 Rebuild 末段的三张卡。
 
-- `ListEmptyCard()` 暴露 `View`、`ActionButton`、`Skeleton`。单入口 `Render(SidebarEmptyKind option)`。其余方法有 `Show`、`Hide`、`SetAction`、`SetActionVisible`、`FocusAction`。
+- `ListEmptyCard()` 暴露 `View`、`ActionButton`、`Skeleton`。单入口 `Render(SidebarEmptyKind option)`（行动键可见性由 `SidebarEmptyKind.NotConnected` 携带）。其余方法有 `Show`、`Hide`、`FocusAction`。
 - 事件：`ActionClicked`。
 - 原生 `Button`、样式类。废除 `ListEmptyCardLook`。
 
@@ -99,7 +101,7 @@
 
 侧栏顶部的品牌行，迁自旧 `Views/Sidebar.fs` 的 brandHeader、compactBackButton、newConversationButton、presetMenuButton。新建对话、预设菜单内容、关抽屉都由组合者负责。根规则见项目根目录 AGENTS.md。
 
-- `SidebarBrand()` 暴露 `View`、`BackButton`、`NewButton`、`PresetButton`；单入口 `Render(SidebarBrandVS)`，保留 `SetPresetsVisible`、`SetCompact`。
+- `SidebarBrand()` 暴露 `View`、`BackButton`、`NewButton`、`PresetButton`、`LogoSlot`；单入口 `Render(SidebarBrandVS)`（`PresetsVisible` / `Compact`），图标挂载走例外插槽 `SlotLogo`。
 - 事件：`NewClicked`、`PresetClicked`（参数是锚点）、`BackClicked`。所有可点控件用原生 `Button`。
 ### 与旧实现的差异
 - 废除 `SidebarBrandLook` 与 `Follow.live`。
@@ -113,7 +115,7 @@
 侧栏搜索框与「未找到」提示（迁自旧 `Views/Sidebar.fs` 的 searchShell、clearSearchButton、searchEmptyHint、searchDebounce 与搜索框 KeyDown）。`SearchSession` / `SearchRequery` / `RowFocus` 与列表重建归组合者。根规则见项目根目录 AGENTS.md。
 
 - `SidebarSearch()`：`View`（搜索区）、`Box`、`ClearButton`、`EmptyHint`。单入口 `Render(SearchBoxVS)`。
-  - `Text` 读写；`Focus(selectAll)`；`SetEmptyHint` / `FocusEmptyHint`；`SetCompact`。
+  - `Text` 读写；`Focus(selectAll)`；`ApplyEmptyHint` / `FocusEmptyHint`。
   - 事件：`Changed`（即时上报，不自开定时器）、`Debounced`、`Keys`（Down/Enter/Escape，`SearchKeyArgs.Handled`）、`ClearRequested`。
   - 清空键槽位常驻：无字时透明度 0、不可点、读屏 Raw（与旧 `setReservedActionVisible` 同义）。
   - 原生 `Button`、`TextBox`（挂 `control-stroke`）。

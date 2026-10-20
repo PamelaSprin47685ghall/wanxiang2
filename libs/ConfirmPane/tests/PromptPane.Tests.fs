@@ -41,12 +41,12 @@ let ``prompt dialog validates input and handles confirm and cancel`` () =
         p.Box.Focus() |> ignore
         press w Key.Enter RawInputModifiers.None
         Assert.Equal<string list>([ "新标题" ], List.ofSeq sent)
-        p.SetPending true
+        p.ApplyPending true
         Assert.Equal("正在保存…", AutomationProperties.GetName p.ConfirmButton)
         Assert.False p.CancelButton.IsEnabled
         press w Key.Enter RawInputModifiers.None
         Assert.Single sent |> ignore
-        p.SetPending false
+        p.ApplyPending false
         click p.ConfirmButton
         click p.CancelButton
         Assert.Equal(2, sent.Count)

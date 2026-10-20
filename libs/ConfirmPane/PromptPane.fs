@@ -9,7 +9,7 @@ open Avalonia.Layout
 open Wanxiang2.WorkspaceState
 
 /// 单行输入对话框的内容（迁自旧 Views/Dialogs.fs 的 prompt，重命名等）。
-/// 空白时禁用确认并说明原因；回车、确认键、行级 Enter 都提交去空白的值；保存往返中 SetPending。
+/// 空白时禁用确认并说明原因；回车、确认键、行级 Enter 都提交去空白的值；保存往返中 ApplyPending。
 /// 字段错误行由组合者给（validationFor，与 FieldCheck 同款），错误文字经 SetError 写。
 type PromptPane(?title: string, ?hint: string, ?initial: string, ?confirmLabel: string, ?validationFor: TextBox -> Control option) =
     let submitted = Event<string>()
@@ -112,7 +112,7 @@ type PromptPane(?title: string, ?hint: string, ?initial: string, ?confirmLabel: 
     member _.IsPending = pending
 
     /// 保存往返：确认键换「正在保存…」并禁用，取消也禁用
-    member _.SetPending(value: bool) =
+    member _.ApplyPending(value: bool) =
         pending <- value
         let text = if value then "正在保存…" else currentLabel
         confirmButton.Content <- text
@@ -139,7 +139,7 @@ type PromptPane(?title: string, ?hint: string, ?initial: string, ?confirmLabel: 
                     helper.IsVisible <- true
                 | None ->
                     helper.IsVisible <- false
-            this.SetPending p.IsPending
+            this.ApplyPending p.IsPending
         | None -> ()
 
     /// 确认（去空白后的值）；空白或保存中不发

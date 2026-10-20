@@ -10,7 +10,7 @@
 
 设备列表里一台设备的线上 JSON 形状（从旧 WsConnection.SendDevices 拆出）。只依赖 BCL。根规则见项目根目录 AGENTS.md。
 
-公开面：`DeviceListJson.item id name createdAt lastSeen revoked online current desktop : JsonObject`。
+公开面：`DeviceListJson.item id name createdAt lastSeen (facts: Set<DeviceFact>) : JsonObject`；`DeviceFact = Revoked | Online | Current | Desktop`（RequireQualifiedAccess，四个正交运行时事实用集合表达，零裸布尔）。线上 JSON 字节契约不变：`online` 仍只对未吊销设备成立。
 
 ## LEMMA
 1. **行为与旧实现一致。** [根 AXIOM: 5]

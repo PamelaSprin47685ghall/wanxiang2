@@ -130,13 +130,13 @@ let ``SettingsTools ShowEditor validates id, command/url, timeout and saves vali
         // 参数框里的回车是换行，不提交
         editor.ArgsBox.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter))
         Assert.Equal(1, saves.Count)
-        editor.SetPending true
+        editor.ApplyPending true
         let saveButton = (named editor.View "正在保存…").Value
         Assert.False saveButton.IsEnabled
         Assert.False (named editor.View "取消").Value.IsEnabled
         editor.Summary.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control))
         Assert.Equal(1, saves.Count)
-        editor.SetPending false
+        editor.ApplyPending false
         editor.Summary.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control))
         Assert.Equal(2, saves.Count)
         Assert.True (named editor.View "添加").Value.IsEnabled

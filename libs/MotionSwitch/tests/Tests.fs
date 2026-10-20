@@ -11,8 +11,8 @@ let ``reduced motion zeroes durations and notifies only on change`` () =
     let seen = Collections.Generic.List<bool>()
     m.Changed.Add seen.Add
     Assert.Equal(TimeSpan.FromMilliseconds 200.0, m.Duration 200.0)
-    m.SetReduced true
-    m.SetReduced true
+    m.ApplyReduced true
+    m.ApplyReduced true
     Assert.Equal(TimeSpan.Zero, m.Duration 200.0)
-    m.SetReduced false
+    m.ApplyReduced false
     Assert.Equal<bool list>([ true; false ], List.ofSeq seen)

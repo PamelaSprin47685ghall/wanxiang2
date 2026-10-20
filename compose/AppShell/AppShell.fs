@@ -94,6 +94,11 @@ type ShellComposer(ports: ShellPorts) =
     let runs = ConversationRuns()
     let commandFeedback = CommandFeedbackTracker()
     let configFeedback = ConfigFeedbackTracker()
+    /// 「检查主机」的有界等待（30 秒）与在途请求 id：报告只认这次发出的请求。
+    let doctorWait = BoundedWait(BoundedWaits.doctorLimit)
+    let mutable doctorRequestId: Guid option = None
+    /// 上一次看到的主机实例：换主机时上一台主机的检查结果与配置问题都不属于新主机。
+    let mutable lastInstanceId = ""
 
     /// 一次性延时：入口壳的 After 是普通计时器，回来时先自停（旧 DispatcherTimer.RunOnce 的语义）。
     let afterOnce (delay: TimeSpan) (action: unit -> unit) : IDisposable =
@@ -105,6 +110,26 @@ type ShellComposer(ports: ShellPorts) =
                 action ())
         handle <- timer
         timer
+
+    let ms (t: Timing) = TimeSpan.FromMilliseconds (MotionTimings.initialMs t)
+
+    /// 主机能力表（HostCapabilities 到达后才有；未知 = 一律视为支持）
+    let mutable hostFeatures: Set<string> option = None
+
+    /// 发给主机的配置写入：request → ConfigApplied 的有界确认（回执与提示由 ProtocolDispatch 结算）。
+    let sendConfig (successMessage: string) (mk: Guid -> WireEvent) (onCompleted: bool -> unit) : unit =
+        let requestId = Guid.NewGuid()
+        configFeedback.Track(requestId, successMessage, onCompleted)
+        ports.Send (mk requestId)
+
+    let noResponse () = HostFeatures.noResponseMessage hostFeatures
+
+
+    /// 已 Build 之后的界面访问：事件回调都发生在 Build 之后（订阅就在 Build 里）。
+    let v () : ShellViews =
+        match views with
+        | Some built -> built
+        | None -> failwith "AppShell: 界面尚未构建（事件早于 Build）"
 
     member _.Model with get () = model
 
@@ -184,39 +209,46 @@ type ShellComposer(ports: ShellPorts) =
             // 3. Composer
             v.Composer.Render vs.Composer
 
-            // 4. Sidebar
-            let summaries =
-                model.Summaries
-                |> List.map (fun s ->
-                    {
-                        Wanxiang.UI.ConversationSummary.id = s.Id
-                        title = s.Title
-                        preview = s.Preview
-                        running = s.Running
-                        pinned = s.Pinned
-                        archived = s.Archived
-                        createdAt = s.UpdatedAt
-                        updatedAt = s.UpdatedAt
-                        messageCount = s.MessageCount
-                        isFork = false
-                        providerId = s.ProviderId
-                        model = s.Model
-                        lastCommitId = s.LastCommitId
-                    })
-            v.Sidebar.Render(vs.Sidebar, activeConvId, summaries)
+            // 4. Sidebar：SidebarVS 是唯一输入（行、活动对话、归档可见性、主机地址都在投影里）
+            v.Sidebar.Render vs.Sidebar
 
             // 5. Settings
             match vs.Settings with
             | Some settingsVS ->
                 v.SettingsHostVisible true
                 v.WorkspaceHostVisible false
-                settingsVS.Catalog |> Option.iter v.Settings.SetCatalog
+                v.Settings.Render settingsVS
             | None ->
                 v.SettingsHostVisible false
                 v.WorkspaceHostVisible true
 
             // 6. Approval
             v.Approval.Render(vs.Approval, activeConvId)
+
+            // 6.5 引导：目录就绪后有两种情形——卡片刚接上的服务取走（交接），或还没有可用服务（卡片留在聊天区）
+            match model.Conn with
+            | ConnPhase.Authed(_, CatalogPhase.Ready(cat, _)) ->
+                if Catalog.isReady cat then
+                    // 交接：卡片刚接上的模型服务已在目录里可用（只取一次；旧 CompleteOnboarding）
+                    match v.Onboarding.TakeConnected cat with
+                    | Some(providerId, modelId) ->
+                        v.Onboarding.Reset()
+                        if String.IsNullOrWhiteSpace model.Composer.Text then
+                            // 空闲输入框：预填第一句话并聚焦（旧 CompleteOnboarding 的交接）
+                            this.Dispatch(User(Composer(ComposerUserMsg.TextChanged OnboardingRules.FirstPrompt)))
+                        v.Composer.Focus()
+                        ports.EffectSink.ShowToast(
+                            sprintf "已连接 %s" (Catalog.describeModel providerId modelId cat), ToastTone.Info)
+                    | None -> ()
+                else
+                    // 引导卡：三项在途事实归模型，这里按单一入口投影回去
+                    v.Onboarding.Render
+                        { SelectedPresetKey = model.Onboarding.SelectedPresetKey
+                          DiscoveredModels = model.Onboarding.DiscoveredModels
+                          SwitchOffered = model.Onboarding.SwitchOffered }
+                    v.Chat.Pane.ShowEmbedded(v.Onboarding.View)
+                    v.Onboarding.StartDiscovery()
+            | _ -> ()
 
             // 7. Run effects
             ports.EffectSink.Run effects
@@ -255,6 +287,41 @@ type ShellComposer(ports: ShellPorts) =
                       Apply = fun ev ->
                           this.Dispatch(Msg.WireRecv ev)
                           match ev with
+                          | CatalogSnapshot _ ->
+                              // 引导交接在投影里做（目录可用即可取走），这里只留启动打点
+                              if StartupTrace.enabled then
+                                  ports.Post(fun () ->
+                                      if StartupTrace.mark "catalogReady" && StartupTrace.exitAfter then StartupTrace.requestExit ())
+                          | ProviderProbeResult d ->
+                              // 探活回执先到引导卡；它没在等，再由设置页接走
+                              let models = ProbeModels.ofJson d.models
+                              if not (v().Onboarding.ApplyProbe(d.providerId, d.ok, models, d.error)) then
+                                  v().Settings.ApplyProbe(d.providerId, d.ok, models, d.error)
+                          | SearchResults d ->
+                              // 迟到的旧结果已由 ProtocolDispatch 丢掉；这里是权威投递
+                              v().Sidebar.ApplySearchResults(
+                                  { queryId = d.queryId
+                                    query = d.query
+                                    hits = SearchHit.parse d.items
+                                    hasMore = d.hasMore
+                                    truncated = d.truncated },
+                                  d.offset)
+                          | SearchFailed d ->
+                              v().Sidebar.ApplySearchFailure(v().Sidebar.SearchQueryText, d.message)
+                          | HostCapabilities d ->
+                              hostFeatures <- Some(Set.ofList d.features)
+                          | HostConfigRejected d ->
+                              v().Settings.Health.ApplyConfigIssue(d.summary, d.errors)
+                          | ConfigChanged _ ->
+                              v().Settings.Health.ClearConfigIssue() |> ignore
+                          | DoctorReport d ->
+                              // 只认这次发出的请求的报告：迟到的旧报告丢掉。
+                              match doctorRequestId with
+                              | Some rid when rid = d.requestId ->
+                                  doctorRequestId <- None
+                                  doctorWait.Settle() |> ignore
+                                  v().Settings.Health.ApplyReport(d.ok, DoctorCheck.parseChecks d.checks)
+                              | _ -> ()
                           | ConversationListSnapshot _ ->
                               if StartupTrace.mark "listReady" && StartupTrace.exitAfter then
                                   afterOnce (TimeSpan.FromSeconds 3.0) (fun () -> StartupTrace.requestExit ()) |> ignore
@@ -272,6 +339,17 @@ type ShellComposer(ports: ShellPorts) =
 
     member this.HandleConnectionClosed(reason: string option) : unit =
         let issue = reason |> Option.map (fun r -> ConnectionIssue.Disconnected r)
+        // 在途请求随连接作废：编辑器退出 pending，设备分区说明「读取时连接断开」
+        commandFeedback.RejectAll()
+        configFeedback.RejectAll()
+        doctorRequestId <- None
+        doctorWait.Settle() |> ignore
+        match views with
+        | Some vs' ->
+            vs'.Settings.Devices.ApplyDisconnected()
+            // 断线时进行中的检查转成说明，不留在「检查中」。
+            vs'.Settings.Health.Disconnected()
+        | None -> ()
         this.Dispatch(Msg.ConnectionDown issue)
 
     member this.Commands: ShellCommands =
@@ -292,9 +370,7 @@ type ShellComposer(ports: ShellPorts) =
                           | OverlayPhase.PopupOpen _ -> true
                           | _ -> false
                       IsSettingsOpen = fun () ->
-                          match model.Conn with
-                          | ConnPhase.Authed(_, CatalogPhase.Ready(_, _)) when (Workspace.project model).Settings.IsSome -> true
-                          | _ -> false
+                          model.Settings.Open
                       IsDrawerOpen = fun () -> model.Nav.DrawerOpen
                       IsGenerating = fun () ->
                           match model.Conn with
@@ -304,7 +380,7 @@ type ShellComposer(ports: ShellPorts) =
                           match model.Conn with
                           | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active _)) -> true
                           | _ -> false
-                      VisibleOrder = fun () -> model.Summaries |> List.map (fun s -> string s.Id)
+                      VisibleOrder = fun () -> model.Summaries |> List.map (fun s -> string s.id)
                       HasPreset = fun _ -> false
                       PaletteInput = fun () ->
                           { hasConversation = false
@@ -416,7 +492,7 @@ type ShellComposer(ports: ShellPorts) =
     member this.HandleShortcut(shortcut: ShortcutAction) : bool =
         this.Commands.HandleShortcut shortcut
 
-    member this.SetPaletteRecent(recent: string list) = this.Dispatch(User(Palette(PaletteUserMsg.SetRecent recent)))
+    member this.ApplyPaletteRecent(recent: string list) = this.Dispatch(User(Palette(PaletteUserMsg.SetRecent recent)))
     member this.PaletteRecent() : string list = model.PaletteRecent
 
     member this.Build() : IDisposable =
@@ -425,17 +501,90 @@ type ShellComposer(ports: ShellPorts) =
         let subs = ResizeArray<IDisposable>()
         ports.SubscribeHostEvents(fun ev -> this.HandleEvent ev) |> subs.Add
         ports.SubscribeClosed(fun detail -> this.HandleConnectionClosed detail) |> subs.Add
+
+        // 侧栏：正文搜索的出口（查询词 → 线协议）与命中打开（打开对话 + 定位消息）。
+        built.Sidebar.SearchHandler <-
+            Some(fun query includeArchived offset ->
+                match MessageLink.tryParse query with
+                | Some(convId, commitId) ->
+                    built.Sidebar.ResetSearch()
+                    this.Dispatch(User(Sidebar(SidebarUserMsg.SearchHitSelect(convId, Some(string commitId)))))
+                | None ->
+                    let queryId = Guid.CreateVersion7()
+                    search.Sent(queryId, DateTimeOffset.UtcNow)
+                    ports.Send(
+                        WireEvent.SearchQuery
+                            { queryId = queryId
+                              query = query
+                              includeArchived = includeArchived
+                              offset = offset
+                              limit = SearchLimits.defaultPageSize }))
+        built.Sidebar.OpenSearchHit <- fun hit ->
+            this.Dispatch(User(Sidebar(SidebarUserMsg.SearchHitSelect(hit.conversationId, Some(string hit.messageId)))))
+
+        // 设置页：关闭与各设备操作都换成模型消息；吊销前须经确认对话框。
+        built.Settings.Bind(this.SettingsHooks())
+        built.Settings.CloseRequested.Add(fun () -> this.Dispatch(User(Settings(SettingsUserMsg.Close)))) |> ignore
+        built.Settings.Devices.ListRequested.Add(fun () -> this.Dispatch(User(Devices(DeviceUserMsg.LoadDevices)))) |> ignore
+        built.Settings.Devices.InviteRequested.Add(fun () -> this.Dispatch(User(Devices(DeviceUserMsg.RequestInvite)))) |> ignore
+        built.Settings.Devices.RenameRequested.Add(fun (deviceId, name) ->
+            this.Dispatch(User(Devices(DeviceUserMsg.RenameDevice(deviceId, name))))) |> ignore
+        built.Settings.Devices.RevokeRequested.Add(fun device ->
+            built.Dialogs.Confirm(
+                "吊销设备",
+                (sprintf "「%s」会立即断开，之后需要重新配对才能再连这台主机。" device.name),
+                "吊销",
+                fun () -> this.Dispatch(User(Devices(DeviceUserMsg.RevokeDevice device.id))))
+            |> ignore)
+        // 导入与预设入口（决策 363：导入归设置页）
+        built.Settings.WireImport(fun () ->
+            this.Dispatch(User(Settings(SettingsUserMsg.Close)))
+            this.ImportConversation())
+        built.Settings.WirePresets(this.RenamePreset, this.DeletePreset)
+
         let ticker = ports.Every (TimeSpan.FromMilliseconds 250.0) (fun () ->
             this.Dispatch(MsgTick DateTimeOffset.UtcNow))
+        // 决策 443/444：石沉大海的配置/命令/探活请求统一在计时器里收尾（界面提示归桌面壳订阅）
+        let expiry = ports.Every (ms Timing.OutboxDeliveryCheckTick) (fun () ->
+            let now = DateTimeOffset.UtcNow
+            let timeout = ms Timing.HostRequestTimeout
+            // 换主机：上一台主机的检查结果与配置问题都不属于新主机。
+            let instanceId =
+                match model.Conn with
+                | ConnPhase.Authed(inst, _) -> inst
+                | _ -> ""
+            if instanceId <> "" && instanceId <> lastInstanceId then
+                lastInstanceId <- instanceId
+                doctorRequestId <- None
+                doctorWait.Settle() |> ignore
+                v().Settings.Health.Reset()
+            // 检查主机超时：主机没给报告就别一直显示「正在检查」。
+            if doctorWait.Tick now then
+                doctorRequestId <- None
+                v().Settings.Health.ApplyUnavailable(BoundedWaits.doctorTimeoutText)
+            let expiredConfig = configFeedback.Expire(now, timeout)
+            let expiredCommands = commandFeedback.Expire(now, timeout)
+            for f in expiredConfig do f.onCompleted false
+            for f in expiredCommands do f.onCompleted false
+            if not (List.isEmpty expiredConfig && List.isEmpty expiredCommands) then
+                ports.EffectSink.ShowToast(noResponse (), ToastTone.Warning)
+            if search.Expire(now, timeout) then
+                v().Sidebar.ApplySearchFailure(v().Sidebar.SearchQueryText, noResponse ())
+            for (_, pid) in probes.Expire(now, timeout) do
+                let err = Some(noResponse ())
+                if not (v().Onboarding.ApplyProbe(pid, false, [], err)) then
+                    v().Settings.ApplyProbe(pid, false, [], err))
         this.Reproject()
         { new IDisposable with
             member _.Dispose() =
                 ticker.Dispose()
+                expiry.Dispose()
                 for sub in subs do sub.Dispose() }
 
     member this.AutoConnect() =
         match ports.TryLoadClientToml() with
         | Some(url, token) ->
+            this.Dispatch(Msg.ConnectionRequested url)
             async {
                 try
                     let! epoch = ports.Connect url
@@ -494,15 +643,8 @@ type ShellComposer(ports: ShellPorts) =
         | ConnPhase.Authed _ ->
             match views with
             | Some v ->
-                let summaries =
-                    model.Summaries
-                    |> List.map (fun s ->
-                        { Wanxiang.UI.ConversationSummary.id = s.Id; title = s.Title; preview = s.Preview; running = s.Running
-                          pinned = s.Pinned; archived = s.Archived; createdAt = s.UpdatedAt; updatedAt = s.UpdatedAt
-                          messageCount = s.MessageCount; isFork = false; providerId = s.ProviderId; model = s.Model; lastCommitId = s.LastCommitId })
-                let lineage = ForkLineage.parse state.ConversationList
-                let lineageInfo = ConversationTransfer.lineageOf summaries lineage convId
-                let title = model.Summaries |> List.tryFind (fun s -> s.Id = convId) |> Option.map (fun s -> s.Title) |> Option.defaultValue "导出对话"
+                let lineageInfo = ConversationTransfer.lineageOf model.Summaries model.Lineage convId
+                let title = model.Summaries |> List.tryFind (fun s -> s.id = convId) |> Option.map (fun s -> s.title) |> Option.defaultValue "导出对话"
                 let desk =
                     v.NewExportDesk
                         (fun query -> ports.SendAtGeneration (ConversationExportRead query))
@@ -585,20 +727,20 @@ type ShellComposer(ports: ShellPorts) =
               let cmd = SetConversationFlags {| invocationId = invId; conversationId = s.id; pinned = s.pinned; archived = archived |}
               this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
           selectionAllPinned = fun ids ->
-              let rows = model.Summaries |> List.filter (fun s -> List.contains s.Id ids)
-              not (List.isEmpty rows) && rows |> List.forall (fun s -> s.Pinned)
+              let rows = model.Summaries |> List.filter (fun s -> List.contains s.id ids)
+              not (List.isEmpty rows) && rows |> List.forall (fun s -> s.pinned)
           setPinnedMany = fun ids pin ->
               for id in ids do
-                  match model.Summaries |> List.tryFind (fun s -> s.Id = id) with
+                  match model.Summaries |> List.tryFind (fun s -> s.id = id) with
                   | Some s ->
-                      let cmd = SetConversationFlags {| invocationId = Guid.NewGuid(); conversationId = s.Id; pinned = pin; archived = s.Archived |}
+                      let cmd = SetConversationFlags {| invocationId = Guid.NewGuid(); conversationId = s.id; pinned = pin; archived = s.archived |}
                       this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
                   | None -> ()
           setArchivedMany = fun ids archived ->
               for id in ids do
-                  match model.Summaries |> List.tryFind (fun s -> s.Id = id) with
+                  match model.Summaries |> List.tryFind (fun s -> s.id = id) with
                   | Some s ->
-                      let cmd = SetConversationFlags {| invocationId = Guid.NewGuid(); conversationId = s.Id; pinned = s.Pinned; archived = archived |}
+                      let cmd = SetConversationFlags {| invocationId = Guid.NewGuid(); conversationId = s.id; pinned = s.pinned; archived = archived |}
                       this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
                   | None -> ()
           deleteMany = fun ids -> this.Dispatch(User(Sidebar(SidebarUserMsg.BatchDelete ids)))
@@ -610,6 +752,7 @@ type ShellComposer(ports: ShellPorts) =
           reconnect = fun () ->
               match ports.TryLoadClientToml() with
               | Some(url, token) ->
+                  this.Dispatch(Msg.ConnectionRequested url)
                   async {
                       try
                           let! epoch = ports.Connect url
@@ -618,26 +761,138 @@ type ShellComposer(ports: ShellPorts) =
                   } |> Async.Start
               | None -> ()
           toggleArchivedVisibility = fun () ->
-              let next = { model.Prefs with showArchived = not model.Prefs.showArchived }
-              ports.EffectSink.PrefsSave next
+              this.Dispatch(User(Sidebar(SidebarUserMsg.ToggleShowArchived)))
           closeNavigation = fun () -> this.Dispatch(User(Overlay(OverlayUserMsg.Escape))) }
 
     member this.SettingsHooks() : Wanxiang2.SettingsScreen.SettingsHooks =
-        { UpsertProvider = fun _ _ -> ()
-          DeleteProvider = fun id -> this.Dispatch(User(Settings(SettingsUserMsg.DeleteProvider id)))
-          ProbeProvider = fun id -> this.Dispatch(User(Settings(SettingsUserMsg.ProbeProvider id)))
-          UpsertMcp = fun _ _ -> ()
-          DeleteMcp = fun _ -> ()
-          UpdateGeneration = fun _ onDone -> onDone true
-          SavePrefs = fun p -> ports.EffectSink.PrefsSave p }
+        { UpsertProvider =
+            fun payload onCompleted ->
+                sendConfig
+                    "模型服务设置已保存"
+                    (fun requestId -> ConfigUpsertProvider {| requestId = requestId; provider = payload |})
+                    onCompleted
+          DeleteProvider =
+            fun id ->
+                v().Dialogs.Confirm(
+                    "删除模型服务",
+                    (sprintf "「%s」将从配置中移除，使用它的对话需要重新选择模型。" id),
+                    "删除",
+                    fun () ->
+                        sendConfig
+                            "模型服务已删除"
+                            (fun requestId -> ConfigDeleteProvider {| requestId = requestId; providerId = id |})
+                            ignore)
+                |> ignore
+          ProbeProvider = fun id -> this.ProbeProvider id
+          UpsertMcp =
+            fun payload onCompleted ->
+                sendConfig
+                    "MCP 设置已保存"
+                    (fun requestId -> ConfigUpsertMcp {| requestId = requestId; server = payload |})
+                    onCompleted
+          DeleteMcp =
+            fun id ->
+                v().Dialogs.Confirm(
+                    "删除 MCP 服务",
+                    (sprintf "「%s」提供的工具将不再可用。" id),
+                    "删除",
+                    fun () ->
+                        sendConfig
+                            "MCP 服务已删除"
+                            (fun requestId -> ConfigDeleteMcp {| requestId = requestId; serverId = id |})
+                            ignore)
+                |> ignore
+          UpdateGeneration =
+            fun payload onCompleted ->
+                sendConfig
+                    "生成设置已保存"
+                    (fun requestId -> ConfigUpdateGeneration {| requestId = requestId; generation = payload |})
+                    onCompleted
+          SavePrefs =
+            fun p ->
+                // 偏好先入模型再落盘：下次投影各分区读到的就是新值（单一归属，不再旁路）。
+                this.Dispatch(User(Settings(SettingsUserMsg.PrefsChanged p)))
+          RequestDoctorCheck =
+            fun () ->
+                // 「检查主机」：纯读请求，带 requestId；报告由协议事件分支回填。
+                match model.Conn with
+                | ConnPhase.Authed(_, _) ->
+                    let requestId = Guid.NewGuid()
+                    doctorRequestId <- Some requestId
+                    doctorWait.Begin(DateTimeOffset.UtcNow)
+                    ports.Send(DoctorRequest {| requestId = requestId |})
+                | _ -> v().Settings.Health.ApplyUnavailable(BoundedWaits.doctorOfflineText) }
 
     member this.OnboardingHooks() : Wanxiang2.SettingsScreen.OnboardingHooks =
-        { UpsertProvider = fun _ _ -> ()
-          DiscardProvider = fun _ -> ()
-          ProbeProvider = fun id -> this.Dispatch(User(Settings(SettingsUserMsg.ProbeProvider id)))
-          TakenIds = fun () -> []
-          DiscoverLocal = fun () -> Task.FromResult None
-          OpenAdvanced = fun () -> this.Dispatch(User(Settings(SettingsUserMsg.OpenSection (Some "providers")))) }
+        { UpsertProvider =
+            fun payload onCompleted ->
+                // 引导卡的写入由卡片自己说话：成功文案留空，ProtocolDispatch 不叠 toast。
+                sendConfig
+                    ""
+                    (fun requestId -> ConfigUpsertProvider {| requestId = requestId; provider = payload |})
+                    (fun ok ->
+                        onCompleted ok
+                        // 卡片此刻才把「已接上」记在卡片里：重投影一次，交接才接得住
+                        this.Reproject())
+          DiscardProvider =
+            fun id ->
+                sendConfig "" (fun requestId -> ConfigDeleteProvider {| requestId = requestId; providerId = id |}) ignore
+          ProbeProvider = fun id -> this.ProbeProvider id
+          TakenIds =
+            fun () ->
+                match model.Conn with
+                | ConnPhase.Authed(_, CatalogPhase.Ready(cat, _)) -> cat.providers |> List.map (fun p -> p.id)
+                | _ -> []
+          DiscoverLocal =
+            fun () ->
+                if OnboardingRules.canDiscoverLocal model.ServerUrl then
+                    OnboardingRules.discoverOllamaAt ProviderPresets.OllamaProbeUrl
+                else Task.FromResult None
+          OpenAdvanced =
+            fun () ->
+                this.Dispatch(User(Settings(SettingsUserMsg.OpenSection (Some "providers"))))
+                match views with
+                | Some vs' -> ports.Post(fun () -> vs'.Settings.ApplyOpenAddProvider())
+                | None -> ()
+          Report = fun msg -> this.Dispatch(User(Onboarding(msg))) }
+
+    /// 探活：登记请求再发出；回执由 ProtocolDispatch 结算（超时走 ExpireHostRequests）。
+    member this.ProbeProvider(providerId: string) =
+        let requestId = Guid.NewGuid()
+        probes.Track(requestId, providerId, DateTimeOffset.UtcNow)
+        ports.Send(ProviderProbeRequest {| requestId = requestId; providerId = providerId |})
+
+    /// 预设写入（须主机支持 presets 能力；未知 = 允许）
+    member this.RenamePreset(preset: Wanxiang.UI.PresetInfo) =
+        if HostFeatures.supports hostFeatures HostFeatures.Presets then
+            v().Dialogs.Prompt(
+                "重命名预设",
+                "预设名称",
+                preset.name,
+                "保存",
+                fun name onCompleted ->
+                    sendConfig
+                        "预设已重命名"
+                        (fun requestId ->
+                            ConfigUpsertPreset
+                                {| requestId = requestId; preset = Presets.payloadOf (Some preset.id) name (Presets.ofPreset preset) |})
+                        onCompleted)
+            |> ignore
+        else ports.EffectSink.ShowToast(HostFeatures.unsupportedMessage HostFeatures.Presets, ToastTone.Warning)
+
+    member this.DeletePreset(preset: Wanxiang.UI.PresetInfo) =
+        if HostFeatures.supports hostFeatures HostFeatures.Presets then
+            v().Dialogs.Confirm(
+                "删除预设",
+                (sprintf "「%s」将从这台主机上移除。已经用它建好的对话不受影响。" preset.name),
+                "删除",
+                fun () ->
+                    sendConfig
+                        "预设已删除"
+                        (fun requestId -> ConfigDeletePreset {| requestId = requestId; presetId = preset.id |})
+                        ignore)
+            |> ignore
+        else ports.EffectSink.ShowToast(HostFeatures.unsupportedMessage HostFeatures.Presets, ToastTone.Warning)
 
     member this.WorkspaceHooks(touch: unit -> bool) : Wanxiang2.Workspace.WorkspaceHooks =
         { PrefersTouch = touch

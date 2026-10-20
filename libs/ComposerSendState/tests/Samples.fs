@@ -2,21 +2,24 @@ module Samples
 
 open Wanxiang.UI
 
-let up = { ready = false; failed = false; isImage = false }
-let ok = { ready = true; failed = false; isImage = false }
-let bad = { ready = false; failed = true; isImage = false }
-let img = { ready = true; failed = false; isImage = true }
-let lists = [ []; [ ok ]; [ up ]; [ bad ]; [ img ]; [ ok; up ]; [ ok; bad ]; [ img; ok ] ]
+let up = { stage = AttachmentStage.Uploading; kind = AttachmentKind.OtherFile }
+let ok = { stage = AttachmentStage.Ready; kind = AttachmentKind.OtherFile }
+let bad = { stage = AttachmentStage.Failed; kind = AttachmentKind.OtherFile }
+let restored = { stage = AttachmentStage.Restored; kind = AttachmentKind.OtherFile }
+let img = { stage = AttachmentStage.Ready; kind = AttachmentKind.Image }
+let lists = [ []; [ ok ]; [ up ]; [ bad ]; [ restored ]; [ img ]; [ ok; up ]; [ ok; bad ]; [ img; ok ] ]
 let inputs =
-    [ for enabled in [ true; false ] do
-        for generating, canStop in [ false, false; true, true; true, false ] do
-          for hasText in [ false; true ] do
+    [ for host in [ HostAvailable; HostDisabled ""; HostDisabled "主机忙" ] do
+        for gen in [ Idle; Generating CanStop; Generating WaitingHost ] do
+          for text in [ EmptyText; HasText ] do
             for atts in lists do
-              for visionNo in [ false; true ] do
-                for reason in [ ""; "主机忙" ] do
-                  for enterSends in [ true; false ] ->
-                    { enabled = enabled; generating = generating; canStop = canStop; disabledReason = reason
-                      hasText = hasText; attachments = atts; visionNo = visionNo
-                      visionBlockedMessage = "当前模型不支持图片"; enterSends = enterSends } ]
-let texts = [ ""; "  "; "hi" ]
-let chips = [ up; ok; bad ]
+              for vision in [ VisionAllowed; VisionForbidden "当前模型不支持图片" ] do
+                for sendKey in [ EnterSends; CtrlEnterSends ] ->
+                    { host = host
+                      generation = gen
+                      text = text
+                      attachments = atts
+                      vision = vision
+                      sendKey = sendKey } ]
+let texts = [ EmptyText; HasText ]
+let chipStages = [ AttachmentStage.Uploading; AttachmentStage.Ready; AttachmentStage.Failed; AttachmentStage.Restored ]

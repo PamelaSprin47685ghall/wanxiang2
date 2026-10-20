@@ -8,16 +8,15 @@ open Wanxiang2.WorkspaceState
 
 let private setup () =
     let mutable now = DateTimeOffset(2026, 10, 14, 0, 0, 0, TimeSpan.Zero)
-    let opacity = Cell 0.6
-    let look = { FadeOpacity = opacity; Hold = Cell(TimeSpan.FromMilliseconds 1500.0); Fade = Cell(TimeSpan.FromMilliseconds 150.0) }
+    let look = { FadeOpacity = 0.6; Hold = TimeSpan.FromMilliseconds 1500.0; Fade = TimeSpan.FromMilliseconds 150.0 }
     let b = Button()
     let c = CopyButton(b, look, (fun () -> now))
-    b, c, opacity, (fun ms -> now <- now.AddMilliseconds ms)
+    b, c, (fun ms -> now <- now.AddMilliseconds ms)
 
 [<Fact>]
 let ``复制后先淡出再保持勾号，到点复位`` () =
     Headless.run (fun () ->
-        let b, c, _, advance = setup ()
+        let b, c, advance = setup ()
         let seen = ResizeArray<CopyState>()
         c.StateChanged.Add seen.Add
         c.Copied false
@@ -35,7 +34,7 @@ let ``复制后先淡出再保持勾号，到点复位`` () =
 [<Fact>]
 let ``减弱动效不淡出；再次复制重新起算`` () =
     Headless.run (fun () ->
-        let b, c, _, advance = setup ()
+        let b, c, advance = setup ()
         c.Copied true
         Assert.Equal(CopyState.Confirmed, c.State)
         Assert.Equal(1.0, b.Opacity)
@@ -46,14 +45,16 @@ let ``减弱动效不淡出；再次复制重新起算`` () =
         Assert.Equal(CopyState.Confirmed, c.State))
 
 [<Fact>]
-let ``离开可视树立即复位；淡出值随主题实时变`` () =
+let ``离开可视树立即复位；淡出到期回到确认态`` () =
     Headless.run (fun () ->
-        let b, c, opacity, _ = setup ()
+        let b, c, advance = setup ()
         let w = Window(Content = b)
         w.Show()
         c.Copied false
-        opacity.Set 0.4
-        Assert.Equal(0.4, b.Opacity)
+        Assert.Equal(0.6, b.Opacity)
+        advance 150.0
+        c.Refresh()
+        Assert.Equal(1.0, b.Opacity)
         w.Content <- null
         Assert.Equal(CopyState.Default, c.State)
         Assert.Equal(1.0, b.Opacity)
@@ -62,7 +63,7 @@ let ``离开可视树立即复位；淡出值随主题实时变`` () =
 [<Fact>]
 let ``单入口 Render(CopyButtonVS) 幂等生效`` () =
     Headless.run (fun () ->
-        let b, c, _, _ = setup ()
+        let b, c, _ = setup ()
         let vs: CopyButtonVS =
             { State = CopyButtonState.Confirmed
               Text = "hi"

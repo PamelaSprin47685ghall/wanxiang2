@@ -57,7 +57,7 @@ type ActionStrip(rest: StripRest) =
     member _.Host: Control = row
     member _.Shown = shown
     /// 悬停、聚焦或触屏选中时显示，否则回到闲置档
-    member _.SetShown(value: bool) =
+    member _.ApplyShown(value: bool) =
         shown <- value
         apply ()
 
@@ -85,7 +85,7 @@ type ActionStrip(rest: StripRest) =
         p :> Control
 
     /// 换按钮的图标（复制确认时换成对勾）
-    member _.SetIcon(button: Button, glyph: StripGlyph, ?brush: IBrush) =
+    member _.ApplyIcon(button: Button, glyph: StripGlyph, ?brush: IBrush) =
         let g = ActionStrip.GlyphControl(glyph, ?brush = brush)
         button.Content <- g
 
@@ -105,7 +105,7 @@ type ActionStrip(rest: StripRest) =
                 VerticalAlignment = VerticalAlignment.Center)
         button.Classes.Add "icon-button"
         button.Classes.Add "ghost"
-        this.SetIcon(button, glyph)
+        this.ApplyIcon(button, glyph)
         ToolTip.SetTip(button, tip)
         AutomationProperties.SetName(button, name)
         AutomationProperties.SetHelpText(button, help)
@@ -130,7 +130,7 @@ type ActionStrip(rest: StripRest) =
                 | _ -> StripGlyph.Copy
             let b = this.Add(glyph, item.Tip, item.Name, item.Help, fun () -> onAction item.Id)
             b.IsEnabled <- item.Enabled
-        this.SetShown vs.Visible
+        this.ApplyShown vs.Visible
 
 module ActionStrip =
     /// 复制按钮的读屏名带角色与序号，同屏多个「复制」不撞名

@@ -7,7 +7,7 @@ open Wanxiang.UI
 
 let private fresh () =
     let d = GenerationDraft<int>(0)
-    d.SetScope "A"
+    d.ApplyScope "A"
     d.CatalogArrived(1, ignore)
     d
 
@@ -34,9 +34,9 @@ let ``catalog never overwrites an unsaved draft`` () =
 let ``a draft cannot be saved to another host but can after coming back`` () =
     let d = fresh ()
     d.Edited()
-    d.SetScope "B"
+    d.ApplyScope "B"
     Assert.False d.CanSave
-    d.SetScope "A"
+    d.ApplyScope "A"
     Assert.True d.CanSave
 
 [<Fact>]
@@ -54,7 +54,7 @@ let ``switching hosts voids the pending confirmation`` () =
     let d = fresh ()
     d.Edited()
     let save = d.BeginSave 5
-    d.SetScope "B"
+    d.ApplyScope "B"
     Assert.False d.Saving
     Assert.False(d.Finish(save, true))
     Assert.Equal(1, d.Baseline)

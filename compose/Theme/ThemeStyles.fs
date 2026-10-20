@@ -63,6 +63,7 @@ module StyleClass =
     let animBreathe = "anim-breathe"
     let animSpin = "anim-spin"
     let animFadeIn = "anim-fade-in"
+    let foldHeader = "fold-header"
 
 /// 把主题样式装进一个 Styles。样式只建一次：画笔是管理者的活实例（原地改色），
 /// 尺寸、间距经 ToBinding 绑到管理者的活值，焦点环颜色是本对象自己的活值、随 Changed 更新。
@@ -173,6 +174,9 @@ type ThemeStyles(manager: ThemeManager) =
           yield style (border StyleClass.selectButton)
               [ Border.BackgroundProperty, box (brush PaletteKey.Surface)
                 Border.BorderBrushProperty, box (brush PaletteKey.Border) ]
+          yield style (buttonCls StyleClass.selectButton)
+              [ Button.BackgroundProperty, box (brush PaletteKey.Surface)
+                Button.BorderBrushProperty, box (brush PaletteKey.Border) ]
           yield style (fun s -> s.OfType<TextBlock>().Class(StyleClass.sectionLabel))
               [ TextBlock.FontSizeProperty, (metric Metric.FontMicro)
                 TextBlock.FontWeightProperty, box FontWeight.Medium
@@ -370,7 +374,17 @@ type ThemeStyles(manager: ThemeManager) =
                   spinAnim.Duration <- TimeSpan.Zero
               else
                   breatheAnim.Duration <- TimeSpan.FromMilliseconds (manager.Timing Timing.CaretBreathPhase).Value
-                  spinAnim.Duration <- TimeSpan.FromMilliseconds ((manager.Timing Timing.BusySpinnerFrame).Value * 20.0)) ]
+                  spinAnim.Duration <- TimeSpan.FromMilliseconds ((manager.Timing Timing.BusySpinnerFrame).Value * 20.0))
+          // ---- 原生 Expander 折叠头样式 ----
+          yield style (fun s -> s.OfType<Expander>().Class(StyleClass.foldHeader))
+              [ Expander.BackgroundProperty, box Brushes.Transparent
+                Expander.BorderBrushProperty, box Brushes.Transparent
+                Expander.BorderThicknessProperty, box (Thickness 0.0)
+                Expander.PaddingProperty, box (Thickness 0.0) ]
+          yield style (fun s -> s.OfType<Expander>().Class(StyleClass.foldHeader).Class("no-motion").Template().OfType<ToggleButton>().Name("ExpanderHeader").Template().OfType<Avalonia.Controls.Shapes.Path>().Name("ExpandCollapseChevron"))
+              [ Visual.TransitionsProperty, null ]
+          yield style (fun s -> s.OfType<Expander>().Class("no-motion").Template().OfType<ToggleButton>().Name("ExpanderHeader").Template().OfType<Avalonia.Controls.Shapes.Path>().Name("ExpandCollapseChevron"))
+              [ Visual.TransitionsProperty, null ] ]
 
     do for s in build () do group.Add s
 

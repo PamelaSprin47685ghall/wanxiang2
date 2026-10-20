@@ -16,6 +16,6 @@ let ``only the latest attempt's reply counts`` () =
 
 [<Fact>]
 let ``import key needs a preview and an idle dialog`` () =
-    Assert.False (ImportView.chrome false false).importVisible
-    Assert.False (ImportView.chrome true true).importEnabled
+    Assert.Equal(ImportGate.Hidden, (ImportView.chrome false false).gate)
+    Assert.Equal(ImportGate.Disabled, (ImportView.chrome true true).gate)
     Assert.Equal("换一个文件…", (ImportView.chrome true false).pickText)

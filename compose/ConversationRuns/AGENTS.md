@@ -13,4 +13,6 @@
 - ModelChipRateLimitTests：`retry countdown deadline is fixed at finish time and survives re-reads`、`non retryable errors never get a countdown`
 - LibraryUndoTests：`§215 每类不可自愈的错误都有恢复动作`（`ErrorRecovery.forKind` 在本组合者，动作与文案在 ErrorRecovery 库）
 - R19SimplifyTests：`366 限流只给「换个模型」并直达切换器`
-- 另：`GenerationOutcome.errorOf` / `notice` 与 `FinishNotice`，迁自旧 AppShell HandleEvent 的 GenerationFinished 分支（D2 Fail-closed）。`tests/golden/expected.txt` 由 `tools/OldGenerationOutcome.fs`（原样摘录）经 `tools/gen-golden.fsx` 生成；新增 `D2 无错误详情的失败与未知状态都落成可重试的通用失败`。
+- 另：`GenerationOutcome.errorOf` / `notice` 与 `FinishNotice`，迁自旧 AppShell HandleEvent 的 GenerationFinished 分支（D2 Fail-closed）；新增 `D2 无错误详情的失败与未知状态都落成可重试的通用失败`。
+
+生成结束的旧分支金样复刻已退役（`tests/golden/expected.txt`、`tools/OldGenerationOutcome.fs`、`tools/gen-golden.fsx` 全删，`tests/Render.fs` 一并删）。改为直接断言真实行为：`tests/Tests.fs` 断言 `errorOf` 对每种结束状态（完成 / 取消 / 失败 / 未知）的判定与错误落成（含未知状态的 detail），断言 `notice` 在当前对话与非当前对话下的提示差异（卡片 / 一句 toast / 已停止），并跑两条真实生成序列（成功与失败）验证 `ConversationRuns` 的状态转移与副作用（用量记下、消息清空、半截回复保留、清错误时半截一并清掉）。

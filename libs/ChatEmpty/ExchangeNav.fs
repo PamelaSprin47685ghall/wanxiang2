@@ -70,7 +70,7 @@ type ExchangeNav() =
     member _.OlderFailureText = message.Text
 
     /// 菜单与快捷键共用的端点可用态（旧 syncExchangeNavState 的结果）
-    member _.SetJumpEnds(previous: bool, next: bool) =
+    member _.ApplyJumpEnds(previous: bool, next: bool) =
         canPrev <- previous
         canNext <- next
 

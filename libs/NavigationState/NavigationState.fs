@@ -47,7 +47,8 @@ type NavigationController(initialSidebarCollapsed: bool, compactBreakpoint: floa
                 { state with sidebarCollapsed = not state.sidebarCollapsed }
         state
 
-    member _.SetCompactNavigation(opened: bool) =
+    /// 窄屏抽屉开合（单槽投影，幂等）：返回更新后的状态快照。
+    member _.ApplyCompactNavigation(opened: bool) =
         if state.compactMode then state <- { state with compactNavigationOpen = opened }
         state
 

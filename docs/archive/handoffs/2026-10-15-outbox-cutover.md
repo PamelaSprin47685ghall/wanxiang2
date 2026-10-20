@@ -6,7 +6,7 @@
 
 | 职责 | 当前 owner | 库侧能力 | 已消费？ | 可退出的旧路径 |
 |---|---|---|---|---|
-| Outbox 离线排队/重发/状态机 | `Wanxiang2.Outbox`（compose，`MessageOutbox`） | Stage/Restore/SetState/Expire/Disconnect/DiscardUnsent/DiscardConversation/ConversationReady/TryFind/ForInstance/Items/AllInstances/Accept/Commit/RejectCreation | 是：AppShell.fs 约 26 处直接调用 | 无（旧 `Model/UiControllers.fs`/`DraftStore.fs` 已不在 fsproj Compile 列表） |
+| Outbox 离线排队/重发/状态机 | `Wanxiang2.Outbox`（compose，`MessageOutbox`） | Stage/Restore/ApplyState/Expire/Disconnect/DiscardUnsent/DiscardConversation/ConversationReady/TryFind/ForInstance/Items/AllInstances/Accept/Commit/RejectCreation | 是：AppShell.fs 约 26 处直接调用 | 无（旧 `Model/UiControllers.fs`/`DraftStore.fs` 已不在 fsproj Compile 列表） |
 | CommandFeedback 确认/拒绝/超时 | `Wanxiang2.CommandFeedback`（libs，`CommandFeedbackTracker`） | TrackId/TrackIdWithCompletion/Commit/Reject/RejectAll/Clear/Expire | 是（含经 Outbox 包 AutoOpen 扩展按命令登记） | 无 |
 | CommandCommitted/Rejected/Queued 事件分派 | `Wanxiang2.ProtocolDispatch`（compose） | `Outbox.Accept/Commit` + `Commands.Commit/Reject` | 是：AppShell 把 outbox/commandFeedback 实例传入 Dispatch（AppShell.fs:1524–1525） | 无（旧 HandleEvent 已由 Dispatch 取代） |
 | TearDownConnection 衔接 | 宿主（AppShell.fs:574–584） | 消费 `outbox.Disconnect` + `commandFeedback.RejectAll` + `configFeedback.RejectAll` | 是（AuthAccepted:1550 的第二处 Disconnect 为换 instanceId 清理，语义独立非重复） | 无 |

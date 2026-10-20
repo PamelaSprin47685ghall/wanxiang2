@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- 组合者：宿主 AppShell.fs 的编排核心（认证步骤序列、连接/重连调度、视口轮询处理、协议事件界面面、
-       对话操作、附件、导入导出、草稿策略、视图组装）。命名空间沿用 Wanxiang.UI（与 ShellCommands、
-       ProtocolDispatch、DeletionDesk、DraftSession 同模式）。不持 DispatcherTimer、不做文件 IO、
+       对话操作、附件、导入导出、草稿策略、视图组装）。命名空间沿用 Wanxiang.UI（与 ShellCommands、ProtocolDispatch 同模式）。不持 DispatcherTimer、不做文件 IO、
        不做 Browser 调用——计时、IO、浏览器与视图端口全部由入口壳经 ShellPorts 注入。 -->
   <ItemGroup>
     <Compile Include="UnansweredReply.fs" />
@@ -25,8 +24,6 @@
     <PackageReference Include="Wanxiang2.ModelSwitchDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.TransferDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DialogsDesk" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DeletionDesk" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DraftSession" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ProtocolDispatch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ShellCommands" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Catalog" VersionOverride="0.0.0-local" />

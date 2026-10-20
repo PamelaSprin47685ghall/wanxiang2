@@ -11,12 +11,6 @@ open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
 open Wanxiang2.WorkspaceState
 
-/// 面包屑呈现事实（兼容定义）
-type CrumbView =
-    { Text: string
-      Description: string
-      Clickable: bool }
-
 /// 动态资源绑定辅助
 module private Dyn =
     let res (key: string) =
@@ -218,6 +212,14 @@ type ChatHeader() =
             generatingChip.IsHitTestVisible <- isGenerating
             generatingChip.Focusable <- isGenerating
 
+    let applyCompact (compact: bool) =
+        isCompact <- compact
+        let size = if compact then 44.0 else 30.0
+        for b in [ sidebarButton; moreButton ] do
+            b.Width <- size
+            b.Height <- size
+        syncChip ()
+
     do
         chipRow.Children.Add dot
         chipRow.Children.Add caption
@@ -304,7 +306,7 @@ type ChatHeader() =
     /// 单入口幂等渲染：根据 ChatHeaderVS 投影全量刷新顶栏各部件
     member this.Render(vs: ChatHeaderVS) =
         bar.IsVisible <- vs.Visible
-        this.SetCompact(vs.Compact)
+        applyCompact vs.Compact
         bar.Padding <- Thickness(vs.InsetLeft, 0.0, vs.InsetLeft, 0.0)
 
         // 更多按钮与侧栏按钮可见性
@@ -356,51 +358,6 @@ type ChatHeader() =
         | None ->
             crumbClickable <- false
             crumbBar.IsVisible <- false
-
-    // 为组合层过渡保留的兼容包装（内部映射为 Render 调用）
-    member this.SetTitle(text: string, canEdit: bool) =
-        isEditable <- canEdit
-        currentTitle <- text
-        titleText.Text <- text
-        if not isEditing then editBox.Text <- text
-        titleAction.Focusable <- canEdit
-        titleAction.Cursor <- if canEdit then new Cursor(StandardCursorType.Hand) else null
-        chrome text
-
-    member this.BeginRename() = beginEdit ()
-    member this.CommitRename(_refocus: bool) = commit ()
-    member this.CancelRename() = cancel ()
-
-    member this.SetGenerating(value: bool, statusText: string) =
-        isGenerating <- value
-        caption.Text <- if String.IsNullOrWhiteSpace statusText then "生成中" else statusText
-        syncChip ()
-
-    member this.SetConversationChrome(value: bool) =
-        moreButton.IsVisible <- value
-        bar.IsVisible <- true
-
-    member this.SetCompact(value: bool, ?target: float) =
-        isCompact <- value
-        let size = if value then defaultArg target 44.0 else 30.0
-        for b in [ sidebarButton; moreButton ] do
-            b.Width <- size
-            b.Height <- size
-        syncChip ()
-
-    member this.SetInset(inset: float) =
-        bar.Padding <- Thickness(inset, 0.0, inset, 0.0)
-
-    member this.SetCrumb(crumb: CrumbView option) =
-        match crumb with
-        | Some c ->
-            crumbClickable <- c.Clickable
-            crumbText.Text <- c.Text
-            crumbAction.Focusable <- c.Clickable
-            crumbAction.Cursor <- if c.Clickable then new Cursor(StandardCursorType.Hand) else null
-            ToolTip.SetTip(crumbAction, c.Description)
-            AutomationProperties.SetName(crumbAction, c.Text)
-            crumbBar.IsVisible <- not (String.IsNullOrEmpty c.Text)
-        | None ->
-            crumbClickable <- false
-            crumbBar.IsVisible <- false
+    member _.BeginRename() = beginEdit ()
+    member _.CommitRename(_refocus: bool) = commit ()
+    member _.CancelRename() = cancel ()

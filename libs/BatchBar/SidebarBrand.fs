@@ -79,20 +79,14 @@ type SidebarBrand() =
     member _.PresetButton = presetButton :> Control
     member _.LogoSlot = logoSlot
 
-    /// 宿主挂载品牌图标
-    member _.SetLogo(logo: Control) =
+    /// 宿主挂载品牌图标（插槽：构造期一次性接入，不随每帧投影变）
+    member _.SlotLogo(logo: Control) =
         logoSlot.Child <- logo
 
-    /// 有预设才出现
-    member _.SetPresetsVisible(visible: bool) = presetButton.IsVisible <- visible
-
-    /// 紧凑：出现返回键
-    member _.SetCompact(value: bool) =
-        backButton.IsVisible <- value
-
     /// 单入口渲染
-    member this.Render(vs: SidebarBrandVS) =
-        this.SetPresetsVisible vs.PresetsVisible
+    member _.Render(vs: SidebarBrandVS) =
+        presetButton.IsVisible <- vs.PresetsVisible
+        backButton.IsVisible <- vs.Compact
 
     [<CLIEvent>] member _.BackClicked = back.Publish
     [<CLIEvent>] member _.NewClicked = create.Publish

@@ -9,7 +9,7 @@ module Stderr =
 
     let private log = JsonLinesLog((fun line -> eprintfn "%s" line), (fun () -> System.DateTimeOffset.UtcNow), 200)
 
-    let setInstanceId (id: string) = log.SetInstanceId id
+    let setInstanceId (id: string) = log.ApplyInstanceId id
     let registerSecrets (secrets: string seq) = log.RegisterSecrets secrets
     let clearSecrets () = log.ClearSecrets()
     let redact (text: string) : string = log.Redact text

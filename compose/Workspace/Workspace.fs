@@ -52,13 +52,13 @@ type Workspace
     let mutable cssWidth: float option = None
 
     let shellHooks: ShellHooks =
-        { SetCompactMode =
+        { ApplyCompactMode =
             fun compact ->
                 let baseVS = Workspace.project (Workspace.init ())
                 composer.Render { baseVS.Composer with Compact = compact }
                 sidebar.Render({ baseVS.Sidebar with Compact = compact })
                 chat.Render { Messages = []; Streaming = None; Error = None; FontSize = 14.5; Title = None; CanEditTitle = false; IsGenerating = false; GeneratingText = ""; CanStop = false; ConversationChrome = false; CompactMode = compact; AutoCollapseReasoning = false; ReducedMotion = false; Usage = None; MissingAttachments = Set.empty }
-          SetStartMode = chat.WireStartMode
+          ApplyStartMode = chat.WireStartMode
           FocusComposer = composer.Focus
           FocusSidebarSearch = fun () -> sidebar.FocusSearch()
           PrefersTouch = hooks.PrefersTouch }
@@ -102,16 +102,13 @@ type Workspace
 
     /// Ctrl+B；返回新状态，宿主据此存偏好
     member _.ToggleSidebar() = shell.ToggleSidebar()
-    member _.SetCompactNavigation(opened: bool) = shell.SetCompactNavigation opened
     member _.EnsureSearchVisible() = shell.EnsureSearchVisible()
-    /// 起步页（新对话、无消息）与续聊切换
-    member _.SetStarting(value: bool) = shell.SetStarting value
 
     /// 单入口幂等渲染：以单一状态树的 ShellVS 为准（紧凑/抽屉/起步态/侧栏开合）
     member this.Render(vs: ShellVS) =
-        shell.SetStarting vs.StartingPageVisible
+        shell.RenderStarting vs.StartingPageVisible
         if vs.Compact then
-            shell.SetCompactNavigation vs.SidebarOpen |> ignore
+            shell.ApplyCompactNavigation vs.SidebarOpen |> ignore
         else
             if vs.SidebarOpen = shell.State.sidebarCollapsed then
                 shell.ToggleSidebar() |> ignore

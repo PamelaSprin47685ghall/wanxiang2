@@ -10,6 +10,7 @@ open Avalonia.Layout
 open Avalonia.Media
 open Wanxiang2.WorkspaceState
 open Wanxiang2.DevicesPane
+open Wanxiang2.DevicesPane.ButtonExtensions
 
 /// 一个可用工具
 type ToolsPaneTool =
@@ -319,18 +320,18 @@ type McpEditor(existing: McpEditorValues option, validationFor: TextBox -> Contr
     /// 首个焦点：新建落在标识，编辑落在名称（标识只读）
     member _.InitialFocus = (if existing.IsSome then labelBox else idBox) :> Control
     /// 对话框最高（组合者给 ScrollViewer 的上限）
-    member _.SetMaxHeight(h: float) = form.MaxHeight <- h
+    member _.ApplyMaxHeight(h: float) = form.MaxHeight <- h
     member _.IsPending = pending
 
     /// 保存往返中：保存键换「正在保存…」并禁用，取消也禁用；重复的 Ctrl+Enter 不再提交
-    member _.SetPending(value: bool) =
+    member _.ApplyPending(value: bool) =
         pending <- value
         let text = if value then "正在保存…" else idleText
-        saveButton.SetText text
+        saveButton.ApplyText text
         AutomationProperties.SetName(saveButton, text)
-        saveButton.SetEnabled(not value)
+        saveButton.ApplyEnabled(not value)
         AutomationProperties.SetHelpText(saveButton, (if value then text else sprintf "确认%s MCP 服务设置（Ctrl / ⌘ + Enter）" idleText))
-        cancelButton.SetEnabled(not value)
+        cancelButton.ApplyEnabled(not value)
 
     member _.SaveRequested = save.Publish
     member _.CancelRequested = cancel.Publish

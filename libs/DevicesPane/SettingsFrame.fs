@@ -237,12 +237,12 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
         | _ -> ()
 
     /// 范围说明两行
-    member _.SetCaptions(scope: string, target: string) =
+    member _.ApplyCaptions(scope: string, target: string) =
         scopeCaption.Text <- scope
         targetCaption.Text <- target
 
     /// 换内容；restoreY 有值时滚到该位置
-    member _.SetContent(control: Control, restoreY: float option) =
+    member _.ApplyContent(control: Control, restoreY: float option) =
         contentHost.Content <- control
         restoreY |> Option.iter (fun y -> content.Offset <- Vector(0.0, y))
 

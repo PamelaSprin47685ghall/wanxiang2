@@ -2,7 +2,7 @@
 
 ApprovalPanel + ApprovalCardText + Wire + Theme + IconSet + OverlayDesk = 旧 `Views/ToolApprovalCard.fs` 的 ToolApprovalPanel 在 AppShell 里的接线（构造、ToolApprovalRequested / Resolved 分支、断线清空）。根规则见项目根目录 AGENTS.md。
 
-- 宿主入口：`ApprovalDesk(theme: ThemeManager, overlay: OverlayDesk, send: WireEvent -> unit)`；`View`（放进输入框附属位）、`SetConversation(Guid option)`、`Handle(WireEvent) : bool`（是审批事件就处理）、`Disconnected()`、`AwaitingCallIds`、事件 `AwaitingChanged`（宿主据此给消息里的工具卡标「等待批准」，旧 SyncAwaitingApproval）。
+- 宿主入口：`ApprovalDesk(theme: ThemeManager, overlay: OverlayDesk, send: WireEvent -> unit)`；`View`（放进输入框附属位）、`ApplyConversation(Guid option)`、`Handle(WireEvent) : bool`（是审批事件就处理）、`Disconnected()`、`AwaitingCallIds`、事件 `AwaitingChanged`（宿主据此给消息里的工具卡标「等待批准」，旧 SyncAwaitingApproval）。
 - 协作都在这里：主机事件 → ApprovalAsk；批准 / 拒绝 → `ToolApprovalDecision`；别的对话来审批、已处理过用 Info 提示条告知。
 - 废除 `ApprovalLook`，改由主题样式系统及原生 Button 提供外观；提供单入口 `Render(ApprovalVS, currentConversation)`。
 

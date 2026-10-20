@@ -23,7 +23,7 @@ let ``navigation controller owns compact and collapsed state transitions`` () =
 
     let toggled = navigation.ToggleSidebar()
     Assert.True toggled.compactNavigationOpen
-    let closed = navigation.SetCompactNavigation(false)
+    let closed = navigation.ApplyCompactNavigation(false)
     Assert.False closed.compactNavigationOpen
 
 

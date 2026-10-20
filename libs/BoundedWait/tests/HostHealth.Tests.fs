@@ -26,10 +26,10 @@ let ``host health owns doctor and config-issue state`` () =
     match h.Doctor with Unavailable r -> Assert.Contains("连接已断开", r) | other -> failwithf "%A" other
     h.Disconnected()
     Assert.Equal(2, fired)
-    h.SetConfigIssue("bad", [ "e" ])
+    h.ApplyConfigIssue("bad", [ "e" ])
     Assert.True(h.ClearConfigIssue())
     Assert.False(h.ClearConfigIssue())
-    h.SetReport(true, [])
+    h.ApplyReport(true, [])
     match h.Doctor with Report(true, [], _) -> () | other -> failwithf "%A" other
     h.Reset()
     Assert.Equal(NotRun, h.Doctor)

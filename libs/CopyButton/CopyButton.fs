@@ -14,22 +14,23 @@ type CopyState =
     /// 勾号「已复制」，透明度压到 FadeOpacity
     | Fading
 
-/// 复制确认的外观与时长。全部由主题管理者提供活的实例。
+/// 复制确认的外观与时长。静态参数记录（无活值字段）：淡出目标不透明度是
+/// 主题的度量常量，时长来自 MotionLedger 的语义档；减弱动效由 Copied 入参门控。
 type CopyButtonAppearance =
     { /// 淡出时的不透明度（旧 Tokens.opacityCopyConfirmFade）
-      FadeOpacity: IObservable<float>
+      FadeOpacity: float
       /// 勾号保持时长（旧 MotionLedger.copyConfirmationHold）
-      Hold: IObservable<TimeSpan>
+      Hold: TimeSpan
       /// 淡出时长（旧 MotionLedger.copyConfirmationFade）
-      Fade: IObservable<TimeSpan> }
+      Fade: TimeSpan }
 
 /// 复制按钮的确认反馈（迁自旧 Controls/CopyFeedback.fs，确认记账由本控件自己持有）：
 /// 复制后先淡一下，保持勾号一段时间后复位；减弱动效不淡出。离开可视树立即复位。
 /// 图标、提示文字、读屏名由使用方按 StateChanged 去换。
 type CopyButton(button: Control, look: CopyButtonAppearance, clock: unit -> DateTimeOffset) =
-    let mutable fadeOpacity = 1.0
-    let mutable hold = TimeSpan.Zero
-    let mutable fade = TimeSpan.Zero
+    let fadeOpacity = look.FadeOpacity
+    let hold = look.Hold
+    let fade = look.Fade
     let mutable confirmedUntil: DateTimeOffset option = None
     let mutable fadeUntil: DateTimeOffset option = None
     let changed = Event<CopyState>()
@@ -61,11 +62,6 @@ type CopyButton(button: Control, look: CopyButtonAppearance, clock: unit -> Date
         show (advance (clock ()))
 
     do
-        look.FadeOpacity.Subscribe(fun v ->
-            fadeOpacity <- v
-            if state = CopyState.Fading then button.Opacity <- v) |> ignore
-        look.Hold.Subscribe(fun v -> hold <- v) |> ignore
-        look.Fade.Subscribe(fun v -> fade <- v) |> ignore
         button.DetachedFromVisualTree.Add(fun _ ->
             stop ()
             confirmedUntil <- None

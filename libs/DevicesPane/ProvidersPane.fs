@@ -11,6 +11,7 @@ open Avalonia.Layout
 open Avalonia.Media
 open Wanxiang2.WorkspaceState
 open Wanxiang2.DevicesPane
+open Wanxiang2.DevicesPane.ButtonExtensions
 
 /// 行首状态点的语气
 [<RequireQualifiedAccess>]
@@ -206,7 +207,7 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         AutomationProperties.SetAutomationId(probeButton, "provider-probe-models")
         probeButton.MinWidth <- 96.0
         saveButton.MinWidth <- 96.0
-        if isNew then probeButton.SetEnabled false
+        if isNew then probeButton.ApplyEnabled false
         transportButton.HorizontalAlignment <- HorizontalAlignment.Left
         transportButton.IsVisible <- false
         // 预设选择器（旧 Menu.selectButton）：读屏 ComboBox，点开由组合者弹分组菜单
@@ -309,52 +310,52 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
     member _.InitialFocus = labelBox :> Control
     member _.IsPending = pending
     member _.IsAdvanced = advanced
-    member _.SetAdvanced(expanded: bool) = setAdvanced expanded
     member _.Enabled = readEnabled ()
-    member _.SetEnabledValue(v: bool) = writeEnabled v
 
     /// 编辑已有服务时标识只读
     member _.LockId() = idBox.IsEnabled <- false
 
-    member _.SetPresetLabel(text: string) = presetCaption.Text <- text
-
-    /// 预设说明（空则隐藏）
-    member _.SetPresetHint(text: string) =
-        presetHint.Text <- text
-        presetHint.IsVisible <- not (String.IsNullOrWhiteSpace text)
-
-    member _.SetKindText(text: string) = kindCaption.Text <- text
-
-    /// 传输切换键（None 为隐藏）
-    member _.SetTransport(label: string option) =
-        match label with
+    /// 预设标题、预设说明、传输说明与传输切换键：一次性投影（预设说明空则隐藏；传输键 None 为隐藏）
+    member _.ApplyPresetCaption(label: string, hint: string, kind: string, transport: string option) =
+        presetCaption.Text <- label
+        presetHint.Text <- hint
+        presetHint.IsVisible <- not (String.IsNullOrWhiteSpace hint)
+        kindCaption.Text <- kind
+        match transport with
         | Some t ->
-            transportButton.SetText t
+            transportButton.ApplyText t
             transportButton.IsVisible <- true
         | None -> transportButton.IsVisible <- false
 
-    member _.SetVisionCurrent(text: string) = visionCurrent.Text <- text
+    /// 看图能力的当前判断与手动指定的两框：一次性投影
+    member _.ApplyVisionCurrent(text: string, inheritOverride: string, customOverride: string) =
+        visionCurrent.Text <- text
+        visionYesBox.Text <- inheritOverride
+        visionNoBox.Text <- customOverride
 
-    /// 获取模型列表：往返中换「正在获取…」并禁用
-    member _.SetProbePending(value: bool) =
-        let text = if value then "正在获取…" else "获取模型列表"
-        probeButton.SetText text
-        probeButton.SetEnabled(not value)
-        AutomationProperties.SetHelpText(probeButton, (if value then text else ""))
-
-    /// 探活失败的常驻行（空则隐藏）
-    member _.SetProbeStatus(text: string) =
-        probeStatus.Text <- text
+    /// 获取模型列表：往返中换「正在获取…」并禁用；探活失败的常驻行（空则隐藏）
+    member _.ApplyProbeState(pending: bool, status: string) =
+        let text = if pending then "正在获取…" else "获取模型列表"
+        probeButton.ApplyText text
+        probeButton.ApplyEnabled(not pending && not isNew)
+        AutomationProperties.SetHelpText(probeButton, (if pending then text else ""))
+        probeStatus.Text <- status
         probeStatus.IsVisible <- not (String.IsNullOrWhiteSpace text)
 
     /// 保存往返中：保存键换「正在保存…」并禁用，取消也禁用；重复的 Ctrl+Enter 不再提交
-    member _.SetPending(value: bool) =
+    member _.ApplyPending(value: bool) =
         pending <- value
         let text = if value then "正在保存…" else idleText
-        saveButton.SetText text
-        saveButton.SetEnabled(not value)
+        saveButton.ApplyText text
+        saveButton.ApplyEnabled(not value)
         AutomationProperties.SetHelpText(saveButton, (if value then text else sprintf "确认%s模型服务设置（Ctrl / ⌘ + Enter）" idleText))
-        cancelButton.SetEnabled(not value)
+        cancelButton.ApplyEnabled(not value)
+
+    /// 「启用这个模型服务」开关的值
+    member _.ApplyEnabledValue(v: bool) = writeEnabled v
+
+    /// 强制展开高级区（表单错误落在收起的高级区时，组合者先展开）
+    member _.ApplyAdvanced(expanded: bool) = setAdvanced expanded
 
     /// 预设选择器被点（带锚点）
     member _.PresetClicked = presetClicked.Publish

@@ -8,6 +8,7 @@ ChatHeader + ChatPane + MessageCardView（MessageCards、CardDeck）+ ComposerDe
 - 滚动：`ScrollToMessage`、`RevealAndHighlight`（高亮承载面按 `MessageCards.HighlightName` 找，停留由 `actions.After` 回调结束）、`EndRevealHighlight`、`SmoothScrollToEnd`、`SmoothScrollToBeginning`、`ScrollToBeginning`、`ScrollToEndDeferred`、`JumpExchange`、`Begin/Restore/CancelHistoryPrependAnchor`、`ResetScrollState`。钉住期间内容高度变了用 `ChatPane.PinOffset` 重新对齐（决策 460），不被当成用户上滚。到顶时向主机要更早一页；上一轮挂起时若首条提交变动自动兑现。
 - 顶栏与状态：已收拢入 `Render(ScreenFrame)`（包含 Title、CanEditTitle、IsGenerating、GeneratingText、CanStop、ConversationChrome、CompactMode 等），实现单入口幂等渲染。
 - 例外插槽/命令（命名避开 Set*，非每帧投影）：`SlotSavePresetAction`（存预设回调插槽）、`SlotSiblingProvider`（版本条提供者插槽）、`SlotAwaitingApproval`（审批卡集合插槽）、`SlotPartialReply`（半截回复插槽）、`ApplyBreadcrumb`（分叉面包屑命令）、`WireStartMode`（起步模式布局插槽）、`ShowMenu()`。
+- 起手式芯片：ChatPane 构造期传入 `onStarter`，这里接 `composer.ApplyDraftText`（点选起手式把半句话回填进输入框）。ChatEmpty 的 `SetStarterPick` / `SetPresets` 写入成员已退役（预设芯片生产零消费，整条删除）。
 
 ## 证据与旧测试
 - 无头行为用例四条：渲染次序（复用、流式原位更新、换形重建、错误卡）、长对话定位高亮（宿主计时结束高亮）、顶栏改名 / 侧栏 / 面包屑、版本条。

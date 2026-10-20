@@ -18,6 +18,7 @@ open Wanxiang2.ThemeMetrics
 open Wanxiang2.Theme
 open Wanxiang2.OverlayDesk
 open Wanxiang2.SettingsScreen
+open Wanxiang2.WorkspaceState
 open Wanxiang2.DeskTests
 
 let private all (root: Visual) = root.GetVisualDescendants() |> Seq.choose (function :? Control as c -> Some c | _ -> None) |> List.ofSeq
@@ -54,6 +55,12 @@ let private setup (hooks: SettingsHooks) =
     let screen = SettingsScreen(theme, overlay, hooks, prefs)
     root.Children.Insert(0, screen.View)
     let window = Desk.show root 1100.0 800.0
+    // 主题资源字典在生产里由入口壳挂进 Application.Resources（见 compose/EntryShells/App.fs）；
+    // 无头界面测试没有入口壳，DynamicResource 查不到值，这里挂到本用例自己的窗口上
+    // （每个用例一份 ThemeManager，不能共用 Application 上那一份，否则改的是另一份活值）。
+    if not (window.Resources.MergedDictionaries.Contains (theme.Resources :> Avalonia.Controls.IResourceDictionary)) then
+        window.Resources.MergedDictionaries.Add (theme.Resources :> Avalonia.Controls.IResourceDictionary)
+    Dispatcher.UIThread.RunJobs()
     { theme = theme; overlay = overlay; screen = screen; root = root; window = window }
 
 let private device id name : DeviceInfo =
@@ -64,6 +71,25 @@ let private provider: ProviderInfo =
     { id = "test-prov"; label = "Test Provider"; kind = "openai"; baseUrl = "https://api.test.com/v1"; hasApiKey = true
       models = [ "old-model" ]; defaultModel = "old-model"; timeoutSeconds = 120; maxRetries = 2; enabled = true
       visionOverrides = Map.empty; visionDetected = Map.empty }
+
+// 设置的唯一输入是 WorkspaceState 投影（W7-B）：测试直接构造它，没有本地 empty 可依赖。
+let private devicesVS () : SettingsDevicesVS =
+    { ServerUrl = ""
+      Devices = []
+      CanInvite = false
+      Invite = None
+      InviteRejected = None
+      LoadNote = None
+      IsLoading = false
+      Now = DateTimeOffset.UtcNow }
+
+let private screenVS (prefs: UiPrefs) : SettingsVS =
+    { ActiveSection = None
+      Catalog = None
+      InstanceId = ""
+      ServerUrl = ""
+      Prefs = prefs
+      Devices = devicesVS () }
 
 // 迁自 DevicesUiTests 的同名用例
 [<Fact>]
@@ -94,7 +120,7 @@ let ``device list read without a reply times out with the older host hint`` () =
         let h = setup SettingsHooks.none
         h.screen.ShowSection SettingsPart.Devices
         Assert.True h.screen.Devices.IsLoading
-        h.screen.Devices.NotifyLoadTimeout()
+        h.screen.Devices.ApplyLoadTimeout()
         Assert.False h.screen.Devices.IsLoading
         Assert.Contains("主机版本较旧", textOf h.screen.View)
         h.window.Close())
@@ -105,12 +131,15 @@ let ``device list marks current desktop online and revoked and sorts revoked las
         let h = setup SettingsHooks.none
         h.screen.ShowSection SettingsPart.Devices
         let now = DateTimeOffset.UtcNow
-        h.screen.Devices.SetDevices(
-            [ { device "dev-revoked" "旧手机" with revoked = true }
-              { device "dev-phone" "手机" with online = true }
-              { device "dev-desktop" "wanxiang-desktop" with desktop = true; current = true; online = true }
-              { device "dev-pad" "平板" with lastSeen = Some(now - TimeSpan.FromMinutes 5.0) } ],
-            true)
+        h.screen.Devices.Render(
+            { devicesVS () with
+                Devices =
+                    [ { device "dev-revoked" "旧手机" with revoked = true }
+                      { device "dev-phone" "手机" with online = true }
+                      { device "dev-desktop" "wanxiang-desktop" with desktop = true; current = true; online = true }
+                      { device "dev-pad" "平板" with lastSeen = Some(now - TimeSpan.FromMinutes 5.0) } ]
+                CanInvite = true
+                Now = now })
         Dispatcher.UIThread.RunJobs()
         let rows =
             all h.screen.View
@@ -134,7 +163,10 @@ let ``rename edits inline trims and sends the new name`` () =
         h.screen.ShowSection SettingsPart.Devices
         let renames = ResizeArray<string * string>()
         h.screen.Devices.RenameRequested.Add renames.Add
-        h.screen.Devices.SetDevices([ device "dev-phone" "手机" ], true)
+        h.screen.Devices.Render(
+            { devicesVS () with
+                Devices = [ device "dev-phone" "手机" ]
+                CanInvite = true })
         invoke (byId h.screen.View "devices-rename-dev-phone").Value
         let box = (byId h.screen.View "devices-name-dev-phone").Value :?> TextBox
         Assert.Equal("手机", box.Text)
@@ -155,7 +187,7 @@ let ``a disconnect while loading explains the host may be too old`` () =
         h.screen.Devices.ListRequested.Add requests.Add
         h.screen.ShowSection SettingsPart.Devices
         Assert.Equal(1, requests.Count)
-        h.screen.Devices.NotifyDisconnected()
+        h.screen.Devices.ApplyDisconnected()
         Assert.False h.screen.Devices.IsLoading
         Assert.Contains("版本较旧", textOf h.screen.View)
         h.window.Close())
@@ -166,11 +198,14 @@ let ``invite card shows grouped code address qr and countdown`` () =
         let h = setup SettingsHooks.none
         h.screen.ShowSection SettingsPart.Devices
         let d = h.screen.Devices
-        d.SetLanSource(fun () -> [])
-        d.SetConnection "ws://192.168.1.5:8765/ws"
-        d.SetDevices([], true)
+        d.WireLanSource(fun () -> [])
         let now = DateTimeOffset.UtcNow
-        d.SetInvite("012345", now + TimeSpan.FromMinutes 5.0, now)
+        d.Render(
+            { devicesVS () with
+                ServerUrl = "ws://192.168.1.5:8765/ws"
+                CanInvite = true
+                Invite = Some { code = "012345"; expiresAtUtc = now + TimeSpan.FromMinutes 5.0 }
+                Now = now })
         Assert.True((textOf h.screen.View).Contains "5:00 后失效")
         d.Tick(now + TimeSpan.FromMinutes 5.0 + TimeSpan.FromSeconds 1.0)
         Assert.Contains("已过期", textOf h.screen.View)
@@ -184,11 +219,11 @@ let ``SettingsView navigates sections, remembers scroll positions and invalidate
     Headless.run (fun () ->
         let h = setup SettingsHooks.none
         Assert.Equal(SettingsPart.Providers, h.screen.Current)
-        h.screen.SetSectionScrollOffset(SettingsPart.Tools, 40.0)
+        h.screen.ApplySectionScrollOffset(SettingsPart.Tools, 40.0)
         Assert.Equal(40.0, h.screen.GetSectionScrollOffset SettingsPart.Tools)
         h.screen.ShowSection SettingsPart.About
         Assert.Equal(SettingsPart.About, h.screen.Current)
-        h.screen.SetConnection("inst-1", "ws://host.example:8765/ws")
+        h.screen.Render { screenVS prefs with InstanceId = "inst-1"; ServerUrl = "ws://host.example:8765/ws" }
         Assert.Contains("inst-1", textOf h.screen.View)
         h.screen.ShowSection SettingsPart.Generation
         Assert.Contains("host.example:8765 · 配置由连接这台主机的客户端共用。", textOf h.screen.View)
@@ -199,8 +234,8 @@ let ``SettingsProviders saveCore with invalid advanced field automatically expan
     Headless.run (fun () ->
         let upserts = ResizeArray<JsonObject>()
         let h = setup { SettingsHooks.none with UpsertProvider = fun p cb -> upserts.Add p; cb true }
-        h.screen.SetCatalog { Catalog.empty with providers = [ provider ] }
-        h.screen.Providers.OpenEditor "test-prov"
+        h.screen.Render { screenVS prefs with Catalog = Some { Catalog.empty with providers = [ provider ] } }
+        h.screen.Providers.ApplyOpenEditor "test-prov"
         Dispatcher.UIThread.RunJobs()
         let editor = h.screen.Providers.Session.Value.Editor
         Assert.False editor.IsAdvanced
@@ -220,11 +255,11 @@ let ``SettingsProviders ApplyProbe updates draft models in open editor and cache
         let upserts = ResizeArray<JsonObject>()
         let probes = ResizeArray<string>()
         let h = setup { SettingsHooks.none with UpsertProvider = (fun p cb -> upserts.Add p; cb true); ProbeProvider = probes.Add }
-        h.screen.SetCatalog { Catalog.empty with providers = [ provider ] }
-        h.screen.Providers.OpenEditor "test-prov"
+        h.screen.Render { screenVS prefs with Catalog = Some { Catalog.empty with providers = [ provider ] } }
+        h.screen.Providers.ApplyOpenEditor "test-prov"
         Dispatcher.UIThread.RunJobs()
         let editor = h.screen.Providers.Session.Value.Editor
-        editor.SetAdvanced true
+        editor.ApplyAdvanced true
         invoke (byId h.root "provider-probe-models").Value
         Assert.Equal<string list>([ "test-prov" ], List.ofSeq probes)
         h.screen.ApplyProbe("test-prov", true, [ "probed-model-1"; "probed-model-2" ], None)
@@ -234,7 +269,7 @@ let ``SettingsProviders ApplyProbe updates draft models in open editor and cache
         h.screen.ApplyProbe("test-prov", true, [ "bg-model-a" ], None)
         Assert.Empty upserts
         // 缓存：再打开时模型框用探到的清单
-        h.screen.Providers.OpenEditor "test-prov"
+        h.screen.Providers.ApplyOpenEditor "test-prov"
         Dispatcher.UIThread.RunJobs()
         Assert.Equal("bg-model-a", h.screen.Providers.Session.Value.Editor.ModelsBox.Text)
         h.window.Close())
@@ -245,7 +280,7 @@ let ``SettingsGeneral SaveGenerationCore validates numeric ranges and generates 
         let payloads = ResizeArray<JsonObject>()
         let mutable reply = true
         let h = setup { SettingsHooks.none with UpdateGeneration = fun p cb -> payloads.Add p; cb reply }
-        h.screen.SetCatalog Catalog.empty
+        h.screen.Render { screenVS prefs with Catalog = Some Catalog.empty }
         h.screen.ShowSection SettingsPart.Generation
         let g = h.screen.General.Generation
         g.TemperatureBox.Text <- "5"
@@ -265,7 +300,7 @@ let ``SettingsTools ShowEditor validates id, command/url, timeout and saves vali
         let mcp = ResizeArray<JsonObject>()
         let gens = ResizeArray<JsonObject>()
         let h = setup { SettingsHooks.none with UpsertMcp = (fun p cb -> mcp.Add p; cb true); UpdateGeneration = (fun p cb -> gens.Add p; cb true) }
-        h.screen.SetCatalog Catalog.empty
+        h.screen.Render { screenVS prefs with Catalog = Some Catalog.empty }
         h.screen.ShowSection SettingsPart.Tools
         invoke (byName h.screen.View "添加 MCP 服务").Value
         let ed = h.screen.Tools.McpEditor.Value
@@ -297,7 +332,7 @@ let ``changing a theme metric updates shown settings controls`` () =
         let box = h.screen.General.Generation.InstructionsBox
         let before = (h.theme.Metric Metric.TextAreaMinHeight).Value
         Assert.Equal(before, box.MinHeight)
-        h.theme.SetMetric(Metric.TextAreaMinHeight, before + 37.0)
+        h.theme.ApplyMetric(Metric.TextAreaMinHeight, before + 37.0)
         Assert.Equal(before + 37.0, box.MinHeight)
         h.window.Close())
 
@@ -319,7 +354,8 @@ let ``密钥为空时不发起任何请求并就地说明`` () =
                   ProbeProvider = probes.Add
                   TakenIds = (fun () -> [])
                   DiscoverLocal = (fun () -> Threading.Tasks.Task.FromResult None)
-                  OpenAdvanced = ignore })
+                  OpenAdvanced = ignore
+                  Report = ignore })
         root.Children.Insert(0, card.View)
         let window = Desk.show root 900.0 700.0
         invoke (byName card.View "连接").Value
@@ -333,3 +369,17 @@ let ``密钥为空时不发起任何请求并就地说明`` () =
         Assert.Equal<string list>([ probes[0] ], List.ofSeq discarded)
         Assert.False(card.ApplyProbe("other", true, [], None))
         window.Close())
+
+// 「检查主机」：设置页只宣告要检查，发请求由宿主做（RequestDoctorCheck）。
+[<Fact>]
+let ``点检查主机走宿主出口，且不重复发`` () =
+    Headless.run (fun () ->
+        let requests = ResizeArray<unit>()
+        let h = setup { SettingsHooks.none with RequestDoctorCheck = fun () -> requests.Add() }
+        h.screen.ShowSection SettingsPart.About
+        Dispatcher.UIThread.RunJobs()
+        invoke (byId h.screen.General.AboutView "check-host").Value
+        Assert.Single requests |> ignore
+        // 已经在检查中：按钮禁用，不再发第二次
+        Assert.False (byId h.screen.General.AboutView "check-host").Value.IsEnabled
+        h.window.Close())

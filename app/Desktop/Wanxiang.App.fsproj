@@ -80,7 +80,6 @@
     <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ProtocolDispatch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ShellCommands" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DraftSession" VersionOverride="0.0.0-local" />
     <!-- 入口壳 IO 组件（批次 2 新建）：本地状态、单实例、富文本后端、外部链接、凭据、偏好文件、URL 注册。 -->
     <PackageReference Include="Wanxiang2.LocalState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.RichBackend" VersionOverride="0.0.0-local" />

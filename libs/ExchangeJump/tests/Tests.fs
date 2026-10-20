@@ -19,7 +19,7 @@ let ``the anchor follows jumps, not the viewport`` () =
 [<Fact>]
 let ``older history: request, then jump again once the first commit changes`` () =
     let j = ExchangeJump<int>()
-    j.SetOlderAvailable true
+    j.ApplyOlderAvailable true
     Assert.Equal(JumpStep.RequestOlder, j.Jump(-1, m, cards, 0, false, Some 1UL))
     Assert.False(j.Mounted(m, Some 1UL))
     Assert.True(j.Mounted(m, Some 0UL))
@@ -28,12 +28,12 @@ let ``older history: request, then jump again once the first commit changes`` ()
 [<Fact>]
 let ``losing older history or a failure drops the pending jump`` () =
     let j = ExchangeJump<int>()
-    j.SetOlderAvailable true
+    j.ApplyOlderAvailable true
     j.Jump(-1, m, cards, 0, false, Some 1UL) |> ignore
     j.OlderFailed()
     Assert.False j.PendingPrevious
     j.Jump(-1, m, cards, 0, false, Some 1UL) |> ignore
-    j.SetOlderAvailable false
+    j.ApplyOlderAvailable false
     Assert.False j.PendingPrevious
 
 [<Fact>]
@@ -54,7 +54,7 @@ let ``a vanished anchor card is dropped`` () =
 [<Fact>]
 let ``scrolling to the beginning drops the anchor but keeps the pending previous`` () =
     let j = ExchangeJump<int>()
-    j.SetOlderAvailable true
+    j.ApplyOlderAvailable true
     Assert.Equal(JumpStep.RequestOlder, j.Jump(-1, m, cards, 0, false, Some 1UL))
     Assert.Equal(Some 1, j.Anchor)
     j.ClearAnchor()

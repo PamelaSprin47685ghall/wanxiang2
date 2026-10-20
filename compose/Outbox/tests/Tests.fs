@@ -14,7 +14,7 @@ let ``a send whose conversation was never confirmed falls back into the start dr
     let creation =
         CreateConversation {| invocationId = Guid.NewGuid(); conversationId = conv; title = "新对话"; config = SessionConfig.empty |}
     let item = outbox.Stage("host-1", conv, "对话还没建成", [], Some creation)
-    outbox.SetState(PendingMessage.invocationId item, UnconfirmedMessage "断线")
+    outbox.ApplyState(PendingMessage.invocationId item, UnconfirmedMessage "断线")
     let snapshot = DraftPolicy.snapshotOf drafts outbox (fun _ -> DateTimeOffset.UtcNow)
     Assert.Empty snapshot.unsent
     let row = Assert.Single snapshot.drafts
@@ -29,7 +29,7 @@ let ``an unconfirmed send comes back as retryable with the original invocation i
         { attachmentId = Guid.NewGuid(); sha256 = String('b', 64); size = 10L; mediaType = "text/plain"
           fileName = "a.txt"; ready = true; failed = false }
     let item = outbox.Stage("host-1", conv, "还没确认的消息", [ attachment ], None)
-    outbox.SetState(PendingMessage.invocationId item, UnconfirmedMessage "连接已断开")
+    outbox.ApplyState(PendingMessage.invocationId item, UnconfirmedMessage "连接已断开")
     let snapshot = DraftPolicy.snapshotOf drafts outbox (fun _ -> DateTimeOffset.UtcNow)
     let text = DraftCodec.serialize snapshot
     // 重新启动：新的内存，只从落盘文本恢复。

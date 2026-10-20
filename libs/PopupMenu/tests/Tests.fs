@@ -12,8 +12,6 @@ open Xunit
 open Wanxiang2.PopupMenu
 
 let look () =
-    let minH = Cell 32.0
-    minH,
     { Text = Brushes.Black
       Muted = Brushes.Gray
       Faint = Brushes.LightGray
@@ -21,24 +19,9 @@ let look () =
       Accent = Brushes.Blue
       Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b, Name = "check"))
       Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
-      FontSize = Cell 12.0
-      HintFontSize = Cell 10.0
-      IconSlotWidth = Cell 16.0
-      IconHeight = Cell 16.0
-      RightSlotMinWidth = Cell 16.0
-      HintMargin = Cell(Thickness(12.0, 0.0, 0.0, 0.0))
-      ColumnSpacing = Cell 6.0
-      ItemPadding = Cell(Thickness(8.0, 4.0))
-      ItemRadius = Cell(CornerRadius 4.0)
-      ItemMinHeight = minH
-      ItemSpacing = Cell 2.0
-      MaxHeight = Cell 200.0
-      DividerMargin = Cell(Thickness(6.0, 2.0))
-      HeaderMargin = Cell(Thickness(8.0, 6.0, 8.0, 2.0))
-      SelectPadding = Cell(Thickness(8.0, 4.0))
-      SelectRadius = Cell(CornerRadius 8.0)
-      SelectEdgeWidth = Cell(Thickness 1.0)
-      SelectCaptionMaxWidth = Cell 260.0 }
+      IconSlotWidth = 16.0
+      ItemMinHeight = 32.0
+      MaxHeight = 200.0 }
 
 let show (content: Control) =
     let window = Window(Width = 360.0, Height = 320.0, Content = content)
@@ -48,6 +31,9 @@ let show (content: Control) =
 
 let byName (root: Visual) name =
     root.GetVisualDescendants() |> Seq.choose (function :? Control as c when AutomationProperties.GetName c = name -> Some c | _ -> None) |> Seq.head
+
+let textOf (root: Visual) text =
+    root.GetVisualDescendants() |> Seq.choose (function :? TextBlock as t when t.Text = text -> Some t | _ -> None) |> Seq.head
 
 let key (c: Control) k =
     let e = KeyEventArgs(Key = k, RoutedEvent = InputElement.KeyDownEvent)
@@ -59,24 +45,23 @@ let key (c: Control) k =
 [<Fact>]
 let ``select button carries an automation name that tracks the text`` () =
     Headless.run (fun () ->
-        let _, l = look ()
+        let l = look ()
         let b = SelectButton(l, "跟随系统")
         Assert.Equal("跟随系统", AutomationProperties.GetName b.View)
-        b.SetText "浅色"
+        b.ApplyText "浅色"
         Assert.Equal("浅色", AutomationProperties.GetName b.View)
         Assert.Equal<obj>("浅色", ToolTip.GetTip b.View)
-        Assert.Equal(AutomationControlType.ComboBox, AutomationProperties.GetControlTypeOverride(b.View).Value)
         // 调用方显式命名优先，不被下拉文本覆盖。
         let named = SelectButton(l, "gpt-4o")
         AutomationProperties.SetName(named.View, "切换模型")
-        named.SetText "无所谓"
+        named.ApplyText "无所谓"
         Assert.Equal("切换模型", AutomationProperties.GetName named.View))
 
 // 迁自旧 OverlayMenuTests。
 [<Fact>]
 let ``select button and menu items keep full opacity until pressed`` () =
     Headless.run (fun () ->
-        let minH, l = look ()
+        let l = look ()
         let b = SelectButton(l, "模型")
         Assert.Equal(1.0, b.View.Opacity, 3)
         let menu = (PopupMenu.build l ignore [ PopupEntry.create "重命名" ignore |> PopupEntry.withHint "F2" ]).Value
@@ -84,15 +69,27 @@ let ``select button and menu items keep full opacity until pressed`` () =
         let item = byName menu "重命名" :?> Border
         Assert.Equal(1.0, item.Opacity, 3)
         Assert.Equal(32.0, item.MinHeight, 3)
-        minH.Set 40.0
-        Assert.Equal(40.0, item.MinHeight, 3)
+        window.Close())
+
+// 主题资源直达菜单：字号走资源键，改主题即改菜单字号（W7 外观退役后的活路径）。
+[<Fact>]
+let ``主题资源直达菜单：字号随资源键更新`` () =
+    Headless.run (fun () ->
+        Application.Current.Resources["Metric.FontBody"] <- box 12.0
+        let l = look ()
+        let menu = (PopupMenu.build l ignore [ PopupEntry.create "重命名" ignore ]).Value
+        let window = show menu
+        let caption = textOf menu "重命名"
+        Assert.Equal(12.0, caption.FontSize, 3)
+        Application.Current.Resources["Metric.FontBody"] <- box 14.0
+        Assert.Equal(14.0, caption.FontSize, 3)
         window.Close())
 
 // 迁自旧 UiStabilityTests `forty item menu keeps long labels bounded and supports directional focus`（菜单本身部分；落进浮层在组合者里测）。
 [<Fact>]
 let ``forty item menu supports directional focus and scrolls`` () =
     Headless.run (fun () ->
-        let _, l = look ()
+        let l = look ()
         let longLabel = "菜单项 01 " + String.replicate 18 "非常长的名称"
         let entries =
             [ for i in 1..40 ->
@@ -133,7 +130,7 @@ let ``roving index matches the old menu rule`` () =
 [<Fact>]
 let ``enter and space activate the entry and grouped menus skip empty groups`` () =
     Headless.run (fun () ->
-        let _, l = look ()
+        let l = look ()
         let hits = ResizeArray()
         let a = PopupEntry.create "甲" ignore |> PopupEntry.markSelected true
         let b = PopupEntry.create "乙" ignore |> PopupEntry.asDanger
@@ -157,7 +154,7 @@ let ``enter and space activate the entry and grouped menus skip empty groups`` (
 [<Fact>]
 let ``select button opens on up and down`` () =
     Headless.run (fun () ->
-        let _, l = look ()
+        let l = look ()
         let b = SelectButton(l, "模型")
         let mutable opened = 0
         b.OpenRequested.Add(fun () -> opened <- opened + 1)
@@ -166,6 +163,5 @@ let ``select button opens on up and down`` () =
         key b.View Key.Up |> ignore
         key b.View Key.Left |> ignore
         Assert.Equal(2, opened)
-        Assert.Equal(AutomationControlType.ComboBox, AutomationProperties.GetControlTypeOverride(b.View).Value)
         Assert.True b.View.Focusable
         window.Close())

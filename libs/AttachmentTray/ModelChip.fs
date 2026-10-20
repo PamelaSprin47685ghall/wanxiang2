@@ -68,12 +68,8 @@ type ModelChip() =
     /// 点开时的去处（宿主注入模型切换器，锚点即本芯片）
     member _.OnOpen(f: Control -> unit) = onOpen <- f
 
-    member _.SetCompact(value: bool) =
-        compact <- value
-        applyWidth ()
-
     /// 空或「未选择模型」用 muted 色
-    member _.SetLabel(text: string) =
+    member _.ApplyLabel(text: string) =
         let empty = String.IsNullOrWhiteSpace text || text = "未选择模型"
         caption.Text <- if String.IsNullOrWhiteSpace text then "未选择模型" else text
         if empty then
@@ -87,5 +83,5 @@ type ModelChip() =
         compact <- isCompact
         applyWidth ()
         match model with
-        | Some label when not (String.IsNullOrWhiteSpace label) -> this.SetLabel label
-        | _ -> this.SetLabel "未选择模型"
+        | Some label when not (String.IsNullOrWhiteSpace label) -> this.ApplyLabel label
+        | _ -> this.ApplyLabel "未选择模型"

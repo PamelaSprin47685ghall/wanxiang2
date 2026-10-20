@@ -2,6 +2,11 @@
 
 把 LedgerStore 和 ChatDomain 组合成旧 `Wanxiang.Store`（DataPaths、Store、RecoveryBundle），源码原样迁移，命名空间与磁盘格式不变。根规则见项目根目录 AGENTS.md。
 
+## 接口
+- `EventStore(dataDir, ?onCommitted, ?policy)`：日志存储的旧领域薄壳（只做类型映射）。成员：`DataDir`、`WireOnCommitted(f)`（接上提交成功后的广播回调；单槽回调注入，命名避开 `Set*`）、`Health`、`Startup`、`LastSnapshotError`、`IsReadOnly`、`Projection`、`LastCommitId`、`Stamps`、`Checkpoint`、`Submit` / `SubmitEvents`、`CommitsAfter`、`SaveSnapshot`、`Repair`、`Shutdown`。
+- `Inspect.run` / `Inspect.runOrPeek` / `Inspect.peek` / `Inspect.ofStore`、`Repair.repair` / `Repair.repairWith`。
+- 命名规约：组合者零 `Set*` 业务写入成员（`grep "member .*\.Set"` 归零）；回调注入一律 `Wire*`。
+
 # LEMMA
 1. **源码与磁盘字节与旧实现一致。** [根 AXIOM: 5]
     - 推理：已有数据目录必须继续可读；原样迁移最容易对照。

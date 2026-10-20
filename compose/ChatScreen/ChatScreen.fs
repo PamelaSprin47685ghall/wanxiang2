@@ -17,6 +17,7 @@ open Wanxiang.Core
 open Wanxiang.UI
 open Wanxiang2.IconSet
 open Wanxiang2.PopupMenu
+open Wanxiang2.WorkspaceState
 open Wanxiang2.OverlayDesk
 open Wanxiang2.ChatHeader
 open Wanxiang2.ChatPane
@@ -97,13 +98,17 @@ type ChatScreen
      brandLogo: float -> Control,
      actions: ChatScreenActions) =
     let header = ChatHeader()
-    let pane = ChatPane<ScreenKey>(looks.Pane, brandLogo)
+    // 起手式芯片点选：把半句话回填进输入框（宿主草稿回填命令）
+    let pane = ChatPane<ScreenKey>(brandLogo, Some(composer.ApplyDraftText))
     let deck = CardDeck<ScreenKey>(pane.Messages)
     let flash = RevealFlash()
     let breadcrumb = BreadcrumbAction<Guid>()
     let root = ScreenRoot(Background = looks.Canvas)
     let layout = DockPanel()
     let mutable mounted: ScreenKey option[] = [||]
+    let mutable currentInset = 0.0
+    let mutable currentCrumb: CrumbVS option = None
+    let mutable currentTitle = "新对话"
     let mutable last: ScreenFrame option = None
     let mutable streamSlot: (obj * ScreenKey * MarkdownStream) option = None
     let mutable streamGeneration = 0
@@ -116,11 +121,20 @@ type ChatScreen
     let mutable siblings: uint64 -> uint64 option -> SiblingVersions option = fun _ _ -> None
     let mutable revealTarget: Control option = None
     let mutable highlight: (IDisposable * (unit -> unit)) option = None
-    let mutable top3xl = 0.0
-    let mutable avatar = 0.0
-    let mutable xs = 0.0
-    let mutable caption = 0.0
-    let mutable iconButton = 0.0
+    /// 主题资源字典的浮点值现读（W7 外观退役：无 IObservable、无订阅）：
+    /// 用量时刻取值，主题改动在下一帧渲染自然生效。
+    let resFloat (key: string) (fallback: float) =
+        match Avalonia.Application.Current with
+        | null -> fallback
+        | app ->
+            match app.TryFindResource(box key) with
+            | true, v -> unbox v
+            | _ -> fallback
+    let top3xl () = resFloat "Space.X3l" Wanxiang.UI.Spacing.space3xl
+    let xs () = resFloat "Space.Xs" Wanxiang.UI.Spacing.spaceXs
+    let caption () = resFloat "Metric.FontCaption" 11.5
+    let iconButton () = resFloat "Metric.IconButton" 30.0
+    let avatar () = resFloat "Metric.LogoAvatar" 26.0
 
     let exchangeIndices () = ExchangeJump<ScreenKey>.Cards(mounted, fun k -> k.role = "user")
 
@@ -139,7 +153,7 @@ type ChatScreen
 
     /// 把一张卡平滑带到视口顶（每帧按卡片当前位置取目标；减弱动效时直接写并记为自己写的）
     let smoothToCard (child: Control) =
-        let target () = max 0.0 (child.Bounds.Y - top3xl)
+        let target () = max 0.0 (child.Bounds.Y - top3xl ())
         if not (pane.Scroller.SmoothTo(target, ignore, fun y -> pane.PinOffset y)) then pane.PinOffset(target ())
 
     let withSiblingBar (card: Control) (s: SiblingVersions) : Control =
@@ -148,7 +162,7 @@ type ChatScreen
             if t >= 0 && t < s.count then actions.SiblingSelected(List.item t s.targets)
         let button glyph (tip: string) enabled delta =
             let b = Button(Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand), Focusable = true,
-                           Width = iconButton, Height = iconButton, MinWidth = iconButton, MinHeight = iconButton,
+                           Width = iconButton (), Height = iconButton (), MinWidth = iconButton (), MinHeight = iconButton (),
                            Padding = Thickness 0.0,
                            VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center)
             b.Classes.Add "icon-button"
@@ -164,36 +178,50 @@ type ChatScreen
             b :> Control
         let name = sprintf "这条消息的版本 %d / %d" (s.index + 1) s.count
         let label =
-            TextBlock(Text = sprintf "%d/%d" (s.index + 1) s.count, FontSize = caption, Foreground = looks.TextMuted,
+            TextBlock(Text = sprintf "%d/%d" (s.index + 1) s.count, FontSize = caption (), Foreground = looks.TextMuted,
                       VerticalAlignment = VerticalAlignment.Center)
         AutomationProperties.SetName(label, name)
         ToolTip.SetTip(label, "同一条消息编辑后产生的版本（每个版本是一个分叉）")
-        let bar = StackPanel(Orientation = Orientation.Horizontal, Spacing = xs, HorizontalAlignment = HorizontalAlignment.Right)
+        let bar = StackPanel(Orientation = Orientation.Horizontal, Spacing = xs (), HorizontalAlignment = HorizontalAlignment.Right)
         bar.Children.Add(button Glyph.ChevronLeft "上一个版本" (s.index > 0) -1)
         bar.Children.Add label
         bar.Children.Add(button Glyph.ChevronRight "下一个版本" (s.index < s.count - 1) 1)
         AutomationProperties.SetName(bar, name)
-        let stack = StackPanel(Spacing = xs)
+        let stack = StackPanel(Spacing = xs ())
         stack.Children.Add card
         stack.Children.Add bar
         stack :> Control
 
     let stack (a: Control) (b: Control) =
-        let s = StackPanel(Spacing = xs)
+        let s = StackPanel(Spacing = xs ())
         s.Children.Add a
         s.Children.Add b
         s :> Control
 
+    let renderHeader (f: ScreenFrame) =
+        f.Title |> Option.iter (fun t ->
+            currentTitle <- t
+            editable <- f.CanEditTitle)
+        let headerVS: ChatHeaderVS = {
+            Visible = f.ConversationChrome
+            Compact = f.CompactMode
+            InsetLeft = currentInset
+            Title = TitleMode.Viewing(currentTitle, editable)
+            GeneratingStatus = if f.IsGenerating then Some (if String.IsNullOrWhiteSpace f.GeneratingText then "生成中" else f.GeneratingText) else None
+            Crumb = currentCrumb
+            ShowBack = f.CompactMode
+            ShowMore = f.ConversationChrome
+        }
+        header.Render headerVS
+
     let rec render (f: ScreenFrame) =
         last <- Some f
         f.Title |> Option.iter (fun t ->
-            editable <- f.CanEditTitle
-            header.SetTitle(t, f.CanEditTitle))
+            currentTitle <- t
+            editable <- f.CanEditTitle)
         generating <- f.IsGenerating
         canStop <- f.CanStop
-        header.SetGenerating(f.IsGenerating, f.GeneratingText)
-        header.SetConversationChrome f.ConversationChrome
-        header.SetCompact f.CompactMode
+        renderHeader f
         pane.ApplyCompact f.CompactMode
         syncNav ()
         pane.HideSkeleton()
@@ -209,7 +237,7 @@ type ChatScreen
               Usage = f.Usage
               MissingAttachments = f.MissingAttachments
               AwaitingApproval = awaiting
-              BrandAvatar = fun () -> brandLogo avatar }
+              BrandAvatar = fun () -> brandLogo (avatar ()) }
         let desired = ResizeArray<ScreenKey option * (unit -> Control)>()
         // 版本：前一条按原始顺序取（工具结果折进调用消息后前一条身份会错位）
         let previous =
@@ -363,18 +391,15 @@ type ChatScreen
         pane.RefreshLatestButton()
 
     do
-        looks.Space3xl |> Observable.add (fun v -> top3xl <- v)
-        looks.LogoAvatar |> Observable.add (fun v -> avatar <- v)
-        looks.SpaceXs |> Observable.add (fun v -> xs <- v)
-        looks.FontCaption |> Observable.add (fun v -> caption <- v)
-        looks.IconButton |> Observable.add (fun v -> iconButton <- v)
         DockPanel.SetDock(header.Host, Dock.Top)
         layout.Children.Add header.Host
         layout.Children.Add pane.Host
         root.Child <- layout
         // 顶栏与滚动区同源取档：一次读自身宽度，同时写两处水平留白
         root.PropertyChanged.Add(fun e ->
-            if e.Property = Visual.BoundsProperty then header.SetInset(LayoutPolicy.horizontalInset root.Bounds.Width))
+            if e.Property = Visual.BoundsProperty then
+                currentInset <- LayoutPolicy.horizontalInset root.Bounds.Width
+                last |> Option.iter renderHeader)
         header.Renamed.Add actions.RenameTitle
         header.SidebarPressed.Add actions.ToggleSidebar
         header.MorePressed.Add showMenu
@@ -393,7 +418,7 @@ type ChatScreen
             | Some child when pane.Follow.RevealPinned && not pane.Scroller.IsSmoothing && abs note.ExtentDelta > 0.1 ->
                 if isNull child.Parent then revealTarget <- None
                 else
-                    let target = max 0.0 (child.Bounds.Y - top3xl)
+                    let target = max 0.0 (child.Bounds.Y - top3xl ())
                     if abs (pane.Scroller.Offset - target) > 1.0 then pane.PinOffset target
             | _ -> ()
             if not pane.Follow.RevealPinned then revealTarget <- None
@@ -426,7 +451,11 @@ type ChatScreen
 
     member _.ApplyBreadcrumb(crumb: ForkBreadcrumb option) =
         let view = breadcrumb.Set(crumb |> Option.map (fun c -> c.text, c.description, c.parentAvailable, c.parentId))
-        header.SetCrumb(if view.visible then Some { Text = view.text; Description = view.description; Clickable = view.clickable } else None)
+        currentCrumb <-
+            if view.visible then
+                Some { ParentId = Option.defaultValue Guid.Empty (crumb |> Option.map (fun c -> c.parentId)); ParentTitle = view.text; Clickable = view.clickable }
+            else None
+        last |> Option.iter renderHeader
     member _.BreadcrumbText = breadcrumb.Text
 
     member _.WireStartMode(value: bool) = pane.WireStartMode value

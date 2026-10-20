@@ -24,9 +24,9 @@ let ``brand row fires new, preset with anchor and back`` () =
         b.PresetClicked.Add(fun a -> log.Add(if obj.ReferenceEquals(a, b.PresetButton) then "preset" else "?"))
         b.BackClicked.Add(fun () -> log.Add "back")
         click b.NewButton
-        b.SetPresetsVisible true
+        b.Render { PresetsVisible = true; Compact = false }
         click b.PresetButton
-        b.SetCompact true
+        b.Render { PresetsVisible = true; Compact = true }
         click b.BackButton
         Assert.Equal<string list>([ "new"; "preset"; "back" ], List.ofSeq log))
 
@@ -35,7 +35,7 @@ let ``render SidebarBrandVS controls preset visibility`` () =
     Headless.run (fun () ->
         let b = make ()
         Assert.False b.PresetButton.IsVisible
-        b.Render { PresetsVisible = true }
+        b.Render { PresetsVisible = true; Compact = false }
         Assert.True b.PresetButton.IsVisible
-        b.Render { PresetsVisible = false }
+        b.Render { PresetsVisible = false; Compact = false }
         Assert.False b.PresetButton.IsVisible)

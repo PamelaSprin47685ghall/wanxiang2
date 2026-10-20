@@ -56,7 +56,7 @@ let ``审批面板：只显示当前对话的卡片，已处理即移除，断�
         let _, _, desk, sent, _, window = setup ()
         let a, b = Guid.NewGuid(), Guid.NewGuid()
         let ra, rb = requested a, requested b
-        desk.SetConversation(Some a)
+        desk.ApplyConversation(Some a)
         desk.Handle ra |> Assert.True
         desk.Handle rb |> Assert.True
         Dispatcher.UIThread.RunJobs()
@@ -71,12 +71,12 @@ let ``审批面板：只显示当前对话的卡片，已处理即移除，断�
         // 重连补发同一审批不产生第二张卡
         desk.Handle ra |> ignore
         Assert.Equal(2, desk.Pending.Length)
-        desk.SetConversation(Some b)
+        desk.ApplyConversation(Some b)
         Assert.True((byId desk.View (sprintf "tool-approval-%O" (idOf rb))).IsSome)
         desk.Handle(ToolApprovalResolved {| approvalId = idOf rb; conversationId = b; status = "approved"; reason = ""; alreadyHandled = false |}) |> Assert.True
         Assert.Empty desk.Panel.Children
         Assert.False desk.View.IsVisible
-        desk.SetConversation(Some a)
+        desk.ApplyConversation(Some a)
         Assert.Single(desk.Panel.Children) |> ignore
         desk.Disconnected()
         Assert.Empty desk.Pending
@@ -91,7 +91,7 @@ let ``别的对话来审批给提示条，已处理过的结果也给提示条�
         let seen = ResizeArray<Set<string>>()
         desk.AwaitingChanged.Add seen.Add
         let a = Guid.NewGuid()
-        desk.SetConversation(Some a)
+        desk.ApplyConversation(Some a)
         desk.Handle(requested a) |> ignore
         Dispatcher.UIThread.RunJobs()
         Assert.False(toastShown root ApprovalCardText.otherConversationWaitingText)
@@ -136,7 +136,7 @@ let ``改主题的触控下限后已显示的审批键跟着变`` () =
     Headless.run (fun () ->
         let _, _, desk, _, _, window = setup ()
         let a = Guid.NewGuid()
-        desk.SetConversation(Some a)
+        desk.ApplyConversation(Some a)
         desk.Handle(requested a) |> ignore
         Dispatcher.UIThread.RunJobs()
         let approve = (byId desk.View "tool-approval-approve").Value

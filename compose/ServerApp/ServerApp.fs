@@ -335,7 +335,7 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                 | None -> ()
             with _ -> ()
             // 决策 73：首版不做附件 GC——删对话不断触发任何 blob 清扫，孤儿留待未来压缩处理。
-        store.SetOnCommitted broadcastCommit
+        store.WireOnCommitted broadcastCommit
         coordinator <- Some store
         registry <- Some(ConnectionRegistry())
         let broadcastToConversation (convId: Guid) (ev: WireEvent) =

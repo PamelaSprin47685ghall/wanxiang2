@@ -8,6 +8,7 @@
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.ChatHeader" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ApprovalDesk" VersionOverride="0.0.0-local" />

@@ -69,6 +69,12 @@ module private CardUi =
         let sp = { new IServiceProvider with member _.GetService _ = null }
         ext.ProvideValue sp
 
+    /// 动作时刻读减弱动效资源（无订阅）；缺省按不减弱。
+    let reduced (c: Control) : bool =
+        match c.TryFindResource(box "Motion.Reduced") with
+        | true, (:? bool as r) -> r
+        | _ -> false
+
     /// 原生加载转圈（12x12 弧形 Path + 声明式 anim-spin 样式类，无 DispatcherTimer）
     let spinner (spin: bool) (tint: IBrush) : Control =
         let p =
@@ -80,35 +86,6 @@ module private CardUi =
                 Width = 12.0, Height = 12.0)
         if spin then p.Classes.Add "anim-spin"
         p :> Control
-
-module private Follow =
-    let now (source: IObservable<'T>) =
-        let mutable v = Unchecked.defaultof<'T>
-        (source.Subscribe(fun x -> v <- x)).Dispose()
-        v
-
-    let attachLive (control: Control) (source: IObservable<'T>) (apply: 'T -> unit) =
-        apply (now source)
-        let mutable sub: IDisposable = null
-        control.AttachedToVisualTree.Add(fun _ -> if isNull sub then sub <- source.Subscribe apply)
-        control.DetachedFromVisualTree.Add(fun _ ->
-            if not (isNull sub) then
-                sub.Dispose()
-                sub <- null)
-
-    let attachLive2 control (a: IObservable<'A>) (b: IObservable<'B>) (apply: 'A -> 'B -> unit) =
-        let mutable va = now a
-        let mutable vb = now b
-        attachLive control a (fun x -> va <- x; apply va vb)
-        attachLive control b (fun y -> vb <- y; apply va vb)
-
-    let live3 control (a: IObservable<'A>) (b: IObservable<'B>) (c: IObservable<'C>) (apply: 'A -> 'B -> 'C -> unit) =
-        let mutable va = now a
-        let mutable vb = now b
-        let mutable vc = now c
-        attachLive control a (fun x -> va <- x; apply va vb vc)
-        attachLive control b (fun y -> vb <- y; apply va vb vc)
-        attachLive control c (fun z -> vc <- z; apply va vb vc)
 
 /// 流式光标的呼吸时钟：一段呼吸运行的原点跨卡片重建持久，流式卡每次重建也接得上同一段呼吸
 /// （旧 MessageCard 模块级 breathOriginTicks / breathRunLive）。时钟可注入，测试不靠墙钟。
@@ -185,21 +162,19 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
         let fade = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty)
         if isNull button.Transitions then button.Transitions <- Avalonia.Animation.Transitions()
         button.Transitions.Add fade
-        let mutable reduced = false
-        Follow.attachLive2 button (looks.Timing Timing.CopyConfirmationFade) looks.Reduced (fun ms r ->
-            reduced <- r
-            fade.Duration <- (if r then TimeSpan.Zero else TimeSpan.FromMilliseconds ms))
+        // 淡出时长是主题的静态时长档；减弱动效在激活时刻读资源键（无订阅）
+        fade.Duration <- looks.Copy.Fade
         button.OnInvoke(fun () ->
             let payload = getText ()
             if not (String.IsNullOrEmpty payload) then
                 copy payload
-                confirm.Copied reduced)
+                confirm.Copied(CardUi.reduced button))
         button :> Control
 
     member private _.Reveal(maxHeight: float) =
         fun (content: Control) (visible: bool) ->
             let pane = RevealPane(content, maxHeight, visible)
-            pane.Host, (fun v -> pane.SetVisible v)
+            pane.Host, (fun v -> pane.ApplyVisible v)
 
     /// 思考过程（旧 reasoningBlock）
     member this.Thinking(ctx: CardContext, actions: CardActions, reasoning: string, durationMs: int64 option) : Control =
@@ -225,7 +200,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
             ToolTip.SetTip(header, (if open' then "收起思考过程" else "展开思考过程"))
             titleRun.Text <- ThinkingBlock.title ctx.Streaming open'
         fold.Toggled.Add(fun open' ->
-            pane.SetVisible open'
+            pane.ApplyVisible open'
             sync open')
         sync expanded
         ThinkingBlock(fold.Header, pane.Host).Host
@@ -303,7 +278,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
         let stateRun = FoldHeader.run "（收起）" (brush PaletteKey.TextMuted)
         fold.Caption.Inlines.Add(FoldHeader.run text tint)
         fold.Caption.Inlines.Add stateRun
-        Follow.attachLive fold.Header (looks.Space Space.Md) (fun md -> fold.Header.Margin <- Thickness(0.0, 0.0, 0.0, md))
+        fold.Header.Bind(Layoutable.MarginProperty, CardUi.res "Margin.GapBottomMd") |> ignore
         AutomationProperties.SetName(fold.Header, text)
         AutomationProperties.SetHelpText(fold.Header, "点击收起工具活动列表")
         fold.Toggled.Add(fun open' ->
@@ -338,9 +313,9 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                 Foreground = warn,
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center)
-        Follow.attachLive label (looks.Metric Metric.FontCaption) (fun s -> label.FontSize <- s)
+        label.Bind(TextBlock.FontSizeProperty, CardUi.res "Metric.FontCaption") |> ignore
         let row = StackPanel(Orientation = Orientation.Horizontal)
-        Follow.attachLive row (looks.Space Space.Sm) (fun s -> row.Spacing <- s)
+        row.Bind(StackPanel.SpacingProperty, CardUi.res "Space.Sm") |> ignore
         row.Children.Add icon
         row.Children.Add label
         AutomationProperties.SetName(row, "回复未完成")
@@ -352,39 +327,81 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
             { Copy = fun tip name get -> this.CopyButton(actions.CopyText, tip, name, get)
               Reveal = this.Reveal LayoutPolicy.expandedDetailMaxHeight
               CountdownText = ProviderRateLimit.countdownText }
-        let panel = ErrorPanel(parts, GenerationErrorTitle.ofMessage error.message, GenerationError.hint error)
+        let panel = ErrorPanel(parts)
         // 等待建议只跟可重试错误走；截止时刻挂在错误实例上，卡片重建不会让倒计时重来
+        let mutable countdownLeft = -1
+        let mutable countdownTicking = false
+        let mutable countdownAnnounce = false
+        let mutable hint = GenerationError.hint error
         match RetryCountdown.tryGet error (host.Now()) with
         | Some info when error.retryable ->
             match info.limit with
             | Some limit when ProviderRateLimit.isExhausted limit ->
-                panel.SetHint "这个模型服务当前时段的额度已用完：等倒计时结束再试，或换个模型继续。"
+                hint <- "这个模型服务当前时段的额度已用完：等倒计时结束再试，或换个模型继续。"
             | _ -> ()
             let ticker = CountdownTicker()
             let refresh () =
                 let frame = ticker.Refresh(RetryCountdown.remainingSeconds info (host.Now()))
-                panel.SetSeconds(frame.Left, frame.Announce)
-                panel.SetTicking frame.KeepTicking
+                countdownLeft <- frame.Left
+                countdownTicking <- frame.KeepTicking
+                countdownAnnounce <- frame.Announce
+                panel.Render (this.ErrorPanelVS error hint countdownLeft countdownTicking countdownAnnounce onRetry actions onContinue)
             refresh ()
             panel.Tick.Add(fun () -> refresh ())
             panel.Host.AttachedToVisualTree.Add(fun _ -> refresh ())
         | _ -> ()
-        match onContinue with
-        | Some go when error.retryable -> panel.AddContinue go |> ignore
-        | _ -> ()
-        if error.retryable then panel.AddRetry(onContinue.IsSome, onRetry) |> ignore
-        match ErrorRecovery.forKind error.kind, actions.Recover with
-        | Some recovery, Some sink -> panel.AddRecovery(ErrorRecovery.label recovery, fun () -> sink recovery) |> ignore
-        | _ -> ()
-        error.detail |> Option.iter (panel.AddDetail >> ignore)
+        if countdownLeft < 0 then
+            panel.Render (this.ErrorPanelVS error hint countdownLeft countdownTicking countdownAnnounce onRetry actions onContinue)
         panel.Host
+
+    /// 错误卡的视图状态（单入口 Render 的输入）：按钮族、倒计时与回调都在这里。
+    member private _.ErrorPanelVS
+        (error: GenerationError)
+        (hint: string)
+        (countdownLeft: int)
+        (countdownTicking: bool)
+        (countdownAnnounce: bool)
+        (onRetry: unit -> unit)
+        (actions: CardActions)
+        (onContinue: (unit -> unit) option)
+        : Wanxiang2.WorkspaceState.ErrorPanelVS =
+        let canContinue = error.retryable && onContinue.IsSome
+        let recovery =
+            match ErrorRecovery.forKind error.kind, actions.Recover with
+            | Some kind, Some sink -> Some(kind, sink)
+            | _ -> None
+        let row =
+            [ if canContinue then Wanxiang2.WorkspaceState.ErrorPanelAction.Continue
+              if error.retryable then Wanxiang2.WorkspaceState.ErrorPanelAction.Retry
+              match recovery with
+              | Some(kind, _) -> Wanxiang2.WorkspaceState.ErrorPanelAction.Recovery (ErrorRecovery.label kind)
+              | None -> () ]
+        { Title = GenerationErrorTitle.ofMessage error.message
+          Hint = hint
+          Detail = error.detail
+          CountdownSeconds = countdownLeft
+          Ticking = countdownTicking
+          Announce = countdownAnnounce
+          Actions = row
+          OnRetry = onRetry
+          OnContinue = onContinue
+          OnRecovery =
+            (match recovery with
+             | Some(kind, sink) -> Some(fun _ -> sink kind)
+             | None -> None) }
 
     /// 右键菜单（旧 buildMessageContextMenu）：与脚注行按钮逐项同源
     member _.Menu(message: MessageView, ctx: CardContext, actions: CardActions) : ContextMenu =
         let menu = ContextMenu()
-        let isUser = MessageView.isUser message
+        let facts =
+            { generation = (if ctx.Streaming then MenuGeneration.Streaming else MenuGeneration.Settled)
+              role = MessageMenu.roleOfText message.role
+              position = (if ctx.IsLastAssistant then ReplyPosition.LastAssistant else ReplyPosition.Other)
+              text = message.text
+              commitId = message.commitId
+              linkSink = (if actions.CopyLink.IsSome then LinkSink.Available else LinkSink.Absent) }
         let items =
-            MessageMenu.entries ctx.Streaming isUser ctx.IsLastAssistant message.text message.commitId actions.CopyLink.IsSome
+            MessageMenu.entries facts
             |> List.map (fun item ->
                 let action, glyph =
                     match item with
@@ -397,7 +414,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                 let entry = MenuItem(Header = MessageMenu.label item)
                 entry.Icon <- looks.Icon glyph (if danger then brush PaletteKey.Danger else brush PaletteKey.TextMuted)
                 if danger then entry.Foreground <- brush PaletteKey.Danger
-                let hint = MessageMenu.hint isUser ctx.IsLastAssistant item
+                let hint = MessageMenu.hint facts item
                 if not (String.IsNullOrWhiteSpace hint) then
                     try entry.InputGesture <- KeyGesture.Parse hint with _ -> ()
                 entry.Click.Add(fun _ -> action ())
@@ -414,32 +431,31 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
         if not (String.IsNullOrWhiteSpace message.text) && not ctx.Streaming then
             let name = ActionStrip.copyName isUser index
             let mutable confirm: CopyButton option = None
-            let mutable reduced = false
+            let mutable hostButton: Control = null
             let button =
                 strip.Add(StripGlyph.Copy, "复制", name, "复制消息正文", fun () ->
                     actions.CopyText message.text
-                    confirm |> Option.iter (fun c -> c.Copied reduced))
+                    confirm |> Option.iter (fun c -> c.Copied(CardUi.reduced hostButton)))
+            hostButton <- button
             AutomationProperties.SetLiveSetting(button, AutomationLiveSetting.Polite)
             let c = CopyButton(button, looks.Copy)
             c.StateChanged.Add(fun state ->
                 match state with
                 | CopyState.Default ->
-                    strip.SetIcon(button, StripGlyph.Copy, brush PaletteKey.TextMuted)
+                    strip.ApplyIcon(button, StripGlyph.Copy, brush PaletteKey.TextMuted)
                     ToolTip.SetTip(button, "复制")
                     AutomationProperties.SetName(button, name)
                     AutomationProperties.SetHelpText(button, "复制消息正文")
                 | CopyState.Confirmed
                 | CopyState.Fading ->
-                    strip.SetIcon(button, StripGlyph.Check, brush PaletteKey.Success)
+                    strip.ApplyIcon(button, StripGlyph.Check, brush PaletteKey.Success)
                     ToolTip.SetTip(button, "已复制")
                     AutomationProperties.SetName(button, "已复制")
                     AutomationProperties.SetHelpText(button, "已复制消息正文"))
             let fade = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty)
             if isNull button.Transitions then button.Transitions <- Avalonia.Animation.Transitions()
             button.Transitions.Add fade
-            Follow.attachLive2 button (looks.Timing Timing.CopyConfirmationFade) looks.Reduced (fun ms r ->
-                reduced <- r
-                fade.Duration <- (if r then TimeSpan.Zero else TimeSpan.FromMilliseconds ms))
+            fade.Duration <- looks.Copy.Fade
             confirm <- Some c
         if isUser && not ctx.Streaming then
             strip.Add(StripGlyph.Pencil, "编辑并分叉", "编辑并分叉", "以编辑后的消息创建分叉对话", fun () -> actions.EditAndFork message) |> ignore
@@ -509,7 +525,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                 let bubble = Border(Background = Brushes.Transparent, Padding = Thickness 0.0, HorizontalAlignment = HorizontalAlignment.Stretch, Child = body)
                 let avatar = ctx.BrandAvatar()
                 avatar.VerticalAlignment <- VerticalAlignment.Top
-                Follow.attachLive avatar (looks.Space Space.Xl) (fun xl -> avatar.Margin <- Thickness(0.0, 0.0, xl, 0.0))
+                avatar.Bind(Layoutable.MarginProperty, CardUi.res "Margin.AvatarRight") |> ignore
                 // 助手正文必须铺满阅读列：DockPanel 让头像靠左、正文填满
                 let dock = DockPanel(LastChildFill = true, HorizontalAlignment = HorizontalAlignment.Stretch)
                 DockPanel.SetDock(avatar, Dock.Left)
@@ -520,12 +536,9 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
         let strip = this.Actions(message, ctx, actions, index)
         let meta = if ctx.Streaming then None else this.Footer(message, (if ctx.IsLastAssistant then ctx.Usage else None))
         let line = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
-        Follow.attachLive line (looks.Space Space.Md) (fun md -> line.Spacing <- md)
-        // 头像宽 + 间距：脚注缩进同样的量才与正文左缘对齐
-        Follow.attachLive2 line (looks.Metric Metric.LogoAvatar) (looks.Space Space.Xl) (fun avatar xl ->
-            let gutter = avatar + xl
-            let md = Follow.now (looks.Space Space.Md)
-            line.Margin <- (if isUser then Thickness(0.0, md, gutter, 0.0) else Thickness(gutter, md, 0.0, 0.0)))
+        line.Bind(StackPanel.SpacingProperty, CardUi.res "Space.Md") |> ignore
+        // 头像宽 + 间距：脚注缩进同样的量才与正文左缘对齐（主题派生档）
+        line.Bind(Layoutable.MarginProperty, CardUi.res (if isUser then "Margin.UserIndent" else "Margin.AssistantIndent")) |> ignore
         if isUser then
             line.HorizontalAlignment <- HorizontalAlignment.Right
             meta |> Option.iter line.Children.Add
@@ -539,7 +552,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
         card.Children.Add row
         card.Children.Add line
         let mutable touched = false
-        let sync () = strip.SetShown(card.IsPointerOver || strip.Host.IsKeyboardFocusWithin || touched)
+        let sync () = strip.ApplyShown(card.IsPointerOver || strip.Host.IsKeyboardFocusWithin || touched)
         // 触屏没有 hover：点一下消息就选中它、露出操作；点另一条时上一条收起
         card.AddHandler(
             InputElement.PointerPressedEvent,
@@ -547,7 +560,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                 if e.Pointer.Type = PointerType.Touch || e.Pointer.Type = PointerType.Pen then
                     host.Touch.Release |> Option.iter (fun release -> release ())
                     touched <- true
-                    strip.SetShown true
+                    strip.ApplyShown true
                     host.Touch.Release <-
                         Some(fun () ->
                             touched <- false
@@ -555,7 +568,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                             sync ())),
             Avalonia.Interactivity.RoutingStrategies.Tunnel,
             true)
-        let show () = strip.SetShown true
+        let show () = strip.ApplyShown true
         let dim () = sync ()
         card.PointerEntered.Add(fun _ -> show ())
         card.PointerExited.Add(fun _ -> dim ())
@@ -570,7 +583,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
         // 定位高亮的承载面：零边距圆角 Border，平时透明，不改列表占位
         let highlight =
             Border(Name = MessageCards.HighlightName, Background = Brushes.Transparent, Child = card, ContextMenu = this.Menu(message, ctx, actions))
-        Follow.attachLive highlight (looks.Space Space.RadiusLg) (fun r -> highlight.CornerRadius <- CornerRadius r)
+        highlight.Bind(Border.CornerRadiusProperty, CardUi.res "CornerRadius.RadiusLg") |> ignore
         (highlight :> Control), stream
 
     /// 单入口：从 MessageRowVS 渲染

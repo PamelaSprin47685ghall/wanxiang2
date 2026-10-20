@@ -45,7 +45,7 @@ let ``sessionSettings dialog validates numeric bounds and updates config`` () =
         p.TemperatureBox.Text <- "1"
         Dispatcher.UIThread.RunJobs()
         Assert.False p.Summary.IsVisible
-        p.SetPending true
+        p.ApplyPending true
         Assert.Equal("正在保存…", AutomationProperties.GetName p.SaveButton)
         click p.SaveButton
         Assert.Single drafts |> ignore)

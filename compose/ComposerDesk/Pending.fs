@@ -3,8 +3,6 @@ namespace Wanxiang2.ComposerDesk
 open System
 open Avalonia
 open Avalonia.Automation
-open Avalonia.Automation.Peers
-open Avalonia.Automation.Provider
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
 open Avalonia.Input
@@ -24,35 +22,6 @@ type PendingAppearance =
       BodyFont: IObservable<FontFamily>
       /// 次要按钮样式类（旧 Ui.Secondary）
       DressSecondary: Border -> unit }
-
-/// 可点的文字按钮（旧 Ui.button）：自动化层报按钮并给 Invoke
-type private PendingButton(label: string) as this =
-    inherit Border()
-    let mutable action: unit -> unit = ignore
-    do
-        this.Child <- TextBlock(Text = label, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
-        this.Focusable <- true
-        this.Cursor <- new Cursor(StandardCursorType.Hand)
-        AutomationProperties.SetName(this, label)
-        this.PointerReleased.Add(fun e ->
-            if not e.Handled && this.IsEnabled && e.InitialPressMouseButton = MouseButton.Left then
-                e.Handled <- true
-                action ())
-        this.KeyDown.Add(fun e ->
-            if not e.Handled && this.IsEnabled && (e.Key = Key.Enter || e.Key = Key.Space) then
-                e.Handled <- true
-                action ())
-    override _.StyleKeyOverride = typeof<Border>
-    member _.OnInvoke(f: unit -> unit) = action <- f
-    member _.Invoke() = if this.IsEnabled then action ()
-    override _.OnCreateAutomationPeer() = PendingButtonPeer(this) :> AutomationPeer
-
-and private PendingButtonPeer(owner: PendingButton) =
-    inherit ControlAutomationPeer(owner)
-    override _.GetAutomationControlTypeCore() = AutomationControlType.Button
-    interface IInvokeProvider with
-        // 跨线程 marshal，非焦点竞态（UI Automation 调用方可能来自辅助功能后台线程）
-        member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())
 
 /// 未确认消息区（旧 Composer.SetPendingMessages）：当前对话的每条未确认消息一张分组卡，
 /// 别的对话的按对话给一个「查看」按钮，末尾一句保存提醒。
@@ -78,11 +47,15 @@ type PendingPanel(look: PendingAppearance) =
         t
 
     let button (label: string) (onClick: unit -> unit) =
-        let b = PendingButton label
-        look.DressSecondary b
+        let b = Button(Content = label, Focusable = true, Cursor = new Cursor(StandardCursorType.Hand),
+                       HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
+        b.Classes.Add "secondary"
+        b.Classes.Add "button-secondary"
+        AutomationProperties.SetName(b, label)
         live (look.Metric Metric.TextButtonMinHeight) (fun h -> b.MinHeight <- h)
+        live (look.Space Space.RadiusMd) (fun r -> b.CornerRadius <- CornerRadius r)
         b.Padding <- Thickness(Spacing.space2xl, Spacing.spaceSm)
-        b.OnInvoke onClick
+        b.Click.Add(fun _ -> onClick ())
         b
 
     do

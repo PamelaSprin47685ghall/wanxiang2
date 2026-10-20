@@ -90,6 +90,8 @@ type ThemeStyles(manager: ThemeManager) =
         st :> IStyle
     let border (cls: string) (s: Selector) = s.OfType<Border>().Class(cls)
     let surface (s: Selector) = s.OfType<Border>().Class(StyleClass.surface)
+    let buttonCls (cls: string) (s: Selector) = s.Is<Button>().Class(cls)
+    let buttonSurface (s: Selector) = s.Is<Button>().Class(StyleClass.surface)
     let childText (cls: string) (s: Selector) = s.OfType<Border>().Class(cls).Child().OfType<TextBlock>()
     let thin () = thick Thickness (manager.Metric Metric.BorderWidth)
 
@@ -122,6 +124,22 @@ type ThemeStyles(manager: ThemeManager) =
                     Layoutable.MinWidthProperty, iconSize (); Layoutable.MinHeightProperty, iconSize ()
                     Border.CornerRadiusProperty, corner radius
                     Border.BackgroundProperty, box bg ]
+          // ---- 外观（Button 平行路径）----
+          yield style (buttonCls StyleClass.buttonGhost)
+              [ Button.BackgroundProperty, box Brushes.Transparent
+                Button.ForegroundProperty, box (brush PaletteKey.TextMuted)
+                Button.BorderBrushProperty, box Brushes.Transparent
+                Button.BorderThicknessProperty, box (Thickness 0.0)
+                Button.CornerRadiusProperty, corner Space.RadiusMd
+                Button.PaddingProperty, bind (Live.map2 (fun x y -> Thickness(x, y)) (manager.Space Space.X2l) (manager.Metric Metric.TextButtonPaddingY))
+                Layoutable.MinHeightProperty, (metric Metric.TextButtonMinHeight) ]
+          for cls, radius, bg in [ StyleClass.iconButton, Space.RadiusMd, Brushes.Transparent :> IBrush
+                                   StyleClass.iconButtonAccent, Space.RadiusPill, brush PaletteKey.Accent ] do
+              yield style (buttonCls cls)
+                  [ Layoutable.WidthProperty, iconSize (); Layoutable.HeightProperty, iconSize ()
+                    Layoutable.MinWidthProperty, iconSize (); Layoutable.MinHeightProperty, iconSize ()
+                    Button.CornerRadiusProperty, corner radius
+                    Button.BackgroundProperty, box bg ]
           yield style (border StyleClass.toggleTrack)
               [ Layoutable.WidthProperty, (metric Metric.ToggleTrackWidth)
                 Layoutable.HeightProperty, (metric Metric.ToggleTrackHeight)
@@ -177,6 +195,25 @@ type ThemeStyles(manager: ThemeManager) =
           yield style (fun s -> (surface s).Class(":focus-visible")) [ Border.BoxShadowProperty, bind ringAccent ]
           yield style (fun s -> (surface s).Class(StyleClass.focusByProgram).Class(":focus"))
               [ Border.BoxShadowProperty, bind ringAccent ]
+          // ---- Button 状态样式（平行路径：按压/禁用/悬停/焦点环）----
+          yield style (fun s -> (buttonSurface s).Class(":pressed")) [ Visual.OpacityProperty, (metric Metric.OpacityPressed) ]
+          yield style (fun s -> (buttonSurface s).Class(":disabled"))
+              [ Visual.OpacityProperty, (metric Metric.OpacityDisabled); Avalonia.Input.InputElement.IsHitTestVisibleProperty, box false ]
+          for variant, over in [ StyleClass.hoverPlain, brush PaletteKey.Hover
+                                 StyleClass.hoverAccent, brush PaletteKey.AccentHover
+                                 StyleClass.hoverRaised, manager.Derived DerivedBrush.HoverRaised :> IBrush
+                                 StyleClass.hoverDanger, manager.Derived DerivedBrush.HoverDanger :> IBrush ] do
+              yield style (fun s -> (buttonSurface s).Class(variant).Class(":pointerover")) [ Button.BackgroundProperty, box over ]
+          yield style (fun s -> (buttonSurface s).Class(StyleClass.hoverBordered).Class(":pointerover"))
+              [ Button.BorderBrushProperty, box (brush PaletteKey.Line) ]
+          yield style (fun s -> (buttonSurface s).Class(StyleClass.focusSoft).Class(":focus-within"))
+              [ Button.BorderBrushProperty, box (brush PaletteKey.AccentSoft) ]
+          yield style (fun s -> (buttonSurface s).Class(":focus-visible"))
+              [ Button.BorderBrushProperty, box (brush PaletteKey.Accent)
+                Button.BorderThicknessProperty, thick Thickness (manager.Metric Metric.BorderWidth) ]
+          yield style (fun s -> (buttonSurface s).Class(StyleClass.focusByProgram).Class(":focus"))
+              [ Button.BorderBrushProperty, box (brush PaletteKey.Accent)
+                Button.BorderThicknessProperty, thick Thickness (manager.Metric Metric.BorderWidth) ]
 
           // ========================================================
           // ---- 原生控件覆盖与样式（AGENTS.md 规则 1 & 2）----
@@ -404,7 +441,17 @@ type ThemeStyles(manager: ThemeManager) =
     member _.Install(target: Styles) = if not (target.Contains group) then target.Add group
 
     /// 让一个表面参与统一状态反馈：挂 surface 与悬停变体，并挂状态过渡（只补间颜色）
-    member _.Surface(control: Border, variant: string) =
-        control.Classes.Add StyleClass.surface
-        if not (System.String.IsNullOrEmpty variant) then control.Classes.Add variant
-        control.Transitions <- manager.StateTransitions((variant = StyleClass.hoverBordered))
+    member _.Surface(control: Control, variant: string) =
+        match control with
+        | :? Border as b ->
+            b.Classes.Add StyleClass.surface
+            if not (System.String.IsNullOrEmpty variant) then b.Classes.Add variant
+            b.Transitions <- manager.StateTransitions((variant = StyleClass.hoverBordered))
+        | :? Button as btn ->
+            btn.Classes.Add StyleClass.surface
+            if not (System.String.IsNullOrEmpty variant) then btn.Classes.Add variant
+            btn.Transitions <- manager.StateTransitions((variant = StyleClass.hoverBordered))
+        | _ ->
+            control.Classes.Add StyleClass.surface
+            if not (System.String.IsNullOrEmpty variant) then control.Classes.Add variant
+            control.Transitions <- manager.StateTransitions((variant = StyleClass.hoverBordered))

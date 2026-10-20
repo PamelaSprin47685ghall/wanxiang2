@@ -164,7 +164,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
             g.HorizontalAlignment <- HorizontalAlignment.Center
             g.VerticalAlignment <- VerticalAlignment.Center
             g.Margin <- Thickness 0.0
-            button.Child <- g
+            button.Content <- g
         let normal () =
             setIcon Glyph.Copy (brush PaletteKey.TextMuted)
             ToolTip.SetTip(button, tip)

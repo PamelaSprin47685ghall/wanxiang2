@@ -343,7 +343,7 @@ module Program =
                         try
                             use stream = new MemoryStream(bytes)
                             let image = Bitmap.DecodeToWidth(stream, 96)
-                            if not (isNull image) then composerDesk.SetThumbnail(attachmentId, image :> Avalonia.Media.IImage)
+                            if not (isNull image) then composerDesk.ApplyThumbnail(attachmentId, image :> Avalonia.Media.IImage)
                         with _ -> ()
                     // 草稿落点接线（宿主桥）：桌面写 $WANXIANG_HOME/drafts.json
                     //（原子写 tmp+rename、0600、Q118 同口径；WANXIANG_HOME 已在上方设为 configPath 的目录）。

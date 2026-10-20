@@ -2,7 +2,7 @@ namespace Wanxiang.UI
 
 // 照抄旧 Views/ChatView.fs：exchangeIndices、currentExchangeIndex、syncExchangeNavState、JumpExchange、
 // RenderMessages 末尾的锚点与挂起处理、SetOlderAvailable、ShowOlderPageFailure、换对话的重置。
-// 控件与滚动换成返回值；ExpandMountWindow 的递归换成 ExpandAndRetry
+// 控件与滚动换成返回值；扩窗的递归换成 ExpandAndRetry
 [<RequireQualifiedAccess>]
 type JumpStep =
     | Stay

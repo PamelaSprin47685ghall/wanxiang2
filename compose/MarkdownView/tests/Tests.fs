@@ -142,7 +142,7 @@ let ``Markdown code block copy button confirms visually with check icon and tool
         let view = make kit (fun t -> copied <- t) ignore (CodeWrapMemory false)
         let controls = view.RenderText "```fsharp\nlet x = 42\n```"
         let w = show controls
-        let button = byTip "复制代码" controls :?> Border
+        let button = byTip "复制代码" controls :?> Button
         Assert.True button.Focusable
         Assert.Equal("复制fsharp代码", AutomationProperties.GetName button)
         invoke button
@@ -150,7 +150,7 @@ let ``Markdown code block copy button confirms visually with check icon and tool
         Assert.Equal("已复制", AutomationProperties.GetName button)
         Assert.Equal(box "已复制", ToolTip.GetTip button)
         // 勾号用成功色
-        Assert.Same(kit.Brush MarkdownInk.Success, (button.Child :?> Border).Background)
+        Assert.Same(kit.Brush MarkdownInk.Success, (button.Content :?> Border).Background)
         w.Close())
 
 [<Fact>]
@@ -186,12 +186,12 @@ let ``wrap toggle flips the block and is remembered for later blocks`` () =
         let view = make kit ignore ignore memory
         let first = view.RenderText "```\nx\n```"
         let w = show first
-        let toggle = byTip "长行折行 / 横向滚动" first :?> Border
+        let toggle = byTip "长行折行 / 横向滚动" first :?> Button
         Assert.Equal("长行折行", AutomationProperties.GetName toggle)
         invoke toggle
         Assert.True memory.Wrapped
         Assert.Equal("取消折行", AutomationProperties.GetName toggle)
-        Assert.Same(kit.Brush MarkdownInk.Accent, (toggle.Child :?> Border).Background)
+        Assert.Same(kit.Brush MarkdownInk.Accent, (toggle.Content :?> Border).Background)
         let code = descendants first |> Seq.pick (function :? SelectableTextBlock as s when s.Text = null || s.Inlines.Count > 0 -> Some s | _ -> None)
         Assert.Equal(TextWrapping.Wrap, code.TextWrapping)
         let second = view.RenderText "```\ny\n```"
@@ -207,17 +207,17 @@ let ``huge code block expand button reports its expanded state`` () =
         let expand =
             descendants control
             |> Seq.pick (function
-                | :? Border as b -> (match b.Child with :? TextBlock as t when t.Text = "展开全部" -> Some b | _ -> None)
+                | :? Button as b -> (match b.Content with :? TextBlock as t when t.Text = "展开全部" -> Some b | _ -> None)
                 | _ -> None)
         let scroll = descendants control |> Seq.pick (function :? ScrollViewer as s -> Some s | _ -> None)
         Assert.Equal(LayoutPolicy.expandedDetailMaxHeight, scroll.MaxHeight)
         Assert.Equal("已折叠", AutomationProperties.GetItemStatus expand)
         key expand Key.Enter
-        Assert.Equal("收起", (expand.Child :?> TextBlock).Text)
+        Assert.Equal("收起", (expand.Content :?> TextBlock).Text)
         Assert.Equal("已展开", AutomationProperties.GetItemStatus expand)
         Assert.True(Double.IsPositiveInfinity scroll.MaxHeight)
         key expand Key.Enter
-        Assert.Equal("展开全部", (expand.Child :?> TextBlock).Text)
+        Assert.Equal("展开全部", (expand.Content :?> TextBlock).Text)
         Assert.Equal("已折叠", AutomationProperties.GetItemStatus expand))
 
 [<Fact>]

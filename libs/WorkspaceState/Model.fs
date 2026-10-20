@@ -169,4 +169,5 @@ type WorkspaceModel = {
     NextToastId: int
     NextTimerToken: int
     PendingApprovals: Map<Guid, {| ToolName: string; CallId: string; Summary: string; ArgumentsJson: string; Policy: string; ConversationId: Guid |}>
+    PaletteRecent: string list
 }

@@ -6,7 +6,7 @@
 1. **同一错误，文案与按钮文案与旧实现相同。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/connectissuetext.txt` 由旧函数在 13 种错误上生成。
+1. [LEMMA: 1] 错误文案与按钮文案由行为断言覆盖全部 13 种错误变体（SPEC 7：退役纯界面金样复刻测试，转为直接行为断言）。
 
 # 迁入或覆盖的旧测试
 旧 DevicesUiTests 的下列用例要打开对话框点按钮，**旧用例不删**，这里只迁入其中不需要窗口的断言：
@@ -14,7 +14,3 @@
 - `retry visibility does not depend on message keywords`（部分覆盖：文案不含旧关键词）
 - `frozen pairing shows the minutes and offers no retry`（部分覆盖：文案含分钟数）
 
-本组合新增：金样。
-
-# 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。

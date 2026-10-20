@@ -2,8 +2,6 @@
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
     <Compile Include="BreadcrumbAction.Tests.fs" />
-    <Compile Include="MountWindow.Samples.fs" />
-    <Compile Include="MountWindow.Tests.fs" />
     <Compile Include="RevealFlash.Tests.fs" />
   </ItemGroup>
   <ItemGroup>

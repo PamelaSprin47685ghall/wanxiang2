@@ -74,13 +74,18 @@ let private setupWith (allPinned: Guid list -> bool) =
     let desk = SidebarDesk(theme, overlay, actions, fun s -> Border(Width = s, Height = s) :> Control)
     root.Children.Insert(0, desk.View)
     let window = Desk.show root 360.0 800.0
-    desk.SetConnection(true, "已连接")
+    let emptySidebarVS () = (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Sidebar
+    desk.Render({ emptySidebarVS () with Host = { (emptySidebarVS ()).Host with Connected = true; StatusText = "已连接" } })
     { desk = desk; overlay = overlay; log = log; window = window; root = root }
+
+let private emptySidebarVS () =
+    let vs = (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Sidebar
+    { vs with Host = { vs.Host with Connected = true; StatusText = "已连接" } }
 
 let private setup () = setupWith (fun _ -> false)
 
 let private load r (items: ConversationSummary list) =
-    r.desk.SetConversations items
+    r.desk.Render(emptySidebarVS (), None, items)
     pump ()
     r.window.UpdateLayout()
     pump ()
@@ -142,7 +147,7 @@ let ``Sidebar search navigation moves focus and handles escape`` () =
         pump ()
         key r.desk.Search.Box Key.Escape
         Assert.Equal("", r.desk.Search.Text)
-        r.desk.SetActive(Some b.id)
+        r.desk.Render(emptySidebarVS (), Some b.id)
         key r.desk.Search.Box Key.Escape
         Assert.Same(row r b, focused r))
 
@@ -198,7 +203,7 @@ let ``escape in selection mode exits the mode even with a search query`` () =
         let r = setup ()
         let a = conv "甲"
         load r [ a ]
-        r.desk.SetSearchText "甲"
+        r.desk.ApplySearchText "甲"
         pump ()
         r.desk.EnterSelection a.id
         key (row r a) Key.Escape
@@ -267,7 +272,7 @@ let ``setting the active conversation scrolls it into view`` () =
         let items = [ for i in 1..80 -> conv (sprintf "对话 %d" i) ]
         load r items
         let last = r.desk.Rows.VisibleIds |> List.last
-        r.desk.SetActive(Some last)
+        r.desk.Render(emptySidebarVS (), Some last)
         pump ()
         r.window.UpdateLayout()
         pump ()
@@ -400,8 +405,8 @@ let ``changing active sidebar row does not rebuild the conversation list`` () =
         load r [ a; b ]
         let source = r.desk.Rows.List.ItemsSource
         let hostA = row r a
-        r.desk.SetActive(Some a.id)
-        r.desk.SetActive(Some b.id)
+        r.desk.Render(emptySidebarVS (), Some a.id)
+        r.desk.Render(emptySidebarVS (), Some b.id)
         Assert.Same(source, r.desk.Rows.List.ItemsSource)
         Assert.Same(hostA, row r a)
         Assert.Equal("当前对话", AutomationProperties.GetItemStatus(row r b)))
@@ -410,16 +415,15 @@ let ``changing active sidebar row does not rebuild the conversation list`` () =
 let ``sidebar empty state separates list loading from confirmed empty and embeds primary actions`` () =
     Headless.run (fun () ->
         let r = setup ()
-        r.desk.SetConnection(false, "未连接")
+        r.desk.Render({ emptySidebarVS () with Host = { (emptySidebarVS ()).Host with Connected = false; StatusText = "未连接" } })
         Assert.True r.desk.EmptyCard.IsVisible
         Assert.False r.desk.EmptyCard.ActionButton.IsVisible
-        r.desk.SetCompactMode true
+        r.desk.Render({ emptySidebarVS () with Compact = true; Host = { (emptySidebarVS ()).Host with Connected = false; StatusText = "未连接" } })
         Assert.True r.desk.EmptyCard.ActionButton.IsVisible
         invoke r.desk.EmptyCard.ActionButton
         Assert.Contains("reconnect", r.log.Items)
-        r.desk.SetCompactMode false
-        r.desk.SetConnection(true, "已连接")
-        r.desk.SetConversationListLoading true
+        r.desk.Render({ emptySidebarVS () with Compact = false; Host = { (emptySidebarVS ()).Host with Connected = true; StatusText = "已连接" } })
+        r.desk.Render({ emptySidebarVS () with Empty = Wanxiang2.WorkspaceState.SidebarEmptyKind.Loading })
         Assert.True r.desk.EmptyCard.Skeleton.IsVisible
         Assert.DoesNotContain("还没有对话", Desk.texts r.desk.View)
         load r []
@@ -436,7 +440,7 @@ let ``title and preview both highlight while searching`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.SetConversations [ a ]
+        r.desk.Render(emptySidebarVS (), None, [ a ])
         pump ()
         let lit = highlighted (row r a) |> List.map (fun x -> x.Text)
         Assert.True(lit.Length >= 2, sprintf "%A" lit))
@@ -449,7 +453,7 @@ let ``clearing the query removes every highlight`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.SetConversations [ a ]
+        r.desk.Render(emptySidebarVS (), None, [ a ])
         pump ()
         r.desk.ResetSearch false
         pump ()
@@ -465,9 +469,9 @@ let ``recycled rows keep their highlight after a snapshot refresh`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.SetConversations [ a ]
+        r.desk.Render(emptySidebarVS (), None, [ a ])
         pump ()
-        r.desk.SetConversations [ { a with messageCount = 9 } ]
+        r.desk.Render(emptySidebarVS (), None, [ { a with messageCount = 9 } ])
         pump ()
         r.window.UpdateLayout()
         Assert.NotEmpty(highlighted (row r a)))
@@ -482,7 +486,7 @@ let ``两万行带分叉与同名对话的重建在一秒内完成`` () =
             items |> List.chunkBySize 2 |> List.choose (function
                 | [ p; c ] -> Some(c.id, { parentId = p.id; forkBaseMessageId = None; forkFirstMessageId = None; parentTitle = None; parentDeleted = false; forkOrdinal = Some 1 })
                 | _ -> None) |> Map.ofList
-        r.desk.SetLineage lineage
+        r.desk.SlotLineage lineage
         let sw = Diagnostics.Stopwatch.StartNew()
         load r items
         sw.Stop()

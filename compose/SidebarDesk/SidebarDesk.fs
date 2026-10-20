@@ -67,6 +67,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
     let mutable showArchived = false
     let mutable connected = false
     let mutable listLoading = false
+    let mutable projectedEmpty: SidebarEmptyKind option = None
     let mutable compact = false
     let mutable presetEntries: (string * string * (unit -> unit)) list = []
     let mutable presetMenu: (Control -> (string * string * (unit -> unit)) list -> unit) option = None
@@ -188,6 +189,9 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         let searchEmpty = not (String.IsNullOrWhiteSpace query) && List.isEmpty visible && section.IsNone
         search.SetEmptyHint searchEmpty
         let emptyKind =
+            match projectedEmpty with
+            | Some SidebarEmptyKind.Loading -> Some SidebarEmptyKind.Loading
+            | _ ->
             if not connected then Some (SidebarEmptyKind.NotConnected compact)
             elif listLoading then Some SidebarEmptyKind.Loading
             elif List.isEmpty visible && section.IsNone then
@@ -434,63 +438,59 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
 
     member _.PaletteButton = hostBar.PaletteButton
 
-    /// 预设下拉：空列表时按钮隐藏
-    member _.SetPresets(entries: (string * string * (unit -> unit)) list, show: Control -> (string * string * (unit -> unit)) list -> unit) =
+    /// 预设下拉插槽：空列表时按钮隐藏
+    member _.SlotPresets(entries: (string * string * (unit -> unit)) list, show: Control -> (string * string * (unit -> unit)) list -> unit) =
         presetEntries <- entries
         presetMenu <- Some show
         brand.SetPresetsVisible(not (List.isEmpty entries))
 
     member _.PresetMenuButton = brand.PresetButton
 
-    /// 命令面板把全文搜索交给侧栏
-    member _.SetSearchText(text: string) = search.Text <- text
+    /// 命令面板把全文搜索交给侧栏（一次性命令）
+    member _.ApplySearchText(text: string) = search.Text <- text
 
-    /// 谱系随快照更新；本方法不重建，下一次 SetConversations 带上
-    member _.SetLineage(value: Map<Guid, ForkLineage>) = lineage <- value
-
-    member _.SetConversations(items: ConversationSummary list) =
-        summaries <- items
-        listLoading <- false
-        rebuild ()
-        if selection.Active then refreshChrome ()
-
-    member _.SetActive(id: Guid option) =
-        if activeId <> id then
-            activeId <- id
-            marks ()
-            // 只滚屏不抢焦点
-            id |> Option.iter rows.ScrollTo
-
-    member _.SetShowArchived(value: bool) =
-        if showArchived <> value then
-            showArchived <- value
-            rebuild ()
+    /// 谱系随快照更新插槽
+    member _.SlotLineage(value: Map<Guid, ForkLineage>) = lineage <- value
 
     member _.ConnectionText = hostBar.ConnectionText
 
-    member _.SetConnection(isConnected: bool, text: string) =
-        connected <- isConnected
-        listLoading <- false
-        if not isConnected then messageSearch.Disconnected()
-        hostBar.SetConnection(isConnected, text)
-        rebuild ()
-
-    member _.SetConversationListLoading(isLoading: bool) =
-        if listLoading <> isLoading then
-            listLoading <- isLoading
+    /// 单入口幂等渲染：由 SidebarVS 投影全量驱动侧栏
+    member this.Render(vs: SidebarVS, ?activeConversationId: Guid option, ?customSummaries: ConversationSummary list) =
+        let hadSummaries = customSummaries.IsSome
+        connected <- vs.Host.Connected
+        compact <- vs.Compact
+        if empty.Style = Some EmptyCardStyle.Note then empty.SetActionVisible vs.Compact
+        brand.SetCompact vs.Compact
+        search.SetCompact vs.Compact
+        hostBar.SetCompact vs.Compact
+        rows.SetCompact vs.Compact
+        hostBar.SetServerUrl vs.Host.ServerUrl
+        hostBar.SetConnection(vs.Host.Connected, vs.Host.StatusText)
+        if not vs.Host.Connected then messageSearch.Disconnected()
+        match customSummaries with
+        | Some s -> summaries <- s
+        | None -> ()
+        listLoading <- match vs.Empty with SidebarEmptyKind.Loading -> true | _ -> false
+        projectedEmpty <-
+            match vs.Empty with
+            | SidebarEmptyKind.Loading -> Some SidebarEmptyKind.Loading
+            | _ -> None
+        let nextActive = defaultArg activeConversationId activeId
+        let activeChanged = activeId <> nextActive
+        if activeChanged then
+            activeId <- nextActive
+        let onlyActiveChanged = activeChanged && not hadSummaries && not listLoading && vs.Empty <> SidebarEmptyKind.Loading
+        if onlyActiveChanged then
+            marks ()
+        else
             rebuild ()
-
-    member _.SetCompactMode(value: bool) =
-        compact <- value
-        if empty.Style = Some EmptyCardStyle.Note then empty.SetActionVisible value
-        brand.SetCompact value
-        search.SetCompact value
-        hostBar.SetCompact value
-        rows.SetCompact value
+        if activeChanged then
+            nextActive |> Option.iter rows.ScrollTo
+        if selection.Active then refreshChrome ()
 
     member _.FocusSearch(?selectAll: bool) = focusSearch (defaultArg selectAll true)
 
-    member _.SetServerUrl(url: string) = hostBar.SetServerUrl url
+    member _.ApplyServerUrl(url: string) = hostBar.SetServerUrl url
 
     /// 当前从上到下的对话行 id（Ctrl+1..9 用）
     member _.GetVisibleOrder() : string list = rows.VisibleIds |> List.map string

@@ -59,6 +59,7 @@ module Workspace =
             NextToastId = 1
             NextTimerToken = 1
             PendingApprovals = Map.empty
+            PaletteRecent = []
         }
 
     let private addToast (text: string) (tone: ToastTone) (undo: string option) (now: DateTimeOffset) (model: WorkspaceModel) : WorkspaceModel * Effect list =
@@ -436,6 +437,15 @@ module Workspace =
                 | HeaderUserMsg.ToggleSidebar ->
                     let nextNav = { model.Nav with SidebarCollapsed = not model.Nav.SidebarCollapsed }
                     { model with Nav = nextNav }, []
+                | _ -> model, []
+
+            | UserMsg.Palette paletteMsg ->
+                match paletteMsg with
+                | PaletteUserMsg.PushRecent itemId ->
+                    let updated = itemId :: (model.PaletteRecent |> List.filter ((<>) itemId)) |> List.truncate 8
+                    { model with PaletteRecent = updated }, []
+                | PaletteUserMsg.SetRecent recent ->
+                    { model with PaletteRecent = List.truncate 8 recent }, []
                 | _ -> model, []
 
             | _ -> model, []

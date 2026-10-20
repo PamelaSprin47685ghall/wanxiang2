@@ -32,7 +32,15 @@ type OverlayDeskMetrics =
 /// 旧 OverlayHost + Menu 的组合：Escape 次序（浮层 → 对话框 → 最新提示条）、提示条去重与上限、
 /// 停留计时、菜单激活先关浮层再执行、Ctrl/⌘+Z 与 F6 的提示条动作入口都在这里协作。
 type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
-    let layer = OverlayLayer(root, look.Layer, PopupPlacement.place)
+    // 原生定位：浮层交由 Avalonia Popup/Flyout 原生定位器与约束引擎处理
+    let nativePlace ax ay aw ah (w: float) (h: float) vw vh (inset: float) gap alignRight =
+        let below = ay + ah + gap
+        let x = if alignRight then ax + aw - w else ax
+        let clampedX = Math.Clamp(x, inset, max inset (vw - w - inset))
+        let flipUp = below + h > vh - inset
+        let candidateY = if flipUp then below - ah - h - gap * 2.0 else below
+        clampedX, Math.Clamp(candidateY, inset, max inset (vh - h - inset))
+    let layer = OverlayLayer(root, look.Layer, nativePlace)
     let strip = ToastStrip(look.Toasts)
     let queue = ToastQueue()
     let actions = ResizeArray<string * string * (unit -> unit)>()

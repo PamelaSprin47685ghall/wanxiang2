@@ -7,7 +7,7 @@
 - `SetOlderAvailable`、`OlderFailed`、`Reset`，以及回到开头时只丢锚点、保留挂起的 `ClearAnchor`；
 - 静态 `Cards`、`ViewportIndex` 对应旧 exchangeIndices 与 currentExchangeIndex 的选取。
 
-面板、卡片边界、平滑滚动、ExpandMountWindow、要更早一页的请求仍归 ChatView。不引用任何其他库。根规则见项目根目录 AGENTS.md。
+面板、卡片边界、平滑滚动、要更早一页的请求仍归 ChatView。不引用任何其他库。根规则见项目根目录 AGENTS.md。
 
 # LEMMA
 1. **同一串操作，跳转结果与状态和旧实现相同。** [根 AXIOM: 5]

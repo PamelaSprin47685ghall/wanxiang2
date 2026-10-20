@@ -152,6 +152,8 @@ and PaletteUserMsg =
     | Close
     | QueryChanged of query: string
     | ExecuteItem of itemId: string
+    | PushRecent of itemId: string
+    | SetRecent of recent: string list
 
 and ModelSwitchUserMsg =
     | Open

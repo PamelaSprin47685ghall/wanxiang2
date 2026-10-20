@@ -29,7 +29,7 @@
 
 ## ExportView（库）
 
-旧 `Views/ExportDialog.fs` 的 RenderProgress（状态文字、颜色档、进度、按键）与 Refresh 节流决定迁入：`decide`、`refresh`。读取阶段用本库自己的 `ExportPhase`（与旧 ConversationExport 状态同形）。计时器、文件保存、焦点兜底仍归 ExportDialog。不引用任何其他库。根规则见项目根目录 AGENTS.md。
+旧 `Views/ExportDialog.fs` 的 RenderProgress（状态文字、颜色档、进度、按键）与 Refresh 节流决定迁入：`decide`、`refresh`。入参采用互斥的 `ExportOutputKind`（None | MarkdownOnly | JsonOnly | Both）收敛输出物状态，消除了多裸 bool 参数。读取阶段用本库自己的 `ExportPhase`（与旧 ConversationExport 状态同形）。计时器、文件保存、焦点兜底仍归 ExportDialog。不引用任何其他库。根规则见项目根目录 AGENTS.md。
 
 ## LEMMA
 1. **同一组状态，呈现与节流决定和旧实现相同。** [根 AXIOM: 5]

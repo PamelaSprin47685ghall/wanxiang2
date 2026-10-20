@@ -121,6 +121,7 @@ let ``312 导出对话框同一次读取备好 Markdown 和 JSON，并显示隐�
             | Ok p -> dialog.Handle p
             | Error e -> failwith e
             i <- i + 1
+        Dispatcher.UIThread.RunJobs()
         Assert.Contains("「原对话」第 3 条消息的分叉", dialog.MarkdownText.Value)
         Assert.Contains("message-0003", dialog.MarkdownText.Value)
         Assert.Contains("\"kind\": \"fork\"", dialog.JsonText.Value)

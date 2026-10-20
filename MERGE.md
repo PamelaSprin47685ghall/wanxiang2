@@ -91,7 +91,7 @@ consume：仓库外消费者提交后重开得到 Used 1UL
 | 14 | app/Desktop(Wanxiang.App) | — | — | LocalHostGate, PwaAssets, ShutdownSignals, SingleInstance |
 | 15 | ComposerDesk | Avalonia | UiKit | AttachmentTray, ComposerBox, ModelChip |
 | 16 | CodeTint | — | — | BoundedCache, HighlightQueue, HljsHtml |
-| 17 | ChatScreen | — | — | BreadcrumbAction, MountWindow, RevealFlash |
+| 17 | ChatScreen | — | — | BreadcrumbAction, RevealFlash |
 | 18 | ChatPane | — | — | BreathPhase, ChatEmptyText, ScrollFollow |
 | 19 | AppShell, ProtocolDispatch | — | — | ConfigFeedback, DownloadBuffers, HostRequests, UploadFacts |
 | 20 | WsConnection | — | — | DeviceListJson, DeviceRules, DeviceSightings |

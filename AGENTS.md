@@ -139,6 +139,13 @@
 | WorkspaceState 单一状态树需要多兄弟包依赖 | compose/AppShell(P3) | WorkspaceState 是单一状态树，收编原碎布尔判断库 | P3 接线完成且碎布尔库删除后收窄 |
 
 已解除：2026-10-20 解除「手搓轮子库残余（BusyRing、ScrollTween、CaretBreath、BreathPhase 相位模块）」一项：BusyRing 退役为 MessageCardView 内原生 Path + `anim-spin` 声明式类（减弱动效经 `ScreenFrame.ReducedMotion → CardContext.Spin` 由宿主下发）；ScrollTween 退役为 ChatPane 原生 ScrollViewer Offset 记账 + prepend 即时补偿，Theme 缓动改原生 SplineEasing；CaretBreath/BreathPhase 相位计算退役为 `anim-breathe` 声明式类（StreamCaret 接管），libs/ 生产源码 `grep -rn DispatcherTimer libs compose --include='*.fs'`（除 tests 与注释）归零。三库目录物理删除，`./x all`、`./x app`、smoke_desktop.sh 复验通过。同批解除「手搓动画与滚动定时器」一项：生产代码 DispatcherTimer 只剩 app/Desktop、app/Pwa 入口壳的 After/Every 端口实现（判定 grep 达标）。同批解除「散落的 Dispatcher.UIThread.Post」：焦点/滚动投递收归 compose/EntryShells/Effects.fs 唯一 Runner；其余存活 Post 均为两类合规项——UI-Automation IInvokeProvider 跨线程 marshal 与浮层首帧布局排队，逐处注释并在各 AGENTS.md 登记。 2026-10-20 解除「手搓动画与滚动定时器（DispatcherTimer）」一项：TransferDesk（ExportDesk 导出节流与到期检查、ImportDesk 超时）彻底替换为 timing.After 调度，生产代码中 `grep -rn DispatcherTimer libs compose app --include='*.fs' | grep -v tests | grep -v /obj/` 仅剩 app/Desktop 与 app/Pwa 入口壳端口实现。 2026-10-20 解除「散落的 Dispatcher.UIThread.Post」一项：ChatScreen 三处滚动与高亮时序同步化、TransferDesk 调度交由宿主端口、ExportSheet 与 ImportSheet 保留首帧布局排队并注释登记、其余皆为 UI-Automation（IInvokeProvider.Invoke）跨线程 marshal；生产代码中除唯一的 Effect Runner（compose/EntryShells/Effects.fs）、app/* 端口实现及注释登记项外无散落 Post。 2026-10-20 解除「碎布尔判断库与其 golden 复刻测试」一项：StartReady/IdleSurface/ConversationSurface/SidebarEmpty/SearchRequery/EscapeChain 已从 libs/ChangeWatch、libs/RowFocus 删除，判定合入 `libs/WorkspaceState` 的 DU 状态树；golden 复刻断言与样本随 SPEC 7 退役（保留线协议/哈希/字体指纹等外部契约向量）。 2026-10-13 删去「`compose/LedgerStore` 与旧仓库 `Store.fs` 双重实现」一项。旧仓库分支 `extract-ledger@8f39e84` 改为消费 `Wanxiang2.LedgerStore` 包，`Store.fs` 只剩领域接线。2026-10-20 解除「手搓 UI 原语：UiKit 的 Tap / Spot / InvokeBorder / Follow / KitLook ＋ 各控件库的 `<Name>Look` 记录」一项：libs/ActionStrip 十控件完成原生化、UiKit 整库删除，全仓无 UiKit 依赖。
+2026-10-20 解除 W6 批次 Clean-break 终局事项：
+1. 解除「Tap 仿制件与手写 AutomationPeer 残留」：ChatScreen 旧 Tap/TapPeer 删除，ComposerDesk/Pending.fs PendingButton、MarkdownView/ActionSpot.fs ActionSpot、libs/ExportSheet/{ExportSheet,ImportSheet}.fs Tap 全部改原生 Button + Click，手写 AutomationPeer 全删；判定口径 `grep -rn 'AutomationPeer\|TapPeer' compose libs` 生产代码归零。
+2. 已解除「MountWindow/CardReconcile/PopupPlacement 手搓轮子」：MountWindow.fs 物理删除，ChatScreen 直呈完整卡片列表，HiddenMessageCount 恒 0；CardReconcile.fs 物理删除，CardDeck 改内部缓存直投影；PopupPlacement 库整库退役删除，ToastQueue/ToastDwell 迁入 OverlayDesk 作为内部模块，OverlayDesk 改原生定位；判定口径 `find libs compose -name "MountWindow.fs" -o -name "CardReconcile.fs" -o -name "PopupPlacement.fs"` 归零。
+3. 解除「Set* 族多入口」：ChatScreen/ChatPane/ComposerDesk/SidebarDesk 对外收拢为单入口 Render，插槽/命令统一 Wire/Slot/Apply 前缀并在各库登记；判定口径各组合者公开方法不再有零散 Set* 状态修改器。
+4. 解除「AppShell 双重权威」：paletteRecent 收拢入 WorkspaceModel（PaletteUserMsg.PushRecent/SetRecent），ReprojectInternal 从 model.Conn 的 WorkspacePhase.Active 取数不再旁读 state.Conversations/runs.Get，剩余 mutable 仅 model/views/protocolDispatch/shellCommands/handle 五个容器字段。
+5. 解除「golden 复刻残测」：ConnectIssueText golden txt、ChatPane/ChatScreen GoldenTests+Dump+Cases、tools/panegold、tools/screengold 物理删除，改直接行为断言；判定口径 `find compose libs tools -name "*gold*" -o -name "GoldenTests.fs"`（除外部契约样本外）全清。
+6. 解除「MotionSwitch 死常量与 ExportView 碎布尔」：MotionSwitch 清除死常量 SkeletonBreathFrame/CaretBreathFrame/SmoothScrollFrame/SmoothScrollDuration，ExportView.decide 布尔收敛为 ExportOutputKind DU；判定口径 `grep -rn 'CaretBreathFrame' libs` 生产代码归零。
 
 
 # 落地起点
@@ -173,7 +180,7 @@
 
 1. **只用 Avalonia 原生控件，废除 `Border` 仿制件。** [AXIOM: 2, 5; LEMMA: 10]
    按钮用 `Button`，开关用 `ToggleSwitch` / `CheckBox`，下拉选择用 `ComboBox`，菜单与气泡用 `ContextMenu` / `MenuFlyout` / `Flyout`，折叠用 `Expander`，长列表用 `ItemsControl` 或 `ListBox` 配合原生 `VirtualizingStackPanel`。
-   不再使用 `Tap`、`Spot`、`InvokeBorder` 等以 `Border` 冒充交互控件的做法，也不再手写 `AutomationPeer`、手算浮层坐标（`PopupPlacement`）或手搓列表挂载窗口（`MountWindow`、`CardReconcile`）。它们登记为待退出的迁移遗留（见《例外清单》），按工作区模块逐个替换为原生控件并删除对应库。
+   不再使用 `Tap`、`Spot`、`InvokeBorder` 等以 `Border` 冒充交互控件的做法，也不再手写 `AutomationPeer`、手算浮层坐标（`PopupPlacement` 已退役，ToastQueue/ToastDwell 迁入 OverlayDesk，原生定位接管）或手搓列表挂载窗口（`MountWindow` 已解除并物理删除，ChatScreen 直呈完整卡片列表；CardReconcile 对账器物理删除，内部缓存直投影）。全仓 Border 仿制件清零、手写 AutomationPeer 全删。
 
 2. **样式与动效归 Avalonia 资源与样式系统，废除 `*Look` 记录与帧定时器。** [AXIOM: 2; LEMMA: 10]
    颜色、字号、间距、圆角、过渡时长统一登记在主题层的 `ResourceDictionary`（含 Light / Dark `ThemeVariant`）与 `ControlTheme` / `Styles` 中。控件通过 `DynamicResource` 与样式类（`Classes`）获取外观。
@@ -181,7 +188,7 @@
 
 3. **单入口幂等渲染，单出口意图事件。** [LEMMA: 3, 4, 12]
    视图组件只负责呈现与采集用户意图，不持有业务状态副本。
-   - 输入（渲染）：每个视图组件对外只暴露一个幂等的 `Render(viewState)` 方法（或纯声明式视图函数），一次性接收该组件所需的全部展示数据；废除多入口、有调用顺序依赖的 `SetTitle` / `SetGenerating` / `SetEnabled` / `SetCompact` 零散方法。
+   - 输入（渲染）：每个视图组件对外只暴露一个幂等的 `Render(viewState)` 方法（或纯声明式视图函数），一次性接收该组件所需的全部展示数据；废除多入口、有调用顺序依赖的 `SetTitle` / `SetGenerating` / `SetEnabled` / `SetCompact` 零散方法。插槽/命令命名 Wire/Slot/Apply 前缀并在各库登记。
    - 输出（意图）：用户操作通过明确的消息类型（`Msg` 分支或事件）向上汇报，组件内部不自行决定跨组件副作用。
 
 4. **工作区状态收敛与统一副作用执行。** [LEMMA: 3, 4, 12; SPEC: 3, 4, 7]

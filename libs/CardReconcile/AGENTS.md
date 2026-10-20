@@ -1,27 +1,8 @@
 # CardReconcile
 
-合并包：CardReconcile、CountdownTicker、DurationText、GenerationErrorTitle、MessageMenu、MessageTimestamp、ToolArgsPreview、ToolCallState、ToolErrorSummary、ToolOverview。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。手搓光标呼吸 CaretBreath 已退役删除，改由 Avalonia 声明式动效类 anim-breathe 原生驱动。
+合并包（原 CardReconcile 包，手搓 DOM 对账器 Reconciler 已按 Clean-break 架构铁律退役删除，仅保留其余纯函数/纯状态工具模块）：CountdownTicker、DurationText、GenerationErrorTitle、MessageMenu、MessageTimestamp、ToolArgsPreview、ToolCallState、ToolErrorSummary、ToolOverview。生产消费者集合、外部依赖与 Wanxiang2 依赖按 MERGE.md 判据一致，合并后消费者不会多拿到它本来不用的 API。手搓光标呼吸 CaretBreath 已退役删除，改由 Avalonia 声明式动效类 anim-breathe 原生驱动。
 
 测试工程 `<包名>.Tests.fsproj` 合并各成员用例（`<成员名>.<文件>.fs`），golden 目录按成员分目录；控件库的测试工程用 `AssemblySettings.fs` 关掉并行（Avalonia 平台状态是进程级全局量）。
-
-## 成员 `CardReconcile`
-
-## CardReconcile（库）
-
-> **注意（P2/P3 清理）**：CardReconcile（Reconciler）是旧手搓 DOM 共同前缀比对器。随着消息卡片容器改用原生 VirtualizingStackPanel 以及卡片工厂按消息 ID 缓存与幂等 Render，CardReconcile 里的手搓容器对账部分已不再被实际消费，将在 P3 阶段彻底删除。
-旧 `Views/ChatView.fs` 消息卡对账（1245-1290）迁入为泛型 `Reconciler<'K, 'V>`：`Reconcile(desired)` 返回 `ReconcilePlan`（保留前缀长度 `Keep`、其后依次挂上的 `Append`），`MountedKeys`、`CachedCount`、`Clear`。共同前缀只认两边都有身份且相等的项；前缀之后按身份取缓存、未命中或无身份才调工厂；每帧丢掉不再用到的缓存。面板增删、锚点恢复、跟随判断仍归 ChatView。不引用任何其他库。根规则见项目根目录 AGENTS.md。
-
-## LEMMA
-1. **追加或刷新末尾时，前面的卡不重建。** [根 AXIOM: 5] 长对话每批流式增量不重排上百张卡。
-
-## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/cardreconcile.txt`；`tests/Tests.fs` 两条行为用例。
-
-## 迁入或覆盖的旧测试
-旧对账用例都经 ChatView 起窗口（如 `ExchangeNavTests` 一组），留在旧仓库；对账规则由本库覆盖。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/OldCardReconcile.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样证据较弱；规则另由 `tests/Tests.fs` 直接断言。
 
 ## 成员 `CountdownTicker`
 

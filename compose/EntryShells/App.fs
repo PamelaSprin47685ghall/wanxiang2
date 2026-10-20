@@ -95,6 +95,7 @@ type App() =
         // 共享类选择器样式（Wanxiang2.Theme.ThemeStyles），绑定 SharedTheme 的活实例，只装一次；
         // 交互状态（:focus-visible / :pointerover / :pressed / :disabled）也由它提供（旧 Interaction.register）。
         SharedTheme.styles.Install this.Styles
+        SharedTheme.styles.InstallControlThemes this.Resources
         Wanxiang2.ImeShield.ImeShield.install ()
         // 画布主题固定为浅色变体：万象自己的深色由 Tokens 提供，
         // 若让 Fluent 也切深色，两套配色会互相打架。

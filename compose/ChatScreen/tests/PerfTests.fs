@@ -62,12 +62,18 @@ let ``长对话的流式刷新代价与消息条数无关`` () =
         let s = createScreen theme styles
         let w = Window(Width = 900.0, Height = 800.0, Content = s.Host)
         w.Show()
-        s.SetConversationChrome true
         s.Pane.HideEmpty()
         let messages = [ for i in 1 .. 200 -> messageAt i ]
         let frame n =
             { Messages = messages; Streaming = Some { MessageView.empty with role = "assistant"; text = String('x', n) }
-              Error = None; FontSize = 14.5; AutoCollapseReasoning = false; ReducedMotion = false; Usage = None; MissingAttachments = Set.empty }
+              Error = None; FontSize = 14.5; AutoCollapseReasoning = false; ReducedMotion = false; Usage = None; MissingAttachments = Set.empty
+              Title = None
+              CanEditTitle = false
+              IsGenerating = true
+              GeneratingText = ""
+              CanStop = true
+              ConversationChrome = true
+              CompactMode = false }
         s.Render(frame 1)
         let watch = Stopwatch.StartNew()
         for n in 2 .. 21 do s.Render(frame n)

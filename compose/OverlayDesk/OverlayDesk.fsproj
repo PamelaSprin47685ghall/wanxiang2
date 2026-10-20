@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 组合者：OverlayLayer + ToastStrip + PopupMenu + ToastQueue + ToastDwell + PopupPlacement + FocusOrigin = 旧 OverlayHost 与 Menu。 -->
+  <!-- 组合者：OverlayLayer + ToastStrip + PopupMenu + ToastQueue + ToastDwell + FocusOrigin = 旧 OverlayHost 与 Menu。 -->
   <ItemGroup>
+    <Compile Include="ToastDwell.fs" />
+    <Compile Include="ToastQueue.fs" />
     <Compile Include="OverlayDesk.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -9,6 +11,5 @@
     <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.PopupPlacement" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

@@ -1,9 +1,9 @@
-module ToastDwellTests
+module Wanxiang2.OverlayDesk.Tests.ToastDwellTests
+
 open System
 open System.IO
 open Xunit
 open Wanxiang.UI
-
 
 let private ticksUntilExpired (d: ToastDwell) =
     let mutable n = 1

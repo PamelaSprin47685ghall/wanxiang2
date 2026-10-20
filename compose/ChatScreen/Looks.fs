@@ -38,8 +38,8 @@ module ChatScreenMetrics =
         let metric m = manager.Metric m :> IObservable<float>
         let space s = manager.Space s :> IObservable<float>
         let icon g b = IconSet.image g b (manager.Metric Metric.IconGlyph)
-        let surface variant (b: Border) = styles.Surface(b, variant)
-        let dressIcon (b: Border) = surface StyleClass.hoverPlain b; b.Classes.Add StyleClass.iconButton
+        let surface variant (b: Control) = styles.Surface(b, variant)
+        let dressIcon (b: Control) = surface StyleClass.hoverPlain b; b.Classes.Add StyleClass.iconButton
         {
           Pane = ChatPaneMetrics.ofTheme manager styles
           Canvas = brush PaletteKey.Canvas

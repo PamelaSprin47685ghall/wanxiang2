@@ -4,6 +4,8 @@ ComposerBox + AttachmentTray + ModelChip + ComposerSendState + ModelVision + Com
 
 - 宿主入口：`ComposerDesk(ComposerMetrics.ofTheme manager styles, actions: ComposerDeskActions)`；`ComposerDeskActions = { Submit: string -> bool; StopGeneration; PickAttachment; RemoveAttachment: Guid -> unit; OpenModelPicker: Control -> unit; DropFiles; PasteFromClipboard: unit -> bool; OpenSessionSettings }`。
 - 成员：`Host`、`Box`、`Tray`、`Chip`、`Text`、`IsGenerating`、`ModelAnchor()`；`SetAttachments`、`SetThumbnail(id, IImage)`、`HasThumbnail`、`SetShrinkNote`、`ShrinkNote`、`SetModelVision(support, label)`、`SetCanStop`、`SetGenerating`、`SetEnabled(value, reason)`、`SetModelLabel`、`SetEnterSends`、`SetCompactMode`、`SetContext((label, detail) option, canEdit)`、`SetAccessory`、`SetText`、`Focus`、`SetImeProbe`、`SetKeyHook`。
+- 渲染入口已收拢为 `Render(vs: ComposerVS)`（包含 Enabled, DisabledReason, Text, Caret, EnterSends, Send, Tray, ModelChip, Context, Compact），实现单入口幂等投影。
+- 例外插槽/命令（命名避开 Set*，非每帧投影）：`ApplyThumbnail`（已解码缩略图命令）、`ApplyShrinkNote`（图片压缩说明命令）、`SlotPendingMessages`（未确认消息面板插槽）、`SlotAccessory`（附属视图插槽，如审批卡）、`ApplyDraftText`（用户草稿回填命令）、`SlotImeProbe`（IME 探针插槽）、`SlotKeyHook`（按键拦截插槽）。
 - 发送门控每次文本、附件、看图、生成、启用变化都经 `ComposerSendState.decide` 重算并 `ApplySend`；提交先过 `canSubmit`，宿主返回 true 才清空。
 - 外观全部取主题活实例（ThemeManager 的笔刷、度量、间距、减弱动效开关，ThemeStyles 的表面类），常量只来自 DesignRhythm 的 LayoutPolicy / ReadingRhythm。
 

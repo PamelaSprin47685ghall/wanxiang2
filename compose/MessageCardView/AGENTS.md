@@ -11,7 +11,7 @@
   - `IncompleteMarker()`（旧 `incompleteMarker`）、`CopyButton(copy, tip, name, getText)`、`ToolCard`、`ToolActivity`、`Thinking`、`Attachment`、`Menu`、`Actions`、`Footer` 各件也公开。
   - `MessageCards.HighlightName = "reveal-highlight"`：卡外层高亮承载面的名字。
 - `CardContext`（旧 MessageContext，同名字段改 PascalCase，加 `Spin: bool` 由 AppShell 依据 MotionSwitch 填充）；`CardActions`（旧 MessageActions，加上旧模块级的 `CopyLink`、`Recover` 两个出口，None 时不出对应入口）。
-- `CardDeck(panel)`：`Show [key, factory]` 按身份复用（CardReconcile），`CardDeck.key message ctx` 给已提交消息的身份（流式卡为 None，每次重建）；`Clear()` 换对话。
+- `CardDeck(panel)`：`Show [key, factory]` 按身份复用（内部缓存），`CardDeck.key message ctx` 给已提交消息的身份（流式卡为 None，每次重建）；`Clear()` 换对话。
 
 # LEMMA
 1. **用真实主题填好的消息卡与错误卡，渲染出的控件树与旧 MessageCard 逐行相同。** [根 AXIOM: 5]

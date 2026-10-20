@@ -1,9 +1,9 @@
-module ToastQueueTests
+module Wanxiang2.OverlayDesk.Tests.ToastQueueTests
+
 open System
 open System.IO
 open Xunit
 open Wanxiang.UI
-
 
 [<Fact>]
 let ``same text keeps only the newest entry`` () =

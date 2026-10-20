@@ -2,8 +2,6 @@
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup>
     <Compile Include="Headless.fs" />
-    <Compile Include="Dump.fs" />
-    <Compile Include="Cases.fs" />
     <Compile Include="Tests.fs" />
     <Compile Include="PerfTests.fs" />
   </ItemGroup>

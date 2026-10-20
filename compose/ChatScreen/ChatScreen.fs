@@ -48,6 +48,13 @@ type ScreenFrame =
       /// 生成错误与重试
       Error: (GenerationError * (unit -> unit)) option
       FontSize: float
+      Title: string option
+      CanEditTitle: bool
+      IsGenerating: bool
+      GeneratingText: string
+      CanStop: bool
+      ConversationChrome: bool
+      CompactMode: bool
       AutoCollapseReasoning: bool
       /// 减弱动效：转圈等循环动画保持静态（宿主按 MotionSwitch 填充）
       ReducedMotion: bool
@@ -73,39 +80,14 @@ type ChatScreenActions =
       /// 延时回调（计时器归宿主）：定位高亮停留用
       After: TimeSpan -> (unit -> unit) -> IDisposable }
 
-/// 可点的图标按钮（版本条用）：自动化层报按钮并给 Invoke
-type private Tap() as this =
-    inherit Border()
-    let mutable action: unit -> unit = ignore
-    do
-        this.PointerReleased.Add(fun e ->
-            if not e.Handled && this.IsEnabled && e.InitialPressMouseButton = MouseButton.Left then
-                e.Handled <- true
-                action ())
-        this.KeyDown.Add(fun e ->
-            if not e.Handled && this.IsEnabled && (e.Key = Key.Enter || e.Key = Key.Space) then
-                e.Handled <- true
-                action ())
-    override _.StyleKeyOverride = typeof<Border>
-    member _.OnInvoke(f: unit -> unit) = action <- f
-    member _.Invoke() = if this.IsEnabled then action ()
-    override _.OnCreateAutomationPeer() = TapPeer(this) :> AutomationPeer
-
-and private TapPeer(owner: Tap) =
-    inherit ControlAutomationPeer(owner)
-    override _.GetAutomationControlTypeCore() = AutomationControlType.Button
-    interface IInvokeProvider with
-        // 跨线程 marshal，非焦点竞态（UI Automation 调用方可能来自辅助功能后台线程）
-        member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())
-
 /// 根面：与旧 ChatView 一样是 Border 派生类型
 type ScreenRoot() =
     inherit Border()
 
 /// 组合者：对话屏（旧 Views/ChatView.fs 的整体 + AppShell 里对话列的接线）。
 /// 顶栏走 ChatHeader，滚动 / 空态 / 骨架 / 跳转走 ChatPane，卡片走 MessageCards + CardDeck，
-/// 挂载窗口走 MountWindow，定位高亮记账走 RevealFlash，面包屑走 BreadcrumbAction；
-/// 审批面板放进输入区附属位。本组合者拥有渲染次序：挂载窗口规划 → 卡片对账 → 跳转锚点续跳 → 贴底跟随。
+/// 定位高亮记账走 RevealFlash，面包屑走 BreadcrumbAction；
+/// 审批面板放进输入区附属位。本组合者拥有渲染次序：卡片对账 → 跳转锚点续跳 → 贴底跟随。
 type ChatScreen
     (looks: ChatScreenMetrics,
      cards: MessageCards,
@@ -117,7 +99,6 @@ type ChatScreen
     let header = ChatHeader()
     let pane = ChatPane<ScreenKey>(looks.Pane, brandLogo)
     let deck = CardDeck<ScreenKey>(pane.Messages)
-    let mountWindow = MountWindow(MountWindow.Initial, MountWindow.Step)
     let flash = RevealFlash()
     let breadcrumb = BreadcrumbAction<Guid>()
     let root = ScreenRoot(Background = looks.Canvas)
@@ -154,7 +135,7 @@ type ChatScreen
         |> Option.orElseWith (fun () -> List.tryHead cardsAt)
         |> Option.defaultValue 0
 
-    let syncNav () = pane.RefreshJumps(mounted, exchangeIndices (), currentExchange (), mountWindow.HiddenCount > 0)
+    let syncNav () = pane.RefreshJumps(mounted, exchangeIndices (), currentExchange (), false)
 
     /// 把一张卡平滑带到视口顶（每帧按卡片当前位置取目标；减弱动效时直接写并记为自己写的）
     let smoothToCard (child: Control) =
@@ -205,6 +186,16 @@ type ChatScreen
 
     let rec render (f: ScreenFrame) =
         last <- Some f
+        f.Title |> Option.iter (fun t ->
+            editable <- f.CanEditTitle
+            header.SetTitle(t, f.CanEditTitle))
+        generating <- f.IsGenerating
+        canStop <- f.CanStop
+        header.SetGenerating(f.IsGenerating, f.GeneratingText)
+        header.SetConversationChrome f.ConversationChrome
+        header.SetCompact f.CompactMode
+        pane.ApplyCompact f.CompactMode
+        syncNav ()
         pane.HideSkeleton()
         let merged = MessageView.mergeToolResults f.Messages
         let lastAssistant =
@@ -236,11 +227,10 @@ type ChatScreen
             | Some c when MessageView.isUser m ->
                 siblings c (match previous.TryGetValue c with | true, p -> p | _ -> None)
             | _ -> None
-        // 决策 293：只挂尾部窗口；分页回来的整页挂上
-        let firstMounted = mountWindow.Plan(merged |> List.map _.commitId, false)
+        let firstCommit = merged |> List.tryHead |> Option.bind _.commitId
         merged
         |> List.iteri (fun index message ->
-            if index >= firstMounted && MessageView.hasVisibleBody message then
+            if MessageView.hasVisibleBody message then
                 // 生成仍在进行时最后一条助手消息里没结果的工具调用是「执行中」
                 let awaitingTools =
                     generating && f.Streaming.IsNone && lastAssistant = Some index
@@ -304,25 +294,17 @@ type ChatScreen
         deck.Show(List.ofSeq desired) |> ignore
         mounted <- [| for key, _ in desired -> key |]
         // 锚点指向的卡不在了就丢；分页回来要续跳就等前置锚点恢复后再跳
-        let resume = pane.Jumps.Mounted(mounted, mountWindow.LastFirstCommit)
+        let resume = pane.Jumps.Mounted(mounted, firstCommit)
         syncNav ()
         if resume then jumpExchange -1
-        // 窗口外未挂载的也算条数（决策 293）
-        pane.Rendered(f.Streaming.IsSome, desired.Count + firstMounted, false)
+        pane.Rendered(f.Streaming.IsSome, desired.Count, false)
 
     and rerender () = last |> Option.iter render
 
-    /// 把窗口向上扩一步：前置锚点包住重绘
-    and expandMount () =
-        if mountWindow.HiddenCount = 0 then false
-        else
-            mountWindow.Expand() |> ignore
-            rerender ()
-            true
-
     and jumpExchange (direction: int) =
-        match pane.Jump(direction, mounted, exchangeIndices (), currentExchange (), mountWindow.HiddenCount > 0, mountWindow.LastFirstCommit) with
-        | JumpStep.ExpandAndRetry -> if expandMount () then jumpExchange direction
+        let firstCommit = mounted |> Array.tryPick id |> Option.map _.commit
+        match pane.Jump(direction, mounted, exchangeIndices (), currentExchange (), false, firstCommit) with
+        | JumpStep.ExpandAndRetry -> ()
         | JumpStep.RequestOlder -> actions.RequestOlderHistory()
         | JumpStep.ScrollTo(index, _) ->
             if index < pane.Messages.Children.Count then smoothToCard pane.Messages.Children.[index]
@@ -332,7 +314,6 @@ type ChatScreen
     let indexOf commit = mounted |> Array.tryFindIndex (function Some k -> k.commit = commit | None -> false)
 
     let scrollToMessage (commit: uint64) =
-        if mountWindow.EnsureMounted commit then rerender ()
         match indexOf commit with
         | Some _ ->
             pane.PinReveal()
@@ -352,7 +333,7 @@ type ChatScreen
         syncNav ()
         let icon g = fun (b: IBrush) -> looks.Icon g b
         let item label action glyph = PopupEntry.create label action |> PopupEntry.withIcon (icon glyph)
-        let prev, next = pane.Jumps.NavState(mounted, exchangeIndices (), currentExchange (), pane.Follow.AtBottom, mountWindow.HiddenCount > 0)
+        let prev, next = pane.Jumps.NavState(mounted, exchangeIndices (), currentExchange (), pane.Follow.AtBottom, false)
         let conversation =
             [ if editable then item "重命名" header.BeginRename Glyph.Pencil
               item "对话上下文" actions.OpenSessionSettings Glyph.Sliders
@@ -400,7 +381,7 @@ type ChatScreen
         header.CrumbPressed.Add(fun () -> breadcrumb.Activate() |> Option.iter actions.OpenParent)
         pane.FocusReturned.Add(fun () -> actions.FocusHome())
         // 审批卡在输入框正上方附属位：与输入框同列同宽、占布局高度
-        composer.SetAccessory approvals.View
+        composer.SlotAccessory approvals.View
         approvals.AwaitingChanged.Add(fun ids ->
             if ids <> awaiting then
                 awaiting <- ids
@@ -417,11 +398,9 @@ type ChatScreen
             | _ -> ()
             if not pane.Follow.RevealPinned then revealTarget <- None
             syncNav ()
-            // 到顶：本机还有没挂的先挂（只认用户往上推）；否则向主机要更早一页（上一页刚失败时不静默重发）
+            // 到顶：向主机要更早一页（上一页刚失败时不静默重发）
             if note.AtTop && not pane.IsSkeletonShown then
-                if mountWindow.HiddenCount > 0 then
-                    if note.Upward then expandMount () |> ignore
-                elif not pane.Nav.FailureBanner.IsVisible then actions.RequestOlderHistory())
+                if not pane.Nav.FailureBanner.IsVisible then actions.RequestOlderHistory())
 
     /// 放进布局的根
     member _.Host: Control = root
@@ -429,9 +408,9 @@ type ChatScreen
     member _.Pane = pane
     member _.Deck = deck
     member _.Mounted = mounted
-    member _.HiddenMessageCount = mountWindow.HiddenCount
+    member _.HiddenMessageCount = 0
 
-    /// 重绘（旧 RenderMessages）：挂载窗口规划 → 卡片对账 → 跳转续跳 → 贴底跟随，同步完成
+    /// 重绘（旧 RenderMessages）：卡片对账 → 跳转续跳 → 贴底跟随，同步完成
     member _.Render(frame: ScreenFrame) = render frame
 
     /// 丢弃卡片缓存（后台着色算完时），下一次全部重建
@@ -440,40 +419,23 @@ type ChatScreen
         mounted <- [||]
         streamSlot <- None
 
-    member _.SetTitle(text: string, canEdit: bool) =
-        editable <- canEdit
-        header.SetTitle(text, canEdit)
+    member _.SlotSavePresetAction(action: (unit -> unit) option) = savePreset <- action
+    member _.SlotSiblingProvider(f: uint64 -> uint64 option -> SiblingVersions option) = siblings <- f
+    member _.SlotAwaitingApproval(ids: Set<string>) = awaiting <- ids
+    member _.SlotPartialReply(p: (MessageView * (unit -> unit)) option) = partial <- p
 
-    member _.SetGenerating(value: bool, statusText: string) =
-        generating <- value
-        header.SetGenerating(value, statusText)
-
-    member _.SetCanStop(value: bool) = canStop <- value
-    member _.SetConversationChrome(value: bool) =
-        header.SetConversationChrome value
-        syncNav ()
-    member _.SetSavePresetAction(action: (unit -> unit) option) = savePreset <- action
-    member _.SetSiblingProvider(f: uint64 -> uint64 option -> SiblingVersions option) = siblings <- f
-    member _.SetAwaitingApproval(ids: Set<string>) = awaiting <- ids
-    member _.SetPartialReply(p: (MessageView * (unit -> unit)) option) = partial <- p
-
-    member _.SetBreadcrumb(crumb: ForkBreadcrumb option) =
+    member _.ApplyBreadcrumb(crumb: ForkBreadcrumb option) =
         let view = breadcrumb.Set(crumb |> Option.map (fun c -> c.text, c.description, c.parentAvailable, c.parentId))
         header.SetCrumb(if view.visible then Some { Text = view.text; Description = view.description; Clickable = view.clickable } else None)
     member _.BreadcrumbText = breadcrumb.Text
 
-    member _.SetCompactMode(value: bool) =
-        header.SetCompact value
-        pane.SetCompact value
-
-    member _.SetStartMode(value: bool) = pane.SetStartMode value
+    member _.WireStartMode(value: bool) = pane.WireStartMode value
 
     /// 宿主菜单（快捷键打开）
     member _.ShowMenu() = showMenu (header.MoreButton :> Control)
     member _.JumpExchange(direction: int) = jumpExchange direction
-    member _.ExpandMountWindow() = expandMount ()
 
-    /// 滚到一条消息（窗口外先扩到它）；不在已加载范围时返回 false，由宿主先要更早历史
+    /// 滚到一条消息；不在已加载范围时返回 false，由宿主先要更早历史
     member _.ScrollToMessage(commit: uint64) = scrollToMessage commit
 
     /// 滚到一条消息并短暂高亮（第 211 节）；停留计时归宿主（actions.After）
@@ -529,7 +491,6 @@ type ChatScreen
 
     /// 换对话
     member _.ResetScrollState() =
-        mountWindow.Reset()
         revealTarget <- None
         pane.Reset()
         syncNav ()

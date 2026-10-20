@@ -8,11 +8,7 @@ type Timing =
     | BusySpinnerFrame
     | CopyConfirmationHold
     | SearchInputDebounce
-    | SkeletonBreathFrame
-    | CaretBreathFrame
     | ConversationSkeletonDelay
-    | SmoothScrollFrame
-    | SmoothScrollDuration
     | HostViewportPoll
     | ToastDismissTick
     | ToastDwellFailure
@@ -42,11 +38,7 @@ module MotionTimings =
         [ Timing.BusySpinnerFrame
           Timing.CopyConfirmationHold
           Timing.SearchInputDebounce
-          Timing.SkeletonBreathFrame
-          Timing.CaretBreathFrame
           Timing.ConversationSkeletonDelay
-          Timing.SmoothScrollFrame
-          Timing.SmoothScrollDuration
           Timing.HostViewportPoll
           Timing.ToastDismissTick
           Timing.ToastDwellFailure
@@ -75,11 +67,7 @@ module MotionTimings =
         | Timing.BusySpinnerFrame -> 40.0
         | Timing.CopyConfirmationHold -> 1500.0
         | Timing.SearchInputDebounce -> 160.0
-        | Timing.SkeletonBreathFrame -> 50.0
-        | Timing.CaretBreathFrame -> 50.0
         | Timing.ConversationSkeletonDelay -> 300.0
-        | Timing.SmoothScrollFrame -> 16.0
-        | Timing.SmoothScrollDuration -> 180.0
         | Timing.HostViewportPoll -> 500.0
         | Timing.ToastDismissTick -> 200.0
         | Timing.ToastDwellFailure -> 9000.0

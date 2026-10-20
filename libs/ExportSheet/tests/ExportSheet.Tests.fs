@@ -113,6 +113,8 @@ let ``export save action appears only after the last page and fits the window`` 
         Assert.True sheet.SaveButton.IsVisible
         Assert.True sheet.SaveButton.IsEnabled
         let save = sheet.SaveButton
+        Assert.True(save.Bounds.Width > 0.0)
+        Assert.True(save.Bounds.Height > 0.0)
         let origin = save.TranslatePoint(Point(0.0, 0.0), root).Value
         Assert.True(origin.X >= 0.0 && origin.X + save.Bounds.Width <= root.Bounds.Width + 0.5)
         Assert.True(origin.Y >= 0.0 && origin.Y + save.Bounds.Height <= root.Bounds.Height + 0.5)

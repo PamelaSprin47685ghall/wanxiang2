@@ -115,9 +115,9 @@ module ReadingLook =
                     | MarkdownGlyph.TextWrap -> Glyph.TextWrap
                 IconSet.image g brush (manager.Metric Metric.IconGlyph)
           Dress =
-            fun role (border: Border) ->
-                styles.Surface(border, StyleClass.hoverPlain)
-                border.Classes.Add(
+            fun role (button: Button) ->
+                styles.Surface(button, StyleClass.hoverPlain)
+                button.Classes.Add(
                     match role with
                     | MarkdownButton.Icon -> StyleClass.iconButton
                     | MarkdownButton.Ghost -> StyleClass.buttonGhost)

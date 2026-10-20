@@ -72,11 +72,11 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
 
     let mono (owner: Control) (apply: FontFamily -> unit) = live owner look.MonoFont apply
 
-    let setIcon (button: Border) (glyph: MarkdownGlyph) (brush: IBrush) =
+    let setIcon (button: Button) (glyph: MarkdownGlyph) (brush: IBrush) =
         let g = look.Glyph glyph brush
         g.HorizontalAlignment <- HorizontalAlignment.Center
         g.VerticalAlignment <- VerticalAlignment.Center
-        button.Child <- g
+        button.Content <- g
 
     /// 图标按钮（旧 Ui.iconButton + setSquareTarget）：外观类由 Dress 挂，命中区按布局规则取方形
     let iconButton (glyph: MarkdownGlyph) (tip: string) =
@@ -196,7 +196,7 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
                         Cursor = handCursor,
                         Focusable = focusable,
                         VerticalAlignment = VerticalAlignment.Center,
-                        Child = linkText)
+                        Content = linkText)
                 if focusable then AutomationProperties.SetName(link, fullText)
                 else
                     // 非首段切片从读屏树摘除，否则一个链接被念成碎句
@@ -347,7 +347,7 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
         if huge then
             let expand = ActionSpot(Focusable = true, Cursor = handCursor, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left)
             let label = TextBlock(Text = "展开全部", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
-            expand.Child <- label
+            expand.Content <- label
             look.Dress MarkdownButton.Ghost expand
             live2 expand (gauge MarkdownGauge.BlockPaddingX) (gauge MarkdownGauge.SpaceXs) (fun x xs -> expand.Margin <- Thickness(x, xs, 0.0, xs))
             AutomationProperties.SetName(expand, "展开全部")

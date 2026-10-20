@@ -60,9 +60,15 @@ type ExportDesk
             | ExportCancelled -> ExportPhase.Cancelled
             | ExportIdle -> ExportPhase.Idle
         let v =
+            let outputKind =
+                match output.IsSome, outputJson.IsSome with
+                | true, true -> Wanxiang.UI.ExportOutputKind.Both
+                | true, false -> Wanxiang.UI.ExportOutputKind.MarkdownOnly
+                | false, true -> Wanxiang.UI.ExportOutputKind.JsonOnly
+                | false, false -> Wanxiang.UI.ExportOutputKind.None
             ExportView.decide phase
                 { saving = saving; saved = saved; savedKind = savedKind; error = saveError }
-                output.IsSome outputJson.IsSome (timing.ReducedMotion())
+                outputKind (timing.ReducedMotion())
         sheet.Render
             { StatusText = v.statusText
               Tone =

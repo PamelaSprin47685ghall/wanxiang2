@@ -87,7 +87,7 @@ type MarkdownMetrics =
       BodyFont: IObservable<FontFamily>
       MonoFont: IObservable<FontFamily>
       Glyph: MarkdownGlyph -> IBrush -> Control
-      Dress: MarkdownButton -> Border -> unit
+      Dress: MarkdownButton -> Button -> unit
       /// 减弱动效（复制确认不淡出）
       Reduced: IObservable<bool>
       Copy: CopyButtonAppearance

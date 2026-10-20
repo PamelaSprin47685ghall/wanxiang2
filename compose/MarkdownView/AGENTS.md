@@ -12,7 +12,7 @@
 - `MarkdownHost`：`CopyText`、`OpenLink`、`MathHtml`（宿主后端）、`Tint`（CodeTint 实例）、`Wrap`（`CodeWrapMemory`，折行记忆）。
 - `MarkdownView(look, host, fontSize, allowHighlight)`：`Render`、`RenderText`、`RenderBlock`。
 - `MarkdownStream(view)`：`Panel`、`BlockCount`、`Update raw`。
-- `ActionSpot`：可点的 Border，自动化层报按钮并给 Invoke。
+- `ActionSpot`：继承 Button 的原生交互件。
 
 # LEMMA
 1. **同一段 Markdown 渲染出的控件树与旧 MarkdownRenderer 相同。** [根 AXIOM: 5]（金样在 ReadingLook，因为要用真实主题填 Look）
@@ -30,7 +30,6 @@
 - 公式 HTML 与着色由宿主传入，不再问全局 RichBackend。
 - 图标按钮不再有 `InputModality.suppressTooltipOnTouch`（那是宿主的输入方式判断，接入时由宿主补）。
 - 尺寸（边框、内边距、圆角、圆点、任务框、字距、复制淡出时长）改主题后已显示的块跟着变；旧代码只在构造时取一次。
-- ActionSpotPeer.Invoke：跨线程 marshal，非焦点竞态（辅助功能调用端线程安全）。
 
 # 迁入或覆盖的旧测试
 旧 CraftsmanshipPolishTests：`MarkdownRenderer wide table (>4 columns) wraps in horizontal scroll viewer`、`Markdown hyperlink responds to Enter and Space key to openLink`、`Markdown code block copy button confirms visually with check icon and tooltip`、`huge code block expand button reports its expanded state`、`MarkdownRenderer task boxes expose checkbox automation state`。旧 DeliveryPolishingTests：`markdown renderer renders complex markdown with code, tables and math without error`。旧 PresentationRefreshTests：`code block copy confirmation dips toward fade opacity and keeps the confirmed label`。同名迁入。

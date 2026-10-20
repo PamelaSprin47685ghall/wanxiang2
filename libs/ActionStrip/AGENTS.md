@@ -110,7 +110,7 @@
 
 ### 证据与旧测试
 
-覆盖旧用例：`PresentationRefreshTests.streaming caret keeps opacity inside the breath band and pins to max under reduced motion`（控件部分；相位纯函数由 CaretBreath 库与组合者覆盖）。本库在 headless 下验证：挂上才起表、按呼吸函数取值、摘下停表、减弱动效钉在上限与即时切换。
+覆盖旧用例：`PresentationRefreshTests.streaming caret keeps opacity inside the breath band and pins to max under reduced motion`（控件部分；原 CaretBreath 呼吸数学已退役，改由 Avalonia 声明式动效类 anim-breathe 原生驱动）。本库在 headless 下验证：挂上才起表、按呼吸函数取值、摘下停表、减弱动效钉在上限与即时切换。
 
 ### 与旧实现的差异
 

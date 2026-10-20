@@ -395,10 +395,6 @@
     <Project Path="libs/PopupMenu/PopupMenu.fsproj" />
     <Project Path="libs/PopupMenu/tests/PopupMenu.Tests.fsproj" />
   </Folder>
-  <Folder Name="/PopupPlacement/">
-    <Project Path="libs/PopupPlacement/PopupPlacement.fsproj" />
-    <Project Path="libs/PopupPlacement/tests/PopupPlacement.Tests.fsproj" />
-  </Folder>
   <Folder Name="/PromptHistory/">
     <Project Path="libs/PromptHistory/PromptHistory.fsproj" />
     <Project Path="libs/PromptHistory/tests/PromptHistory.Tests.fsproj" />

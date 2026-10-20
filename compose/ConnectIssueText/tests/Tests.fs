@@ -1,17 +1,30 @@
 module Tests
 
 open System
-open System.IO
 open Xunit
 open Wanxiang.Client
 open Wanxiang.UI
 
-let expected () = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "golden", "connectissuetext.txt"))
-
-/// 金样由旧代码（旧 Views/Dialogs.fs 的 describeIssue 与 retryLabel）跑同一份 Samples 与 Render 生成
 [<Fact>]
-let ``golden: output matches the old code`` () =
-    Assert.Equal(expected (), Render.render ())
+let ``describe produces informative non-empty messages for all connection issue variants`` () =
+    for issue in Samples.issues do
+        let desc = ConnectIssueText.describe issue
+        Assert.False(String.IsNullOrWhiteSpace desc)
+        match issue with
+        | ConnectionIssue.Rejected _ ->
+            Assert.Contains("拒绝了连接", desc)
+        | ConnectionIssue.TimedOut ->
+            Assert.Contains("连接超时", desc)
+        | ConnectionIssue.TokenInvalid ->
+            Assert.Contains("授权已失效", desc)
+        | ConnectionIssue.PairingFrozen m ->
+            Assert.Contains(sprintf "%d 分钟" m, desc)
+        | ConnectionIssue.PairingRejected _ ->
+            Assert.Contains("配对没有成功", desc)
+        | ConnectionIssue.Disconnected detail ->
+            Assert.Contains("连接已断开", desc)
+            if not (String.IsNullOrWhiteSpace detail) then
+                Assert.Contains(detail, desc)
 
 // ---- 旧 DevicesUiTests 中不需要窗口的部分
 

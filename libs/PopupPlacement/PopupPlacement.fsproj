@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <Compile Include="PopupPlacement.fs" />
-    <Compile Include="ToastDwell.fs" />
-    <Compile Include="ToastQueue.fs" />
-  </ItemGroup>
-</Project>

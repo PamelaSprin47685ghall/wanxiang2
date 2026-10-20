@@ -162,3 +162,40 @@ let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
         Assert.False pane.Skeleton.IsShown
         Assert.True pane.Scroller.Viewer.IsVisible
         w.Close())
+
+[<Fact>]
+let ``主体各典型状态结构与可见性状态断言`` () =
+    Headless.run (fun () ->
+        let pane, w = rig ()
+        // 1. 消息态
+        pane.HideEmpty()
+        Assert.False pane.IsEmptyShown
+        Assert.False pane.Skeleton.IsShown
+        Assert.True pane.Scroller.Viewer.IsVisible
+
+        // 2. 骨架态
+        pane.ShowSkeleton()
+        Assert.True pane.Skeleton.IsShown
+
+        // 3. 更早一页失败态
+        let mutable retried = false
+        pane.ShowOlderFailure("没能取到更早的消息：超时", fun () -> retried <- true)
+        Assert.True pane.Nav.OlderFailureVisible
+        Assert.Equal("没能取到更早的消息：超时", pane.Nav.OlderFailureText)
+        let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement pane.Nav.RetryButton
+        ((peer :> obj) :?> Avalonia.Automation.Provider.IInvokeProvider).Invoke()
+        Assert.True retried
+        Assert.False pane.Nav.OlderFailureVisible
+
+        // 4. 空态各分支
+        let emptyCases =
+            [ ChatEmptyState.EmptyConversation, None
+              ChatEmptyState.NoConversation, Some("新对话", ignore)
+              ChatEmptyState.NotConnected, Some("连接主机", ignore)
+              ChatEmptyState.ConnectionFailed "超时", Some("重试", ignore)
+              ChatEmptyState.NoProvider, Some("添加模型", ignore) ]
+        for st, action in emptyCases do
+            pane.ShowEmpty(st, action)
+            Assert.True pane.IsEmptyShown
+            Assert.False pane.Scroller.Viewer.IsVisible
+        w.Close())

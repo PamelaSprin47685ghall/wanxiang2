@@ -24,7 +24,7 @@ type CardAppearance =
       Timing: Timing -> IObservable<float>
       Icon: Glyph -> IBrush -> Control
       /// 图标按钮的样式类（旧 Ui.iconButton）
-      DressIcon: Border -> unit
+      DressIcon: Control -> unit
       Reduced: IObservable<bool> }
 
 module CardLooks =
@@ -37,8 +37,8 @@ module CardLooks =
         let timing t = manager.Timing t :> IObservable<float>
         let icon g b = IconSet.image g b (manager.Metric Metric.IconGlyph)
         let reduced = ReadingLook.reduced manager
-        let surface variant (b: Border) = styles.Surface(b, variant)
-        let iconButton (b: Border) =
+        let surface variant (b: Control) = styles.Surface(b, variant)
+        let iconButton (b: Control) =
             surface StyleClass.hoverPlain b
             b.Classes.Add StyleClass.iconButton
         { Markdown = ReadingLook.markdown manager styles

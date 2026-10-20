@@ -54,10 +54,11 @@ type Workspace
     let shellHooks: ShellHooks =
         { SetCompactMode =
             fun compact ->
-                composer.SetCompactMode compact
-                sidebar.SetCompactMode compact
-                chat.SetCompactMode compact
-          SetStartMode = chat.SetStartMode
+                let baseVS = Workspace.project (Workspace.init ())
+                composer.Render { baseVS.Composer with Compact = compact }
+                sidebar.Render({ baseVS.Sidebar with Compact = compact })
+                chat.Render { Messages = []; Streaming = None; Error = None; FontSize = 14.5; Title = None; CanEditTitle = false; IsGenerating = false; GeneratingText = ""; CanStop = false; ConversationChrome = false; CompactMode = compact; AutoCollapseReasoning = false; ReducedMotion = false; Usage = None; MissingAttachments = Set.empty }
+          SetStartMode = chat.WireStartMode
           FocusComposer = composer.Focus
           FocusSidebarSearch = fun () -> sidebar.FocusSearch()
           PrefersTouch = hooks.PrefersTouch }

@@ -31,7 +31,7 @@ let look () =
       ScrimFade = Cell TimeSpan.Zero
       ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut() }
 
-/// 与 PopupPlacement.place 相同的规则（下方放不下翻到上方，再钳进视口）；组合者实际填入的是那个库。
+/// 浮层落点规则（下方放不下翻到上方，再钳进视口）；组合者实际填入该函数。
 let place ax ay aw ah (w: float) (h: float) vw vh (inset: float) gap alignRight =
     let below = ay + ah + gap
     let x = if alignRight then ax + aw - w else ax

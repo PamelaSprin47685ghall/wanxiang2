@@ -43,6 +43,7 @@ module Desk =
     open Avalonia.VisualTree
     open Avalonia.Automation
     open Avalonia.Input
+    open Wanxiang2.Theme
     open Wanxiang2.OverlayDesk
 
     /// 测试用的浮层外观（与 OverlayDesk 自己的测试同值）。
@@ -120,6 +121,10 @@ module Desk =
 
     let show (root: Control) (w: float) (h: float) =
         let window = Window(Width = w, Height = h, Content = root)
+        let tm = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
+        let styles = ThemeStyles tm
+        styles.InstallControlThemes window.Resources
+        styles.Install window.Styles
         window.Show()
         Dispatcher.UIThread.RunJobs()
         window

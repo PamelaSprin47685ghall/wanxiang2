@@ -138,24 +138,61 @@ type ComposerDesk(looks: ComposerMetrics, actions: ComposerDeskActions) =
     member _.IsGenerating = generating
     member _.ModelAnchor() : Control = chip.Host :> Control
 
-    member _.SetAttachments(items: PendingAttachment list) =
-        if attachments <> items then
-            for id in List.ofSeq thumbs.Keys do
-                if not (items |> List.exists (fun a -> a.attachmentId = id)) then thumbs.Remove id |> ignore
-            for id in List.ofSeq notes.Keys do
-                if not (items |> List.exists (fun a -> a.attachmentId = id)) then notes.Remove id |> ignore
-            attachments <- items
-            render ()
-            refresh ()
+    /// 单入口幂等渲染：由 ComposerVS 投影全量刷新
+    member this.Render(vs: Wanxiang2.WorkspaceState.ComposerVS) =
+        attachments <-
+            vs.Tray
+            |> List.map (fun a ->
+                { attachmentId = a.Id
+                  sha256 = ""
+                  size = a.Size
+                  mediaType = a.MediaType
+                  fileName = a.FileName
+                  ready = a.Ready
+                  failed = a.Failed })
+        if box.Text <> vs.Text then
+            box.SetText vs.Text
+        enabled <- vs.Enabled
+        reason <- vs.DisabledReason |> Option.defaultValue ""
+        box.SetEnabled(vs.Enabled, reason)
+        chip.Host.IsEnabled <- vs.Enabled
+        chip.Host.Focusable <- vs.Enabled
+        chip.Host.IsHitTestVisible <- vs.Enabled
+        enterSends <- vs.EnterSends
+        box.SetEnterSends vs.EnterSends
+        compactMode <- vs.Compact
+        applyPadding ()
+        box.SetCompact vs.Compact
+        tray.SetCompact vs.Compact
+        chip.SetCompact vs.Compact
+        match vs.Send.State with
+        | Wanxiang2.WorkspaceState.SendButtonState.GeneratingStop ->
+            generating <- true
+            canStop <- true
+            box.SetGenerating true
+        | _ ->
+            generating <- false
+            box.SetGenerating false
+        match vs.ModelChip with
+        | Some label ->
+            chip.SetLabel label
+            Avalonia.Automation.AutomationProperties.SetName(chip.Host, "切换本对话使用的模型")
+            ToolTip.SetTip(chip.Host, "切换本对话使用的模型")
+        | None -> ()
+        match vs.Context with
+        | Some ctx -> box.ShowContext(ctx.Model, ctx.ContextSummary, true)
+        | None -> box.HideContext()
+        tray.Render(vs.Tray, vs.Compact)
+        refresh ()
 
     /// 图片缩略图（已解码；宿主负责解码与释放）
-    member _.SetThumbnail(attachmentId: Guid, image: IImage) =
+    member _.ApplyThumbnail(attachmentId: Guid, image: IImage) =
         thumbs.[attachmentId] <- image
         if attachments |> List.exists (fun a -> a.attachmentId = attachmentId) then render ()
 
     member _.HasThumbnail(attachmentId: Guid) = thumbs.ContainsKey attachmentId
 
-    member _.SetShrinkNote(attachmentId: Guid, note: string) =
+    member _.ApplyShrinkNote(attachmentId: Guid, note: string) =
         notes.[attachmentId] <- note
         if attachments |> List.exists (fun a -> a.attachmentId = attachmentId) then render ()
 
@@ -164,67 +201,20 @@ type ComposerDesk(looks: ComposerMetrics, actions: ComposerDeskActions) =
         | true, n -> n
         | _ -> ""
 
-    member _.SetModelVision(support: VisionSupport, label: string) =
-        if vision <> support || visionLabel <> label then
-            vision <- support
-            visionLabel <- label
-            refresh ()
-
-    member _.SetCanStop(value: bool) =
-        canStop <- value
-        refresh ()
-
-    member _.SetGenerating(value: bool) =
-        generating <- value
-        box.SetGenerating value
-        refresh ()
-
-    member _.SetEnabled(value: bool, why: string) =
-        enabled <- value
-        reason <- why
-        box.SetEnabled(value, why)
-        chip.Host.IsEnabled <- value
-        chip.Host.Focusable <- value
-        chip.Host.IsHitTestVisible <- value
-        refresh ()
-
-    member _.SetModelLabel(text: string) =
-        chip.SetLabel text
-        // 旧代码：名称与提示固定为动作说明，不随模型名变
-        Avalonia.Automation.AutomationProperties.SetName(chip.Host, "切换本对话使用的模型")
-        ToolTip.SetTip(chip.Host, "切换本对话使用的模型")
-
-    member _.SetEnterSends(value: bool) =
-        enterSends <- value
-        box.SetEnterSends value
-        refresh ()
-
-    member _.SetCompactMode(value: bool) =
-        compactMode <- value
-        applyPadding ()
-        box.SetCompact value
-        tray.SetCompact value
-        chip.SetCompact value
-
-    /// 对话上下文摘要（旧 SetSessionContext 的呈现部分）；label = None 时收起
-    member _.SetContext(label: (string * string) option, canEdit: bool) =
-        match label with
-        | Some(text, detail) -> box.ShowContext(text, detail, canEdit)
-        | None -> box.HideContext()
-
-    /// 未确认消息（旧 SetPendingMessages）
-    member _.SetPendingMessages(items: PendingMessage list, activeConversationId: Guid option, canRetry: bool, retry: Guid -> unit, openConversation: Guid -> unit) =
+    /// 未确认消息（宿主直注插槽，非每帧投影）
+    member _.SlotPendingMessages(items: PendingMessage list, activeConversationId: Guid option, canRetry: bool, retry: Guid -> unit, openConversation: Guid -> unit) =
         pending.Set(items, activeConversationId, canRetry, retry, openConversation)
 
     member _.Pending = pending
 
-    member _.SetAccessory(c: Control) = box.SetAccessory c
+    member _.SlotAccessory(c: Control) = box.SetAccessory c
     /// 同步提交（旧 Composer.Submit）：门控通过才交宿主，宿主接管才清空；宿主异常照常抛出
     member _.Submit() = box.Submit()
 
-    member _.SetText(text: string) =
+    /// 用户草稿回填（一次性命令，非每帧投影）
+    member _.ApplyDraftText(text: string) =
         box.SetText text
         refresh ()
     member _.Focus() = box.Focus()
-    member _.SetImeProbe(f) = box.SetImeProbe f
-    member _.SetKeyHook(f) = box.SetKeyHook f
+    member _.SlotImeProbe(f) = box.SetImeProbe f
+    member _.SlotKeyHook(f) = box.SetKeyHook f

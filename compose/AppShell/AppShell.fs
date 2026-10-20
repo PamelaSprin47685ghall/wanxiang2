@@ -84,7 +84,6 @@ type ShellComposer(ports: ShellPorts) =
     let mutable views: ShellViews option = None
     let mutable protocolDispatch: ProtocolDispatch option = None
     let mutable shellCommands: ShellCommands option = None
-    let mutable paletteRecent: string list = []
 
     // 账本状态参与者（由 ProtocolDispatch 处理）
     let state = ClientState()
@@ -131,54 +130,59 @@ type ShellComposer(ports: ShellPorts) =
             v.Overlay.RenderToasts vs.Toasts
 
             // 2. Chat / Header
-            let activeConvId =
+            let activeConvInfo =
                 match model.Conn with
-                | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(conv, _))) -> Some conv.ConversationId
+                | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(conv, run))) -> Some (conv, run)
                 | _ -> None
-            let activeConv =
-                activeConvId |> Option.bind (fun id -> state.Conversations |> Map.tryFind id)
+            let activeConvId = activeConvInfo |> Option.map (fun (c, _) -> c.ConversationId)
 
-            match activeConvId, activeConv with
-            | None, _ ->
-                v.Chat.SetConversationChrome false
-                v.Chat.SetBreadcrumb None
-                match vs.Chat.Phase with
-                | ChatPhase.Empty (IdleEmptyKind.ConnectionFailed err) ->
-                    v.Chat.Pane.ShowEmpty(Wanxiang.UI.ChatEmptyState.ConnectionFailed err, None)
-                | ChatPhase.Empty IdleEmptyKind.NotConnected ->
-                    v.Chat.Pane.ShowEmpty(Wanxiang.UI.ChatEmptyState.NotConnected, None)
-                | ChatPhase.Empty IdleEmptyKind.NoConversation ->
-                    v.Chat.Pane.ShowEmpty(Wanxiang.UI.ChatEmptyState.NoConversation, None)
-                | ChatPhase.Empty _ ->
-                    v.Chat.Pane.ShowEmpty(Wanxiang.UI.ChatEmptyState.NoConversation, None)
-                | _ ->
-                    v.Chat.Pane.ShowEmpty(Wanxiang.UI.ChatEmptyState.NoConversation, None)
+            match activeConvInfo with
+            | None ->
+                v.Chat.Pane.Render vs.Chat
                 v.Chat.Header.Render vs.Header
-            | Some _, None ->
-                v.Chat.SetConversationChrome true
-                v.Chat.Pane.ShowSkeleton()
-                v.Chat.Header.Render vs.Header
-            | Some convId, Some view ->
-                v.Chat.Pane.HideSkeleton()
-                v.Chat.Pane.HideEmpty()
-                v.Chat.Header.Render vs.Header
-                let msgs = view.messages |> Seq.map MessageView.ofSnapshotItem |> List.ofSeq
-                let run = runs.Get (Some convId)
-                v.Chat.SetGenerating(run.running, (if run.running then "生成中" else ""))
-                v.Chat.SetCanStop(run.running)
-                let retry () = this.Dispatch(User(Chat(ChatUserMsg.Regenerate)))
                 v.Chat.Render
-                    { Messages = msgs
-                      Streaming = run.message
-                      Error = run.error |> Option.map (fun e -> e, retry)
+                    { Messages = []
+                      Streaming = None
+                      Error = None
                       FontSize = model.Prefs.fontScale
+                      Title = Some "新对话"
+                      CanEditTitle = false
+                      IsGenerating = false
+                      GeneratingText = ""
+                      CanStop = false
+                      ConversationChrome = false
+                      CompactMode = vs.Shell.Compact
                       AutoCollapseReasoning = model.Prefs.autoCollapseReasoning
                       ReducedMotion = Wanxiang.UI.SharedTheme.manager.Motion.IsReduced
-                      Usage = run.usage
+                      Usage = None
+                      MissingAttachments = Set.empty }
+            | Some (conv, run) ->
+                v.Chat.Pane.Render vs.Chat
+                v.Chat.Header.Render vs.Header
+                let isGenerating, streamMsg, runError =
+                    match run with
+                    | RunState.Generating(_, _, partial) -> true, partial, None
+                    | RunState.Idle err -> false, None, err
+                let retry () = this.Dispatch(User(Chat(ChatUserMsg.Regenerate)))
+                v.Chat.Render
+                    { Messages = conv.Messages
+                      Streaming = streamMsg
+                      Error = runError |> Option.map (fun e -> e, retry)
+                      FontSize = model.Prefs.fontScale
+                      Title = Some conv.Title
+                      CanEditTitle = true
+                      IsGenerating = isGenerating
+                      GeneratingText = (if isGenerating then "生成中" else "")
+                      CanStop = isGenerating
+                      ConversationChrome = true
+                      CompactMode = vs.Shell.Compact
+                      AutoCollapseReasoning = model.Prefs.autoCollapseReasoning
+                      ReducedMotion = Wanxiang.UI.SharedTheme.manager.Motion.IsReduced
+                      Usage = None
                       MissingAttachments = Set.empty }
 
             // 3. Composer
-            v.Composer.Box.Render vs.Composer
+            v.Composer.Render vs.Composer
 
             // 4. Sidebar
             let summaries =
@@ -199,10 +203,7 @@ type ShellComposer(ports: ShellPorts) =
                         model = s.Model
                         lastCommitId = s.LastCommitId
                     })
-            v.Sidebar.SetConversations summaries
-            v.Sidebar.SetActive activeConvId
-            v.Sidebar.SetConnection(vs.Sidebar.Host.Connected, vs.Sidebar.Host.StatusText)
-            v.Sidebar.SetCompactMode vs.Sidebar.Compact
+            v.Sidebar.Render(vs.Sidebar, activeConvId, summaries)
 
             // 5. Settings
             match vs.Settings with
@@ -401,22 +402,22 @@ type ShellComposer(ports: ShellPorts) =
                           match views with
                           | Some v -> v.Palette.Show(items, recent)
                           | None -> ()
-                      SaveRecent = fun recent -> paletteRecent <- recent
+                      SaveRecent = fun recent -> this.Dispatch(User(Palette(PaletteUserMsg.SetRecent recent)))
                       SaveTheme = fun theme ->
                           let next = { model.Prefs with theme = theme }
                           ports.EffectSink.PrefsSave next
                       Toast = fun text tone ->
                           let t = match tone with Wanxiang.UI.ShellTone.Warning -> ToastTone.Warning | _ -> ToastTone.Info
                           ports.EffectSink.ShowToast(text, t) },
-                    paletteRecent)
+                    model.PaletteRecent)
             shellCommands <- Some c
             c
 
     member this.HandleShortcut(shortcut: ShortcutAction) : bool =
         this.Commands.HandleShortcut shortcut
 
-    member this.SetPaletteRecent(recent: string list) = paletteRecent <- recent
-    member this.PaletteRecent() : string list = paletteRecent
+    member this.SetPaletteRecent(recent: string list) = this.Dispatch(User(Palette(PaletteUserMsg.SetRecent recent)))
+    member this.PaletteRecent() : string list = model.PaletteRecent
 
     member this.Build() : IDisposable =
         let built = ports.BuildViews()

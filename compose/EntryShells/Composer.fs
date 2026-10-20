@@ -75,11 +75,13 @@ type Composer(actions: ComposerActions) =
             recall (history.Down(input.Text, input.CaretIndex, hasSelection))
         else false
 
+    let emptyComposerVS () =
+        (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Composer
+
     do
-        desk.SetImeProbe(fun box -> Wanxiang2.ImeShield.ImeShield.isComposing box)
-        desk.SetKeyHook keyHook
-        desk.SetEnterSends true
-        desk.SetCompactMode false
+        desk.SlotImeProbe(fun box -> Wanxiang2.ImeShield.ImeShield.isComposing box)
+        desk.SlotKeyHook keyHook
+        desk.Render { emptyComposerVS () with EnterSends = true; Compact = false }
 
     member _.Desk = desk
     member _.Host = desk.Host
@@ -91,17 +93,16 @@ type Composer(actions: ComposerActions) =
     member _.SetThumbnail(attachmentId: Guid, bytes: byte[]) =
         try
             use ms = new IO.MemoryStream(bytes)
-            desk.SetThumbnail(attachmentId, Avalonia.Media.Imaging.Bitmap.DecodeToWidth(ms, 96))
+            desk.ApplyThumbnail(attachmentId, Avalonia.Media.Imaging.Bitmap.DecodeToWidth(ms, 96))
         with _ -> ()
 
     member _.HasThumbnail(attachmentId: Guid) = desk.HasThumbnail attachmentId
-    member _.SetShrinkNote(attachmentId: Guid, note: string) = desk.SetShrinkNote(attachmentId, note)
+    member _.SetShrinkNote(attachmentId: Guid, note: string) = desk.ApplyShrinkNote(attachmentId, note)
     member _.ShrinkNote(attachmentId: Guid) = desk.ShrinkNote attachmentId
 
     member _.SetModelVision(support: VisionSupport, modelLabel: string) =
         visionSupport <- support
         visionModelLabel <- modelLabel
-        desk.SetModelVision(support, modelLabel)
 
     member _.VisionNoticeText =
         if visionSupport = VisionNo && attachments |> List.exists (fun a -> MediaTypes.isImage a.mediaType) then
@@ -110,22 +111,19 @@ type Composer(actions: ComposerActions) =
 
     member _.SetAttachments(items: PendingAttachment list) =
         attachments <- items
-        desk.SetAttachments items
 
     /// 历史召回中输入框显示的是旧发送，真正的半截草稿由 history 保管。
     member _.Text = history.Draft desk.Text
 
-    member _.SetCanStop(value: bool) = desk.SetCanStop value
 
-    member _.SetPendingMessages(items: PendingMessage list, activeConversationId: Guid option, canRetry: bool, retry: Guid -> unit, openConversation: Guid -> unit) =
-        desk.SetPendingMessages(items, activeConversationId, canRetry, retry, openConversation)
+    member _.SlotPendingMessages(items: PendingMessage list, activeConversationId: Guid option, canRetry: bool, retry: Guid -> unit, openConversation: Guid -> unit) =
+        desk.SlotPendingMessages(items, activeConversationId, canRetry, retry, openConversation)
 
-    member _.SetGenerating(value: bool) = desk.SetGenerating value
     member _.IsGenerating = desk.IsGenerating
-    member _.SetEnabled(value: bool, reason: string) = desk.SetEnabled(value, reason)
-    member _.SetModelLabel(text: string) = desk.SetModelLabel text
+    member _.SetEnabled(value: bool, reason: string) = desk.Render { emptyComposerVS () with Enabled = value; DisabledReason = Some reason }
+    member _.SetModelLabel(text: string) = desk.Render { emptyComposerVS () with ModelChip = Some text }
 
-    member _.SetSessionContext(config: SessionConfig option, canEdit: bool, onOpen: unit -> unit) =
+    member _.SetSessionContext(config: SessionConfig option, _canEdit: bool, onOpen: unit -> unit) =
         openSessionSettings <- onOpen
         // 决策 364：工具开关不算「特殊设置」；只有特殊设置时输入区才显示摘要。
         let isCustomized (value: SessionConfig) =
@@ -138,19 +136,19 @@ type Composer(actions: ComposerActions) =
             let detail =
                 sprintf "%s，%d 项工具。修改只影响当前对话。"
                     (if value.instructions.IsSome then "已设系统指令" else "默认系统指令") value.tools.Length
-            desk.SetContext(Some(label, detail), canEdit)
-        | _ -> desk.SetContext(None, canEdit)
+            desk.Render { emptyComposerVS () with Context = Some { ProviderId = ""; Model = label; ContextSummary = detail } }
+        | _ -> desk.Render { emptyComposerVS () with Context = None }
 
     member _.ModelAnchor() : Control = desk.ModelAnchor()
-    member _.SetAccessory(control: Control) = desk.SetAccessory control
-    member _.SetEnterSends(value: bool) = desk.SetEnterSends value
+    member _.SetAccessory(control: Control) = desk.SlotAccessory control
+    member _.SetEnterSends(value: bool) = desk.Render { emptyComposerVS () with EnterSends = value }
 
     /// 窄屏收紧与按宽取档的根留白归 ComposerDesk（旧 ApplyComposerPadding）。
-    member _.SetCompactMode(value: bool) = desk.SetCompactMode value
+    member _.SetCompactMode(value: bool) = desk.Render { emptyComposerVS () with Compact = value }
 
     member _.Focus() = desk.Focus()
 
     /// 把文本塞进输入框（编辑重发、提示词模板）。
     member _.SetText(text: string) =
-        desk.SetText text
+        desk.ApplyDraftText text
         history.Reset()

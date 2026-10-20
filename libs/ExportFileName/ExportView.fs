@@ -17,6 +17,14 @@ type ExportTone =
     | Success
     | Danger
 
+/// 导出的输出产物类别（限定访问）
+[<RequireQualifiedAccess>]
+type ExportOutputKind =
+    | None
+    | MarkdownOnly
+    | JsonOnly
+    | Both
+
 /// 保存的子状态（旧 saving、saved、savedKind、saveError）
 type ExportSave = { saving: bool; saved: bool; savedKind: string; error: string option }
 
@@ -46,7 +54,7 @@ module ExportView =
 
     let idleSave = { saving = false; saved = false; savedKind = ""; error = None }
 
-    let decide (phase: ExportPhase) (save: ExportSave) (hasOutput: bool) (hasJson: bool) (reducedMotion: bool) =
+    let decide (phase: ExportPhase) (save: ExportSave) (outputKind: ExportOutputKind) (reducedMotion: bool) =
         let baseState =
             { statusText = ""; tone = ExportTone.Text; progressVisible = false; indeterminate = false; progressValue = 0.0
               retryVisible = false; saveVisible = false; saveJsonVisible = false; saveEnabled = false; saveJsonEnabled = false; closeText = "关闭" }
@@ -62,6 +70,8 @@ module ExportView =
         | ExportPhase.Ready count ->
             let empty = count = 0
             // 已知旧行为：读完但没有输出时，重试键可见
+            let hasOutput = match outputKind with ExportOutputKind.None -> false | _ -> true
+            let hasJson = match outputKind with ExportOutputKind.JsonOnly | ExportOutputKind.Both -> true | _ -> false
             let usable = hasOutput && not save.saving && not empty
             { baseState with
                 statusText =

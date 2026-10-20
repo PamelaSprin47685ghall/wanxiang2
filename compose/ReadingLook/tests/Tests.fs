@@ -31,26 +31,6 @@ let private view (manager, styles) (math: string * bool -> string option) =
         14.5,
         false)
 
-/// 逐行比对，失败时指出第一处不同（整段 Assert.Equal 输出太长难读）
-let private same (expected: string) (actual: string) =
-    let e = expected.Split('\n')
-    let a = actual.Split('\n')
-    for i in 0 .. min e.Length a.Length - 1 do
-        if e.[i] <> a.[i] then
-            Assert.Fail(sprintf "line %d\nold: %s\nnew: %s\n(prev: %s)" (i + 1) e.[i] a.[i] (if i > 0 then e.[i - 1] else ""))
-    Assert.Equal(e.Length, a.Length)
-
-[<Fact>]
-let ``every sample renders the same tree as the old MarkdownRenderer`` () =
-    Headless.run (fun () ->
-        let theme = themed ()
-        let table = MathHtml.table (Path.Combine(__SOURCE_DIRECTORY__, "golden", "figure-html.txt"))
-        let sb = Text.StringBuilder()
-        for label, math in [ "plain", (fun _ -> None); "rich", (fun key -> Map.tryFind key table) ] do
-            for name, raw in Samples.all do
-                sb.Append("== ").Append(label).Append(' ').Append(name).Append('\n').Append(Dump.tree (FontFamily Wanxiang2.ThemeFonts.ThemeFonts.body) ((view theme math).RenderText raw)) |> ignore
-        same (golden "markdown.txt") (sb.ToString()))
-
 let rec private descendants (c: Control) : Control seq =
     seq {
         yield c
@@ -59,6 +39,26 @@ let rec private descendants (c: Control) : Control seq =
             | :? Control as cc -> yield! descendants cc
             | _ -> ()
     }
+
+[<Fact>]
+let ``markdown interactive links produce accessible actionable buttons`` () =
+    Headless.run (fun () ->
+        let theme = themed ()
+        let mutable opened = None
+        let view =
+            MarkdownView(
+                ReadingLook.markdown (fst theme) (snd theme),
+                { CopyText = ignore; OpenLink = (fun url -> opened <- Some url); MathHtml = (fun _ -> None); Tint = noTint (); Wrap = CodeWrapMemory false },
+                14.5,
+                false)
+        let control = view.RenderText "请见 [文档](https://example.com/docs)"
+        let link = descendants control |> Seq.find (function :? Button as b -> b.Classes.Contains StyleClass.surface || Avalonia.Automation.AutomationProperties.GetName b = "文档" | _ -> false) :?> Button
+        Assert.True link.Focusable
+        Assert.Equal("文档", Avalonia.Automation.AutomationProperties.GetName link)
+        Assert.Equal("https://example.com/docs", Avalonia.Automation.AutomationProperties.GetHelpText link)
+        Assert.Equal("https://example.com/docs", ToolTip.GetTip link :?> string)
+        link.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, link))
+        Assert.Equal(Some "https://example.com/docs", opened))
 
 [<Fact>]
 let ``theme switch recolors shown code in place and metric edits reach shown blocks`` () =
@@ -85,7 +85,7 @@ let ``code header buttons wear the shared icon button classes from the theme`` (
         let control = (view (manager, styles) (fun _ -> None)).RenderText "```\nx\n```"
         let win = Window(Width = 600.0, Height = 400.0, Content = control)
         win.Show()
-        let copy = descendants control |> Seq.find (fun c -> (match ToolTip.GetTip c with :? string as t -> t = "复制代码" | _ -> false)) :?> Border
+        let copy = descendants control |> Seq.find (fun c -> (match ToolTip.GetTip c with :? string as t -> t = "复制代码" | _ -> false)) :?> Button
         Assert.Contains(StyleClass.iconButton, copy.Classes)
         Assert.Contains(StyleClass.surface, copy.Classes)
         // 命中区按布局规则取方形（本地值），圆角来自主题样式

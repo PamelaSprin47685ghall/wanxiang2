@@ -4,58 +4,38 @@ open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
+open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Media
 open Avalonia.Threading
-open Avalonia.Input
-open Avalonia.Automation.Peers
-open Avalonia.Automation.Provider
 
-/// 可点的 Border（与旧 ActionBorder 同义）：读屏得到 Button 与 Invoke；Enter / Space / 左键松开都触发。
+/// 可点的原生 Button，继承 Button 获得原生自动化、键盘导航与悬停反馈。
 type internal Tap(child: Control, name: string, classes: string list, action: unit -> unit) as this =
-    inherit Border()
+    inherit Button()
 
     do
-        this.Child <- child
+        this.Content <- child
         this.Focusable <- true
         this.VerticalAlignment <- VerticalAlignment.Center
         this.Cursor <- new Cursor(StandardCursorType.Hand)
         for c in classes do this.Classes.Add c
         if not (String.IsNullOrEmpty name) then AutomationProperties.SetName(this, name)
-        this.PointerReleased.Add(fun e ->
-            if this.IsEnabled && e.InitialPressMouseButton = MouseButton.Left then
-                e.Handled <- true
-                action ())
-        this.KeyDown.Add(fun e ->
-            if this.IsEnabled && (e.Key = Key.Enter || e.Key = Key.Space) then
-                e.Handled <- true
-                action ())
-
-    override _.StyleKeyOverride = typeof<Border>
-    override _.OnCreateAutomationPeer() = TapPeer(this) :> AutomationPeer
+        this.Click.Add(fun _ -> if this.IsEnabled then action ())
 
     member _.Invoke() = if this.IsEnabled then action ()
 
     member _.SetText(value: string) =
-        match this.Child with
+        match this.Content with
         | :? TextBlock as t -> t.Text <- value
         | _ -> ()
         AutomationProperties.SetName(this, value)
 
     member _.SetEnabled(enabled: bool) =
         this.IsEnabled <- enabled
-        this.Focusable <- enabled
 
     static member TextButton(text: string, classes: string list, action: unit -> unit) : Tap =
         let t = TextBlock(Text = text, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
         Tap(t, text, classes, action)
-
-and internal TapPeer(owner: Tap) =
-    inherit ControlAutomationPeer(owner)
-    override _.GetAutomationControlTypeCore() = AutomationControlType.Button
-    interface IInvokeProvider with
-        // 跨线程 marshal，非焦点竞态（UI Automation 调用方可能来自辅助功能后台线程）
-        member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())
 
 /// 按钮档对应的主题类（旧 Ui.button 的四档）
 module internal TapTone =

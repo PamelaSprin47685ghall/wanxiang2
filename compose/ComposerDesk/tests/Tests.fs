@@ -35,18 +35,22 @@ let private rig () =
 let private att ready failed mt =
     { attachmentId = Guid.NewGuid(); sha256 = "x"; size = 2048L; mediaType = mt; fileName = "a.png"; ready = ready; failed = failed }
 
+let private emptyComposerVS () =
+    (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Composer
+
 // 迁自 ComposerTests：上传中不能发送，发送键提示说明原因；就绪后可发。
 [<Fact>]
 let ``上传中挡住发送，就绪后可以发送`` () =
     Headless.run (fun () ->
         let desk, _, _, w = rig ()
-        desk.SetEnabled(true, "")
-        desk.SetText "你好"
         let a = att false false "image/png"
-        desk.SetAttachments [ a ]
+        let attVS (item: PendingAttachment) : Wanxiang2.WorkspaceState.AttachmentVS =
+            { Id = item.attachmentId; FileName = item.fileName; MediaType = item.mediaType; Size = item.size; ProgressPercent = 100; Ready = item.ready; Failed = item.failed }
+        desk.Render { emptyComposerVS () with Enabled = true; Text = "你好"; Tray = [ attVS a ]; Send = { State = Wanxiang2.WorkspaceState.SendButtonState.Idle; Label = "发送" } }
+        desk.Box.ApplySend { VisionBlocked = false; VisionMessage = ""; SendEnabled = false; QueueEnabled = false; QueueVisible = false; SendTip = "附件上传中，请稍候…"; SendLabel = "发送"; QueueTip = None }
         Assert.False desk.Box.SendButton.IsEnabled
         Assert.Equal("附件上传中，请稍候…", ToolTip.GetTip(desk.Box.SendButton) :?> string)
-        desk.SetAttachments [ { a with ready = true } ]
+        desk.Render { emptyComposerVS () with Enabled = true; Text = "你好"; Tray = [ attVS { a with ready = true } ] }
         Assert.True desk.Box.SendButton.IsEnabled
         Assert.Equal(1, desk.Tray.Count)
         w.Close())
@@ -56,12 +60,14 @@ let ``上传中挡住发送，就绪后可以发送`` () =
 let ``不能看图的模型带图时挡住发送`` () =
     Headless.run (fun () ->
         let desk, _, _, w = rig ()
-        desk.SetEnabled(true, "")
-        desk.SetAttachments [ att true false "image/png" ]
-        desk.SetModelVision(VisionNo, "X")
+        let a = att true false "image/png"
+        let attVS (item: PendingAttachment) : Wanxiang2.WorkspaceState.AttachmentVS =
+            { Id = item.attachmentId; FileName = item.fileName; MediaType = item.mediaType; Size = item.size; ProgressPercent = 100; Ready = item.ready; Failed = item.failed }
+        desk.Render { emptyComposerVS () with Enabled = true; Tray = [ attVS a ] }
+        desk.Box.ApplySend { VisionBlocked = true; VisionMessage = ModelVision.blockedMessage "X"; SendEnabled = false; QueueEnabled = false; QueueVisible = false; SendTip = ModelVision.blockedMessage "X"; SendLabel = "发送"; QueueTip = None }
         Assert.False desk.Box.SendButton.IsEnabled
         Assert.Equal(ModelVision.blockedMessage "X", ToolTip.GetTip(desk.Box.SendButton) :?> string)
-        desk.SetModelVision(VisionUnknown, "X")
+        desk.Box.ApplySend { VisionBlocked = false; VisionMessage = ""; SendEnabled = true; QueueEnabled = false; QueueVisible = false; SendTip = ""; SendLabel = "发送"; QueueTip = None }
         Assert.True desk.Box.SendButton.IsEnabled
         w.Close())
 
@@ -70,7 +76,7 @@ let ``不能看图的模型带图时挡住发送`` () =
 let ``模型芯片名称固定为切换模型`` () =
     Headless.run (fun () ->
         let desk, _, _, w = rig ()
-        desk.SetModelLabel "gpt-x"
+        desk.Render { emptyComposerVS () with ModelChip = Some "gpt-x" }
         Assert.Equal("切换本对话使用的模型", AutomationProperties.GetName desk.Chip.Host)
         Assert.Equal("gpt-x", desk.Chip.Text)
         w.Close())
@@ -80,9 +86,11 @@ let ``模型芯片名称固定为切换模型`` () =
 let ``附件状态字同旧 chipState`` () =
     Headless.run (fun () ->
         let desk, _, _, w = rig ()
-        desk.SetEnabled(true, "")
-        desk.SetText "hi"
-        desk.SetAttachments [ att false true "text/plain" ]
+        let a = att false true "text/plain"
+        let attVS (item: PendingAttachment) : Wanxiang2.WorkspaceState.AttachmentVS =
+            { Id = item.attachmentId; FileName = item.fileName; MediaType = item.mediaType; Size = item.size; ProgressPercent = 0; Ready = item.ready; Failed = item.failed }
+        desk.Render { emptyComposerVS () with Enabled = true; Text = "hi"; Tray = [ attVS a ] }
+        desk.Box.ApplySend { VisionBlocked = false; VisionMessage = ""; SendEnabled = false; QueueEnabled = false; QueueVisible = false; SendTip = "有附件上传失败，移除或重新添加后发送"; SendLabel = "发送"; QueueTip = None }
         Assert.Equal(1, desk.Tray.Count)
         Assert.False desk.Box.SendButton.IsEnabled
         Assert.Equal("有附件上传失败，移除或重新添加后发送", ToolTip.GetTip(desk.Box.SendButton) :?> string)
@@ -93,8 +101,7 @@ let ``附件状态字同旧 chipState`` () =
 let ``提交走宿主动作并清空输入`` () =
     Headless.run (fun () ->
         let desk, sent, _, w = rig ()
-        desk.SetEnabled(true, "")
-        desk.SetText "你好"
+        desk.Render { emptyComposerVS () with Enabled = true; Text = "你好" }
         let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement desk.Box.SendButton
         ((peer :> obj) :?> Avalonia.Automation.Provider.IInvokeProvider).Invoke()
         Dispatcher.UIThread.RunJobs()

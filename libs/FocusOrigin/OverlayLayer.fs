@@ -33,7 +33,7 @@ type OverlayLayerAppearance =
       ScrimEasing: Avalonia.Animation.Easings.Easing }
 
 /// 浮层落点（插槽）：锚点左上角 x、y、锚点宽高、浮层宽高、视口宽高、留白、间距、是否右对齐 → 浮层左上角。
-/// 组合者填入 PopupPlacement.place。
+/// 组合者填入原生对齐或定位适配函数。
 type PopupPlace = float -> float -> float -> float -> float -> float -> float -> float -> float -> float -> bool -> float * float
 
 /// 覆盖层：对话框（含嵌套栈与关闭守卫）、浮层、遮罩、焦点记忆与 Tab 圈定

@@ -133,12 +133,12 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
     /// 立即写偏移并记为自己写的（旧 tween.Pin）：钉住期间重新对齐不被当成用户上滚
     member _.PinOffset(y: float) = scroller.PinOffset y
 
-    /// 起步模式（旧 SetStartMode）：空态贴近输入区；只改布局
-    member _.SetStartMode(value: bool) =
+    /// 起步模式（插槽/非每帧投影）：空态贴近输入区；只改布局
+    member _.WireStartMode(value: bool) =
         startMode <- Some value
         applyStart ()
 
-    member _.SetCompact(value: bool) =
+    member _.ApplyCompact(value: bool) =
         compact <- value
         scroller.SetCompact value
         refreshButton ()
@@ -189,10 +189,10 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
         itemsControl.IsVisible <- true
         messages.IsVisible <- true
 
-    /// 空态的开场白芯片：点选回调（None 时不出这一行）
-    member _.SetStarterPick(pick: (string -> unit) option) = empty.SetStarterPick pick
-    /// 空态的预设芯片（名称, 说明, 套用）
-    member _.SetPresets(items: (string * string * (unit -> unit)) list) = empty.SetPresets items
+    /// 空态的开场白芯片：点选回调插槽（None 时不出这一行）
+    member _.WireStarterPick(pick: (string -> unit) option) = empty.SetStarterPick pick
+    /// 空态的预设芯片插槽（名称, 说明, 套用）
+    member _.WirePresets(items: (string * string * (unit -> unit)) list) = empty.SetPresets items
 
     member _.IsEmptyShown = emptyScroller.IsVisible
 
@@ -229,7 +229,7 @@ type ChatPane<'K when 'K: equality>(looks: ChatPaneMetrics, brandLogo: float -> 
         | _ -> ()
         step
 
-    member _.SetOlderAvailable(value: bool) = jump.SetOlderAvailable value
+    member _.ApplyOlderAvailable(value: bool) = jump.SetOlderAvailable value
 
     /// 更早一页取失败：横幅带重试
     member _.ShowOlderFailure(text: string, onRetry: unit -> unit) =

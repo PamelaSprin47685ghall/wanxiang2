@@ -8,14 +8,12 @@ ChatScroller + ExchangeNav + ChatEmpty + SkeletonList + ScrollFollow + ExchangeJ
 - 外观全部取主题活实例；字距强调取 Spacing.Tracking.emphasis；常量只来自 DesignRhythm 的 LayoutPolicy。
 
 ## 证据与旧测试
-- 整树金样 `tests/golden/chatpane.txt`（260 行，8 个状态：消息列、骨架、更早一页失败、5 种空态），由 `tools/panegold/run.sh <旧仓库>` 用 extract-ledger 533b85b 的旧 ChatView 主体生成，嵌入字体排版。
-- ChatViewTests：`空态文案与品牌态`、`贴底跟随与回到最新`、`骨架显示与隐藏`、`问答跳转端点`
-- 空态文案金样在 libs/BreathPhase；滚动/跳转/呼吸的逐分支金样在对应逻辑库。
+- 行为断言：`tests/Tests.fs` 覆盖空态文案与品牌态、贴底跟随与回到最新、骨架显示与隐藏、问答跳转端点、虚拟化列表面板及 ChatVS 单入口幂等渲染和主体各状态可见性不变式（SPEC 7：退役纯界面整树金样，转为行为断言）。
 
 ## 与旧实现的差异
-- 消息卡、标题栏 / 面包屑、挂载窗口（MountWindow）与分页前置的宿主侧接线仍在宿主；`Messages` 是插槽。
+- 消息卡、标题栏 / 面包屑与分页前置的宿主侧接线仍在宿主；`Messages` 是插槽。
 - 主体子项序与旧代码一致：ChatScroller 的叠放层拆开，滚动区、空态滚动区、「回到最新」、失败横幅直接放进主体 Grid；骨架时滚动区内容换成骨架。
 
 - RefreshLatestButton()：宿主改了跟随状态后刷新「回到最新」按钮（不要再借 SetCompact 刷新）。PinOffset(y)：转给 ChatScroller.PinOffset。
-- 空态整树金样已在 tests/golden/chatpane.txt（空对话、无对话带主操作、未连接、连接失败、无模型五态，由旧 ChatView 生成）。
-- SetStartMode(bool)：起步模式空态贴近输入区（旧 ChatView.SetStartMode），留白取 Space2xl。
+- WireStartMode(bool)：起步模式空态贴近输入区布局插槽（命名避开 Set*，非每帧投影）。
+- WireStarterPick / WirePresets：宿主注入的稳定回调/预设芯片插槽（非每帧投影状态）。ApplyCompact / ApplyOlderAvailable：宿主与跳转联动动作。

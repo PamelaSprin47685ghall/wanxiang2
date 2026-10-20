@@ -194,7 +194,7 @@ module Program =
     let private makeThumbnail (attachmentId: Guid) (bytes: byte[]) =
         try
             use stream = new MemoryStream(bytes)
-            composerDesk.SetThumbnail(attachmentId, Bitmap.DecodeToWidth(stream, 96))
+            composerDesk.ApplyThumbnail(attachmentId, Bitmap.DecodeToWidth(stream, 96))
         with _ ->
             ()
 

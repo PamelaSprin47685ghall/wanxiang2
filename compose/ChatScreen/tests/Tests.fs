@@ -82,6 +82,13 @@ let private msg role text commit =
 
 let private frame messages streaming =
     { Messages = messages; Streaming = streaming; Error = None; FontSize = 14.5; AutoCollapseReasoning = false
+      Title = None
+      CanEditTitle = false
+      IsGenerating = false
+      GeneratingText = ""
+      CanStop = false
+      ConversationChrome = false
+      CompactMode = false
       ReducedMotion = false
       Usage = None; MissingAttachments = Set.empty }
 
@@ -118,13 +125,13 @@ let ``渲染次序：已提交卡按身份复用，流式卡外形不变时原�
         r.Window.Close())
 
 [<Fact>]
-let ``长对话只挂尾部窗口；定位窗口外的消息先扩到它，并高亮到宿主计时结束`` () =
+let ``长对话直接呈现完整卡片列表；定位消息并高亮到宿主计时结束`` () =
     Headless.run (fun () ->
         let r = rig ()
         let s = r.Screen
         s.Render(frame (exchange 50) None)
-        Assert.Equal(MountWindow.Initial, s.Pane.Messages.Children.Count)
-        Assert.Equal(100 - MountWindow.Initial, s.HiddenMessageCount)
+        Assert.Equal(100, s.Pane.Messages.Children.Count)
+        Assert.Equal(0, s.HiddenMessageCount)
         Assert.True(s.RevealAndHighlight 3UL)
         Assert.True(s.Mounted |> Array.exists (function Some k -> k.commit = 3UL | None -> false))
         Assert.True s.Pane.Follow.RevealPinned
@@ -142,17 +149,16 @@ let ``顶栏：改名、侧栏开关交宿主；面包屑可点时回到父对�
     Headless.run (fun () ->
         let r = rig ()
         let s = r.Screen
-        s.SetConversationChrome true
-        s.SetTitle("旧", true)
+        s.Render { frame (exchange 1) None with ConversationChrome = true; Title = Some "旧"; CanEditTitle = true }
         s.Header.BeginRename()
         s.Header.TitleEditor.Text <- "新"
         s.Header.CommitRename false
         invoke s.Header.SidebarButton
         let parent = Guid(1, 0s, 0s, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy)
-        s.SetBreadcrumb(Some { parentId = parent; parentAvailable = false; text = "分叉自 A"; description = "父对话已删除" })
+        s.ApplyBreadcrumb(Some { parentId = parent; parentAvailable = false; text = "分叉自 A"; description = "父对话已删除" })
         Assert.Equal("分叉自 A", s.BreadcrumbText)
         invoke s.Header.CrumbAction
-        s.SetBreadcrumb(Some { parentId = parent; parentAvailable = true; text = "分叉自 A"; description = "回到 A" })
+        s.ApplyBreadcrumb(Some { parentId = parent; parentAvailable = true; text = "分叉自 A"; description = "回到 A" })
         invoke s.Header.CrumbAction
         Assert.Equal<string list>([ "rename:新"; "sidebar"; sprintf "parent:%O" parent ], List.ofSeq r.Log)
         r.Window.Close())
@@ -163,11 +169,59 @@ let ``用户消息有多个版本时卡下出版本条，按「下一个版本�
         let r = rig ()
         let s = r.Screen
         let other = Guid(2, 0s, 0s, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy, 0uy)
-        s.SetSiblingProvider(fun commit _ ->
+        s.SlotSiblingProvider(fun commit _ ->
             if commit = 1UL then Some { index = 0; count = 2; targets = [ Guid.Empty; other ] } else None)
         s.Render(frame (exchange 1) None)
         let next = Desk.named s.Host "下一个版本"
         Assert.True next.IsSome
         invoke next.Value
         Assert.Equal<string list>([ sprintf "sibling:%O" other ], List.ofSeq r.Log)
+        r.Window.Close())
+
+[<Fact>]
+let ``整屏各状态渲染与可见性断言：空态、对话、生成中、流式、面包屑与紧凑模式`` () =
+    Headless.run (fun () ->
+        let r = rig ()
+        let s = r.Screen
+
+        // 1. 空态
+        s.Render { frame [] None with Title = Some "新对话"; CanEditTitle = false }
+        s.Pane.ShowEmpty(ChatEmptyState.EmptyConversation, None)
+        Assert.True s.Pane.IsEmptyShown
+        Assert.Equal("新对话", s.Header.Title)
+        Assert.False s.Header.IsEditing
+
+        // 2. 对话态
+        s.Pane.HideEmpty()
+        s.Render { frame (exchange 2) None with ConversationChrome = true; Title = Some "京都行程"; CanEditTitle = true }
+        Assert.False s.Pane.IsEmptyShown
+        Assert.Equal(4, s.Pane.Messages.Children.Count)
+        Assert.Equal("京都行程", s.Header.Title)
+
+        // 3. 生成中状态
+        s.Render { frame (exchange 2) None with ConversationChrome = true; Title = Some "京都行程"; CanEditTitle = true; IsGenerating = true; GeneratingText = "正在思考" }
+        Assert.Equal(1.0, s.Header.GeneratingChip.Opacity)
+
+        // 4. 流式消息追加
+        let stream = { MessageView.empty with role = "assistant"; text = "流式输出中" }
+        s.Render { frame (exchange 2) (Some stream) with ConversationChrome = true; Title = Some "京都行程"; CanEditTitle = true }
+        Assert.Equal(5, s.Pane.Messages.Children.Count)
+
+        // 5. 面包屑有父对话与已删除父对话
+        let parentId = Guid.NewGuid()
+        s.ApplyBreadcrumb(Some { parentId = parentId; parentAvailable = true; text = "分叉自「旅行」"; description = "回到父对话「旅行」" })
+        Assert.Equal("分叉自「旅行」", s.BreadcrumbText)
+        Assert.True s.Header.CrumbAction.IsVisible
+
+        s.ApplyBreadcrumb(Some { parentId = parentId; parentAvailable = false; text = "分叉自「旅行」"; description = "父对话已删除" })
+        Assert.Equal("分叉自「旅行」", s.BreadcrumbText)
+
+        // 6. 紧凑模式
+        s.Render { frame (exchange 2) None with ConversationChrome = true; Title = Some "京都行程"; CanEditTitle = true; CompactMode = true; IsGenerating = true }
+        Assert.False s.Header.GeneratingChip.IsVisible
+        s.Render { frame (exchange 2) None with ConversationChrome = true; Title = Some "京都行程"; CanEditTitle = true; CompactMode = false }
+
+        // 7. 只读标题模式
+        s.Render { frame (exchange 2) None with ConversationChrome = true; Title = Some "加载中…"; CanEditTitle = false }
+        Assert.Equal("加载中…", s.Header.Title)
         r.Window.Close())

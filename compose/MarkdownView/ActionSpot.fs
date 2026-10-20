@@ -1,40 +1,24 @@
 namespace Wanxiang2.MarkdownView
 
-open Avalonia.Automation.Peers
-open Avalonia.Automation.Provider
 open Avalonia.Controls
 open Avalonia.Input
-open Avalonia.Threading
+open Avalonia.Media
 
-/// 可点的自绘 Border（旧 Primitives.ActionBorder）：几何与外观仍是 Border，自动化层报按钮并给 Invoke。
-/// StyleKeyOverride = Border 是必需的：否则 OfType<Border>() 的共享样式选不中本类型。
+/// 可点的原生交互件，继承 Button 获得原生自动化、键盘导航与悬停反馈。
 type ActionSpot() as this =
-    inherit Border()
-
-    let mutable action: unit -> unit = ignore
+    inherit Button()
 
     do
-        this.PointerReleased.Add(fun e ->
-            if this.IsEnabled && this.IsHitTestVisible && e.InitialPressMouseButton = MouseButton.Left then
-                e.Handled <- true
-                action ())
-        this.KeyDown.Add(fun e ->
-            if this.IsEnabled && (e.Key = Key.Enter || e.Key = Key.Space) then
-                e.Handled <- true
-                action ())
+        this.Focusable <- true
+        this.Background <- Brushes.Transparent
 
-    override _.StyleKeyOverride = typeof<Border>
+    override this.OnKeyDown(e: KeyEventArgs) =
+        base.OnKeyDown(e)
+        if not e.Handled && this.IsEnabled && e.Key = Key.Space then
+            e.Handled <- true
+            this.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, this))
 
-    /// 点击、Enter/Space、读屏 Invoke 都走这一个动作
-    member _.OnInvoke(f: unit -> unit) = action <- f
+    /// 点击走原生 Click 事件
+    member this.OnInvoke(f: unit -> unit) =
+        this.Click.Add(fun _ -> if this.IsEnabled then f ())
 
-    member _.Invoke() = if this.IsEnabled then action ()
-
-    override _.OnCreateAutomationPeer() = ActionSpotPeer(this) :> AutomationPeer
-
-and internal ActionSpotPeer(owner: ActionSpot) =
-    inherit ControlAutomationPeer(owner)
-    override _.GetAutomationControlTypeCore() = AutomationControlType.Button
-    interface IInvokeProvider with
-        // 跨线程 marshal，非焦点竞态（UI Automation 调用方可能来自辅助功能后台线程）
-        member _.Invoke() = Dispatcher.UIThread.Post(fun () -> owner.Invoke())

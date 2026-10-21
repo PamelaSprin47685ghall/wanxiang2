@@ -75,11 +75,19 @@ let ``recoloring the live ink repaints without relayout`` () =
         let ink, l = look ()
         let tex, _ = Scenario.math.[1]
         let before = run tex false htmls.[1] l
+        // 像素只在本进程内前后对比（不进金样）：同一平台、同一字体光栅化，差异只来自颜色
+        let figure = (MathFigures.tryInline l htmls.[1] 14.5 tex).Value
+        let win = Window(Width = 480.0, Height = 400.0, Content = figure)
+        win.Show()
+        win.UpdateLayout()
+        let pxBefore = Probe.pixels figure
         ink.Color <- Colors.Red
+        Dispatcher.UIThread.RunJobs()
+        let pxAfter = Probe.pixels figure
+        win.Close()
         let after = run tex false htmls.[1] l
-        let layout (s: string) = s.Substring(0, s.IndexOf " px=")
-        Assert.Equal(layout before, layout after)
-        Assert.NotEqual<string>(before, after))
+        Assert.Equal(before, after)
+        Assert.NotEqual<string>(pxBefore, pxAfter))
 
 [<Fact>]
 let ``body font change relays out glyphs with the new family`` () =

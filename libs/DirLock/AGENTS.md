@@ -16,7 +16,7 @@
 1. [LEMMA: 1] 同进程持锁期间再次 `TryAcquire` 返回 Error（带持有者 pid）；`Dispose` 后可再次获取。
     - 证明：`tests/Tests.fs` `second acquire fails until first is disposed`，通过。
 2. [LEMMA: 1, 2] 其他进程持锁时获取失败；该进程被杀后无需清理即可获取。
-    - 证明：`lock held by another process is released when it dies`（Linux/macOS 用 `flock` 子进程），Linux 通过。
+    - 证明：`lock held by another process is released when it dies`（子进程是 python3 `fcntl.flock(LOCK_EX)` 脚本，打印 `locked` 后才开始争抢；不依赖 Linux 独有的 `flock` 命令），Linux 与 macOS 通过。
 3. [LEMMA: 3] 写 `.lock.pid` 失败时释放句柄，返回不同于「被占用」的错误。
     - 证明：`pid write failure is reported distinctly and releases the lock`，通过。
 4. [LEMMA: 1] 真实组合中，第二个存储打不开同一目录。

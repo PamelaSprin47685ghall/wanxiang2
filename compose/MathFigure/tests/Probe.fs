@@ -9,13 +9,15 @@ open Avalonia.Controls.Documents
 open Avalonia.Media
 open Avalonia.Media.Imaging
 
-/// 金样两边共用：同一段落、同一画布，量出布局并对像素取哈希。
+/// 金样两边共用：同一段落、同一画布，量出布局（Bounds、基线、留白、读屏名）。
+/// 不记像素哈希：Skia 在 macOS（CoreText）与 Linux（FreeType）上光栅化结果不同，布局与基线则平台无关。
 let f (v: float) =
     v.ToString("0.###", Globalization.CultureInfo.InvariantCulture)
 
 let ink = SolidColorBrush(Color.Parse "#1F2328")
 
-let private pixels (control: Control) =
+/// 整块像素的 SHA-256 前缀。只用于同一进程内的前后对比，不进金样（跨平台不稳定）。
+let pixels (control: Control) =
     let w = max 1 (int (Math.Ceiling control.Bounds.Width))
     let h = max 1 (int (Math.Ceiling control.Bounds.Height))
     use bmp = new RenderTargetBitmap(PixelSize(w, h), Vector(96.0, 96.0))
@@ -64,7 +66,7 @@ let probe
 
             line (
                 sprintf
-                    "block: host=%s,%s,%s,%s figure=%s,%s,%s,%s baseline=%s pad=%s px=%s"
+                    "block: host=%s,%s,%s,%s figure=%s,%s,%s,%s baseline=%s pad=%s"
                     (f host.Bounds.X)
                     (f host.Bounds.Y)
                     (f host.Bounds.Width)
@@ -75,7 +77,6 @@ let probe
                     (f figure.Bounds.Height)
                     (f (baseline figure))
                     (f (host :?> Border).Padding.Top)
-                    (pixels panel)
             )
 
             win.Close()
@@ -103,7 +104,7 @@ let probe
 
             line (
                 sprintf
-                    "inline: block=%s,%s figure=%s,%s,%s,%s baseline=%s name=%s px=%s"
+                    "inline: block=%s,%s figure=%s,%s,%s,%s baseline=%s name=%s"
                     (f block.Bounds.Width)
                     (f block.Bounds.Height)
                     (f figure.Bounds.X)
@@ -112,7 +113,6 @@ let probe
                     (f figure.Bounds.Height)
                     (f (baseline figure))
                     (string (Avalonia.Automation.AutomationProperties.GetName figure))
-                    (pixels block)
             )
 
             win.Close()

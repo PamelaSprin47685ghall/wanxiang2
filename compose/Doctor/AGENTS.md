@@ -10,7 +10,7 @@
 
 # SPEC
 1. [LEMMA: 1] `golden/doctor.txt` 由旧 Doctor 跑同一 Scenario 生成（端口、provider/MCP 配置、快照、日志重放、缺失与孤立附件），通过。
-2. [LEMMA: 1] 旧 DoctorInspectTests 原样迁入，通过。
+2. [LEMMA: 1] 旧 DoctorInspectTests 原样迁入，通过（Linux 与 macOS）。其中「结果未知」用例的真实写失败分平台：Linux 用指向 `/dev/full` 的日志符号链接（第 1 条提交即未知）；macOS 没有 `/dev/full`，改为先落 1 条提交、再把本进程 `RLIMIT_FSIZE` 收紧到 0 并忽略 SIGXFSZ，第 2 条的写与截回都按 EFBIG 失败（第 2 条未知）。上限是整进程的，所以本测试程序集关闭并行。
 
 # 迁入或覆盖的旧测试
 - DoctorInspectTests.fs 整个文件（原样迁入 tests/）。

@@ -232,8 +232,9 @@ let classify () =
             "http418", HttpRequestException("teapot", null, Nullable(enum<HttpStatusCode> 418))
             "http400ctx", HttpRequestException("maximum context exceeded", null, Nullable HttpStatusCode.BadRequest)
             "httpnet", HttpRequestException("refused")
-            "socket", SocketException 111
-            "wrapped", Exception("outer", SocketException 111)
+            // 用平台无关的 SocketError 枚举，不用原生 errno（ECONNREFUSED 在 Linux 是 111、在 Darwin 是 61）
+            "socket", SocketException(int SocketError.ConnectionRefused)
+            "wrapped", Exception("outer", SocketException(int SocketError.ConnectionRefused))
             "refusedtext", Exception("Connection refused (127.0.0.1)")
             "filter", Exception("blocked by content_filter")
             "badgateway", Exception("upstream said Bad Gateway")

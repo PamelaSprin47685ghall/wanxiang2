@@ -245,12 +245,12 @@
 | `ClientTomlFile` | 33 | `app/Desktop` | `grep -rnw "ClientTomlFile" app/Desktop/*.fs` 无输出 |
 | `AguiMessageMap` | 19 | `app/Desktop` | `grep -rnw "MessageMap" app/Desktop/*.fs` 无输出（该包已于 2026-10-21 删除） |
 
-反向核验（避免误判）：`compose/AppShell` 里 `open Wanxiang2.MotionSwitch` 确实存在，且 `MotionTimings.initialMs` / `Timing.OutboxDeliveryCheckTick` 在 `AppShell.fs:114,548,550` 被用到——所以 `MotionSwitch` 对 `AppShell` 是**真**引用，只是对 `ChatPane` 是穿帮。`compose/SidebarDesk/Looks.fs` 里 `open Wanxiang2.IconSet` + `IconSet.image` 真用到，所以 `IconSet` 对 `SidebarDesk` 是真引用，只是对 `AppShell`/`ChatPane`/`ComposerDesk` 是穿帮。
+反向核验（避免误判）：`compose/AppShell` 里 `open Wanxiang2.MotionSwitch` 确实存在，且 `MotionTimings.initialMs` / `Timing.OutboxDeliveryCheckTick` 在 `AppShell.fs:114,172,748` 被用到——所以 `MotionSwitch` 对 `AppShell` 是**真**引用，只是对 `ChatPane` 是穿帮。`compose/SidebarDesk/Looks.fs` 里 `open Wanxiang2.IconSet` + `IconSet.image` 真用到，所以 `IconSet` 对 `SidebarDesk` 是真引用，只是对 `AppShell`/`ChatPane`/`ComposerDesk` 是穿帮。
 
 扫描器的两个已知误判来源，已排除：
 
-- `BrowserInterop` 是唯一的 C# 包，`.csproj` 里没有 `<Compile Include>` 清单，成员名要走默认 glob 取。审计脚本已按 `.csproj` 走 glob、`.fsproj` 走 `Compile Include` 修正。它是**真引用**：`compose/CredentialStore/CredentialStore.fs:43,61,70,78` 用 `BrowserCredentials` / `BrowserPage`，`compose/RichBrowser/RichBrowser.fs:18,23,28,43,51` 用 `BrowserRich`，`app/Pwa/BrowserDraftBackend.fs:16,21,23` 用 `BrowserDrafts`，`app/Pwa/Program.fs:46,55,106` 用 `BrowserLocalStore` / `BrowserPage`，`app/Pwa/BrowserImageShrink.fs:15` 用 `BrowserImage`。**该包不动**。
-- `ThemeMetrics` 对 `compose/ChatPane` 报穿帮时，`ChatPane.fs:171` 有 `resFloat "Metric.LogoEmpty" 68.0`——这是主题资源键的**字符串**，不是对 `libs/ThemeMetrics` 的代码引用（键由主题资源字典在运行时解析）。所以判定成立：`compose/ChatPane` 确实不碰 `ThemeMetrics` 包。同理 `ThemePalette` 对 `compose/ChatPane` 与 `compose/AppShell` 也是如此。审计脚本在比对前会先剥掉字符串字面量。
+- `BrowserInterop` 是唯一的 C# 包，`.csproj` 里没有 `<Compile Include>` 清单，成员名要走默认 glob 取。审计脚本已按 `.csproj` 走 glob、`.fsproj` 走 `Compile Include` 修正。它是**真引用**：`compose/CredentialStore/CredentialStore.fs:50,68,78,89` 用 `BrowserCredentials` / `BrowserPage`，`compose/RichBrowser/RichBrowser.fs:18,23,28,45,55` 用 `BrowserRich`，`app/Pwa/BrowserDraftBackend.fs:16,21,23` 用 `BrowserDrafts`，`app/Pwa/Program.fs:46,55,106` 用 `BrowserLocalStore` / `BrowserPage`，`app/Pwa/BrowserImageShrink.fs:15` 用 `BrowserImage`。**该包不动**。
+- `ThemeMetrics` 对 `compose/ChatPane` 报穿帮时，`ChatPane.fs:220` 有 `resFloat "Metric.LogoEmpty" 68.0`——这是主题资源键的**字符串**，不是对 `libs/ThemeMetrics` 的代码引用（键由主题资源字典在运行时解析）。所以判定成立：`compose/ChatPane` 确实不碰 `ThemeMetrics` 包。同理 `ThemePalette` 对 `compose/ChatPane` 与 `compose/AppShell` 也是如此。审计脚本在比对前会先剥掉字符串字面量。
 
 **处置建议**：删掉这 12 条 `PackageReference`（消费者侧一行改动），包本身保留（它们各自还有别的真消费者）。风险极低：`./x check` 只检查「库有消费者」，删除后该包仍有其他消费者；`.fsproj` 里少一条引用不会影响编译。
 
@@ -284,7 +284,7 @@
 
   同一提交（`82d5628`，2026-10-21 03:35）删掉了整个 `compose/EntryShells/Composer.fs`，`PromptHistory` 的**唯一**构造点、**唯一** `Record` 调用点、**唯一** `Escape` 召回点与**唯一** `Draft` 读取点随之一起消失。该提交同时把 `compose/EntryShells/AGENTS.md` 改成仍宣称「输入区适配器（发送历史召回、IME 守护、缩略图、上下文摘要）」——**文档说它在，代码里它已经没了**。
 - **现在没有任何地方构造它**。`grep -rn 'PromptHistory' compose app libs --include='*.fs' --include='*.fsproj'` 除本库自身与 `compose/EntryShells/EntryShells.fsproj` 的 `PackageReference` 外零命中；`grep -rn 'PromptHistory\|.Up(\|.Down(\|IsRecalling\|Record(' compose/EntryShells app/Desktop app/Pwa --include='*.fs'` 零命中。
-- **按键通路还留着钩子，但没人接**。`libs/AttachmentTray/ComposerBox.fs:421` 仍有 `member _.WireKeyHook(f: KeyEventArgs -> bool) = keyHook <- f`，`libs/AttachmentTray/ComposerBox.fs:325` 仍在按键处理里调 `elif keyHook e then e.Handled <- true`；`compose/ComposerDesk/ComposerDesk.fs:209` 仍导出 `member _.WireKeyHook(f) = box.WireKeyHook f`。但 `grep -rn 'WireKeyHook' compose app --include='*.fs'`（排除 tests）**只命中库与组合者的定义本身，没有一个调用方**——钩子还在，线头掉了。
+- **按键通路还留着钩子，但没人接**。`libs/AttachmentTray/ComposerBox.fs:536` 仍有 `member _.WireKeyHook(f: KeyEventArgs -> bool) = keyHook <- f`，`libs/AttachmentTray/ComposerBox.fs:408` 仍在按键处理里调 `elif keyHook e then e.Handled <- true`；`compose/ComposerDesk/ComposerDesk.fs:398` 仍导出 `member _.WireKeyHook(f) = box.WireKeyHook f`。但 `grep -rn 'WireKeyHook' compose app --include='*.fs'`（排除 tests）**只命中库与组合者的定义本身，没有一个调用方**——钩子还在，线头掉了。
 
 **结论**：「输入框上下键召回已发送消息、Esc 退回半截草稿」这个产品能力在 2026-10-21 的 W7 clean-break 里**静默消失了**。这不是死代码，是**功能回归**。`PromptHistory` 库本身（59 行，有完整的 `Up`/`Down`/`Escape`/`Record`/`Draft` 状态机与召回规则测试）必须**保留**——它是这个能力的实现，删掉它等于把回归坐实成「本来就没这功能」。
 
@@ -520,14 +520,14 @@
 
 | 消息 | 发处 | 后果 |
 | --- | --- | --- |
-| `Regenerate` | `AppShell.fs:191`（错误卡「重试」）、`:694` | **重试与重新生成点了没反应** |
-| `DeleteExchange` | `AppShell.fs:703` | 删除消息没反应 |
-| `CopyLatestReply` | `AppShell.fs:413` | 复制回复没反应 |
-| `JumpBeginning` / `JumpEnd` | `AppShell.fs:410-411` | 跳到开头/末尾没反应 |
-| `SwitchVersion` | `AppShell.fs:718` | 切换消息版本没反应 |
-| `OlderPageRequested` | `AppShell.fs:715` | 加载更早一页没反应 |
+| `Regenerate` | `AppShell.fs:255`（错误卡「重试」）、`:1058` | **重试与重新生成点了没反应** |
+| `DeleteExchange` | `AppShell.fs:1077` | 删除消息没反应 |
+| `CopyLatestReply` | `AppShell.fs:525` | 复制回复没反应 |
+| `JumpBeginning` / `JumpEnd` | `AppShell.fs:522-523` | 跳到开头/末尾没反应 |
+| `SwitchVersion` | `AppShell.fs:1095` | 切换消息版本没反应 |
+| `OlderPageRequested` | `AppShell.fs:1092` | 加载更早一页没反应 |
 | `ContinueReply` | 卡片「继续生成」 | 继续生成没反应 |
-| `ApprovalRespond` | `AppShell/tests/ComposerTests.fs:182` | 工具审批回应没反应 |
+| `ApprovalRespond` | `AppShell/tests/ComposerTests.fs:320` | 工具审批回应没反应 |
 
 这些动作**没有别的实现**——MVU 重构（提交 `ad22bf0`）前它们在 `compose/AppShell` 里，
 重构后本该由状态树接手，**但分支一直没写**。
@@ -550,15 +550,16 @@
 ### 3.7.5 分工不同，不改：对话框与侧栏多选
 
 - **对话框**：`compose/DialogsDesk` 直接 `overlay.ShowDialog(...)` 造**真实控件**；
-  `OverlayPhase.DialogOpen` 的投影（`Project.fs:315`）确实没人能置位，但
-  `compose/OverlayDesk/OverlayDesk.fs:91` 的 `OverlayVS.Dialog` 分支**只设 `currentOverlayPhase`、不造控件**。
+  `OverlayPhase.DialogOpen` 的投影（`Project.fs:353`）确实没人能置位，但
+  `compose/OverlayDesk/OverlayDesk.fs:120` 的 `OverlayVS.Dialog` 分支**只设 `currentOverlayPhase`、不造控件**。
   这是「投影是壳、真实控件在桌内」的分工，不是两份互相打架的事实。
   要让投影也带内容，就得把整套对话框内容搬进状态树——**那是新设计，不是缺陷修复**，所以不改。
-- **侧栏多选**：批量条**现在是能用的**——`compose/SidebarDesk` 用自己的 `SidebarSelection`
-  直接算 `batchVS` 渲染（`SidebarDesk.fs:229-241`），批量删除走 `SidebarUserMsg.BatchDelete` 进状态树。
-  真正的问题是**两份事实**：`Chrome.BatchMode` / `Chrome.SelectedRowIds` 只有 `init` 那两行，
-  `Project.fs:103-106` 投影成 `SidebarVS.Batch`，**但没有任何消费者读它**。
-  这条正在收口：多选进状态树、`SidebarDesk` 改从投影读（owner: orphan-dirs）。
+- **侧栏多选**：批量条**现在是能用的**——批量删除走 `SidebarUserMsg.BatchDelete` 进状态树。
+  本节原先记的「两份事实」缺口**已收口**：`Chrome.BatchMode` / `Chrome.SelectedRowIds` 已在
+  `libs/WorkspaceState/Update.fs` 里被真正写入（多选/取消/全选，见 `:719-770`），
+  由 `Project.fs:134-135` 投影成 `SidebarVS.BatchMode` / `SidebarVS.SelectedRowIds`，
+  `compose/SidebarDesk/SidebarDesk.fs:105-107` **只从投影读**（`selectedSet ()` / `inSelectionMode ()`），
+  侧栏不再自己记一份选择集合；渲染用的 `batchVS` 在 `SidebarDesk.fs:352-360`。
 
 ## 4. 风险
 
@@ -863,35 +864,36 @@ PASS 无未捕获页面异常
 
 - `TextElement.FontFamilyProperty` 是 Avalonia 里的 **inherits 附加属性**；
 - 仓库里只有极少数控件单独绑定了字体动态资源
-  （`compose/ComposerDesk/Pending.fs:39`、`compose/MarkdownView/MarkdownView.fs:61-62`、
-  `compose/MathFigure/MathFigure.fs:60`），其余控件（标签、侧栏、引导页……）用**默认字体族**；
+  （`compose/ComposerDesk/Pending.fs:49`、`compose/MarkdownView/MarkdownView.fs:71,74`、
+  `compose/MathFigure/MathFigure.fs:65`），其余控件（标签、侧栏、引导页……）用**默认字体族**；
 - 浏览器端**没有系统字体**，默认族里没有汉字 → 豆腐块。
 
 ### 10.2 修法与证据
 
 - **修法**：PWA 入口在根控件上设一次内嵌字体，整棵树继承——
-  `app/Pwa/Program.fs:529-532`（`buildViewsOnce` 内，`root = Grid()` 之后）：
+  `app/Pwa/Program.fs:599-605`（`buildViewsOnce` 内，`root = Grid()` 之后）：
 
   ```fsharp
-  root.SetValue(Avalonia.Controls.Documents.TextElement.FontFamilyProperty, SharedTheme.manager.FontFamily.Value) |> ignore
+  root.SetValue(Avalonia.Controls.Documents.TextElement.FontFamilyProperty, SharedTheme.manager.FontFamily.Value)
+  |> ignore
   ```
 
 - **桌面端未改**（`app/Desktop/Program.fs` 无字体改动）：桌面有系统字体；强行换成子集字体
   反而会让子集外的字变豆腐块。
 - **弹出层另有显式样式**：ToolTip / ContextMenu / MenuItem / MenuFlyoutPresenter 挂在
-  独立弹出根上、继承不到根字体，故在 `compose/EntryShells/App.fs:115-132` 显式指定同一字体族。
+  独立弹出根上、继承不到根字体，故在 `compose/EntryShells/App.fs:140-161` 显式指定同一字体族。
 - **字体资源**：`libs/ThemeFonts/Assets/Fonts/SarasaGothicSC-Regular.subset.ttf`（12.6 MB，Git 跟踪），
   `libs/ThemeFonts/ThemeFonts.fs:20` 的 `family` 构造 `FontFamily`；`ThemeFonts.body` = `"Sarasa Gothic SC"`。
 
 ### 10.3 回归用例
 
-`compose/EntryShells/tests/Tests.fs:81` 的 `EmbeddedFontTests`，3 条：
+`compose/EntryShells/tests/Tests.fs:87` 的 `EmbeddedFontTests`，3 条：
 
 1. `内嵌正文字体族能解析出字形`——`FontManager.Current.TryGetGlyphTypeface` 能解析出 `Sarasa Gothic SC`；
 2. `内嵌正文字体覆盖常用汉字`——`TryMatchCharacter` 对 U+4E2D / 6587 / 4E07 / 8C61 全部命中；
 3. `等宽字体把正文字体列为回落（否则中文变豆腐块）`——`ThemeFonts.mono` 含 `"Sarasa Gothic SC"`。
 
-该文件共 5 条 `[<Fact>]`（`:9`、`:28`、`:86`、`:94`、`:105`），后 3 条即上述字体回归用例；
+该文件共 5 条 `[<Fact>]`（`:9`、`:28`、`:92`、`:100`、`:120`），后 3 条即上述字体回归用例；
 跑法：`dotnet test --project compose/EntryShells/tests/EntryShells.Tests.fsproj`。
 
 ### 10.4 本轮排除掉的说法

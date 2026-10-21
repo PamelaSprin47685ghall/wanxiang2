@@ -229,21 +229,21 @@
 
 | # | 位置 | 形态 | 为什么什么都没证明 |
 | --- | --- | --- | --- |
-| A4 | `compose/Theme/tests/A11yRegression.fs`（原 `:123`） | 正则 `\.IconButton\(\s*…(""|null)\s*,` 扫 `libs` + `compose` 的生产 `.fs` | 本仓库的图标按钮 API 是**小写** `iconButton`（`libs/DevicesPane/Ui.fs:101`、`compose/MarkdownView/MarkdownView.fs:71`、`compose/MessageCardView/Looks.fs:35`）。在 `libs` 与 `compose` 的**每一个生产文件**上**正则命中 0 次** → `bad` 恒为空 → `Assert.True(bad.IsEmpty, …)` **永远通过**。**已迁为 `tools/lint-copy.sh` 的口径（覆盖 libs+compose+app），并在 `./x lint` 与 CI hygiene 作业里执行**——但它是文案规则，不是「控件对外暴露了什么」的断言；控件的可访问名称仍应由控件自己的 headless 测试断言。 |
+| A4 | `compose/Theme/tests/A11yRegression.fs`（原 `:123`） | 正则 `\.IconButton\(\s*…(""|null)\s*,` 扫 `libs` + `compose` 的生产 `.fs` | 本仓库的图标按钮 API 是**小写** `iconButton`（`libs/DevicesPane/Ui.fs:110`、`compose/MarkdownView/MarkdownView.fs:83`、`compose/MessageCardView/Looks.fs:41`）。在 `libs` 与 `compose` 的**每一个生产文件**上**正则命中 0 次** → `bad` 恒为空 → `Assert.True(bad.IsEmpty, …)` **永远通过**。**已迁为 `tools/lint-copy.sh` 的口径（覆盖 libs+compose+app），并在 `./x lint` 与 CI hygiene 作业里执行**——但它是文案规则，不是「控件对外暴露了什么」的断言；控件的可访问名称仍应由控件自己的 headless 测试断言。 |
 | A5 | `compose/Theme/tests/A11yRegression.fs`（原 `:194`） | 扫「`"取消并关闭` 开头且不含 `Esc`」的字符串，范围只覆盖 `compose` + `app` | 全仓 14 处「取消并关闭…」字符串（7 个取消按钮 × `SetHelpText` + `SetTip`）**全部住在 `libs`**（`libs/ConfirmPane/*`、`libs/DevicesPane/*`、`libs/ExportSheet/*`），而扫描范围不含 `libs` → 断言**永远在空集合上运行，永远通过**。**已迁为 `tools/lint-copy.sh` 的 C2 规则（覆盖 libs+compose+app），并在 `./x lint` 与 CI hygiene 作业里执行。** |
-| A1 | `compose/AppShell/tests/ComposerTests.fs`（原 `:41`，现 `:40-49`） | `\| _ -> false \|\| true)` | 谓词恒为 `true`。`Assert.Contains(rig.Fake.RecordedEffects, fun eff -> ...)` 退化成「RecordedEffects 列表非空」——**它对 `Effect.Focus` 存在与否一字未验**。而这个断言所在的测试名叫「附件上传按开始-分块-完成发事件，图片另走缩略图端口」，恰恰声称在验上传事件序列。**已改为** `Assert.Equal(1, thumbnails.Length)` + 缩略图字节逐字节相等（`:40-49`）。 |
-| A2 | `compose/AppShell/tests/ComposerTests.fs`（原 `:68`，现 `:81-84`） | `\| ConnPhase.Connecting _ -> Assert.True(true)` | 分支体是恒真断言。该分支里的 `Connecting` 与否**没有任何语义**。**已改为** `Assert.Equal(1, attempt)`，其余状态 `Assert.Fail`。 |
-| A3 | `compose/AppShell/tests/ComposerTests.fs`（原 `:69`，现 `:84`） | `\| _ -> Assert.True(true)` | 同上，且这是**兜底分支**——无论 `Conn` 落到哪个状态（包括完全不合理的 `Authed`），测试都通过。整个测试「断开连接：清空状态并转入断开」**不验证任何断开语义**。**已改为** `Assert.Fail`（`:84`）。 |
+| A1 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:41`，现 `:38-49`） | `\| _ -> false \|\| true)` | 谓词恒为 `true`。`Assert.Contains(rig.Fake.RecordedEffects, fun eff -> ...)` 退化成「RecordedEffects 列表非空」——**它对 `Effect.Focus` 存在与否一字未验**。而这个断言所在的测试名叫「附件上传按开始-分块-完成发事件，图片另走缩略图端口」，恰恰声称在验上传事件序列。**已改为** `Assert.Equal(1, thumbnails.Length)`（`:41`）+ 缩略图字节逐字节相等（`:43`）+ 非图片不走该端口（`:49`）。 |
+| A2 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:68`，现 `:81-83`） | `\| ConnPhase.Connecting _ -> Assert.True(true)` | 分支体是恒真断言。该分支里的 `Connecting` 与否**没有任何语义**。**已改为** `Assert.Equal(1, attempt)`（`:82`），其余状态 `Assert.Fail`（`:83`）。 |
+| A3 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:69`，现 `:83`） | `\| _ -> Assert.True(true)` | 同上，且这是**兜底分支**——无论 `Conn` 落到哪个状态（包括完全不合理的 `Authed`），测试都通过。整个测试「断开连接：清空状态并转入断开」**不验证任何断开语义**。**已改为** `Assert.Fail`（`:83`）。 |
 
 ### 4.2 B 层：弱断言（关键正向结果无人断言）
 
 | # | 位置 | 形态 | 为什么弱 |
 | --- | --- | --- | --- |
-| B1 | `compose/AppShell/tests/ComposerTests.fs`（原 `:111-113`，现 `:126-128`） | `match vs.Composer.Send.State with \| SendButtonState.GeneratingStop -> Assert.Fail "…" \| _ -> ()` | **旅程 2「引导流程配置模型」的唯一断言是负向的**：只证明「状态不是 GeneratingStop」。测试名声称验的是「引导流程配置模型」，但**没有任何断言检查目录是否装载、预设是否选中、引导卡是否投影**。且负向断言只能捕捉「恰好是 GeneratingStop」这一种错误值。**已改为**目录就绪且 `providers` 为空、引导事实为空、输入区禁用且原因正确、空态是 `NoConversation`（`:129-148`）。 |
-| B2 | `compose/AppShell/tests/ComposerTests.fs`（原 `:238-240`，现 `:303-307`） | 同上形态 | 旅程 5 的收尾断言只验「不是 GeneratingStop」；错误状态若是别的值（如 `Idle` 但其实没停）照样通过。**已改为** `Assert.Equal(SendButtonState.Idle, …)` + `RunState.Idle (Some err)` 带 kind/message/retryable + `GenerationCancel` 发给那一个对话与代号（`:307-330`）。 |
-| B3 | `compose/AppShell/tests/ComposerTests.fs`（原 `:275-279`，现 `:364-379`） | `match toastUndoAction with \| Some actionId -> … \| None -> ()` | 「撤销删除」这一步的断言**只在 `UndoAction` 是 `Some` 时才执行**。如果撤销入口消失（`None`），测试静默通过。上面 `Assert.True(rig.Shell.Model.Toasts.Length > 0)` 只证明有 toast，不证明 toast 带撤销动作。**这正是「批量删除恢复」旅程最该守住的那一环。** **已改为** `None -> Assert.Fail`（`:367-378`）。 |
-| B4 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs:600-606` | `with \| :? OperationCanceledException as oce when oce.Message.Contains "superseded" -> caughtSuperseded <- true \| _ -> ()` | `caughtSuperseded` 被赋值后**从未被断言**；非匹配异常被 `\| _ -> ()` 静默吞掉。最后那句注释「Either it threw superseded or was canceled cleanly」把**两种行为都当成通过**——测试名「generation check」想验的「连接代次检查生效」实际上没被断言（只断言了 `ConnectionGeneration >= 2`）。 |
-| B5 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs:41-46` | `match oldBuffers.Append(sha256, bytes) with \| DownloadChunkResult.Capped when not downloadCappedNotified -> … \| _ -> ()` + `with _ -> ()` | 旧实现摘录里，**非 Capped 结果与所有异常都被静默吞掉**。`oldStep` 的返回值只反映「是否 toast 过」，因此「坏 base64 被忽略」「第二次触顶不再 toast」等语义**只由新旧两份实现的相等性担保**，而 `newStep` 那侧一旦也退化成同样行为，测试仍然绿。 |
+| B1 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:111-113`，现 `:141-143`） | `match vs.Composer.Send.State with \| SendButtonState.GeneratingStop -> Assert.Fail "…" \| _ -> ()` | **旅程 2「引导流程配置模型」的唯一断言是负向的**：只证明「状态不是 GeneratingStop」。测试名声称验的是「引导流程配置模型」，但**没有任何断言检查目录是否装载、预设是否选中、引导卡是否投影**。且负向断言只能捕捉「恰好是 GeneratingStop」这一种错误值。**已改为**目录就绪且 `providers` 为空（`:151`）、引导事实为空（`:154-155`）、输入区禁用且原因正确（`:157-158`）、空态是 `NoConversation`（`:160-162`）。 |
+| B2 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:238-240`，现 `:421-427`） | 同上形态 | 旅程 5 的收尾断言只验「不是 GeneratingStop」；错误状态若是别的值（如 `Idle` 但其实没停）照样通过。**已改为** `Assert.Equal(SendButtonState.Idle, …)`（`:427`）+ `RunState.Idle(Some err)` 带 kind/message/retryable（`:432-436`）+ `GenerationCancel` 发给那一个对话与代号（`:449-451`）。 |
+| B3 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:275-279`，现 `:482-497`） | `match toastUndoAction with \| Some actionId -> … \| None -> ()` | 「撤销删除」这一步的断言**只在 `UndoAction` 是 `Some` 时才执行**。如果撤销入口消失（`None`），测试静默通过。上面 `Assert.True(rig.Shell.Model.Toasts.Length > 0)` 只证明有 toast，不证明 toast 带撤销动作。**这正是「批量删除恢复」旅程最该守住的那一环。** **已改为** `None -> Assert.Fail`（`:497`）。 |
+| B4 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs:802-840` | `with \| :? OperationCanceledException as oce when oce.Message.Contains "superseded" -> caughtSuperseded <- true \| _ -> ()` | `caughtSuperseded` 被赋值后**从未被断言**；非匹配异常被 `\| _ -> ()` 静默吞掉。最后那句注释「Either it threw superseded or was canceled cleanly」把**两种行为都当成通过**——测试名「generation check」想验的「连接代次检查生效」实际上没被断言（只断言了 `ConnectionGeneration >= 2`）。 |
+| B5 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs:45-57` | `match oldBuffers.Append(sha256, bytes) with \| DownloadChunkResult.Capped when not downloadCappedNotified -> … \| _ -> ()` + `with _ -> ()` | 旧实现摘录里，**非 Capped 结果与所有异常都被静默吞掉**。`oldStep` 的返回值只反映「是否 toast 过」，因此「坏 base64 被忽略」「第二次触顶不再 toast」等语义**只由新旧两份实现的相等性担保**，而 `newStep` 那侧一旦也退化成同样行为，测试仍然绿。 |
 
 ### 4.3 C 层：事实级空转（函数体没有任何断言、也不 failwith）
 
@@ -251,17 +251,17 @@
 
 | # | 位置 | 测试名 | 空转原因 |
 | --- | --- | --- | --- |
-| C1 | `compose/ServerApp/tests/ServerAppTests.fs:135` | 「ServerApp 启动时正确处理截尾事件文件并恢复运行」 | 写了半截损坏字节 → 启动 → 停止。**没有断言截尾恢复的结果**（日志是否被修好、commit 是否保留）。启动不抛异常即绿。 |
-| C2 | `compose/ServerApp/tests/ServerAppTests.fs:164` | 「ServerApp 监听 0.0.0.0 且无 TLS 时正常启动并执行 WarnIfExposedWithoutTls 逻辑」 | **完全没有断言 `WarnIfExposedWithoutTls` 被执行过**（没有任何告警探针）。 |
-| C3 | `compose/ServerApp/tests/ServerAppTests.fs:185` | 「ServerApp 连续多次 Stop 与 Dispose 保持严格幂等不抛出异常」 | 只有「不抛异常」；**没有断言端口已释放 / 锁已释放 / writer 已关闭**。 |
-| C4 | `compose/ServerApp/tests/ServerAppTests.fs:207` | 「ServerApp 启动时配置不存在安全回退到默认配置并正常启停」 | **没有断言回退到了默认配置**（无配置内容断言）。 |
-| C5 | `compose/MarkdownView/tests/Tests.fs:251` | 「markdown renderer renders complex markdown with code, tables and math without error」 | 渲染复杂 Markdown 后 `w.Close()`，**没有断言任何渲染结果**（标题、表格、公式是否出现都不知道）。 |
-| C6 | `compose/EventStore/tests/StoreConsistencyTests.fs:269` | 「EventStore 正常 Dispose 释放 writer 且不抛出异常」 | 没有断言 writer 真的释放（无「再开一次能成功」这类反向验证）。 |
-| C7 | `libs/BrowserInterop/tests/BrowserPage.Tests.fs:33` | 「没有订阅者时 NotifyHidden 不抛」 | 语义就是「不抛」，作为冒烟可接受，但**不构成任何行为断言**。 |
+| C1 | `compose/ServerApp/tests/ServerAppTests.fs:169` | 「ServerApp 启动时正确处理截尾事件文件并恢复运行」 | 写了半截损坏字节 → 启动 → 停止。**没有断言截尾恢复的结果**（日志是否被修好、commit 是否保留）。启动不抛异常即绿。 |
+| C2 | `compose/ServerApp/tests/ServerAppTests.fs:215` | 「ServerApp 监听 0.0.0.0 且无 TLS 时正常启动并执行 WarnIfExposedWithoutTls 逻辑」 | **完全没有断言 `WarnIfExposedWithoutTls` 被执行过**（没有任何告警探针）。 |
+| C3 | `compose/ServerApp/tests/ServerAppTests.fs:250` | 「ServerApp 连续多次 Stop 与 Dispose 保持严格幂等不抛出异常」 | 只有「不抛异常」；**没有断言端口已释放 / 锁已释放 / writer 已关闭**。 |
+| C4 | `compose/ServerApp/tests/ServerAppTests.fs:291` | 「ServerApp 启动时配置不存在安全回退到默认配置并正常启停」 | **没有断言回退到了默认配置**（无配置内容断言）。 |
+| C5 | `compose/MarkdownView/tests/Tests.fs:361` | 「markdown renderer renders complex markdown with code, tables and math without error」 | 渲染复杂 Markdown 后 `w.Close()`，**没有断言任何渲染结果**（标题、表格、公式是否出现都不知道）。 |
+| C6 | `compose/EventStore/tests/StoreConsistencyTests.fs:466` | 「EventStore 正常 Dispose 释放 writer 且不抛出异常」 | 没有断言 writer 真的释放（无「再开一次能成功」这类反向验证）。 |
+| C7 | `libs/BrowserInterop/tests/BrowserPage.Tests.fs:45` | 「没有订阅者时 NotifyHidden 不抛」 | 语义就是「不抛」，作为冒烟可接受，但**不构成任何行为断言**。 |
 
 ### 4.4 结构性观察（不是单行空断言，但同样削弱证据）
 
-- **`compose/AppShell/tests/ComposerTests.fs` 整体只断言模型与 Effect**，SPEC 7 要求的「原生交互证明（Headless 窗口中验证焦点流转、无障碍角色）」在这一层**没有发生**。旅程 1–6 中唯一触及原生控件的是缩略图端口断言（`Assert.Equal(1, thumbnails.Length)`，A1 所在测试，现 `:40`）与 `rig.Views.Onboarding.*` 三个属性断言。
+- **`compose/AppShell/tests/ComposerTests.fs` 整体只断言模型与 Effect**，SPEC 7 要求的「原生交互证明（Headless 窗口中验证焦点流转、无障碍角色）」在这一层**没有发生**。旅程 1–6 中唯一触及原生控件的是缩略图端口断言（`Assert.Equal(1, thumbnails.Length)`，A1 所在测试，现 `:41`）与 `rig.Views.Onboarding.*` 三个属性断言。
 - **`docs/ux/r28-pwa-parity.md` 表中明确标注「CI 未断言」的行为**（剪贴板、文件选择/保存、右键菜单、拖放、限流倒计时/搜索防抖）今天仍无断言——这些是**已被记录但从未自动化**的缺口。
 - **`compose/EntryShells/AGENTS.md` SPEC 2 自陈**：「`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（**真实界面验收要人看，仓库内未自动化**）」——这是全仓对「界面缺陷为何靠人肉发现」最明确的一句自白。
 - **`compose/Theme/tests/A11yRegression.fs` 的 7 条对比度用例**走 `check()` 帮助函数，**函数体内确实有 `Assert.True(bad.IsEmpty, …)`**，**不是空断言**；但它们只算调色板数值，**不构造控件、不看实际渲染出的颜色**（控件若没绑定该资源，对比度全绿而界面仍是错的）。
@@ -277,7 +277,7 @@
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 2 | 断言目录就绪且 `providers` 为空、引导事实为空、输入区禁用且原因正确、空态是 `NoConversation` | 目录状态错 / 输入区在无模型服务时仍可发 / 禁用原因丢失 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 5 | 断言发送键回到 `Idle`、`RunState.Idle (Some err)` 带 kind/message/retryable、`GenerationCancel` 发给**那一个**对话与代号 | 停止后仍不可发 / 错误被丢掉 / 取消发错对话 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 6 | 断言提示条**必须**带撤销动作、撤销前有一个待删批次且含那两段对话、撤销后批次清空 | 撤销入口消失 / 批次漏记 / 撤销后仍残留 |
-| `compose/AppShell/tests/ComposerTests.fs` | 旅程 3 | 断言发送被主机的 `attachment.committed` 确认门控（未就绪时发不出去、草稿与附件都留着），并断言真正发出的 `SendUserMessage` 载荷：`contents` 有 2 条、文本「你好」、附件带 `fileName` / `sha256` / `size`（`:150-198`） | 附件没随消息发出 / 附件元数据不全 / 未就绪时也能发 |
+| `compose/AppShell/tests/ComposerTests.fs` | 旅程 3 | 断言发送被主机的 `attachment.committed` 确认门控（未就绪时发不出去、草稿与附件都留着），并断言真正发出的 `SendUserMessage` 载荷：`contents` 有 2 条、文本「你好」、附件带 `fileName` / `sha256` / `size`（`:165-238`） | 附件没随消息发出 / 附件元数据不全 / 未就绪时也能发 |
 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs` | 连接被抢占 | 断言真的抛 `OperationCanceledException("superseded")`（旧写法吞掉异常且从不断言标志位） | 不抛 superseded / 抛别的异常 |
 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs` | 旧实现摘录 | 逐个写出 `Accepted` / `Unknown` / 坏 base64 三条分支，不再 `| _ -> ()` 一锅端 | 新旧摘录行为不一致 |
 | `compose/ServerApp/tests/ServerAppTests.fs` | 截尾事件文件 | 断言进入**只读降级模式**并留下 `read-only-degraded` 诊断、且**没有**偷偷改用户的日志（S-001 契约） | 降级诊断缺失 / 启动擅自截断日志 |
@@ -292,9 +292,9 @@
 
 | 旅程 | 还缺什么 | 证据位置 |
 |---|---|---|
-| 旅程 1 | 用例止于 `ConnPhase.Authed(inst, CatalogPhase.LoadingCatalog)`，**没有走完配对后的首条消息** | `compose/AppShell/tests/ComposerTests.fs:90-117` |
-| 旅程 5 | 断言了失败落进 `RunState.Idle (Some err)` 且带 `retryable`，但**没有触发重试** | 同上（旅程 5 用例，`:260-331`）；重试入口在 `libs/WorkspaceState/ViewState.fs:339-340,394`（`RetryVisible` / `RetryLabel`），无用例触及 |
-| 旅程 6 | 断言了待删批次与撤销把批次清空，但**没有验到期提交真删** | 同上（旅程 6 用例，`:333-382`）；到期删除在 `libs/BoundedWait` 侧 |
+| 旅程 1 | 用例止于 `ConnPhase.Authed(inst, CatalogPhase.LoadingCatalog)`，**没有走完配对后的首条消息** | `compose/AppShell/tests/ComposerTests.fs:90-121` |
+| 旅程 5 | 断言了失败落进 `RunState.Idle (Some err)` 且带 `retryable`，但**没有触发重试** | 同上（旅程 5 用例，`:339-451`）；重试入口在 `libs/WorkspaceState/ViewState.fs:365-366,424`（`RetryVisible` / `RetryLabel`），无用例触及 |
+| 旅程 6 | 断言了待删批次与撤销把批次清空，但**没有验到期提交真删** | 同上（旅程 6 用例，`:454-497`）；到期删除在 `libs/BoundedWait` 侧 |
 
 旅程 1 / 5 / 6 这三条属**代码侧缺口**，本轮未改代码，故上表只登记、不伪称已修。
 

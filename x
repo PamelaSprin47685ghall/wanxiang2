@@ -9,7 +9,7 @@
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
 #   ./x consume       在仓库外的临时项目里只从 artifacts/feed 取包，构建并真实运行
 #   ./x app           从 artifacts/feed 构建 app/ 下的入口（Pwa 需 wasm-tools workload）
-#   ./x all           check + hygiene + lint + 逐库 test + pack + compose + consume（测试并发：XJOBS；默认按内存与核数取，见 test_jobs）
+#   ./x all           check + hygiene + lint + pack + 逐库 test + compose + consume（测试并发：XJOBS；默认按内存与核数取，见 test_jobs）
 #   ./x sln           由 libs/ 重新生成 wanxiang2.slnx
 #   ./x new-widget <Name>  由 tools/widget-template 生成控件库 libs/<Name>（目录已存在则拒绝）
 set -euo pipefail
@@ -40,6 +40,11 @@ need_lib() {
 # 项目文件中的相对引用路径（ProjectReference / Import / Compile）
 refs() { grep -oE '(ProjectReference|Import|Compile)[^>]*(Include|Project)="[^"]*"' "$1" | sed -E 's/.*"([^"]*)"/\1/' || true; }
 
+# 规范化绝对路径，等价 GNU `realpath -m`：即使路径不存在也解析，不要求存在、不解析符号链接。
+# 本机 macOS 的 BSD realpath 没有 -m，也没有 grealpath；python3 在 macOS 与 Linux 都自带，
+# os.path.abspath(os.path.normpath(...)) 与 realpath -m 语义一致。
+abspath() { python3 -c 'import os,sys; print(os.path.abspath(os.path.normpath(sys.argv[1])))' "$1"; }
+
 # 排序一律走字节序：`sort` 的默认排序随 locale 变，而 gen_sln 的输出要与仓库里的
 # wanxiang2.slnx 逐字节比对（2026-10-18 首轮 CI 就因为本机 en_US 与 runner 的 C 排序不同而失败）。
 sort_c() { LC_ALL=C sort "$@"; }
@@ -56,7 +61,7 @@ check() {
       local dir; dir="$(dirname "$proj")"
       while IFS= read -r ref; do
         [[ -z "$ref" ]] && continue
-        local abs; abs="$(realpath -m "$dir/$ref")"
+        local abs; abs="$(abspath "$dir/$ref")"
         [[ "$abs" == "$root"/* ]] || { echo "FAIL $lib: $proj -> $ref escapes libs/$lib"; bad=1; }
       done < <(refs "$proj")
       if [[ "$proj" != */tests/* ]] && grep -q 'ProjectReference' "$proj"; then
@@ -75,7 +80,7 @@ check() {
       local dir; dir="$(dirname "$proj")"
       while IFS= read -r ref; do
         [[ -z "$ref" ]] && continue
-        [[ "$(realpath -m "$dir/$ref")" == "$(realpath "compose/$c")"/* ]] || { echo "FAIL compose/$c: $proj -> $ref escapes compose/$c"; bad=1; }
+        [[ "$(abspath "$dir/$ref")" == "$(realpath "compose/$c")"/* ]] || { echo "FAIL compose/$c: $proj -> $ref escapes compose/$c"; bad=1; }
       done < <(refs "$proj")
     done < <(find "compose/$c" -name '*.fsproj' -not -path '*/obj/*' -not -path '*/bin/*')
   done
@@ -199,7 +204,7 @@ pack() {
       for proj in $ready; do echo "  <Project Path=\"../$proj\" />"; done
       echo '</Solution>'
     } > "$sln"
-    echo "== pack wave $wave（$(printf '%s\n' $ready | wc -l) 个工程，一个 solution 一次 restore/pack）"
+    echo "== pack wave ${wave}（$(printf '%s\n' $ready | wc -l) 个工程，一个 solution 一次 restore/pack）"
     if ! dotnet restore "$sln" -p:RestorePackagesPath="$PWD/artifacts/packages" --verbosity q --nologo; then
       rm -f "$sln"; return 1
     fi
@@ -253,7 +258,7 @@ run_tests_parallel() {
   local title="$1" list="$2" jobs="$3" extra="${4:-}"
   local logdir; logdir="$(mktemp -d /tmp/wanxiang2-tests-XXXXXX)"
   local total=0 running=0
-  echo "== $title（并发 $jobs；日志 $logdir）"
+  echo "== ${title}（并发 ${jobs}；日志 ${logdir}）"
   # 并发的 dotnet 首跑会抢同一套一次性初始化（NuGet-Migrations 互斥量、XDG_RUNTIME_DIR 下
   # .dotnet/shm/session* 的建立），抢输的进程直接起不来（CI 上 AguiWire 就这么挂过，2026-10-18）。
   # 对策：先补 shm 目录，再串行跑第一个工程把初始化坐实，然后才并发其余。
@@ -269,7 +274,7 @@ run_tests_parallel() {
     if dotnet test --project "$warm" $extra > "$logdir/$wname.log" 2>&1; then
       echo ok > "$logdir/$wname.status" 2>/dev/null || true
     else
-      echo "-- FAIL $wname（热身第一个，串行）"
+      echo "-- FAIL ${wname}（热身第一个，串行）"
     fi
   fi
   while IFS= read -r proj; do
@@ -294,7 +299,7 @@ run_tests_parallel() {
     if [[ "$(cat "$s")" == FAIL ]]; then
       local name; name="$(basename "$s" .status)"
       failed=$((failed+1))
-      echo "-- FAIL $name（日志 $logdir/$name.log 末尾）"
+      echo "-- FAIL ${name}（日志 $logdir/$name.log 末尾）"
       tail -25 "$logdir/$name.log"
     fi
   done
@@ -305,9 +310,9 @@ run_tests_parallel() {
     echo "-- $(( total - recorded )) 个工程没有留下状态文件（子进程被杀或日志盘满），按失败计"
   fi
   if [[ $failed -eq 0 ]]; then
-    echo "== $title：$total 个工程全部通过（日志 $logdir）"
+    echo "== ${title}：$total 个工程全部通过（日志 ${logdir}）"
   else
-    echo "== $title：$total 个工程中 $failed 个失败" >&2
+    echo "== ${title}：$total 个工程中 $failed 个失败" >&2
     return 1
   fi
 }
@@ -323,7 +328,7 @@ consume() {
   local tmp; tmp="$(mktemp -d /tmp/wanxiang2-consume-XXXXXX)"
   cp tools/consume/Program.fs tools/consume/Consumer.fsproj "$tmp/"
   sed "s#__FEED__#$root/artifacts/feed#" tools/consume/NuGet.config.in > "$tmp/NuGet.config"
-  echo "== consume：仓库外消费者 $tmp（Wanxiang2.* 只从 artifacts/feed 取）"
+  echo "== consume：仓库外消费者 ${tmp}（Wanxiang2.* 只从 artifacts/feed 取）"
   if ( cd "$tmp" && NUGET_PACKAGES="$root/artifacts/packages" dotnet run --project Consumer.fsproj -c Release ); then
     rm -rf "$tmp"
   else
@@ -421,8 +426,11 @@ case "${1:-}" in
     check
     bash tools/assert-hygiene.sh
     bash tools/lint-copy.sh
+    # pack 在逐库 test 之前：少数库引用兄弟包（WorkspaceState 的例外清单项、以及依赖它的控件库），
+    # 测试时要从 artifacts/feed 取包。CI 用 needs: [check, pack] 保证同样顺序。
+    pack
     run_tests_parallel "逐库测试" "$(libs | sed 's#^\(.*\)$#libs/\1/tests/\1.Tests.fsproj#')" "$(test_jobs)"
-    pack; compose; consume ;;
+    compose; consume ;;
   # 用法块 = 开头连续的注释行；行数变化自动同步（末行是第一条非注释行，去掉）
   *) sed -n '2,/^[^#]/p' "$0" | sed '$d'; exit 2 ;;
 esac

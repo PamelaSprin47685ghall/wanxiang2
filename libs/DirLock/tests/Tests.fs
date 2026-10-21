@@ -9,6 +9,17 @@ open DirLock
 let tempDir () =
     Path.Combine(Path.GetTempPath(), "dirlock-" + Guid.NewGuid().ToString("N"))
 
+/// 持独占锁的子进程脚本：python3 的 fcntl.flock 拿 LOCK_EX。
+/// 不依赖 Linux 的 flock 命令（macOS 没有）；flock 是 POSIX 文件锁，Linux 与 macOS 语义一致。
+/// .NET 在 Unix 上的 FileShare.None 即 flock(LOCK_EX)，所以这个子进程真能挡住本进程。
+let private holderScript =
+    "import fcntl, os, sys, time\n"
+    + "fd = os.open(sys.argv[1], os.O_RDWR | os.O_CREAT, 0o644)\n"
+    + "fcntl.flock(fd, fcntl.LOCK_EX)\n"
+    + "sys.stdout.write('locked\\n')\n" // 必须带换行：ReadLine 等到换行才返回，否则会等到子进程退出、锁已释放
+    + "sys.stdout.flush()\n"
+    + "time.sleep(30)\n"
+
 // SPEC 1：同进程第二次获取失败，释放后可再获取
 [<Fact>]
 let ``second acquire fails until first is disposed`` () =
@@ -35,12 +46,18 @@ let ``lock held by another process is released when it dies`` () =
     let d = tempDir ()
     Directory.CreateDirectory d |> ignore
     let lockPath = Path.Combine(d, ".lock")
-    // 用 flock 让子进程持有同一文件的独占打开；.NET 在 Unix 上 FileShare.None 即 flock(LOCK_EX)
+    // 持锁子进程用 python3 的 fcntl.flock：Windows 没有 fcntl，FileShare.None 也不是 flock 语义，
+    // 所以本用例按 SPEC 2 只在 Unix 上跑。
     if not (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()) then
         ()
     else
-        let psi = ProcessStartInfo("flock", [| "-x"; lockPath; "sleep"; "30" |])
+        let scriptPath = Path.Combine(d, "holder.py")
+        File.WriteAllText(scriptPath, holderScript)
+        let psi = ProcessStartInfo("python3", [| scriptPath; lockPath |])
+        psi.RedirectStandardOutput <- true
         use p = Process.Start psi
+        // 等子进程真的拿到锁再开始争抢，否则测的是「还没持锁」的状态
+        Assert.Equal("locked", p.StandardOutput.ReadLine())
         let deadline = DateTime.UtcNow.AddSeconds 5.0
         let mutable blocked = false
 

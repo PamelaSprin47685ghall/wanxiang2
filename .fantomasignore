@@ -1,0 +1,7 @@
+# Fantomas 不处理的路径：构建产物与生成物。
+# F# 编译会在 obj/ 下生成 AssemblyInfo.fs，bin/ 下有复制过来的源码；两者都不是人写的，
+# 格式化它们既无意义也会让门禁误报。
+bin/
+obj/
+artifacts/
+node_modules/

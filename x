@@ -3,6 +3,7 @@
 #   ./x test  <lib>   单独构建并测试 libs/<lib>（只凭本库与声明的外部包）
 #   ./x check         依赖检查：库不引用本库以外的源码；组合者只经交付包使用库
 #   ./x hygiene       断言卫生：恒真断言 / 恒真谓词 / 空转的事实一律红灯（秒级，只需源码）
+#   ./x format        把全仓 F# 排成 Fantomas 格式（规则见 .editorconfig，工具见 .config/dotnet-tools.json）
 #   ./x lint          界面文案：禁用同义词 / 取消类提示须写明 Esc / 中文省略号（秒级，只需源码）
 #   ./x pack          把每个库和组合者打成包，放进 artifacts/feed
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
@@ -120,8 +121,38 @@ FAIL $f: references missing $ref"
     echo "$packed"
     bad=1
   fi
+  # F# 格式门禁（Fantomas）：规则在 .editorconfig，工具版本钉在 .config/dotnet-tools.json。
+  # 只需源码、不需构建产物，所以放在依赖检查之后、最后汇总之前。
+  if ! format_check; then bad=1; fi
   [[ $bad == 0 ]] && echo "check ok: $(libs | wc -l) libs with no sibling references; $(composers | wc -l) composer(s) using packages only"
   return $bad
+}
+
+# F# 格式门禁：dotnet fantomas --check 覆盖全仓 .fs（.fantomasignore 挡掉 obj/bin 等生成物）。
+# 格式工具是本地工具（.config/dotnet-tools.json），没恢复过就先 restore 一次。
+format_check() {
+  local restore_out out rc=0
+  if ! restore_out="$(dotnet tool restore 2>&1)"; then
+    echo "FAIL format: dotnet tool restore failed"
+    echo "$restore_out" | tail -5
+    return 1
+  fi
+  out="$(dotnet fantomas --check . 2>&1)" || rc=$?
+  if [[ $rc == 0 ]]; then return 0; fi
+  if [[ $rc == 99 ]]; then
+    echo "FAIL format: F# files are not formatted (run: dotnet tool restore && dotnet fantomas .)"
+    echo "$out" | grep -E 'needs formatting' | head -40
+    return 1
+  fi
+  echo "FAIL format: dotnet fantomas --check failed (exit $rc)"
+  echo "$out" | tail -20
+  return 1
+}
+
+# 一次性把全仓 F# 排成 Fantomas 格式（改完跑这个；./x check 负责拦未格式化的提交）。
+format() {
+  dotnet tool restore
+  dotnet fantomas .
 }
 
 # 组件工程枚举：libs/ 与 compose/ 顶层目录直属（路径深度恰好 <root>/<dir>/<file>）的全部 .fsproj/.csproj，
@@ -372,6 +403,8 @@ case "${1:-}" in
   # 界面文案：产品文案规则没有运行时可观察，所以走独立的 lint 脚本而不是 xunit 用例
   # （tools/lint-copy.sh）。扫描 libs + compose + app 的生产 .fs。
   lint) bash tools/lint-copy.sh ;;
+  # F# 格式：一次性把全仓 .fs 排成 Fantomas 格式（规则见 .editorconfig）。
+  format)  format ;;
   pack)    pack ;;
   compose) compose ;;
   consume) consume ;;

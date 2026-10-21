@@ -1,0 +1,13 @@
+root = true
+
+# F# 格式化规则：Fantomas（版本钉在 .config/dotnet-tools.json 的本地工具清单里）。
+# 下面显式写出的都是 Fantomas 8 的默认值，列出是为了让「格式规则是什么」有据可查，
+# 而不是随工具默认值漂移。格式门禁在 ./x check 里跑 `dotnet fantomas --check`。
+[*.fs]
+indent_size = 4
+max_line_length = 120
+insert_final_newline = true
+end_of_line = lf
+fsharp_multiline_bracket_style = aligned
+fsharp_record_multiline_formatter = character_width
+fsharp_array_or_list_multiline_formatter = character_width

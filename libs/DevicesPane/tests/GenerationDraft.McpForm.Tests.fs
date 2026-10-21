@@ -1,15 +1,21 @@
 module GenerationDraftMcpFormTests
+
 open System
 open System.IO
 open Xunit
 open Wanxiang.UI
 
 
-let run c u t = snd (McpForm.validate true [ "fs" ] "srv" "名" c "" u t)
+let run c u t =
+    snd (McpForm.validate true [ "fs" ] "srv" "名" c "" u t)
 
 [<Fact>]
 let ``exactly one of command and url, both fields flagged`` () =
-    Assert.Equal<(McpField * string) list>([ McpField.Command, "本地命令与远程端点至少填一个。"; McpField.Url, "本地命令与远程端点至少填一个。" ], run "" "" "60")
+    Assert.Equal<(McpField * string) list>(
+        [ McpField.Command, "本地命令与远程端点至少填一个。"; McpField.Url, "本地命令与远程端点至少填一个。" ],
+        run "" "" "60"
+    )
+
     Assert.Equal(2, (run "npx" "https://x" "60").Length)
     Assert.Empty(run "npx" "" "60")
     Assert.Empty(run "" "https://x/sse" "60")
@@ -29,4 +35,8 @@ let ``a taken id only blocks new entries`` () =
 [<Fact>]
 let ``payload omits empty command, args and url`` () =
     let v, _ = McpForm.validate true [] "srv" "名" "" " a \n\nb" "https://x" "5"
-    Assert.Equal("""{"id":"srv","label":"\u540D","args":["a","b"],"url":"https://x","callTimeoutSeconds":5,"enabled":true}""", (McpForm.payload v true).ToJsonString())
+
+    Assert.Equal(
+        """{"id":"srv","label":"\u540D","args":["a","b"],"url":"https://x","callTimeoutSeconds":5,"enabled":true}""",
+        (McpForm.payload v true).ToJsonString()
+    )

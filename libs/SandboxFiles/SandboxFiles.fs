@@ -18,14 +18,32 @@ module BuiltinToolsCore =
         else
             try
                 let full = Path.GetFullPath path
-                let real = try Path.GetFullPath(File.ResolveLinkTarget(full, true) |> Option.ofObj |> Option.map (fun i -> i.FullName) |> Option.defaultValue full) with _ -> full
+
+                let real =
+                    try
+                        Path.GetFullPath(
+                            File.ResolveLinkTarget(full, true)
+                            |> Option.ofObj
+                            |> Option.map (fun i -> i.FullName)
+                            |> Option.defaultValue full
+                        )
+                    with _ ->
+                        full
+
                 let inside =
                     roots
                     |> List.exists (fun root ->
-                        let normalizedRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + string Path.DirectorySeparatorChar
-                        (real + string Path.DirectorySeparatorChar).StartsWith(normalizedRoot, StringComparison.Ordinal))
-                if inside then Ok real
-                else Error(sprintf "路径超出沙箱范围：%s" path)
+                        let normalizedRoot =
+                            Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar)
+                            + string Path.DirectorySeparatorChar
+
+                        (real + string Path.DirectorySeparatorChar)
+                            .StartsWith(normalizedRoot, StringComparison.Ordinal))
+
+                if inside then
+                    Ok real
+                else
+                    Error(sprintf "路径超出沙箱范围：%s" path)
             with ex ->
                 Error(sprintf "路径无效：%s" ex.Message)
 
@@ -35,9 +53,13 @@ module BuiltinToolsCore =
         | Ok real ->
             try
                 let info = FileInfo real
-                if not info.Exists then sprintf "error: 文件不存在：%s" path
-                elif info.Length > maxReadBytes then sprintf "error: 文件超过 %d KiB 上限" (maxReadBytes / 1024L)
-                else File.ReadAllText(real, Encoding.UTF8)
+
+                if not info.Exists then
+                    sprintf "error: 文件不存在：%s" path
+                elif info.Length > maxReadBytes then
+                    sprintf "error: 文件超过 %d KiB 上限" (maxReadBytes / 1024L)
+                else
+                    File.ReadAllText(real, Encoding.UTF8)
             with ex ->
                 sprintf "error: %s" ex.Message
 
@@ -46,19 +68,27 @@ module BuiltinToolsCore =
         | Error e -> sprintf "error: %s" e
         | Ok real ->
             try
-                if not (Directory.Exists real) then sprintf "error: 目录不存在：%s" path
+                if not (Directory.Exists real) then
+                    sprintf "error: 目录不存在：%s" path
                 else
                     let entries =
                         Directory.EnumerateFileSystemEntries real
                         |> Seq.truncate maxListEntries
                         |> Seq.map (fun e ->
                             let name = Path.GetFileName e
-                            if Directory.Exists e then name + "/"
+
+                            if Directory.Exists e then
+                                name + "/"
                             else
-                                try sprintf "%s (%d B)" name (FileInfo(e).Length)
-                                with _ -> name)
+                                try
+                                    sprintf "%s (%d B)" name (FileInfo(e).Length)
+                                with _ ->
+                                    name)
                         |> List.ofSeq
-                    if List.isEmpty entries then "（空目录）"
-                    else String.Join("\n", entries)
+
+                    if List.isEmpty entries then
+                        "（空目录）"
+                    else
+                        String.Join("\n", entries)
             with ex ->
                 sprintf "error: %s" ex.Message

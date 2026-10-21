@@ -27,6 +27,7 @@ let ``model vision classification by name`` (model: string, expected: string) =
         | VisionYes -> "yes"
         | VisionNo -> "no"
         | VisionUnknown -> "unknown"
+
     Assert.Equal(expected, actual)
 
 [<Fact>]

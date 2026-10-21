@@ -13,7 +13,10 @@ type TestApp() =
 
 type TestAppBuilder =
     static member BuildAvaloniaApp() =
-        AppBuilder.Configure<TestApp>().UseSkia().UseHeadless(AvaloniaHeadlessPlatformOptions(UseHeadlessDrawing = false))
+        AppBuilder
+            .Configure<TestApp>()
+            .UseSkia()
+            .UseHeadless(AvaloniaHeadlessPlatformOptions(UseHeadlessDrawing = false))
 
 module Headless =
     let private session =
@@ -22,4 +25,3 @@ module Headless =
     /// 在 Avalonia UI 线程上同步执行测试体。
     let run (body: unit -> unit) : unit =
         session.Value.Dispatch(Action body, CancellationToken.None).GetAwaiter().GetResult()
-

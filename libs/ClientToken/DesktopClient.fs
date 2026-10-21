@@ -13,7 +13,8 @@ module DesktopClient =
 
     /// 是否保留名（忽略大小写与首尾空白）。
     let isReservedName (name: string) : bool =
-        not (isNull name) && String.Equals(name.Trim(), Name, StringComparison.OrdinalIgnoreCase)
+        not (isNull name)
+        && String.Equals(name.Trim(), Name, StringComparison.OrdinalIgnoreCase)
 
     /// 配对设备自报的名字：保留名或空白一律换成 fallback，其余去掉首尾空白。
     let sanitizeName (requested: string option) (fallback: string) : string =
@@ -22,10 +23,13 @@ module DesktopClient =
         | _ -> fallback
 
     let isLoopback (address: string) : bool =
-        if String.IsNullOrWhiteSpace address then false
+        if String.IsNullOrWhiteSpace address then
+            false
         else
             match IPAddress.TryParse address with
-            | true, ip -> IPAddress.IsLoopback ip || (ip.IsIPv4MappedToIPv6 && IPAddress.IsLoopback(ip.MapToIPv4()))
+            | true, ip ->
+                IPAddress.IsLoopback ip
+                || (ip.IsIPv4MappedToIPv6 && IPAddress.IsLoopback(ip.MapToIPv4()))
             | _ -> false
 
     /// 这条连接是不是本机桌面客户端：设备名是保留名、未吊销、来自回环地址。

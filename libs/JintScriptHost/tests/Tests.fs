@@ -7,7 +7,11 @@ open Wanxiang.App
 let ``同一个键只执行一次，源码只在需要时取`` () =
     let h = JintScriptHost()
     let mutable fetched = 0
-    let src () = fetched <- fetched + 1; "var n = (typeof n === 'undefined' ? 0 : n) + 1;"
+
+    let src () =
+        fetched <- fetched + 1
+        "var n = (typeof n === 'undefined' ? 0 : n) + 1;"
+
     h.LoadOnce("a", src)
     h.LoadOnce("a", src)
     Assert.Equal(1, fetched)
@@ -29,8 +33,13 @@ let ``console 被垫平，调用不抛`` () =
 [<Fact>]
 let ``脚本异常原样抛给调用方，之后仍可用`` () =
     let h = JintScriptHost()
-    Assert.ThrowsAny<exn>(fun () -> h.EvaluateString("throw new Error('boom')", []) |> ignore) |> ignore
-    Assert.ThrowsAny<exn>(fun () -> h.LoadOnce("bad", fun () -> "syntax error (")) |> ignore
+
+    Assert.ThrowsAny<exn>(fun () -> h.EvaluateString("throw new Error('boom')", []) |> ignore)
+    |> ignore
+
+    Assert.ThrowsAny<exn>(fun () -> h.LoadOnce("bad", fun () -> "syntax error ("))
+    |> ignore
+
     Assert.False(h.IsLoaded "bad")
     Assert.Equal("2", h.EvaluateString("String(1+1)", []))
 
@@ -38,9 +47,19 @@ let ``脚本异常原样抛给调用方，之后仍可用`` () =
 let ``无限递归被递归上限拦下并抛出`` () =
     // 上限 10000 层；默认 1MB 线程栈装不下这么深的解释器调用，所以在大栈线程上验证上限本身。
     let mutable caught: exn = null
-    let t = System.Threading.Thread((fun () ->
-        let h = JintScriptHost()
-        try h.EvaluateString("function f(){return f()}; f()", []) |> ignore with e -> caught <- e), 256 * 1024 * 1024)
+
+    let t =
+        System.Threading.Thread(
+            (fun () ->
+                let h = JintScriptHost()
+
+                try
+                    h.EvaluateString("function f(){return f()}; f()", []) |> ignore
+                with e ->
+                    caught <- e),
+            256 * 1024 * 1024
+        )
+
     t.Start()
     t.Join()
     Assert.NotNull caught

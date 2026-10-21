@@ -6,7 +6,12 @@ open FailureLimiter
 open ClientToken
 open DesktopClient
 
-type Limits = { window: TimeSpan; maxFailures: int; freeze: TimeSpan }
+type Limits =
+    {
+        window: TimeSpan
+        maxFailures: int
+        freeze: TimeSpan
+    }
 
 type RequestOutcome =
     /// 有一个有效的码。newCode = Some 表示刚生成，宿主应把它告诉用户（例如打在终端上）；
@@ -32,7 +37,8 @@ type PairingDesk(limits: Limits, codeLifetime: TimeSpan) =
 
     /// 换限额。宿主每次配置重载都会调用（包括与配对无关的写回），所以失败记录与冻结必须保留，
     /// 否则一次重载就能让猜码者重新计数。
-    member _.Reconfigure(l: Limits) = lock gate (fun () -> limiter.Retune(l.window, l.maxFailures, l.freeze))
+    member _.Reconfigure(l: Limits) =
+        lock gate (fun () -> limiter.Retune(l.window, l.maxFailures, l.freeze))
 
     /// 设备请求配对。
     member _.Request(now: DateTimeOffset, address: string) : RequestOutcome =
@@ -47,16 +53,23 @@ type PairingDesk(limits: Limits, codeLifetime: TimeSpan) =
                     Started(int codeLifetime.TotalSeconds, Some s.code))
 
     /// 本机桌面客户端发邀请；别的连接拿不到。
-    member _.Invite(now: DateTimeOffset, deviceName: string, revoked: bool, address: string, lifetime: TimeSpan) : Result<PairingSession, string> =
-        if DesktopClient.isDesktop deviceName revoked address then Ok(codes.StartInvite(now, lifetime))
-        else Error "only the desktop client on this machine can invite devices"
+    member _.Invite
+        (now: DateTimeOffset, deviceName: string, revoked: bool, address: string, lifetime: TimeSpan)
+        : Result<PairingSession, string> =
+        if DesktopClient.isDesktop deviceName revoked address then
+            Ok(codes.StartInvite(now, lifetime))
+        else
+            Error "only the desktop client on this machine can invite devices"
 
     member _.ActiveInvite(now: DateTimeOffset) = codes.ActiveInvite now
 
     /// 设备提交配对码。requested：这条连接此前是否请求过配对（连接自己的状态）。
-    member _.Attempt(now: DateTimeOffset, address: string, code: string, requestedName: string option, requested: bool) : AttemptOutcome =
+    member _.Attempt
+        (now: DateTimeOffset, address: string, code: string, requestedName: string option, requested: bool)
+        : AttemptOutcome =
         lock gate (fun () ->
-            if not (requested || codes.HasInviteSession) then Ignored
+            if not (requested || codes.HasInviteSession) then
+                Ignored
             else
                 match limiter.FrozenUntil(now, address) with
                 | Some u -> Refused("frozen", Some u)
@@ -64,7 +77,12 @@ type PairingDesk(limits: Limits, codeLifetime: TimeSpan) =
                     match codes.TryConsume(now, code) with
                     | Ok() ->
                         let token = ClientToken.generate ()
-                        Accepted(token, ClientToken.hash token, DesktopClient.sanitizeName requestedName (sprintf "client-%s" address))
+
+                        Accepted(
+                            token,
+                            ClientToken.hash token,
+                            DesktopClient.sanitizeName requestedName (sprintf "client-%s" address)
+                        )
                     | Error e ->
                         let froze = limiter.RecordFailure(now, address)
                         Refused(e.Describe(), (if froze then limiter.FrozenUntil(now, address) else None)))
@@ -77,4 +95,5 @@ type PairingDesk(limits: Limits, codeLifetime: TimeSpan) =
             limiter.FrozenUntil(now, address))
 
     /// 宿主已持久化 Accepted 的令牌哈希：清掉这个地址的失败记录。
-    member _.Paired(address: string) = lock gate (fun () -> limiter.Clear address)
+    member _.Paired(address: string) =
+        lock gate (fun () -> limiter.Clear address)

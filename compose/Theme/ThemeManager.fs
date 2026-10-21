@@ -37,76 +37,137 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
     let tween = ThemeTween<PaletteKey>()
     let changed = Event<PaletteMode>()
     let brushes = Dictionary<PaletteKey, SolidColorBrush>()
-    do for k in ThemePalette.keys do brushes[k] <- SolidColorBrush(ThemePalette.color PaletteMode.Light k)
+
+    do
+        for k in ThemePalette.keys do
+            brushes[k] <- SolidColorBrush(ThemePalette.color PaletteMode.Light k)
+
     let derived = Dictionary<DerivedBrush, SolidColorBrush>()
+
     let blend (b: Color) (o: Color) =
         let a, r, g, bl = ColorBlend.over (b.A, b.R, b.G, b.B) (o.A, o.R, o.G, o.B)
         Color.FromArgb(a, r, g, bl)
+
     let derivedColor d =
         match d with
         | DerivedBrush.HoverRaised -> blend brushes[PaletteKey.Surface].Color brushes[PaletteKey.Hover].Color
         | DerivedBrush.HoverDanger -> blend brushes[PaletteKey.DangerSoft].Color brushes[PaletteKey.Hover].Color
         | DerivedBrush.HoverSelected -> blend brushes[PaletteKey.Selected].Color brushes[PaletteKey.Hover].Color
-    do for d in [ DerivedBrush.HoverRaised; DerivedBrush.HoverDanger; DerivedBrush.HoverSelected ] do derived[d] <- SolidColorBrush(derivedColor d)
-    let refreshDerived () = for KeyValue(d, b) in derived do b.Color <- derivedColor d
+
+    do
+        for d in
+            [
+                DerivedBrush.HoverRaised
+                DerivedBrush.HoverDanger
+                DerivedBrush.HoverSelected
+            ] do
+            derived[d] <- SolidColorBrush(derivedColor d)
+
+    let refreshDerived () =
+        for KeyValue(d, b) in derived do
+            b.Color <- derivedColor d
+
     let metrics = Dictionary<Metric, LiveValue<float>>()
-    do for m in ThemeMetrics.all do metrics[m] <- LiveValue(ThemeMetrics.initial m)
+
+    do
+        for m in ThemeMetrics.all do
+            metrics[m] <- LiveValue(ThemeMetrics.initial m)
+
     let spaces = Dictionary<Space, LiveValue<float>>()
-    do for s in Space.all do spaces[s] <- LiveValue(Space.initial s)
+
+    do
+        for s in Space.all do
+            spaces[s] <- LiveValue(Space.initial s)
+
     let timings = Dictionary<Timing, LiveValue<float>>()
-    do for t in MotionTimings.all do timings[t] <- LiveValue(MotionTimings.initialMs t)
+
+    do
+        for t in MotionTimings.all do
+            timings[t] <- LiveValue(MotionTimings.initialMs t)
+
     let fontFamily = LiveValue(FontFamily ThemeFonts.body)
     let monoFontFamily = LiveValue(FontFamily ThemeFonts.mono)
     let mutable frameTimer: Threading.Timer option = None
     let mutable generation = 0
     let toArgb (c: Color) : Argb = { A = c.A; R = c.R; G = c.G; B = c.B }
     let ofArgb (c: Argb) = Color.FromArgb(c.A, c.R, c.G, c.B)
+
     let transitionMs () =
-        if motion.IsReduced then 0.0 else timings[Timing.ThemeColorTransition].Value
+        if motion.IsReduced then
+            0.0
+        else
+            timings[Timing.ThemeColorTransition].Value
+
     let stopFrames () =
         frameTimer |> Option.iter (fun t -> t.Dispose())
         frameTimer <- None
+
     let snapAll () =
-        for KeyValue(k, b) in brushes do b.Color <- ThemePalette.color mode k
+        for KeyValue(k, b) in brushes do
+            b.Color <- ThemePalette.color mode k
+
         refreshDerived ()
+
     let resources = Controls.ResourceDictionary()
+
     let initResources () =
         // 1. 活画笔直接放入基础字典，键名按 PaletteKey.<Name>
         for KeyValue(k, b) in brushes do
             let keyName = sprintf "Palette.%A" k
             resources[box keyName] <- box b
             resources[box (sprintf "Brush.%A" k)] <- box b
+
         for KeyValue(d, b) in derived do
             resources[box (sprintf "Derived.%A" d)] <- box b
         // 2. ThemeDictionaries（Light / Dark）供 Avalonia 原生 ThemeVariant 解析
         let lightDict = Controls.ResourceDictionary()
         let darkDict = Controls.ResourceDictionary()
+
         for k in ThemePalette.keys do
             let keyName = sprintf "Palette.%A" k
             lightDict[box keyName] <- box (SolidColorBrush(ThemePalette.color PaletteMode.Light k))
             darkDict[box keyName] <- box (SolidColorBrush(ThemePalette.color PaletteMode.Dark k))
-        resources.ThemeDictionaries[Avalonia.Styling.ThemeVariant.Light] <- (lightDict :> Controls.IThemeVariantProvider)
+
+        resources.ThemeDictionaries[Avalonia.Styling.ThemeVariant.Light] <-
+            (lightDict :> Controls.IThemeVariantProvider)
+
         resources.ThemeDictionaries[Avalonia.Styling.ThemeVariant.Dark] <- (darkDict :> Controls.IThemeVariantProvider)
         // 3. 度量、间距、字体与时长
         for KeyValue(m, v) in metrics do
             let keyName = sprintf "Metric.%A" m
             resources[box keyName] <- box v.Value
-            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x) |> ignore
+
+            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x)
+            |> ignore
+
         for KeyValue(s, v) in spaces do
             let keyName = sprintf "Space.%A" s
             resources[box keyName] <- box v.Value
-            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x) |> ignore
+
+            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x)
+            |> ignore
+
         for KeyValue(t, v) in timings do
             let keyName = sprintf "Timing.%A" t
             resources[box keyName] <- box v.Value
-            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x) |> ignore
+
+            (v :> IObservable<float>).Subscribe(fun x -> resources[box keyName] <- box x)
+            |> ignore
+
         resources[box "FontFamily.Body"] <- box fontFamily.Value
-        (fontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Body"] <- box f) |> ignore
+
+        (fontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Body"] <- box f)
+        |> ignore
+
         resources[box "FontFamily.Mono"] <- box monoFontFamily.Value
-        (monoFontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Mono"] <- box f) |> ignore
+
+        (monoFontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Mono"] <- box f)
+        |> ignore
         // 减弱动效开关的资源化：控件在动作时刻经 TryFindResource 取值，不再挂 IObservable
         resources[box "Motion.Reduced"] <- box motion.IsReduced
-        motion.Changed.Subscribe(fun r -> resources[box "Motion.Reduced"] <- box r) |> ignore
+
+        motion.Changed.Subscribe(fun r -> resources[box "Motion.Reduced"] <- box r)
+        |> ignore
         // 常用派生度量（Thickness / CornerRadius）预置
         let updateDerivedMetrics () =
             resources[box "CornerRadius.RadiusXs"] <- box (CornerRadius spaces[Space.RadiusXs].Value)
@@ -118,7 +179,9 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             resources[box "Thickness.None"] <- box (Thickness 0.0)
             // 复合几何档：控件用 DynamicResource 键即可吃到「非均匀」的主题几何，
             // 不用再手写 Subscribe 拼 Thickness/CornerRadius（W7 外观退役）。
-            resources[box "CornerRadius.QuoteRight"] <- box (CornerRadius(0.0, spaces[Space.RadiusSm].Value, spaces[Space.RadiusSm].Value, 0.0))
+            resources[box "CornerRadius.QuoteRight"] <-
+                box (CornerRadius(0.0, spaces[Space.RadiusSm].Value, spaces[Space.RadiusSm].Value, 0.0))
+
             resources[box "CornerRadius.ListMarkerDot"] <- box (CornerRadius metrics[Metric.ListMarkerDotRadius].Value)
             resources[box "Thickness.BorderBottom"] <- box (Thickness(0.0, 0.0, 0.0, metrics[Metric.BorderWidth].Value))
             resources[box "Thickness.TaskBoxEdge"] <- box (Thickness metrics[Metric.TaskBoxBorderWidth].Value)
@@ -126,8 +189,12 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             resources[box "Thickness.GapRightMd"] <- box (Thickness(0.0, 0.0, spaces[Space.Md].Value, 0.0))
             resources[box "Margin.GapRightMd"] <- box (Thickness(0.0, 0.0, spaces[Space.Md].Value, 0.0))
             resources[box "Thickness.GapBottomMd"] <- box (Thickness(0.0, 0.0, 0.0, spaces[Space.Md].Value))
-            resources[box "Padding.Block"] <- box (Thickness(metrics[Metric.BlockPaddingX].Value, metrics[Metric.BlockPaddingY].Value))
-            resources[box "Margin.Block"] <- box (Thickness(metrics[Metric.BlockPaddingX].Value, metrics[Metric.BlockPaddingY].Value))
+
+            resources[box "Padding.Block"] <-
+                box (Thickness(metrics[Metric.BlockPaddingX].Value, metrics[Metric.BlockPaddingY].Value))
+
+            resources[box "Margin.Block"] <-
+                box (Thickness(metrics[Metric.BlockPaddingX].Value, metrics[Metric.BlockPaddingY].Value))
             // 覆盖层两档卡：对话框卡与浮层卡的均匀内边距。
             resources[box "Padding.OverlayDialog"] <- box (Thickness(spaces[Space.Xl].Value))
             resources[box "Padding.OverlayPopup"] <- box (Thickness(spaces[Space.Xs].Value))
@@ -137,11 +204,45 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             resources[box "Padding.MenuItem"] <- box (Thickness(spaces[Space.Md].Value, spaces[Space.Xs].Value))
             resources[box "Margin.MenuHint"] <- box (Thickness(spaces[Space.Xl].Value, 0.0, 0.0, 0.0))
             resources[box "Margin.MenuDivider"] <- box (Thickness(spaces[Space.Sm].Value, spaces[Space.XXs].Value))
-            resources[box "Margin.MenuHeader"] <- box (Thickness(spaces[Space.Md].Value, spaces[Space.Sm].Value, spaces[Space.Md].Value, spaces[Space.XXs].Value))
-            resources[box "Padding.CodeHeader"] <- box (Thickness(metrics[Metric.BlockPaddingX].Value, spaces[Space.Xs].Value, spaces[Space.Xs].Value, spaces[Space.Xs].Value))
-            resources[box "Margin.CodeExpand"] <- box (Thickness(metrics[Metric.BlockPaddingX].Value, spaces[Space.Xs].Value, 0.0, spaces[Space.Xs].Value))
-            resources[box "Padding.Quote"] <- box (Thickness(spaces[Space.Md].Value, spaces[Space.Sm].Value, spaces[Space.Md].Value, spaces[Space.Sm].Value))
-            resources[box "Margin.QuoteNested"] <- box (Thickness(spaces[Space.Md].Value, 0.0, 0.0, Wanxiang.UI.Spacing.spaceMd))
+
+            resources[box "Margin.MenuHeader"] <-
+                box (
+                    Thickness(
+                        spaces[Space.Md].Value,
+                        spaces[Space.Sm].Value,
+                        spaces[Space.Md].Value,
+                        spaces[Space.XXs].Value
+                    )
+                )
+
+            resources[box "Padding.CodeHeader"] <-
+                box (
+                    Thickness(
+                        metrics[Metric.BlockPaddingX].Value,
+                        spaces[Space.Xs].Value,
+                        spaces[Space.Xs].Value,
+                        spaces[Space.Xs].Value
+                    )
+                )
+
+            resources[box "Margin.CodeExpand"] <-
+                box (
+                    Thickness(metrics[Metric.BlockPaddingX].Value, spaces[Space.Xs].Value, 0.0, spaces[Space.Xs].Value)
+                )
+
+            resources[box "Padding.Quote"] <-
+                box (
+                    Thickness(
+                        spaces[Space.Md].Value,
+                        spaces[Space.Sm].Value,
+                        spaces[Space.Md].Value,
+                        spaces[Space.Sm].Value
+                    )
+                )
+
+            resources[box "Margin.QuoteNested"] <-
+                box (Thickness(spaces[Space.Md].Value, 0.0, 0.0, Wanxiang.UI.Spacing.spaceMd))
+
             resources[box "Padding.MathBlock"] <- box (Thickness(0.0, spaces[Space.Md].Value))
             resources[box "Margin.AvatarRight"] <- box (Thickness(0.0, 0.0, spaces[Space.Xl].Value, 0.0))
             resources[box "Margin.MathInline"] <- box (Thickness(spaces[Space.Xs].Value, 0.0))
@@ -154,18 +255,46 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             resources[box "Margin.UserIndent"] <- box (Thickness(0.0, md, gutter, 0.0))
             // 输入区留白：宽屏顶=Space.X2l、底=Space.Xl；窄屏固定收紧（左右=Space.Xl、底=Space.Md）。
             // 水平档（窄屏 16 / 中 24 / 桌面 32 / 宽屏 48）随自身宽度取，不在主题里（见 LayoutPolicy.horizontalInset）。
-            resources[box "Margin.Composer"] <- box (Thickness(0.0, spaces[Space.X2l].Value, 0.0, spaces[Space.Xl].Value))
-            resources[box "Margin.ComposerCompact"] <- box (Thickness(spaces[Space.Xl].Value, spaces[Space.Xl].Value, 0.0, spaces[Space.Md].Value))
+            resources[box "Margin.Composer"] <-
+                box (Thickness(0.0, spaces[Space.X2l].Value, 0.0, spaces[Space.Xl].Value))
+
+            resources[box "Margin.ComposerCompact"] <-
+                box (Thickness(spaces[Space.Xl].Value, spaces[Space.Xl].Value, 0.0, spaces[Space.Md].Value))
             // 强调字距档（正文语言标签等）：静态常量，来自 SpacingRamp
             resources[box "Tracking.Emphasis"] <- box Wanxiang.UI.Spacing.Tracking.emphasis
+
         updateDerivedMetrics ()
         // 派生档的唯一刷新点：任何来源活值改动都重算全部复合几何（幂等、开销为常数）。
         let refresh () = updateDerivedMetrics ()
-        for m in [ Metric.BorderWidth; Metric.ListMarkerDotRadius; Metric.TaskBoxBorderWidth
-                   Metric.QuoteEdgeWidth; Metric.BlockPaddingX; Metric.BlockPaddingY; Metric.LogoAvatar ] do
+
+        for m in
+            [
+                Metric.BorderWidth
+                Metric.ListMarkerDotRadius
+                Metric.TaskBoxBorderWidth
+                Metric.QuoteEdgeWidth
+                Metric.BlockPaddingX
+                Metric.BlockPaddingY
+                Metric.LogoAvatar
+            ] do
             (metrics[m] :> IObservable<float>).Subscribe(fun _ -> refresh ()) |> ignore
-        for s in [ Space.RadiusXs; Space.RadiusMd; Space.RadiusLg; Space.RadiusPill; Space.RadiusSm; Space.Md; Space.Sm; Space.Xs; Space.XXs; Space.Xl; Space.X2l ] do
+
+        for s in
+            [
+                Space.RadiusXs
+                Space.RadiusMd
+                Space.RadiusLg
+                Space.RadiusPill
+                Space.RadiusSm
+                Space.Md
+                Space.Sm
+                Space.Xs
+                Space.XXs
+                Space.Xl
+                Space.X2l
+            ] do
             (spaces[s] :> IObservable<float>).Subscribe(fun _ -> refresh ()) |> ignore
+
     do initResources ()
 
     new() = new ThemeManager((fun () -> DateTimeOffset.UtcNow), true)
@@ -194,24 +323,33 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
     member _.MergedDictionary = resources
     member _.MonoFontFamily = monoFontFamily
 
-    member _.ApplyMetric(m: Metric, v: float) =
-        metrics[m].Set v
-    member _.ApplySpace(s: Space, v: float) =
-        spaces[s].Set v
+    member _.ApplyMetric(m: Metric, v: float) = metrics[m].Set v
+    member _.ApplySpace(s: Space, v: float) = spaces[s].Set v
 
     /// 推进一帧（帧计时器调；autoFrames = false 时由调用方调）。forGeneration 不是当前代次时只画不停帧
     member this.Pump(?forGeneration: int) =
         let g = defaultArg forGeneration generation
         let frame = tween.Frame(clock (), transitionMs ())
-        for k, c in frame.Colors do brushes[k].Color <- ofArgb c
-        if not frame.Colors.IsEmpty then refreshDerived ()
-        if frame.Finished && g = generation then stopFrames ()
+
+        for k, c in frame.Colors do
+            brushes[k].Color <- ofArgb c
+
+        if not frame.Colors.IsEmpty then
+            refreshDerived ()
+
+        if frame.Finished && g = generation then
+            stopFrames ()
 
     /// 切换主题：画笔从当前色补间到新色；补间途中再切换时后来者接管。减弱动效或同主题重放同步到位
     member this.Apply(next: PaletteMode) =
         let sameMode = (mode = next)
         mode <- next
-        let plan = [ for KeyValue(k, b) in brushes -> k, toArgb b.Color, toArgb (ThemePalette.color next k) ]
+
+        let plan =
+            [
+                for KeyValue(k, b) in brushes -> k, toArgb b.Color, toArgb (ThemePalette.color next k)
+            ]
+
         match tween.Apply(clock (), sameMode, transitionMs (), plan) with
         | ThemeStart.Snap ->
             stopFrames ()
@@ -219,11 +357,23 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
         | ThemeStart.Tween ->
             generation <- generation + 1
             stopFrames ()
+
             if autoFrames then
                 let g = generation
-                let period = TimeSpan.FromTicks(max 1L (TimeSpan.FromMilliseconds(transitionMs ()).Ticks / 12L))
+
+                let period =
+                    TimeSpan.FromTicks(max 1L (TimeSpan.FromMilliseconds(transitionMs ()).Ticks / 12L))
+
                 frameTimer <-
-                    Some(new Threading.Timer((fun _ -> Dispatcher.UIThread.InvokeAsync(fun () -> this.Pump g) |> ignore), null, period, period))
+                    Some(
+                        new Threading.Timer(
+                            (fun _ -> Dispatcher.UIThread.InvokeAsync(fun () -> this.Pump g) |> ignore),
+                            null,
+                            period,
+                            period
+                        )
+                    )
+
         changed.Trigger next
 
     /// 立即收尾到目标色并停帧（旧 completeTransition）
@@ -235,24 +385,45 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
 
     /// 中等抬升阴影：下拉、气泡（旧 Tokens.shadowPopup）
     member this.ShadowPopup() =
-        BoxShadows(BoxShadow(OffsetX = 0.0, OffsetY = 8.0, Blur = 26.0, Spread = -8.0, Color = this.Color PaletteKey.ShadowStrong))
+        BoxShadows(
+            BoxShadow(
+                OffsetX = 0.0,
+                OffsetY = 8.0,
+                Blur = 26.0,
+                Spread = -8.0,
+                Color = this.Color PaletteKey.ShadowStrong
+            )
+        )
 
     /// 对话框阴影（旧 Tokens.shadowDialog）
     member this.ShadowDialog() =
-        BoxShadows(BoxShadow(OffsetX = 0.0, OffsetY = 18.0, Blur = 48.0, Spread = -12.0, Color = this.Color PaletteKey.ShadowStrong))
+        BoxShadows(
+            BoxShadow(
+                OffsetX = 0.0,
+                OffsetY = 18.0,
+                Blur = 48.0,
+                Spread = -12.0,
+                Color = this.Color PaletteKey.ShadowStrong
+            )
+        )
 
     /// 状态过渡：只补间底色（bordered = 另补间描边，只给描边即状态的表面）。时长经减弱动效门控
     member _.StateTransitions(bordered: bool) : Animation.Transitions =
         let duration = motion.Duration timings[Timing.ControlStateTransition].Value
+
         let make (p: AvaloniaProperty) =
             let t = Animation.BrushTransition()
             t.Property <- p
             t.Duration <- duration
             t.Easing <- EaseOutCubicEasing()
             t
+
         let ts = Animation.Transitions()
         ts.Add(make Controls.Border.BackgroundProperty)
-        if bordered then ts.Add(make Controls.Border.BorderBrushProperty)
+
+        if bordered then
+            ts.Add(make Controls.Border.BorderBrushProperty)
+
         ts
 
     interface IDisposable with

@@ -14,9 +14,11 @@ let ``标签换色；读屏 Invoke 打开切换器`` () =
     Headless.run (fun () ->
         let c = ModelChip()
         let mutable opened = false
+
         c.OnOpen(fun anchor ->
             opened <- true
             Assert.Same(c.Host, anchor))
+
         Assert.Equal("未选择模型", c.Text)
         c.ApplyLabel "gpt-test"
         Assert.Equal("gpt-test", c.Text)

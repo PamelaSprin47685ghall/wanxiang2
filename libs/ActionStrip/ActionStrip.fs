@@ -31,23 +31,40 @@ type StripRest =
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 消息脚注里的操作条（旧 MessageCard.actionButtons）：按钮随文档流排布，整行恒定占一个命中区高，
 /// 流式期间撤掉按钮也不缩；显隐只改不透明度，不动几何。
 type ActionStrip(rest: StripRest) =
-    let fade = DoubleTransition(Property = Visual.OpacityProperty, Duration = TimeSpan.FromMilliseconds 120.0)
-    let row = StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Spacing = 4.0, MinHeight = 30.0)
+    let fade =
+        DoubleTransition(Property = Visual.OpacityProperty, Duration = TimeSpan.FromMilliseconds 120.0)
+
+    let row =
+        StackPanel(
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+            Spacing = 4.0,
+            MinHeight = 30.0
+        )
+
     let mutable shown = false
     let mutable subtle = 0.55
+
     let apply () =
         row.Opacity <-
-            if shown then 1.0
+            if shown then
+                1.0
             else
                 match rest with
                 | StripRest.Hidden -> 0.0
                 | StripRest.Subtle -> subtle
+
     do
         let transitions = Transitions()
         transitions.Add fade
@@ -56,6 +73,7 @@ type ActionStrip(rest: StripRest) =
 
     member _.Host: Control = row
     member _.Shown = shown
+
     /// 悬停、聚焦或触屏选中时显示，否则回到闲置档
     member _.ApplyShown(value: bool) =
         shown <- value
@@ -64,11 +82,13 @@ type ActionStrip(rest: StripRest) =
     static member GlyphControl(glyph: StripGlyph, ?brush: IBrush) : Control =
         let data =
             match glyph with
-            | StripGlyph.Copy -> "M 4 2 L 11 2 A 2 2 0 0 1 13 4 L 13 11 A 2 2 0 0 1 11 13 L 4 13 A 2 2 0 0 1 2 11 L 2 4 A 2 2 0 0 1 4 2 Z M 5 5 L 14 5 L 14 14 L 5 14"
+            | StripGlyph.Copy ->
+                "M 4 2 L 11 2 A 2 2 0 0 1 13 4 L 13 11 A 2 2 0 0 1 11 13 L 4 13 A 2 2 0 0 1 2 11 L 2 4 A 2 2 0 0 1 4 2 Z M 5 5 L 14 5 L 14 14 L 5 14"
             | StripGlyph.Check -> "M 3 8 L 6 11 L 13 4"
             | StripGlyph.Pencil -> "M 11 2 L 14 5 L 5 14 L 2 14 L 2 11 Z"
             | StripGlyph.Refresh -> "M 2 8 A 6 6 0 1 1 5 13 L 2 10"
             | StripGlyph.Trash -> "M 3 4 L 13 4 M 5 4 L 5 13 L 11 13 L 11 4 M 6 4 L 6 2 L 10 2 L 10 4"
+
         let p =
             Path(
                 Data = Geometry.Parse data,
@@ -78,10 +98,13 @@ type ActionStrip(rest: StripRest) =
                 Width = 16.0,
                 Height = 16.0,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center)
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         match brush with
         | Some b -> p.Stroke <- b
         | None -> p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+
         p :> Control
 
     /// 换按钮的图标（复制确认时换成对勾）
@@ -102,7 +125,9 @@ type ActionStrip(rest: StripRest) =
                 MinWidth = 30.0,
                 MinHeight = 30.0,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center)
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         button.Classes.Add "icon-button"
         button.Classes.Add "ghost"
         this.ApplyIcon(button, glyph)
@@ -119,23 +144,30 @@ type ActionStrip(rest: StripRest) =
     /// 单入口：从 ActionStripVS 渲染
     member this.Render(vs: ActionStripVS, onAction: string -> unit) =
         row.Children.Clear()
+
         for item in vs.Items do
             let glyph =
                 match item.Glyph.ToLowerInvariant() with
                 | "copy" -> StripGlyph.Copy
                 | "check" -> StripGlyph.Check
-                | "pencil" | "edit" -> StripGlyph.Pencil
-                | "refresh" | "regenerate" -> StripGlyph.Refresh
-                | "trash" | "delete" -> StripGlyph.Trash
+                | "pencil"
+                | "edit" -> StripGlyph.Pencil
+                | "refresh"
+                | "regenerate" -> StripGlyph.Refresh
+                | "trash"
+                | "delete" -> StripGlyph.Trash
                 | _ -> StripGlyph.Copy
+
             let b = this.Add(glyph, item.Tip, item.Name, item.Help, fun () -> onAction item.Id)
             b.IsEnabled <- item.Enabled
+
         this.ApplyShown vs.Visible
 
 module ActionStrip =
     /// 复制按钮的读屏名带角色与序号，同屏多个「复制」不撞名
     let copyName (isUser: bool) (index: int option) =
         let role = if isUser then "用户" else "助手"
+
         match index with
         | Some i when i >= 0 -> sprintf "复制%s消息 %d" role (i + 1)
         | _ -> sprintf "复制%s消息" role

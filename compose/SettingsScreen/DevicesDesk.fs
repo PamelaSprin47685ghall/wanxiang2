@@ -47,46 +47,73 @@ type DevicesDesk(_theme: ThemeManager, overlay: OverlayDesk) =
         match canInvite, invite with
         | false, _ ->
             DevicesPaneInvite.Unavailable(
-                if String.IsNullOrWhiteSpace wsUrl then "尚未连接主机。"
-                else "只有这台主机上的桌面应用可以添加设备。请在桌面应用里打开「设置 → 设备 → 添加设备」。")
+                if String.IsNullOrWhiteSpace wsUrl then
+                    "尚未连接主机。"
+                else
+                    "只有这台主机上的桌面应用可以添加设备。请在桌面应用里打开「设置 → 设备 → 添加设备」。"
+            )
         | true, None ->
             DevicesPaneInvite.Offer(
                 match inviteRejected with
                 | Some "not-desktop" -> Some "主机没有批准这次邀请：只有主机上的桌面应用可以添加设备。"
                 | Some _ -> Some "主机没有批准这次邀请，请稍后再试。"
-                | None -> None)
+                | None -> None
+            )
         | true, Some i ->
             let left = remaining ()
             let expired = left <= TimeSpan.Zero
+
             let address =
                 match DevicesModel.inviteTarget wsUrl (lan ()) with
                 | InviteTarget.Reachable url -> DevicesPaneAddress.Reachable(withQr url)
-                | InviteTarget.LoopbackOnly(first :: others) -> DevicesPaneAddress.LoopbackOnly(Some(withQr first), others)
+                | InviteTarget.LoopbackOnly(first :: others) ->
+                    DevicesPaneAddress.LoopbackOnly(Some(withQr first), others)
                 | InviteTarget.LoopbackOnly [] -> DevicesPaneAddress.LoopbackOnly(None, [])
                 | InviteTarget.NoAddress -> DevicesPaneAddress.NoAddress
+
             DevicesPaneInvite.Code(
                 DevicesModel.groupCode i.code,
                 String.Join(" ", i.code.ToCharArray()),
-                (if expired then "已过期" else sprintf "%s 后失效" (DevicesModel.countdown left)),
+                (if expired then
+                     "已过期"
+                 else
+                     sprintf "%s 后失效" (DevicesModel.countdown left)),
                 expired,
-                address)
+                address
+            )
 
     let row (device: DeviceInfo) : DevicesPaneRow =
         let badges =
-            [ if device.current then "这台设备"
-              if device.desktop then "桌面"
-              if device.revoked then "已吊销" ]
-        { Id = device.id
-          Name = device.name
-          // 保留名 wanxiang-desktop 是协议标识，给人看的是「本机桌面客户端」
-          Title =
-            (if String.IsNullOrWhiteSpace device.name then "未命名设备"
-             elif device.desktop && device.name = "wanxiang-desktop" then "本机桌面客户端"
-             else device.name)
-          Meta = String.Join(" · ", badges @ [ DevicesModel.lastSeenText now device; DevicesModel.createdText device ])
-          Revoked = device.revoked
-          CanRename = not device.revoked && not device.desktop
-          CanRevoke = not device.revoked && not device.current && not device.desktop }
+            [
+                if device.current then
+                    "这台设备"
+                if device.desktop then
+                    "桌面"
+                if device.revoked then
+                    "已吊销"
+            ]
+
+        {
+            Id = device.id
+            Name = device.name
+            // 保留名 wanxiang-desktop 是协议标识，给人看的是「本机桌面客户端」
+            Title =
+                (if String.IsNullOrWhiteSpace device.name then
+                     "未命名设备"
+                 elif device.desktop && device.name = "wanxiang-desktop" then
+                     "本机桌面客户端"
+                 else
+                     device.name)
+            Meta =
+                String.Join(
+                    " · ",
+                    badges
+                    @ [ DevicesModel.lastSeenText now device; DevicesModel.createdText device ]
+                )
+            Revoked = device.revoked
+            CanRename = not device.revoked && not device.desktop
+            CanRevoke = not device.revoked && not device.current && not device.desktop
+        }
 
     let listState () =
         match loadNote with
@@ -100,7 +127,13 @@ type DevicesDesk(_theme: ThemeManager, overlay: OverlayDesk) =
             |> List.map row
             |> DevicesPaneList.Rows
 
-    let render () = pane.Render { Invite = inviteState (); List = listState (); Editing = editing }
+    let render () =
+        pane.Render
+            {
+                Invite = inviteState ()
+                List = listState ()
+                Editing = editing
+            }
 
     let timeOut () =
         if loadWait.TimeOut() then
@@ -117,19 +150,39 @@ type DevicesDesk(_theme: ThemeManager, overlay: OverlayDesk) =
         requested.Trigger()
 
     do
-        pane.AddClicked.Add(fun () -> inviteRejected <- None; inviteRequested.Trigger())
+        pane.AddClicked.Add(fun () ->
+            inviteRejected <- None
+            inviteRequested.Trigger())
+
         pane.RegenerateClicked.Add(fun () -> inviteRequested.Trigger())
-        pane.CloseInviteClicked.Add(fun () -> invite <- None; render ())
+
+        pane.CloseInviteClicked.Add(fun () ->
+            invite <- None
+            render ())
+
         pane.RefreshClicked.Add(fun () -> refresh ())
-        pane.RenameClicked.Add(fun id -> editing <- Some id; render ())
-        pane.RenameCancelled.Add(fun _ -> editing <- None; render ())
+
+        pane.RenameClicked.Add(fun id ->
+            editing <- Some id
+            render ())
+
+        pane.RenameCancelled.Add(fun _ ->
+            editing <- None
+            render ())
+
         pane.RenameSaved.Add(fun (id, name) ->
-            if name = "" then overlay.Toast("设备名称不能为空。", ToastTone.Failure)
+            if name = "" then
+                overlay.Toast("设备名称不能为空。", ToastTone.Failure)
             else
                 editing <- None
                 renameRequested.Trigger((id, name))
                 render ())
-        pane.RevokeClicked.Add(fun id -> devices |> List.tryFind (fun d -> d.id = id) |> Option.iter revokeRequested.Trigger)
+
+        pane.RevokeClicked.Add(fun id ->
+            devices
+            |> List.tryFind (fun d -> d.id = id)
+            |> Option.iter revokeRequested.Trigger)
+
         render ()
 
     member _.View = pane.View
@@ -144,8 +197,10 @@ type DevicesDesk(_theme: ThemeManager, overlay: OverlayDesk) =
         inviteRejected <- vs.InviteRejected
         loadNote <- vs.LoadNote
         now <- vs.Now
+
         if not vs.IsLoading then
             loadWait.Settle() |> ignore
+
         render ()
 
     /// 切进设备分区时：读取最新列表（开始有界等待）
@@ -162,15 +217,13 @@ type DevicesDesk(_theme: ThemeManager, overlay: OverlayDesk) =
     /// 外部推进时钟（测试与定时器共用）
     member _.Tick(nowUtc: DateTimeOffset) =
         now <- nowUtc
-        if loadWait.Tick nowUtc then
-            timeOut ()
-        else
-            render ()
+        if loadWait.Tick nowUtc then timeOut () else render ()
 
     /// 读取设备列表期间连接断开：旧版主机不认识设备事件时会直接断开
     member _.ApplyDisconnected() =
         if loadWait.Settle() then
             loadNote <- Some "读取设备列表时连接断开了。如果主机版本较旧，可能还不支持设备管理，请先升级主机。"
+
         invite <- None
         render ()
 

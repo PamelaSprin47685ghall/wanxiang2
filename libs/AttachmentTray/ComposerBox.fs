@@ -16,14 +16,16 @@ open Wanxiang2.WorkspaceState
 /// 「发送 / 停止 / 排队」呈现视图：由门控决策（ComposerSendState.ComposerSendView 的派生成员）
 /// 在呈现边界落成的一次性记录，无判定逻辑。
 type SendView =
-    { VisionBlocked: bool
-      VisionMessage: string
-      SendEnabled: bool
-      QueueEnabled: bool
-      QueueVisible: bool
-      SendTip: string
-      SendLabel: string
-      QueueTip: string option }
+    {
+        VisionBlocked: bool
+        VisionMessage: string
+        SendEnabled: bool
+        QueueEnabled: bool
+        QueueVisible: bool
+        SendTip: string
+        SendLabel: string
+        QueueTip: string option
+    }
 
 /// 输入区根 Border
 type ComposerRoot() =
@@ -33,7 +35,12 @@ type ComposerRoot() =
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 输入壳（原生 TextBox / Button 实现）：
@@ -48,20 +55,28 @@ type ComposerBox() =
             MinHeight = 44.0,
             MaxHeight = 200.0,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalContentAlignment = VerticalAlignment.Center)
+            VerticalContentAlignment = VerticalAlignment.Center
+        )
+
     do input.Classes.Add "text-area"
 
     let shell =
-        Border(
-            CornerRadius = CornerRadius 8.0,
-            BorderThickness = Thickness 1.0,
-            Padding = Thickness(12.0, 8.0))
+        Border(CornerRadius = CornerRadius 8.0, BorderThickness = Thickness 1.0, Padding = Thickness(12.0, 8.0))
+
     do
         shell.Bind(Border.BackgroundProperty, Dyn.res "Palette.Surface") |> ignore
-        shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.ControlStroke") |> ignore
+
+        shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.ControlStroke")
+        |> ignore
 
     let send =
-        let b = Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), VerticalAlignment = VerticalAlignment.Center)
+        let b =
+            Button(
+                Focusable = true,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         b.Classes.Add "icon-button"
         b.Classes.Add "primary"
         b.Width <- 32.0
@@ -70,7 +85,14 @@ type ComposerBox() =
         b
 
     let queue =
-        let b = Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), VerticalAlignment = VerticalAlignment.Center, IsVisible = false)
+        let b =
+            Button(
+                Focusable = true,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                VerticalAlignment = VerticalAlignment.Center,
+                IsVisible = false
+            )
+
         b.Classes.Add "icon-button"
         b.Classes.Add "secondary"
         b.Width <- 32.0
@@ -79,7 +101,13 @@ type ComposerBox() =
         b
 
     let attach =
-        let b = Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), VerticalAlignment = VerticalAlignment.Center)
+        let b =
+            Button(
+                Focusable = true,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         b.Classes.Add "icon-button"
         b.Classes.Add "ghost"
         b.Width <- 32.0
@@ -88,25 +116,45 @@ type ComposerBox() =
         b
 
     let context =
-        let b = Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), VerticalAlignment = VerticalAlignment.Center, IsVisible = false)
+        let b =
+            Button(
+                Focusable = true,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                VerticalAlignment = VerticalAlignment.Center,
+                IsVisible = false
+            )
+
         b.Classes.Add "ghost"
         b.Classes.Add "button-ghost"
         b
 
-    let contextLabel = TextBlock(Text = "上下文", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center)
+    let contextLabel =
+        TextBlock(
+            Text = "上下文",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        )
 
     let mutable trayCtl: Control option = None
     let mutable modelCtl: Control option = None
     let mutable pendingCtl: Control option = None
 
-    let outer = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0, MaxWidth = 800.0)
+    let outer =
+        StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0, MaxWidth = 800.0)
+
     let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 6.0)
-    let request = StackPanel(Orientation = Orientation.Horizontal, Spacing = 8.0, VerticalAlignment = VerticalAlignment.Center)
+
+    let request =
+        StackPanel(Orientation = Orientation.Horizontal, Spacing = 8.0, VerticalAlignment = VerticalAlignment.Center)
+
     let accessory = StackPanel(Orientation = Orientation.Vertical)
 
     let disabledText =
         TextBlock(TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, FontSize = 12.0)
-    do disabledText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+
+    do
+        disabledText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
 
     let disabledNotice =
         Border(
@@ -115,13 +163,17 @@ type ComposerBox() =
             Padding = Thickness(12.0, 6.0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Child = disabledText,
-            IsVisible = false)
-    do
-        disabledNotice.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer") |> ignore
-        disabledNotice.Bind(Border.BorderBrushProperty, Dyn.res "Palette.HairlineStrong") |> ignore
+            IsVisible = false
+        )
 
-    let visionText =
-        TextBlock(TextWrapping = TextWrapping.Wrap, FontSize = 12.0)
+    do
+        disabledNotice.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer")
+        |> ignore
+
+        disabledNotice.Bind(Border.BorderBrushProperty, Dyn.res "Palette.HairlineStrong")
+        |> ignore
+
+    let visionText = TextBlock(TextWrapping = TextWrapping.Wrap, FontSize = 12.0)
     do visionText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
 
     let visionNotice =
@@ -131,17 +183,24 @@ type ComposerBox() =
             Padding = Thickness(12.0, 6.0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Child = visionText,
-            IsVisible = false)
+            IsVisible = false
+        )
+
     do
-        visionNotice.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer") |> ignore
-        visionNotice.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Warning") |> ignore
+        visionNotice.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer")
+        |> ignore
+
+        visionNotice.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Warning")
+        |> ignore
 
     let dropText =
         TextBlock(
             Text = "释放文件以添加到当前对话附件",
             FontWeight = FontWeight.Medium,
             HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center)
+            VerticalAlignment = VerticalAlignment.Center
+        )
+
     do dropText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Accent") |> ignore
 
     let dropHint =
@@ -150,8 +209,12 @@ type ComposerBox() =
             BorderThickness = Thickness 0.0,
             IsHitTestVisible = false,
             IsVisible = false,
-            Child = dropText)
-    do dropHint.Bind(Border.BackgroundProperty, Dyn.res "Palette.AccentFaint") |> ignore
+            Child = dropText
+        )
+
+    do
+        dropHint.Bind(Border.BackgroundProperty, Dyn.res "Palette.AccentFaint")
+        |> ignore
 
     let host = ComposerRoot(Background = Brushes.Transparent)
 
@@ -172,7 +235,8 @@ type ComposerBox() =
     let mutable composing: TextBox -> bool = fun _ -> false
     let mutable keyHook: KeyEventArgs -> bool = fun _ -> false
 
-    let submitText () = submitted.Trigger(if isNull input.Text then "" else input.Text)
+    let submitText () =
+        submitted.Trigger(if isNull input.Text then "" else input.Text)
 
     let setSendIcon isStop =
         if isStop then
@@ -181,7 +245,9 @@ type ComposerBox() =
                     Data = Geometry.Parse "M 4 4 L 12 4 L 12 12 L 4 12 Z",
                     Fill = Brushes.White,
                     Width = 14.0,
-                    Height = 14.0)
+                    Height = 14.0
+                )
+
             send.Content <- p
             AutomationProperties.SetName(send, "停止生成")
         else
@@ -192,7 +258,9 @@ type ComposerBox() =
                     Stroke = Brushes.White,
                     Fill = Brushes.Transparent,
                     Width = 14.0,
-                    Height = 14.0)
+                    Height = 14.0
+                )
+
             send.Content <- p
             AutomationProperties.SetName(send, "发送")
 
@@ -203,7 +271,9 @@ type ComposerBox() =
                 StrokeThickness = 1.6,
                 Fill = Brushes.Transparent,
                 Width = 14.0,
-                Height = 14.0)
+                Height = 14.0
+            )
+
         p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
         queue.Content <- p
         AutomationProperties.SetName(queue, "排队发送")
@@ -216,7 +286,9 @@ type ComposerBox() =
                 StrokeThickness = 1.2,
                 Fill = Brushes.Transparent,
                 Width = 14.0,
-                Height = 14.0)
+                Height = 14.0
+            )
+
         p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
         attach.Content <- p
         AutomationProperties.SetName(attach, "添加附件")
@@ -231,13 +303,18 @@ type ComposerBox() =
             shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Accent") |> ignore
             dropHint.IsVisible <- false
         else
-            shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.ControlStroke") |> ignore
+            shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.ControlStroke")
+            |> ignore
+
             dropHint.IsVisible <- false
 
         input.PlaceholderText <-
-            if not enabled && not (String.IsNullOrWhiteSpace disabledReason) then ""
-            elif dragging && enabled then "释放文件以添加到当前对话附件"
-            else "输入消息…"
+            if not enabled && not (String.IsNullOrWhiteSpace disabledReason) then
+                ""
+            elif dragging && enabled then
+                "释放文件以添加到当前对话附件"
+            else
+                "输入消息…"
 
     let applySizes () =
         let size = if compact then 36.0 else 32.0
@@ -276,15 +353,20 @@ type ComposerBox() =
         context.Content <- contextLabel
         AutomationProperties.SetName(context, "对话上下文")
 
-        send.Click.Add(fun _ ->
-            if generating then stopped.Trigger()
-            else submitText ())
+        send.Click.Add(fun _ -> if generating then stopped.Trigger() else submitText ())
 
         queue.Click.Add(fun _ -> submitText ())
         attach.Click.Add(fun _ -> attachAsked.Trigger())
         context.Click.Add(fun _ -> contextOpened.Trigger())
 
-        let actionRow = StackPanel(Orientation = Orientation.Horizontal, Spacing = 6.0, VerticalAlignment = VerticalAlignment.Bottom, HorizontalAlignment = HorizontalAlignment.Right)
+        let actionRow =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 6.0,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                HorizontalAlignment = HorizontalAlignment.Right
+            )
+
         actionRow.Children.Add attach
         actionRow.Children.Add queue
         actionRow.Children.Add send
@@ -321,57 +403,90 @@ type ComposerBox() =
         input.AddHandler(
             InputElement.KeyDownEvent,
             EventHandler<KeyEventArgs>(fun _ e ->
-                if composing input && (e.Key = Key.Enter || e.Key = Key.Up || e.Key = Key.Down) then ()
-                elif keyHook e then e.Handled <- true
+                if composing input && (e.Key = Key.Enter || e.Key = Key.Up || e.Key = Key.Down) then
+                    ()
+                elif keyHook e then
+                    e.Handled <- true
                 elif e.Key = Key.Escape && generating then
                     e.Handled <- true
                     stopped.Trigger()
                 elif e.Key = Key.Enter then
                     let shift = e.KeyModifiers.HasFlag KeyModifiers.Shift
-                    let ctrl = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
+
+                    let ctrl =
+                        e.KeyModifiers.HasFlag KeyModifiers.Control
+                        || e.KeyModifiers.HasFlag KeyModifiers.Meta
+
                     let sends = not shift && (enterSends <> ctrl)
+
                     if sends then
                         e.Handled <- true
                         submitText ()
                 elif e.Key = Key.V then
-                    let ctrl = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
-                    if ctrl && paste () then e.Handled <- true),
-            RoutingStrategies.Tunnel)
+                    let ctrl =
+                        e.KeyModifiers.HasFlag KeyModifiers.Control
+                        || e.KeyModifiers.HasFlag KeyModifiers.Meta
+
+                    if ctrl && paste () then
+                        e.Handled <- true),
+            RoutingStrategies.Tunnel
+        )
 
         DragDrop.SetAllowDrop(host, true)
+
         host.AddHandler(
             DragDrop.DragOverEvent,
             EventHandler<DragEventArgs>(fun _ e ->
-                let has = e.DataTransfer <> null && (e.DataTransfer.Contains DataFormat.File || e.DataTransfer.TryGetFiles() <> null)
+                let has =
+                    e.DataTransfer <> null
+                    && (e.DataTransfer.Contains DataFormat.File || e.DataTransfer.TryGetFiles() <> null)
+
                 if not has then
                     e.DragEffects <- DragDropEffects.None
-                    if dragging then dragging <- false; updateShell ()
+
+                    if dragging then
+                        dragging <- false
+                        updateShell ()
                 else
                     e.DragEffects <- DragDropEffects.Copy
-                    if not dragging then dragging <- true; updateShell ()),
-            RoutingStrategies.Bubble)
+
+                    if not dragging then
+                        dragging <- true
+                        updateShell ()),
+            RoutingStrategies.Bubble
+        )
 
         host.AddHandler(
             DragDrop.DragLeaveEvent,
             EventHandler<DragEventArgs>(fun _ _ ->
-                if dragging then dragging <- false; updateShell ()),
-            RoutingStrategies.Bubble)
+                if dragging then
+                    dragging <- false
+                    updateShell ()),
+            RoutingStrategies.Bubble
+        )
 
         host.AddHandler(
             DragDrop.DropEvent,
             EventHandler<DragEventArgs>(fun _ e ->
-                if dragging then dragging <- false; updateShell ()
+                if dragging then
+                    dragging <- false
+                    updateShell ()
+
                 if e.DataTransfer <> null then
                     let files =
                         let multi = e.DataTransfer.TryGetFiles()
-                        if multi <> null then List.ofSeq multi
+
+                        if multi <> null then
+                            List.ofSeq multi
                         else
                             let single = e.DataTransfer.TryGetFile()
                             if single <> null then [ single ] else []
+
                     if not (List.isEmpty files) then
                         e.Handled <- true
                         dropped.Trigger files),
-            RoutingStrategies.Bubble)
+            RoutingStrategies.Bubble
+        )
 
     /// 布局宿主
     member _.Host: Control = host :> Control
@@ -442,6 +557,7 @@ type ComposerBox() =
         ToolTip.SetTip(send, view.SendTip)
         AutomationProperties.SetName(send, view.SendLabel)
         AutomationProperties.SetHelpText(send, view.SendTip)
+
         match view.QueueTip with
         | Some tip ->
             ToolTip.SetTip(queue, tip)
@@ -466,11 +582,14 @@ type ComposerBox() =
     /// 单入口幂等渲染：由 ComposerVS 投影全量刷新输入区
     member this.Render(vs: ComposerVS) =
         setEnabled vs.Enabled (vs.DisabledReason |> Option.defaultValue "")
+
         if input.Text <> vs.Text then
             input.Text <- vs.Text
+
             match vs.Caret with
             | Some c -> input.CaretIndex <- c
             | None -> input.CaretIndex <- if isNull vs.Text then 0 else vs.Text.Length
+
         setEnterSends vs.EnterSends
         setCompact vs.Compact
 

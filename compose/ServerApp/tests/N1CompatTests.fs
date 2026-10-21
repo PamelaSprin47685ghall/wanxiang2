@@ -31,32 +31,39 @@ module N1Compat =
     let ``旧式 auth.present 事件形态仍被当前解码器识别`` () =
         // 旧客户端（无 Hello 握手时代）发送的 {type, payload} 外壳
         let json = """{"type":"auth.present","payload":{"token":"tok-123"}}"""
+
         match WireCodec.tryDecode json with
-        | Ok (AuthPresent d) -> Assert.Equal("tok-123", d.token)
+        | Ok(AuthPresent d) -> Assert.Equal("tok-123", d.token)
         | other -> failwithf "expected AuthPresent, got %A" other
 
     [<Fact>]
     let ``旧式 pairing.requested 事件形态仍被当前解码器识别`` () =
-        let json = """{"type":"pairing.requested","payload":{"clientName":"legacy-client"}}"""
+        let json =
+            """{"type":"pairing.requested","payload":{"clientName":"legacy-client"}}"""
+
         match WireCodec.tryDecode json with
-        | Ok (PairingRequested d) -> Assert.Equal(Some "legacy-client", d.clientName)
+        | Ok(PairingRequested d) -> Assert.Equal(Some "legacy-client", d.clientName)
         | other -> failwithf "expected PairingRequested, got %A" other
 
     [<Fact>]
     let ``Hello 事件仍可解码（兼容 reader，ADR-001 方案 B 保留）`` () =
         // 方案 B：保留兼容 reader 仅用于读取旧客户端事件；无生产发送路径。
-        let json = """{"type":"protocol.hello","payload":{"protocol":"wanxiang","version":1}}"""
+        let json =
+            """{"type":"protocol.hello","payload":{"protocol":"wanxiang","version":1}}"""
+
         match WireCodec.tryDecode json with
-        | Ok (Hello d) ->
+        | Ok(Hello d) ->
             Assert.Equal("wanxiang", d.protocol)
             Assert.Equal(1, d.version)
         | other -> failwithf "expected Hello, got %A" other
 
     [<Fact>]
     let ``UpgradeRequired 事件仍可解码（兼容 reader）`` () =
-        let json = """{"type":"protocol.upgrade-required","payload":{"serverVersion":2,"clientVersion":1}}"""
+        let json =
+            """{"type":"protocol.upgrade-required","payload":{"serverVersion":2,"clientVersion":1}}"""
+
         match WireCodec.tryDecode json with
-        | Ok (UpgradeRequired d) ->
+        | Ok(UpgradeRequired d) ->
             Assert.Equal(2, d.serverVersion)
             Assert.Equal(1, d.clientVersion)
         | other -> failwithf "expected UpgradeRequired, got %A" other
@@ -70,6 +77,7 @@ module N1Compat =
         // 官方 SDK 对未知 type 抛 AGUIUnknownEventTypeException（与其自家规范矛盾），
         // 万象必须自建宽容读层（SSOT 56.3 硬约束 3）。
         let json = """{"type":"SOME_FUTURE_EVENT_TYPE_2099","payload":{"x":1}}"""
+
         match Wanxiang.Agui.TolerantReader.parse json with
         | Wanxiang.Agui.ParsedEvent.Unrecognized name -> Assert.Equal("SOME_FUTURE_EVENT_TYPE_2099", name)
         | other -> failwithf "expected Unrecognized, got %A" other
@@ -78,14 +86,16 @@ module N1Compat =
     let ``别家 CUSTOM 事件被识别为 Custom 而非拒绝`` () =
         // AG-UI 对 CUSTOM 规定 MUST ignore；别家命名空间不得切断连接
         let json = """{"type":"CUSTOM","name":"other-vendor/thing","value":{"a":1}}"""
+
         match Wanxiang.Agui.TolerantReader.parse json with
-        | Wanxiang.Agui.ParsedEvent.Custom (name, _) -> Assert.Equal("other-vendor/thing", name)
+        | Wanxiang.Agui.ParsedEvent.Custom(name, _) -> Assert.Equal("other-vendor/thing", name)
         | other -> failwithf "expected Custom, got %A" other
 
     [<Fact>]
     let ``已知类型但畸形载荷被识别为 Malformed（真协议错误）`` () =
         // 已知类型字段畸形 = 真的坏了：不得静默忽略
         let json = """{"type":"CUSTOM"}""" // 缺 name
+
         match Wanxiang.Agui.TolerantReader.parse json with
         | Wanxiang.Agui.ParsedEvent.Malformed reason -> Assert.Contains("name", reason)
         | other -> failwithf "expected Malformed, got %A" other
@@ -102,11 +112,16 @@ module N1Compat =
         let port = Wanxiang.Tests.ServerE2eTests.pickPort ()
         let token = ClientToken.ClientToken.generate ()
         let server = Wanxiang.Tests.ServerE2eTests.E2e.ServerHandle(port, token)
+
         try
             use timeout = new CancellationTokenSource(TimeSpan.FromSeconds 20.0)
             let ct = timeout.Token
             use ws = Wanxiang.Tests.ServerE2eTests.E2e.conn port token ct
-            let ev = Wanxiang.Tests.ServerE2eTests.E2e.waitFor ws ct (fun ev -> ev["type"].GetValue<string>() = "auth.accepted")
+
+            let ev =
+                Wanxiang.Tests.ServerE2eTests.E2e.waitFor ws ct (fun ev ->
+                    ev["type"].GetValue<string>() = "auth.accepted")
+
             Assert.Equal("auth.accepted", ev["type"].GetValue<string>())
         finally
             server.Dispose()
@@ -118,13 +133,22 @@ module N1Compat =
         let port = Wanxiang.Tests.ServerE2eTests.pickPort ()
         let token = ClientToken.ClientToken.generate ()
         let server = Wanxiang.Tests.ServerE2eTests.E2e.ServerHandle(port, token)
+
         try
             use timeout = new CancellationTokenSource(TimeSpan.FromSeconds 20.0)
             let ct = timeout.Token
             use ws = new ClientWebSocket()
             ws.ConnectAsync(Uri(sprintf "ws://127.0.0.1:%d/ws" port), ct).GetAwaiter().GetResult()
             // 不认证直接发业务命令（conversation.create）
-            let cmd = CreateConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); title = "x"; config = testConfig () |}
+            let cmd =
+                CreateConversation
+                    {|
+                        invocationId = Guid.NewGuid()
+                        conversationId = Guid.NewGuid()
+                        title = "x"
+                        config = testConfig ()
+                    |}
+
             let carrier = JsonObject()
             carrier["type"] <- "CUSTOM"
             carrier["name"] <- "wanxiang.dev/conversation.create"
@@ -137,14 +161,17 @@ module N1Compat =
             let buf = Array.zeroCreate<byte> 1024
             let mutable sawClose = false
             let mutable threw = false
+
             try
                 let result = ws.ReceiveAsync(ArraySegment<byte>(buf), ct).GetAwaiter().GetResult()
+
                 if result.MessageType = WebSocketMessageType.Close then
                     sawClose <- true
                 // 第二次：连接已关闭 → 抛异常
                 ws.ReceiveAsync(ArraySegment<byte>(buf), ct).GetAwaiter().GetResult() |> ignore
             with :? WebSocketException ->
                 threw <- true
+
             Assert.True(sawClose || threw, "expected server to close connection with protocol error")
         finally
             server.Dispose()

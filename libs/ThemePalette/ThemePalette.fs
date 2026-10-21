@@ -71,65 +71,70 @@ type PaletteKey =
 /// 活的画笔归主题管理者。
 module ThemePalette =
 
-    let private rgb (v: int) = Color.FromRgb(byte (v >>> 16), byte (v >>> 8), byte v)
-    let private argb (v: uint32) = Color.FromArgb(byte (v >>> 24), byte (v >>> 16), byte (v >>> 8), byte v)
+    let private rgb (v: int) =
+        Color.FromRgb(byte (v >>> 16), byte (v >>> 8), byte v)
+
+    let private argb (v: uint32) =
+        Color.FromArgb(byte (v >>> 24), byte (v >>> 16), byte (v >>> 8), byte v)
 
     /// 全部配色项，按旧字段顺序
-    let keys : PaletteKey list =
-        [ PaletteKey.Canvas
-          PaletteKey.Rail
-          PaletteKey.Surface
-          PaletteKey.SurfaceRaised
-          PaletteKey.SurfaceContainer
-          PaletteKey.Border
-          PaletteKey.BorderSoft
-          PaletteKey.Hairline
-          PaletteKey.HairlineStrong
-          PaletteKey.Line
-          PaletteKey.Text
-          PaletteKey.TextMuted
-          PaletteKey.TextFaint
-          PaletteKey.TextOnAccent
-          PaletteKey.Accent
-          PaletteKey.AccentHover
-          PaletteKey.AccentSoft
-          PaletteKey.AccentFaint
-          PaletteKey.Selected
-          PaletteKey.UserBubble
-          PaletteKey.UserBubbleText
-          PaletteKey.InlineCode
-          PaletteKey.TableStripe
-          PaletteKey.TableHeader
-          PaletteKey.Success
-          PaletteKey.Warning
-          PaletteKey.Danger
-          PaletteKey.DangerSoft
-          PaletteKey.Info
-          PaletteKey.InfoSoft
-          PaletteKey.CodeBg
-          PaletteKey.CodeHeaderBg
-          PaletteKey.CodeBorder
-          PaletteKey.CodeText
-          PaletteKey.CodeMuted
-          PaletteKey.CodeKeyword
-          PaletteKey.CodeString
-          PaletteKey.CodeComment
-          PaletteKey.CodeNumber
-          PaletteKey.CodeType
-          PaletteKey.CodeFunction
-          PaletteKey.CodeMeta
-          PaletteKey.CodeVariable
-          PaletteKey.CodeOperator
-          PaletteKey.CodeAddition
-          PaletteKey.CodeDeletion
-          PaletteKey.Scrim
-          PaletteKey.Shadow
-          PaletteKey.ShadowStrong
-          PaletteKey.Hover
-          PaletteKey.Pressed
-          PaletteKey.SurfaceSoft
-          PaletteKey.UserBubbleSelection
-          PaletteKey.ControlStroke ]
+    let keys: PaletteKey list =
+        [
+            PaletteKey.Canvas
+            PaletteKey.Rail
+            PaletteKey.Surface
+            PaletteKey.SurfaceRaised
+            PaletteKey.SurfaceContainer
+            PaletteKey.Border
+            PaletteKey.BorderSoft
+            PaletteKey.Hairline
+            PaletteKey.HairlineStrong
+            PaletteKey.Line
+            PaletteKey.Text
+            PaletteKey.TextMuted
+            PaletteKey.TextFaint
+            PaletteKey.TextOnAccent
+            PaletteKey.Accent
+            PaletteKey.AccentHover
+            PaletteKey.AccentSoft
+            PaletteKey.AccentFaint
+            PaletteKey.Selected
+            PaletteKey.UserBubble
+            PaletteKey.UserBubbleText
+            PaletteKey.InlineCode
+            PaletteKey.TableStripe
+            PaletteKey.TableHeader
+            PaletteKey.Success
+            PaletteKey.Warning
+            PaletteKey.Danger
+            PaletteKey.DangerSoft
+            PaletteKey.Info
+            PaletteKey.InfoSoft
+            PaletteKey.CodeBg
+            PaletteKey.CodeHeaderBg
+            PaletteKey.CodeBorder
+            PaletteKey.CodeText
+            PaletteKey.CodeMuted
+            PaletteKey.CodeKeyword
+            PaletteKey.CodeString
+            PaletteKey.CodeComment
+            PaletteKey.CodeNumber
+            PaletteKey.CodeType
+            PaletteKey.CodeFunction
+            PaletteKey.CodeMeta
+            PaletteKey.CodeVariable
+            PaletteKey.CodeOperator
+            PaletteKey.CodeAddition
+            PaletteKey.CodeDeletion
+            PaletteKey.Scrim
+            PaletteKey.Shadow
+            PaletteKey.ShadowStrong
+            PaletteKey.Hover
+            PaletteKey.Pressed
+            PaletteKey.SurfaceSoft
+            PaletteKey.UserBubbleSelection
+            PaletteKey.ControlStroke
+        ]
 
     let rec private light (key: PaletteKey) : Color =
         match key with

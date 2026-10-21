@@ -1,4 +1,5 @@
 module GenerationDraftGenerationFormTests
+
 open System
 open System.IO
 open Xunit
@@ -21,7 +22,11 @@ let ``blank optional fields mean unset and required fields must parse`` () =
     Assert.Equal(None, v.temperature)
     Assert.Equal(None, v.topP)
     Assert.Equal(None, v.maxTokens)
-    Assert.Equal<GenerationField list>([ GenerationField.ContextMessages; GenerationField.ToolRounds ], errs "" "" "" "" "")
+
+    Assert.Equal<GenerationField list>(
+        [ GenerationField.ContextMessages; GenerationField.ToolRounds ],
+        errs "" "" "" "" ""
+    )
 
 [<Fact>]
 let ``ranges are inclusive at the documented bounds`` () =
@@ -40,9 +45,11 @@ let ``decimal separator is always a dot`` () =
 [<Fact>]
 let ``payload writes every key with null for unset values in a fixed order`` () =
     let v = ok "" "" "" "3" "4"
+
     Assert.Equal(
         """{"temperature":null,"topP":null,"maxTokens":null,"instructions":null,"maxContextMessages":3,"maxToolRounds":4,"autoTitle":true}""",
-        (GenerationForm.payload v None true).ToJsonString())
+        (GenerationForm.payload v None true).ToJsonString()
+    )
 
 [<Fact>]
 let ``instructions are trimmed and blank means none`` () =

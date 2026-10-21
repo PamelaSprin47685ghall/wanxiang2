@@ -1,4 +1,5 @@
 module ColorBlendTests
+
 open System
 open System.IO
 open Xunit
@@ -18,7 +19,8 @@ let ``transparent overlay leaves the base`` () =
 [<Fact>]
 let ``result keeps base alpha and each channel lies between base and overlay`` () =
     let values = [ 0uy; 1uy; 17uy; 128uy; 200uy; 254uy; 255uy ]
-    for a in 0 .. 255 do
+
+    for a in 0..255 do
         for bc in values do
             for oc in values do
                 let rA, r, _, _ = ColorBlend.over (77uy, bc, 0uy, 0uy) (byte a, oc, 0uy, 0uy)
@@ -29,7 +31,11 @@ let ``result keeps base alpha and each channel lies between base and overlay`` (
 
 [<Fact>]
 let ``more overlay alpha moves the channel monotonically toward the overlay`` () =
-    let channel a = let _, r, _, _ = ColorBlend.over (255uy, 20uy, 0uy, 0uy) (byte a, 240uy, 0uy, 0uy) in r
-    for a in 1 .. 255 do Assert.True(channel a >= channel (a - 1))
+    let channel a =
+        let _, r, _, _ = ColorBlend.over (255uy, 20uy, 0uy, 0uy) (byte a, 240uy, 0uy, 0uy) in r
+
+    for a in 1..255 do
+        Assert.True(channel a >= channel (a - 1))
+
     Assert.Equal(20uy, channel 0)
     Assert.Equal(240uy, channel 255)

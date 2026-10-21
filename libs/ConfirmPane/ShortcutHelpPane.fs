@@ -13,7 +13,12 @@ open Wanxiang2.WorkspaceState
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 快捷键帮助的内容（迁自旧 Views/Dialogs.fs 的 shortcuts）。分组与条目由组合者给（旧原文见组合者）。
@@ -21,6 +26,7 @@ module private Dyn =
 type ShortcutHelpPane(?sections: (string * (string * string) list) list) =
     let closed = Event<unit>()
     let closeButton = Button(Content = "关闭")
+
     do
         closeButton.Classes.Add "primary"
         closeButton.Classes.Add "button-primary"
@@ -34,16 +40,28 @@ type ShortcutHelpPane(?sections: (string * (string * string) list) list) =
 
     let renderSections (secList: (string * (string * string) list) list) =
         sectionsPanel.Children.Clear()
+
         for (category, items) in secList do
             let catHeader = TextBlock(Text = category, FontWeight = FontWeight.Medium)
             catHeader.Classes.Add "section-label"
             sectionsPanel.Children.Add catHeader
             let rows = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
+
             for (keys, description) in items do
-                let keyText = TextBlock(Text = keys, HorizontalAlignment = HorizontalAlignment.Center)
+                let keyText =
+                    TextBlock(Text = keys, HorizontalAlignment = HorizontalAlignment.Center)
+
                 keyText.FontWeight <- FontWeight.Medium
                 keyText.Classes.Add "muted"
-                let cap = Border(Child = keyText, Padding = Thickness(8.0, 2.0), CornerRadius = CornerRadius 4.0, MinWidth = 60.0)
+
+                let cap =
+                    Border(
+                        Child = keyText,
+                        Padding = Thickness(8.0, 2.0),
+                        CornerRadius = CornerRadius 4.0,
+                        MinWidth = 60.0
+                    )
+
                 cap.Classes.Add "grouping-card"
                 let caption = TextBlock(Text = description)
                 caption.VerticalAlignment <- VerticalAlignment.Center
@@ -51,22 +69,27 @@ type ShortcutHelpPane(?sections: (string * (string * string) list) list) =
                 row.Children.Add cap
                 row.Children.Add caption
                 rows.Children.Add row
+
             sectionsPanel.Children.Add rows
 
-    do
-        renderSections (defaultArg sections [])
+    do renderSections (defaultArg sections [])
 
     let view =
         let content = StackPanel(Orientation = Orientation.Vertical, Spacing = 16.0)
         content.Children.Add titleBlock
         content.Children.Add sectionsPanel
         content.Children.Add closeButton
+
         let scroller =
             ScrollViewer(
                 Content = content,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto)
-        scroller.Bind(Layoutable.MaxHeightProperty, Dyn.res "Metric.DialogContentMaxHeight") |> ignore
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            )
+
+        scroller.Bind(Layoutable.MaxHeightProperty, Dyn.res "Metric.DialogContentMaxHeight")
+        |> ignore
+
         scroller
 
     member _.View = view :> Control
@@ -74,11 +97,14 @@ type ShortcutHelpPane(?sections: (string * (string * string) list) list) =
     member _.InitialFocus = closeButton :> Control
 
     member this.Render(vs: DialogVS) =
-        if not (String.IsNullOrEmpty vs.Title) then titleBlock.Text <- vs.Title
+        if not (String.IsNullOrEmpty vs.Title) then
+            titleBlock.Text <- vs.Title
+
         match vs.ShortcutHelp with
         | Some sh ->
             let raw = sh.Sections |> List.map (fun s -> s.Category, s.Items)
             renderSections raw
         | None -> ()
 
-    [<CLIEvent>] member _.Closed = closed.Publish
+    [<CLIEvent>]
+    member _.Closed = closed.Publish

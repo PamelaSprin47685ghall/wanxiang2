@@ -11,15 +11,46 @@ open Wanxiang.Tests.Helpers
 [<Fact>]
 let ``conversation list summary includes last message and runtime state`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let convId = newConversationId ()
+
         let commits =
-            [ Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = convId; title = "摘要"; config = testConfig () } ]
-              Events.Commit.create 2UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = assistantMessageJson "最后一条消息内容" } ] ]
+            [
+                Events.Commit.create
+                    1UL
+                    DateTimeOffset.UtcNow
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "摘要"
+                                config = testConfig ()
+                            }
+                    ]
+                Events.Commit.create
+                    2UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = assistantMessageJson "最后一条消息内容"
+                            }
+                    ]
+            ]
+
         let proj =
             commits
-            |> List.fold (fun p c -> Projection.applyCommit p c |> function Ok p -> p | Error e -> failwith (WanxiangError.message e)) Projection.empty
+            |> List.fold
+                (fun p c ->
+                    Projection.applyCommit p c
+                    |> function
+                        | Ok p -> p
+                        | Error e -> failwith (WanxiangError.message e))
+                Projection.empty
+
         let items = ServerModel.conversationListItems proj (fun _ -> "idle")
         Assert.Single items |> ignore
         let item = items[0].AsObject()
@@ -36,16 +67,56 @@ let ``conversation list summary includes last message and runtime state`` () =
 [<Fact>]
 let ``snapshot messages carry commitId per message`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let convId = newConversationId ()
+
         let commits =
-            [ Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
-              Events.Commit.create 2UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m1" } ]
-              Events.Commit.create 3UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = assistantMessageJson "m2" } ] ]
+            [
+                Events.Commit.create
+                    1UL
+                    DateTimeOffset.UtcNow
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "A"
+                                config = testConfig ()
+                            }
+                    ]
+                Events.Commit.create
+                    2UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = userMessageJson "m1"
+                            }
+                    ]
+                Events.Commit.create
+                    3UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = assistantMessageJson "m2"
+                            }
+                    ]
+            ]
+
         let proj =
             commits
-            |> List.fold (fun p c -> Projection.applyCommit p c |> function Ok p -> p | Error e -> failwith (WanxiangError.message e)) Projection.empty
+            |> List.fold
+                (fun p c ->
+                    Projection.applyCommit p c
+                    |> function
+                        | Ok p -> p
+                        | Error e -> failwith (WanxiangError.message e))
+                Projection.empty
+
         let conv = Projection.tryConversation proj convId |> Option.get
         let msgs = ServerModel.conversationMessages proj conv
         Assert.Equal(2, msgs.Count)
@@ -62,6 +133,7 @@ let ``snapshot messages carry commitId per message`` () =
 [<Fact>]
 let ``fork plan requires fork point to be a message commit id`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
@@ -70,30 +142,83 @@ let ``fork plan requires fork point to be a message commit id`` () =
         // 创建对话 + 一条消息
         let c1 =
             coord.Submit
-                { events = [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
-                  commandId = None; commandType = None; commandHash = None; nowUtc = None }
+                {
+                    events =
+                        [
+                            ConversationCreated
+                                {
+                                    conversationId = convId
+                                    title = "A"
+                                    config = testConfig ()
+                                }
+                        ]
+                    commandId = None
+                    commandType = None
+                    commandHash = None
+                    nowUtc = None
+                }
+
         let c2 =
             coord.Submit
-                { events = [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m1" } ]
-                  commandId = None; commandType = None; commandHash = None; nowUtc = None }
+                {
+                    events =
+                        [
+                            AgentMessageRecorded
+                                {
+                                    conversationId = convId
+                                    payloadJson = userMessageJson "m1"
+                                }
+                        ]
+                    commandId = None
+                    commandType = None
+                    commandHash = None
+                    nowUtc = None
+                }
+
         match c1, c2 with
         | Committed _, Committed _ -> ()
         | _ -> failwith "setup commits failed"
+
         let forkId = newConversationId ()
         // 合法：forkAfterId = 消息 commitId (2)
         let okPlan =
-            CommandEngine.planStamped coord.Stamps coord.Projection 2UL
-                (ForkConversation {| invocationId = Guid.NewGuid(); conversationId = forkId; parentConversationId = convId; forkAfterId = Some 2UL; config = testConfig (); editedMessageJson = userMessageJson "编辑后" |})
+            CommandEngine.planStamped
+                coord.Stamps
+                coord.Projection
+                2UL
+                (ForkConversation
+                    {|
+                        invocationId = Guid.NewGuid()
+                        conversationId = forkId
+                        parentConversationId = convId
+                        forkAfterId = Some 2UL
+                        config = testConfig ()
+                        editedMessageJson = userMessageJson "编辑后"
+                    |})
+
         match okPlan with
         | Planned p -> Assert.Equal(2, p.events.Length) // forked + message
         | r -> failwithf "valid fork should plan, got %A" r
         // 非法：forkAfterId = 对话 lastCommitId（2 之后无消息提交，用 999 模拟非消息 id）
         let badPlan =
-            CommandEngine.planStamped coord.Stamps coord.Projection 2UL
-                (ForkConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); parentConversationId = convId; forkAfterId = Some 999UL; config = testConfig (); editedMessageJson = userMessageJson "x" |})
+            CommandEngine.planStamped
+                coord.Stamps
+                coord.Projection
+                2UL
+                (ForkConversation
+                    {|
+                        invocationId = Guid.NewGuid()
+                        conversationId = Guid.NewGuid()
+                        parentConversationId = convId
+                        forkAfterId = Some 999UL
+                        config = testConfig ()
+                        editedMessageJson = userMessageJson "x"
+                    |})
+
         match badPlan with
-        | Rejected (ForkPointInvalid _) -> ()
+        | Rejected(ForkPointInvalid _) -> ()
         | r -> failwithf "invalid fork point should be rejected, got %A" r
+
         coord.Shutdown()
     finally
         cleanup dir
@@ -104,6 +229,7 @@ let ``fork plan requires fork point to be a message commit id`` () =
 [<Fact>]
 let ``command id idempotency and conversation id collision`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
@@ -111,21 +237,54 @@ let ``command id idempotency and conversation id collision`` () =
         let convId = newConversationId ()
         let invId = Guid.NewGuid()
         // 提交第一次
-        let cmd1 = CreateConversation {| invocationId = invId; conversationId = convId; title = "A"; config = testConfig () |}
+        let cmd1 =
+            CreateConversation
+                {|
+                    invocationId = invId
+                    conversationId = convId
+                    title = "A"
+                    config = testConfig ()
+                |}
+
         match CommandEngine.planStamped coord.Stamps coord.Projection 0UL cmd1 with
         | Planned p ->
-            coord.Submit { events = p.events; commandId = Some p.commandId; commandType = Some p.commandType; commandHash = Some p.canonicalHash; nowUtc = None } |> ignore
+            coord.Submit
+                {
+                    events = p.events
+                    commandId = Some p.commandId
+                    commandType = Some p.commandType
+                    commandHash = Some p.canonicalHash
+                    nowUtc = None
+                }
+            |> ignore
         | r -> failwithf "plan failed: %A" r
         // 同 invocationId + 同载荷 → 幂等命中（网络重试，决策 13/37）
-        let cmd3 = CreateConversation {| invocationId = invId; conversationId = convId; title = "A"; config = testConfig () |}
+        let cmd3 =
+            CreateConversation
+                {|
+                    invocationId = invId
+                    conversationId = convId
+                    title = "A"
+                    config = testConfig ()
+                |}
+
         match CommandEngine.planStamped coord.Stamps coord.Projection 1UL cmd3 with
         | PlanResult.IdempotentReplay cid -> Assert.Equal(1UL, cid)
         | r -> failwithf "expected idempotent replay, got %A" r
         // 不同 invocationId + 同 conversationId → 正常拒绝（id 已占用）
-        let cmd2 = CreateConversation {| invocationId = Guid.NewGuid(); conversationId = convId; title = "B"; config = testConfig () |}
+        let cmd2 =
+            CreateConversation
+                {|
+                    invocationId = Guid.NewGuid()
+                    conversationId = convId
+                    title = "B"
+                    config = testConfig ()
+                |}
+
         match CommandEngine.planStamped coord.Stamps coord.Projection 1UL cmd2 with
-        | Rejected (ConversationIdTaken _) -> ()
+        | Rejected(ConversationIdTaken _) -> ()
         | r -> failwithf "expected conversation id taken, got %A" r
+
         coord.Shutdown()
     finally
         cleanup dir
@@ -135,23 +294,72 @@ let ``command id idempotency and conversation id collision`` () =
 [<Fact>]
 let ``fork with empty config succeeds and is idempotent`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         use coord = new EventStore(dir)
         let convId = newConversationId ()
-        let emptyCfg = { provider = ""; model = ""; instructions = None; tools = []; temperature = None; topP = None; maxTokens = None; thinkingBudget = None; extraJson = None }
+
+        let emptyCfg =
+            {
+                provider = ""
+                model = ""
+                instructions = None
+                tools = []
+                temperature = None
+                topP = None
+                maxTokens = None
+                thinkingBudget = None
+                extraJson = None
+            }
         // 父对话 + 一条消息
-        coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "P"; config = testConfig () } ] |> ignore
-        coord.SubmitEvents [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m1" } ] |> ignore
+        coord.SubmitEvents
+            [
+                ConversationCreated
+                    {
+                        conversationId = convId
+                        title = "P"
+                        config = testConfig ()
+                    }
+            ]
+        |> ignore
+
+        coord.SubmitEvents
+            [
+                AgentMessageRecorded
+                    {
+                        conversationId = convId
+                        payloadJson = userMessageJson "m1"
+                    }
+            ]
+        |> ignore
+
         let forkId = newConversationId ()
         let invId = Guid.NewGuid()
         // 空 config 的 fork 应能 plan（不再被 isValid 拒绝）
         let forkCmd =
-            ForkConversation {| invocationId = invId; conversationId = forkId; parentConversationId = convId; forkAfterId = Some 2UL; config = emptyCfg; editedMessageJson = userMessageJson "编辑" |}
+            ForkConversation
+                {|
+                    invocationId = invId
+                    conversationId = forkId
+                    parentConversationId = convId
+                    forkAfterId = Some 2UL
+                    config = emptyCfg
+                    editedMessageJson = userMessageJson "编辑"
+                |}
+
         match CommandEngine.planStamped coord.Stamps coord.Projection 2UL forkCmd with
         | Planned p ->
-            let submit = { events = p.events; commandId = Some p.commandId; commandType = Some p.commandType; commandHash = Some p.canonicalHash; nowUtc = None }
+            let submit =
+                {
+                    events = p.events
+                    commandId = Some p.commandId
+                    commandType = Some p.commandType
+                    commandHash = Some p.canonicalHash
+                    nowUtc = None
+                }
+
             match coord.Submit submit with
             | Committed _ -> ()
             | r -> failwithf "fork with empty config should commit, got %A" r
@@ -162,17 +370,28 @@ let ``fork with empty config succeeds and is idempotent`` () =
         | r -> failwithf "fork retry should be idempotent, got %A" r
         // config 不参与 fork 的 commandId：同 invocationId 但 config 不同 → 仍幂等（非冲突）
         let forkCmdDiffCfg =
-            ForkConversation {| invocationId = invId; conversationId = forkId; parentConversationId = convId; forkAfterId = Some 2UL; config = { emptyCfg with provider = "other" }; editedMessageJson = userMessageJson "编辑" |}
+            ForkConversation
+                {|
+                    invocationId = invId
+                    conversationId = forkId
+                    parentConversationId = convId
+                    forkAfterId = Some 2UL
+                    config = { emptyCfg with provider = "other" }
+                    editedMessageJson = userMessageJson "编辑"
+                |}
+
         match CommandEngine.planStamped coord.Stamps coord.Projection 3UL forkCmdDiffCfg with
         | PlanResult.IdempotentReplay _ -> ()
         | r -> failwithf "fork retry with different config should still be idempotent, got %A" r
         // fork 投影继承了父对话 config（testConfig：provider=openai, model=test-model）
         let proj = coord.Projection
+
         match Projection.tryConversation proj forkId with
         | Some fc ->
             Assert.Equal("openai", fc.config.provider)
             Assert.Equal("test-model", fc.config.model)
         | None -> failwith "fork conversation missing"
+
         coord.Shutdown()
     finally
         cleanup dir

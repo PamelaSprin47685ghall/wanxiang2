@@ -14,21 +14,28 @@ open Wanxiang2.ToastStrip
 open Wanxiang2.WorkspaceState
 
 let look () =
-    { Surface = SolidColorBrush(Colors.White)
-      Edge = SolidColorBrush(Colors.Gray)
-      Text = SolidColorBrush(Colors.Black)
-      Accent = (fun tone -> if tone = ToastTone.Failure then Brushes.Red else Brushes.Gray)
-      AccentOpacity = 0.6
-      Padding = Thickness(16.0, 12.0)
-      Shadow = BoxShadows()
-      LineHeight = 18.0
-      ColumnSpacing = 12.0
-      Spacing = 8.0
-      Margin = Thickness(24.0, 0.0, 24.0, 32.0)
-      MaxWidth = 480.0
-      BodyMaxHeight = 160.0
-      Fade = TimeSpan.Zero
-      FadeEasing = Avalonia.Animation.Easings.CubicEaseOut() }
+    {
+        Surface = SolidColorBrush(Colors.White)
+        Edge = SolidColorBrush(Colors.Gray)
+        Text = SolidColorBrush(Colors.Black)
+        Accent =
+            (fun tone ->
+                if tone = ToastTone.Failure then
+                    Brushes.Red
+                else
+                    Brushes.Gray)
+        AccentOpacity = 0.6
+        Padding = Thickness(16.0, 12.0)
+        Shadow = BoxShadows()
+        LineHeight = 18.0
+        ColumnSpacing = 12.0
+        Spacing = 8.0
+        Margin = Thickness(24.0, 0.0, 24.0, 32.0)
+        MaxWidth = 480.0
+        BodyMaxHeight = 160.0
+        Fade = TimeSpan.Zero
+        FadeEasing = Avalonia.Animation.Easings.CubicEaseOut()
+    }
 
 /// 主题资源字典的替身：控件绑定资源键，这里只往应用资源写值。
 let seedResources () =
@@ -50,7 +57,11 @@ let host w h (strip: ToastStrip) =
     root, window
 
 let byName (root: Visual) name =
-    root.GetVisualDescendants() |> Seq.choose (function :? Control as c when AutomationProperties.GetName c = name -> Some c | _ -> None) |> Seq.tryHead
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? Control as c when AutomationProperties.GetName c = name -> Some c
+        | _ -> None)
+    |> Seq.tryHead
 
 // 迁自旧 OverlayMenuTests.toast_stays_non_focusable_and_escape_dismisses_it（Escape 那步在组合者里测）。
 [<Fact>]
@@ -163,10 +174,32 @@ let ``render idempotently reconciles toasts list`` () =
         let strip = ToastStrip l
         let _root, window = host 400.0 300.0 strip
         let now = DateTimeOffset.UtcNow
-        let vs1: ToastVS list = [ { Id = 1; Text = "消息一"; Tone = ToastTone.Info; UndoAction = None; ExpiresAt = now.AddSeconds 5.0 } ]
+
+        let vs1: ToastVS list =
+            [
+                {
+                    Id = 1
+                    Text = "消息一"
+                    Tone = ToastTone.Info
+                    UndoAction = None
+                    ExpiresAt = now.AddSeconds 5.0
+                }
+            ]
+
         strip.Render vs1
         Assert.Equal<string list>([ "消息一" ], strip.Messages)
-        let vs2: ToastVS list = [ { Id = 2; Text = "消息二"; Tone = ToastTone.Success; UndoAction = Some "undo-1"; ExpiresAt = now.AddSeconds 5.0 } ]
+
+        let vs2: ToastVS list =
+            [
+                {
+                    Id = 2
+                    Text = "消息二"
+                    Tone = ToastTone.Success
+                    UndoAction = Some "undo-1"
+                    ExpiresAt = now.AddSeconds 5.0
+                }
+            ]
+
         strip.Render vs2
         Assert.Equal<string list>([ "消息二" ], strip.Messages)
         strip.Render []

@@ -14,7 +14,9 @@ let ``KatexHtml fontScaleOf computes ratio of size classes`` () =
 
 [<Fact>]
 let ``KatexHtml emOf parses em and px correctly`` () =
-    let style = Map.ofList [ "height", "1.5em"; "margin-top", "-0.2em"; "width", "24px" ]
+    let style =
+        Map.ofList [ "height", "1.5em"; "margin-top", "-0.2em"; "width", "24px" ]
+
     Assert.Equal(Some 1.5, KatexHtml.emOf style "height")
     Assert.Equal(Some -0.2, KatexHtml.emOf style "margin-top")
     Assert.Equal(Some 24.0, KatexHtml.emOf style "width")
@@ -22,7 +24,9 @@ let ``KatexHtml emOf parses em and px correctly`` () =
 
 [<Fact>]
 let ``KatexHtml parse and visualSubtree filters katex-html`` () =
-    let html = "<span class=\"katex\"><span class=\"katex-mathml\">text</span><span class=\"katex-html\"><span>x</span></span></span>"
+    let html =
+        "<span class=\"katex\"><span class=\"katex-mathml\">text</span><span class=\"katex-html\"><span>x</span></span></span>"
+
     let nodes = KatexHtml.parse html
     Assert.NotEmpty(nodes)
     let vis = KatexHtml.visualSubtree nodes
@@ -31,7 +35,10 @@ let ``KatexHtml parse and visualSubtree filters katex-html`` () =
 [<Fact>]
 let ``KatexHtml isDisplay detects display formulas`` () =
     let inlineHtml = "<span class=\"katex\"><span class=\"katex-html\">x</span></span>"
-    let displayHtml = "<span class=\"katex-display\"><span class=\"katex-html\">x</span></span>"
+
+    let displayHtml =
+        "<span class=\"katex-display\"><span class=\"katex-html\">x</span></span>"
+
     Assert.False(KatexHtml.isDisplay (KatexHtml.parse inlineHtml))
     Assert.True(KatexHtml.isDisplay (KatexHtml.parse displayHtml))
 

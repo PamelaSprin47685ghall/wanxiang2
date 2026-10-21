@@ -20,15 +20,27 @@ type SettingsPart =
 
 module SettingsPart =
     let groups =
-        [ "主机", [ SettingsPart.Providers; SettingsPart.Tools; SettingsPart.Generation; SettingsPart.Devices ]
-          "这台客户端", [ SettingsPart.Appearance; SettingsPart.About ] ]
+        [
+            "主机",
+            [
+                SettingsPart.Providers
+                SettingsPart.Tools
+                SettingsPart.Generation
+                SettingsPart.Devices
+            ]
+            "这台客户端", [ SettingsPart.Appearance; SettingsPart.About ]
+        ]
 
     let all = groups |> List.collect snd
 
     let scope =
         function
-        | SettingsPart.Providers | SettingsPart.Tools | SettingsPart.Generation | SettingsPart.Devices -> "主机"
-        | SettingsPart.Appearance | SettingsPart.About -> "这台客户端"
+        | SettingsPart.Providers
+        | SettingsPart.Tools
+        | SettingsPart.Generation
+        | SettingsPart.Devices -> "主机"
+        | SettingsPart.Appearance
+        | SettingsPart.About -> "这台客户端"
 
     let label =
         function
@@ -49,46 +61,52 @@ module SettingsPart =
         | SettingsPart.About -> "info"
 
     let key (part: SettingsPart) = (sprintf "%A" part).ToLowerInvariant()
-    let ofKey (k: string) = all |> List.tryFind (fun p -> key p = k)
+
+    let ofKey (k: string) =
+        all |> List.tryFind (fun p -> key p = k)
 
 /// 对话默认值、外观与操作、关于分区的视图状态投影
 type SettingsGeneralVS =
-    { Catalog: Catalog
-      InstanceId: string
-      ServerUrl: string
-      Prefs: UiPrefs }
+    {
+        Catalog: Catalog
+        InstanceId: string
+        ServerUrl: string
+        Prefs: UiPrefs
+    }
 
 module SettingsGeneralVS =
     let empty (prefs: UiPrefs) : SettingsGeneralVS =
-        { Catalog = Catalog.empty
-          InstanceId = ""
-          ServerUrl = ""
-          Prefs = prefs }
+        {
+            Catalog = Catalog.empty
+            InstanceId = ""
+            ServerUrl = ""
+            Prefs = prefs
+        }
 
 /// 模型服务分区的视图状态投影
-type SettingsProvidersVS =
-    { Catalog: Catalog }
+type SettingsProvidersVS = { Catalog: Catalog }
 
 module SettingsProvidersVS =
-    let empty: SettingsProvidersVS =
-        { Catalog = Catalog.empty }
+    let empty: SettingsProvidersVS = { Catalog = Catalog.empty }
 
 /// 工具分区的视图状态投影
-type SettingsToolsVS =
-    { Catalog: Catalog }
+type SettingsToolsVS = { Catalog: Catalog }
 
 module SettingsToolsVS =
-    let empty: SettingsToolsVS =
-        { Catalog = Catalog.empty }
+    let empty: SettingsToolsVS = { Catalog = Catalog.empty }
 
 /// 首次运行引导卡片的视图状态投影
 type SettingsOnboardingVS =
-    { SelectedPresetKey: string option
-      DiscoveredModels: string list option
-      SwitchOffered: bool }
+    {
+        SelectedPresetKey: string option
+        DiscoveredModels: string list option
+        SwitchOffered: bool
+    }
 
 module SettingsOnboardingVS =
     let empty: SettingsOnboardingVS =
-        { SelectedPresetKey = None
-          DiscoveredModels = None
-          SwitchOffered = false }
+        {
+            SelectedPresetKey = None
+            DiscoveredModels = None
+            SwitchOffered = false
+        }

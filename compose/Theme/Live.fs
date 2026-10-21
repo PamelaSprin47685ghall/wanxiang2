@@ -15,13 +15,18 @@ type LiveValue<'T when 'T: equality>(initial: 'T) =
     member _.Set(next: 'T) =
         if next <> value then
             value <- next
-            for s in List.ofSeq subs do s.OnNext next
+
+            for s in List.ofSeq subs do
+                s.OnNext next
 
     interface IObservable<'T> with
         member _.Subscribe(o: IObserver<'T>) =
             subs.Add o
             o.OnNext value
-            { new IDisposable with member _.Dispose() = subs.Remove o |> ignore }
+
+            { new IDisposable with
+                member _.Dispose() = subs.Remove o |> ignore
+            }
 
 /// 活值的派生视图：源值每次推送都经 f 变换后推送（样式 Setter 经 ToBinding 订阅它）
 module Live =
@@ -32,21 +37,33 @@ module Live =
                     { new IObserver<'A> with
                         member _.OnNext v = o.OnNext(f v)
                         member _.OnError e = o.OnError e
-                        member _.OnCompleted() = o.OnCompleted() } }
+                        member _.OnCompleted() = o.OnCompleted()
+                    }
+        }
 
     /// 两个活值合成一个
     let map2 (f: 'A -> 'B -> 'C) (a: LiveValue<'A>) (b: LiveValue<'B>) : IObservable<'C> =
         { new IObservable<'C> with
             member _.Subscribe(o: IObserver<'C>) =
                 let push () = o.OnNext(f a.Value b.Value)
+
                 let watch (x: IObservable<'T>) =
-                    x.Subscribe { new IObserver<'T> with
-                                    member _.OnNext _ = push ()
-                                    member _.OnError e = o.OnError e
-                                    member _.OnCompleted() = () }
+                    x.Subscribe
+                        { new IObserver<'T> with
+                            member _.OnNext _ = push ()
+                            member _.OnError e = o.OnError e
+                            member _.OnCompleted() = ()
+                        }
+
                 let da = watch a
                 let db = watch b
-                { new IDisposable with member _.Dispose() = da.Dispose(); db.Dispose() } }
+
+                { new IDisposable with
+                    member _.Dispose() =
+                        da.Dispose()
+                        db.Dispose()
+                }
+        }
 
 /// 间距、圆角、描边、字形档（SpacingRamp 的刻度，作为活值的初始值）
 [<RequireQualifiedAccess>]
@@ -83,9 +100,32 @@ module Space =
     open Wanxiang.UI
 
     let all =
-        [ Space.None; Space.XXs; Space.Xs; Space.Sm; Space.Md; Space.Lg; Space.Xl; Space.X2l; Space.X3l; Space.X4l; Space.X6l; Space.X8l
-          Space.RadiusXs; Space.RadiusSm; Space.RadiusMd; Space.RadiusLg; Space.RadiusPill
-          Space.StrokeThin; Space.StrokeThick; Space.GlyphSm; Space.GlyphMd; Space.GlyphLg; Space.TrackingSection; Space.TrackingDisplay ]
+        [
+            Space.None
+            Space.XXs
+            Space.Xs
+            Space.Sm
+            Space.Md
+            Space.Lg
+            Space.Xl
+            Space.X2l
+            Space.X3l
+            Space.X4l
+            Space.X6l
+            Space.X8l
+            Space.RadiusXs
+            Space.RadiusSm
+            Space.RadiusMd
+            Space.RadiusLg
+            Space.RadiusPill
+            Space.StrokeThin
+            Space.StrokeThick
+            Space.GlyphSm
+            Space.GlyphMd
+            Space.GlyphLg
+            Space.TrackingSection
+            Space.TrackingDisplay
+        ]
 
     let initial (s: Space) =
         match s with

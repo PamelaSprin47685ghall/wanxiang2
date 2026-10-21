@@ -13,9 +13,11 @@ open Wanxiang2.ThemePalette
 /// Cut / Copy / Paste——r9 走查在手机 PWA 上截到。Fluent 的文案走资源键，这里统一改成中文。
 module TextFlyoutLocale =
     let strings =
-        [ "StringTextFlyoutCutText", "剪切"
-          "StringTextFlyoutCopyText", "复制"
-          "StringTextFlyoutPasteText", "粘贴" ]
+        [
+            "StringTextFlyoutCutText", "剪切"
+            "StringTextFlyoutCopyText", "复制"
+            "StringTextFlyoutPasteText", "粘贴"
+        ]
 
     let apply (resources: IResourceDictionary) =
         for key, text in strings do
@@ -24,7 +26,10 @@ module TextFlyoutLocale =
 /// 决策 276：触屏时隐藏菜单项右侧的快捷键文字（Fluent MenuItem 模板部件 PART_InputGestureText）。
 module TouchMenuGestures =
     let style () =
-        let s = Style(fun selector -> selector.OfType<MenuItem>().Template().OfType<TextBlock>().Name "PART_InputGestureText")
+        let s =
+            Style(fun selector ->
+                selector.OfType<MenuItem>().Template().OfType<TextBlock>().Name "PART_InputGestureText")
+
         s.Setters.Add(Setter(Visual.IsVisibleProperty, false))
         s
 
@@ -59,16 +64,20 @@ type App() =
     /// 少了这一步，输入框会在浅纸背景上呈现一块更深的灰板。
     member private this.FlattenTextBoxChrome() =
         let transparent = Brushes.Transparent :> IBrush
+
         for key in
-            [ "TextControlBackground"
-              "TextControlBackgroundPointerOver"
-              "TextControlBackgroundFocused"
-              "TextControlBackgroundDisabled"
-              "TextControlBorderBrush"
-              "TextControlBorderBrushPointerOver"
-              "TextControlBorderBrushFocused"
-              "TextControlBorderBrushDisabled" ] do
+            [
+                "TextControlBackground"
+                "TextControlBackgroundPointerOver"
+                "TextControlBackgroundFocused"
+                "TextControlBackgroundDisabled"
+                "TextControlBorderBrush"
+                "TextControlBorderBrushPointerOver"
+                "TextControlBorderBrushFocused"
+                "TextControlBorderBrushDisabled"
+            ] do
             this.Resources[key] <- transparent
+
         this.Resources["TextControlBorderThemeThickness"] <- Thickness 0.0
         this.Resources["TextControlBorderThemeThicknessFocused"] <- Thickness 0.0
         this.Resources["TextControlThemePadding"] <- Thickness 0.0
@@ -79,12 +88,20 @@ type App() =
         this.Resources["TextControlPlaceholderForegroundPointerOver"] <- SharedTheme.manager.Brush PaletteKey.TextFaint
         this.Resources["TextControlPlaceholderForegroundFocused"] <- SharedTheme.manager.Brush PaletteKey.TextFaint
         this.Resources["TextControlSelectionHighlightColor"] <- SharedTheme.manager.Brush PaletteKey.AccentSoft
+
         for pseudo in [ ""; ":focus"; ":pointerover"; ":disabled" ] do
             let style =
                 Style(fun selector ->
                     let baseSelector = selector.OfType<TextBox>()
-                    let stated = if pseudo = "" then baseSelector else baseSelector.Class pseudo
+
+                    let stated =
+                        if pseudo = "" then
+                            baseSelector
+                        else
+                            baseSelector.Class pseudo
+
                     stated.Template().OfType<Border>().Name "PART_BorderElement")
+
             style.Setters.Add(Setter(Border.BorderThicknessProperty, Thickness 0.0))
             style.Setters.Add(Setter(Border.BorderBrushProperty, transparent))
             style.Setters.Add(Setter(Border.BackgroundProperty, transparent))
@@ -98,8 +115,17 @@ type App() =
         SharedTheme.styles.InstallControlThemes this.Resources
         // 主题资源字典（Palette.* / Metric.* / Space.* / 派生档）装进应用资源：
         // 控件的 DynamicResource 声明式绑定沿可视树查到 Application 才吃得值（W7 外观退役的通路）。
-        if not (this.Resources.MergedDictionaries.Contains (SharedTheme.manager.Resources :> Avalonia.Controls.IResourceDictionary)) then
-            this.Resources.MergedDictionaries.Add (SharedTheme.manager.Resources :> Avalonia.Controls.IResourceDictionary)
+        if
+            not (
+                this.Resources.MergedDictionaries.Contains(
+                    SharedTheme.manager.Resources :> Avalonia.Controls.IResourceDictionary
+                )
+            )
+        then
+            this.Resources.MergedDictionaries.Add(
+                SharedTheme.manager.Resources :> Avalonia.Controls.IResourceDictionary
+            )
+
         Wanxiang2.ImeShield.ImeShield.install ()
         // 画布主题固定为浅色变体：万象自己的深色由 Tokens 提供，
         // 若让 Fluent 也切深色，两套配色会互相打架。
@@ -121,8 +147,10 @@ type App() =
         this.Styles.Add toolTipFont
         // 右键菜单同理：ContextMenu 是弹出层，PWA 里菜单文字曾整排渲染成豆腐块。
         for popupFont in
-            [ Style(fun selector -> selector.OfType<ContextMenu>())
-              Style(fun selector -> selector.OfType<MenuItem>()) ] do
+            [
+                Style(fun selector -> selector.OfType<ContextMenu>())
+                Style(fun selector -> selector.OfType<MenuItem>())
+            ] do
             popupFont.Setters.Add(Setter(TemplatedControl.FontFamilyProperty, SharedTheme.manager.FontFamily.Value))
             this.Styles.Add popupFont
 
@@ -134,28 +162,46 @@ type App() =
         // 决策 276：画布固定浅色变体，输入框菜单因此在深色主题下仍是一块白板。
         // 菜单底色 / 描边 / 文字改走万象的实时画笔，随主题补间一起变。
         let flyoutChrome = Style(fun selector -> selector.OfType<MenuFlyoutPresenter>())
-        flyoutChrome.Setters.Add(Setter(TemplatedControl.BackgroundProperty, SharedTheme.manager.Brush PaletteKey.SurfaceRaised))
-        flyoutChrome.Setters.Add(Setter(TemplatedControl.BorderBrushProperty, SharedTheme.manager.Brush PaletteKey.Border))
+
+        flyoutChrome.Setters.Add(
+            Setter(TemplatedControl.BackgroundProperty, SharedTheme.manager.Brush PaletteKey.SurfaceRaised)
+        )
+
+        flyoutChrome.Setters.Add(
+            Setter(TemplatedControl.BorderBrushProperty, SharedTheme.manager.Brush PaletteKey.Border)
+        )
+
         flyoutChrome.Setters.Add(Setter(TemplatedControl.ForegroundProperty, SharedTheme.manager.Brush PaletteKey.Text))
         this.Styles.Add flyoutChrome
-        let flyoutItem = Style(fun selector -> selector.OfType<MenuFlyoutPresenter>().Descendant().OfType<MenuItem>())
+
+        let flyoutItem =
+            Style(fun selector -> selector.OfType<MenuFlyoutPresenter>().Descendant().OfType<MenuItem>())
+
         flyoutItem.Setters.Add(Setter(TemplatedControl.ForegroundProperty, SharedTheme.manager.Brush PaletteKey.Text))
         this.Styles.Add flyoutItem
+
         for key, brush in
-            [ "MenuFlyoutPresenterBackground", SharedTheme.manager.Brush PaletteKey.SurfaceRaised
-              "MenuFlyoutPresenterBorderBrush", SharedTheme.manager.Brush PaletteKey.Border
-              "MenuFlyoutItemForeground", SharedTheme.manager.Brush PaletteKey.Text
-              "MenuFlyoutItemForegroundPointerOver", SharedTheme.manager.Brush PaletteKey.Text
-              "MenuFlyoutItemBackgroundPointerOver", SharedTheme.manager.Brush PaletteKey.Hover
-              "MenuFlyoutItemBackgroundPressed", SharedTheme.manager.Brush PaletteKey.Pressed
-              "MenuFlyoutItemKeyboardAcceleratorTextForeground", SharedTheme.manager.Brush PaletteKey.TextMuted ] do
+            [
+                "MenuFlyoutPresenterBackground", SharedTheme.manager.Brush PaletteKey.SurfaceRaised
+                "MenuFlyoutPresenterBorderBrush", SharedTheme.manager.Brush PaletteKey.Border
+                "MenuFlyoutItemForeground", SharedTheme.manager.Brush PaletteKey.Text
+                "MenuFlyoutItemForegroundPointerOver", SharedTheme.manager.Brush PaletteKey.Text
+                "MenuFlyoutItemBackgroundPointerOver", SharedTheme.manager.Brush PaletteKey.Hover
+                "MenuFlyoutItemBackgroundPressed", SharedTheme.manager.Brush PaletteKey.Pressed
+                "MenuFlyoutItemKeyboardAcceleratorTextForeground", SharedTheme.manager.Brush PaletteKey.TextMuted
+            ] do
             this.Resources[key] <- brush
         // 决策 276：触屏上没有键盘，菜单里的「Ctrl+X」提示只是噪声——按输入方式挂 / 摘一条样式。
         let hideGestures = TouchMenuGestures.style ()
+
         let syncGestures (touch: bool) =
             let present = this.Styles.Contains hideGestures
-            if touch && not present then this.Styles.Add hideGestures
-            elif not touch && present then this.Styles.Remove hideGestures |> ignore
+
+            if touch && not present then
+                this.Styles.Add hideGestures
+            elif not touch && present then
+                this.Styles.Remove hideGestures |> ignore
+
         syncGestures (SharedTheme.input.PrefersTouch)
         SharedTheme.input.Changed.Add syncGestures
 
@@ -174,12 +220,15 @@ type App() =
             match App.Root, App.LoadPrefs, App.SavePrefs with
             | Some root, Some loadPrefs, Some savePrefs ->
                 let port =
-                    { Root = root
-                      Build = App.Build |> Option.defaultValue ignore
-                      FlushDrafts = App.FlushDrafts |> Option.defaultValue ignore
-                      LoadPrefs = loadPrefs
-                      SavePrefs = savePrefs
-                      MarkFirstFrame = App.MarkFirstFrame }
+                    {
+                        Root = root
+                        Build = App.Build |> Option.defaultValue ignore
+                        FlushDrafts = App.FlushDrafts |> Option.defaultValue ignore
+                        LoadPrefs = loadPrefs
+                        SavePrefs = savePrefs
+                        MarkFirstFrame = App.MarkFirstFrame
+                    }
+
                 desktop.MainWindow <- MainWindow(port)
             | _ -> ()
         | :? ISingleViewApplicationLifetime as singleView ->
@@ -191,4 +240,5 @@ type App() =
                 App.Build |> Option.iter (fun b -> b view)
             | None -> ()
         | _ -> ()
+
         base.OnFrameworkInitializationCompleted()

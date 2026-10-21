@@ -16,28 +16,53 @@ let apply (s: int) (c: Commit<int>) : Result<int, CounterError> =
     let v = s + List.sum c.events
     if v < 0 then Error(Negative v) else Ok v
 
-let codec : Codec<int, int> =
-    { encodeEvent = fun n -> JsonValue.Create n :> JsonNode
-      decodeEvent = fun j -> try Ok(j.GetValue<int>()) with e -> Error e.Message
-      encodeState = fun n -> JsonValue.Create n :> JsonNode
-      decodeState = fun j -> try Ok(j.GetValue<int>()) with e -> Error e.Message }
+let codec: Codec<int, int> =
+    {
+        encodeEvent = fun n -> JsonValue.Create n :> JsonNode
+        decodeEvent =
+            fun j ->
+                try
+                    Ok(j.GetValue<int>())
+                with e ->
+                    Error e.Message
+        encodeState = fun n -> JsonValue.Create n :> JsonNode
+        decodeState =
+            fun j ->
+                try
+                    Ok(j.GetValue<int>())
+                with e ->
+                    Error e.Message
+    }
 
 [<EntryPoint>]
 let main _ =
-    let dir = Path.Combine(Path.GetTempPath(), "wanxiang2-consume-data-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "wanxiang2-consume-data-" + Guid.NewGuid().ToString("N"))
+
     let t0 = DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
+
     do
-        use store = new LedgerStore<int, int, CounterError>(dir, apply, 0, codec, SnapshotPolicy.Manual)
+        use store =
+            new LedgerStore<int, int, CounterError>(dir, apply, 0, codec, SnapshotPolicy.Manual)
+
         match store.Submit([ 1 ], t0) with
         | Committed c when c.id = 1UL -> printfn "committed id=%d" c.id
         | r -> failwithf "first submit should commit id 1, got %A" r
+
         match store.SaveSnapshot() with
         | Ok() -> ()
         | Error e -> failwithf "save snapshot: %s" e
-    use reopened = new LedgerStore<int, int, CounterError>(dir, apply, 0, codec, SnapshotPolicy.Manual)
+
+    use reopened =
+        new LedgerStore<int, int, CounterError>(dir, apply, 0, codec, SnapshotPolicy.Manual)
+
     printfn "reopen: startup=%A state=%d lastId=%d" reopened.Startup reopened.State reopened.LastId
+
     match reopened.Startup with
-    | { snapshot = Used 1UL; replayedCommits = 0 } when reopened.State = 1 && reopened.LastId = 1UL ->
+    | {
+          snapshot = Used 1UL
+          replayedCommits = 0
+      } when reopened.State = 1 && reopened.LastId = 1UL ->
         printfn "consume ok: commit and reopen yield Used 1UL"
         0
     | s ->
@@ -46,4 +71,5 @@ let main _ =
             s
             reopened.State
             reopened.LastId
+
         1

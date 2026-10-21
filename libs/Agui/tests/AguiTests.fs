@@ -43,6 +43,7 @@ module AguiTests =
         let exts = Capabilities.extensions
         let set = Set.ofList exts
         Assert.Equal(exts.Length, set.Count)
+
         for ext in exts do
             Assert.False(System.String.IsNullOrWhiteSpace ext)
             Assert.False(ext.StartsWith Capabilities.Namespace)
@@ -54,6 +55,7 @@ module AguiTests =
     [<Fact>]
     let ``TolerantReader parses standard known AG-UI events`` () =
         let json = """{"type":"RUN_STARTED","threadId":"t1","runId":"r1"}"""
+
         match TolerantReader.parse json with
         | ParsedEvent.Known ev ->
             Assert.Equal("RUN_STARTED", ev.Type)
@@ -63,14 +65,16 @@ module AguiTests =
     [<Fact>]
     let ``TolerantReader handles unrecognized event type gracefully without exception`` () =
         let json = """{"type":"SOME_FUTURE_UNKNOWN_TYPE","foo":"bar"}"""
+
         match TolerantReader.parse json with
-        | ParsedEvent.Unrecognized name ->
-            Assert.Equal("SOME_FUTURE_UNKNOWN_TYPE", name)
+        | ParsedEvent.Unrecognized name -> Assert.Equal("SOME_FUTURE_UNKNOWN_TYPE", name)
         | other -> failwithf "预期 Unrecognized，实际得到 %A" other
 
     [<Fact>]
     let ``TolerantReader parses CUSTOM event with name and value`` () =
-        let json = """{"type":"CUSTOM","name":"wanxiang.dev/cursor","value":{"commitId":"42"}}"""
+        let json =
+            """{"type":"CUSTOM","name":"wanxiang.dev/cursor","value":{"commitId":"42"}}"""
+
         match TolerantReader.parse json with
         | ParsedEvent.Custom(name, value) ->
             Assert.Equal("wanxiang.dev/cursor", name)
@@ -82,6 +86,7 @@ module AguiTests =
     let ``TolerantReader parses CUSTOM event without value defaults to null JsonNode`` () =
         // 覆盖 TolerantReader.fs 中 value 为 None 时的 `JsonNode.Parse "null"` 分支
         let json = """{"type":"CUSTOM","name":"wanxiang.dev/heartbeat"}"""
+
         match TolerantReader.parse json with
         | ParsedEvent.Custom(name, value) ->
             Assert.Equal("wanxiang.dev/heartbeat", name)
@@ -92,6 +97,7 @@ module AguiTests =
     [<Fact>]
     let ``TolerantReader parses CUSTOM event with explicit null value`` () =
         let json = """{"type":"CUSTOM","name":"wanxiang.dev/signal","value":null}"""
+
         match TolerantReader.parse json with
         | ParsedEvent.Custom(name, value) ->
             Assert.Equal("wanxiang.dev/signal", name)
@@ -101,71 +107,72 @@ module AguiTests =
     [<Fact>]
     let ``TolerantReader rejects CUSTOM event without name`` () =
         let json = """{"type":"CUSTOM","value":{"data":1}}"""
+
         match TolerantReader.parse json with
-        | ParsedEvent.Malformed reason ->
-            Assert.Contains("CUSTOM event without a string 'name'", reason)
+        | ParsedEvent.Malformed reason -> Assert.Contains("CUSTOM event without a string 'name'", reason)
         | other -> failwithf "预期 Malformed，实际得到 %A" other
 
     [<Fact>]
     let ``TolerantReader rejects CUSTOM event with non-string name`` () =
         // 覆盖 name 字段不是 string 的分支
         let json = """{"type":"CUSTOM","name":12345,"value":{}}"""
+
         match TolerantReader.parse json with
-        | ParsedEvent.Malformed reason ->
-            Assert.Contains("CUSTOM event without a string 'name'", reason)
+        | ParsedEvent.Malformed reason -> Assert.Contains("CUSTOM event without a string 'name'", reason)
         | other -> failwithf "预期 Malformed，实际得到 %A" other
 
     [<Fact>]
     let ``TolerantReader rejects CUSTOM event with null name`` () =
         let json = """{"type":"CUSTOM","name":null,"value":{}}"""
+
         match TolerantReader.parse json with
-        | ParsedEvent.Malformed reason ->
-            Assert.Contains("CUSTOM event without a string 'name'", reason)
+        | ParsedEvent.Malformed reason -> Assert.Contains("CUSTOM event without a string 'name'", reason)
         | other -> failwithf "预期 Malformed，实际得到 %A" other
 
     [<Fact>]
     let ``TolerantReader rejects non-object root JSON`` () =
         // 覆盖 match JsonNode.Parse json with :? JsonObject 之外的模式
         let cases = [ "[1, 2, 3]"; "\"a bare string\""; "12345"; "true"; "false"; "null" ]
+
         for case in cases do
             match TolerantReader.parse case with
-            | ParsedEvent.Malformed reason ->
-                Assert.Contains("event is not a JSON object", reason)
+            | ParsedEvent.Malformed reason -> Assert.Contains("event is not a JSON object", reason)
             | other -> failwithf "用例 %s 预期 Malformed，实际得到 %A" case other
 
     [<Fact>]
     let ``TolerantReader rejects completely invalid JSON`` () =
         // 覆盖外层 try ... with e -> Malformed("invalid JSON...") 分支
         let cases = [ "{ broken json"; "not json"; ""; "   "; "{\"" ]
+
         for case in cases do
             match TolerantReader.parse case with
-            | ParsedEvent.Malformed reason ->
-                Assert.Contains("invalid JSON", reason)
+            | ParsedEvent.Malformed reason -> Assert.Contains("invalid JSON", reason)
             | other -> failwithf "用例 %s 预期 Malformed，实际得到 %A" case other
 
     [<Fact>]
     let ``TolerantReader rejects object missing type property`` () =
         // 覆盖 tryProp o "type" 为 None 的分支
         let json = """{"threadId":"t1","foo":"bar"}"""
+
         match TolerantReader.parse json with
-        | ParsedEvent.Malformed reason ->
-            Assert.Contains("missing or non-string 'type'", reason)
+        | ParsedEvent.Malformed reason -> Assert.Contains("missing or non-string 'type'", reason)
         | other -> failwithf "预期 Malformed，实际得到 %A" other
 
     [<Fact>]
     let ``TolerantReader rejects object with non-string type property`` () =
         // 覆盖 type 属性为数字、布尔、数组或对象的分支
-        let cases = [
-            """{"type": 123}"""
-            """{"type": true}"""
-            """{"type": ["RUN_STARTED"]}"""
-            """{"type": {"name":"RUN_STARTED"}}"""
-            """{"type": null}"""
-        ]
+        let cases =
+            [
+                """{"type": 123}"""
+                """{"type": true}"""
+                """{"type": ["RUN_STARTED"]}"""
+                """{"type": {"name":"RUN_STARTED"}}"""
+                """{"type": null}"""
+            ]
+
         for case in cases do
             match TolerantReader.parse case with
-            | ParsedEvent.Malformed reason ->
-                Assert.Contains("missing or non-string 'type'", reason)
+            | ParsedEvent.Malformed reason -> Assert.Contains("missing or non-string 'type'", reason)
             | other -> failwithf "用例 %s 预期 Malformed，实际得到 %A" case other
 
     [<Fact>]
@@ -173,17 +180,17 @@ module AguiTests =
         // 覆盖 knownTypes 分支中的 try ... with e -> Malformed(...) 异常捕获分支
         // 官方 SDK 对已知类型（如 RUN_STARTED）在 threadId 期望为 string 时收到数字/嵌套对象会抛异常
         let json = """{"type":"RUN_STARTED","threadId":{"invalid":"object"}}"""
+
         match TolerantReader.parse json with
-        | ParsedEvent.Malformed reason ->
-            Assert.Contains("known type 'RUN_STARTED' failed to deserialize", reason)
+        | ParsedEvent.Malformed reason -> Assert.Contains("known type 'RUN_STARTED' failed to deserialize", reason)
         | other -> failwithf "预期 Malformed，实际得到 %A" other
 
     [<Fact>]
     let ``TolerantReader recognizes known type with valid optional payload`` () =
         let json = """{"type":"RUN_STARTED","threadId":"thread-99","runId":"run-99"}"""
+
         match TolerantReader.parse json with
-        | ParsedEvent.Known ev ->
-            Assert.Equal("RUN_STARTED", ev.Type)
+        | ParsedEvent.Known ev -> Assert.Equal("RUN_STARTED", ev.Type)
         | other -> failwithf "预期 Known，实际得到 %A" other
 
     [<Fact>]

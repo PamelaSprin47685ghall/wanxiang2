@@ -16,7 +16,10 @@ let ``same text keeps only the newest entry`` () =
 [<Fact>]
 let ``never more than the capacity and the oldest goes first`` () =
     let q = ToastQueue(3)
-    for t in [ "1"; "2"; "3"; "4"; "5" ] do q.Admit t |> ignore
+
+    for t in [ "1"; "2"; "3"; "4"; "5" ] do
+        q.Admit t |> ignore
+
     Assert.Equal<string list>([ "3"; "4"; "5" ], q.Showing)
     let q2 = ToastQueue(1)
     q2.Admit "x" |> ignore

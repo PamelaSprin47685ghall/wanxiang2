@@ -19,30 +19,39 @@ module TitleGenerator =
     let maxLength = TitleText.maxLength
 
     let private instruction =
-        "用一句不超过 12 个字的短语概括这段对话的主题，作为对话标题。"
-        + "只输出标题本身，不要引号、句号、前后缀或解释。"
+        "用一句不超过 12 个字的短语概括这段对话的主题，作为对话标题。" + "只输出标题本身，不要引号、句号、前后缀或解释。"
 
     /// 从用户首句截断出兜底标题。
     let fallback (userText: string) : string =
         let cleaned = PlainText.ofMarkdown userText
-        if String.IsNullOrWhiteSpace cleaned then "新对话" else TitleText.clip cleaned
+
+        if String.IsNullOrWhiteSpace cleaned then
+            "新对话"
+        else
+            TitleText.clip cleaned
 
     /// 清洗模型返回：去引号、去换行、限长。
     let sanitize (raw: string) (userText: string) : string =
-        if String.IsNullOrWhiteSpace raw then fallback userText
+        if String.IsNullOrWhiteSpace raw then
+            fallback userText
         else
-            let s = raw |> TitleText.firstLine |> PlainText.ofMarkdown |> TitleText.stripQuotes |> TitleText.firstSentence
-            if String.IsNullOrWhiteSpace s then fallback userText else TitleText.clip s
+            let s =
+                raw
+                |> TitleText.firstLine
+                |> PlainText.ofMarkdown
+                |> TitleText.stripQuotes
+                |> TitleText.firstSentence
+
+            if String.IsNullOrWhiteSpace s then
+                fallback userText
+            else
+                TitleText.clip s
 
     /// 该对话标题是否还是系统生成的占位。
     let isPlaceholder (title: string) : bool = TitleText.isPlaceholder title
 
     /// 请求一个标题。已有真实标题、关闭开关或消息不足时返回 None。
-    let suggest
-        (runtime: AgentRuntime)
-        (messages: ChatMessage list)
-        (ct: CancellationToken)
-        : Task<string option> =
+    let suggest (runtime: AgentRuntime) (messages: ChatMessage list) (ct: CancellationToken) : Task<string option> =
         task {
             let transcript =
                 messages
@@ -54,13 +63,18 @@ module TitleGenerator =
                     let clipped = if text.Length > 400 then text.Substring(0, 400) else text
                     sprintf "%s：%s" role clipped)
                 |> String.concat "\n"
+
             if String.IsNullOrWhiteSpace transcript then
                 return None
             else
                 let prompt =
-                    [ MessageSerde.textMessage ChatRole.System instruction
-                      MessageSerde.textMessage ChatRole.User transcript ]
+                    [
+                        MessageSerde.textMessage ChatRole.System instruction
+                        MessageSerde.textMessage ChatRole.User transcript
+                    ]
+
                 let! result = runtime.CompleteOnce(prompt, 48, ct)
+
                 match result with
                 | Ok text when not (String.IsNullOrWhiteSpace text) ->
                     return Some(sanitize text (GenerationContext.lastUserText messages))

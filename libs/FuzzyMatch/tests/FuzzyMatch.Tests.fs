@@ -1,9 +1,11 @@
 module FuzzyMatchTests
+
 open Xunit
 open Wanxiang.UI
 
 [<Fact>]
-let ``empty query matches with zero`` () = Assert.Equal(Some 0, FuzzyMatch.score "  " "anything")
+let ``empty query matches with zero`` () =
+    Assert.Equal(Some 0, FuzzyMatch.score "  " "anything")
 
 [<Fact>]
 let ``substring beats subsequence and prefix beats inner substring`` () =

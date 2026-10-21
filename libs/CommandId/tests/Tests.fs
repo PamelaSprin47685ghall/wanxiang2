@@ -6,7 +6,9 @@ open Wanxiang.Core
 
 [<Fact>]
 let ``command id matches the golden vector computed independently with Python hashlib`` () =
-    let id = CommandId.compute (Guid "11111111-2222-3333-4444-555555555555") "conversation.rename" """{"a":1}"""
+    let id =
+        CommandId.compute (Guid "11111111-2222-3333-4444-555555555555") "conversation.rename" """{"a":1}"""
+
     Assert.Equal("WyMw23eIPDlRGgNZYpN_LuQ7028dv44jTuXrYpeOHaw", id)
 
 [<Fact>]

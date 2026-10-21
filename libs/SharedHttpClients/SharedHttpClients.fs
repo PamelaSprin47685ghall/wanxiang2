@@ -14,8 +14,14 @@ type SharedHttpClients() =
     /// 流式响应可能远超单次请求超时，HttpClient.Timeout 取 timeoutSeconds 的 10 倍；首字节超时归调用方的传输。
     member _.Get(key: string, timeoutSeconds: int, headers: Map<string, string>) : HttpClient =
         let fp =
-            let hs = headers |> Map.toList |> List.map (fun (k, v) -> k + "=" + v) |> String.concat ";"
+            let hs =
+                headers
+                |> Map.toList
+                |> List.map (fun (k, v) -> k + "=" + v)
+                |> String.concat ";"
+
             sprintf "%s|%d|%s" key timeoutSeconds hs
+
         lock gate (fun () ->
             match clients.TryGetValue fp with
             | true, existing -> existing
@@ -25,8 +31,13 @@ type SharedHttpClients() =
                 handler.AutomaticDecompression <- DecompressionMethods.All
                 let client = new HttpClient(handler)
                 client.Timeout <- TimeSpan.FromSeconds(float timeoutSeconds * 10.0)
+
                 for KeyValue(name, value) in headers do
-                    try client.DefaultRequestHeaders.TryAddWithoutValidation(name, value) |> ignore with _ -> ()
+                    try
+                        client.DefaultRequestHeaders.TryAddWithoutValidation(name, value) |> ignore
+                    with _ ->
+                        ()
+
                 clients[fp] <- client
                 client)
 

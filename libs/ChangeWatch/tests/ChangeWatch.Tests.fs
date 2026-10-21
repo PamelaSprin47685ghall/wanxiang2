@@ -1,4 +1,5 @@
 module ChangeWatchTests
+
 open Xunit
 open Wanxiang.UI
 

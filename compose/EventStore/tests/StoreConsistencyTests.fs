@@ -11,7 +11,7 @@ open Wanxiang.Tests.Helpers
 let private repairRequired (dir: string) : ReplayOutcome * RepairPlan =
     match Inspect.run dir with
     | Healthy _ -> failwith "expected repair required"
-    | RepairRequired (o, p) -> o, p
+    | RepairRequired(o, p) -> o, p
     | UnsupportedFormat msg -> failwith msg
     | Unreadable msg -> failwith msg
 
@@ -24,23 +24,44 @@ let private repairRequired (dir: string) : ReplayOutcome * RepairPlan =
 [<Fact>]
 let ``单写者内部幂等：同 commandId 再次 Submit 返回原提交且不追加`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         use coord = new EventStore(dir)
         let convId = newConversationId ()
         let invId = Guid.NewGuid()
-        let cmd = CreateConversation {| invocationId = invId; conversationId = convId; title = "A"; config = testConfig () |}
+
+        let cmd =
+            CreateConversation
+                {|
+                    invocationId = invId
+                    conversationId = convId
+                    title = "A"
+                    config = testConfig ()
+                |}
         // 直接构造 Submit（绕过 CommandEngine.plan，模拟 DrainQueue 路径）
         let canonical = CommandEngine.canonicalPayload cmd
         let commandId = CommandId.compute invId (ClientCommand.commandType cmd) canonical
         let hash = CommandId.sha256Hex canonical
+
         let submit =
-            { events = [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
-              commandId = Some commandId
-              commandType = Some(ClientCommand.commandType cmd)
-              commandHash = Some hash
-              nowUtc = None }
+            {
+                events =
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "A"
+                                config = testConfig ()
+                            }
+                    ]
+                commandId = Some commandId
+                commandType = Some(ClientCommand.commandType cmd)
+                commandHash = Some hash
+                nowUtc = None
+            }
+
         match coord.Submit submit with
         | Committed c -> Assert.Equal(1UL, c.id)
         | r -> failwithf "first submit should commit, got %A" r
@@ -59,28 +80,64 @@ let ``单写者内部幂等：同 commandId 再次 Submit 返回原提交且不�
 [<Fact>]
 let ``单写者内部幂等：同 commandId 不同载荷返回冲突`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         use coord = new EventStore(dir)
         let convId = newConversationId ()
         let invId = Guid.NewGuid()
-        let cmd = CreateConversation {| invocationId = invId; conversationId = convId; title = "A"; config = testConfig () |}
+
+        let cmd =
+            CreateConversation
+                {|
+                    invocationId = invId
+                    conversationId = convId
+                    title = "A"
+                    config = testConfig ()
+                |}
+
         let canonical = CommandEngine.canonicalPayload cmd
         let commandId = CommandId.compute invId (ClientCommand.commandType cmd) canonical
         let hash = CommandId.sha256Hex canonical
+
         let submit =
-            { events = [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
-              commandId = Some commandId; commandType = Some(ClientCommand.commandType cmd); commandHash = Some hash; nowUtc = None }
+            {
+                events =
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "A"
+                                config = testConfig ()
+                            }
+                    ]
+                commandId = Some commandId
+                commandType = Some(ClientCommand.commandType cmd)
+                commandHash = Some hash
+                nowUtc = None
+            }
+
         coord.Submit submit |> ignore
         // 同一 commandId 但不同载荷（hash 不同）→ 冲突
         let submit2 =
             { submit with
-                events = [ ConversationCreated { conversationId = convId; title = "B"; config = testConfig () } ]
-                commandHash = Some(CommandId.sha256Hex "different-payload") }
+                events =
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "B"
+                                config = testConfig ()
+                            }
+                    ]
+                commandHash = Some(CommandId.sha256Hex "different-payload")
+            }
+
         match coord.Submit submit2 with
-        | CommandIdRejected (CommandIdConflict _) -> ()
+        | CommandIdRejected(CommandIdConflict _) -> ()
         | r -> failwithf "expected conflict, got %A" r
+
         coord.Shutdown()
     finally
         cleanup dir
@@ -88,6 +145,7 @@ let ``单写者内部幂等：同 commandId 不同载荷返回冲突`` () =
 [<Fact>]
 let ``排队消息重试窗口：DrainQueue 清空后同 invocationId 不重复提交`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
@@ -95,16 +153,47 @@ let ``排队消息重试窗口：DrainQueue 清空后同 invocationId 不重复�
         use coord = new EventStore(dir, committed.Add)
         let convId = newConversationId ()
         // 创建对话
-        coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ] |> ignore
+        coord.SubmitEvents
+            [
+                ConversationCreated
+                    {
+                        conversationId = convId
+                        title = "A"
+                        config = testConfig ()
+                    }
+            ]
+        |> ignore
+
         let invId = Guid.NewGuid()
         let msgJson = userMessageJson "hello"
-        let cmd = SendUserMessage {| invocationId = invId; conversationId = convId; messageJson = msgJson |}
+
+        let cmd =
+            SendUserMessage
+                {|
+                    invocationId = invId
+                    conversationId = convId
+                    messageJson = msgJson
+                |}
+
         let canonical = CommandEngine.canonicalPayload cmd
         let commandId = CommandId.compute invId (ClientCommand.commandType cmd) canonical
         let hash = CommandId.sha256Hex canonical
+
         let submit =
-            { events = [ AgentMessageRecorded { conversationId = convId; payloadJson = msgJson } ]
-              commandId = Some commandId; commandType = Some(ClientCommand.commandType cmd); commandHash = Some hash; nowUtc = None }
+            {
+                events =
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = msgJson
+                            }
+                    ]
+                commandId = Some commandId
+                commandType = Some(ClientCommand.commandType cmd)
+                commandHash = Some hash
+                nowUtc = None
+            }
         // 模拟 DrainQueue：第一次提交
         match coord.Submit submit with
         | Committed c -> Assert.Equal(2UL, c.id)
@@ -113,6 +202,7 @@ let ``排队消息重试窗口：DrainQueue 清空后同 invocationId 不重复�
         match coord.Submit submit with
         | IdempotentReplay c -> Assert.Equal(2UL, c.id)
         | r -> failwithf "retry should be idempotent: %A" r
+
         Assert.Equal(2UL, coord.Projection.latestCommitId)
         let conv = Projection.conversationList coord.Projection |> List.head
         Assert.Equal(1, conv.messages.Length) // 仅一条用户消息（重试未重复记账）
@@ -123,9 +213,23 @@ let ``排队消息重试窗口：DrainQueue 清空后同 invocationId 不重复�
 [<Fact>]
 let ``CRLF 行截尾偏移精确：损坏行前完整行不被截坏`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
-        let c1 = Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         // 第一行用 \r\n 结尾（模拟外部编辑），第二行损坏
@@ -134,6 +238,7 @@ let ``CRLF 行截尾偏移精确：损坏行前完整行不被截坏`` () =
         let outcome, plan = repairRequired dir
         Assert.Equal(1UL, outcome.lastCommitId)
         Assert.Contains(path, plan.damage.file)
+
         match Repair.repair dir with
         | Error e -> failwith e
         | Ok truncated -> Assert.Contains(path, truncated)
@@ -158,11 +263,36 @@ let ``canonical 数字规范化：1.50 与 1.5、1.0 与 1 等价`` () =
 [<Fact>]
 let ``replay 正确解码含中文的日志行`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let convId = newConversationId ()
-        let c1 = Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = convId; title = "对话标题中文"; config = testConfig () } ]
-        let c2 = Events.Commit.create 2UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "你好，万象！这是中文消息。" } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = convId
+                            title = "对话标题中文"
+                            config = testConfig ()
+                        }
+                ]
+
+        let c2 =
+            Events.Commit.create
+                2UL
+                DateTimeOffset.UtcNow
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = userMessageJson "你好，万象！这是中文消息。"
+                        }
+                ]
+
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         File.AppendAllBytes(path, Wanxiang.Store.Assembly.frame c1)
@@ -174,6 +304,7 @@ let ``replay 正确解码含中文的日志行`` () =
         Assert.Equal("对话标题中文", conv.title)
         // 消息 payload 中文不丢失（读取 contents[0].text 字段）
         let msg = conv.messages.Head
+
         match msg.payloadJson with
         | :? System.Text.Json.Nodes.JsonObject as o ->
             let contents = (o["contents"]).AsArray()
@@ -188,15 +319,44 @@ let ``replay 正确解码含中文的日志行`` () =
 [<Fact>]
 let ``replay 遇非法 UTF-8 序列触发截尾`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
-        let c1 = Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
-        let c2 = Events.Commit.create 2UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = newConversationId (); title = "B@B"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
+        let c2 =
+            Events.Commit.create
+                2UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "B@B"
+                            config = testConfig ()
+                        }
+                ]
+
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         File.AppendAllBytes(path, Wanxiang.Store.Assembly.frame c1)
         // 把 c2 标题里的 '@' 换成非法字节 0xFF
-        let f2 = Wanxiang.Store.Assembly.frame c2 |> Array.map (fun b -> if b = byte '@' then 0xFFuy else b)
+        let f2 =
+            Wanxiang.Store.Assembly.frame c2
+            |> Array.map (fun b -> if b = byte '@' then 0xFFuy else b)
+
         File.AppendAllBytes(path, f2)
         let outcome, plan = repairRequired dir
         Assert.Equal(1UL, outcome.lastCommitId)
@@ -207,17 +367,36 @@ let ``replay 遇非法 UTF-8 序列触发截尾`` () =
 [<Fact>]
 let ``EventStore CommitsAfter 二分查找覆盖边界条件`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         use coord = new EventStore(dir)
         let convId = newConversationId ()
-        coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ] |> ignore
-        coord.SubmitEvents [ ConversationRenamed { conversationId = convId; title = "B" } ] |> ignore
-        coord.SubmitEvents [ ConversationRenamed { conversationId = convId; title = "C" } ] |> ignore
-        coord.SubmitEvents [ ConversationRenamed { conversationId = convId; title = "D" } ] |> ignore
-        coord.SubmitEvents [ ConversationRenamed { conversationId = convId; title = "E" } ] |> ignore
-        
+
+        coord.SubmitEvents
+            [
+                ConversationCreated
+                    {
+                        conversationId = convId
+                        title = "A"
+                        config = testConfig ()
+                    }
+            ]
+        |> ignore
+
+        coord.SubmitEvents [ ConversationRenamed { conversationId = convId; title = "B" } ]
+        |> ignore
+
+        coord.SubmitEvents [ ConversationRenamed { conversationId = convId; title = "C" } ]
+        |> ignore
+
+        coord.SubmitEvents [ ConversationRenamed { conversationId = convId; title = "D" } ]
+        |> ignore
+
+        coord.SubmitEvents [ ConversationRenamed { conversationId = convId; title = "E" } ]
+        |> ignore
+
         // after 0 -> 全部 5 条
         let all = coord.CommitsAfter 0UL
         Assert.Equal(5, all.Length)
@@ -237,29 +416,46 @@ let ``EventStore CommitsAfter 二分查找覆盖边界条件`` () =
 [<Fact>]
 let ``EventStore 提交非法事件触发 ApplyFailed 截尾并复用 commitId`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         let truncated = ResizeArray<Events.Commit * WanxiangError * int64 * string>()
         use coord = new EventStore(dir)
+
         let badSubmit =
-            { events = [ EventData.ConversationDeleted { conversationId = Guid.NewGuid() } ] // 不存在的对话，apply 失败
-              commandId = None
-              commandType = None
-              commandHash = None
-              nowUtc = None }
+            {
+                events = [ EventData.ConversationDeleted { conversationId = Guid.NewGuid() } ] // 不存在的对话，apply 失败
+                commandId = None
+                commandType = None
+                commandHash = None
+                nowUtc = None
+            }
+
         match coord.Submit badSubmit with
         | CommitFailed _ -> Assert.True(truncated.Count = 0) // 先折叠后写盘：被拒的提交不落盘、不截尾
         | other -> failwithf "expected CommitFailed, got %A" other
-        
+
         // 验证 commitId 被复用：下一次合法提交依然获得 id = 1UL
         let convId = newConversationId ()
+
         let goodSubmit =
-            { events = [ ConversationCreated { conversationId = convId; title = "Reused"; config = testConfig () } ]
-              commandId = None
-              commandType = None
-              commandHash = None
-              nowUtc = None }
+            {
+                events =
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "Reused"
+                                config = testConfig ()
+                            }
+                    ]
+                commandId = None
+                commandType = None
+                commandHash = None
+                nowUtc = None
+            }
+
         match coord.Submit goodSubmit with
         | Committed c -> Assert.Equal(1UL, c.id)
         | _ -> failwith "expected Committed with reused id"
@@ -269,18 +465,34 @@ let ``EventStore 提交非法事件触发 ApplyFailed 截尾并复用 commitId``
 [<Fact>]
 let ``EventStore 正常 Dispose 释放 writer 且不抛出`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         let coord = new EventStore(dir)
         let convId = newConversationId ()
-        coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "Test"; config = testConfig () } ] |> ignore
+
+        coord.SubmitEvents
+            [
+                ConversationCreated
+                    {
+                        conversationId = convId
+                        title = "Test"
+                        config = testConfig ()
+                    }
+            ]
+        |> ignore
+
         coord.Shutdown()
         // 「释放 writer」不是「不抛异常」就成立：目录锁必须真的放开，
         // 同一个目录能再开一个 EventStore（旧写法只验不抛——锁没释放也照样绿）。
         // 显式断言：再开一次**不**抛「is locked」。
         let again =
-            try new EventStore(dir) with ex -> failwithf "Dispose 后目录锁应释放，却抛: %s" ex.Message
+            try
+                new EventStore(dir)
+            with ex ->
+                failwithf "Dispose 后目录锁应释放，却抛: %s" ex.Message
+
         Assert.NotNull(again)
         again.Shutdown()
     finally

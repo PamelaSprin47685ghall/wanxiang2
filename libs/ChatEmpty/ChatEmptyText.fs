@@ -3,10 +3,12 @@ namespace Wanxiang.UI
 /// 空对话的起手式：标签 → 填进输入框的开头。只给开头不给整句，用户补完再发（决策 222）。
 module ChatStarters =
     let items =
-        [ "解释概念", "用通俗的话解释："
-          "总结要点", "帮我总结下面这段内容的要点：\n\n"
-          "改写润色", "帮我改写得更清楚、更简洁：\n\n"
-          "写代码", "写一段代码，实现：" ]
+        [
+            "解释概念", "用通俗的话解释："
+            "总结要点", "帮我总结下面这段内容的要点：\n\n"
+            "改写润色", "帮我改写得更清楚、更简洁：\n\n"
+            "写代码", "写一段代码，实现："
+        ]
 
 /// 空态在不同前提下要说不同的话，否则用户不知道下一步做什么。
 type ChatEmptyState =
@@ -26,8 +28,11 @@ module ChatEmptyState =
     /// 未连接、连接失败、没有模型服务时展示品牌标；有对话可开时展示起手式。
     let showsBrand (state: ChatEmptyState) =
         match state with
-        | NotConnected | ConnectionFailed _ | NoProvider -> true
-        | NoConversation | EmptyConversation -> false
+        | NotConnected
+        | ConnectionFailed _
+        | NoProvider -> true
+        | NoConversation
+        | EmptyConversation -> false
 
 
 module ChatEmptyText =

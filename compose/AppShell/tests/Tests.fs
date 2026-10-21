@@ -16,11 +16,41 @@ let private keyArgs (key: Key) (modifiers: KeyModifiers) : KeyEventArgs =
 let ``KeyShortcut 换算按键事件的四字段`` () =
     Headless.run (fun () ->
         let ctrlK = KeyShortcut.ofEvent (keyArgs Key.K KeyModifiers.Control)
-        Assert.Equal({ key = "K"; ctrl = true; shift = false; noModifiers = false }, ctrlK)
-        let ctrlShiftB = KeyShortcut.ofEvent (keyArgs Key.B (KeyModifiers.Control ||| KeyModifiers.Shift))
-        Assert.Equal({ key = "B"; ctrl = true; shift = true; noModifiers = false }, ctrlShiftB)
+
+        Assert.Equal(
+            {
+                key = "K"
+                ctrl = true
+                shift = false
+                noModifiers = false
+            },
+            ctrlK
+        )
+
+        let ctrlShiftB =
+            KeyShortcut.ofEvent (keyArgs Key.B (KeyModifiers.Control ||| KeyModifiers.Shift))
+
+        Assert.Equal(
+            {
+                key = "B"
+                ctrl = true
+                shift = true
+                noModifiers = false
+            },
+            ctrlShiftB
+        )
+
         let bareEscape = KeyShortcut.ofEvent (keyArgs Key.Escape KeyModifiers.None)
-        Assert.Equal({ key = "Escape"; ctrl = false; shift = false; noModifiers = true }, bareEscape))
+
+        Assert.Equal(
+            {
+                key = "Escape"
+                ctrl = false
+                shift = false
+                noModifiers = true
+            },
+            bareEscape
+        ))
 
 [<Fact>]
 let ``KeyShortcut 分派 Escape、Ctrl+K 与无快捷键`` () =

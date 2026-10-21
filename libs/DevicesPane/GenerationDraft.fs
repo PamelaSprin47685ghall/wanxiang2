@@ -1,7 +1,12 @@
 namespace Wanxiang.UI
 
 /// 一次在途保存：提交时的修订号、主机纪元与提交的值。
-type GenerationSave<'T> = { revision: int; epoch: int; submitted: 'T }
+type GenerationSave<'T> =
+    {
+        revision: int
+        epoch: int
+        submitted: 'T
+    }
 
 /// 设置页「生成」草稿的状态机（旧 Views/SettingsGeneral.fs 的 generationDirty/Saving/Syncing/Revision/
 /// Baseline/Scope、draftScope、scopeEpoch 与状态文案）。
@@ -30,16 +35,24 @@ type GenerationDraft<'T when 'T: equality>(initial: 'T) =
     /// 表单任一字段被改。回填期间的改动不算。
     member _.Edited() =
         if not syncing then
-            if not dirty then draftScope <- scope
+            if not dirty then
+                draftScope <- scope
+
             revision <- revision + 1
             dirty <- true
-            status <- if draftScope <> scope then switchedAway else "有未保存的修改。离开设置后，草稿仍留在当前窗口。"
+
+            status <-
+                if draftScope <> scope then
+                    switchedAway
+                else
+                    "有未保存的修改。离开设置后，草稿仍留在当前窗口。"
 
     /// 主机目录到达。没有草稿且不在保存时回填表单并以它为基线；
     /// 有草稿且主机默认值变了时只提示。
     member _.CatalogArrived(next: 'T, fill: unit -> unit) =
         if not dirty && not saving then
             syncing <- true
+
             try
                 fill ()
                 baseline <- next
@@ -54,12 +67,18 @@ type GenerationDraft<'T when 'T: equality>(initial: 'T) =
             epoch <- epoch + 1
             scope <- instance
             saving <- false
+
             if dirty then
-                status <- if draftScope = instance then "已回到草稿所属的主机。修改尚未保存。" else switchedAway
+                status <-
+                    if draftScope = instance then
+                        "已回到草稿所属的主机。修改尚未保存。"
+                    else
+                        switchedAway
 
     /// 放弃修改并按 current 回填。保存途中不做，返回 false。
     member this.Discard(current: 'T, fill: unit -> unit) : bool =
-        if saving then false
+        if saving then
+            false
         else
             dirty <- false
             draftScope <- scope
@@ -76,11 +95,17 @@ type GenerationDraft<'T when 'T: equality>(initial: 'T) =
     member _.BeginSave(submitted: 'T) : GenerationSave<'T> =
         saving <- true
         status <- "正在保存到主机…"
-        { revision = revision; epoch = epoch; submitted = submitted }
+
+        {
+            revision = revision
+            epoch = epoch
+            submitted = submitted
+        }
 
     /// 主机回复。切换过主机的旧确认被忽略。返回 true 表示保存失败、调用方应弹「保存失败，请重试。」。
     member _.Finish(save: GenerationSave<'T>, ok: bool) : bool =
-        if save.epoch <> epoch then false
+        if save.epoch <> epoch then
+            false
         elif ok then
             saving <- false
             baseline <- save.submitted

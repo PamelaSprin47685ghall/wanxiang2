@@ -7,7 +7,11 @@ module RichBrowserAdapter =
 
     let create () : BrowserRichBackend * IRichBackend =
         let rich = BrowserRichBackend()
+
         rich,
         { new IRichBackend with
-            member _.HighlightHtml(code, canonicalLanguage) = rich.HighlightHtml(code, canonicalLanguage)
-            member _.MathHtml(tex, displayMode) = rich.MathHtml(tex, displayMode) }
+            member _.HighlightHtml(code, canonicalLanguage) =
+                rich.HighlightHtml(code, canonicalLanguage)
+
+            member _.MathHtml(tex, displayMode) = rich.MathHtml(tex, displayMode)
+        }

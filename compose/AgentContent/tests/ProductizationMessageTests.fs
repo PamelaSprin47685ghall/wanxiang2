@@ -56,35 +56,53 @@ let ``attachment-only message parses when empty contents are allowed`` () =
 // ---------------------------------------------------------------- 附件送入模型
 
 let private attachment (mediaType: string) (fileName: string) (size: int64) : AttachmentReference =
-    { sha256 = "ab12"; mediaType = mediaType; fileName = fileName; size = size }
+    {
+        sha256 = "ab12"
+        mediaType = mediaType
+        fileName = fileName
+        size = size
+    }
 
 let private resolveWith (support: MediaSupport) (bytes: byte[] option) (reference: AttachmentReference) =
     AttachmentContent.resolve support (fun _ -> bytes) reference
 
 let private textOf (contents: AIContent list) =
-    contents |> List.pick (function :? TextContent as t -> Some t.Text | _ -> None)
+    contents
+    |> List.pick (function
+        | :? TextContent as t -> Some t.Text
+        | _ -> None)
 
 let private binaries (contents: AIContent list) =
-    contents |> List.choose (function :? DataContent as d -> Some d | _ -> None)
+    contents
+    |> List.choose (function
+        | :? DataContent as d -> Some d
+        | _ -> None)
 
 [<Fact>]
 let ``images reach the model as binary content`` () =
     let bytes = Array.init 64 byte
-    let contents = resolveWith MediaSupport.openAiCompatible (Some bytes) (attachment "image/png" "shot.png" 64L)
+
+    let contents =
+        resolveWith MediaSupport.openAiCompatible (Some bytes) (attachment "image/png" "shot.png" 64L)
+
     Assert.Contains(contents, fun c -> c :? DataContent)
 
 [<Fact>]
 let ``text attachments are inlined as a fenced block`` () =
     let bytes = Encoding.UTF8.GetBytes "let x = 1"
+
     let contents =
         resolveWith MediaSupport.openAiCompatible (Some bytes) (attachment "text/plain" "a.fs" (int64 bytes.Length))
+
     let text = textOf contents
     Assert.Contains("```fsharp", text)
     Assert.Contains("let x = 1", text)
 
 [<Fact>]
 let ``a lost blob degrades to an explanation instead of failing`` () =
-    let contents = resolveWith MediaSupport.openAiCompatible None (attachment "image/png" "gone.png" 10L)
+    let contents =
+        resolveWith MediaSupport.openAiCompatible None (attachment "image/png" "gone.png" 10L)
+
     Assert.Contains("丢失", textOf contents)
     Assert.DoesNotContain(contents, fun c -> c :? DataContent)
 
@@ -94,8 +112,12 @@ let ``PDF 在支持的传输上作为二进制递过去`` () =
     let bytes = Array.init 128 byte
     let file = attachment "application/pdf" "spec.pdf" 128L
     Assert.Empty(binaries (resolveWith MediaSupport.openAiCompatible (Some bytes) file))
-    Assert.Single(binaries (resolveWith MediaSupport.anthropic (Some bytes) file)) |> ignore
-    Assert.Single(binaries (resolveWith MediaSupport.gemini (Some bytes) file)) |> ignore
+
+    Assert.Single(binaries (resolveWith MediaSupport.anthropic (Some bytes) file))
+    |> ignore
+
+    Assert.Single(binaries (resolveWith MediaSupport.gemini (Some bytes) file))
+    |> ignore
 
 [<Fact>]
 let ``音频只在 Gemini 上作为二进制递过去`` () =
@@ -103,19 +125,26 @@ let ``音频只在 Gemini 上作为二进制递过去`` () =
     let file = attachment "audio/mpeg" "note.mp3" 128L
     Assert.Empty(binaries (resolveWith MediaSupport.openAiCompatible (Some bytes) file))
     Assert.Empty(binaries (resolveWith MediaSupport.anthropic (Some bytes) file))
-    Assert.Single(binaries (resolveWith MediaSupport.gemini (Some bytes) file)) |> ignore
+
+    Assert.Single(binaries (resolveWith MediaSupport.gemini (Some bytes) file))
+    |> ignore
 
 [<Fact>]
 let ``传输吃不下的类型要说清原因而不是默默省略`` () =
     // 「悄悄退化」是最坏的结果：用户以为模型看过那份文件
-    let contents = resolveWith MediaSupport.openAiCompatible (Some(Array.init 32 byte)) (attachment "application/pdf" "a.pdf" 32L)
+    let contents =
+        resolveWith MediaSupport.openAiCompatible (Some(Array.init 32 byte)) (attachment "application/pdf" "a.pdf" 32L)
+
     Assert.Contains("不接受该类型", textOf contents)
 
 [<Fact>]
 let ``超过内联上限的二进制附件给出上限说明`` () =
     let tooBig = int64 AttachmentContent.maxInlineBinaryBytes + 1L
-    let bytes = Array.zeroCreate<byte> (int tooBig)
-    let contents = resolveWith MediaSupport.gemini (Some bytes) (attachment "application/pdf" "huge.pdf" tooBig)
+    let bytes = Array.zeroCreate<byte>(int tooBig)
+
+    let contents =
+        resolveWith MediaSupport.gemini (Some bytes) (attachment "application/pdf" "huge.pdf" tooBig)
+
     Assert.Empty(binaries contents)
     Assert.Contains("内联上限", textOf contents)
 
@@ -126,12 +155,23 @@ let ``工具调用 id 能穿过序列化往返`` () =
     let original =
         ChatMessage(
             ChatRole.Assistant,
-            [| FunctionCallContent("echo@0", "echo", dict [ "text", box "hi" ]) :> AIContent |])
+            [|
+                FunctionCallContent("echo@0", "echo", dict [ "text", box "hi" ]) :> AIContent
+            |]
+        )
+
     let json = MessageSerde.serialize original
+
     match MessageSerde.deserialize json with
     | None -> failwith $"重放失败：{json}"
     | Some restored ->
-        match restored.Contents |> Seq.choose (function :? FunctionCallContent as c -> Some c | _ -> None) |> List.ofSeq with
+        match
+            restored.Contents
+            |> Seq.choose (function
+                | :? FunctionCallContent as c -> Some c
+                | _ -> None)
+            |> List.ofSeq
+        with
         | [ call ] ->
             Assert.Equal("echo@0", call.CallId)
             Assert.Equal("echo", call.Name)
@@ -142,11 +182,15 @@ let ``工具调用 id 能穿过序列化往返`` () =
 let ``工具结果的调用 id 同样能穿过序列化往返`` () =
     let call = FunctionCallContent("echo@3", "echo", dict [ "text", box "x" ])
     let message = MessageSerde.toolResultMessage call "{\"ok\":true}"
+
     match MessageSerde.deserialize (MessageSerde.serialize message) with
     | None -> failwith "工具结果消息重放失败"
     | Some restored ->
         let ids =
             restored.Contents
-            |> Seq.choose (function :? FunctionResultContent as r -> Some r.CallId | _ -> None)
+            |> Seq.choose (function
+                | :? FunctionResultContent as r -> Some r.CallId
+                | _ -> None)
             |> List.ofSeq
+
         Assert.Equal<string list>([ "echo@3" ], ids)

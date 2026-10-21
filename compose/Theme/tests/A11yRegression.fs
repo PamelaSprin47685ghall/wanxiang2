@@ -14,33 +14,48 @@ open Wanxiang2.ThemePalette
 
 let private repoRoot =
     let rec up (dir: DirectoryInfo) =
-        if isNull dir then failwith "找不到仓库根（wanxiang2.slnx）"
-        elif File.Exists(Path.Combine(dir.FullName, "wanxiang2.slnx")) then dir.FullName
-        else up dir.Parent
+        if isNull dir then
+            failwith "找不到仓库根（wanxiang2.slnx）"
+        elif File.Exists(Path.Combine(dir.FullName, "wanxiang2.slnx")) then
+            dir.FullName
+        else
+            up dir.Parent
+
     up (DirectoryInfo AppContext.BaseDirectory)
 
-let private read (rel: string) = File.ReadAllText(Path.Combine(repoRoot, rel))
+let private read (rel: string) =
+    File.ReadAllText(Path.Combine(repoRoot, rel))
 
 let private luminance (c: Color) =
     let lin (v: byte) =
         let x = float v / 255.0
-        if x <= 0.03928 then x / 12.92 else Math.Pow((x + 0.055) / 1.055, 2.4)
+
+        if x <= 0.03928 then
+            x / 12.92
+        else
+            Math.Pow((x + 0.055) / 1.055, 2.4)
+
     0.2126 * lin c.R + 0.7152 * lin c.G + 0.0722 * lin c.B
 
 let private ratio (a: Color) (b: Color) =
     let la, lb = luminance a, luminance b
     (max la lb + 0.05) / (min la lb + 0.05)
 
-let private palettes : (string * PaletteMode) list =
+let private palettes: (string * PaletteMode) list =
     [ "light", PaletteMode.Light; "dark", PaletteMode.Dark ]
-let private color (mode: PaletteMode) (key: PaletteKey) =
-    ThemePalette.color mode key
+
+let private color (mode: PaletteMode) (key: PaletteKey) = ThemePalette.color mode key
 
 let private check (label: string) (minimum: float) (pairs: (string * Color * string * Color) list) =
     let bad =
-        [ for (fgName, fg, bgName, bg) in pairs do
-            let r = ratio fg bg
-            if r < minimum then sprintf "%s: %s on %s = %.2f < %.1f" label fgName bgName r minimum ]
+        [
+            for (fgName, fg, bgName, bg) in pairs do
+                let r = ratio fg bg
+
+                if r < minimum then
+                    sprintf "%s: %s on %s = %.2f < %.1f" label fgName bgName r minimum
+        ]
+
     Assert.True(bad.IsEmpty, String.Join("\n", bad))
 
 // ---------- 对比度 ----------
@@ -49,49 +64,99 @@ let private check (label: string) (minimum: float) (pairs: (string * Color * str
 let ``代码块内全部着色与弱化文字在代码面和代码头上过 AA`` () =
     for (label, mode) in palettes do
         let inks =
-            [ "codeText", color mode PaletteKey.CodeText; "codeMuted", color mode PaletteKey.CodeMuted; "codeComment", color mode PaletteKey.CodeComment
-              "codeKeyword", color mode PaletteKey.CodeKeyword; "codeString", color mode PaletteKey.CodeString; "codeNumber", color mode PaletteKey.CodeNumber
-              "codeType", color mode PaletteKey.CodeType; "codeFunction", color mode PaletteKey.CodeFunction; "codeMeta", color mode PaletteKey.CodeMeta
-              "codeVariable", color mode PaletteKey.CodeVariable; "codeOperator", color mode PaletteKey.CodeOperator
-              "codeAddition", color mode PaletteKey.CodeAddition; "codeDeletion", color mode PaletteKey.CodeDeletion ]
-        let grounds = [ "codeBg", color mode PaletteKey.CodeBg; "codeHeaderBg", color mode PaletteKey.CodeHeaderBg ]
-        check label 4.5 [ for (i, f) in inks do for (g, b) in grounds -> (i, f, g, b) ]
+            [
+                "codeText", color mode PaletteKey.CodeText
+                "codeMuted", color mode PaletteKey.CodeMuted
+                "codeComment", color mode PaletteKey.CodeComment
+                "codeKeyword", color mode PaletteKey.CodeKeyword
+                "codeString", color mode PaletteKey.CodeString
+                "codeNumber", color mode PaletteKey.CodeNumber
+                "codeType", color mode PaletteKey.CodeType
+                "codeFunction", color mode PaletteKey.CodeFunction
+                "codeMeta", color mode PaletteKey.CodeMeta
+                "codeVariable", color mode PaletteKey.CodeVariable
+                "codeOperator", color mode PaletteKey.CodeOperator
+                "codeAddition", color mode PaletteKey.CodeAddition
+                "codeDeletion", color mode PaletteKey.CodeDeletion
+            ]
+
+        let grounds =
+            [
+                "codeBg", color mode PaletteKey.CodeBg
+                "codeHeaderBg", color mode PaletteKey.CodeHeaderBg
+            ]
+
+        check
+            label
+            4.5
+            [
+                for (i, f) in inks do
+                    for (g, b) in grounds -> (i, f, g, b)
+            ]
 
 [<Fact>]
 let ``正文与次要文字在选中行行内代码表格底上过 AA`` () =
     for (label, mode) in palettes do
         let grounds =
-            [ "selected", color mode PaletteKey.Selected; "inlineCode", color mode PaletteKey.InlineCode; "tableStripe", color mode PaletteKey.TableStripe
-              "tableHeader", color mode PaletteKey.TableHeader; "accentSoft", color mode PaletteKey.AccentSoft; "accentFaint", color mode PaletteKey.AccentFaint ]
-        check label 4.5
-            [ for (g, b) in grounds do
-                yield ("text", color mode PaletteKey.Text, g, b)
-                yield ("textMuted", color mode PaletteKey.TextMuted, g, b) ]
+            [
+                "selected", color mode PaletteKey.Selected
+                "inlineCode", color mode PaletteKey.InlineCode
+                "tableStripe", color mode PaletteKey.TableStripe
+                "tableHeader", color mode PaletteKey.TableHeader
+                "accentSoft", color mode PaletteKey.AccentSoft
+                "accentFaint", color mode PaletteKey.AccentFaint
+            ]
+
+        check
+            label
+            4.5
+            [
+                for (g, b) in grounds do
+                    yield ("text", color mode PaletteKey.Text, g, b)
+                    yield ("textMuted", color mode PaletteKey.TextMuted, g, b)
+            ]
 
 [<Fact>]
 let ``状态色文字在各自的浅底上过 AA`` () =
     for (label, mode) in palettes do
-        check label 4.5
-            [ "danger", color mode PaletteKey.Danger, "dangerSoft", color mode PaletteKey.DangerSoft
-              "info", color mode PaletteKey.Info, "infoSoft", color mode PaletteKey.InfoSoft
-              "accent", color mode PaletteKey.Accent, "accentSoft", color mode PaletteKey.AccentSoft ]
+        check
+            label
+            4.5
+            [
+                "danger", color mode PaletteKey.Danger, "dangerSoft", color mode PaletteKey.DangerSoft
+                "info", color mode PaletteKey.Info, "infoSoft", color mode PaletteKey.InfoSoft
+                "accent", color mode PaletteKey.Accent, "accentSoft", color mode PaletteKey.AccentSoft
+            ]
 
 [<Fact>]
 let ``强调色悬停态与用户气泡上的文字过 AA`` () =
     for (label, mode) in palettes do
-        check label 4.5
-            [ "textOnAccent", color mode PaletteKey.TextOnAccent, "accentHover", color mode PaletteKey.AccentHover
-              "textOnAccent", color mode PaletteKey.TextOnAccent, "accent", color mode PaletteKey.Accent
-              "userBubbleText", color mode PaletteKey.UserBubbleText, "userBubble", color mode PaletteKey.UserBubble ]
+        check
+            label
+            4.5
+            [
+                "textOnAccent", color mode PaletteKey.TextOnAccent, "accentHover", color mode PaletteKey.AccentHover
+                "textOnAccent", color mode PaletteKey.TextOnAccent, "accent", color mode PaletteKey.Accent
+                "userBubbleText", color mode PaletteKey.UserBubbleText, "userBubble", color mode PaletteKey.UserBubble
+            ]
 
 [<Fact>]
 let ``键盘焦点环颜色在所有基础表面上过非文本 3 比 1`` () =
     // WCAG 1.4.11：焦点指示器与相邻颜色至少 3:1。焦点环取 accent（见 Theme 的样式类）。
     for (label, mode) in palettes do
-        check label 3.0
-            [ for (g, b) in [ "canvas", color mode PaletteKey.Canvas; "rail", color mode PaletteKey.Rail; "surface", color mode PaletteKey.Surface
-                              "surfaceRaised", color mode PaletteKey.SurfaceRaised; "surfaceContainer", color mode PaletteKey.SurfaceContainer ] ->
-                ("accent(focus ring)", color mode PaletteKey.Accent, g, b) ]
+        check
+            label
+            3.0
+            [
+                for (g, b) in
+                    [
+                        "canvas", color mode PaletteKey.Canvas
+                        "rail", color mode PaletteKey.Rail
+                        "surface", color mode PaletteKey.Surface
+                        "surfaceRaised", color mode PaletteKey.SurfaceRaised
+                        "surfaceContainer", color mode PaletteKey.SurfaceContainer
+                    ] -> ("accent(focus ring)", color mode PaletteKey.Accent, g, b)
+            ]
 
 [<Fact>]
 let ``控件边界描边在四种底上都过 1.4.11`` () =
@@ -99,10 +164,18 @@ let ``控件边界描边在四种底上都过 1.4.11`` () =
     // 所以边界只能靠这条描边，WCAG 1.4.11 要求它至少 3:1。2026-10-18 引入 ControlStroke 之前，
     // 这些控件用 border（浅 1.33~1.47、深 1.46~1.92），达不到 3:1。
     for (label, mode) in palettes do
-        check label 3.0
-            [ for (g, b) in [ "canvas", color mode PaletteKey.Canvas; "surface", color mode PaletteKey.Surface
-                              "surfaceRaised", color mode PaletteKey.SurfaceRaised; "surfaceContainer", color mode PaletteKey.SurfaceContainer ] ->
-                ("controlStroke", color mode PaletteKey.ControlStroke, g, b) ]
+        check
+            label
+            3.0
+            [
+                for (g, b) in
+                    [
+                        "canvas", color mode PaletteKey.Canvas
+                        "surface", color mode PaletteKey.Surface
+                        "surfaceRaised", color mode PaletteKey.SurfaceRaised
+                        "surfaceContainer", color mode PaletteKey.SurfaceContainer
+                    ] -> ("controlStroke", color mode PaletteKey.ControlStroke, g, b)
+            ]
 
 [<Fact>]
 let ``遮罩不透明度足以压住背后内容`` () =
@@ -148,18 +221,21 @@ let ``PWA 清单声明名称与图标`` () =
 [<Fact>]
 let ``r7-r12 新增控件的文字在浅色与深色主题下都过 AA`` () =
     for (label, mode) in palettes do
-        check label 4.5
+        check
+            label
+            4.5
             [ // 顶栏模型芯片（决策 240）
-              "accent", color mode PaletteKey.Accent, "accentFaint", color mode PaletteKey.AccentFaint
-              // 限流倒计时（决策 242）：错误卡在 surface / surfaceRaised 上
-              "warning", color mode PaletteKey.Warning, "surface", color mode PaletteKey.Surface
-              "warning", color mode PaletteKey.Warning, "surfaceRaised", color mode PaletteKey.SurfaceRaised
-              "success", color mode PaletteKey.Success, "surface", color mode PaletteKey.Surface
-              "success", color mode PaletteKey.Success, "surfaceRaised", color mode PaletteKey.SurfaceRaised
-              // 提示条（撤销删除）与模型切换器浮层
-              "text", color mode PaletteKey.Text, "surfaceRaised", color mode PaletteKey.SurfaceRaised
-              "textMuted", color mode PaletteKey.TextMuted, "surfaceRaised", color mode PaletteKey.SurfaceRaised
-              "accent", color mode PaletteKey.Accent, "surfaceRaised", color mode PaletteKey.SurfaceRaised
-              // 选中行（切换器当前项、搜索命中）
-              "text", color mode PaletteKey.Text, "selected", color mode PaletteKey.Selected
-              "textMuted", color mode PaletteKey.TextMuted, "selected", color mode PaletteKey.Selected ]
+                "accent", color mode PaletteKey.Accent, "accentFaint", color mode PaletteKey.AccentFaint
+                // 限流倒计时（决策 242）：错误卡在 surface / surfaceRaised 上
+                "warning", color mode PaletteKey.Warning, "surface", color mode PaletteKey.Surface
+                "warning", color mode PaletteKey.Warning, "surfaceRaised", color mode PaletteKey.SurfaceRaised
+                "success", color mode PaletteKey.Success, "surface", color mode PaletteKey.Surface
+                "success", color mode PaletteKey.Success, "surfaceRaised", color mode PaletteKey.SurfaceRaised
+                // 提示条（撤销删除）与模型切换器浮层
+                "text", color mode PaletteKey.Text, "surfaceRaised", color mode PaletteKey.SurfaceRaised
+                "textMuted", color mode PaletteKey.TextMuted, "surfaceRaised", color mode PaletteKey.SurfaceRaised
+                "accent", color mode PaletteKey.Accent, "surfaceRaised", color mode PaletteKey.SurfaceRaised
+                // 选中行（切换器当前项、搜索命中）
+                "text", color mode PaletteKey.Text, "selected", color mode PaletteKey.Selected
+                "textMuted", color mode PaletteKey.TextMuted, "selected", color mode PaletteKey.Selected
+            ]

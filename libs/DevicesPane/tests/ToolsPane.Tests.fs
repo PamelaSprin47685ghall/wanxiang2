@@ -11,7 +11,14 @@ open Xunit
 open Wanxiang2.ToolsPane
 open Wanxiang2.ToolsPane.Tests.Probe
 
-let private empty = { Tools = []; Folders = []; SandboxNote = "文件读取工具当前不可用：还没有授权任何文件夹。"; ExposeDebug = false; Servers = [] }
+let private empty =
+    {
+        Tools = []
+        Folders = []
+        SandboxNote = "文件读取工具当前不可用：还没有授权任何文件夹。"
+        ExposeDebug = false
+        Servers = []
+    }
 
 let private pane () =
     let p = ToolsPane()
@@ -20,7 +27,13 @@ let private pane () =
     p
 
 let private server id label enabled : ToolsPaneServer =
-    { Id = id; Label = label; ToolCount = 1; Transport = "本地 · python main.py"; Enabled = enabled }
+    {
+        Id = id
+        Label = label
+        ToolCount = 1
+        Transport = "本地 · python main.py"
+        Enabled = enabled
+    }
 
 [<Fact>]
 let ``SettingsTools SetCatalog renders tool list, mcp list and sandbox notes`` () =
@@ -28,14 +41,37 @@ let ``SettingsTools SetCatalog renders tool list, mcp list and sandbox notes`` (
         let p = pane ()
         Assert.Contains("当前没有可用工具", textOf p.View)
         Assert.Contains("还没有 MCP 服务", textOf p.View)
+
         p.Render
             { empty with
                 Tools =
-                    [ { Id = "read_file"; Label = "读取文件"; Description = "读取本地沙箱中的文件。"; FromMcp = false; PolicyLabel = "首次询问" }
-                      { Id = "mcp_tool"; Label = "MCP 工具"; Description = ""; FromMcp = true; PolicyLabel = "自动执行" } ]
-                Servers = [ server "mcp-srv" "示例 MCP" true; { server "mcp-remote" "远程 MCP" false with Transport = "远程 · https://mcp.remote.com" } ]
+                    [
+                        {
+                            Id = "read_file"
+                            Label = "读取文件"
+                            Description = "读取本地沙箱中的文件。"
+                            FromMcp = false
+                            PolicyLabel = "首次询问"
+                        }
+                        {
+                            Id = "mcp_tool"
+                            Label = "MCP 工具"
+                            Description = ""
+                            FromMcp = true
+                            PolicyLabel = "自动执行"
+                        }
+                    ]
+                Servers =
+                    [
+                        server "mcp-srv" "示例 MCP" true
+                        { server "mcp-remote" "远程 MCP" false with
+                            Transport = "远程 · https://mcp.remote.com"
+                        }
+                    ]
                 Folders = [ "/data" ]
-                SandboxNote = "文件读取工具的沙箱根目录：/data" }
+                SandboxNote = "文件读取工具的沙箱根目录：/data"
+            }
+
         let text = textOf p.View
         Assert.DoesNotContain("当前没有可用工具", text)
         Assert.Contains("（MCP 服务未提供描述）", text)
@@ -50,13 +86,31 @@ let ``SettingsTools SetCatalog renders tool list, mcp list and sandbox notes`` (
 let ``工具设置：每个工具有审批方式入口，授权文件夹有入口；空授权时文案指向入口`` () =
     Headless.run (fun () ->
         let p = pane ()
-        let policies, removes, adds = ResizeArray<string>(), ResizeArray<string>(), ResizeArray<unit>()
+
+        let policies, removes, adds =
+            ResizeArray<string>(), ResizeArray<string>(), ResizeArray<unit>()
+
         p.PolicyClicked.Add(fun (id, _) -> policies.Add id)
         p.RemoveFolderClicked.Add removes.Add
         p.AddFolderClicked.Add adds.Add
         Assert.True((byId p.View "tools-add-folder").IsSome)
         Assert.Contains("还没有授权任何文件夹", textOf p.View)
-        p.Render { empty with Tools = [ { Id = "builtin:time"; Label = "当前时间"; Description = "返回时间"; FromMcp = false; PolicyLabel = "每次询问" } ]; Folders = [ "/data" ] }
+
+        p.Render
+            { empty with
+                Tools =
+                    [
+                        {
+                            Id = "builtin:time"
+                            Label = "当前时间"
+                            Description = "返回时间"
+                            FromMcp = false
+                            PolicyLabel = "每次询问"
+                        }
+                    ]
+                Folders = [ "/data" ]
+            }
+
         let policy = (byId p.View "tool-policy-builtin:time").Value
         Assert.Equal("当前时间 的审批方式：每次询问", AutomationProperties.GetName policy)
         click policy
@@ -74,8 +128,19 @@ let ``disabled mcp card dims its text while keeping row actions alive`` () =
         let edits, mores = ResizeArray<string>(), ResizeArray<string>()
         p.EditServerClicked.Add edits.Add
         p.ServerMoreClicked.Add(fun (id, _) -> mores.Add id)
-        p.Render { empty with Servers = [ server "filesystem" "文件系统" false ] }
-        let _name = descendants p.View |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "文件系统" -> Some t | _ -> None)
+
+        p.Render
+            { empty with
+                Servers = [ server "filesystem" "文件系统" false ]
+            }
+
+        let _name =
+            descendants p.View
+            |> Seq.pick (fun c ->
+                match c with
+                | :? TextBlock as t when t.Text = "文件系统" -> Some t
+                | _ -> None)
+
         let edit = (named p.View "编辑").Value
         let more = (named p.View "更多").Value
         Assert.True(edit.IsEnabled && more.IsEnabled)
@@ -89,8 +154,28 @@ let ``built-in tool row title shares the row-title body font`` () =
     Headless.run (fun () ->
         let p = ToolsPane()
         let _ = host p.View
-        p.Render { empty with Tools = [ { Id = "t"; Label = "当前时间"; Description = "d"; FromMcp = false; PolicyLabel = "自动执行" } ] }
-        let title = descendants p.View |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "当前时间" -> Some t | _ -> None)
+
+        p.Render
+            { empty with
+                Tools =
+                    [
+                        {
+                            Id = "t"
+                            Label = "当前时间"
+                            Description = "d"
+                            FromMcp = false
+                            PolicyLabel = "自动执行"
+                        }
+                    ]
+            }
+
+        let title =
+            descendants p.View
+            |> Seq.pick (fun c ->
+                match c with
+                | :? TextBlock as t when t.Text = "当前时间" -> Some t
+                | _ -> None)
+
         Assert.Equal(14.0, title.FontSize))
 
 [<Fact>]
@@ -114,10 +199,12 @@ let ``switch row consumes the shared settings row height and toggle semantics`` 
 let ``SettingsTools ShowEditor validates id, command/url, timeout and saves valid config`` () =
     Headless.run (fun () ->
         let messages = Collections.Generic.Dictionary<TextBox, TextBlock>()
+
         let validation (box: TextBox) =
             let t = TextBlock(IsVisible = false)
             messages[box] <- t
             Some(t :> Control)
+
         let editor = McpEditor(None, validation)
         let _ = host editor.View
         Assert.Equal(6, messages.Count)
@@ -134,10 +221,18 @@ let ``SettingsTools ShowEditor validates id, command/url, timeout and saves vali
         let saveButton = (named editor.View "正在保存…").Value
         Assert.False saveButton.IsEnabled
         Assert.False (named editor.View "取消").Value.IsEnabled
-        editor.Summary.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control))
+
+        editor.Summary.RaiseEvent(
+            KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control)
+        )
+
         Assert.Equal(1, saves.Count)
         editor.ApplyPending false
-        editor.Summary.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control))
+
+        editor.Summary.RaiseEvent(
+            KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control)
+        )
+
         Assert.Equal(2, saves.Count)
         Assert.True (named editor.View "添加").Value.IsEnabled
         Assert.True editor.Enabled)
@@ -145,7 +240,17 @@ let ``SettingsTools ShowEditor validates id, command/url, timeout and saves vali
 [<Fact>]
 let ``editing an existing mcp server locks its id and focuses the label`` () =
     Headless.run (fun () ->
-        let v = { Id = "fs"; Label = "文件"; Command = "npx"; Args = "-y\nserver"; Url = ""; Timeout = "30"; Enabled = false }
+        let v =
+            {
+                Id = "fs"
+                Label = "文件"
+                Command = "npx"
+                Args = "-y\nserver"
+                Url = ""
+                Timeout = "30"
+                Enabled = false
+            }
+
         let editor = McpEditor(Some v, fun _ -> None)
         let _ = host editor.View
         Assert.False editor.IdBox.IsEnabled

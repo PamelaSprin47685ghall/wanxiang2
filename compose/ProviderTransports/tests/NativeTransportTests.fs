@@ -33,6 +33,7 @@ type private FakeUpstream(sse: string) =
     do
         listener.Prefixes.Add $"http://127.0.0.1:{port}/"
         listener.Start()
+
         async {
             try
                 while listener.IsListening do
@@ -40,18 +41,24 @@ type private FakeUpstream(sse: string) =
                     use reader = new StreamReader(context.Request.InputStream, Encoding.UTF8)
                     requestBody <- reader.ReadToEnd()
                     requestPath <- context.Request.Url.PathAndQuery
+
                     requestHeaders <-
                         context.Request.Headers.AllKeys
                         |> Seq.choose (fun key ->
-                            if isNull key then None else Some(key, context.Request.Headers[key]))
+                            if isNull key then
+                                None
+                            else
+                                Some(key, context.Request.Headers[key]))
                         |> Map.ofSeq
+
                     context.Response.StatusCode <- 200
                     context.Response.ContentType <- "text/event-stream"
                     let bytes = Encoding.UTF8.GetBytes sse
                     context.Response.OutputStream.Write(bytes, 0, bytes.Length)
                     context.Response.OutputStream.Flush()
                     context.Response.Close()
-            with _ -> ()
+            with _ ->
+                ()
         }
         |> Async.Start
 
@@ -65,40 +72,51 @@ type private FakeUpstream(sse: string) =
             try
                 listener.Stop()
                 listener.Close()
-            with _ -> ()
+            with _ ->
+                ()
 
 let private providerOf (kind: string) (baseUrl: string) : ProviderConfig =
-    { id = "test"
-      kind = kind
-      label = "Test"
-      baseUrl = baseUrl
-      apiKey = Some "secret-key"
-      models = [ "m" ]
-      defaultModel = "m"
-      timeoutSeconds = 30
-      maxRetries = 0
-      enabled = true
-      promptCaching = false
-      headers = Map.empty
-      extraJson = None; visionOverrides = Map.empty }
+    {
+        id = "test"
+        kind = kind
+        label = "Test"
+        baseUrl = baseUrl
+        apiKey = Some "secret-key"
+        models = [ "m" ]
+        defaultModel = "m"
+        timeoutSeconds = 30
+        maxRetries = 0
+        enabled = true
+        promptCaching = false
+        headers = Map.empty
+        extraJson = None
+        visionOverrides = Map.empty
+    }
 
 /// 一轮真实的工具往返：系统指令、用户提问、模型的工具调用、工具结果。
 /// 这个形状能同时压到「system 提到顶层」「相邻同角色合并」「结果配回调用」三条规则。
 let private toolRoundTrip (callId: string) =
-    [ ChatMessage(ChatRole.System, "be brief")
-      ChatMessage(ChatRole.User, "请调用 echo")
-      ChatMessage(
-          ChatRole.Assistant,
-          [| FunctionCallContent(callId, "echo", dict [ "text", box "hi" ]) :> AIContent |])
-      ChatMessage(ChatRole.Tool, [| FunctionResultContent(callId, "echoed") :> AIContent |]) ]
+    [
+        ChatMessage(ChatRole.System, "be brief")
+        ChatMessage(ChatRole.User, "请调用 echo")
+        ChatMessage(
+            ChatRole.Assistant,
+            [|
+                FunctionCallContent(callId, "echo", dict [ "text", box "hi" ]) :> AIContent
+            |]
+        )
+        ChatMessage(ChatRole.Tool, [| FunctionResultContent(callId, "echoed") :> AIContent |])
+    ]
 
 let private optionsWith (instructions: string option) =
     let options = ChatOptions()
     options.MaxOutputTokens <- Nullable 256
     options.Temperature <- Nullable 0.5f
+
     match instructions with
     | Some text -> options.Instructions <- text
     | None -> ()
+
     options
 
 let private runOnce (client: IChatClient) (messages: ChatMessage list) (options: ChatOptions) =
@@ -107,7 +125,9 @@ let private runOnce (client: IChatClient) (messages: ChatMessage list) (options:
 let private functionCalls (response: ChatResponse) =
     response.Messages
     |> Seq.collect (fun m -> m.Contents)
-    |> Seq.choose (function :? FunctionCallContent as c -> Some c | _ -> None)
+    |> Seq.choose (function
+        | :? FunctionCallContent as c -> Some c
+        | _ -> None)
     |> List.ofSeq
 
 // ---------------------------------------------------------------- Anthropic
@@ -115,47 +135,59 @@ let private functionCalls (response: ChatResponse) =
 let private anthropicSse =
     String.concat
         "\n"
-        [ "event: message_start"
-          """data: {"type":"message_start","message":{"id":"msg_1","usage":{"input_tokens":11,"output_tokens":0}}}"""
-          ""
-          "event: content_block_start"
-          """data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}"""
-          ""
-          "event: content_block_delta"
-          """data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"你好"}}"""
-          ""
-          "event: content_block_delta"
-          """data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"世界"}}"""
-          ""
-          "event: content_block_stop"
-          """data: {"type":"content_block_stop","index":0}"""
-          ""
-          "event: content_block_start"
-          """data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"toolu_9","name":"echo","input":{}}}"""
-          ""
-          "event: content_block_delta"
-          """data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"text\""}}"""
-          ""
-          "event: content_block_delta"
-          """data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":":\"hi\"}"}}"""
-          ""
-          "event: content_block_stop"
-          """data: {"type":"content_block_stop","index":1}"""
-          ""
-          "event: message_delta"
-          """data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":7}}"""
-          ""
-          "event: message_stop"
-          """data: {"type":"message_stop"}"""
-          ""
-          "" ]
+        [
+            "event: message_start"
+            """data: {"type":"message_start","message":{"id":"msg_1","usage":{"input_tokens":11,"output_tokens":0}}}"""
+            ""
+            "event: content_block_start"
+            """data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}"""
+            ""
+            "event: content_block_delta"
+            """data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"你好"}}"""
+            ""
+            "event: content_block_delta"
+            """data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"世界"}}"""
+            ""
+            "event: content_block_stop"
+            """data: {"type":"content_block_stop","index":0}"""
+            ""
+            "event: content_block_start"
+            """data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"toolu_9","name":"echo","input":{}}}"""
+            ""
+            "event: content_block_delta"
+            """data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"text\""}}"""
+            ""
+            "event: content_block_delta"
+            """data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":":\"hi\"}"}}"""
+            ""
+            "event: content_block_stop"
+            """data: {"type":"content_block_stop","index":1}"""
+            ""
+            "event: message_delta"
+            """data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":7}}"""
+            ""
+            "event: message_stop"
+            """data: {"type":"message_stop"}"""
+            ""
+            ""
+        ]
 
 let private anthropicRunWith (sse: string) (thinkingBudget: int) (promptCaching: bool) =
     let upstream = new FakeUpstream(sse)
-    let provider = { providerOf "anthropic" upstream.BaseUrl with promptCaching = promptCaching }
+
+    let provider =
+        { providerOf "anthropic" upstream.BaseUrl with
+            promptCaching = promptCaching
+        }
+
     use http = new HttpClient()
-    let client = new AnthropicChatClient(provider, "claude-test", http, thinkingBudget) :> IChatClient
-    let response = runOnce client (toolRoundTrip "toolu_prev") (optionsWith (Some "be terse"))
+
+    let client =
+        new AnthropicChatClient(provider, "claude-test", http, thinkingBudget) :> IChatClient
+
+    let response =
+        runOnce client (toolRoundTrip "toolu_prev") (optionsWith (Some "be terse"))
+
     let body = JsonNode.Parse upstream.RequestBody
     let path = upstream.RequestPath
     let headers = upstream.RequestHeaders
@@ -166,8 +198,13 @@ let private anthropicRun () =
     let upstream = new FakeUpstream(anthropicSse)
     let provider = providerOf "anthropic" upstream.BaseUrl
     use http = new HttpClient()
-    let client = new AnthropicChatClient(provider, "claude-test", http, 0) :> IChatClient
-    let response = runOnce client (toolRoundTrip "toolu_prev") (optionsWith (Some "be terse"))
+
+    let client =
+        new AnthropicChatClient(provider, "claude-test", http, 0) :> IChatClient
+
+    let response =
+        runOnce client (toolRoundTrip "toolu_prev") (optionsWith (Some "be terse"))
+
     let body = JsonNode.Parse upstream.RequestBody
     let path = upstream.RequestPath
     let headers = upstream.RequestHeaders
@@ -183,6 +220,7 @@ let ``anthropic 把分片的文本增量拼回完整回答`` () =
 let ``anthropic 把分片下发的工具入参拼完整再解析`` () =
     // 入参是 input_json_delta 一片片来的，中途解析必然失败
     let response, _, _, _ = anthropicRun ()
+
     match functionCalls response with
     | [ call ] ->
         Assert.Equal("toolu_9", call.CallId)
@@ -208,6 +246,7 @@ let ``anthropic 请求把 system 提到顶层且必带 max_tokens`` () =
         ProviderSse.tryArray body "system"
         |> Option.map (fun blocks -> blocks.ToJsonString())
         |> Option.defaultValue ""
+
     Assert.Contains("be terse", system)
     Assert.Contains("be brief", system)
     Assert.EndsWith("/v1/messages", path)
@@ -216,11 +255,15 @@ let ``anthropic 请求把 system 提到顶层且必带 max_tokens`` () =
 let ``anthropic 请求里相邻同角色被合并且工具结果算 user`` () =
     // Anthropic 要求 user/assistant 交替；工具结果紧跟用户消息时最容易撞 400
     let _, body, _, _ = anthropicRun ()
+
     let roles =
         ProviderSse.tryArray body "messages"
         |> Option.map (fun a ->
-            a |> Seq.map (fun m -> ProviderSse.tryString m "role" |> Option.defaultValue "") |> List.ofSeq)
+            a
+            |> Seq.map (fun m -> ProviderSse.tryString m "role" |> Option.defaultValue "")
+            |> List.ofSeq)
         |> Option.defaultValue []
+
     Assert.Equal<string list>([ "user"; "assistant"; "user" ], roles)
     Assert.DoesNotContain("\"role\":\"system\"", body.ToJsonString())
 
@@ -235,20 +278,27 @@ let ``anthropic 用请求头带密钥与协议版本`` () =
 let private geminiSse =
     String.concat
         "\n"
-        [ """data: {"candidates":[{"content":{"role":"model","parts":[{"text":"你好"}]}}],"usageMetadata":{"promptTokenCount":5,"candidatesTokenCount":1,"totalTokenCount":6}}"""
-          ""
-          """data: {"candidates":[{"content":{"role":"model","parts":[{"text":"世界"}]}}]}"""
-          ""
-          """data: {"candidates":[{"content":{"role":"model","parts":[{"functionCall":{"name":"echo","args":{"text":"hi"}}}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":5,"candidatesTokenCount":9,"totalTokenCount":14}}"""
-          ""
-          "" ]
+        [
+            """data: {"candidates":[{"content":{"role":"model","parts":[{"text":"你好"}]}}],"usageMetadata":{"promptTokenCount":5,"candidatesTokenCount":1,"totalTokenCount":6}}"""
+            ""
+            """data: {"candidates":[{"content":{"role":"model","parts":[{"text":"世界"}]}}]}"""
+            ""
+            """data: {"candidates":[{"content":{"role":"model","parts":[{"functionCall":{"name":"echo","args":{"text":"hi"}}}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":5,"candidatesTokenCount":9,"totalTokenCount":14}}"""
+            ""
+            ""
+        ]
 
 let private geminiRunWith (sse: string) (thinkingBudget: int) =
     let upstream = new FakeUpstream(sse)
     let provider = providerOf "gemini" upstream.BaseUrl
     use http = new HttpClient()
-    let client = new GeminiChatClient(provider, "gemini-test", http, thinkingBudget) :> IChatClient
-    let response = runOnce client (toolRoundTrip "echo@0") (optionsWith (Some "be terse"))
+
+    let client =
+        new GeminiChatClient(provider, "gemini-test", http, thinkingBudget) :> IChatClient
+
+    let response =
+        runOnce client (toolRoundTrip "echo@0") (optionsWith (Some "be terse"))
+
     let body = JsonNode.Parse upstream.RequestBody
     (upstream :> IDisposable).Dispose()
     response, body
@@ -258,7 +308,10 @@ let private geminiRun () =
     let provider = providerOf "gemini" upstream.BaseUrl
     use http = new HttpClient()
     let client = new GeminiChatClient(provider, "gemini-test", http, 0) :> IChatClient
-    let response = runOnce client (toolRoundTrip "echo@0") (optionsWith (Some "be terse"))
+
+    let response =
+        runOnce client (toolRoundTrip "echo@0") (optionsWith (Some "be terse"))
+
     let body = JsonNode.Parse upstream.RequestBody
     let path = upstream.RequestPath
     let headers = upstream.RequestHeaders
@@ -274,6 +327,7 @@ let ``gemini 把多帧文本拼回完整回答`` () =
 let ``gemini 的 functionCall 被造出可回配的调用 id`` () =
     // Gemini 的 functionCall 不带 id，而编排层要靠 id 把结果配回调用
     let response, _, _, _ = geminiRun ()
+
     match functionCalls response with
     | [ call ] ->
         Assert.Equal("echo", call.Name)
@@ -292,17 +346,22 @@ let ``gemini 汇总用量并取最后一帧`` () =
 [<Fact>]
 let ``gemini 请求用 systemInstruction 与 model 角色`` () =
     let _, body, path, _ = geminiRun ()
+
     let system =
         ProviderSse.tryObject body "systemInstruction"
         |> Option.bind (fun node -> ProviderSse.tryArray node "parts")
         |> Option.map (fun parts -> parts.ToJsonString())
         |> Option.defaultValue ""
+
     Assert.Contains("be terse", system)
     Assert.Contains("be brief", system)
+
     let roles =
         ProviderSse.tryArray body "contents"
         |> Option.map (fun a ->
-            a |> Seq.map (fun m -> ProviderSse.tryString m "role" |> Option.defaultValue "") |> List.ofSeq)
+            a
+            |> Seq.map (fun m -> ProviderSse.tryString m "role" |> Option.defaultValue "")
+            |> List.ofSeq)
         |> Option.defaultValue []
     // Gemini 管助手叫 model
     Assert.Equal<string list>([ "user"; "model"; "user" ], roles)
@@ -337,40 +396,45 @@ let ``两个原生传输都被配置层接受`` () =
 let private reasoningOf (response: ChatResponse) =
     response.Messages
     |> Seq.collect (fun m -> m.Contents)
-    |> Seq.choose (function :? TextReasoningContent as r -> Some r.Text | _ -> None)
+    |> Seq.choose (function
+        | :? TextReasoningContent as r -> Some r.Text
+        | _ -> None)
     |> String.concat ""
 
 let private anthropicThinkingSse =
     String.concat
         "\n"
-        [ "event: message_start"
-          """data: {"type":"message_start","message":{"id":"msg_t","usage":{"input_tokens":3,"output_tokens":0}}}"""
-          ""
-          "event: content_block_start"
-          """data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}"""
-          ""
-          "event: content_block_delta"
-          """data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"先拆解"}}"""
-          ""
-          "event: content_block_delta"
-          """data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"再作答"}}"""
-          ""
-          "event: content_block_delta"
-          """data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"sig"}}"""
-          ""
-          "event: content_block_stop"
-          """data: {"type":"content_block_stop","index":0}"""
-          ""
-          "event: content_block_start"
-          """data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}"""
-          ""
-          "event: content_block_delta"
-          """data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"答案"}}"""
-          ""
-          "event: message_stop"
-          """data: {"type":"message_stop"}"""
-          ""
-          "" ]
+        [
+            "event: message_start"
+            """data: {"type":"message_start","message":{"id":"msg_t","usage":{"input_tokens":3,"output_tokens":0}}}"""
+            ""
+            "event: content_block_start"
+            """data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}"""
+            ""
+            "event: content_block_delta"
+            """data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"先拆解"}}"""
+            ""
+            "event: content_block_delta"
+            """data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"再作答"}}"""
+            ""
+            "event: content_block_delta"
+            """data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"sig"}}"""
+            ""
+            "event: content_block_stop"
+            """data: {"type":"content_block_stop","index":0}"""
+            ""
+            "event: content_block_start"
+            """data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}"""
+            ""
+            "event: content_block_delta"
+            """data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"答案"}}"""
+            ""
+            "event: message_stop"
+            """data: {"type":"message_stop"}"""
+            ""
+            ""
+        ]
+
 [<Fact>]
 let ``anthropic 的思维链与正式回答分开呈现`` () =
     let response, _, _, _ = anthropicRunWith anthropicThinkingSse 1024 false
@@ -383,11 +447,13 @@ let ``anthropic 的思维链与正式回答分开呈现`` () =
 let ``anthropic 开思维链时请求带 thinking 且 max_tokens 大于预算`` () =
     // Anthropic 要求 max_tokens > budget_tokens，冲突时应当抬高上限而不是抛 400
     let _, body, _, _ = anthropicRunWith anthropicThinkingSse 1024 false
+
     match ProviderSse.tryObject body "thinking" with
     | None -> failwith "请求里没有 thinking"
     | Some thinking ->
         Assert.Equal(Some "enabled", ProviderSse.tryString thinking "type")
         Assert.Equal(Some 1024, ProviderSse.tryInt thinking "budget_tokens")
+
     let maxTokens = ProviderSse.tryInt body "max_tokens" |> Option.defaultValue 0
     Assert.True(maxTokens > 1024, $"max_tokens={maxTokens} 应当大于思维链预算 1024")
 
@@ -412,11 +478,13 @@ let ``anthropic 默认不打缓存标记`` () =
 let private geminiThinkingSse =
     String.concat
         "\n"
-        [ """data: {"candidates":[{"content":{"role":"model","parts":[{"text":"先拆解","thought":true}]}}]}"""
-          ""
-          """data: {"candidates":[{"content":{"role":"model","parts":[{"text":"答案"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":3,"candidatesTokenCount":2,"totalTokenCount":5}}"""
-          ""
-          "" ]
+        [
+            """data: {"candidates":[{"content":{"role":"model","parts":[{"text":"先拆解","thought":true}]}}]}"""
+            ""
+            """data: {"candidates":[{"content":{"role":"model","parts":[{"text":"答案"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":3,"candidatesTokenCount":2,"totalTokenCount":5}}"""
+            ""
+            ""
+        ]
 
 [<Fact>]
 let ``gemini 的 thought 片段进思维链而非正文`` () =
@@ -428,6 +496,7 @@ let ``gemini 的 thought 片段进思维链而非正文`` () =
 [<Fact>]
 let ``gemini 开思维链时 generationConfig 带 thinkingConfig`` () =
     let _, body = geminiRunWith geminiThinkingSse 512
+
     match ProviderSse.tryObject body "generationConfig" with
     | None -> failwith "请求里没有 generationConfig"
     | Some config ->
@@ -441,22 +510,31 @@ let ``gemini 开思维链时 generationConfig 带 thinkingConfig`` () =
 [<Fact>]
 let ``gemini 不开思维链时没有 thinkingConfig`` () =
     let _, body = geminiRunWith geminiSse 0
+
     let hasThinking =
         ProviderSse.tryObject body "generationConfig"
         |> Option.bind (fun c -> ProviderSse.tryObject c "thinkingConfig")
+
     Assert.True(hasThinking.IsNone)
 
 // ---------------------------------------------------------------- 请求映射（直接构造，不走 HTTP）
 
 let private withAttachment (mediaType: string) (bytes: byte[]) =
-    [ ChatMessage(
-          ChatRole.User,
-          [| TextContent "看这个" :> AIContent
-             DataContent(ReadOnlyMemory bytes, mediaType) :> AIContent |]) ]
+    [
+        ChatMessage(
+            ChatRole.User,
+            [|
+                TextContent "看这个" :> AIContent
+                DataContent(ReadOnlyMemory bytes, mediaType) :> AIContent
+            |]
+        )
+    ]
 
 [<Fact>]
 let ``anthropic 把 PDF 映成 document 块`` () =
-    let body = AnthropicRequest.build "m" (withAttachment "application/pdf" (Array.init 8 byte)) null true 0 false
+    let body =
+        AnthropicRequest.build "m" (withAttachment "application/pdf" (Array.init 8 byte)) null true 0 false
+
     let json = body.ToJsonString()
     Assert.Contains("\"type\":\"document\"", json)
     Assert.Contains("application/pdf", json)
@@ -464,7 +542,9 @@ let ``anthropic 把 PDF 映成 document 块`` () =
 
 [<Fact>]
 let ``anthropic 把图片映成 image 块`` () =
-    let body = AnthropicRequest.build "m" (withAttachment "image/png" (Array.init 8 byte)) null true 0 false
+    let body =
+        AnthropicRequest.build "m" (withAttachment "image/png" (Array.init 8 byte)) null true 0 false
+
     let json = body.ToJsonString()
     Assert.Contains("\"type\":\"image\"", json)
     Assert.DoesNotContain("\"type\":\"document\"", json)
@@ -482,9 +562,13 @@ let ``对话 extraJson 在两种原生传输上都不被丢掉`` () =
     // 兼容传输靠 ChatOptions.AdditionalProperties 透传；原生传输若不读它，
     // 用户在对话里配的模型专属参数会静默消失
     let options = ChatOptions()
+
     options.AdditionalProperties <-
         AdditionalPropertiesDictionary(dict [ "service_tier", box (JsonValue.Create "priority" :> JsonNode) ])
-    let anthropic = AnthropicRequest.build "m" [ ChatMessage(ChatRole.User, "hi") ] options true 0 false
+
+    let anthropic =
+        AnthropicRequest.build "m" [ ChatMessage(ChatRole.User, "hi") ] options true 0 false
+
     Assert.Equal(Some "priority", ProviderSse.tryString anthropic "service_tier")
 
     let gemini = GeminiRequest.build [ ChatMessage(ChatRole.User, "hi") ] options 0
@@ -499,6 +583,7 @@ let ``对话 extraJson 在两种原生传输上都不被丢掉`` () =
 /// 不装多余包装。
 type private CountingHandler(status: HttpStatusCode, count: int ref) =
     inherit HttpMessageHandler()
+
     override _.SendAsync(_, _) =
         count.Value <- count.Value + 1
         task { return new HttpResponseMessage(status) }
@@ -507,11 +592,19 @@ type private CountingHandler(status: HttpStatusCode, count: int ref) =
 let ``sendWithRetry with maxRetries 0 makes exactly one attempt`` () =
     // retry-zero 必须精确打一次上游：多一次就是对计费调用的自动重发（原则 5）。
     let count = ref 0
-    use http = new HttpClient(new CountingHandler(HttpStatusCode.InternalServerError, count))
+
+    use http =
+        new HttpClient(new CountingHandler(HttpStatusCode.InternalServerError, count))
+
     use response =
-        ProviderSse.sendWithRetry http (fun () -> new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1/")) 0 CancellationToken.None
+        ProviderSse.sendWithRetry
+            http
+            (fun () -> new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1/"))
+            0
+            CancellationToken.None
         |> Async.AwaitTask
         |> Async.RunSynchronously
+
     Assert.Equal(1, count.Value)
     Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode)
 
@@ -519,10 +612,18 @@ let ``sendWithRetry with maxRetries 0 makes exactly one attempt`` () =
 let ``sendWithRetry retries transient failures while maxRetries allows`` () =
     // 正控制：配了重试时首字节前重试仍在（退避与状态码语义不动，只盖零档）。
     let count = ref 0
-    use http = new HttpClient(new CountingHandler(HttpStatusCode.ServiceUnavailable, count))
+
+    use http =
+        new HttpClient(new CountingHandler(HttpStatusCode.ServiceUnavailable, count))
+
     use response =
-        ProviderSse.sendWithRetry http (fun () -> new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1/")) 2 CancellationToken.None
+        ProviderSse.sendWithRetry
+            http
+            (fun () -> new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1/"))
+            2
+            CancellationToken.None
         |> Async.AwaitTask
         |> Async.RunSynchronously
+
     Assert.Equal(3, count.Value)
     Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode)

@@ -25,14 +25,16 @@ type ProviderDot =
 
 /// 一个模型服务
 type ProviderRow =
-    { Id: string
-      Label: string
-      /// 「地址 · N 个模型 · 未设置密钥」
-      Meta: string
-      Enabled: bool
-      Dot: ProviderDot
-      /// 是全局默认
-      IsDefault: bool }
+    {
+        Id: string
+        Label: string
+        /// 「地址 · N 个模型 · 未设置密钥」
+        Meta: string
+        Enabled: bool
+        Dot: ProviderDot
+        /// 是全局默认
+        IsDefault: bool
+    }
 
 /// 设置 → 模型服务列表（旧 SettingsProviders 的列表部分）
 type ProvidersPane(?glyphOf: string -> IBrush -> Control) =
@@ -44,37 +46,65 @@ type ProvidersPane(?glyphOf: string -> IBrush -> Control) =
 
     let renderRow (p: ProviderRow) : Control =
         let dot = Ui.statusDot ()
+
         match (p: ProviderRow).Dot with
-        | ProviderDot.Disabled -> dot.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, Dyn.res "Palette.TextFaint") |> ignore
-        | ProviderDot.Configured -> dot.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, Dyn.res "Palette.Accent") |> ignore
-        | ProviderDot.MissingKey -> dot.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, Dyn.res "Palette.Warning") |> ignore
+        | ProviderDot.Disabled ->
+            dot.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, Dyn.res "Palette.TextFaint")
+            |> ignore
+        | ProviderDot.Configured ->
+            dot.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, Dyn.res "Palette.Accent")
+            |> ignore
+        | ProviderDot.MissingKey ->
+            dot.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, Dyn.res "Palette.Warning")
+            |> ignore
+
         let name = TextBlock(Text = p.Label, FontSize = 14.0)
+
         if p.Enabled then
             name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
         else
             name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+
         name.FontWeight <- FontWeight.Medium
         name.VerticalAlignment <- VerticalAlignment.Center
         let meta = TextBlock(Text = p.Meta, FontSize = 11.0)
         meta.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
         meta.TextTrimming <- TextTrimming.CharacterEllipsis
+
         let stateLabel, tone =
             match p.Dot with
             | ProviderDot.Disabled -> "已停用", TagTone.Neutral
             | ProviderDot.Configured -> "已配置", TagTone.Neutral
             | ProviderDot.MissingKey -> "缺少密钥", TagTone.Warning
-        let titleRow = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0, VerticalAlignment = VerticalAlignment.Center)
+
+        let titleRow =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 12.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         titleRow.Children.Add dot
         titleRow.Children.Add name
         titleRow.Children.Add(Ui.tag tone stateLabel)
-        if p.IsDefault then titleRow.Children.Add(Ui.tag TagTone.Neutral "默认")
+
+        if p.IsDefault then
+            titleRow.Children.Add(Ui.tag TagTone.Neutral "默认")
+
         let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 2.0)
         column.Children.Add titleRow
         column.Children.Add meta
         let editButton = Ui.iconButton "✎" "编辑" (fun () -> edit.Trigger p.Id)
         let mutable moreButton: Button = Unchecked.defaultof<_>
         moreButton <- Ui.iconButton "⋯" "更多" (fun () -> more.Trigger((p.Id, moreButton :> Control)))
-        let actions = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0, VerticalAlignment = VerticalAlignment.Center)
+
+        let actions =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 4.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         actions.Children.Add editButton
         actions.Children.Add moreButton
         let dock = DockPanel(LastChildFill = true)
@@ -102,14 +132,18 @@ type ProvidersPane(?glyphOf: string -> IBrush -> Control) =
     member _.Render(rows: ProviderRow list) =
         listPanel.Children.Clear()
         topAdd.IsVisible <- not rows.IsEmpty
+
         if rows.IsEmpty then
             let logo =
                 match glyphOf with
                 | Some g -> g "logo" (SolidColorBrush(Colors.Gray) :> IBrush)
                 | None ->
-                    let t = TextBlock(Text = "万", FontSize = 32.0, HorizontalAlignment = HorizontalAlignment.Center)
+                    let t =
+                        TextBlock(Text = "万", FontSize = 32.0, HorizontalAlignment = HorizontalAlignment.Center)
+
                     t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
                     t :> Control
+
             logo.HorizontalAlignment <- HorizontalAlignment.Center
             let text = Ui.caption "添加一个模型服务后就能开始对话。预设已经填好端点和常见模型，你只需要粘贴密钥。"
             text.TextAlignment <- TextAlignment.Center
@@ -121,7 +155,8 @@ type ProvidersPane(?glyphOf: string -> IBrush -> Control) =
             emptyCardPanel.Children.Add emptyAdd
             listPanel.Children.Add(Ui.card emptyCardPanel)
         else
-            for r in rows do listPanel.Children.Add(renderRow r)
+            for r in rows do
+                listPanel.Children.Add(renderRow r)
 
     member _.AddClicked = add.Publish
     member _.EditClicked = edit.Publish
@@ -139,24 +174,41 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
     let cancel = Event<unit>()
     let mutable pending = false
     let mutable advanced = false
+
     let field label hint placeholder (name: string) =
         let box = Ui.textField placeholder
         AutomationProperties.SetName(box, name)
         box, Ui.fieldGroup label hint box (validationFor box)
+
     let multiline (box: TextBox) =
         box.AcceptsReturn <- true
         box.TextWrapping <- TextWrapping.Wrap
         box.VerticalContentAlignment <- VerticalAlignment.Top
+
     let idBox, idField = field "稳定标识" "创建后不可修改；仅限字母、数字、下划线与连字符。" "例如 openai" "稳定标识"
     let labelBox, labelField = field "显示名称" "仅用于界面显示。" "在界面上怎么称呼它" "显示名称"
-    let urlBox, urlField = field "端点地址" "模型服务的 API 地址，以 https:// 开头；原生接口与兼容接口均可。" "https://api.openai.com/v1" "端点地址"
+
+    let urlBox, urlField =
+        field "端点地址" "模型服务的 API 地址，以 https:// 开头；原生接口与兼容接口均可。" "https://api.openai.com/v1" "端点地址"
+
     let keyBox, keyField = field "API Key" "只保存在主机，界面不会回显。" "粘贴密钥" "API Key"
     let modelsBox, modelsField = field "模型列表" "每行一个；也可用逗号分隔。" "每行一个模型名" "模型列表"
-    let defaultModelBox, defaultModelField = field "默认模型" "必须在模型列表中；留空自动选用第一个。" "留空则自动使用列表中第一个" "默认模型"
-    let timeoutBox, timeoutField = field "请求超时（秒）" "单个请求等待的最长时间（秒），默认 120 秒。" "120" "请求超时"
-    let retriesBox, retriesField = field "失败重试次数" "网络或偶发错误时的重试次数（0-10），默认 2 次。" "2" "失败重试"
-    let visionYesBox, visionYesField = field "指定能看图的模型" "每行一个，必须在模型列表中。自动判断错了才需要填。" "留空则自动判断" "指定能看图的模型"
-    let visionNoBox, visionNoField = field "指定只吃文字的模型" "每行一个。这里的模型带图时会在发送前拦下。" "留空则自动判断" "指定只吃文字的模型"
+
+    let defaultModelBox, defaultModelField =
+        field "默认模型" "必须在模型列表中；留空自动选用第一个。" "留空则自动使用列表中第一个" "默认模型"
+
+    let timeoutBox, timeoutField =
+        field "请求超时（秒）" "单个请求等待的最长时间（秒），默认 120 秒。" "120" "请求超时"
+
+    let retriesBox, retriesField =
+        field "失败重试次数" "网络或偶发错误时的重试次数（0-10），默认 2 次。" "2" "失败重试"
+
+    let visionYesBox, visionYesField =
+        field "指定能看图的模型" "每行一个，必须在模型列表中。自动判断错了才需要填。" "留空则自动判断" "指定能看图的模型"
+
+    let visionNoBox, visionNoField =
+        field "指定只吃文字的模型" "每行一个。这里的模型带图时会在发送前拦下。" "留空则自动判断" "指定只吃文字的模型"
+
     let visionCurrent = Ui.caption ""
     let summary = Ui.caption ""
     let presetHint = Ui.caption ""
@@ -169,12 +221,22 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
     let probeButton = Ui.button "secondary" "获取模型列表" probeClicked.Trigger
     let transportButton = Ui.button "secondary" "" transportClicked.Trigger
     let cancelButton = Ui.button "ghost" "取消" cancel.Trigger
-    let saveButton = Ui.button "primary" idleText (fun () -> if not pending then save.Trigger())
-    let advancedPanel = StackPanel(Orientation = Orientation.Vertical, IsVisible = false)
+
+    let saveButton =
+        Ui.button "primary" idleText (fun () ->
+            if not pending then
+                save.Trigger())
+
+    let advancedPanel =
+        StackPanel(Orientation = Orientation.Vertical, IsVisible = false)
+
     let mutable flipAdvanced: unit -> unit = ignore
     let advancedToggle = Ui.button "ghost" "高级设置 ▼" (fun () -> flipAdvanced ())
     let presetButton = Button()
-    let trySave () = if not pending then save.Trigger()
+
+    let trySave () =
+        if not pending then
+            save.Trigger()
 
     let setAdvanced (expanded: bool) =
         advanced <- expanded
@@ -189,7 +251,10 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
     let view =
         keyBox.PasswordChar <- '●'
         multiline modelsBox
-        modelsBox.Bind(Layoutable.MinHeightProperty, Dyn.res "Metric.TextAreaMinHeight") |> ignore
+
+        modelsBox.Bind(Layoutable.MinHeightProperty, Dyn.res "Metric.TextAreaMinHeight")
+        |> ignore
+
         multiline visionYesBox
         multiline visionNoBox
         AutomationProperties.SetAutomationId(visionYesBox, "provider-vision-yes")
@@ -201,13 +266,19 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         AutomationProperties.SetName(summary, "表单错误摘要")
         AutomationProperties.SetLiveSetting(summary, AutomationLiveSetting.Assertive)
         presetHint.IsVisible <- false
-        probeStatus.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
+
+        probeStatus.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger")
+        |> ignore
+
         probeStatus.IsVisible <- false
         probeNeedsSave.IsVisible <- isNew
         AutomationProperties.SetAutomationId(probeButton, "provider-probe-models")
         probeButton.MinWidth <- 96.0
         saveButton.MinWidth <- 96.0
-        if isNew then probeButton.ApplyEnabled false
+
+        if isNew then
+            probeButton.ApplyEnabled false
+
         transportButton.HorizontalAlignment <- HorizontalAlignment.Left
         transportButton.IsVisible <- false
         // 预设选择器（旧 Menu.selectButton）：读屏 ComboBox，点开由组合者弹分组菜单
@@ -216,7 +287,10 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         presetCaption.MaxWidth <- 260.0
         let chevron = TextBlock(Text = "▼", FontSize = 10.0)
         chevron.VerticalAlignment <- VerticalAlignment.Center
-        chevron.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
+
+        chevron.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint")
+        |> ignore
+
         let presetStack = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)
         presetStack.Children.Add presetCaption
         presetStack.Children.Add chevron
@@ -232,6 +306,7 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
             if presetButton.IsEnabled && (e.Key = Key.Down || e.Key = Key.Up) then
                 e.Handled <- true
                 presetClicked.Trigger(presetButton :> Control))
+
         presetButton.HorizontalAlignment <- HorizontalAlignment.Stretch
         AutomationProperties.SetHelpText(cancelButton, "取消并关闭模型服务设置 (Esc)")
         ToolTip.SetTip(cancelButton, "取消并关闭 (Esc)")
@@ -241,31 +316,49 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         row.Children.Add cancelButton
         row.Children.Add saveButton
         row.HorizontalAlignment <- HorizontalAlignment.Right
+
         cancelButton.KeyDown.Add(fun e ->
             if e.Key = Key.Right && saveButton.IsEnabled then
                 e.Handled <- true
                 saveButton.Focus(NavigationMethod.Directional) |> ignore)
+
         saveButton.KeyDown.Add(fun e ->
             if e.Key = Key.Left && cancelButton.IsEnabled then
                 e.Handled <- true
                 cancelButton.Focus(NavigationMethod.Directional) |> ignore)
-        let ctrl (e: KeyEventArgs) = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
+
+        let ctrl (e: KeyEventArgs) =
+            e.KeyModifiers.HasFlag KeyModifiers.Control
+            || e.KeyModifiers.HasFlag KeyModifiers.Meta
         // 单行字段回车即提交；多行框的回车是换行
         for box in [ idBox; labelBox; urlBox; keyBox; defaultModelBox; timeoutBox; retriesBox ] do
             box.KeyDown.Add(fun e ->
                 if e.Key = Key.Enter && not (ctrl e) then
                     e.Handled <- true
                     trySave ())
+
         advancedPanel.Spacing <- 16.0
         let probeStack = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
         probeStack.Children.Add probeButton
         probeStack.Children.Add probeNeedsSave
         probeStack.Children.Add probeStatus
+
         for c in
-            [ transportButton :> Control; idField; modelsField; defaultModelField
-              probeStack
-              visionCurrent; visionYesField; visionNoField; timeoutField; retriesField; enabledRow ] do
+            [
+                transportButton :> Control
+                idField
+                modelsField
+                defaultModelField
+                probeStack
+                visionCurrent
+                visionYesField
+                visionNoField
+                timeoutField
+                retriesField
+                enabledRow
+            ] do
             advancedPanel.Children.Add c
+
         advancedToggle.HorizontalAlignment <- HorizontalAlignment.Left
         AutomationProperties.SetName(advancedToggle, "高级设置")
         setAdvanced false
@@ -282,13 +375,19 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         form.Children.Add midFields
         form.Children.Add advancedToggle
         form.Children.Add advancedPanel
-        form.Children.Add(Ui.hairline())
+        form.Children.Add(Ui.hairline ())
         form.Children.Add row
+
         form.KeyDown.Add(fun e ->
             if e.Key = Key.Enter && ctrl e then
                 e.Handled <- true
                 trySave ())
-        ScrollViewer(Content = form, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Auto)
+
+        ScrollViewer(
+            Content = form,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        )
 
     member _.View = view :> Control
     member _.IdBox = idBox
@@ -301,10 +400,34 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
     member _.RetriesBox = retriesBox
     member _.VisionYesBox = visionYesBox
     member _.VisionNoBox = visionNoBox
+
     /// 全部输入框（摘要复位用）
-    member _.Boxes = [ idBox; labelBox; urlBox; keyBox; modelsBox; defaultModelBox; visionYesBox; visionNoBox; timeoutBox; retriesBox ]
+    member _.Boxes =
+        [
+            idBox
+            labelBox
+            urlBox
+            keyBox
+            modelsBox
+            defaultModelBox
+            visionYesBox
+            visionNoBox
+            timeoutBox
+            retriesBox
+        ]
+
     /// 落在高级区的输入框（出错时组合者先展开高级区）
-    member _.AdvancedBoxes = [ idBox; modelsBox; defaultModelBox; timeoutBox; retriesBox; visionYesBox; visionNoBox ]
+    member _.AdvancedBoxes =
+        [
+            idBox
+            modelsBox
+            defaultModelBox
+            timeoutBox
+            retriesBox
+            visionYesBox
+            visionNoBox
+        ]
+
     member _.Summary = summary
     /// 首个焦点：名称框
     member _.InitialFocus = labelBox :> Control
@@ -321,6 +444,7 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         presetHint.Text <- hint
         presetHint.IsVisible <- not (String.IsNullOrWhiteSpace hint)
         kindCaption.Text <- kind
+
         match transport with
         | Some t ->
             transportButton.ApplyText t
@@ -348,7 +472,15 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         let text = if value then "正在保存…" else idleText
         saveButton.ApplyText text
         saveButton.ApplyEnabled(not value)
-        AutomationProperties.SetHelpText(saveButton, (if value then text else sprintf "确认%s模型服务设置（Ctrl / ⌘ + Enter）" idleText))
+
+        AutomationProperties.SetHelpText(
+            saveButton,
+            (if value then
+                 text
+             else
+                 sprintf "确认%s模型服务设置（Ctrl / ⌘ + Enter）" idleText)
+        )
+
         cancelButton.ApplyEnabled(not value)
 
     /// 「启用这个模型服务」开关的值

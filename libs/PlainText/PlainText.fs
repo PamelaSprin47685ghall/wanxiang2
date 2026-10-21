@@ -12,7 +12,8 @@ open System.Text.RegularExpressions
 module PlainText =
 
     /// 围栏代码块整段丢弃：预览里贴一段代码没有信息量。
-    let private fencedCode = Regex(@"```[\s\S]*?```|~~~[\s\S]*?~~~", RegexOptions.Compiled)
+    let private fencedCode =
+        Regex(@"```[\s\S]*?```|~~~[\s\S]*?~~~", RegexOptions.Compiled)
 
     /// 图片先于链接处理，否则 `![alt](url)` 会残留一个前导 `!`。
     let private image = Regex(@"!\[(?<alt>[^\]]*)\]\([^)]*\)", RegexOptions.Compiled)
@@ -21,21 +22,32 @@ module PlainText =
 
     /// 行首结构标记：标题号、引用角、列表符、有序号、表格分隔行。
     let private leadingMarkers =
-        Regex(@"^[ \t]*(?:#{1,6}[ \t]+|>[ \t]?|[-*+][ \t]+|\d+[.)][ \t]+)", RegexOptions.Compiled ||| RegexOptions.Multiline)
+        Regex(
+            @"^[ \t]*(?:#{1,6}[ \t]+|>[ \t]?|[-*+][ \t]+|\d+[.)][ \t]+)",
+            RegexOptions.Compiled ||| RegexOptions.Multiline
+        )
 
-    let private tableDivider = Regex(@"^[ \t]*\|?[ \t]*:?-{2,}:?[ \t]*(\|[ \t]*:?-{2,}:?[ \t]*)*\|?[ \t]*$", RegexOptions.Compiled ||| RegexOptions.Multiline)
+    let private tableDivider =
+        Regex(
+            @"^[ \t]*\|?[ \t]*:?-{2,}:?[ \t]*(\|[ \t]*:?-{2,}:?[ \t]*)*\|?[ \t]*$",
+            RegexOptions.Compiled ||| RegexOptions.Multiline
+        )
 
-    let private thematicBreak = Regex(@"^[ \t]*(?:\*{3,}|-{3,}|_{3,})[ \t]*$", RegexOptions.Compiled ||| RegexOptions.Multiline)
+    let private thematicBreak =
+        Regex(@"^[ \t]*(?:\*{3,}|-{3,}|_{3,})[ \t]*$", RegexOptions.Compiled ||| RegexOptions.Multiline)
 
     /// 行内强调与代码：只脱标记，保留文字。
-    let private emphasis = Regex(@"(\*{1,3}|_{1,3}|~{2})(?=\S)(.*?\S)\1", RegexOptions.Compiled)
+    let private emphasis =
+        Regex(@"(\*{1,3}|_{1,3}|~{2})(?=\S)(.*?\S)\1", RegexOptions.Compiled)
+
     let private inlineCode = Regex(@"`+([^`]+)`+", RegexOptions.Compiled)
 
     let private whitespace = Regex(@"\s+", RegexOptions.Compiled)
 
     /// 转成适合单行展示的纯文本。
     let ofMarkdown (raw: string) : string =
-        if String.IsNullOrWhiteSpace raw then ""
+        if String.IsNullOrWhiteSpace raw then
+            ""
         else
             let mutable text = raw
             text <- fencedCode.Replace(text, " ")
@@ -56,17 +68,23 @@ module PlainText =
     /// 截断后对末尾空白作 TrimEnd，避免在空格后直接附带省略号。
     let summarize (maxChars: int) (raw: string) : string =
         let text = ofMarkdown raw
-        if maxChars <= 0 then ""
+
+        if maxChars <= 0 then
+            ""
         else
             let enumerator = StringInfo.GetTextElementEnumerator(text)
             let sb = StringBuilder()
             let mutable count = 0
             let mutable truncated = false
+
             while enumerator.MoveNext() do
                 if count < maxChars then
                     sb.Append(enumerator.GetTextElement()) |> ignore
                     count <- count + 1
                 else
                     truncated <- true
-            if not truncated then text
-            else sb.ToString().TrimEnd() + "…"
+
+            if not truncated then
+                text
+            else
+                sb.ToString().TrimEnd() + "…"

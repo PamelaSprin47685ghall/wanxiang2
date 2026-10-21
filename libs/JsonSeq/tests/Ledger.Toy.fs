@@ -9,7 +9,8 @@ type Ev =
     | Add of int
     | Reset
 
-let writeEv = function
+let writeEv =
+    function
     | Add n -> JsonValue.Create n :> JsonNode
     | Reset -> JsonValue.Create "reset" :> JsonNode
 
@@ -20,15 +21,36 @@ let readEv (n: JsonNode) =
     | _ -> Error "bad toy event"
 
 let ofJson (c: Commit<JsonNode>) : Result<Commit<Ev>, string> =
-    match c.events |> List.map readEv |> List.tryPick (function Error e -> Some e | Ok _ -> None) with
+    match
+        c.events
+        |> List.map readEv
+        |> List.tryPick (function
+            | Error e -> Some e
+            | Ok _ -> None)
+    with
     | Some e -> Error e
-    | None -> Ok(c |> Commit.map (fun n -> match readEv n with Ok e -> e | Error e -> failwith e))
+    | None ->
+        Ok(
+            c
+            |> Commit.map (fun n ->
+                match readEv n with
+                | Ok e -> e
+                | Error e -> failwith e)
+        )
 
 /// 计数器不允许为负：用来测试折叠拒绝。错误类型是领域自己的。
 type ToyError = Negative of int
 
 let apply (s: int) (c: Commit<Ev>) : Result<int, ToyError> =
-    let s' = c.events |> List.fold (fun acc e -> match e with Add n -> acc + n | Reset -> 0) s
+    let s' =
+        c.events
+        |> List.fold
+            (fun acc e ->
+                match e with
+                | Add n -> acc + n
+                | Reset -> 0)
+            s
+
     if s' < 0 then Error(Negative s') else Ok s'
 
 let t0 = DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)
@@ -39,7 +61,11 @@ let sp a b = { start = a; ``end`` = b }
 
 /// 提议并以「已持久化在 [tail, tail+len)」这一事实记入；返回提交。
 let commit (l: L) (len: int64) (events: Ev list) (stamp: Stamp option) =
-    match (match stamp with Some s -> l.Propose(events, t0, s) | None -> l.Propose(events, t0)) with
+    match
+        (match stamp with
+         | Some s -> l.Propose(events, t0, s)
+         | None -> l.Propose(events, t0))
+    with
     | Proposed c ->
         match l.Record(c, sp l.Tail (l.Tail + len)) with
         | Ok() -> c

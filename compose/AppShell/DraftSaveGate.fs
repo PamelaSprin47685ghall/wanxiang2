@@ -27,6 +27,7 @@ type DraftSaveGate(windowMs: float) =
     /// `false` 表示「已排上尾巴，等窗口到期再落」。
     member this.Request(now: DateTimeOffset, text: string) : bool =
         pendingText <- text
+
         match lastSaveAt with
         | Some t when (now - t).TotalMilliseconds < windowMs ->
             // 窗口内：这次搭车，不立即落。

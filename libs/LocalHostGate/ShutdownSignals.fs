@@ -18,7 +18,11 @@ type ShutdownSignals() =
     member _.Signal() : ShutdownStep =
         lock gate (fun () ->
             count <- count + 1
-            if count >= 2 then ShutdownStep.Force else ShutdownStep.Graceful)
+
+            if count >= 2 then
+                ShutdownStep.Force
+            else
+                ShutdownStep.Graceful)
 
     /// 立即退出时的进程退出码（128 + SIGINT）。
     static member ForceExitCode = 130

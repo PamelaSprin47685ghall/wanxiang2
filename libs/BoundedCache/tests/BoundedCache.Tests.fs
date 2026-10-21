@@ -1,4 +1,5 @@
 module BoundedCacheTests
+
 open Xunit
 open Wanxiang.UI
 
@@ -24,7 +25,11 @@ let ``RichBackend Cache stores and evicts by capacity`` () =
 let ``GetOrAdd 命中时不再计算`` () =
     let c = BoundedCache<int, int>(4)
     let mutable n = 0
-    let f k = n <- n + 1; k * 10
+
+    let f k =
+        n <- n + 1
+        k * 10
+
     Assert.Equal(10, c.GetOrAdd(1, f))
     Assert.Equal(10, c.GetOrAdd(1, f))
     Assert.Equal(1, n)
@@ -40,5 +45,5 @@ let ``Clear 清空全部`` () =
 let ``并发写不越过上限也不抛`` () =
     let c = BoundedCache<int, int>(8)
     System.Threading.Tasks.Parallel.For(0, 1000, fun i -> c.Set(i, i)) |> ignore
-    let hits = [ 0 .. 999 ] |> List.filter (fun i -> (c.TryGet i).IsSome)
+    let hits = [ 0..999 ] |> List.filter (fun i -> (c.TryGet i).IsSome)
     Assert.True(hits.Length <= 8)

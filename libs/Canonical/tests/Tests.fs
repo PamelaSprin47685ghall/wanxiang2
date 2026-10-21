@@ -14,10 +14,26 @@ let ``key order and whitespace do not change canonical form or hash`` () =
 // SPEC 2：RFC 8785 §3.2.3 样例（键按 UTF-16 码元排序）
 [<Fact>]
 let ``RFC 8785 sorting example`` () =
-    let input = """{"\u20ac":"Euro Sign","\r":"Carriage Return","\ufb33":"Hebrew Letter Dalet With Dagesh","1":"One","\ud83d\ude00":"Emoji: Grinning Face","\u0080":"Control","\u00f6":"Latin Small Letter O With Diaeresis"}"""
-    let keys = System.Text.Json.Nodes.JsonNode.Parse(Jcs.text input).AsObject() |> Seq.map _.Value.GetValue<string>() |> List.ofSeq
+    let input =
+        """{"\u20ac":"Euro Sign","\r":"Carriage Return","\ufb33":"Hebrew Letter Dalet With Dagesh","1":"One","\ud83d\ude00":"Emoji: Grinning Face","\u0080":"Control","\u00f6":"Latin Small Letter O With Diaeresis"}"""
+
+    let keys =
+        System.Text.Json.Nodes.JsonNode.Parse(Jcs.text input).AsObject()
+        |> Seq.map _.Value.GetValue<string>()
+        |> List.ofSeq
+
     Assert.Equal<string list>(
-        [ "Carriage Return"; "One"; "Control"; "Latin Small Letter O With Diaeresis"; "Euro Sign"; "Emoji: Grinning Face"; "Hebrew Letter Dalet With Dagesh" ], keys)
+        [
+            "Carriage Return"
+            "One"
+            "Control"
+            "Latin Small Letter O With Diaeresis"
+            "Euro Sign"
+            "Emoji: Grinning Face"
+            "Hebrew Letter Dalet With Dagesh"
+        ],
+        keys
+    )
 
 // SPEC 3：哈希格式
 [<Fact>]

@@ -21,7 +21,10 @@ let ``recall then come back restores the half typed draft`` () =
 [<Fact>]
 let ``duplicates and blanks are not recorded and capacity drops the oldest`` () =
     let h = PromptHistory(2)
-    for t in [ "a"; "a"; " "; "b"; "c" ] do h.Record t
+
+    for t in [ "a"; "a"; " "; "b"; "c" ] do
+        h.Record t
+
     Assert.Equal(Some "c", h.Up("", 0, false))
     Assert.Equal(Some "b", h.Up("", 0, false))
     Assert.Equal(Some "b", h.Up("", 0, false))
@@ -29,7 +32,10 @@ let ``duplicates and blanks are not recorded and capacity drops the oldest`` () 
 
 let private filled (items: string list) =
     let h = PromptHistory()
-    for t in items do h.Record t
+
+    for t in items do
+        h.Record t
+
     h
 
 [<Fact>]
@@ -64,7 +70,10 @@ let ``down only acts while recalling and with the caret at the end`` () =
 [<Fact>]
 let ``up stops at the oldest entry`` () =
     let h = filled [ "a"; "b" ]
-    for _ in 1 .. 5 do h.Up("", 0, false) |> ignore
+
+    for _ in 1..5 do
+        h.Up("", 0, false) |> ignore
+
     Assert.Equal(Some "a", h.Up("", 0, false))
 
 [<Fact>]
@@ -84,9 +93,12 @@ let ``only an immediate repeat is dropped`` () =
 
 [<Fact>]
 let ``default capacity keeps the latest 100`` () =
-    let h = filled [ for i in 1 .. 150 -> string i ]
+    let h = filled [ for i in 1..150 -> string i ]
     let mutable last = None
-    for _ in 1 .. 200 do last <- h.Up("", 0, false)
+
+    for _ in 1..200 do
+        last <- h.Up("", 0, false)
+
     Assert.Equal(Some "51", last)
 
 [<Fact>]

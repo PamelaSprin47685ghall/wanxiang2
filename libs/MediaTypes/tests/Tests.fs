@@ -9,12 +9,17 @@ let ``validate rejects unsupported image formats and oversize images with guidan
     match MediaTypes.validate "IMG_0001.HEIC" 1024L with
     | Error m -> Assert.Contains("PNG、JPG、GIF、WebP", m)
     | Ok() -> failwith "heic should be rejected"
+
     match MediaTypes.validate "big.jpg" (9L * 1024L * 1024L) with
-    | Error m -> Assert.Contains("8 MiB", m); Assert.Contains("压缩", m)
+    | Error m ->
+        Assert.Contains("8 MiB", m)
+        Assert.Contains("压缩", m)
     | Ok() -> failwith "oversize image should be rejected"
+
     match MediaTypes.validate "empty.txt" 0L with
     | Error m -> Assert.Contains("空", m)
     | Ok() -> failwith "empty should be rejected"
+
     Assert.Equal(Ok(), MediaTypes.validate "notes.md" 1024L)
     Assert.Equal(Ok(), MediaTypes.validate "photo.jpeg" (7L * 1024L * 1024L))
     Assert.Equal(Ok(), MediaTypes.validate "paper.pdf" (20L * 1024L * 1024L))

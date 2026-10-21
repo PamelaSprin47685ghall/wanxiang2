@@ -8,5 +8,10 @@ open Avalonia.Markup.Xaml.MarkupExtensions
 module internal Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp

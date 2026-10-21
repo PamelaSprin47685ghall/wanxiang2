@@ -6,22 +6,61 @@ open Xunit
 open Wanxiang.UI
 
 let private mk title minutesAgo : ConversationSummary =
-    { id = Guid.NewGuid(); title = title; preview = ""; running = false; pinned = false; archived = false
-      createdAt = DateTimeOffset.Now.AddMinutes(-minutesAgo); updatedAt = DateTimeOffset.Now.AddMinutes(-minutesAgo)
-      messageCount = 0; isFork = false; providerId = ""; model = ""; lastCommitId = 0UL }
+    {
+        id = Guid.NewGuid()
+        title = title
+        preview = ""
+        running = false
+        pinned = false
+        archived = false
+        createdAt = DateTimeOffset.Now.AddMinutes(-minutesAgo)
+        updatedAt = DateTimeOffset.Now.AddMinutes(-minutesAgo)
+        messageCount = 0
+        isFork = false
+        providerId = ""
+        model = ""
+        lastCommitId = 0UL
+    }
 
 // 迁自旧 UiPureLogicTests。
 [<Fact>]
 let ``ConversationSummary matching, sorting and grouping`` () =
     let now = DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero)
+
     let item1 =
-        { id = Guid.NewGuid(); title = "项目讨论"; preview = "好的，我们来看一下架构"; running = false; pinned = true; archived = false
-          createdAt = now.AddHours(-2.0); updatedAt = now.AddHours(-1.0); messageCount = 5; isFork = false
-          providerId = "openai"; model = "gpt-5"; lastCommitId = 100UL }
+        {
+            id = Guid.NewGuid()
+            title = "项目讨论"
+            preview = "好的，我们来看一下架构"
+            running = false
+            pinned = true
+            archived = false
+            createdAt = now.AddHours(-2.0)
+            updatedAt = now.AddHours(-1.0)
+            messageCount = 5
+            isFork = false
+            providerId = "openai"
+            model = "gpt-5"
+            lastCommitId = 100UL
+        }
+
     let item2 =
-        { id = Guid.NewGuid(); title = "随手记"; preview = "买菜清单"; running = false; pinned = false; archived = false
-          createdAt = now.AddDays(-3.0); updatedAt = now.AddDays(-3.0); messageCount = 2; isFork = false
-          providerId = "deepseek"; model = "deepseek-chat"; lastCommitId = 90UL }
+        {
+            id = Guid.NewGuid()
+            title = "随手记"
+            preview = "买菜清单"
+            running = false
+            pinned = false
+            archived = false
+            createdAt = now.AddDays(-3.0)
+            updatedAt = now.AddDays(-3.0)
+            messageCount = 2
+            isFork = false
+            providerId = "deepseek"
+            model = "deepseek-chat"
+            lastCommitId = 90UL
+        }
+
     Assert.True(ConversationSummary.matches "讨论" item1)
     Assert.True(ConversationSummary.matches "gpt-5" item1)
     Assert.True(ConversationSummary.matches "买菜" item2)
@@ -65,7 +104,12 @@ let ``ConversationSummary parseList handles valid, empty and invalid records`` (
 
 [<Fact>]
 let ``ConversationSummary matches searches single and multi-word keywords`` () =
-    let s = { mk "Refactoring Wanxiang UI ViewModel Architecture" 0.0 with providerId = "test"; model = "test-model" }
+    let s =
+        { mk "Refactoring Wanxiang UI ViewModel Architecture" 0.0 with
+            providerId = "test"
+            model = "test-model"
+        }
+
     Assert.True(ConversationSummary.matches "Wanxiang" s)
     Assert.True(ConversationSummary.matches "ui refactoring" s)
     Assert.False(ConversationSummary.matches "unrelated keyword" s)
@@ -79,9 +123,19 @@ let ``361 同名对话附时间，不同名不附`` () =
     let all = [ a; b; c ]
     Assert.True((ConversationSummary.disambiguator all DateTimeOffset.Now a).IsSome)
     Assert.True((ConversationSummary.disambiguator all DateTimeOffset.Now b).IsSome)
-    Assert.NotEqual(ConversationSummary.disambiguator all DateTimeOffset.Now a, ConversationSummary.disambiguator all DateTimeOffset.Now b)
+
+    Assert.NotEqual(
+        ConversationSummary.disambiguator all DateTimeOffset.Now a,
+        ConversationSummary.disambiguator all DateTimeOffset.Now b
+    )
+
     Assert.Equal(None, ConversationSummary.disambiguator all DateTimeOffset.Now c)
-    let old = { (mk "新对话" 0.0) with updatedAt = DateTimeOffset.Now.AddDays(-3.0) }
+
+    let old =
+        { (mk "新对话" 0.0) with
+            updatedAt = DateTimeOffset.Now.AddDays(-3.0)
+        }
+
     let stamp = ConversationSummary.disambiguator (old :: all) DateTimeOffset.Now old
     Assert.Contains("/", stamp.Value)
 

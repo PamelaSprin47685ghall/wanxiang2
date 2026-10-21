@@ -11,25 +11,48 @@ module HostProbe =
     let portInUse (listen: string) : bool =
         try
             let parts = listen.Split ':'
-            if parts.Length <> 2 then false
+
+            if parts.Length <> 2 then
+                false
             else
                 use client = new TcpClient()
                 let ar = client.BeginConnect(parts[0], int parts[1], null, null)
                 ar.AsyncWaitHandle.WaitOne 300 |> ignore
                 client.EndConnect ar |> ignore
                 true
-        with _ -> false
+        with _ ->
+            false
 
     /// 路径所在磁盘的可用字节数；磁盘未就绪时为 Int64.MaxValue；拿不到信息时为 None。
     let freeBytes (path: string) : int64 option =
         try
             let drive = DriveInfo(Path.GetPathRoot path)
-            Some(if drive.IsReady then drive.AvailableFreeSpace else Int64.MaxValue)
-        with _ -> None
+
+            Some(
+                if drive.IsReady then
+                    drive.AvailableFreeSpace
+                else
+                    Int64.MaxValue
+            )
+        with _ ->
+            None
 
     /// 存在且组或其他用户有任何权限的目录。读不了权限的目录不算。
     let groupOrOtherAccessible (dirs: string list) : string list =
         let open' =
-            int (UnixFileMode.GroupRead ||| UnixFileMode.GroupWrite ||| UnixFileMode.GroupExecute
-                 ||| UnixFileMode.OtherRead ||| UnixFileMode.OtherWrite ||| UnixFileMode.OtherExecute)
-        dirs |> List.filter (fun dir -> Directory.Exists dir && (try (int (File.GetUnixFileMode dir) &&& open') <> 0 with _ -> false))
+            int (
+                UnixFileMode.GroupRead
+                ||| UnixFileMode.GroupWrite
+                ||| UnixFileMode.GroupExecute
+                ||| UnixFileMode.OtherRead
+                ||| UnixFileMode.OtherWrite
+                ||| UnixFileMode.OtherExecute
+            )
+
+        dirs
+        |> List.filter (fun dir ->
+            Directory.Exists dir
+            && (try
+                    (int (File.GetUnixFileMode dir) &&& open') <> 0
+                with _ ->
+                    false))

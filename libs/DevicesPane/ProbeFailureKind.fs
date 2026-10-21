@@ -34,15 +34,22 @@ module ProbeFailureKind =
 
     /// 解析线上 `[code] 说明`。没有前缀时类型为 ProbeUnclassified，说明原样保留。
     let parse (text: string) : ProbeFailureKind * string =
-        if not (String.IsNullOrWhiteSpace text) && text.StartsWith("[", StringComparison.Ordinal) then
+        if
+            not (String.IsNullOrWhiteSpace text)
+            && text.StartsWith("[", StringComparison.Ordinal)
+        then
             let close = text.IndexOf ']'
-            if close > 1 then ofCode (text.Substring(1, close - 1)), text.Substring(close + 1).TrimStart()
-            else ProbeUnclassified, text
+
+            if close > 1 then
+                ofCode (text.Substring(1, close - 1)), text.Substring(close + 1).TrimStart()
+            else
+                ProbeUnclassified, text
         else
             ProbeUnclassified, (if isNull text then "" else text)
 
     /// 失败后值得给「改用兼容端点 / 改用原生接口」这类下一步的类型。
     let suggestsTransportSwitch (kind: ProbeFailureKind) =
         match kind with
-        | ProbeEndpointNotFound | ProbeBadResponse -> true
+        | ProbeEndpointNotFound
+        | ProbeBadResponse -> true
         | _ -> false

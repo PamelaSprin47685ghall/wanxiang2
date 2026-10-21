@@ -10,7 +10,14 @@ open Xunit
 open Wanxiang2.AttachmentChip
 open Wanxiang2.AttachmentChip.Tests
 open Wanxiang2.WorkspaceState
-let private data : AttachmentChipVS = { FileName = "a.png"; SizeText = "1.2 KB"; IsImage = true; Missing = false }
+
+let private data: AttachmentChipVS =
+    {
+        FileName = "a.png"
+        SizeText = "1.2 KB"
+        IsImage = true
+        Missing = false
+    }
 
 [<Fact>]
 let ``图片附件可点，提示是查看或下载`` () =
@@ -22,18 +29,27 @@ let ``图片附件可点，提示是查看或下载`` () =
         Assert.Equal(1, hits)
         Assert.Equal("查看或下载图片 a.png", AutomationProperties.GetName c.Host)
         Assert.Contains("hover-raised", c.Host.Classes)
+
         let row =
             match c.Host with
             | :? Button as b -> b.Content :?> StackPanel
             | :? Border as b -> b.Child :?> StackPanel
             | _ -> failwith "unexpected host type"
+
         Assert.Equal(4, row.Children.Count)
         Assert.Equal(box ChipGlyph.Image, row.Children[0].Tag))
 
 [<Fact>]
 let ``普通文件提示下载附件`` () =
     Headless.run (fun () ->
-        let c = AttachmentChip({ data with IsImage = false; FileName = "b.pdf" })
+        let c =
+            AttachmentChip(
+                { data with
+                    IsImage = false
+                    FileName = "b.pdf"
+                }
+            )
+
         Assert.Equal("下载附件 b.pdf", AutomationProperties.GetName c.Host))
 
 [<Fact>]
@@ -55,6 +71,7 @@ let ``附件条有正确边距和圆角`` () =
     Headless.run (fun () ->
         let c = AttachmentChip(data)
         Assert.Equal(Thickness(0.0, 4.0, 0.0, 0.0), c.Host.Margin)
+
         match c.Host with
         | :? Button as b -> Assert.Equal(CornerRadius 6.0, b.CornerRadius)
         | :? Border as b -> Assert.Equal(CornerRadius 6.0, b.CornerRadius)

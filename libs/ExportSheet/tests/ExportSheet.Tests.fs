@@ -14,21 +14,56 @@ open Xunit
 open Wanxiang2.ExportSheet
 
 let look () =
-    { Text = Brushes.Black; Muted = Brushes.Gray; Success = Brushes.Green; Danger = Brushes.Red }
+    {
+        Text = Brushes.Black
+        Muted = Brushes.Gray
+        Success = Brushes.Green
+        Danger = Brushes.Red
+    }
 
 let privacy = "导出文件不含 API 密钥。"
 
 
 let reading reduced =
-    { StatusText = "正在读取…"
-      Tone = ExportSheetTone.Muted
-      Progress = if reduced then ExportSheetProgress.Determinate 0.0 else ExportSheetProgress.Indeterminate
-      Action = ExportSheetAction.None
-      CloseText = "取消导出" }
-let failed = { reading false with StatusText = "测试直接推到失败终态"; Tone = ExportSheetTone.Danger; Progress = ExportSheetProgress.Hidden; Action = ExportSheetAction.Retry; CloseText = "关闭" }
-let cancelled = { failed with StatusText = "导出已取消。"; Tone = ExportSheetTone.Text }
-let ready = { failed with StatusText = "已读取 5 条消息。"; Tone = ExportSheetTone.Text; Progress = ExportSheetProgress.Hidden; Action = ExportSheetAction.Save(ExportSaveGate.Enabled, true) }
-let savingNow = { ready with Action = ExportSheetAction.Save(ExportSaveGate.Disabled, true) }
+    {
+        StatusText = "正在读取…"
+        Tone = ExportSheetTone.Muted
+        Progress =
+            if reduced then
+                ExportSheetProgress.Determinate 0.0
+            else
+                ExportSheetProgress.Indeterminate
+        Action = ExportSheetAction.None
+        CloseText = "取消导出"
+    }
+
+let failed =
+    { reading false with
+        StatusText = "测试直接推到失败终态"
+        Tone = ExportSheetTone.Danger
+        Progress = ExportSheetProgress.Hidden
+        Action = ExportSheetAction.Retry
+        CloseText = "关闭"
+    }
+
+let cancelled =
+    { failed with
+        StatusText = "导出已取消。"
+        Tone = ExportSheetTone.Text
+    }
+
+let ready =
+    { failed with
+        StatusText = "已读取 5 条消息。"
+        Tone = ExportSheetTone.Text
+        Progress = ExportSheetProgress.Hidden
+        Action = ExportSheetAction.Save(ExportSaveGate.Enabled, true)
+    }
+
+let savingNow =
+    { ready with
+        Action = ExportSheetAction.Save(ExportSaveGate.Disabled, true)
+    }
 
 let host w (sheet: ExportSheet) =
     let window = Window(Content = sheet.View, Width = w, Height = 600.0)
@@ -37,16 +72,30 @@ let host w (sheet: ExportSheet) =
     window
 
 let key (target: Control) k =
-    let args = KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = k, KeyModifiers = KeyModifiers.None, Source = target)
+    let args =
+        KeyEventArgs(
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = k,
+            KeyModifiers = KeyModifiers.None,
+            Source = target
+        )
+
     target.RaiseEvent args
     Dispatcher.UIThread.RunJobs()
     args
 
 let byName (root: Visual) name =
-    root.GetVisualDescendants() |> Seq.choose (function :? Control as c -> Some c | _ -> None) |> Seq.find (fun c -> AutomationProperties.GetName c = name)
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? Control as c -> Some c
+        | _ -> None)
+    |> Seq.find (fun c -> AutomationProperties.GetName c = name)
 
 let invoke control =
-    (ControlAutomationPeer.CreatePeerForElement control |> Assert.IsAssignableFrom<IInvokeProvider>).Invoke()
+    (ControlAutomationPeer.CreatePeerForElement control
+     |> Assert.IsAssignableFrom<IInvokeProvider>)
+        .Invoke()
+
     Dispatcher.UIThread.RunJobs()
 
 // 迁自旧 ConversationExportTests。
@@ -135,7 +184,14 @@ let ``cancel stays in the dialog and offers the retry entry`` () =
         let retry = byName window "重新导出"
         Assert.True retry.IsVisible
         invoke retry
-        let bars = window.GetVisualDescendants() |> Seq.choose (function :? ProgressBar as b -> Some b | _ -> None) |> List.ofSeq
+
+        let bars =
+            window.GetVisualDescendants()
+            |> Seq.choose (function
+                | :? ProgressBar as b -> Some b
+                | _ -> None)
+            |> List.ofSeq
+
         Assert.Equal(1, bars.Length)
         Assert.True bars.Head.IsVisible
         Assert.False retry.IsVisible
@@ -178,13 +234,30 @@ let ``312 导出对话框同一次读取备好 Markdown 和 JSON，并显示隐�
         let saves = ResizeArray<bool>()
         sheet.SaveClicked.Add saves.Add
         sheet.Render ready
-        let texts = window.GetVisualDescendants() |> Seq.choose (function :? TextBlock as t -> Option.ofObj t.Text | _ -> None) |> String.concat "\n"
+
+        let texts =
+            window.GetVisualDescendants()
+            |> Seq.choose (function
+                | :? TextBlock as t -> Option.ofObj t.Text
+                | _ -> None)
+            |> String.concat "\n"
+
         Assert.Contains("不含 API 密钥", texts)
         Assert.Contains("保存 JSON", texts)
         invoke sheet.SaveJsonButton
         invoke sheet.SaveButton
         Assert.Equal<bool list>([ true; false ], List.ofSeq saves)
-        Assert.Equal(AutomationLiveSetting.Assertive, AutomationProperties.GetLiveSetting(window.GetVisualDescendants() |> Seq.pick (function :? TextBlock as t when t.Text = "已读取 5 条消息。" -> Some t | _ -> None)))
+
+        Assert.Equal(
+            AutomationLiveSetting.Assertive,
+            AutomationProperties.GetLiveSetting(
+                window.GetVisualDescendants()
+                |> Seq.pick (function
+                    | :? TextBlock as t when t.Text = "已读取 5 条消息。" -> Some t
+                    | _ -> None)
+            )
+        )
+
         window.Close())
 
 // 字号 / 行高 / 间距走主题动态资源键（不再经 Appearance 记录传活值）。
@@ -200,13 +273,21 @@ let ``字号行高与间距走主题资源键`` () =
         r["Space.Md"] <- box 8.0
         let sheet = ExportSheet(look (), "完整导出", privacy)
         let window = host 480.0 sheet
+
         let heading =
             window.GetVisualDescendants()
-            |> Seq.pick (function :? TextBlock as t when t.Text = "导出对话" -> Some t | _ -> None)
+            |> Seq.pick (function
+                | :? TextBlock as t when t.Text = "导出对话" -> Some t
+                | _ -> None)
+
         Assert.Equal(18.0, heading.FontSize)
+
         let caption =
             window.GetVisualDescendants()
-            |> Seq.pick (function :? TextBlock as t when t.Text = privacy -> Some t | _ -> None)
+            |> Seq.pick (function
+                | :? TextBlock as t when t.Text = privacy -> Some t
+                | _ -> None)
+
         Assert.Equal(12.0, caption.FontSize)
         Assert.Equal(18.0, caption.LineHeight)
         Assert.Equal(12.0, (sheet.View :?> StackPanel).Spacing)

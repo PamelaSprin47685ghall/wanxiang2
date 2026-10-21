@@ -51,7 +51,10 @@ let ``窗口过后再来请求立刻落`` () =
 let ``连续打字只落一次且内容是最终文本`` () =
     let gate = DraftSaveGate(800.0)
     gate.Request(t0, "a") |> ignore
-    for i in 1..9 do gate.Request(ms (float i * 50.0), "a" + string i) |> ignore
+
+    for i in 1..9 do
+        gate.Request(ms (float i * 50.0), "a" + string i) |> ignore
+
     Assert.Equal(Some "a9", gate.Flush(ms 800.0))
 
 /// 本机草稿的**恢复**（2026-10-21 PWA 冒烟暴露）。
@@ -66,16 +69,18 @@ let ``连续打字只落一次且内容是最终文本`` () =
 let ``本机草稿在启动后被恢复到输入区`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()
-        rig.Fake.SetLocalDraft (Some "上次的草稿")
+        rig.Fake.SetLocalDraft(Some "上次的草稿")
         rig.Shell.Build() |> ignore
         // 恢复是**异步**的（读的是宿主的落点），等它落地。
         // 恢复是异步的：读盘 → 回到 UI 线程派发。测试要**泵**调度器，不能靠睡。
         let mutable vs = Workspace.project rig.Shell.Model
+
         for _ in 1..50 do
             if String.IsNullOrEmpty vs.Composer.Text then
                 Threading.Thread.Sleep 10
                 Avalonia.Threading.Dispatcher.UIThread.RunJobs()
                 vs <- Workspace.project rig.Shell.Model
+
         Assert.Equal("上次的草稿", vs.Composer.Text))
 
 /// 输入区**已经有字**时，旧草稿不该盖掉用户这次打的字。
@@ -84,11 +89,13 @@ let ``输入区已有文本时旧草稿不覆盖`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()
         rig.Shell.Dispatch(User(Composer(ComposerUserMsg.TextChanged "这次打的"))) |> ignore
-        rig.Fake.SetLocalDraft (Some "上次的草稿")
+        rig.Fake.SetLocalDraft(Some "上次的草稿")
         rig.Shell.Build() |> ignore
         let mutable vs = Workspace.project rig.Shell.Model
+
         for _ in 1..50 do
             Threading.Thread.Sleep 10
             Avalonia.Threading.Dispatcher.UIThread.RunJobs()
             vs <- Workspace.project rig.Shell.Model
+
         Assert.Equal("这次打的", vs.Composer.Text))

@@ -4,4 +4,5 @@ namespace Wanxiang.UI
 /// 客户端第一次连接前等它完成。默认已完成（PWA、纯客户端、测试）。
 /// 迁自旧 Model/StartupTrace.fs；独立 fsproj：libs/StartupTrace/StartupTrace.fsproj 已存在且不可改，故新建。
 module LocalHostGate =
-    let mutable ready: System.Threading.Tasks.Task = System.Threading.Tasks.Task.CompletedTask
+    let mutable ready: System.Threading.Tasks.Task =
+        System.Threading.Tasks.Task.CompletedTask

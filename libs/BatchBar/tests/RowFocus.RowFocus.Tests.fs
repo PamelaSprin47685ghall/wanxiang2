@@ -1,4 +1,5 @@
 module RowFocusTests
+
 open System
 open Xunit
 open Wanxiang.UI

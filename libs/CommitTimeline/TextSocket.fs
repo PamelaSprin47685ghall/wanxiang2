@@ -28,11 +28,21 @@ type TextSocket() =
                 ws <- null
                 cts <- null
                 g, s, c)
+
         if not (isNull previousCts) then
-            try previousCts.Cancel() with _ -> ()
+            try
+                previousCts.Cancel()
+            with _ ->
+                ()
+
             previousCts.Dispose()
+
         if not (isNull previousSocket) then
-            try previousSocket.Dispose() with _ -> ()
+            try
+                previousSocket.Dispose()
+            with _ ->
+                ()
+
         g
 
     /// 收到一条完整文本消息：(代号, 文本)。只有当时仍是当前代才触发。
@@ -51,15 +61,19 @@ type TextSocket() =
             let g = detach ()
             let newWs = new ClientWebSocket()
             let newCts = CancellationTokenSource.CreateLinkedTokenSource ct
+
             try
                 do! newWs.ConnectAsync(uri, newCts.Token)
+
                 let installed =
                     lock connectionLock (fun () ->
                         if g = generation then
                             ws <- newWs
                             cts <- newCts
                             true
-                        else false)
+                        else
+                            false)
+
                 if installed then
                     Async.Start(this.ReceiveLoop(newWs, newCts.Token, g)) |> ignore
                     return g
@@ -80,24 +94,42 @@ type TextSocket() =
         task {
             let socket, tokenSource =
                 lock connectionLock (fun () ->
-                    if expectedGeneration |> Option.exists (fun e -> e <> generation) then null, null
-                    else ws, cts)
-            if not (isNull socket) && not (isNull tokenSource) && socket.State = WebSocketState.Open then
+                    if expectedGeneration |> Option.exists (fun e -> e <> generation) then
+                        null, null
+                    else
+                        ws, cts)
+
+            if
+                not (isNull socket)
+                && not (isNull tokenSource)
+                && socket.State = WebSocketState.Open
+            then
                 let bytes = Encoding.UTF8.GetBytes text
+
                 try
                     do! sendGate.WaitAsync(tokenSource.Token)
+
                     try
                         if socket.State = WebSocketState.Open then
-                            do! socket.SendAsync(ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, tokenSource.Token)
+                            do!
+                                socket.SendAsync(
+                                    ArraySegment<byte>(bytes),
+                                    WebSocketMessageType.Text,
+                                    true,
+                                    tokenSource.Token
+                                )
+
                             return true
-                        else return false
+                        else
+                            return false
                     finally
                         sendGate.Release() |> ignore
                 with
                 | :? OperationCanceledException -> return false
                 | :? ObjectDisposedException -> return false
                 | :? WebSocketException -> return false
-            else return false
+            else
+                return false
         }
 
     /// 接收循环用 async 而不是 task：browser-wasm 单线程运行时中，task CE 对 pending task 的 await 会
@@ -105,13 +137,19 @@ type TextSocket() =
     member private this.ReceiveLoop(socket: ClientWebSocket, ct: CancellationToken, g: int) : Async<unit> =
         async {
             let mutable shouldNotify = true
-            let closed error = if this.IsCurrent g then onClosed.Trigger(g, error)
+
+            let closed error =
+                if this.IsCurrent g then
+                    onClosed.Trigger(g, error)
+
             try
-                let buffer = Array.zeroCreate<byte> (1024 * 1024)
+                let buffer = Array.zeroCreate<byte>(1024 * 1024)
                 use ms = new System.IO.MemoryStream()
                 let mutable doneReceiving = false
+
                 while not doneReceiving && socket.State = WebSocketState.Open do
                     let! result = socket.ReceiveAsync(ArraySegment<byte>(buffer), ct) |> Async.AwaitTask
+
                     if result.MessageType = WebSocketMessageType.Close then
                         doneReceiving <- true
                     elif result.MessageType = WebSocketMessageType.Binary then
@@ -120,13 +158,24 @@ type TextSocket() =
                         shouldNotify <- false
                     else
                         ms.Write(buffer, 0, result.Count)
+
                         if result.EndOfMessage then
                             let text = Encoding.UTF8.GetString(ms.ToArray())
                             ms.SetLength 0L
-                            if this.IsCurrent g then onText.Trigger(g, text)
-                if shouldNotify then closed None
+
+                            if this.IsCurrent g then
+                                onText.Trigger(g, text)
+
+                if shouldNotify then
+                    closed None
             with
-            | :? OperationCanceledException -> if shouldNotify then closed None
-            | :? ObjectDisposedException -> if shouldNotify then closed None
-            | e -> if shouldNotify then closed (Some e)
+            | :? OperationCanceledException ->
+                if shouldNotify then
+                    closed None
+            | :? ObjectDisposedException ->
+                if shouldNotify then
+                    closed None
+            | e ->
+                if shouldNotify then
+                    closed (Some e)
         }

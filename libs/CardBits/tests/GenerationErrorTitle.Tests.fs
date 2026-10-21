@@ -1,4 +1,5 @@
 module GenerationErrorTitleTests
+
 open System
 open System.IO
 open Xunit

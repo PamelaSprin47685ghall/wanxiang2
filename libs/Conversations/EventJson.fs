@@ -25,6 +25,7 @@ module EventJson =
 
     let private tryGet (o: JsonObject) (key: string) : JsonNode option =
         let mutable n: JsonNode = null
+
         if o.TryGetPropertyValue(key, &n) then
             if isNull n then None else Some n
         else
@@ -51,6 +52,7 @@ module EventJson =
         o["type"] <- eventType ev
         o["version"] <- Version
         let data = JsonObject()
+
         match ev with
         | ConversationCreated d ->
             data["conversationId"] <- d.conversationId.ToString("D")
@@ -59,15 +61,17 @@ module EventJson =
         | ConversationForked d ->
             data["conversationId"] <- d.conversationId.ToString("D")
             data["parentConversationId"] <- d.parentConversationId.ToString("D")
-            match d.forkAfterId with Some id -> data["forkAfterId"] <- id | None -> ()
+
+            match d.forkAfterId with
+            | Some id -> data["forkAfterId"] <- id
+            | None -> ()
         | ConversationRenamed d ->
             data["conversationId"] <- d.conversationId.ToString("D")
             data["title"] <- d.title
         | ConversationConfigUpdated d ->
             data["conversationId"] <- d.conversationId.ToString("D")
             data["config"] <- config d.config
-        | ConversationDeleted d ->
-            data["conversationId"] <- d.conversationId.ToString("D")
+        | ConversationDeleted d -> data["conversationId"] <- d.conversationId.ToString("D")
         | ConversationFlagsChanged d ->
             data["conversationId"] <- d.conversationId.ToString("D")
             data["pinned"] <- d.pinned
@@ -78,6 +82,7 @@ module EventJson =
         | MessageDeleted d ->
             data["conversationId"] <- d.conversationId.ToString("D")
             data["messageCommitId"] <- d.messageCommitId
+
         o["data"] <- data
         o
 
@@ -86,14 +91,16 @@ module EventJson =
             match v.GetValueKind() with
             | JsonValueKind.String -> Some(Guid.Parse(v.GetValue<string>()))
             | _ -> None
-        with _ -> None
+        with _ ->
+            None
 
     let private parseId (v: JsonNode) : uint64 option =
         try
             match v.GetValueKind() with
             | JsonValueKind.Number -> tryGetUInt64 v
             | _ -> None
-        with _ -> None
+        with _ ->
+            None
 
     let private configFromNode (config: JsonObject -> 'C) (v: JsonNode) : 'C option =
         match v with
@@ -108,28 +115,61 @@ module EventJson =
     /// 按事件外壳解析为领域事件。结构非法或版本未知返回 None（触发损坏处理）。
     let tryFromJson (config: JsonObject -> 'C) (o: JsonObject) : EventData<'C> option =
         match tryGet o "type", tryGet o "version", tryGet o "data" with
-        | Some typeNode, Some versionNode, Some dataNode
-            when typeNode.GetValueKind() = JsonValueKind.String
-                 && versionNode.GetValueKind() = JsonValueKind.Number
-                 && dataNode.GetValueKind() = JsonValueKind.Object ->
+        | Some typeNode, Some versionNode, Some dataNode when
+            typeNode.GetValueKind() = JsonValueKind.String
+            && versionNode.GetValueKind() = JsonValueKind.Number
+            && dataNode.GetValueKind() = JsonValueKind.Object
+            ->
             match tryGetInt versionNode with
             | Some v when v = Version ->
                 let data = dataNode.AsObject()
-                let guid k = match tryGet data k with Some v -> parseGuid v | None -> None
-                let commitId k = match tryGet data k with Some v -> parseId v | None -> None
-                let cfg () = match tryGet data "config" with Some v -> configFromNode config v | None -> None
+
+                let guid k =
+                    match tryGet data k with
+                    | Some v -> parseGuid v
+                    | None -> None
+
+                let commitId k =
+                    match tryGet data k with
+                    | Some v -> parseId v
+                    | None -> None
+
+                let cfg () =
+                    match tryGet data "config" with
+                    | Some v -> configFromNode config v
+                    | None -> None
+
                 match tryString o "type" with
                 | Some "conversation.created" ->
                     match guid "conversationId", cfg () with
                     | Some cid, Some c ->
                         let title = tryString data "title" |> Option.defaultValue ""
-                        Some(ConversationCreated { conversationId = cid; title = title; config = c })
+
+                        Some(
+                            ConversationCreated
+                                {
+                                    conversationId = cid
+                                    title = title
+                                    config = c
+                                }
+                        )
                     | _ -> None
                 | Some "conversation.forked" ->
                     match guid "conversationId", guid "parentConversationId" with
                     | Some cid, Some pid ->
-                        let after = match tryGet data "forkAfterId" with Some v -> parseId v | None -> None
-                        Some(ConversationForked { conversationId = cid; parentConversationId = pid; forkAfterId = after })
+                        let after =
+                            match tryGet data "forkAfterId" with
+                            | Some v -> parseId v
+                            | None -> None
+
+                        Some(
+                            ConversationForked
+                                {
+                                    conversationId = cid
+                                    parentConversationId = pid
+                                    forkAfterId = after
+                                }
+                        )
                     | _ -> None
                 | Some "conversation.renamed" ->
                     match guid "conversationId" with
@@ -152,20 +192,41 @@ module EventJson =
                             match tryGet data k with
                             | Some v -> v.GetValueKind() = JsonValueKind.True
                             | None -> false
-                        Some(ConversationFlagsChanged { conversationId = cid; pinned = flag "pinned"; archived = flag "archived" })
+
+                        Some(
+                            ConversationFlagsChanged
+                                {
+                                    conversationId = cid
+                                    pinned = flag "pinned"
+                                    archived = flag "archived"
+                                }
+                        )
                     | _ -> None
                 | Some "agent-message-recorded" ->
                     match guid "conversationId" with
                     | Some cid ->
                         match tryGet data "payload" with
-                        | Some p -> Some(AgentMessageRecorded { conversationId = cid; payloadJson = p.DeepClone() })
+                        | Some p ->
+                            Some(
+                                AgentMessageRecorded
+                                    {
+                                        conversationId = cid
+                                        payloadJson = p.DeepClone()
+                                    }
+                            )
                         | None -> None
                     | _ -> None
                 | Some "message.deleted" ->
                     match guid "conversationId", commitId "messageCommitId" with
-                    | Some cid, Some mid -> Some(MessageDeleted { conversationId = cid; messageCommitId = mid })
+                    | Some cid, Some mid ->
+                        Some(
+                            MessageDeleted
+                                {
+                                    conversationId = cid
+                                    messageCommitId = mid
+                                }
+                        )
                     | _ -> None
                 | _ -> None
             | _ -> None
         | _ -> None
-

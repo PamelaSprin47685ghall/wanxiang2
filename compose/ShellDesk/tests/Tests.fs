@@ -16,13 +16,15 @@ open Wanxiang2.ShellDesk
 open Wanxiang2.DeskTests
 
 type private Rig =
-    { Desk: ShellDesk
-      Grid: Grid
-      Sidebar: StackPanel
-      Search: TextBox
-      Calls: ResizeArray<string>
-      Window: Window
-      Theme: ThemeManager }
+    {
+        Desk: ShellDesk
+        Grid: Grid
+        Sidebar: StackPanel
+        Search: TextBox
+        Calls: ResizeArray<string>
+        Window: Window
+        Theme: ThemeManager
+    }
 
 let private rig (collapsed: bool) =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
@@ -33,18 +35,34 @@ let private rig (collapsed: bool) =
     let chat = Border()
     let composer = TextBox()
     let calls = ResizeArray<string>()
+
     let hooks =
-        { ApplyCompactMode = fun c -> calls.Add(sprintf "compact:%b" c)
-          ApplyStartMode = fun s -> calls.Add(sprintf "start:%b" s)
-          FocusComposer = fun () -> calls.Add "focus:composer"
-          FocusSidebarSearch = fun () -> calls.Add "focus:search"
-          PrefersTouch = fun () -> false }
+        {
+            ApplyCompactMode = fun c -> calls.Add(sprintf "compact:%b" c)
+            ApplyStartMode = fun s -> calls.Add(sprintf "start:%b" s)
+            FocusComposer = fun () -> calls.Add "focus:composer"
+            FocusSidebarSearch = fun () -> calls.Add "focus:search"
+            PrefersTouch = fun () -> false
+        }
+
     let grid = Grid()
-    let desk = ShellDesk(theme, grid, sidebar, splitter, chat, composer, hooks, collapsed, fun () -> 280.0)
+
+    let desk =
+        ShellDesk(theme, grid, sidebar, splitter, chat, composer, hooks, collapsed, fun () -> 280.0)
+
     let window = Window(Width = 1000.0, Height = 700.0, Content = grid)
     window.Show()
     Dispatcher.UIThread.RunJobs()
-    { Desk = desk; Grid = grid; Sidebar = sidebar; Search = search; Calls = calls; Window = window; Theme = theme }
+
+    {
+        Desk = desk
+        Grid = grid
+        Sidebar = sidebar
+        Search = search
+        Calls = calls
+        Window = window
+        Theme = theme
+    }
 
 // 迁自 FocusRingTests：窄屏不自动打开抽屉；显式打开后焦点送进抽屉（这里断言组合者要求聚焦搜索框）。
 [<Fact>]
@@ -109,7 +127,18 @@ let ``按下抽屉遮罩收起抽屉并把焦点交回输入区`` () =
         r.Desk.ApplyCompactNavigation true |> ignore
         Assert.True r.Desk.Columns.Scrim.IsVisible
         r.Calls.Clear()
-        let args = PointerPressedEventArgs(r.Desk.Columns.Scrim, new Pointer(1, PointerType.Mouse, true), r.Window, Point(1.0, 1.0), 0UL, PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed), KeyModifiers.None)
+
+        let args =
+            PointerPressedEventArgs(
+                r.Desk.Columns.Scrim,
+                new Pointer(1, PointerType.Mouse, true),
+                r.Window,
+                Point(1.0, 1.0),
+                0UL,
+                PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+                KeyModifiers.None
+            )
+
         r.Desk.Columns.Scrim.RaiseEvent args
         Assert.False r.Desk.State.compactNavigationOpen
         Assert.False r.Sidebar.IsVisible

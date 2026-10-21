@@ -6,7 +6,10 @@ open Wanxiang.Agent
 
 [<Fact>]
 let ``values of the right kind are returned, anything else is None`` () =
-    let node = JsonNode.Parse """{"str":"sample","numberInt":123,"big":5000000000,"flag":true,"nestedObj":{"key":"value"},"items":[1,2,3],"nil":null}"""
+    let node =
+        JsonNode.Parse
+            """{"str":"sample","numberInt":123,"big":5000000000,"flag":true,"nestedObj":{"key":"value"},"items":[1,2,3],"nil":null}"""
+
     Assert.Equal(Some "sample", JsonPick.tryString node "str")
     Assert.Equal(None, JsonPick.tryString node "non_existent")
     Assert.Equal(None, JsonPick.tryString node "nil")

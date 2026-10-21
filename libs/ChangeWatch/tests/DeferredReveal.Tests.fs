@@ -1,4 +1,5 @@
 module DeferredRevealTests
+
 open System
 open Xunit
 open Wanxiang.UI

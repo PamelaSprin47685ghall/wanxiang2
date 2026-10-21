@@ -37,22 +37,35 @@ type InputSense(browserDefault: bool) =
             InputElement.PointerPressedEvent,
             (fun _ (e: PointerPressedEventArgs) -> this.Report(e.Pointer.Type = PointerType.Touch)),
             RoutingStrategies.Tunnel,
-            true)
-        root.AddHandler(InputElement.KeyDownEvent, (fun _ (_: KeyEventArgs) -> this.Report false), RoutingStrategies.Tunnel, true)
+            true
+        )
+
+        root.AddHandler(
+            InputElement.KeyDownEvent,
+            (fun _ (_: KeyEventArgs) -> this.Report false),
+            RoutingStrategies.Tunnel,
+            true
+        )
 
     /// 触屏上不显示该控件的悬停提示（无障碍名称不受影响）。
     static member SuppressTooltipOnTouch(control: Control) =
         let sync (pointerType: PointerType) =
             let touch = pointerType = PointerType.Touch
             ToolTip.SetServiceEnabled(control, not touch)
-            if touch then ToolTip.SetIsOpen(control, false)
+
+            if touch then
+                ToolTip.SetIsOpen(control, false)
+
         control.AddHandler(
             InputElement.PointerEnteredEvent,
             (fun _ (e: PointerEventArgs) -> sync e.Pointer.Type),
             RoutingStrategies.Direct ||| RoutingStrategies.Bubble,
-            true)
+            true
+        )
+
         control.AddHandler(
             InputElement.PointerPressedEvent,
             (fun _ (e: PointerPressedEventArgs) -> sync e.Pointer.Type),
             RoutingStrategies.Tunnel ||| RoutingStrategies.Bubble,
-            true)
+            true
+        )

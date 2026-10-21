@@ -14,7 +14,10 @@ module CredentialStore =
 
     /// 客户端标识（配对时上报；PWA 与桌面区分，决策 55 语义：客户端名用于展示与审计）。
     let clientName =
-        if OperatingSystem.IsBrowser() then "PWA" else "wanxiang-desktop"
+        if OperatingSystem.IsBrowser() then
+            "PWA"
+        else
+            "wanxiang-desktop"
 
     let private configHome () =
         match Environment.GetEnvironmentVariable "WANXIANG_HOME" with
@@ -24,14 +27,18 @@ module CredentialStore =
     /// 桌面：解析 client.toml 的 url/token（自动连接本机 S）。
     /// 浏览器中不触碰文件系统（wasm 无 File API），返回 None。
     let tryLoadClientToml () : (string * string) option =
-        if OperatingSystem.IsBrowser() then None
+        if OperatingSystem.IsBrowser() then
+            None
         else
             try
                 let path = Path.Combine(configHome (), "client.toml")
+
                 if File.Exists path then
                     CredentialStore.parseClientToml (File.ReadAllLines path)
-                else None
-            with _ -> None
+                else
+                    None
+            with _ ->
+                None
 
     /// 浏览器：读取 IndexedDB 中全部连接记录，返回 (url, token, instanceId) 列表（按 updatedAt 降序）。
     let tryListBrowserConnectionsAsync () : Task<(string * string * string) list> =
@@ -59,7 +66,8 @@ module CredentialStore =
             if OperatingSystem.IsBrowser() then
                 try
                     do! BrowserCredentials.Put(instanceId, url, token, name)
-                with _ -> ()
+                with _ ->
+                    ()
         }
 
     /// 浏览器：删除一条连接凭据。
@@ -68,12 +76,16 @@ module CredentialStore =
             if OperatingSystem.IsBrowser() then
                 try
                     do! BrowserCredentials.Delete(instanceId)
-                with _ -> ()
+                with _ ->
+                    ()
         }
 
     /// 浏览器默认连接地址：与页面同源（https → wss，http → ws）；非浏览器回退桌面默认值。
     let defaultServerUrl () : string =
-        if not (OperatingSystem.IsBrowser()) then CredentialStore.desktopServerUrl
+        if not (OperatingSystem.IsBrowser()) then
+            CredentialStore.desktopServerUrl
         else
-            try CredentialStore.serverUrlOfPage "/ws" (BrowserPage.Url())
-            with _ -> CredentialStore.desktopServerUrl
+            try
+                CredentialStore.serverUrlOfPage "/ws" (BrowserPage.Url())
+            with _ ->
+                CredentialStore.desktopServerUrl

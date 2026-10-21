@@ -20,25 +20,29 @@ type RowSpan = { Text: string; IsMatch: bool }
 
 /// 一行对话的呈现
 type RowModel =
-    { Id: Guid
-      Title: string
-      TitleSpans: RowSpan list
-      Preview: string
-      PreviewSpans: RowSpan list
-      AccessibleName: string
-      Tooltip: string
-      Running: bool
-      Pinned: bool
-      Archived: bool }
+    {
+        Id: Guid
+        Title: string
+        TitleSpans: RowSpan list
+        Preview: string
+        PreviewSpans: RowSpan list
+        AccessibleName: string
+        Tooltip: string
+        Running: bool
+        Pinned: bool
+        Archived: bool
+    }
 
 /// 一条消息正文命中
 type HitModel =
-    { Key: string
-      Title: string
-      Before: string
-      Matched: string
-      After: string
-      AccessibleName: string }
+    {
+        Key: string
+        Title: string
+        Before: string
+        Matched: string
+        After: string
+        AccessibleName: string
+    }
 
 /// 列表里的一项
 [<RequireQualifiedAccess>]
@@ -57,7 +61,9 @@ type RowsEscapeArgs(kind: string) =
 /// 对话列表：废除 Look 记录，去脑化，每行通过 Render(SidebarRowVS) 或 RowModel 呈现。
 /// 样式通过样式类与统一主题系统获取。
 type ConversationRows() =
-    let list = ListBox(Background = Brushes.Transparent, BorderThickness = Thickness 0.0, Focusable = true)
+    let list =
+        ListBox(Background = Brushes.Transparent, BorderThickness = Thickness 0.0, Focusable = true)
+
     let rowHosts = Dictionary<Guid, Control>()
     let moreButtons = Dictionary<Guid, Button>()
     let models = Dictionary<Guid, RowModel>()
@@ -85,19 +91,26 @@ type ConversationRows() =
     let spans (block: TextBlock) (parts: RowSpan list) =
         block.Text <- null
         block.Inlines.Clear()
+
         for p in parts do
             let run = Run(p.Text)
-            if p.IsMatch then run.Foreground <- Brushes.Blue
-            block.Inlines.Add (run :> Inline)
+
+            if p.IsMatch then
+                run.Foreground <- Brushes.Blue
+
+            block.Inlines.Add(run :> Inline)
 
     let highlighted (id: Guid) = activeId = Some id || isSelected id
 
     let applyState (id: Guid) (host: Control) =
         let lit = highlighted id
+
         if lit then
-            if not (host.Classes.Contains "selected") then host.Classes.Add "selected"
+            if not (host.Classes.Contains "selected") then
+                host.Classes.Add "selected"
         else
             host.Classes.Remove "selected" |> ignore
+
         let status =
             match models.TryGetValue id with
             | true, m ->
@@ -109,6 +122,7 @@ type ConversationRows() =
                 | false, false when m.Archived -> "已归档"
                 | _ -> ""
             | _ -> if lit then "当前对话" else ""
+
         AutomationProperties.SetItemStatus(host, status)
 
     let applyMore (button: Button) =
@@ -131,9 +145,11 @@ type ConversationRows() =
     let focusRowAt (index: int) =
         if index >= 0 && index < visible.Length then
             let id = visible[index]
+
             match flatIndex.TryGetValue id with
             | true, fi ->
                 list.ScrollIntoView fi
+
                 match rowHosts.TryGetValue id with
                 | true, host ->
                     host.BringIntoView()
@@ -145,6 +161,7 @@ type ConversationRows() =
         match toggleIndex with
         | Some fi ->
             list.ScrollIntoView fi
+
             match toggleHost with
             | Some host -> host.Focus NavigationMethod.Directional |> ignore
             | None -> ()
@@ -155,28 +172,35 @@ type ConversationRows() =
         | Some 0 when delta < 0 -> leaveTop.Trigger()
         | Some index ->
             let target = index + delta
-            if target >= visible.Length && toggleIndex.IsSome then focusToggle ()
-            else focusRowAt (Math.Clamp(target, 0, visible.Length - 1))
+
+            if target >= visible.Length && toggleIndex.IsSome then
+                focusToggle ()
+            else
+                focusRowAt (Math.Clamp(target, 0, visible.Length - 1))
         | None -> ()
 
     let renderRow (m: RowModel) : Control =
         let id = m.Id
+
         let title =
             TextBlock(
                 FontWeight = FontWeight.Medium,
                 TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Center)
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         let preview =
-            TextBlock(
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Center)
+            TextBlock(TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center)
+
         let slot =
             Border(
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Width = 8.0,
                 Height = 12.0,
-                Margin = Thickness(0.0, 0.0, 8.0, 0.0))
+                Margin = Thickness(0.0, 0.0, 8.0, 0.0)
+            )
+
         if m.Running then
             let dot =
                 Border(
@@ -184,14 +208,19 @@ type ConversationRows() =
                     Height = 6.0,
                     CornerRadius = CornerRadius 3.0,
                     Background = Brushes.DodgerBlue,
-                    HorizontalAlignment = HorizontalAlignment.Center)
+                    HorizontalAlignment = HorizontalAlignment.Center
+                )
+
             slot.Child <- dot
         elif m.Pinned then
             let pin = TextBlock(Text = "📌", VerticalAlignment = VerticalAlignment.Center)
             slot.Child <- pin
-        else slot.Child <- null
+        else
+            slot.Child <- null
 
-        let titleRow = DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
+        let titleRow =
+            DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
+
         DockPanel.SetDock(slot, Dock.Left)
         titleRow.Children.Add slot
 
@@ -201,14 +230,20 @@ type ConversationRows() =
             b.Classes.Add "ghost"
             AutomationProperties.SetName(b, sprintf "对话“%s”的操作菜单" m.Title)
             AutomationProperties.SetHelpText(b, "打开对话操作菜单")
-            b.Click.Add(fun _ -> if not selectionActive then menuRequested.Trigger((id, b :> Control, true)))
+
+            b.Click.Add(fun _ ->
+                if not selectionActive then
+                    menuRequested.Trigger((id, b :> Control, true)))
+
             b
 
         DockPanel.SetDock(more, Dock.Right)
         titleRow.Children.Add more
         titleRow.Children.Add title
 
-        let column = StackPanel(Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, Spacing = 2.0)
+        let column =
+            StackPanel(Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, Spacing = 2.0)
+
         column.Children.Add titleRow
         column.Children.Add preview
 
@@ -235,52 +270,89 @@ type ConversationRows() =
         host.GotFocus.Add(fun _ ->
             rowFocused.Trigger id
             applyState id host)
-        host.LostFocus.Add(fun _ ->
-            applyState id host)
+
+        host.LostFocus.Add(fun _ -> applyState id host)
 
         host.KeyDown.Add(fun e ->
-            let ctrl = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
-            if (e.Key = Key.Enter || e.Key = Key.Space) && not selectionActive then e.Handled <- true; rowActivated.Trigger id
-            if e.Handled then ()
-            elif e.Key = Key.F2 then e.Handled <- true; renameKey.Trigger id
-            elif e.Key = Key.Delete then e.Handled <- true; deleteKey.Trigger id
-            elif e.Key = Key.P && not ctrl then e.Handled <- true; pinKey.Trigger id
-            elif selectionActive && e.Key = Key.A && ctrl then e.Handled <- true; selectAllKey.Trigger()
-            elif selectionActive && e.Key = Key.Escape then e.Handled <- fireEscape "row"
-            elif e.Key = Key.Down then e.Handled <- true; move id 1
-            elif e.Key = Key.Up then e.Handled <- true; move id -1
-            elif e.Key = Key.Escape then e.Handled <- fireEscape "row"
-            elif e.Key = Key.Home || e.Key = Key.PageUp then e.Handled <- true; focusRowAt 0
+            let ctrl =
+                e.KeyModifiers.HasFlag KeyModifiers.Control
+                || e.KeyModifiers.HasFlag KeyModifiers.Meta
+
+            if (e.Key = Key.Enter || e.Key = Key.Space) && not selectionActive then
+                e.Handled <- true
+                rowActivated.Trigger id
+
+            if e.Handled then
+                ()
+            elif e.Key = Key.F2 then
+                e.Handled <- true
+                renameKey.Trigger id
+            elif e.Key = Key.Delete then
+                e.Handled <- true
+                deleteKey.Trigger id
+            elif e.Key = Key.P && not ctrl then
+                e.Handled <- true
+                pinKey.Trigger id
+            elif selectionActive && e.Key = Key.A && ctrl then
+                e.Handled <- true
+                selectAllKey.Trigger()
+            elif selectionActive && e.Key = Key.Escape then
+                e.Handled <- fireEscape "row"
+            elif e.Key = Key.Down then
+                e.Handled <- true
+                move id 1
+            elif e.Key = Key.Up then
+                e.Handled <- true
+                move id -1
+            elif e.Key = Key.Escape then
+                e.Handled <- fireEscape "row"
+            elif e.Key = Key.Home || e.Key = Key.PageUp then
+                e.Handled <- true
+                focusRowAt 0
             elif e.Key = Key.End || e.Key = Key.PageDown then
                 e.Handled <- true
-                if toggleIndex.IsSome then focusToggle ()
-                elif visible.Length > 0 then focusRowAt (visible.Length - 1)
-            elif (e.Key = Key.F10 && e.KeyModifiers.HasFlag KeyModifiers.Shift) || e.Key = Key.Apps then
+
+                if toggleIndex.IsSome then
+                    focusToggle ()
+                elif visible.Length > 0 then
+                    focusRowAt (visible.Length - 1)
+            elif
+                (e.Key = Key.F10 && e.KeyModifiers.HasFlag KeyModifiers.Shift)
+                || e.Key = Key.Apps
+            then
                 e.Handled <- true
-                if not selectionActive then menuRequested.Trigger((id, host :> Control, false)))
+
+                if not selectionActive then
+                    menuRequested.Trigger((id, host :> Control, false)))
 
         host.PointerReleased.Add(fun e ->
             if e.InitialPressMouseButton = MouseButton.Right then
                 e.Handled <- true
                 host.Focus NavigationMethod.Pointer |> ignore
                 applyState id host
-                if not selectionActive then menuRequested.Trigger((id, host :> Control, false)))
+
+                if not selectionActive then
+                    menuRequested.Trigger((id, host :> Control, false)))
 
         host :> Control
 
     let renderHit (h: HitModel) : Control =
         let title = TextBlock(Text = h.Title, TextTrimming = TextTrimming.CharacterEllipsis)
+
         let snippet =
-            TextBlock(
-                TextWrapping = TextWrapping.Wrap,
-                MaxLines = 2,
-                TextTrimming = TextTrimming.CharacterEllipsis)
-        if h.Before <> "" then snippet.Inlines.Add(Run(h.Before))
+            TextBlock(TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis)
+
+        if h.Before <> "" then
+            snippet.Inlines.Add(Run(h.Before))
+
         if h.Matched <> "" then
             let run = Run(h.Matched)
             run.FontWeight <- FontWeight.Bold
             snippet.Inlines.Add run
-        if h.After <> "" then snippet.Inlines.Add(Run(h.After))
+
+        if h.After <> "" then
+            snippet.Inlines.Add(Run(h.After))
+
         let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 2.0)
         column.Children.Add title
         column.Children.Add snippet
@@ -294,26 +366,37 @@ type ConversationRows() =
         host.Tag <- h
         AutomationProperties.SetName(host, h.AccessibleName)
         ToolTip.SetTip(host, "打开对话并定位到这条消息")
-        host.KeyDown.Add(fun e -> if e.Key = Key.Escape then e.Handled <- fireEscape "hit")
+
+        host.KeyDown.Add(fun e ->
+            if e.Key = Key.Escape then
+                e.Handled <- fireEscape "hit")
+
         host :> Control
 
     let renderStatus (text: string) (action: (string * string) option) : Control =
         let label = TextBlock(Text = text, TextWrapping = TextWrapping.Wrap)
         AutomationProperties.SetName(label, text)
+
         let children =
-            [ yield label :> Control
-              match action with
-              | Some(caption, key) ->
-                  let b = Button(Content = caption)
-                  AutomationProperties.SetName(b, caption)
-                  b.Classes.Add "ghost"
-                  b.Classes.Add "button-ghost"
-                  b.HorizontalAlignment <- HorizontalAlignment.Left
-                  b.Click.Add(fun _ -> statusAction.Trigger key)
-                  yield b :> Control
-              | None -> () ]
+            [
+                yield label :> Control
+                match action with
+                | Some(caption, key) ->
+                    let b = Button(Content = caption)
+                    AutomationProperties.SetName(b, caption)
+                    b.Classes.Add "ghost"
+                    b.Classes.Add "button-ghost"
+                    b.HorizontalAlignment <- HorizontalAlignment.Left
+                    b.Click.Add(fun _ -> statusAction.Trigger key)
+                    yield b :> Control
+                | None -> ()
+            ]
+
         let panel = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
-        for c in children do panel.Children.Add c
+
+        for c in children do
+            panel.Children.Add c
+
         let b = Border(Child = panel, Padding = Thickness(16.0, 8.0))
         b :> Control
 
@@ -329,32 +412,49 @@ type ConversationRows() =
         host.Classes.Add "hover-plain"
         host.HorizontalAlignment <- HorizontalAlignment.Stretch
         host.Padding <- Thickness(16.0, 8.0)
+
         host.Click.Add(fun _ ->
-            match toggleHost with Some h -> h.Focus NavigationMethod.Directional |> ignore | None -> ()
+            match toggleHost with
+            | Some h -> h.Focus NavigationMethod.Directional |> ignore
+            | None -> ()
+
             toggleClicked.Trigger()
-            focusToggle ()
-        )
+            focusToggle ())
+
         host.Tag <- "archived-toggle"
         AutomationProperties.SetName(host, name)
         AutomationProperties.SetItemStatus(host, if expanded then "已展开" else "已折叠")
         ToolTip.SetTip(host, name)
         toggleHost <- Some host
+
         host.KeyDown.Add(fun e ->
             if e.Key = Key.Up then
                 e.Handled <- true
-                if visible.Length > 0 then focusRowAt (visible.Length - 1) else leaveTop.Trigger()
+
+                if visible.Length > 0 then
+                    focusRowAt (visible.Length - 1)
+                else
+                    leaveTop.Trigger()
             elif e.Key = Key.Down || e.Key = Key.End || e.Key = Key.PageDown then
                 e.Handled <- true
             elif e.Key = Key.Home || e.Key = Key.PageUp then
                 e.Handled <- true
-                if visible.Length > 0 then focusRowAt 0 else leaveTop.Trigger()
-            elif e.Key = Key.Escape then e.Handled <- fireEscape "archived")
+
+                if visible.Length > 0 then
+                    focusRowAt 0
+                else
+                    leaveTop.Trigger()
+            elif e.Key = Key.Escape then
+                e.Handled <- fireEscape "archived")
+
         host :> Control
 
     let build (item: RowItem) : Control =
         match item with
         | RowItem.Header label ->
-            let header = TextBlock(Text = label, FontWeight = FontWeight.SemiBold, Margin = Thickness(16.0, 8.0, 16.0, 4.0))
+            let header =
+                TextBlock(Text = label, FontWeight = FontWeight.SemiBold, Margin = Thickness(16.0, 8.0, 16.0, 4.0))
+
             header.Classes.Add "section-label"
             header :> Control
         | RowItem.Conversation m -> renderRow m
@@ -365,6 +465,7 @@ type ConversationRows() =
     do
         list.ItemsPanel <- FuncTemplate<Panel>(fun () -> VirtualizingStackPanel() :> Panel)
         list.ItemTemplate <- FuncDataTemplate<RowItem>((fun item _ -> build item), true)
+
         list.ContainerPrepared.Add(fun args ->
             match args.Container with
             | :? ListBoxItem as item ->
@@ -375,6 +476,7 @@ type ConversationRows() =
                 item.BorderThickness <- Thickness 0.0
                 item.HorizontalContentAlignment <- HorizontalAlignment.Stretch
             | _ -> ())
+
         AutomationProperties.SetName(list, "对话列表")
 
     member _.View = list :> Control
@@ -384,13 +486,17 @@ type ConversationRows() =
     member _.Render(items: RowItem list) =
         let scroller =
             list.GetVisualDescendants()
-            |> Seq.tryPick (function :? ScrollViewer as sv -> Some sv | _ -> None)
+            |> Seq.tryPick (function
+                | :? ScrollViewer as sv -> Some sv
+                | _ -> None)
+
         let saved = scroller |> Option.map (fun sv -> sv.Offset)
         rowHosts.Clear()
         flatIndex.Clear()
         toggleHost <- None
         toggleIndex <- None
         let ids = ResizeArray<Guid>()
+
         items
         |> List.iteri (fun i item ->
             match item with
@@ -400,8 +506,10 @@ type ConversationRows() =
                 ids.Add m.Id
             | RowItem.ArchivedToggle _ -> toggleIndex <- Some i
             | _ -> ())
+
         visible <- ids.ToArray()
         list.ItemsSource <- ResizeArray(items)
+
         match saved, scroller with
         | Some o, Some sv -> sv.Offset <- o
         | _ -> ()
@@ -409,18 +517,21 @@ type ConversationRows() =
     /// 单行渲染适配器：从 SidebarRowVS 产生 RowModel
     member this.Render(row: SidebarRowVS) =
         let spans text = [ { Text = text; IsMatch = false } ]
-        let m: RowModel = {
-            Id = row.Id
-            Title = row.Title
-            TitleSpans = spans row.Title
-            Preview = row.Preview
-            PreviewSpans = spans row.Preview
-            AccessibleName = row.Title
-            Tooltip = row.Title
-            Running = row.Running
-            Pinned = row.Pinned
-            Archived = row.Archived
-        }
+
+        let m: RowModel =
+            {
+                Id = row.Id
+                Title = row.Title
+                TitleSpans = spans row.Title
+                Preview = row.Preview
+                PreviewSpans = spans row.Preview
+                AccessibleName = row.Title
+                Tooltip = row.Title
+                Running = row.Running
+                Pinned = row.Pinned
+                Archived = row.Archived
+            }
+
         renderRow m
 
     member _.VisibleIds: Guid list = List.ofArray visible
@@ -428,7 +539,8 @@ type ConversationRows() =
     member _.ArchivedToggle = toggleHost |> Option.map (fun t -> t :> Control)
 
     member _.FocusedRow: Guid option =
-        rowHosts |> Seq.tryPick (fun kv -> if kv.Value.IsFocused then Some kv.Key else None)
+        rowHosts
+        |> Seq.tryPick (fun kv -> if kv.Value.IsFocused then Some kv.Key else None)
 
     member _.RowHost(id: Guid) : Control option =
         match rowHosts.TryGetValue id with
@@ -458,18 +570,45 @@ type ConversationRows() =
         activeId <- active
         isSelected <- selected
         selectionActive <- inSelection
-        for kv in rowHosts do applyState kv.Key kv.Value
-        for b in moreButtons.Values do applyMore b
 
-    [<CLIEvent>] member _.RowActivated = rowActivated.Publish
-    [<CLIEvent>] member _.RowFocused = rowFocused.Publish
-    [<CLIEvent>] member _.MenuRequested = menuRequested.Publish
-    [<CLIEvent>] member _.RenameKey = renameKey.Publish
-    [<CLIEvent>] member _.DeleteKey = deleteKey.Publish
-    [<CLIEvent>] member _.PinKey = pinKey.Publish
-    [<CLIEvent>] member _.SelectAllKey = selectAllKey.Publish
-    [<CLIEvent>] member _.Escape = escape.Publish
-    [<CLIEvent>] member _.LeaveTop = leaveTop.Publish
-    [<CLIEvent>] member _.HitClicked = hitClicked.Publish
-    [<CLIEvent>] member _.StatusActionClicked = statusAction.Publish
-    [<CLIEvent>] member _.ArchivedToggleClicked = toggleClicked.Publish
+        for kv in rowHosts do
+            applyState kv.Key kv.Value
+
+        for b in moreButtons.Values do
+            applyMore b
+
+    [<CLIEvent>]
+    member _.RowActivated = rowActivated.Publish
+
+    [<CLIEvent>]
+    member _.RowFocused = rowFocused.Publish
+
+    [<CLIEvent>]
+    member _.MenuRequested = menuRequested.Publish
+
+    [<CLIEvent>]
+    member _.RenameKey = renameKey.Publish
+
+    [<CLIEvent>]
+    member _.DeleteKey = deleteKey.Publish
+
+    [<CLIEvent>]
+    member _.PinKey = pinKey.Publish
+
+    [<CLIEvent>]
+    member _.SelectAllKey = selectAllKey.Publish
+
+    [<CLIEvent>]
+    member _.Escape = escape.Publish
+
+    [<CLIEvent>]
+    member _.LeaveTop = leaveTop.Publish
+
+    [<CLIEvent>]
+    member _.HitClicked = hitClicked.Publish
+
+    [<CLIEvent>]
+    member _.StatusActionClicked = statusAction.Publish
+
+    [<CLIEvent>]
+    member _.ArchivedToggleClicked = toggleClicked.Publish

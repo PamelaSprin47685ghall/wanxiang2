@@ -10,7 +10,8 @@ open Wanxiang.Config
 module DesktopPairing =
 
     /// 主机配置旁的 client.toml。
-    let clientTomlOf (configPath: string) = ClientTomlFile(Path.Combine(Path.GetDirectoryName configPath, "client.toml"))
+    let clientTomlOf (configPath: string) =
+        ClientTomlFile(Path.Combine(Path.GetDirectoryName configPath, "client.toml"))
 
     /// client.toml 里的 url 用主机配置的 listen；配置读不了用默认地址（与旧实现相同）。
     let private listenOf (configPath: string) =
@@ -23,13 +24,15 @@ module DesktopPairing =
         let clientToml = clientTomlOf configPath
         // 首次启动 TOML 不存在：ConfigStore.Open 先生成完整默认 TOML（决策 182，原子路径）
         let ensureConfig () =
-            if File.Exists configPath then Ok()
+            if File.Exists configPath then
+                Ok()
             else
                 match ConfigStore.Open(configPath, ignore, ignore) with
                 | Ok cs ->
                     (cs :> IDisposable).Dispose()
                     Ok()
                 | Error e -> Error e
+
         match ensureConfig () with
         | Error e -> Error e
         | Ok() ->
@@ -37,25 +40,39 @@ module DesktopPairing =
             | Error e -> Error e
             | Ok cs ->
                 let cfg = cs.Current
+
                 let tokenValid =
                     clientToml.TryReadToken()
                     |> Option.exists (fun tok ->
-                        cfg.authClients |> List.exists (fun c -> c.tokenHash = ClientToken.ClientToken.hash tok && not c.revoked))
+                        cfg.authClients
+                        |> List.exists (fun c -> c.tokenHash = ClientToken.ClientToken.hash tok && not c.revoked))
+
                 let outcome =
-                    if tokenValid then Ok()
+                    if tokenValid then
+                        Ok()
                     else
                         let token = ClientToken.ClientToken.generate ()
+
                         let newCfg =
                             { cfg with
                                 authClients =
-                                    { tokenHash = ClientToken.ClientToken.hash token
-                                      name = DesktopClient.DesktopClient.Name
-                                      createdAtUtc = DateTimeOffset.UtcNow
-                                      lastSeenUtc = None
-                                      revoked = false }
-                                    :: cfg.authClients }
+                                    {
+                                        tokenHash = ClientToken.ClientToken.hash token
+                                        name = DesktopClient.DesktopClient.Name
+                                        createdAtUtc = DateTimeOffset.UtcNow
+                                        lastSeenUtc = None
+                                        revoked = false
+                                    }
+                                    :: cfg.authClients
+                            }
+
                         match cs.Rewrite newCfg with
-                        | Ok() -> (try clientToml.Write(listenOf configPath, token) with e -> Error e.Message)
+                        | Ok() ->
+                            (try
+                                clientToml.Write(listenOf configPath, token)
+                             with e ->
+                                 Error e.Message)
                         | Error e -> Error e
+
                 (cs :> IDisposable).Dispose()
                 outcome

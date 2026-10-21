@@ -9,10 +9,27 @@ module AttachmentAudit =
     let run (refs: (string * bool) seq) (blobNames: string seq) : (bool * string) * (bool * string) =
         let referenced = System.Collections.Generic.HashSet<string>()
         let missing = System.Collections.Generic.HashSet<string>()
+
         for (sha, exists) in refs do
             referenced.Add sha |> ignore
-            if not exists then missing.Add sha |> ignore
-        let orphan = blobNames |> Seq.filter (fun n -> not (n.EndsWith ".meta") && not (referenced.Contains n)) |> List.ofSeq
+
+            if not exists then
+                missing.Add sha |> ignore
+
+        let orphan =
+            blobNames
+            |> Seq.filter (fun n -> not (n.EndsWith ".meta") && not (referenced.Contains n))
+            |> List.ofSeq
+
         let m = missing.Count
-        (m = 0, (if m = 0 then "ok" else sprintf "%d referenced blob(s) missing" m)),
-        (List.isEmpty orphan, (if List.isEmpty orphan then "ok" else sprintf "%d unreferenced blob(s)" orphan.Length))
+
+        (m = 0,
+         (if m = 0 then
+              "ok"
+          else
+              sprintf "%d referenced blob(s) missing" m)),
+        (List.isEmpty orphan,
+         (if List.isEmpty orphan then
+              "ok"
+          else
+              sprintf "%d unreferenced blob(s)" orphan.Length))

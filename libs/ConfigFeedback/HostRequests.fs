@@ -15,8 +15,16 @@ type PendingProbes() =
 
     /// 取出所有到点的请求 (requestId, providerId)，按发出顺序。
     member _.Expire(now: DateTimeOffset, timeout: TimeSpan) : (Guid * string) list =
-        let due = [ for KeyValue(id, (pid, at)) in pending do if now - at >= timeout then id, pid ]
-        for (id, _) in due do pending.Remove id |> ignore
+        let due =
+            [
+                for KeyValue(id, (pid, at)) in pending do
+                    if now - at >= timeout then
+                        id, pid
+            ]
+
+        for (id, _) in due do
+            pending.Remove id |> ignore
+
         due
 
 /// W4：消息正文搜索的在途查询。每次发出换一个 queryId，只认最近一次；更早的结果迟到即丢。
@@ -36,7 +44,8 @@ type SearchInFlight() =
         if latest = Some queryId then
             sentAt <- None
             true
-        else false
+        else
+            false
 
     /// 到点仍没回应：放弃这次查询，返回 true 由宿主显示失败。
     member _.Expire(now: DateTimeOffset, timeout: TimeSpan) : bool =

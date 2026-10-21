@@ -10,7 +10,10 @@ let ``command tracker expires newer commands but leaves message delivery to outb
     let tracker = CommandFeedbackTracker()
     tracker.TrackId(Guid.NewGuid(), true, None, ignore)
     tracker.TrackId(Guid.NewGuid(), false, None, ignore)
-    let expired = tracker.Expire(DateTimeOffset.UtcNow.AddMinutes 1.0, TimeSpan.FromSeconds 12.0)
+
+    let expired =
+        tracker.Expire(DateTimeOffset.UtcNow.AddMinutes 1.0, TimeSpan.FromSeconds 12.0)
+
     Assert.Equal(1, expired.Length)
     Assert.Equal(1, tracker.Count)
 

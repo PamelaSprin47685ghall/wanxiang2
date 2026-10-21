@@ -1,4 +1,5 @@
 module RowFocusSearchHitTests
+
 open System
 open System.Text.Json.Nodes
 open Xunit
@@ -27,9 +28,18 @@ let ``search hit parsing clamps bad highlight ranges and drops rows without ids`
 // 迁自旧 SearchHighlightTests。
 [<Fact>]
 let ``消息命中片段去掉 Markdown 记号，命中词保持原样`` () =
-    let hit : SearchHit =
-        { conversationId = Guid.NewGuid(); title = "排版验证"; archived = false; messageId = 1UL; role = "assistant"
-          snippet = "### 关于排版\n这是验证 **Markdown 渲染**、`行内代码`"; matchStart = 16; matchLength = 8 }
+    let hit: SearchHit =
+        {
+            conversationId = Guid.NewGuid()
+            title = "排版验证"
+            archived = false
+            messageId = 1UL
+            role = "assistant"
+            snippet = "### 关于排版\n这是验证 **Markdown 渲染**、`行内代码`"
+            matchStart = 16
+            matchLength = 8
+        }
+
     let before, matched, after = SearchHit.splitPlain hit
     Assert.Equal("Markdown", matched)
     Assert.Equal("关于排版 这是验证 ", before)
@@ -37,6 +47,14 @@ let ``消息命中片段去掉 Markdown 记号，命中词保持原样`` () =
 
 [<Fact>]
 let ``truncated page says so`` () =
-    let page = { queryId = Guid.Empty; query = "q"; hits = []; hasMore = false; truncated = true }
+    let page =
+        {
+            queryId = Guid.Empty
+            query = "q"
+            hits = []
+            hasMore = false
+            truncated = true
+        }
+
     Assert.Equal(Some "结果已截断：只显示了最近的一部分匹配，请换更具体的词。", SearchHit.truncationNotice page)
     Assert.Equal(None, SearchHit.truncationNotice { page with truncated = false })

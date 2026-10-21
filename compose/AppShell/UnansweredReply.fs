@@ -9,6 +9,7 @@ open Wanxiang.Core
 /// 也没有 isUnanswered 消费缝；渲染装配点（谁在何时检查 isUnanswered 并补卡）需另行裁决。
 module UnansweredReply =
 
-    let error : GenerationError =
+    let error: GenerationError =
         { GenerationError.create GenerationErrorKind.UnknownFailure ReplyTail.unansweredMessage with
-            detail = Some ReplyTail.unansweredDetail }
+            detail = Some ReplyTail.unansweredDetail
+        }

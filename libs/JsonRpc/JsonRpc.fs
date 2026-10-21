@@ -14,14 +14,20 @@ module JsonRpc =
         o["jsonrpc"] <- "2.0"
         o["id"] <- JsonNode.op_Implicit id
         o["method"] <- method
-        if paramsObj.Count > 0 then o["params"] <- paramsObj
+
+        if paramsObj.Count > 0 then
+            o["params"] <- paramsObj
+
         o
 
     let notification (method: string) (paramsObj: JsonObject) : JsonObject =
         let o = JsonObject()
         o["jsonrpc"] <- "2.0"
         o["method"] <- method
-        if paramsObj.Count > 0 then o["params"] <- paramsObj
+
+        if paramsObj.Count > 0 then
+            o["params"] <- paramsObj
+
         o
 
     let errorNode (message: string) : JsonNode =
@@ -33,7 +39,11 @@ module JsonRpc =
 
     let private prop (o: JsonObject) (k: string) =
         let mutable n: JsonNode = null
-        if o.TryGetPropertyValue(k, &n) && not (isNull n) then Some n else None
+
+        if o.TryGetPropertyValue(k, &n) && not (isNull n) then
+            Some n
+        else
+            None
 
     /// 响应里的 result；没有 result 时给出 error 的原文。
     let resultOf (response: JsonNode) : Result<JsonNode, string> =
@@ -57,11 +67,14 @@ type PendingCalls() =
 
     /// 登记一个 id，返回它的等待任务。
     member _.Register(id: int) : Task<JsonNode> =
-        let tcs = TaskCompletionSource<JsonNode>(TaskCreationOptions.RunContinuationsAsynchronously)
+        let tcs =
+            TaskCompletionSource<JsonNode>(TaskCreationOptions.RunContinuationsAsynchronously)
+
         pending[(JsonNode.op_Implicit id).ToJsonString()] <- tcs
         tcs.Task
 
-    member _.Forget(id: int) = pending.TryRemove((JsonNode.op_Implicit id).ToJsonString()) |> ignore
+    member _.Forget(id: int) =
+        pending.TryRemove((JsonNode.op_Implicit id).ToJsonString()) |> ignore
 
     /// 交来一条响应；有登记的 id 就完成它，返回是否匹配。
     member _.Complete(response: JsonObject) : bool =
@@ -74,13 +87,20 @@ type PendingCalls() =
 
     /// 所有在途请求以同一个错误结束（对端退出、关闭）。
     member _.FailAll(message: string) =
-        for kv in pending do kv.Value.TrySetResult(JsonRpc.errorNode message) |> ignore
+        for kv in pending do
+            kv.Value.TrySetResult(JsonRpc.errorNode message) |> ignore
+
         pending.Clear()
 
     /// 等待结果；超时或取消时撤销登记并返回错误节点（文案与旧实现一致）。
     member this.Await(id: int, waiting: Task<JsonNode>, timeoutMs: int, ct: CancellationToken) : Task<JsonNode> =
         task {
-            let timeout = if timeoutMs > 0 then TimeSpan.FromMilliseconds(float timeoutMs) else Timeout.InfiniteTimeSpan
+            let timeout =
+                if timeoutMs > 0 then
+                    TimeSpan.FromMilliseconds(float timeoutMs)
+                else
+                    Timeout.InfiniteTimeSpan
+
             try
                 return! waiting.WaitAsync(timeout, ct)
             with

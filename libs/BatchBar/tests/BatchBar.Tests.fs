@@ -14,12 +14,13 @@ open Wanxiang2.BatchBar.Tests.Probe
 open Wanxiang2.WorkspaceState
 
 let private state n =
-    Some {
-        SelectedCount = n
-        AllSelected = (n = 3)
-        Busy = false
-        AllPinned = (n = 3)
-    }
+    Some
+        {
+            SelectedCount = n
+            AllSelected = (n = 3)
+            Busy = false
+            AllPinned = (n = 3)
+        }
 
 let private make () =
     let b = BatchBar()
@@ -39,11 +40,15 @@ let ``selection action buttons disable themselves while nothing is selected`` ()
     Headless.run (fun () ->
         let b, _ = make ()
         b.Render(state 0)
+
         for c in [ b.PinButton; b.ArchiveButton; b.DeleteButton ] do
             Assert.False c.IsEnabled
             Assert.False c.Focusable
+
         b.Render(state 2)
-        for c in [ b.PinButton; b.ArchiveButton; b.DeleteButton ] do Assert.True c.IsEnabled)
+
+        for c in [ b.PinButton; b.ArchiveButton; b.DeleteButton ] do
+            Assert.True c.IsEnabled)
 
 [<Fact>]
 let ``selection buttons rename themselves as the selection changes`` () =
@@ -52,7 +57,14 @@ let ``selection buttons rename themselves as the selection changes`` () =
         b.Render(state 3)
         Assert.Equal("已选 3 项", b.CountText)
         Assert.Equal("取消全选", string (b.SelectAllButton :?> Button).Content)
-        b.Render(Some { (state 1).Value with AllPinned = true })
+
+        b.Render(
+            Some
+                { (state 1).Value with
+                    AllPinned = true
+                }
+        )
+
         Assert.Equal("全选", string (b.SelectAllButton :?> Button).Content)
         Assert.Equal("取消置顶", string (b.PinButton :?> Button).Content))
 
@@ -81,7 +93,10 @@ let ``every batch control raises its event through click`` () =
         b.ArchiveClicked.Add(fun () -> log.Add "archive")
         b.DeleteClicked.Add(fun () -> log.Add "delete")
         click (named b.Header "退出多选（Esc）").Value
-        for c in [ b.SelectAllButton; b.PinButton; b.ArchiveButton; b.DeleteButton ] do click c
+
+        for c in [ b.SelectAllButton; b.PinButton; b.ArchiveButton; b.DeleteButton ] do
+            click c
+
         Assert.Equal<string list>([ "exit"; "all"; "pin"; "archive"; "delete" ], List.ofSeq log))
 
 [<Fact>]

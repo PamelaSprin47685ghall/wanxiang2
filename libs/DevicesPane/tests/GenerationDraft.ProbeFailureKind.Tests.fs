@@ -1,4 +1,5 @@
 module GenerationDraftProbeFailureKindTests
+
 open Xunit
 open Wanxiang.UI
 

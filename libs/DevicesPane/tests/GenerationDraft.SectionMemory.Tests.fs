@@ -1,4 +1,5 @@
 module GenerationDraftSectionMemoryTests
+
 open Xunit
 open Wanxiang.UI
 

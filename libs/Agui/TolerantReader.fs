@@ -29,15 +29,21 @@ module TolerantReader =
     /// 官方 SDK 声明的全部标准事件类型名。取字符串常量，不硬编码列表。
     let private knownTypes: Set<string> =
         Set.ofArray
-            [| for f in typeof<AGUIEventTypes>.GetFields() do
-                   match f.GetValue null with
-                   | :? string as s -> yield s
-                   | _ -> () |]
+            [|
+                for f in typeof<AGUIEventTypes>.GetFields() do
+                    match f.GetValue null with
+                    | :? string as s -> yield s
+                    | _ -> ()
+            |]
 
     /// 显式 byref 重载以避开 F# 重载歧义（FS0041）。
     let private tryProp (o: JsonObject) (k: string) : JsonNode option =
         let mutable n: JsonNode = null
-        if o.TryGetPropertyValue(k, &n) && not (isNull n) then Some n else None
+
+        if o.TryGetPropertyValue(k, &n) && not (isNull n) then
+            Some n
+        else
+            None
 
     /// 解析一条入站事件文本。
     let parse (json: string) : ParsedEvent =
@@ -47,6 +53,7 @@ module TolerantReader =
                 match tryProp o "type" with
                 | Some t when t.GetValueKind() = JsonValueKind.String ->
                     let name = t.GetValue<string>()
+
                     if name = "CUSTOM" then
                         match tryProp o "name" with
                         | Some n when n.GetValueKind() = JsonValueKind.String ->
@@ -54,6 +61,7 @@ module TolerantReader =
                                 match tryProp o "value" with
                                 | Some v -> v.DeepClone()
                                 | None -> JsonNode.Parse "null"
+
                             Custom(n.GetValue<string>(), value)
                         | _ -> Malformed "CUSTOM event without a string 'name'"
                     elif Set.contains name knownTypes then
@@ -65,4 +73,5 @@ module TolerantReader =
                         Unrecognized name
                 | _ -> Malformed "missing or non-string 'type'"
             | _ -> Malformed "event is not a JSON object"
-        with e -> Malformed(sprintf "invalid JSON: %s" e.Message)
+        with e ->
+            Malformed(sprintf "invalid JSON: %s" e.Message)

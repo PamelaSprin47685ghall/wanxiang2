@@ -6,16 +6,17 @@ open System
 // Skia 的解码、缩放、编码仍归宿主；宿主的 `ImageShrink.shrink` / `shrinkAsync` 与本模块同名，F# 按名合并。
 
 /// 一次自动缩小的结果。界面用它告诉用户「原图多大、实际发出去多大」。
-type ShrunkImage = {
-    bytes: byte[]
-    fileName: string
-    mediaType: string
-    originalBytes: int64
-    originalWidth: int
-    originalHeight: int
-    width: int
-    height: int
-}
+type ShrunkImage =
+    {
+        bytes: byte[]
+        fileName: string
+        mediaType: string
+        originalBytes: int64
+        originalWidth: int
+        originalHeight: int
+        width: int
+        height: int
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ImageShrink =
@@ -27,12 +28,18 @@ module ImageShrink =
     /// dims 是宿主只读文件头得到的尺寸（已按 EXIF 方向换算）；读不出给 None。
     let needsShrinkFor (fileName: string) (byteCount: int64) (dims: (int * int) option) : bool =
         let mediaType = MediaTypes.ofFileName fileName
+
         if not (MediaTypes.isModelImage mediaType) then false
         elif byteCount > maxBytes then true
         else dims |> Option.exists ImageFit.tooLarge
 
     /// 给用户看的一句话：原图 vs 实际发送。
     let note (r: ShrunkImage) =
-        sprintf "已自动缩小：原图 %s（%d×%d）→ 发送 %s（%d×%d）"
-            (AttachmentRef.formatSize r.originalBytes) r.originalWidth r.originalHeight
-            (AttachmentRef.formatSize (int64 r.bytes.Length)) r.width r.height
+        sprintf
+            "已自动缩小：原图 %s（%d×%d）→ 发送 %s（%d×%d）"
+            (AttachmentRef.formatSize r.originalBytes)
+            r.originalWidth
+            r.originalHeight
+            (AttachmentRef.formatSize (int64 r.bytes.Length))
+            r.width
+            r.height

@@ -21,16 +21,20 @@ module ProviderCatalogTests =
 
     [<Fact>]
     let ``modelIdsFromProbe extracts openai and anthropic data arrays with sorting and deduplication`` () =
-        let json = """{"data": [{"id": "gpt-4o"}, {"id": "gpt-3.5-turbo"}, {"id": "gpt-4o"}]} """
+        let json =
+            """{"data": [{"id": "gpt-4o"}, {"id": "gpt-3.5-turbo"}, {"id": "gpt-4o"}]} """
+
         match ProviderCatalog.modelIdsFromProbe json with
-        | Ok models -> Assert.Equal<string list>(["gpt-3.5-turbo"; "gpt-4o"], models)
+        | Ok models -> Assert.Equal<string list>([ "gpt-3.5-turbo"; "gpt-4o" ], models)
         | Error e -> Assert.Fail(sprintf "Expected Ok, got: %s" e)
 
     [<Fact>]
     let ``modelIdsFromProbe extracts gemini models array stripping prefix`` () =
-        let json = """{"models": [{"name": "models/gemini-1.5-pro"}, {"name": "models/gemini-1.5-flash"}, {"name": "models/gemini-1.5-flash"}]} """
+        let json =
+            """{"models": [{"name": "models/gemini-1.5-pro"}, {"name": "models/gemini-1.5-flash"}, {"name": "models/gemini-1.5-flash"}]} """
+
         match ProviderCatalog.modelIdsFromProbe json with
-        | Ok models -> Assert.Equal<string list>(["gemini-1.5-flash"; "gemini-1.5-pro"], models)
+        | Ok models -> Assert.Equal<string list>([ "gemini-1.5-flash"; "gemini-1.5-pro" ], models)
         | Error e -> Assert.Fail(sprintf "Expected Ok, got: %s" e)
 
     [<Fact>]
@@ -38,8 +42,16 @@ module ProviderCatalogTests =
         Assert.True(ProviderCatalog.modelIdsFromProbe "" |> Result.isError)
         Assert.True(ProviderCatalog.modelIdsFromProbe "not a json at all" |> Result.isError)
         Assert.True(ProviderCatalog.modelIdsFromProbe "{}" |> Result.isError)
-        Assert.True(ProviderCatalog.modelIdsFromProbe """{"data": "not an array"}""" |> Result.isError)
-        Assert.True(ProviderCatalog.modelIdsFromProbe """{"models": "not an array"}""" |> Result.isError)
+
+        Assert.True(
+            ProviderCatalog.modelIdsFromProbe """{"data": "not an array"}"""
+            |> Result.isError
+        )
+
+        Assert.True(
+            ProviderCatalog.modelIdsFromProbe """{"models": "not an array"}"""
+            |> Result.isError
+        )
 
     [<Fact>]
     let ``probeModels returns models when endpoint responds 200 OK`` () =
@@ -49,37 +61,45 @@ module ProviderCatalogTests =
         listener.Prefixes.Add prefix
         listener.Start()
 
-        let serverTask = Task.Run(fun () ->
-            let ctx = listener.GetContext()
-            let resp = ctx.Response
-            let json = """{"data": [{"id": "model-a"}, {"id": "model-b"}]}"""
-            let bytes = Encoding.UTF8.GetBytes(json)
-            resp.ContentType <- "application/json"
-            resp.StatusCode <- 200
-            resp.OutputStream.Write(bytes, 0, bytes.Length)
-            resp.OutputStream.Close()
-        )
+        let serverTask =
+            Task.Run(fun () ->
+                let ctx = listener.GetContext()
+                let resp = ctx.Response
+                let json = """{"data": [{"id": "model-a"}, {"id": "model-b"}]}"""
+                let bytes = Encoding.UTF8.GetBytes(json)
+                resp.ContentType <- "application/json"
+                resp.StatusCode <- 200
+                resp.OutputStream.Write(bytes, 0, bytes.Length)
+                resp.OutputStream.Close())
 
         try
-            let provider: ProviderConfig = {
-                id = "test-prov"
-                kind = "openai"
-                label = "Test Provider"
-                baseUrl = prefix
-                apiKey = Some "test-key"
-                models = ["model-a"]
-                defaultModel = "model-a"
-                timeoutSeconds = 30
-                maxRetries = 0
-                enabled = true
-                promptCaching = false
-                headers = Map.empty
-                extraJson = None; visionOverrides = Map.empty
-            }
-            let res = ProviderCatalog.probeModels provider CancellationToken.None |> Async.AwaitTask |> Async.RunSynchronously
+            let provider: ProviderConfig =
+                {
+                    id = "test-prov"
+                    kind = "openai"
+                    label = "Test Provider"
+                    baseUrl = prefix
+                    apiKey = Some "test-key"
+                    models = [ "model-a" ]
+                    defaultModel = "model-a"
+                    timeoutSeconds = 30
+                    maxRetries = 0
+                    enabled = true
+                    promptCaching = false
+                    headers = Map.empty
+                    extraJson = None
+                    visionOverrides = Map.empty
+                }
+
+            let res =
+                ProviderCatalog.probeModels provider CancellationToken.None
+                |> Async.AwaitTask
+                |> Async.RunSynchronously
+
             match res with
-            | Ok models -> Assert.Equal<string list>(["model-a"; "model-b"], models)
+            | Ok models -> Assert.Equal<string list>([ "model-a"; "model-b" ], models)
             | Error e -> Assert.Fail(sprintf "Expected Ok but got Error: %s" e)
+
             serverTask.Wait(2000) |> ignore
         finally
             listener.Stop()
@@ -93,35 +113,43 @@ module ProviderCatalogTests =
         listener.Prefixes.Add prefix
         listener.Start()
 
-        let serverTask = Task.Run(fun () ->
-            let ctx = listener.GetContext()
-            let resp = ctx.Response
-            resp.StatusCode <- 401
-            let bytes = Encoding.UTF8.GetBytes("Unauthorized")
-            resp.OutputStream.Write(bytes, 0, bytes.Length)
-            resp.OutputStream.Close()
-        )
+        let serverTask =
+            Task.Run(fun () ->
+                let ctx = listener.GetContext()
+                let resp = ctx.Response
+                resp.StatusCode <- 401
+                let bytes = Encoding.UTF8.GetBytes("Unauthorized")
+                resp.OutputStream.Write(bytes, 0, bytes.Length)
+                resp.OutputStream.Close())
 
         try
-            let provider: ProviderConfig = {
-                id = "test-unauth"
-                kind = "openai"
-                label = "Unauth Provider"
-                baseUrl = prefix
-                apiKey = None
-                models = ["m1"]
-                defaultModel = "m1"
-                timeoutSeconds = 30
-                maxRetries = 0
-                enabled = true
-                promptCaching = false
-                headers = Map.empty
-                extraJson = None; visionOverrides = Map.empty
-            }
-            let res = ProviderCatalog.probeModels provider CancellationToken.None |> Async.AwaitTask |> Async.RunSynchronously
+            let provider: ProviderConfig =
+                {
+                    id = "test-unauth"
+                    kind = "openai"
+                    label = "Unauth Provider"
+                    baseUrl = prefix
+                    apiKey = None
+                    models = [ "m1" ]
+                    defaultModel = "m1"
+                    timeoutSeconds = 30
+                    maxRetries = 0
+                    enabled = true
+                    promptCaching = false
+                    headers = Map.empty
+                    extraJson = None
+                    visionOverrides = Map.empty
+                }
+
+            let res =
+                ProviderCatalog.probeModels provider CancellationToken.None
+                |> Async.AwaitTask
+                |> Async.RunSynchronously
+
             match res with
             | Ok _ -> Assert.Fail("Expected Error for 401 status")
             | Error msg -> Assert.Contains("401", msg)
+
             serverTask.Wait(2000) |> ignore
         finally
             listener.Stop()
@@ -130,13 +158,45 @@ module ProviderCatalogTests =
     [<Fact>]
     let ``providers snapshot hides api keys and formats models correctly`` () =
         let p1: ProviderConfig =
-            { id = "p1"; kind = "openai"; label = "P1"; baseUrl = "http://api.p1.com"; apiKey = Some "secret-123"
-              models = ["m1"]; defaultModel = "m1"; timeoutSeconds = 60; maxRetries = 0; enabled = true; promptCaching = false; headers = Map.empty; extraJson = None; visionOverrides = Map.empty }
-        let p2: ProviderConfig =
-            { id = "p2"; kind = "anthropic"; label = ""; baseUrl = "http://api.p2.com"; apiKey = None
-              models = ["m2"]; defaultModel = "m2"; timeoutSeconds = 60; maxRetries = 0; enabled = false; promptCaching = false; headers = Map.empty; extraJson = None; visionOverrides = Map.empty }
+            {
+                id = "p1"
+                kind = "openai"
+                label = "P1"
+                baseUrl = "http://api.p1.com"
+                apiKey = Some "secret-123"
+                models = [ "m1" ]
+                defaultModel = "m1"
+                timeoutSeconds = 60
+                maxRetries = 0
+                enabled = true
+                promptCaching = false
+                headers = Map.empty
+                extraJson = None
+                visionOverrides = Map.empty
+            }
 
-        let sampleAppConfig = { AppConfig.defaults (Guid.NewGuid()) with providers = Map.ofList [ ("p1", p1); ("p2", p2) ] }
+        let p2: ProviderConfig =
+            {
+                id = "p2"
+                kind = "anthropic"
+                label = ""
+                baseUrl = "http://api.p2.com"
+                apiKey = None
+                models = [ "m2" ]
+                defaultModel = "m2"
+                timeoutSeconds = 60
+                maxRetries = 0
+                enabled = false
+                promptCaching = false
+                headers = Map.empty
+                extraJson = None
+                visionOverrides = Map.empty
+            }
+
+        let sampleAppConfig =
+            { AppConfig.defaults (Guid.NewGuid()) with
+                providers = Map.ofList [ ("p1", p1); ("p2", p2) ]
+            }
 
         let arr = ProviderCatalog.providers sampleAppConfig
         Assert.Equal(2, arr.Count)
@@ -158,11 +218,35 @@ module ProviderCatalogTests =
     [<Fact>]
     let ``mcpServers snapshot formats command and url correctly`` () =
         let m1: McpServerConfig =
-            { id = "m1"; label = "Local MCP"; command = Some "node"; args = ["app.js"]; env = Map.ofList [("K", "V")]; url = None; maxConcurrency = Some 2; callTimeoutSeconds = 30; enabled = true }
-        let m2: McpServerConfig =
-            { id = "m2"; label = ""; command = None; args = []; env = Map.empty; url = Some "http://remote.mcp"; maxConcurrency = None; callTimeoutSeconds = 60; enabled = false }
+            {
+                id = "m1"
+                label = "Local MCP"
+                command = Some "node"
+                args = [ "app.js" ]
+                env = Map.ofList [ ("K", "V") ]
+                url = None
+                maxConcurrency = Some 2
+                callTimeoutSeconds = 30
+                enabled = true
+            }
 
-        let sampleAppConfig = { AppConfig.defaults (Guid.NewGuid()) with mcpServers = Map.ofList [ ("m1", m1); ("m2", m2) ] }
+        let m2: McpServerConfig =
+            {
+                id = "m2"
+                label = ""
+                command = None
+                args = []
+                env = Map.empty
+                url = Some "http://remote.mcp"
+                maxConcurrency = None
+                callTimeoutSeconds = 60
+                enabled = false
+            }
+
+        let sampleAppConfig =
+            { AppConfig.defaults (Guid.NewGuid()) with
+                mcpServers = Map.ofList [ ("m1", m1); ("m2", m2) ]
+            }
 
         let arr = ProviderCatalog.mcpServers sampleAppConfig
         Assert.Equal(2, arr.Count)
@@ -182,19 +266,24 @@ module ProviderCatalogTests =
     [<Fact>]
     let ``generation snapshot formats tools and defaults correctly`` () =
         let gen: GenerationDefaults =
-            { temperature = Some 0.7
-              topP = Some 0.9
-              maxTokens = Some 2048
-              instructions = Some "System inst"
-              maxContextMessages = 100
-              maxContextTokens = 32000
-              autoTitle = true
-              maxToolRounds = 8
-              thinkingBudget = 500
-              defaultProvider = None
-              defaultModel = None }
+            {
+                temperature = Some 0.7
+                topP = Some 0.9
+                maxTokens = Some 2048
+                instructions = Some "System inst"
+                maxContextMessages = 100
+                maxContextTokens = 32000
+                autoTitle = true
+                maxToolRounds = 8
+                thinkingBudget = 500
+                defaultProvider = None
+                defaultModel = None
+            }
 
-        let appCfg = { AppConfig.defaults (Guid.NewGuid()) with generation = gen }
+        let appCfg =
+            { AppConfig.defaults (Guid.NewGuid()) with
+                generation = gen
+            }
 
         let json = ProviderCatalog.generation appCfg
         Assert.Equal(0.7, json["temperature"].GetValue<double>())

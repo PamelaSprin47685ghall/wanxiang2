@@ -1,4 +1,5 @@
 module GenerationDraftTests
+
 open System
 open System.IO
 open Xunit
@@ -15,7 +16,14 @@ let private fresh () =
 let ``catalog refills a clean form and edits during the refill do not count`` () =
     let d = fresh ()
     let mutable filled = 0
-    d.CatalogArrived(2, fun () -> filled <- filled + 1; d.Edited())
+
+    d.CatalogArrived(
+        2,
+        fun () ->
+            filled <- filled + 1
+            d.Edited()
+    )
+
     Assert.Equal(1, filled)
     Assert.False d.Dirty
     Assert.Equal(2, d.Baseline)

@@ -5,17 +5,18 @@ open System.Collections.Generic
 
 /// Composer 中的一条附件草稿。用 attachmentId 而不是 sha256 作为身份：
 /// 同一文件被选择两次时，两条草稿仍能独立上传、删除和完成。
-type PendingAttachment = {
-    attachmentId: Guid
-    sha256: string
-    size: int64
-    mediaType: string
-    fileName: string
-    /// 上传中时为 false
-    ready: bool
-    /// 上传失败后保留的可见残留：仍占一条 chip，可移除、可重新添加重试；发送前必须先清理。
-    failed: bool
-}
+type PendingAttachment =
+    {
+        attachmentId: Guid
+        sha256: string
+        size: int64
+        mediaType: string
+        fileName: string
+        /// 上传中时为 false
+        ready: bool
+        /// 上传失败后保留的可见残留：仍占一条 chip，可移除、可重新添加重试；发送前必须先清理。
+        failed: bool
+    }
 
 /// 重新打开后从本地草稿恢复出来的附件引用（W5，决策 81）：客户端无法确认文件仍在，
 /// 只保留名称与大小，必须由用户重新选择；同样占一条 chip、阻塞发送、可移除。
@@ -26,13 +27,14 @@ module RestoredAttachments =
     let isRestored (attachmentId: Guid) = ids.ContainsKey attachmentId
 
 /// 附件传输所需元数据。协议层完成/失败事件通过 attachmentId 回来。
-type AttachmentUpload = {
-    attachmentId: Guid
-    fileName: string
-    mediaType: string
-    size: int64
-    sha256: string
-}
+type AttachmentUpload =
+    {
+        attachmentId: Guid
+        fileName: string
+        mediaType: string
+        size: int64
+        sha256: string
+    }
 
 /// 附件草稿状态机。UI 只消费 Items，不再自己同时维护 pending list + upload dictionary。
 type AttachmentDraftController() =
@@ -44,21 +46,33 @@ type AttachmentDraftController() =
 
     member _.Items = items
     member _.HasReady = items |> List.exists _.ready
-    member _.HasUploading = items |> List.exists (fun item -> not item.ready && not item.failed)
+
+    member _.HasUploading =
+        items |> List.exists (fun item -> not item.ready && not item.failed)
+
     member _.HasFailed = items |> List.exists _.failed
-    member _.OwnerKey with get () = ownerKey and set value = ownerKey <- value
+
+    member _.OwnerKey
+        with get () = ownerKey
+        and set value = ownerKey <- value
 
     member _.Begin(upload: AttachmentUpload) =
         uploads[upload.attachmentId] <- upload
+
         items <-
             items
-            @ [ { attachmentId = upload.attachmentId
-                  sha256 = upload.sha256
-                  size = upload.size
-                  mediaType = upload.mediaType
-                  fileName = upload.fileName
-                  ready = false
-                  failed = false } ]
+            @ [
+                {
+                    attachmentId = upload.attachmentId
+                    sha256 = upload.sha256
+                    size = upload.size
+                    mediaType = upload.mediaType
+                    fileName = upload.fileName
+                    ready = false
+                    failed = false
+                }
+            ]
+
         items
 
     /// 用户从草稿中移除后，底层上传可以自然完成，但不会再重新出现在 Composer。
@@ -74,19 +88,28 @@ type AttachmentDraftController() =
 
     /// 返回上传元数据，以及完成时这条附件是否仍在用户草稿里。
     /// 一并透出所属对话键：调用方只在它等于当前可见对话时才 toast，避免后台对话的完成误报。
-    member _.Complete(attachmentId: Guid, committedSize: int64) : (AttachmentUpload * bool * (string * Guid option)) option =
+    member _.Complete
+        (attachmentId: Guid, committedSize: int64)
+        : (AttachmentUpload * bool * (string * Guid option)) option =
         match uploads.TryGetValue attachmentId with
         | true, upload ->
             uploads.Remove attachmentId |> ignore
             let mutable stillDrafted = false
+
             items <-
                 items
                 |> List.map (fun item ->
                     if item.attachmentId = attachmentId then
                         stillDrafted <- true
-                        { item with ready = true; failed = false; size = committedSize }
+
+                        { item with
+                            ready = true
+                            failed = false
+                            size = committedSize
+                        }
                     else
                         item)
+
             Some(upload, stillDrafted, ownerKey)
         | _ -> None
 
@@ -96,11 +119,21 @@ type AttachmentDraftController() =
         match uploads.TryGetValue attachmentId with
         | true, upload ->
             uploads.Remove attachmentId |> ignore
-            let stillDrafted = items |> List.exists (fun item -> item.attachmentId = attachmentId)
+
+            let stillDrafted =
+                items |> List.exists (fun item -> item.attachmentId = attachmentId)
+
             items <-
                 items
                 |> List.map (fun item ->
-                    if item.attachmentId = attachmentId then { item with ready = false; failed = true } else item)
+                    if item.attachmentId = attachmentId then
+                        { item with
+                            ready = false
+                            failed = true
+                        }
+                    else
+                        item)
+
             Some(upload, stillDrafted, ownerKey)
         | _ -> None
 
@@ -109,15 +142,24 @@ type AttachmentDraftController() =
     /// 但用户移除残留后即可恢复，不会因“永远上传中”楔死发送。
     member _.MarkAllUploadingAsFailed() : PendingAttachment list =
         let failedNow = ResizeArray<PendingAttachment>()
+
         items <-
             items
             |> List.map (fun item ->
                 if not item.ready && not item.failed then
                     uploads.Remove item.attachmentId |> ignore
-                    let failed = { item with ready = false; failed = true }
+
+                    let failed =
+                        { item with
+                            ready = false
+                            failed = true
+                        }
+
                     failedNow.Add failed
                     failed
-                else item)
+                else
+                    item)
+
         List.ofSeq failedNow
 
     /// 发送是草稿的原子消费点。只要仍有 uploading，就拒绝消费。
@@ -129,10 +171,11 @@ type AttachmentDraftController() =
             items <- []
             Some consumed
 
-type ComposerDraft = {
-    mutable text: string
-    attachments: AttachmentDraftController
-}
+type ComposerDraft =
+    {
+        mutable text: string
+        attachments: AttachmentDraftController
+    }
 
 /// 草稿仅在客户端内存中保存，按实例和对话隔离；不构成第二份业务数据库。
 type ComposerDrafts() =
@@ -140,10 +183,16 @@ type ComposerDrafts() =
 
     member _.Get(instanceId: string, conversationId: Guid option) =
         let key = instanceId, conversationId
+
         match items.TryFind key with
         | Some draft -> draft
         | None ->
-            let draft = { text = ""; attachments = AttachmentDraftController() }
+            let draft =
+                {
+                    text = ""
+                    attachments = AttachmentDraftController()
+                }
+
             draft.attachments.OwnerKey <- key
             items <- items.Add(key, draft)
             draft

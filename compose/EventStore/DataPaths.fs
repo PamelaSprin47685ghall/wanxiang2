@@ -13,7 +13,10 @@ open System.IO
 module DataPaths =
 
     let eventsDir (dataDir: string) = Path.Combine(dataDir, "ledger")
-    let logFile (dataDir: string) = Path.Combine(eventsDir dataDir, "log.jsonseq")
+
+    let logFile (dataDir: string) =
+        Path.Combine(eventsDir dataDir, "log.jsonseq")
+
     let attachmentsDir (dataDir: string) = Path.Combine(dataDir, "attachments")
 
     /// 旧版（按日分文件）日志目录。格式不兼容，新版不读；只用于诊断提示。
@@ -23,6 +26,8 @@ module DataPaths =
         // Q118：日志、快照与附件目录采用最小用户权限（仅当前用户），不依赖 umask。
         for dir in [ eventsDir dataDir; attachmentsDir dataDir ] do
             Directory.CreateDirectory dir |> ignore
+
             try
                 File.SetUnixFileMode(dir, UnixFileMode.UserRead ||| UnixFileMode.UserWrite ||| UnixFileMode.UserExecute)
-            with _ -> ()
+            with _ ->
+                ()

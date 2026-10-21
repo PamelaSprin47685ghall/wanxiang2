@@ -17,16 +17,14 @@ type HostSwitcher() =
     let mutable connected = false
 
     let caption =
-        TextBlock(
-            Text = "选择主机",
-            FontWeight = FontWeight.Medium,
-            TextTrimming = TextTrimming.CharacterEllipsis)
+        TextBlock(Text = "选择主机", FontWeight = FontWeight.Medium, TextTrimming = TextTrimming.CharacterEllipsis)
 
     let status =
         TextBlock(
             Text = "未连接",
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis)
+            TextTrimming = TextTrimming.CharacterEllipsis
+        )
 
     let dot =
         Border(
@@ -34,7 +32,8 @@ type HostSwitcher() =
             Height = 8.0,
             CornerRadius = CornerRadius 4.0,
             VerticalAlignment = VerticalAlignment.Center,
-            Background = Brushes.Gray)
+            Background = Brushes.Gray
+        )
 
     let statusRow =
         let statusStack = StackPanel(Orientation = Orientation.Horizontal, Spacing = 6.0)
@@ -74,7 +73,9 @@ type HostSwitcher() =
         b
 
     let view =
-        let dock = DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
+        let dock =
+            DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
+
         DockPanel.SetDock(settingsButton, Dock.Right)
         dock.Children.Add settingsButton
         DockPanel.SetDock(paletteButton, Dock.Right)
@@ -102,10 +103,16 @@ type HostSwitcher() =
             match Uri.TryCreate(vs.ServerUrl, UriKind.Absolute) with
             | true, uri -> uri.Authority
             | _ -> "选择主机"
+
         connected <- vs.Connected
         status.Text <- vs.StatusText
         dot.Background <- if vs.Connected then Brushes.ForestGreen else Brushes.Gray
 
-    [<CLIEvent>] member _.ReconnectClicked = reconnect.Publish
-    [<CLIEvent>] member _.SettingsClicked = settings.Publish
-    [<CLIEvent>] member _.PaletteClicked = palette.Publish
+    [<CLIEvent>]
+    member _.ReconnectClicked = reconnect.Publish
+
+    [<CLIEvent>]
+    member _.SettingsClicked = settings.Publish
+
+    [<CLIEvent>]
+    member _.PaletteClicked = palette.Publish

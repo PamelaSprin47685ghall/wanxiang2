@@ -10,6 +10,7 @@ open Wanxiang2.ThemeFonts
 
 let private golden =
     let dir = Path.Combine(__SOURCE_DIRECTORY__, "golden")
+
     File.ReadAllLines(Path.Combine(dir, "fonts.sha256"))
     |> Array.filter (fun l -> l.Trim() <> "")
     |> Array.map (fun l -> let p = l.Split("  ") in p.[1], p.[0])
@@ -39,6 +40,8 @@ let ``body mono and katex families resolve to the embedded faces`` () =
 [<Fact>]
 let ``katex main carries the minus and plus minus glyphs`` () =
     Headless.run (fun () ->
-        let _, glyph = FontManager.Current.TryGetGlyphTypeface(Typeface(ThemeFonts.family "KaTeX_Main"))
+        let _, glyph =
+            FontManager.Current.TryGetGlyphTypeface(Typeface(ThemeFonts.family "KaTeX_Main"))
+
         for c in [ '\u2212'; '\u00B1' ] do
             Assert.NotEqual(0us, glyph.CharacterToGlyphMap.[int c]))

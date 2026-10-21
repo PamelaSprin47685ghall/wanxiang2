@@ -1,4 +1,5 @@
 module StartupTraceTests
+
 open System
 open System.IO
 open Xunit
@@ -19,6 +20,7 @@ let ``290 未设置环境变量时不打点；值为 exit 时打点并退出`` (
 let ``290 未启用时 mark 不记录；requestExit 可替换`` () =
     if isNull (Environment.GetEnvironmentVariable "WANXIANG_STARTUP_TRACE") then
         Assert.False(StartupTrace.mark "test-milestone")
+
     let called = ref false
     let saved = StartupTrace.requestExit
     StartupTrace.requestExit <- fun () -> called := true

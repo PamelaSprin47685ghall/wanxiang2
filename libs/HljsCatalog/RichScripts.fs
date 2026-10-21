@@ -13,7 +13,10 @@ module RichScripts =
     let read (name: string) : string =
         let assembly = typeof<RichScriptsMarker>.Assembly
         use stream = assembly.GetManifestResourceStream $"js/{name}"
-        if isNull stream then failwith $"missing embedded script: {name}"
+
+        if isNull stream then
+            failwith $"missing embedded script: {name}"
+
         use reader = new StreamReader(stream)
         reader.ReadToEnd()
 

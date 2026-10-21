@@ -27,6 +27,7 @@ type WsClient() =
                 onConnectionEvent.Trigger(generation, ev)
                 onEvent.Trigger ev
             | _ -> ())
+
         socket.Closed.Add(fun (generation, error) ->
             onConnectionClosed.Trigger(generation, error)
             onClosed.Trigger error)
@@ -50,10 +51,15 @@ type WsClient() =
     member _.Disconnect() = socket.Disconnect()
 
     /// 返回传输是否完成，而不是把断线当成功。业务保存仍只认 command.committed。
-    member _.TrySendAsync(ev: WireEvent) : Task<bool> = socket.TrySendAsync(WireAgui.encode ev, None)
-    member _.TrySendCommandAsync(cmd: ClientCommand) : Task<bool> = socket.TrySendAsync(WireAgui.encodeCommand cmd, None)
+    member _.TrySendAsync(ev: WireEvent) : Task<bool> =
+        socket.TrySendAsync(WireAgui.encode ev, None)
+
+    member _.TrySendCommandAsync(cmd: ClientCommand) : Task<bool> =
+        socket.TrySendAsync(WireAgui.encodeCommand cmd, None)
+
     member _.TrySendCommandAtGenerationAsync(generation: int, cmd: ClientCommand) : Task<bool> =
         socket.TrySendAsync(WireAgui.encodeCommand cmd, Some generation)
+
     member _.TrySendAtGenerationAsync(generation: int, ev: WireEvent) : Task<bool> =
         socket.TrySendAsync(WireAgui.encode ev, Some generation)
 
@@ -71,18 +77,19 @@ type WsClient() =
         }
 
 /// 客户端对话状态（内存态；PWA 不持久缓存，决策 3）。
-type ConversationView = {
-    conversationId: Guid
-    mutable title: string
-    mutable lastCommitId: CommitId
-    mutable runtimeState: string
-    mutable messages: JsonArray
-    /// 快照携带的最早 commitId 与是否还有更早历史（Q127 分页）
-    mutable pageEarliest: CommitId
-    mutable pageHasMore: bool
-    /// 对话级配置快照（P0-4：UI 读写 SessionConfig）
-    mutable config: SessionConfig
-}
+type ConversationView =
+    {
+        conversationId: Guid
+        mutable title: string
+        mutable lastCommitId: CommitId
+        mutable runtimeState: string
+        mutable messages: JsonArray
+        /// 快照携带的最早 commitId 与是否还有更早历史（Q127 分页）
+        mutable pageEarliest: CommitId
+        mutable pageHasMore: bool
+        /// 对话级配置快照（P0-4：UI 读写 SessionConfig）
+        mutable config: SessionConfig
+    }
 
 /// 客户端状态机：维护观察视图 + 游标。
 type ClientState() =
@@ -132,14 +139,17 @@ type ClientState() =
                     v.config <- d.config
                     v
                 | None ->
-                    { conversationId = d.conversationId
-                      title = d.title
-                      lastCommitId = d.lastCommitId
-                      runtimeState = d.runtimeState
-                      messages = d.messages
-                      pageEarliest = d.snapshotEarliestCommitId
-                      pageHasMore = d.snapshotHasMore
-                      config = d.config }
+                    {
+                        conversationId = d.conversationId
+                        title = d.title
+                        lastCommitId = d.lastCommitId
+                        runtimeState = d.runtimeState
+                        messages = d.messages
+                        pageEarliest = d.snapshotEarliestCommitId
+                        pageHasMore = d.snapshotHasMore
+                        config = d.config
+                    }
+
             conversations <- conversations.Add(d.conversationId, view)
             latestCommitId <- max latestCommitId d.lastCommitId
             convChanged.Trigger d.conversationId
@@ -161,22 +171,30 @@ type ClientState() =
                 if not (CommitTimeline.contains d.commitId v.messages) then
                     let o = System.Text.Json.Nodes.JsonObject()
                     o["commitId"] <- d.commitId
-                    o["committedAt"] <- d.committedAt.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
+                    o["committedAt"] <-
+                        d.committedAt.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
                     o["payload"] <- d.payload.DeepClone()
                     v.messages.Add o
+
                 v.lastCommitId <- max v.lastCommitId d.commitId
                 latestCommitId <- max latestCommitId d.commitId
                 convChanged.Trigger d.conversationId
             | None -> ()
         | ConversationUpdated d ->
             latestCommitId <- max latestCommitId d.commitId
+
             match conversations.TryFind d.conversationId with
             | Some v ->
                 if not (isNull d.change) then
                     let mutable delNode: System.Text.Json.Nodes.JsonNode = null
+
                     if d.change.TryGetPropertyValue("deletedMessage", &delNode) && not (isNull delNode) then
                         v.messages <- CommitTimeline.without (delNode.GetValue<uint64>()) v.messages
+
                     let mutable titleNode: System.Text.Json.Nodes.JsonNode = null
+
                     if d.change.TryGetPropertyValue("title", &titleNode) && not (isNull titleNode) then
                         v.title <- titleNode.GetValue<string>()
                 // 水位只能单调上升：generation 状态变化推来的 conversation.updated
@@ -188,18 +206,35 @@ type ClientState() =
         | AuthorityCatchUp d ->
             // 慢客户端追赶（决策 32-34）：应用批次中的权威提交，然后推进游标
             let mutable maxApplied = d.fromCursor
+
             for item in d.items do
                 match item with
                 | :? System.Text.Json.Nodes.JsonObject as obj ->
-                    let evType = if obj.ContainsKey "type" && obj["type"] <> null then obj["type"].ToString().Trim('"') else ""
+                    let evType =
+                        if obj.ContainsKey "type" && obj["type"] <> null then
+                            obj["type"].ToString().Trim('"')
+                        else
+                            ""
+
                     if evType = "message.committed" || evType = "chat.message.committed" then
                         match obj["payload"] with
                         | :? System.Text.Json.Nodes.JsonObject as p ->
-                            let cidStr = if p.ContainsKey "conversationId" && p["conversationId"] <> null then p["conversationId"].ToString().Trim('"') else ""
+                            let cidStr =
+                                if p.ContainsKey "conversationId" && p["conversationId"] <> null then
+                                    p["conversationId"].ToString().Trim('"')
+                                else
+                                    ""
+
                             match Guid.TryParse cidStr with
                             | true, cid when conversations.ContainsKey cid ->
                                 let v = conversations[cid]
-                                let msgNode = if p.ContainsKey "message" && p["message"] <> null then p["message"].DeepClone() else obj.DeepClone()
+
+                                let msgNode =
+                                    if p.ContainsKey "message" && p["message"] <> null then
+                                        p["message"].DeepClone()
+                                    else
+                                        obj.DeepClone()
+
                                 v.messages.Add msgNode
                                 convChanged.Trigger cid
                             | _ -> ()
@@ -218,6 +253,7 @@ type ClientState() =
                         | :? System.Text.Json.Nodes.JsonObject as obj ->
                             CommitCodec.tryCommitFromJsonLine (obj.ToJsonString())
                         | _ -> None
+
                     match commitOpt with
                     | Some commit ->
                         for ev in commit.events do
@@ -229,7 +265,13 @@ type ClientState() =
                                     if not (CommitTimeline.contains commit.id v.messages) then
                                         let o = System.Text.Json.Nodes.JsonObject()
                                         o["commitId"] <- commit.id
-                                        o["committedAt"] <- commit.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
+                                        o["committedAt"] <-
+                                            commit.committedAtUtc.UtcDateTime.ToString(
+                                                "o",
+                                                System.Globalization.CultureInfo.InvariantCulture
+                                            )
+
                                         o["payload"] <- m.payloadJson.DeepClone()
                                         v.messages.Add o
                                         v.lastCommitId <- max v.lastCommitId commit.id
@@ -243,8 +285,10 @@ type ClientState() =
                                     convChanged.Trigger m.conversationId
                                 | _ -> ()
                             | _ -> ()
+
                         maxApplied <- max maxApplied commit.id
                     | None -> ()
+
             latestCommitId <- max latestCommitId d.toCommitId
             this.AdvanceCursorTo maxApplied
         | GenerationStarted d ->
@@ -275,5 +319,4 @@ type ClientState() =
         cursorChanged.Trigger cursor
 
     /// 生成要发送给主机的游标确认事件。
-    member this.CursorAdvancedEvent() : WireEvent =
-        CursorAdvanced {| id = cursor |}
+    member this.CursorAdvancedEvent() : WireEvent = CursorAdvanced {| id = cursor |}

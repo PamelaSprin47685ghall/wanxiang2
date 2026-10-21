@@ -60,8 +60,10 @@ type MarkdownButton =
 /// Motion.Reduced），由控件声明式绑定，主题切换即时生效由资源系统保证。
 /// Glyph 给定画笔造一个图标（尺寸由填写方决定）；Dress 给按钮挂上主题安装的共享样式类。
 type MarkdownMetrics =
-    { Ink: MarkdownInk -> IBrush
-      Glyph: MarkdownGlyph -> IBrush -> Control
-      Dress: MarkdownButton -> Button -> unit
-      Copy: CopyButtonAppearance
-      Math: MathFigureMetrics }
+    {
+        Ink: MarkdownInk -> IBrush
+        Glyph: MarkdownGlyph -> IBrush -> Control
+        Dress: MarkdownButton -> Button -> unit
+        Copy: CopyButtonAppearance
+        Math: MathFigureMetrics
+    }

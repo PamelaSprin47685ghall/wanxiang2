@@ -9,6 +9,12 @@ module KeyShortcut =
 
     let ofEvent (e: KeyEventArgs) : ShortcutKey =
         let c = Wanxiang2.KeyChord.KeyChord.ofEvent e
-        { key = c.key; ctrl = c.ctrl; shift = c.shift; noModifiers = c.noModifiers }
+
+        {
+            key = c.key
+            ctrl = c.ctrl
+            shift = c.shift
+            noModifiers = c.noModifiers
+        }
 
     let resolve (e: KeyEventArgs) : ShortcutAction = ShortcutRouter.resolveKey (ofEvent e)

@@ -1,4 +1,5 @@
 module ShutdownSignalsTests
+
 open System.Threading.Tasks
 open Xunit
 open Wanxiang.App

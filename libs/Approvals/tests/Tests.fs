@@ -5,7 +5,8 @@ open System.Threading.Tasks
 open Xunit
 open Wanxiang.Server
 
-let desk () = ApprovalDesk<string, bool, string>((fun ok -> if ok then "approved" else "denied"), 2)
+let desk () =
+    ApprovalDesk<string, bool, string>((fun ok -> if ok then "approved" else "denied"), 2)
 
 [<Fact>]
 let ``first decision wins; later ones see the memo`` () =
@@ -33,9 +34,11 @@ let ``beforeComplete runs before the waiter sees the result`` () =
 let ``recent memory is bounded`` () =
     let d = desk ()
     let ids = [ for _ in 1..3 -> Guid.NewGuid() ]
+
     for id in ids do
         d.Open(id, "") |> ignore
         d.Resolve(id, false, fun _ _ -> ()) |> ignore
+
     Assert.Equal(None, d.Recent ids[0])
     Assert.Equal(Some "denied", d.Recent ids[2])
 

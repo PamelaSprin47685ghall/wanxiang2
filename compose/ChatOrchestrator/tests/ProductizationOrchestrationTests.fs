@@ -36,12 +36,11 @@ let ``only system placeholder titles are auto-renamed`` () =
 
 // ---------------------------------------------------------------- 上下文裁剪
 
-let private textMessage (role: ChatRole) (text: string) =
-    MessageSerde.textMessage role text
+let private textMessage (role: ChatRole) (text: string) = MessageSerde.textMessage role text
 
 [<Fact>]
 let ``context trimming keeps the most recent messages`` () =
-    let messages = [ for i in 1 .. 30 -> textMessage ChatRole.User (string i) ]
+    let messages = [ for i in 1..30 -> textMessage ChatRole.User (string i) ]
     let trimmed = GenerationContext.trim 10 0 messages
     Assert.Equal(10, List.length trimmed)
     Assert.Equal("30", MessageSerde.textOf (List.last trimmed))
@@ -49,15 +48,18 @@ let ``context trimming keeps the most recent messages`` () =
 [<Fact>]
 let ``trimming never leaves an orphan tool result at the front`` () =
     let messages =
-        [ textMessage ChatRole.User "问题"
-          textMessage ChatRole.Tool "工具结果"
-          textMessage ChatRole.Assistant "回答" ]
+        [
+            textMessage ChatRole.User "问题"
+            textMessage ChatRole.Tool "工具结果"
+            textMessage ChatRole.Assistant "回答"
+        ]
+
     let trimmed = GenerationContext.trim 2 0 messages
     Assert.DoesNotContain(ChatRole.Tool, trimmed |> List.map (fun m -> m.Role))
 
 [<Fact>]
 let ``zero means no message limit`` () =
-    let messages = [ for i in 1 .. 5 -> textMessage ChatRole.User (string i) ]
+    let messages = [ for i in 1..5 -> textMessage ChatRole.User (string i) ]
     Assert.Equal(5, GenerationContext.trim 0 0 messages |> List.length)
 
 // ---------------------------------------------------------------- 编排记账与结束决策（D1/D2/N2 回归）
@@ -65,11 +67,20 @@ let ``zero means no message limit`` () =
 [<Fact>]
 let ``queued submit outcomes always resolve to committed or visible error`` () =
     let convId = newConversationId ()
+
     let commit =
         Events.Commit.create
             7UL
             DateTimeOffset.UtcNow
-            [ ConversationCreated { conversationId = convId; title = "T"; config = testConfig () } ]
+            [
+                ConversationCreated
+                    {
+                        conversationId = convId
+                        title = "T"
+                        config = testConfig ()
+                    }
+            ]
+
     let failure = ValidationError "boom"
     // committed 系列 → Ok（拿到 log id，可广播 CommandCommitted）
     for result in [ Committed commit; IdempotentReplay commit ] do
@@ -86,11 +97,13 @@ let ``queued submit outcomes always resolve to committed or visible error`` () =
 let ``empty built context with a drained batch fails retryably, never completes`` () =
     let status, err = EmptyContextFinish.decide true
     Assert.Equal("failed", status)
+
     match err with
     | None -> failwith "non-empty batch must carry an error card"
     | Some e ->
         Assert.True e.retryable
         Assert.False(String.IsNullOrWhiteSpace e.message)
+
     let idleStatus, idleErr = EmptyContextFinish.decide false
     Assert.Equal("completed", idleStatus)
     Assert.Equal(None, idleErr)
@@ -105,11 +118,14 @@ let ``tool round limit error is retryable and names maxToolRounds`` () =
 
 
 let private partialMessage (text: string) : JsonNode =
-    JsonNode.Parse(sprintf """{"role":"assistant","contents":[{"$type":"text","text":%s}]}""" (System.Text.Json.JsonSerializer.Serialize text))
+    JsonNode.Parse(
+        sprintf
+            """{"role":"assistant","contents":[{"$type":"text","text":%s}]}"""
+            (System.Text.Json.JsonSerializer.Serialize text)
+    )
 
 [<Fact>]
 let ``250 只有助手正文才算可续写的半截`` () =
     Assert.True(ChatOrchestrator.PartialText(partialMessage "有字"))
     Assert.False(ChatOrchestrator.PartialText(partialMessage "   "))
     Assert.False(ChatOrchestrator.PartialText(JsonNode.Parse """{"role":"user","contents":[{"text":"x"}]}"""))
-

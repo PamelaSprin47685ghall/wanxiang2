@@ -14,6 +14,7 @@ open Wanxiang.Tests.Helpers
 [<Fact>]
 let ``coordinator survives broadcast work in onCommitted callback`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
@@ -23,12 +24,38 @@ let ``coordinator survives broadcast work in onCommitted callback`` () =
         use coord = new EventStore(dir, committed.Add)
         // 多次提交（含消息事件），验证回调不被阻塞、id 严格连续
         let convId = newConversationId ()
+
         let r1 =
-            coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
+            coord.SubmitEvents
+                [
+                    ConversationCreated
+                        {
+                            conversationId = convId
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
         let r2 =
-            coord.SubmitEvents [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m1" } ]
+            coord.SubmitEvents
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = userMessageJson "m1"
+                        }
+                ]
+
         let r3 =
-            coord.SubmitEvents [ AgentMessageRecorded { conversationId = convId; payloadJson = assistantMessageJson "m2" } ]
+            coord.SubmitEvents
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = assistantMessageJson "m2"
+                        }
+                ]
+
         match r1, r2, r3 with
         | Committed c1, Committed c2, Committed c3 ->
             Assert.Equal(1UL, c1.id)
@@ -36,6 +63,7 @@ let ``coordinator survives broadcast work in onCommitted callback`` () =
             Assert.Equal(3UL, c3.id)
             Assert.Equal(3, committed.Count)
         | _ -> failwith "commits failed"
+
         coord.Shutdown()
     finally
         cleanup dir
@@ -45,14 +73,34 @@ let ``coordinator survives broadcast work in onCommitted callback`` () =
 [<Fact>]
 let ``CommitsAfter paging returns at most limit commits and advances cursor`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         use coord = new EventStore(dir)
         let convId = newConversationId ()
-        coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ] |> ignore
+
+        coord.SubmitEvents
+            [
+                ConversationCreated
+                    {
+                        conversationId = convId
+                        title = "A"
+                        config = testConfig ()
+                    }
+            ]
+        |> ignore
+
         for i in 1..9 do
-            coord.SubmitEvents [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson (sprintf "m%d" i) } ] |> ignore
+            coord.SubmitEvents
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = userMessageJson (sprintf "m%d" i)
+                        }
+                ]
+            |> ignore
         // 10 条提交（id 1..10）
         Assert.Equal(10UL, coord.Projection.latestCommitId)
         // limit=4：只返回 4 条，且是游标后**最前**的 4 条（升序）
@@ -85,23 +133,49 @@ let ``CommitsAfter paging returns at most limit commits and advances cursor`` ()
 [<Fact>]
 let ``concurrent submits keep ids strictly contiguous`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         use coord = new EventStore(dir)
         let convId = newConversationId ()
         // 先建对话（并发提交会以对话不存在失败——先建立）
-        coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ] |> ignore
+        coord.SubmitEvents
+            [
+                ConversationCreated
+                    {
+                        conversationId = convId
+                        title = "A"
+                        config = testConfig ()
+                    }
+            ]
+        |> ignore
+
         let threads =
-            [ for i in 1..8 ->
-                Thread(fun () ->
-                    let r =
-                        coord.SubmitEvents [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson (sprintf "m%d" i) } ]
-                    match r with
-                    | Committed _ -> ()
-                    | _ -> failwith (sprintf "concurrent submit %d failed" i)) ]
-        for t in threads do t.Start()
-        for t in threads do t.Join()
+            [
+                for i in 1..8 ->
+                    Thread(fun () ->
+                        let r =
+                            coord.SubmitEvents
+                                [
+                                    AgentMessageRecorded
+                                        {
+                                            conversationId = convId
+                                            payloadJson = userMessageJson (sprintf "m%d" i)
+                                        }
+                                ]
+
+                        match r with
+                        | Committed _ -> ()
+                        | _ -> failwith (sprintf "concurrent submit %d failed" i))
+            ]
+
+        for t in threads do
+            t.Start()
+
+        for t in threads do
+            t.Join()
+
         let proj = coord.Projection
         // 1 (created) + 8 (messages) = 9
         Assert.Equal(9UL, proj.latestCommitId)
@@ -115,14 +189,34 @@ let ``concurrent submits keep ids strictly contiguous`` () =
 [<Fact>]
 let ``CommitsAfter returns commits after cursor in ascending order`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = replayOutcome dir
         use coord = new EventStore(dir)
         let convId = newConversationId ()
-        coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ] |> ignore
+
+        coord.SubmitEvents
+            [
+                ConversationCreated
+                    {
+                        conversationId = convId
+                        title = "A"
+                        config = testConfig ()
+                    }
+            ]
+        |> ignore
+
         for i in 1..5 do
-            coord.SubmitEvents [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson (sprintf "m%d" i) } ] |> ignore
+            coord.SubmitEvents
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = userMessageJson (sprintf "m%d" i)
+                        }
+                ]
+            |> ignore
         // 全部 6 条提交（id 1..6）
         Assert.Equal(6UL, coord.Projection.latestCommitId)
         // 游标 0 → 全部

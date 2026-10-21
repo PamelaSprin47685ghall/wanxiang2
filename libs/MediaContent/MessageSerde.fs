@@ -7,23 +7,22 @@ open Microsoft.Extensions.AI
 
 /// 消息里的附件引用。客户端手写的 `{"type":"attachment", ...}` 内容项，
 /// NDJSON 原样保存；送给 Provider 前由编排层解析成真实内容（图片/文本）。
-type AttachmentReference = {
-    sha256: string
-    mediaType: string
-    fileName: string
-    size: int64
-}
+type AttachmentReference =
+    {
+        sha256: string
+        mediaType: string
+        fileName: string
+        size: int64
+    }
 
 /// ChatMessage 与 JSON 互转（使用 Agent Framework / Microsoft.Extensions.AI 的 JSON 配置，决策 18/19）。
 module MessageSerde =
 
     let options = AIJsonUtilities.DefaultOptions
 
-    let serialize (msg: ChatMessage) : string =
-        JsonSerializer.Serialize(msg, options)
+    let serialize (msg: ChatMessage) : string = JsonSerializer.Serialize(msg, options)
 
-    let toJsonNode (msg: ChatMessage) : JsonNode =
-        JsonNode.Parse(serialize msg)
+    let toJsonNode (msg: ChatMessage) : JsonNode = JsonNode.Parse(serialize msg)
 
     let deserialize (json: string) : ChatMessage option =
         try
@@ -33,14 +32,24 @@ module MessageSerde =
 
     let private tryStr (o: JsonObject) (key: string) : string option =
         let mutable n: JsonNode = null
-        if o.TryGetPropertyValue(key, &n) && not (isNull n) && n.GetValueKind() = JsonValueKind.String then
+
+        if
+            o.TryGetPropertyValue(key, &n)
+            && not (isNull n)
+            && n.GetValueKind() = JsonValueKind.String
+        then
             Some(n.GetValue<string>())
         else
             None
 
     let private tryInt64 (o: JsonObject) (key: string) : int64 option =
         let mutable n: JsonNode = null
-        if o.TryGetPropertyValue(key, &n) && not (isNull n) && n.GetValueKind() = JsonValueKind.Number then
+
+        if
+            o.TryGetPropertyValue(key, &n)
+            && not (isNull n)
+            && n.GetValueKind() = JsonValueKind.Number
+        then
             match n with
             | :? JsonValue as v ->
                 match v.TryGetValue<int64>() with
@@ -54,7 +63,12 @@ module MessageSerde =
         match node with
         | :? JsonObject as o ->
             let mutable c: JsonNode = null
-            if o.TryGetPropertyValue("contents", &c) && not (isNull c) && c.GetValueKind() = JsonValueKind.Array then
+
+            if
+                o.TryGetPropertyValue("contents", &c)
+                && not (isNull c)
+                && c.GetValueKind() = JsonValueKind.Array
+            then
                 Some(c.AsArray())
             else
                 None
@@ -70,17 +84,21 @@ module MessageSerde =
         match contentsArray node with
         | None -> []
         | Some arr ->
-            [ for item in arr do
-                  match item with
-                  | :? JsonObject as o when isAttachmentItem o ->
-                      match tryStr o "sha256" with
-                      | Some sha when not (String.IsNullOrWhiteSpace sha) ->
-                          { sha256 = sha.ToLowerInvariant()
-                            mediaType = tryStr o "mediaType" |> Option.defaultValue "application/octet-stream"
-                            fileName = tryStr o "fileName" |> Option.defaultValue sha
-                            size = tryInt64 o "size" |> Option.defaultValue 0L }
-                      | _ -> ()
-                  | _ -> () ]
+            [
+                for item in arr do
+                    match item with
+                    | :? JsonObject as o when isAttachmentItem o ->
+                        match tryStr o "sha256" with
+                        | Some sha when not (String.IsNullOrWhiteSpace sha) ->
+                            {
+                                sha256 = sha.ToLowerInvariant()
+                                mediaType = tryStr o "mediaType" |> Option.defaultValue "application/octet-stream"
+                                fileName = tryStr o "fileName" |> Option.defaultValue sha
+                                size = tryInt64 o "size" |> Option.defaultValue 0L
+                            }
+                        | _ -> ()
+                    | _ -> ()
+            ]
 
     /// 逐项解析 contents。
     ///
@@ -93,11 +111,15 @@ module MessageSerde =
             match item with
             | :? JsonObject as o ->
                 let mutable typeTag: JsonNode = null
+
                 if o.TryGetPropertyValue("$type", &typeTag) then
                     try
                         let content = o.Deserialize<AIContent>(options)
-                        if not (isNull content) then msg.Contents.Add content
-                    with _ -> ()
+
+                        if not (isNull content) then
+                            msg.Contents.Add content
+                    with _ ->
+                        ()
                 elif isAttachmentItem o then
                     () // 由 AttachmentResolver 转成 DataContent / TextContent
                 else
@@ -120,12 +142,18 @@ module MessageSerde =
             | :? JsonObject as o ->
                 let msg = ChatMessage()
                 msg.Role <- roleOf (tryStr o "role")
+
                 match contentsArray node with
                 | Some arr -> parseContentsItemwise arr msg
                 | None -> ()
-                if msg.Contents.Count = 0 && not allowEmpty then None else Some msg
+
+                if msg.Contents.Count = 0 && not allowEmpty then
+                    None
+                else
+                    Some msg
             | _ -> None
-        with _ -> None
+        with _ ->
+            None
 
     /// 是否存在缺 $type 的 contents 项（客户端手写 JSON）。
     let private hasUntagged (node: JsonNode) : bool =
@@ -150,9 +178,13 @@ module MessageSerde =
         else
             try
                 let msg = node.Deserialize<ChatMessage>(options)
-                if isNull msg then parseLoose node allowEmptyContents
-                elif msg.Contents.Count = 0 && not allowEmptyContents then parseLoose node allowEmptyContents
-                else Some msg
+
+                if isNull msg then
+                    parseLoose node allowEmptyContents
+                elif msg.Contents.Count = 0 && not allowEmptyContents then
+                    parseLoose node allowEmptyContents
+                else
+                    Some msg
             with _ ->
                 parseLoose node allowEmptyContents
 

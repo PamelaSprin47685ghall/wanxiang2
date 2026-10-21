@@ -17,7 +17,10 @@ let ``tokens have the fixed prefix, base64url body and 256 bits`` () =
 // SPEC 2：哈希与已存进用户配置的值逐字一致（金标准向量，独立用 Python hashlib 算出）
 [<Fact>]
 let ``hash matches the golden vector stored in existing configs`` () =
-    Assert.Equal("13c36d373dadbf047bf832e383e4d2d88583f0ea741b9b7cda49272adc593f2b", ClientToken.hash "wanxiang_client_test_token_12345")
+    Assert.Equal(
+        "13c36d373dadbf047bf832e383e4d2d88583f0ea741b9b7cda49272adc593f2b",
+        ClientToken.hash "wanxiang_client_test_token_12345"
+    )
 
 // SPEC 3：matches 只认对应哈希；空值不认
 [<Fact>]
@@ -34,6 +37,10 @@ let ``matches accepts only the right token`` () =
 // SPEC 4：deviceId 是哈希前 16 位
 [<Fact>]
 let ``device id is the first 16 hex chars of the hash`` () =
-    Assert.Equal("13c36d373dadbf04", ClientToken.deviceId "13c36d373dadbf047bf832e383e4d2d88583f0ea741b9b7cda49272adc593f2b")
+    Assert.Equal(
+        "13c36d373dadbf04",
+        ClientToken.deviceId "13c36d373dadbf047bf832e383e4d2d88583f0ea741b9b7cda49272adc593f2b"
+    )
+
     Assert.Equal("abc", ClientToken.deviceId "abc")
     Assert.Equal("", ClientToken.deviceId null)

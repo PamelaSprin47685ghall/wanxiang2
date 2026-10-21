@@ -12,7 +12,12 @@ open Avalonia.Media
 module internal Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 按钮的文案与可用性写入口（命令类，非公开接口：只在库内使用）
@@ -21,8 +26,8 @@ module internal ButtonExtensions =
         member internal this.ApplyText(text: string) =
             this.Content <- text
             AutomationProperties.SetName(this, text)
-        member internal this.ApplyEnabled(enabled: bool) =
-            this.IsEnabled <- enabled
+
+        member internal this.ApplyEnabled(enabled: bool) = this.IsEnabled <- enabled
 
 [<RequireQualifiedAccess>]
 type TagTone =
@@ -64,7 +69,9 @@ module internal Ui =
         t
 
     let card (child: Control) =
-        let b = Border(Child = child, Padding = Thickness(20.0), CornerRadius = CornerRadius(8.0))
+        let b =
+            Border(Child = child, Padding = Thickness(20.0), CornerRadius = CornerRadius(8.0))
+
         b.Classes.Add "grouping-card"
         b.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer") |> ignore
         b.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Border") |> ignore
@@ -75,10 +82,12 @@ module internal Ui =
         let t = TextBlock(Text = text, VerticalAlignment = VerticalAlignment.Center)
         let b = Border(VerticalAlignment = VerticalAlignment.Center, Child = t)
         b.Classes.Add "tag"
+
         match tone with
         | TagTone.Neutral -> ()
         | TagTone.Warning -> b.Classes.Add "tag-warning"
         | TagTone.Danger -> b.Classes.Add "tag-danger"
+
         b
 
     let statusDot () =
@@ -95,7 +104,7 @@ module internal Ui =
         AutomationProperties.SetName(b, text)
         b.Classes.Add cls
         b.Classes.Add("button-" + cls)
-        b.Click.Add(fun _ -> action())
+        b.Click.Add(fun _ -> action ())
         b
 
     let iconButton content tip action =
@@ -104,7 +113,7 @@ module internal Ui =
         b.Classes.Add "ghost"
         AutomationProperties.SetName(b, tip)
         ToolTip.SetTip(b, tip)
-        b.Click.Add(fun _ -> action())
+        b.Click.Add(fun _ -> action ())
         b
 
     let textField placeholder =
@@ -113,8 +122,12 @@ module internal Ui =
         tb
 
     let textArea placeholder _minHeight =
-        let tb = TextBox(PlaceholderText = placeholder, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap)
-        tb.Bind(Layoutable.MinHeightProperty, Dyn.res "Metric.TextAreaMinHeight") |> ignore
+        let tb =
+            TextBox(PlaceholderText = placeholder, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap)
+
+        tb.Bind(Layoutable.MinHeightProperty, Dyn.res "Metric.TextAreaMinHeight")
+        |> ignore
+
         tb.Classes.Add "control-stroke"
         tb.Classes.Add "text-area"
         tb
@@ -123,14 +136,20 @@ module internal Ui =
         let panel = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
         let l = label labelStr
         panel.Children.Add l
+
         if not (String.IsNullOrWhiteSpace hintStr) then
             let h = caption hintStr
-            validation |> Option.iter (fun v ->
+
+            validation
+            |> Option.iter (fun v ->
                 h.IsVisible <- not v.IsVisible
+
                 v.PropertyChanged.Add(fun args ->
                     if args.Property = Visual.IsVisibleProperty then
                         h.IsVisible <- not v.IsVisible))
+
             panel.Children.Add h
+
         panel.Children.Add shell
         validation |> Option.iter (fun v -> panel.Children.Add v)
         panel :> Control
@@ -150,23 +169,35 @@ module internal Ui =
         dock.Children.Add left
         let row = Border(Child = dock, Padding = Thickness(12.0, 8.0), MinHeight = 52.0)
         AutomationProperties.SetName(row, titleStr)
+
         let updateStatus (v: bool) =
             let s = if v then "开启" else "关闭"
             AutomationProperties.SetItemStatus(sw, s)
             AutomationProperties.SetItemStatus(row, s)
+
         updateStatus initial
         let mutable suppress = false
+
         row.PointerReleased.Add(fun e ->
             if e.InitialPressMouseButton = MouseButton.Left then
                 e.Handled <- true
-                sw.IsChecked <- Nullable (not (sw.IsChecked.GetValueOrDefault())))
+                sw.IsChecked <- Nullable(not (sw.IsChecked.GetValueOrDefault())))
+
         sw.IsCheckedChanged.Add(fun _ ->
             let v = sw.IsChecked.GetValueOrDefault()
             updateStatus v
-            if not suppress then onChanged v)
+
+            if not suppress then
+                onChanged v)
+
         let write (v: bool) =
             suppress <- true
-            try sw.IsChecked <- Nullable v
-            finally suppress <- false
+
+            try
+                sw.IsChecked <- Nullable v
+            finally
+                suppress <- false
+
             updateStatus v
+
         row :> Control, (fun () -> sw.IsChecked.GetValueOrDefault()), write

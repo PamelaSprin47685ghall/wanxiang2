@@ -1,4 +1,5 @@
 module DeviceRulesTests
+
 open Xunit
 open Wanxiang.Server
 

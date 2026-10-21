@@ -6,22 +6,25 @@ open System
 type CommitId = uint64
 
 /// 单次生成用量（generation.finished 透传，不落 NDJSON）。
-type GenerationUsage = {
-    promptTokens: int option
-    completionTokens: int option
-    cachedTokens: int option
-    totalTokens: int option
-    durationMs: int64 option
-}
+type GenerationUsage =
+    {
+        promptTokens: int option
+        completionTokens: int option
+        cachedTokens: int option
+        totalTokens: int option
+        durationMs: int64 option
+    }
 
 module GenerationUsage =
 
     let empty =
-        { promptTokens = None
-          completionTokens = None
-          cachedTokens = None
-          totalTokens = None
-          durationMs = None }
+        {
+            promptTokens = None
+            completionTokens = None
+            cachedTokens = None
+            totalTokens = None
+            durationMs = None
+        }
 
     let formatSummary (u: GenerationUsage) : string option =
         let total =
@@ -31,18 +34,22 @@ module GenerationUsage =
                 match u.promptTokens, u.completionTokens with
                 | Some p, Some c -> Some(p + c)
                 | _ -> None
+
         match total with
         | None -> None
         | Some t ->
             let tok =
-                if t >= 1000 then sprintf "%.1fk tok" (float t / 1000.0)
-                else sprintf "%d tok" t
+                if t >= 1000 then
+                    sprintf "%.1fk tok" (float t / 1000.0)
+                else
+                    sprintf "%d tok" t
+
             match u.durationMs with
             | Some ms when ms >= 1000L -> Some(sprintf "%s · %.1fs" tok (float ms / 1000.0))
             | Some ms -> Some(sprintf "%s · %dms" tok (int ms))
             | None -> Some tok
- 
-     /// 缓存命中数（有值且 > 0 时）。客户端据此在用量角标上补一段「缓存 N」：
+
+    /// 缓存命中数（有值且 > 0 时）。客户端据此在用量角标上补一段「缓存 N」：
     /// 缓存命中省钱，用户看得到才可能去把 PromptCache 打开。0 与 None 一样不显示。
     /// 只给数字：文案由展示层决定，format* 一族职责是「取数」而非「排版」。
     let cachedCount (u: GenerationUsage) : int option =
@@ -55,13 +62,22 @@ module GenerationUsage =
             match v with
             | Some n -> sprintf "%s %d" label n
             | None -> ""
+
         let parts =
-            [| part "输入" u.promptTokens
-               part "输出" u.completionTokens
-               part "缓存" u.cachedTokens
-               part "合计" u.totalTokens |]
+            [|
+                part "输入" u.promptTokens
+                part "输出" u.completionTokens
+                part "缓存" u.cachedTokens
+                part "合计" u.totalTokens
+            |]
             |> Array.filter (fun s -> s <> "")
-        let body = if parts.Length = 0 then "暂无 token 数据" else String.Join(" · ", parts)
+
+        let body =
+            if parts.Length = 0 then
+                "暂无 token 数据"
+            else
+                String.Join(" · ", parts)
+
         match u.durationMs with
         | Some ms when ms >= 1000L -> body + sprintf " · 耗时 %.1fs" (float ms / 1000.0)
         | Some ms -> body + sprintf " · 耗时 %dms" (int ms)
@@ -94,17 +110,18 @@ type GenerationErrorKind =
     | UnknownFailure
 
 /// 面向用户的生成失败描述（随 generation.finished 下发）。
-type GenerationError = {
-    kind: GenerationErrorKind
-    /// 面向用户的一句话说明
-    message: string
-    /// 面向开发者的原始细节（异常文本 / 上游响应片段）
-    detail: string option
-    /// 是否值得重试（UI 给「重试」按钮）
-    retryable: bool
-    /// 建议等待秒数（来自 Retry-After）
-    retryAfterSeconds: int option
-}
+type GenerationError =
+    {
+        kind: GenerationErrorKind
+        /// 面向用户的一句话说明
+        message: string
+        /// 面向开发者的原始细节（异常文本 / 上游响应片段）
+        detail: string option
+        /// 是否值得重试（UI 给「重试」按钮）
+        retryable: bool
+        /// 建议等待秒数（来自 Retry-After）
+        retryAfterSeconds: int option
+    }
 
 module GenerationErrorKind =
 
@@ -138,8 +155,10 @@ module GenerationErrorKind =
 
     /// 针对模型服务不可用（5xx 主机故障 vs 本地网络不可达）的细分建议。
     let hintUnavailable (isServerOutage: bool) : string =
-        if isServerOutage then "模型服务暂时过载或维护中，稍等后可重试。"
-        else "无法连接到模型服务网络，请检查网络设置。"
+        if isServerOutage then
+            "模型服务暂时过载或维护中，稍等后可重试。"
+        else
+            "无法连接到模型服务网络，请检查网络设置。"
 
     /// 该类别下用户能做什么（UI 在错误卡片里给出的行动建议）。
     let hint (k: GenerationErrorKind) : string =
@@ -161,18 +180,35 @@ module GenerationError =
     /// 判断指定错误类别是否属于可重试的临时故障（标准 HTTP 语义）。
     let isRetryable (kind: GenerationErrorKind) : bool =
         match kind with
-        | ProviderRateLimited | ProviderTimeout | ProviderUnavailable | UnknownFailure -> true
-        | ProviderAuthFailed | ProviderBadRequest | ContextTooLong | ModelNotFound | ContentFiltered | ToolFailed | ConfigInvalid -> false
+        | ProviderRateLimited
+        | ProviderTimeout
+        | ProviderUnavailable
+        | UnknownFailure -> true
+        | ProviderAuthFailed
+        | ProviderBadRequest
+        | ContextTooLong
+        | ModelNotFound
+        | ContentFiltered
+        | ToolFailed
+        | ConfigInvalid -> false
 
     let create (kind: GenerationErrorKind) (message: string) : GenerationError =
-        { kind = kind
-          message = message
-          detail = None
-          retryable = isRetryable kind
-          retryAfterSeconds = None }
+        {
+            kind = kind
+            message = message
+            detail = None
+            retryable = isRetryable kind
+            retryAfterSeconds = None
+        }
 
     let withDetail (detail: string) (e: GenerationError) : GenerationError =
-        { e with detail = if System.String.IsNullOrWhiteSpace detail then None else Some detail }
+        { e with
+            detail =
+                if System.String.IsNullOrWhiteSpace detail then
+                    None
+                else
+                    Some detail
+        }
 
     /// 根据具体失败信息与技术细节提供更有针对性的行动建议。
     /// 区分 502/503/504 等模型服务过载/维护，与本地连接断开/DNS 异常。
@@ -182,17 +218,30 @@ module GenerationError =
             let combined =
                 let d = e.detail |> Option.defaultValue ""
                 sprintf "%s %s" e.message d
+
             let is5xx =
-                combined.Contains "500" || combined.Contains "502" || combined.Contains "503" || combined.Contains "504"
-                || combined.Contains "Bad Gateway" || combined.Contains "Service Unavailable"
-                || combined.Contains "Gateway Timeout" || combined.Contains "Internal Server Error"
-                || combined.Contains "过载" || combined.Contains "维护"
+                combined.Contains "500"
+                || combined.Contains "502"
+                || combined.Contains "503"
+                || combined.Contains "504"
+                || combined.Contains "Bad Gateway"
+                || combined.Contains "Service Unavailable"
+                || combined.Contains "Gateway Timeout"
+                || combined.Contains "Internal Server Error"
+                || combined.Contains "过载"
+                || combined.Contains "维护"
+
             let isNetwork =
-                combined.Contains "无法连接" || combined.Contains "Connection refused"
-                || combined.Contains "actively refused" || combined.Contains "no such host"
-                || combined.Contains "name or service not known" || combined.Contains "network is unreachable"
-                || combined.Contains "network unreachable" || combined.Contains "connection reset"
+                combined.Contains "无法连接"
+                || combined.Contains "Connection refused"
+                || combined.Contains "actively refused"
+                || combined.Contains "no such host"
+                || combined.Contains "name or service not known"
+                || combined.Contains "network is unreachable"
+                || combined.Contains "network unreachable"
+                || combined.Contains "connection reset"
                 || combined.Contains "SocketException"
+
             if is5xx && not isNetwork then
                 GenerationErrorKind.hintUnavailable true
             elif isNetwork then
@@ -204,6 +253,10 @@ module GenerationError =
     /// 供 UI 单行展示：说明 + 行动建议。
     let display (e: GenerationError) : string =
         let h = hint e
-        if e.message.Contains h then e.message
-        elif e.message.EndsWith("。") || e.message.EndsWith(" ") then e.message + h
-        else e.message.TrimEnd() + " " + h
+
+        if e.message.Contains h then
+            e.message
+        elif e.message.EndsWith("。") || e.message.EndsWith(" ") then
+            e.message + h
+        else
+            e.message.TrimEnd() + " " + h

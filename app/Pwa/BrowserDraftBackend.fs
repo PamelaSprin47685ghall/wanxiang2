@@ -15,9 +15,24 @@ type BrowserDraftBackend() =
                 try
                     let! text = BrowserDrafts.Get()
                     return if String.IsNullOrWhiteSpace text then None else Some text
-                with _ -> return None
+                with _ ->
+                    return None
             }
+
         member _.Save(text) =
-            task { try do! BrowserDrafts.Put text with _ -> () } :> Task
+            task {
+                try
+                    do! BrowserDrafts.Put text
+                with _ ->
+                    ()
+            }
+            :> Task
+
         member _.Clear() =
-            task { try do! BrowserDrafts.Delete() with _ -> () } :> Task
+            task {
+                try
+                    do! BrowserDrafts.Delete()
+                with _ ->
+                    ()
+            }
+            :> Task

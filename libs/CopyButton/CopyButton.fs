@@ -17,12 +17,14 @@ type CopyState =
 /// 复制确认的外观与时长。静态参数记录（无活值字段）：淡出目标不透明度是
 /// 主题的度量常量，时长来自 MotionLedger 的语义档；减弱动效由 Copied 入参门控。
 type CopyButtonAppearance =
-    { /// 淡出时的不透明度（旧 Tokens.opacityCopyConfirmFade）
-      FadeOpacity: float
-      /// 勾号保持时长（旧 MotionLedger.copyConfirmationHold）
-      Hold: TimeSpan
-      /// 淡出时长（旧 MotionLedger.copyConfirmationFade）
-      Fade: TimeSpan }
+    {
+        /// 淡出时的不透明度（旧 Tokens.opacityCopyConfirmFade）
+        FadeOpacity: float
+        /// 勾号保持时长（旧 MotionLedger.copyConfirmationHold）
+        Hold: TimeSpan
+        /// 淡出时长（旧 MotionLedger.copyConfirmationFade）
+        Fade: TimeSpan
+    }
 
 /// 复制按钮的确认反馈（迁自旧 Controls/CopyFeedback.fs，确认记账由本控件自己持有）：
 /// 复制后先淡一下，保持勾号一段时间后复位；减弱动效不淡出。离开可视树立即复位。
@@ -42,11 +44,13 @@ type CopyButton(button: Control, look: CopyButtonAppearance, clock: unit -> Date
         match fadeUntil with
         | Some t when now >= t -> fadeUntil <- None
         | _ -> ()
+
         match confirmedUntil with
         | Some t when now >= t ->
             confirmedUntil <- None
             fadeUntil <- None
         | _ -> ()
+
         match confirmedUntil, fadeUntil with
         | None, _ -> CopyState.Default
         | Some _, Some _ -> CopyState.Fading
@@ -101,5 +105,6 @@ type CopyButton(button: Control, look: CopyButtonAppearance, clock: unit -> Date
             button.Opacity <- 1.0
             state <- CopyState.Confirmed
             changed.Trigger CopyState.Confirmed
+
         ToolTip.SetTip(button, vs.Tip)
         Avalonia.Automation.AutomationProperties.SetName(button, vs.Name)

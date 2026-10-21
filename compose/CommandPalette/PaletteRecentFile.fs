@@ -15,8 +15,13 @@ module PaletteRecentFile =
     let loadRecent () : string list =
         try
             let path = recentFile ()
-            if IO.File.Exists path then PaletteRecent.decode (IO.File.ReadAllText path) else []
-        with _ -> []
+
+            if IO.File.Exists path then
+                PaletteRecent.decode (IO.File.ReadAllText path)
+            else
+                []
+        with _ ->
+            []
 
     let saveRecent (recent: string list) =
         try
@@ -25,4 +30,5 @@ module PaletteRecentFile =
             let tmp = path + ".tmp"
             IO.File.WriteAllText(tmp, PaletteRecent.encode recent)
             IO.File.Move(tmp, path, true)
-        with _ -> ()
+        with _ ->
+            ()

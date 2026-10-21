@@ -7,7 +7,8 @@ module TextMatch =
 
     /// 按空格、制表符、换行分词并去重。
     let terms (query: string) : string list =
-        if String.IsNullOrWhiteSpace query then []
+        if String.IsNullOrWhiteSpace query then
+            []
         else
             query.Trim().Split([| ' '; '\t'; '\n'; '\r' |], StringSplitOptions.RemoveEmptyEntries)
             |> Array.distinct
@@ -17,11 +18,16 @@ module TextMatch =
     let firstMatch (words: string list) (text: string) : (int * int) option =
         let mutable best = (Int32.MaxValue, 0)
         let mutable all = true
+
         for w in words do
             if all then
                 let i = text.IndexOf(w, StringComparison.OrdinalIgnoreCase)
-                if i < 0 then all <- false
-                elif i < fst best then best <- (i, w.Length)
+
+                if i < 0 then
+                    all <- false
+                elif i < fst best then
+                    best <- (i, w.Length)
+
         if all then Some best else None
 
     /// 以命中为中心截取约 total 个字符：命中前留 30 字符，换行压成空格（一对一，下标不变），
@@ -29,9 +35,15 @@ module TextMatch =
     let snippetAround (total: int) (text: string) (matchStart: int) (matchLength: int) : string * int =
         let lead = 30
         let mutable start = max 0 (matchStart - lead)
-        if start > 0 && Char.IsLowSurrogate text[start] then start <- start - 1
+
+        if start > 0 && Char.IsLowSurrogate text[start] then
+            start <- start - 1
+
         let mutable stop = min text.Length (start + max total (matchLength + lead))
-        if stop < text.Length && stop > 0 && Char.IsHighSurrogate text[stop - 1] then stop <- stop - 1
+
+        if stop < text.Length && stop > 0 && Char.IsHighSurrogate text[stop - 1] then
+            stop <- stop - 1
+
         let body = text.Substring(start, stop - start).Replace('\n', ' ').Replace('\r', ' ')
         let prefix = if start > 0 then "…" else ""
         let suffix = if stop < text.Length then "…" else ""

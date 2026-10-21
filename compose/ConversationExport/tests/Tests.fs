@@ -21,38 +21,73 @@ let private userMessageJson (text: string) : JsonNode =
     o["contents"] <- contents
     o
 
-let private testConfig () = { SessionConfig.empty with provider = "openai"; model = "test-model" }
+let private testConfig () =
+    { SessionConfig.empty with
+        provider = "openai"
+        model = "test-model"
+    }
 
 let private append events (proj: Projection) =
-    let commit = Events.Commit.create (proj.latestCommitId + 1UL) DateTimeOffset.UtcNow events
+    let commit =
+        Events.Commit.create (proj.latestCommitId + 1UL) DateTimeOffset.UtcNow events
+
     match Projection.applyCommit proj commit with
     | Ok updated -> updated
     | Error error -> failwith (WanxiangError.message error)
 
 let private fixture count =
     let id = Guid.NewGuid()
-    let mutable proj = Projection.empty |> append [ ConversationCreated { conversationId = id; title = "完整历史"; config = testConfig () } ]
-    for n in 1 .. count do
-        proj <- proj |> append [ AgentMessageRecorded { conversationId = id; payloadJson = userMessageJson (sprintf "message-%04d" n) } ]
+
+    let mutable proj =
+        Projection.empty
+        |> append
+            [
+                ConversationCreated
+                    {
+                        conversationId = id
+                        title = "完整历史"
+                        config = testConfig ()
+                    }
+            ]
+
+    for n in 1..count do
+        proj <-
+            proj
+            |> append
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = id
+                            payloadJson = userMessageJson (sprintf "message-%04d" n)
+                        }
+                ]
+
     proj, id
 
 let private page proj query =
-    match ServerModel.exportPage proj query with Ok result -> result | Error error -> failwith error
+    match ServerModel.exportPage proj query with
+    | Ok result -> result
+    | Error error -> failwith error
 
 let private complete proj (controller: ConversationExportController) query =
     let mutable next = Some query
     let mutable pages = 0
+
     while next.IsSome do
         pages <- pages + 1
         Assert.True(pages < 100, "分页必须终止")
         next <- controller.Accept(page proj next.Value)
+
     Assert.True(controller.Document.IsSome, sprintf "%A" controller.Status)
     controller.Document.Value
 
 [<Fact>]
 let ``export retrieves all 450 messages while normal snapshot still contains only 200`` () =
     let proj, id = fixture 450
-    let normal, _, more = ServerModel.conversationMessagesTail proj proj.conversations[id] 200
+
+    let normal, _, more =
+        ServerModel.conversationMessagesTail proj proj.conversations[id] 200
+
     Assert.Equal(200, normal.Count)
     Assert.True more
     let controller = ConversationExportController id
@@ -69,11 +104,27 @@ let ``later deletion insertion and renaming cannot alter an export already readi
     let first = page original (controller.Start())
     let next = controller.Accept first |> Option.get
     Assert.True controller.Document.IsNone
+
     let changed =
         original
-        |> append [ MessageDeleted { conversationId = id; messageCommitId = 2UL } ]
-        |> append [ AgentMessageRecorded { conversationId = id; payloadJson = userMessageJson "不能混入" } ]
+        |> append
+            [
+                MessageDeleted
+                    {
+                        conversationId = id
+                        messageCommitId = 2UL
+                    }
+            ]
+        |> append
+            [
+                AgentMessageRecorded
+                    {
+                        conversationId = id
+                        payloadJson = userMessageJson "不能混入"
+                    }
+            ]
         |> append [ ConversationRenamed { conversationId = id; title = "后来的标题" } ]
+
     let document = complete changed controller next
     Assert.Equal("完整历史", document.title)
     Assert.Equal(original.latestCommitId, document.atCommitId)
@@ -84,7 +135,18 @@ let ``later deletion insertion and renaming cannot alter an export already readi
 [<Fact>]
 let ``deletions before export stay hidden even on older pages`` () =
     let original, id = fixture 350
-    let proj = original |> append [ MessageDeleted { conversationId = id; messageCommitId = 3UL } ]
+
+    let proj =
+        original
+        |> append
+            [
+                MessageDeleted
+                    {
+                        conversationId = id
+                        messageCommitId = 3UL
+                    }
+            ]
+
     let controller = ConversationExportController id
     let document = complete proj controller (controller.Start())
     Assert.Equal(349, document.messages.Length)
@@ -94,14 +156,59 @@ let ``deletions before export stay hidden even on older pages`` () =
 let ``nested fork export preserves its frozen ancestors after parent deletion`` () =
     let root, parentId = fixture 250
     let childId, grandchildId = Guid.NewGuid(), Guid.NewGuid()
-    let withChild = root |> append [ ConversationForked { conversationId = childId; parentConversationId = parentId; forkAfterId = Some 221UL } ]
-    let withMessage = withChild |> append [ AgentMessageRecorded { conversationId = childId; payloadJson = userMessageJson "子分支" } ]
+
+    let withChild =
+        root
+        |> append
+            [
+                ConversationForked
+                    {
+                        conversationId = childId
+                        parentConversationId = parentId
+                        forkAfterId = Some 221UL
+                    }
+            ]
+
+    let withMessage =
+        withChild
+        |> append
+            [
+                AgentMessageRecorded
+                    {
+                        conversationId = childId
+                        payloadJson = userMessageJson "子分支"
+                    }
+            ]
+
     let proj =
         withMessage
-        |> append [ ConversationForked { conversationId = grandchildId; parentConversationId = childId; forkAfterId = Some withMessage.latestCommitId } ]
-        |> append [ AgentMessageRecorded { conversationId = grandchildId; payloadJson = userMessageJson "孙分支" } ]
-        |> append [ MessageDeleted { conversationId = parentId; messageCommitId = 2UL } ]
+        |> append
+            [
+                ConversationForked
+                    {
+                        conversationId = grandchildId
+                        parentConversationId = childId
+                        forkAfterId = Some withMessage.latestCommitId
+                    }
+            ]
+        |> append
+            [
+                AgentMessageRecorded
+                    {
+                        conversationId = grandchildId
+                        payloadJson = userMessageJson "孙分支"
+                    }
+            ]
+        |> append
+            [
+                MessageDeleted
+                    {
+                        conversationId = parentId
+                        messageCommitId = 2UL
+                    }
+            ]
         |> append [ EventData.ConversationDeleted { conversationId = parentId } ]
+
     let controller = ConversationExportController grandchildId
     let document = complete proj controller (controller.Start())
     Assert.Equal(222, document.messages.Length)
@@ -132,7 +239,10 @@ let ``cancel retry and disconnect cannot expose partial or stale documents`` () 
     controller.Accept(page proj restarted) |> ignore
     controller.Disconnect()
     Assert.True controller.Document.IsNone
-    match controller.Status with ExportFailed _ -> () | other -> failwithf "%A" other
+
+    match controller.Status with
+    | ExportFailed _ -> ()
+    | other -> failwithf "%A" other
 
 [<Theory>]
 [<InlineData("short")>]
@@ -144,29 +254,53 @@ let ``invalid export pages never become saveable`` mode =
     let proj, id = fixture 250
     let controller = ConversationExportController id
     let first = page proj (controller.Start())
+
     let invalid =
         match mode with
         | "short" -> { first with hasMore = false }
         | "empty" -> { first with items = JsonArray() }
-        | "foreign" -> { first with conversationId = Guid.NewGuid() }
+        | "foreign" ->
+            { first with
+                conversationId = Guid.NewGuid()
+            }
         | "boundary" -> { first with atCommitId = 1UL }
-        | _ -> { first with items = JsonArray(first.items[0].DeepClone(), first.items[0].DeepClone()) }
+        | _ ->
+            { first with
+                items = JsonArray(first.items[0].DeepClone(), first.items[0].DeepClone())
+            }
+
     Assert.True(controller.Accept(invalid).IsNone)
     Assert.True controller.Document.IsNone
-    match controller.Status with ExportFailed _ -> () | other -> failwithf "%A" other
+
+    match controller.Status with
+    | ExportFailed _ -> ()
+    | other -> failwithf "%A" other
 
 [<Fact>]
 let ``changed watermark or total aborts a multi-page export`` () =
     let proj, id = fixture 250
+
     let alterations: (ConversationExportPageData -> ConversationExportPageData) list =
-        [ (fun p -> { p with atCommitId = p.atCommitId + 1UL })
-          (fun p -> { p with totalMessages = p.totalMessages + 1 }) ]
+        [
+            (fun p ->
+                { p with
+                    atCommitId = p.atCommitId + 1UL
+                })
+            (fun p ->
+                { p with
+                    totalMessages = p.totalMessages + 1
+                })
+        ]
+
     for alter in alterations do
         let controller = ConversationExportController id
         let next = controller.Accept(page proj (controller.Start())) |> Option.get
         controller.Accept(alter (page proj next)) |> ignore
         Assert.True controller.Document.IsNone
-        match controller.Status with ExportFailed _ -> () | other -> failwithf "%A" other
+
+        match controller.Status with
+        | ExportFailed _ -> ()
+        | other -> failwithf "%A" other
 
 [<Fact>]
 let ``timeout and size limit stop without offering a partial file`` () =
@@ -174,7 +308,11 @@ let ``timeout and size limit stop without offering a partial file`` () =
     let small = ConversationExportController(id, maxBytes = 100L)
     small.Accept(page proj (small.Start())) |> ignore
     Assert.True small.Document.IsNone
-    match small.Status with ExportFailed _ -> () | other -> failwithf "%A" other
+
+    match small.Status with
+    | ExportFailed _ -> ()
+    | other -> failwithf "%A" other
+
     let slow = ConversationExportController id
     slow.Start() |> ignore
     Assert.True(slow.Expire(DateTimeOffset.UtcNow.AddMinutes 1.0, TimeSpan.FromSeconds 30.0))
@@ -184,7 +322,22 @@ let ``timeout and size limit stop without offering a partial file`` () =
 let ``page byte budget splits large messages without splitting or truncating a message`` () =
     let initial, id = fixture 0
     let text = String('x', 200000)
-    let proj = [ 1 .. 5 ] |> List.fold (fun proj _ -> proj |> append [ AgentMessageRecorded { conversationId = id; payloadJson = userMessageJson text } ]) initial
+
+    let proj =
+        [ 1..5 ]
+        |> List.fold
+            (fun proj _ ->
+                proj
+                |> append
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = id
+                                payloadJson = userMessageJson text
+                            }
+                    ])
+            initial
+
     let controller = ConversationExportController id
     let query = controller.Start()
     let first = page proj query
@@ -197,8 +350,21 @@ let ``page byte budget splits large messages without splitting or truncating a m
 [<Fact>]
 let ``unrenderable messages retain their raw content in export`` () =
     let initial, id = fixture 0
-    let proj = initial |> append [ AgentMessageRecorded { conversationId = id; payloadJson = JsonNode.Parse("""{"role":"assistant","contents":[{"type":"future-content","value":"keep-me"}]}""") } ]
+
+    let proj =
+        initial
+        |> append
+            [
+                AgentMessageRecorded
+                    {
+                        conversationId = id
+                        payloadJson =
+                            JsonNode.Parse(
+                                """{"role":"assistant","contents":[{"type":"future-content","value":"keep-me"}]}"""
+                            )
+                    }
+            ]
+
     let controller = ConversationExportController id
     let document = complete proj controller (controller.Start())
     Assert.Contains("keep-me", document.messages.Head.text)
-

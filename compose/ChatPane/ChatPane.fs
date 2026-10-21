@@ -23,39 +23,51 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
     let follow = ScrollFollow()
     let mutable lastAnimatedOffset = Double.NaN
     let jump = ExchangeJump<'K>()
+
     let ease =
-        { Start =
-            fun _now offset target reduced ->
-                if reduced || abs (target - offset) < 5.0 then false
-                else true
-          Frame =
-            fun _now target -> EaseStep.Arrived target
-          Cancel = fun () -> ()
-          Pin = fun y -> lastAnimatedOffset <- y
-          IsOwn = fun y -> not (Double.IsNaN lastAnimatedOffset) && abs (y - lastAnimatedOffset) < 1.0 }
+        {
+            Start =
+                fun _now offset target reduced ->
+                    if reduced || abs (target - offset) < 5.0 then
+                        false
+                    else
+                        true
+            Frame = fun _now target -> EaseStep.Arrived target
+            Cancel = fun () -> ()
+            Pin = fun y -> lastAnimatedOffset <- y
+            IsOwn = fun y -> not (Double.IsNaN lastAnimatedOffset) && abs (y - lastAnimatedOffset) < 1.0
+        }
+
     let scroller = ChatScroller(ease)
     let nav = ExchangeNav()
     let empty = ChatEmpty(ChatStarters.items, onStarter, brandLogo = brandLogo)
     let skeleton = SkeletonList()
     // 原生 ItemsControl + VirtualizingStackPanel 替代普通 StackPanel 消息容器
     let itemsControl = ItemsControl()
+
     do
         itemsControl.ItemsPanel <- FuncTemplate<Panel>(fun () -> VirtualizingStackPanel() :> Panel)
         itemsControl.HorizontalAlignment <- HorizontalAlignment.Stretch
         itemsControl.MaxWidth <- 748.0
         itemsControl.Margin <- Thickness(0.0, 0.0, 0.0, 48.0)
-    let messages = StackPanel(Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Stretch)
+
+    let messages =
+        StackPanel(Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Stretch)
+
     let emptyScroller =
         ScrollViewer(
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             Content = empty.Host,
-            IsVisible = false)
+            IsVisible = false
+        )
+
     let body = Grid()
     let mutable compact = false
     let mutable overflows = false
     let returnedFocus = Event<unit>()
     let mutable startMode: bool option = None
+
     /// 主题资源字典的浮点值现读：未安装主题时用旧初值兜底。
     let resFloat (key: string) (fallback: float) =
         match Application.Current with
@@ -64,10 +76,10 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
             match app.TryFindResource(box key) with
             | true, v -> unbox v
             | _ -> fallback
+
     let applyStart () =
         match startMode with
-        | Some v ->
-            empty.ApplyBottomAligned v
+        | Some v -> empty.ApplyBottomAligned v
         | None -> ()
 
     let hideSkeleton () =
@@ -78,18 +90,39 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
 
     let refreshButton () =
         let v = follow.Button(overflows, compact)
-        scroller.ShowLatest { Visible = v.visible; Text = v.text; Wide = v.showLabel }
+
+        scroller.ShowLatest
+            {
+                Visible = v.visible
+                Text = v.text
+                Wide = v.showLabel
+            }
 
     let toEnd () =
-        let target () = max 0.0 (scroller.Extent - scroller.Viewport)
+        let target () =
+            max 0.0 (scroller.Extent - scroller.Viewport)
+
         follow.ReturnToLatest()
-        if not (scroller.SmoothTo(target, refreshButton, fun _ -> follow.Arrived(); refreshButton ())) then
+
+        if
+            not (
+                scroller.SmoothTo(
+                    target,
+                    refreshButton,
+                    fun _ ->
+                        follow.Arrived()
+                        refreshButton ()
+                )
+            )
+        then
             scroller.ScrollToEndNow()
             follow.Arrived()
+
         refreshButton ()
 
     /// 水平留白按自身宽度取档（旧 ChatView.ApplyHorizontalInsets 的滚动区部分）
     let mutable top = 0.0
+
     let applyInsets () =
         top <- resFloat "Space.X3l" Wanxiang.UI.Spacing.space3xl
         let inset = LayoutPolicy.horizontalInset body.Bounds.Width
@@ -105,22 +138,36 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
         body.Children.Add emptyScroller
         body.Children.Add scroller.LatestButton
         body.Children.Add nav.FailureBanner
-        body.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty then applyInsets ())
+
+        body.PropertyChanged.Add(fun e ->
+            if e.Property = Visual.BoundsProperty then
+                applyInsets ())
         // 主题资源改值会顶开一次重排：借 Bounds 变化之外的口子在可见性变化时重取留白
         empty.Host.PropertyChanged.Add(fun e ->
-            if e.Property = Visual.IsVisibleProperty && empty.Host.IsVisible then applyStart ())
+            if e.Property = Visual.IsVisibleProperty && empty.Host.IsVisible then
+                applyStart ())
+
         empty.Host.PropertyChanged.Add(fun e ->
-            if e.Property = Visual.IsVisibleProperty then emptyScroller.IsVisible <- empty.Host.IsVisible)
+            if e.Property = Visual.IsVisibleProperty then
+                emptyScroller.IsVisible <- empty.Host.IsVisible)
+
         scroller.Scrolled.Add(fun note ->
             overflows <- note.Overflows
-            if follow.Scrolled(note.UserUp, note.AtBottom) then scroller.StopSmooth()
+
+            if follow.Scrolled(note.UserUp, note.AtBottom) then
+                scroller.StopSmooth()
+
             refreshButton ())
+
         scroller.Wheeled.Add(fun _ ->
             follow.Wheel()
             scroller.StopSmooth())
+
         scroller.LatestPressed.Add(fun focusWasOnButton ->
             toEnd ()
-            if focusWasOnButton then returnedFocus.Trigger())
+
+            if focusWasOnButton then
+                returnedFocus.Trigger())
 
     member _.Host: Control = body
     member _.Scroller = scroller
@@ -157,6 +204,7 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
         match follow.Rendered(streaming, newCount, prependInFlight) with
         | RenderFollow.ScrollToEnd -> scroller.ScrollToEndDeferred(fun () -> follow.RevealPinned)
         | RenderFollow.Keep -> ()
+
         refreshButton ()
 
     member _.ScrollToLatest() = toEnd ()
@@ -167,19 +215,24 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
     /// 空态：文案取 ChatEmptyText；需要品牌标的状态用 logo
     member _.ShowEmpty(state: ChatEmptyState, primary: (string * (unit -> unit)) option) =
         let title, hint = ChatEmptyText.text state
+
         if ChatEmptyState.showsBrand state then
             let logo = brandLogo (resFloat "Metric.LogoEmpty" 68.0)
             logo.HorizontalAlignment <- HorizontalAlignment.Center
             empty.ShowBrand(logo, title, hint, primary)
-        else empty.ShowPrompt(title, hint, primary)
+        else
+            empty.ShowPrompt(title, hint, primary)
+
         scroller.Viewer.IsVisible <- false
         hideSkeleton ()
         itemsControl.IsVisible <- false
         messages.IsVisible <- false
+
         if not follow.RevealPinned then
             follow.Reset()
             jump.Reset()
             nav.Reset()
+
         refreshButton ()
 
     /// 嵌入式空态（如首次引导卡）
@@ -193,7 +246,9 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
     member this.HideEmpty() =
         empty.Hide()
         // 定位钉住时不复位（旧 HideEmpty）；换对话由宿主显式 Reset
-        if not follow.RevealPinned then this.Reset()
+        if not follow.RevealPinned then
+            this.Reset()
+
         scroller.Viewer.IsVisible <- true
         itemsControl.IsVisible <- true
         messages.IsVisible <- true
@@ -205,6 +260,7 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
         itemsControl.IsVisible <- false
         skeleton.Show()
         scroller.Content <- skeleton.Host
+
     member _.HideSkeleton() = hideSkeleton ()
     member _.IsSkeletonShown = skeleton.IsShown
 
@@ -219,18 +275,31 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
 
     /// 刷新上一轮 / 下一轮端点
     member _.RefreshJumps(mounted: 'K option[], cards: int list, viewportIndex: int, hasHidden: bool) =
-        let prev, next = jump.NavState(mounted, cards, viewportIndex, follow.AtBottom, hasHidden)
+        let prev, next =
+            jump.NavState(mounted, cards, viewportIndex, follow.AtBottom, hasHidden)
+
         nav.ApplyJumpEnds(prev, next)
 
     /// 问答跳转；返回 ScrollTo 时宿主把那张卡滚进视口
-    member _.Jump(direction: int, mounted: 'K option[], cards: int list, viewportIndex: int, hasHidden: bool, lastFirstCommit: uint64 option) =
-        let step = jump.Jump(direction, mounted, cards, viewportIndex, hasHidden, lastFirstCommit)
+    member _.Jump
+        (
+            direction: int,
+            mounted: 'K option[],
+            cards: int list,
+            viewportIndex: int,
+            hasHidden: bool,
+            lastFirstCommit: uint64 option
+        ) =
+        let step =
+            jump.Jump(direction, mounted, cards, viewportIndex, hasHidden, lastFirstCommit)
+
         match step with
         | JumpStep.ScrollTo(_, atBottom) ->
             scroller.StopSmooth()
             follow.JumpedTo atBottom
             refreshButton ()
         | _ -> ()
+
         step
 
     member _.ApplyOlderAvailable(value: bool) = jump.ApplyOlderAvailable value

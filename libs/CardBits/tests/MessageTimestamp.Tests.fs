@@ -1,4 +1,5 @@
 module MessageTimestampTests
+
 open System
 open System.IO
 open Xunit

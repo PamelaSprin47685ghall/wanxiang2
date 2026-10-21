@@ -36,5 +36,7 @@ type ProbeSlot() =
 
     /// 默认模型：配置的默认在清单里就用它，否则清单第一项（旧编辑器回填规则）。
     static member DefaultModel(configuredDefault: string, models: string list) : string =
-        if List.contains configuredDefault models then configuredDefault
-        else models |> List.tryHead |> Option.defaultValue ""
+        if List.contains configuredDefault models then
+            configuredDefault
+        else
+            models |> List.tryHead |> Option.defaultValue ""

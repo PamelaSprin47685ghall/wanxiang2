@@ -20,7 +20,9 @@ let private press (w: Window) k mods =
 [<Fact>]
 let ``prompt dialog validates input and handles confirm and cancel`` () =
     Headless.run (fun () ->
-        let p = PromptPane("重命名", "对话标题", "旧标题", "保存", fun _ -> Some(TextBlock() :> Control))
+        let p =
+            PromptPane("重命名", "对话标题", "旧标题", "保存", fun _ -> Some(TextBlock() :> Control))
+
         let w = host p.View
         let sent = ResizeArray<string>()
         let errors = ResizeArray<string option>()

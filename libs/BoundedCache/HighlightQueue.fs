@@ -21,12 +21,15 @@ type HighlightQueue<'K when 'K: equality>() =
     /// 宿主延时 NotifyWindowMs 后调 NotifyFired 再触发 Ready；返回 false 时搭车
     member _.Finished(key: 'K, ok: bool) : bool =
         lock gate (fun () -> inFlight.Remove key |> ignore)
+
         ok
         && lock gate (fun () ->
-            if notifyScheduled then false
+            if notifyScheduled then
+                false
             else
                 notifyScheduled <- true
                 true)
 
     /// 通知窗口到点：放开下一次合并
-    member _.NotifyFired() = lock gate (fun () -> notifyScheduled <- false)
+    member _.NotifyFired() =
+        lock gate (fun () -> notifyScheduled <- false)

@@ -14,29 +14,35 @@ open Wanxiang2.DevicesPane.ButtonExtensions
 
 /// 一个可用工具
 type ToolsPaneTool =
-    { Id: string
-      Label: string
-      Description: string
-      /// 来自 MCP 服务（图标用 server，否则 wrench）
-      FromMcp: bool
-      /// 当前审批方式的文案（ToolsPolicy.label）
-      PolicyLabel: string }
+    {
+        Id: string
+        Label: string
+        Description: string
+        /// 来自 MCP 服务（图标用 server，否则 wrench）
+        FromMcp: bool
+        /// 当前审批方式的文案（ToolsPolicy.label）
+        PolicyLabel: string
+    }
 
 /// 一个 MCP 服务
 type ToolsPaneServer =
-    { Id: string
-      Label: string
-      ToolCount: int
-      /// 「本地 · npx …」/「远程 · url」/「未配置传输」
-      Transport: string
-      Enabled: bool }
+    {
+        Id: string
+        Label: string
+        ToolCount: int
+        /// 「本地 · npx …」/「远程 · url」/「未配置传输」
+        Transport: string
+        Enabled: bool
+    }
 
 type ToolsPaneState =
-    { Tools: ToolsPaneTool list
-      Folders: string list
-      SandboxNote: string
-      ExposeDebug: bool
-      Servers: ToolsPaneServer list }
+    {
+        Tools: ToolsPaneTool list
+        Folders: string list
+        SandboxNote: string
+        ExposeDebug: bool
+        Servers: ToolsPaneServer list
+    }
 
 module internal Empty =
     /// 空态卡（旧 Ui.emptyState 无标题、无动作的形态）
@@ -48,6 +54,7 @@ module internal Empty =
                 let t = TextBlock(Text = "万", FontSize = 32.0)
                 t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
                 t :> Control
+
         logo.HorizontalAlignment <- HorizontalAlignment.Center
         let text = Ui.caption hint
         text.TextAlignment <- TextAlignment.Center
@@ -71,6 +78,7 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
     let mcpPanel = StackPanel(Orientation = Orientation.Vertical)
     let foldersPanel = StackPanel(Orientation = Orientation.Vertical)
     let sandboxNote = Ui.caption ""
+
     let debugRow, _, writeDebug =
         Ui.switchRow "显示调试工具" "打开后，工具清单里会多出一个只用于排查问题的回显工具。" false (fun v -> debugToggled.Trigger v)
 
@@ -84,14 +92,27 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
                 let t = TextBlock(Text = (if tool.FromMcp then "[server]" else "[wrench]"))
                 t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
                 t :> Control
+
         icon.VerticalAlignment <- VerticalAlignment.Top
         let name = TextBlock(Text = tool.Label, FontSize = 14.0)
         name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
         name.FontWeight <- FontWeight.Medium
         let identifier = TextBlock(Text = tool.Id, FontSize = 11.0)
-        identifier.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
-        identifier.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono") |> ignore
-        let description = Ui.caption (if String.IsNullOrWhiteSpace tool.Description then "（MCP 服务未提供描述）" else tool.Description)
+
+        identifier.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint")
+        |> ignore
+
+        identifier.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono")
+        |> ignore
+
+        let description =
+            Ui.caption (
+                if String.IsNullOrWhiteSpace tool.Description then
+                    "（MCP 服务未提供描述）"
+                else
+                    tool.Description
+            )
+
         let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 2.0)
         column.Children.Add name
         column.Children.Add identifier
@@ -111,14 +132,28 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
 
     let renderServer (server: ToolsPaneServer) : Control =
         let name = TextBlock(Text = server.Label, FontSize = 14.0)
-        if server.Enabled then name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
-        else name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+
+        if server.Enabled then
+            name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+        else
+            name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+
         name.FontWeight <- FontWeight.Medium
         name.VerticalAlignment <- VerticalAlignment.Center
-        let titleRow = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0, VerticalAlignment = VerticalAlignment.Center)
+
+        let titleRow =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 12.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         titleRow.Children.Add name
         titleRow.Children.Add(Ui.tag TagTone.Neutral (sprintf "%d 个工具" server.ToolCount))
-        if not server.Enabled then titleRow.Children.Add(Ui.tag TagTone.Neutral "已停用")
+
+        if not server.Enabled then
+            titleRow.Children.Add(Ui.tag TagTone.Neutral "已停用")
+
         let meta = TextBlock(Text = server.Transport, FontSize = 11.0)
         meta.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
         meta.TextTrimming <- TextTrimming.CharacterEllipsis
@@ -128,7 +163,14 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
         let edit = Ui.iconButton "✎" "编辑" (fun () -> editServer.Trigger server.Id)
         let mutable more: Button = Unchecked.defaultof<_>
         more <- Ui.iconButton "⋯" "更多" (fun () -> serverMore.Trigger((server.Id, more :> Control)))
-        let actions = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0, VerticalAlignment = VerticalAlignment.Center)
+
+        let actions =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 4.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         actions.Children.Add edit
         actions.Children.Add more
         let dock = DockPanel(LastChildFill = true)
@@ -138,7 +180,9 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
         rowCard dock
 
     let root =
-        for p in [ builtinPanel; mcpPanel; foldersPanel ] do p.Spacing <- 12.0
+        for p in [ builtinPanel; mcpPanel; foldersPanel ] do
+            p.Spacing <- 12.0
+
         let addButton = Ui.button "primary" "添加 MCP 服务" addServer.Trigger
         addButton.HorizontalAlignment <- HorizontalAlignment.Left
         let addFolderButton = Ui.button "secondary" "授权文件夹" addFolder.Trigger
@@ -164,7 +208,7 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
         main.Children.Add sandboxNote
         main.Children.Add foldersStack
         main.Children.Add debugRow
-        main.Children.Add(Ui.hairline())
+        main.Children.Add(Ui.hairline ())
         main.Children.Add mcpStack
         main
 
@@ -172,14 +216,23 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
 
     member _.Render(state: ToolsPaneState) =
         builtinPanel.Children.Clear()
-        for t in state.Tools do builtinPanel.Children.Add(renderTool t)
+
+        for t in state.Tools do
+            builtinPanel.Children.Add(renderTool t)
+
         if state.Tools.IsEmpty then
             builtinPanel.Children.Add(Empty.card glyphOf "当前没有可用工具。内置文件工具需要主机配置沙箱根目录后才会出现。")
+
         mcpPanel.Children.Clear()
-        for s in state.Servers do mcpPanel.Children.Add(renderServer s)
+
+        for s in state.Servers do
+            mcpPanel.Children.Add(renderServer s)
+
         if state.Servers.IsEmpty then
             mcpPanel.Children.Add(Empty.card glyphOf "还没有 MCP 服务。添加后它提供的工具会自动出现在上面的清单里。")
+
         foldersPanel.Children.Clear()
+
         for folder in state.Folders do
             let label = TextBlock(Text = folder, FontSize = 12.0)
             label.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
@@ -193,6 +246,7 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
             dock.Children.Add remove
             dock.Children.Add label
             foldersPanel.Children.Add(Ui.card dock)
+
         sandboxNote.Text <- state.SandboxNote
         writeDebug state.ExposeDebug
 
@@ -209,13 +263,15 @@ type ToolsPane(?glyphOf: string -> IBrush -> Control) =
 
 /// MCP 服务编辑器的现有值
 type McpEditorValues =
-    { Id: string
-      Label: string
-      Command: string
-      Args: string
-      Url: string
-      Timeout: string
-      Enabled: bool }
+    {
+        Id: string
+        Label: string
+        Command: string
+        Args: string
+        Url: string
+        Timeout: string
+        Enabled: bool
+    }
 
 /// 添加 / 编辑 MCP 服务的对话框内容（旧 SettingsTools.ShowEditor 的界面部分）。
 /// validationFor 给每个输入框的校验行（组合者的 FieldCheck.MessageFor）；校验、保存往返、关闭由组合者接。
@@ -223,9 +279,11 @@ type McpEditor(existing: McpEditorValues option, validationFor: TextBox -> Contr
     let save = Event<unit>()
     let cancel = Event<unit>()
     let mutable pending = false
+
     let field label hint (placeholder: string) =
         let box = Ui.textField placeholder
         box, Ui.fieldGroup label hint box (validationFor box)
+
     let idBox, idField = field "稳定标识" "仅限字母、数字、下划线与连字符。" "例如 filesystem"
     let labelBox, labelField = field "显示名称" "仅用于界面显示。" "在界面上怎么称呼它"
     let commandBox, commandField = field "本地命令" "本地启动命令；与远程端点二选一。" "例如 npx"
@@ -233,23 +291,36 @@ type McpEditor(existing: McpEditorValues option, validationFor: TextBox -> Contr
     let urlBox, urlField = field "远程端点" "http(s) 地址；与本地命令二选一。" "https://example.com/mcp"
     let timeoutBox, timeoutField = field "单次调用超时（秒）" "1–3600 秒。" "60"
     let summary = Ui.caption ""
+
     let enabledRow, readEnabled, _ =
         Ui.switchRow "启用这个 MCP 服务" "" (existing |> Option.map (fun v -> v.Enabled) |> Option.defaultValue true) ignore
+
     let idleText = if existing.IsSome then "保存" else "添加"
     let cancelButton = Ui.button "ghost" "取消" cancel.Trigger
-    let saveButton = Ui.button "primary" idleText (fun () -> if not pending then save.Trigger())
-    let trySave () = if not pending then save.Trigger()
+
+    let saveButton =
+        Ui.button "primary" idleText (fun () ->
+            if not pending then
+                save.Trigger())
+
+    let trySave () =
+        if not pending then
+            save.Trigger()
 
     let form =
         argsBox.AcceptsReturn <- true
         argsBox.TextWrapping <- TextWrapping.Wrap
         argsBox.VerticalContentAlignment <- VerticalAlignment.Top
-        argsBox.Bind(Layoutable.MinHeightProperty, Dyn.res "Metric.TextAreaMinHeight") |> ignore
+
+        argsBox.Bind(Layoutable.MinHeightProperty, Dyn.res "Metric.TextAreaMinHeight")
+        |> ignore
+
         summary.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
         summary.IsVisible <- false
         summary.Focusable <- true
         AutomationProperties.SetName(summary, "表单错误摘要")
         AutomationProperties.SetLiveSetting(summary, AutomationLiveSetting.Assertive)
+
         match existing with
         | Some v ->
             idBox.Text <- v.Id
@@ -260,6 +331,7 @@ type McpEditor(existing: McpEditorValues option, validationFor: TextBox -> Contr
             urlBox.Text <- v.Url
             timeoutBox.Text <- v.Timeout
         | None -> timeoutBox.Text <- "60"
+
         AutomationProperties.SetHelpText(cancelButton, "取消并关闭 MCP 服务编辑 (Esc)")
         ToolTip.SetTip(cancelButton, "取消并关闭 (Esc)")
         AutomationProperties.SetHelpText(saveButton, sprintf "确认%s MCP 服务设置（Ctrl / ⌘ + Enter）" idleText)
@@ -274,17 +346,22 @@ type McpEditor(existing: McpEditorValues option, validationFor: TextBox -> Contr
             if e.Key = Key.Right && saveButton.IsEnabled then
                 e.Handled <- true
                 saveButton.Focus(NavigationMethod.Directional) |> ignore)
+
         saveButton.KeyDown.Add(fun e ->
             if e.Key = Key.Left && cancelButton.IsEnabled then
                 e.Handled <- true
                 cancelButton.Focus(NavigationMethod.Directional) |> ignore)
-        let ctrl (e: KeyEventArgs) = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
+
+        let ctrl (e: KeyEventArgs) =
+            e.KeyModifiers.HasFlag KeyModifiers.Control
+            || e.KeyModifiers.HasFlag KeyModifiers.Meta
         // 单行字段回车即提交；多行参数框的回车是换行
         for box in [ idBox; labelBox; commandBox; urlBox; timeoutBox ] do
             box.KeyDown.Add(fun e ->
                 if e.Key = Key.Enter && not (ctrl e) then
                     e.Handled <- true
                     trySave ())
+
         let form = StackPanel(Orientation = Orientation.Vertical, Spacing = 16.0)
         form.Children.Add(Ui.title (if existing.IsSome then "编辑 MCP 服务" else "添加 MCP 服务"))
         form.Children.Add(Ui.caption "本地 MCP 服务以子进程方式启动（stdio）；远程 MCP 服务走 Streamable HTTP。")
@@ -296,16 +373,19 @@ type McpEditor(existing: McpEditorValues option, validationFor: TextBox -> Contr
         form.Children.Add urlField
         form.Children.Add timeoutField
         form.Children.Add enabledRow
-        form.Children.Add(Ui.hairline())
+        form.Children.Add(Ui.hairline ())
         form.Children.Add row
+
         form.KeyDown.Add(fun e ->
             if e.Key = Key.Enter && ctrl e then
                 e.Handled <- true
                 trySave ())
+
         ScrollViewer(
             Content = form,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto)
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        )
 
     member _.View = form :> Control
     member _.IdBox = idBox
@@ -330,7 +410,15 @@ type McpEditor(existing: McpEditorValues option, validationFor: TextBox -> Contr
         saveButton.ApplyText text
         AutomationProperties.SetName(saveButton, text)
         saveButton.ApplyEnabled(not value)
-        AutomationProperties.SetHelpText(saveButton, (if value then text else sprintf "确认%s MCP 服务设置（Ctrl / ⌘ + Enter）" idleText))
+
+        AutomationProperties.SetHelpText(
+            saveButton,
+            (if value then
+                 text
+             else
+                 sprintf "确认%s MCP 服务设置（Ctrl / ⌘ + Enter）" idleText)
+        )
+
         cancelButton.ApplyEnabled(not value)
 
     member _.SaveRequested = save.Publish
@@ -341,23 +429,31 @@ type FolderEditor(validationFor: TextBox -> Control option) =
     let save = Event<string>()
     let cancel = Event<unit>()
     let pathBox = Ui.textField "例如 /home/me/文档"
-    let field = Ui.fieldGroup "文件夹的绝对路径" "模型只能读取这个文件夹以内的文件，不能读到它之外。" pathBox (validationFor pathBox)
-    let text () = if isNull pathBox.Text then "" else pathBox.Text.Trim()
+
+    let field =
+        Ui.fieldGroup "文件夹的绝对路径" "模型只能读取这个文件夹以内的文件，不能读到它之外。" pathBox (validationFor pathBox)
+
+    let text () =
+        if isNull pathBox.Text then "" else pathBox.Text.Trim()
+
     let cancelButton = Ui.button "ghost" "取消" cancel.Trigger
     // 这个对话框由 overlay.ShowDialog 承载，Esc 会关掉它（ToolsDesk 的 canDismiss 只在
     // 保存在途时拦）。取消键的提示必须写明 Esc 可用（a11y 回归「取消按钮的提示文案都写明 Esc」）。
     do AutomationProperties.SetHelpText(cancelButton, "取消并关闭授权文件夹对话框 (Esc)")
     do ToolTip.SetTip(cancelButton, "取消并关闭授权文件夹对话框 (Esc)")
     let confirm = Ui.button "primary" "授权" (fun () -> save.Trigger(text ()))
+
     let form =
         let buttons = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)
         buttons.Children.Add cancelButton
         buttons.Children.Add confirm
         buttons.HorizontalAlignment <- HorizontalAlignment.Right
+
         pathBox.KeyDown.Add(fun e ->
             if e.Key = Key.Enter then
                 e.Handled <- true
                 save.Trigger(text ()))
+
         let p = StackPanel(Orientation = Orientation.Vertical, Spacing = 16.0)
         p.Children.Add(Ui.title "授权文件夹")
         p.Children.Add(Ui.caption "授权后，读取文件、列出文件夹这两个工具才会出现在工具清单里。")

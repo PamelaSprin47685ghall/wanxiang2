@@ -28,113 +28,186 @@ module Doctor =
     /// 磁盘剩余空间警告阈值（字节）：默认 256 MiB。
     let diskFreeWarningBytes = 256L * 1024L * 1024L
 
-    type CheckResult = {
-        name: string
-        ok: bool
-        detail: string
-    }
+    type CheckResult =
+        {
+            name: string
+            ok: bool
+            detail: string
+        }
 
-    type Diagnosis = {
-        mutable checks: CheckResult list
-        mutable configErrors: string list
-        mutable replayError: string
-        mutable attachmentsMissing: string list
-        mutable orphanAttachments: string list
-        mutable snapshotStatus: string
-    }
+    type Diagnosis =
+        {
+            mutable checks: CheckResult list
+            mutable configErrors: string list
+            mutable replayError: string
+            mutable attachmentsMissing: string list
+            mutable orphanAttachments: string list
+            mutable snapshotStatus: string
+        }
 
     let private portInUse (listen: string) : bool = HostProbe.portInUse listen
 
     /// 数据目录权限检查：events/attachments 应为 0700（Q118 最小权限）。
     let private checkPermissions (dataDir: string) : CheckResult =
-        let bad = HostProbe.groupOrOtherAccessible [ DataPaths.eventsDir dataDir; DataPaths.attachmentsDir dataDir ]
-        { name = "data-permissions"
-          ok = List.isEmpty bad
-          detail = if List.isEmpty bad then "0700" else sprintf "world/group-accessible: %s" (String.concat ", " bad) }
+        let bad =
+            HostProbe.groupOrOtherAccessible [ DataPaths.eventsDir dataDir; DataPaths.attachmentsDir dataDir ]
+
+        {
+            name = "data-permissions"
+            ok = List.isEmpty bad
+            detail =
+                if List.isEmpty bad then
+                    "0700"
+                else
+                    sprintf "world/group-accessible: %s" (String.concat ", " bad)
+        }
 
     /// 磁盘剩余空间检查。
     let private checkDiskFree (dataDir: string) : CheckResult =
         match HostProbe.freeBytes dataDir with
         | Some free ->
-            { name = "disk-free-space"
-              ok = free >= diskFreeWarningBytes
-              detail =
-                if free >= diskFreeWarningBytes then
-                    sprintf "%d MiB free" (free / 1024L / 1024L)
-                else
-                    sprintf "only %d MiB free (threshold %d MiB)" (free / 1024L / 1024L) (diskFreeWarningBytes / 1024L / 1024L) }
+            {
+                name = "disk-free-space"
+                ok = free >= diskFreeWarningBytes
+                detail =
+                    if free >= diskFreeWarningBytes then
+                        sprintf "%d MiB free" (free / 1024L / 1024L)
+                    else
+                        sprintf
+                            "only %d MiB free (threshold %d MiB)"
+                            (free / 1024L / 1024L)
+                            (diskFreeWarningBytes / 1024L / 1024L)
+            }
         | None ->
             // O-001/R6：磁盘信息不可用 = 无法验证 = 不通过（不得无证据报告 PASS）。
             // 磁盘满是最危险的静默故障之一，宁可误报也不掩盖。
-            { name = "disk-free-space"; ok = false; detail = "unavailable" }
+            {
+                name = "disk-free-space"
+                ok = false
+                detail = "unavailable"
+            }
 
     /// 快照状态检查（findLatest：最新有效快照 / 无 / 损坏 / 超前）。
     let private checkSnapshot (inspect: unit -> InspectResult) : CheckResult =
         let startup =
             match inspect () with
-            | Healthy o | RepairRequired(o, _) | OutcomeUnknown(o, _, _) -> Ok o.startup
+            | Healthy o
+            | RepairRequired(o, _)
+            | OutcomeUnknown(o, _, _) -> Ok o.startup
             | HostOwned i -> Ok i.startup
-            | UnsupportedFormat m | Unreadable m -> Error m
+            | UnsupportedFormat m
+            | Unreadable m -> Error m
+
         let state =
             match startup with
             | Ok { snapshot = LedgerStore.Absent } -> SnapshotState.Absent
-            | Ok { snapshot = LedgerStore.Used through; replayedCommits = n } -> SnapshotState.Used(through, n)
-            | Ok { snapshot = LedgerStore.Discarded reason } -> SnapshotState.Discarded reason
+            | Ok {
+                     snapshot = LedgerStore.Used through
+                     replayedCommits = n
+                 } -> SnapshotState.Used(through, n)
+            | Ok {
+                     snapshot = LedgerStore.Discarded reason
+                 } -> SnapshotState.Discarded reason
             | Error m -> SnapshotState.NotChecked m
+
         let ok, detail = SnapshotCheck.run state
-        { name = "snapshot"; ok = ok; detail = detail }
+
+        {
+            name = "snapshot"
+            ok = ok
+            detail = detail
+        }
 
     /// recovery 证据包检查：存在 recovery 目录且至少一个 manifest.json。
     let private checkRecoveryBundle (dataDir: string) : CheckResult =
         let recoveryDir = Path.Combine(dataDir, "recovery")
+
         let hasBundle =
             Directory.Exists recoveryDir
-            && Directory.GetDirectories(recoveryDir) |> Array.exists (fun d -> File.Exists(Path.Combine(d, "manifest.json")))
-        { name = "recovery-bundle"
-          // 无证据包不是故障：只是说明从未执行过修复。ok 恒 true（信息性检查）。
-          ok = true
-          detail = if hasBundle then "evidence bundle(s) present" else "none (no repair has been run)" }
+            && Directory.GetDirectories(recoveryDir)
+               |> Array.exists (fun d -> File.Exists(Path.Combine(d, "manifest.json")))
+
+        {
+            name = "recovery-bundle"
+            // 无证据包不是故障：只是说明从未执行过修复。ok 恒 true（信息性检查）。
+            ok = true
+            detail =
+                if hasBundle then
+                    "evidence bundle(s) present"
+                else
+                    "none (no repair has been run)"
+        }
 
     let private formatVersionCheck () : CheckResult =
-        { name = "format-version"
-          ok = true
-          detail = sprintf "event shell formatVersion=%d (single authority)" Constants.FormatVersion }
+        {
+            name = "format-version"
+            ok = true
+            detail = sprintf "event shell formatVersion=%d (single authority)" Constants.FormatVersion
+        }
 
     /// provider 配置结构检查：每个启用 provider 必须有模型且默认模型在列表中。
     let private checkProviders (cfg: AppConfig) : CheckResult =
         let ok, detail =
-            cfg.providers |> Map.toList
+            cfg.providers
+            |> Map.toList
             |> List.map (fun (_, p) -> p.id, p.enabled, p.apiKey.IsSome, p.baseUrl)
             |> ProviderCheck.run
-        { name = "provider-config"; ok = ok; detail = detail }
+
+        {
+            name = "provider-config"
+            ok = ok
+            detail = detail
+        }
 
     /// MCP 配置结构检查：command/url 二选一，且至少一个存在。
     let private checkMcp (cfg: AppConfig) : CheckResult =
         let ok, detail =
-            cfg.mcpServers |> Map.toList
+            cfg.mcpServers
+            |> Map.toList
             |> List.map (fun (_, m) -> m.id, m.enabled, m.command, m.url)
             |> McpCheck.run File.Exists
-        { name = "mcp-config"; ok = ok; detail = detail }
+
+        {
+            name = "mcp-config"
+            ok = ok
+            detail = detail
+        }
 
     /// 附件检查：missing = 消息引用但 blob 缺失（Q179）；orphan = 存在 blob 但无任何引用。
     let private checkAttachments (dataDir: string) (outcome: ReplayOutcome) : (CheckResult * CheckResult) =
         let store = new AttachmentStore(dataDir, 1024L)
+
         try
             // 引用按消息顺序收集，存在性逐条探测（与旧实现一致：同一 sha 每次出现都探测）
             let refs =
-                [ for conv in Projection.conversationList outcome.projection do
-                    for m in Projection.effectiveMessages outcome.projection conv do
-                        for (sha, _, _, _) in AttachmentRefs.ofPayload m.payloadJson do
-                            yield sha, store.Exists sha ]
+                [
+                    for conv in Projection.conversationList outcome.projection do
+                        for m in Projection.effectiveMessages outcome.projection conv do
+                            for (sha, _, _, _) in AttachmentRefs.ofPayload m.payloadJson do
+                                yield sha, store.Exists sha
+                ]
+
             let blobs =
-                [ if Directory.Exists(DataPaths.attachmentsDir dataDir) then
-                    for dir in Directory.GetDirectories(DataPaths.attachmentsDir dataDir) do
-                        for sub in Directory.GetDirectories dir do
-                            for f in Directory.GetFiles sub do
-                                yield Path.GetFileName f ]
+                [
+                    if Directory.Exists(DataPaths.attachmentsDir dataDir) then
+                        for dir in Directory.GetDirectories(DataPaths.attachmentsDir dataDir) do
+                            for sub in Directory.GetDirectories dir do
+                                for f in Directory.GetFiles sub do
+                                    yield Path.GetFileName f
+                ]
+
             let (mOk, mDetail), (oOk, oDetail) = AttachmentAudit.run refs blobs
-            { name = "missing-attachments"; ok = mOk; detail = mDetail },
-            { name = "orphan-attachments"; ok = oOk; detail = oDetail }
+
+            {
+                name = "missing-attachments"
+                ok = mOk
+                detail = mDetail
+            },
+            {
+                name = "orphan-attachments"
+                ok = oOk
+                detail = oDetail
+            }
         finally
             store.Dispose()
 
@@ -143,39 +216,91 @@ module Doctor =
     /// 避免把写入者正在追加的半条记录误报为损坏。其余检查与命令行 doctor 完全一致，仍严格只读。
     /// 运行中的主机自己持有存储（LedgerStore 独占目录），live 时由主机给出它的检查结论。
     let private runWith (live: (unit -> InspectResult) option) (configPath: string, dataDir: string) : Diagnosis =
-        let inspect () = match live with Some f -> f () | None -> Inspect.runOrPeek dataDir
+        let inspect () =
+            match live with
+            | Some f -> f ()
+            | None -> Inspect.runOrPeek dataDir
+
         let live = live.IsSome
+
         let d =
-            { checks = []
-              configErrors = []
-              replayError = ""
-              attachmentsMissing = []
-              orphanAttachments = []
-              snapshotStatus = "" }
+            {
+                checks = []
+                configErrors = []
+                replayError = ""
+                attachmentsMissing = []
+                orphanAttachments = []
+                snapshotStatus = ""
+            }
         // 配置
         if File.Exists configPath then
             match TomlCodec.tryParse (File.ReadAllText configPath) with
             | Ok cfg ->
                 d.configErrors <- []
+
                 let port =
-                    if live then { name = "listen-port"; ok = true; detail = sprintf "listening on %s (this host)" cfg.listen }
-                    else { name = "listen-port"; ok = not (portInUse cfg.listen); detail = if portInUse cfg.listen then sprintf "port %s already in use" cfg.listen else "free" }
+                    if live then
+                        {
+                            name = "listen-port"
+                            ok = true
+                            detail = sprintf "listening on %s (this host)" cfg.listen
+                        }
+                    else
+                        {
+                            name = "listen-port"
+                            ok = not (portInUse cfg.listen)
+                            detail =
+                                if portInUse cfg.listen then
+                                    sprintf "port %s already in use" cfg.listen
+                                else
+                                    "free"
+                        }
+
                 d.checks <- d.checks @ [ port; checkProviders cfg; checkMcp cfg ]
             | Error errs -> d.configErrors <- errs
         else
             d.configErrors <- [ sprintf "config file not found: %s" configPath ]
-        d.checks <- d.checks @ [ formatVersionCheck (); checkDiskFree dataDir; checkPermissions dataDir ]
+
+        d.checks <-
+            d.checks
+            @ [ formatVersionCheck (); checkDiskFree dataDir; checkPermissions dataDir ]
         // 数据锁
         if live then
-            d.checks <- d.checks @ [ { name = "data-lock"; ok = true; detail = "held by this host" } ]
+            d.checks <-
+                d.checks
+                @ [
+                    {
+                        name = "data-lock"
+                        ok = true
+                        detail = "held by this host"
+                    }
+                ]
         else
             DataPaths.ensureDataDirs dataDir
+
             match DirLock.DirLock.TryAcquire(DataPaths.eventsDir dataDir) with
             | Ok l ->
                 (l :> IDisposable).Dispose()
-                d.checks <- d.checks @ [ { name = "data-lock"; ok = true; detail = "free" } ]
+
+                d.checks <-
+                    d.checks
+                    @ [
+                        {
+                            name = "data-lock"
+                            ok = true
+                            detail = "free"
+                        }
+                    ]
             | Error e ->
-                d.checks <- d.checks @ [ { name = "data-lock"; ok = false; detail = e } ]
+                d.checks <-
+                    d.checks
+                    @ [
+                        {
+                            name = "data-lock"
+                            ok = false
+                            detail = e
+                        }
+                    ]
         // 快照状态
         let snap = checkSnapshot inspect
         d.snapshotStatus <- snap.detail
@@ -186,75 +311,214 @@ module Doctor =
             try
                 Directory.GetFiles(DataPaths.legacyEventsDir dataDir)
                 |> Array.filter (fun f -> f.EndsWith ".jsonseq" || f.EndsWith ".ndjson")
-            with _ -> [||]
+            with _ ->
+                [||]
+
         if unrecognizedLogs.Length > 0 then
             d.replayError <-
                 sprintf
                     "found %d legacy event log(s) in events/ that this version does not read (the ledger is ledger/log.jsonseq). Archive or remove: %s"
                     unrecognizedLogs.Length
                     (String.Join(", ", unrecognizedLogs |> Array.map Path.GetFileName))
-            d.checks <- d.checks @ [ { name = "log-replay"; ok = false; detail = d.replayError } ]
+
+            d.checks <-
+                d.checks
+                @ [
+                    {
+                        name = "log-replay"
+                        ok = false
+                        detail = d.replayError
+                    }
+                ]
         // 只读检查（算法 R）；有无法识别的日志时跳过（上面已给出明确报错）
         if unrecognizedLogs.Length = 0 then
-            let inspected =
-                inspect ()
+            let inspected = inspect ()
+
             match inspected with
             | Healthy outcome ->
                 let missingCheck, orphanCheck = checkAttachments dataDir outcome
                 d.attachmentsMissing <- []
                 d.orphanAttachments <- []
-                d.checks <- d.checks @ [ { name = "log-replay"; ok = true; detail = sprintf "healthy through commit %d" outcome.lastCommitId }; missingCheck; orphanCheck ]
-            | RepairRequired (outcome, plan) ->
+
+                d.checks <-
+                    d.checks
+                    @ [
+                        {
+                            name = "log-replay"
+                            ok = true
+                            detail = sprintf "healthy through commit %d" outcome.lastCommitId
+                        }
+                        missingCheck
+                        orphanCheck
+                    ]
+            | RepairRequired(outcome, plan) ->
                 d.replayError <-
                     sprintf
                         "damaged log at %s (%s); valid prefix through commit %d. Run `wanxiang doctor --fix` to repair (a recovery bundle will be created first)."
                         plan.damage.file
                         plan.damage.reason
                         outcome.lastCommitId
-                d.checks <- d.checks @ [ { name = "log-replay"; ok = false; detail = d.replayError }; { name = "missing-attachments"; ok = true; detail = "skipped (log damaged)" }; { name = "orphan-attachments"; ok = true; detail = "skipped (log damaged)" } ]
-            | OutcomeUnknown (outcome, commitId, reason) ->
+
+                d.checks <-
+                    d.checks
+                    @ [
+                        {
+                            name = "log-replay"
+                            ok = false
+                            detail = d.replayError
+                        }
+                        {
+                            name = "missing-attachments"
+                            ok = true
+                            detail = "skipped (log damaged)"
+                        }
+                        {
+                            name = "orphan-attachments"
+                            ok = true
+                            detail = "skipped (log damaged)"
+                        }
+                    ]
+            | OutcomeUnknown(outcome, commitId, reason) ->
                 d.replayError <-
                     sprintf
                         "the outcome of writing commit %d is unknown (%s); the store is read-only to avoid writing it twice. Restart the host: reopening reads the log and settles whether commit %d is there (valid through commit %d now)."
-                        commitId reason commitId outcome.lastCommitId
-                d.checks <- d.checks @ [ { name = "log-replay"; ok = false; detail = d.replayError } ]
+                        commitId
+                        reason
+                        commitId
+                        outcome.lastCommitId
+
+                d.checks <-
+                    d.checks
+                    @ [
+                        {
+                            name = "log-replay"
+                            ok = false
+                            detail = d.replayError
+                        }
+                    ]
             | HostOwned i ->
-                let skipped = [ { name = "missing-attachments"; ok = true; detail = "skipped (host running)" }; { name = "orphan-attachments"; ok = true; detail = "skipped (host running)" } ]
+                let skipped =
+                    [
+                        {
+                            name = "missing-attachments"
+                            ok = true
+                            detail = "skipped (host running)"
+                        }
+                        {
+                            name = "orphan-attachments"
+                            ok = true
+                            detail = "skipped (host running)"
+                        }
+                    ]
+
                 let log =
                     match i.health with
                     | LedgerStore.Healthy ->
-                        { name = "log-replay"; ok = true; detail = sprintf "healthy through commit %d (host running; checked without the lock)" i.lastId }
+                        {
+                            name = "log-replay"
+                            ok = true
+                            detail =
+                                sprintf "healthy through commit %d (host running; checked without the lock)" i.lastId
+                        }
                     | LedgerStore.NewerFormat(offset, reason) ->
                         // 更新版本写的日志不是损坏：不建议 --fix（截掉会毁掉新版本的数据）；文字与 UnsupportedFormat 一致。
                         d.replayError <- sprintf "event log %s at byte %d" reason offset
-                        { name = "log-replay"; ok = false; detail = d.replayError }
+
+                        {
+                            name = "log-replay"
+                            ok = false
+                            detail = d.replayError
+                        }
                     | LedgerStore.Damaged _ when i.tailMayBeInFlight ->
-                        { name = "log-replay"; ok = true; detail = sprintf "healthy through commit %d; the last record may still be being written by the running host (use the host's own check for its health)" i.lastId }
+                        {
+                            name = "log-replay"
+                            ok = true
+                            detail =
+                                sprintf
+                                    "healthy through commit %d; the last record may still be being written by the running host (use the host's own check for its health)"
+                                    i.lastId
+                        }
                     | LedgerStore.Damaged(offset, reason) ->
-                        d.replayError <- sprintf "damaged log at byte %d (%s); valid prefix through commit %d. Stop the host, then run `wanxiang doctor --fix`." offset reason i.lastId
-                        { name = "log-replay"; ok = false; detail = d.replayError }
+                        d.replayError <-
+                            sprintf
+                                "damaged log at byte %d (%s); valid prefix through commit %d. Stop the host, then run `wanxiang doctor --fix`."
+                                offset
+                                reason
+                                i.lastId
+
+                        {
+                            name = "log-replay"
+                            ok = false
+                            detail = d.replayError
+                        }
                     | LedgerStore.OutcomeUnknown(commitId, reason) ->
-                        d.replayError <- sprintf "the outcome of writing commit %d is unknown (%s); restart the host to settle it." commitId reason
-                        { name = "log-replay"; ok = false; detail = d.replayError }
+                        d.replayError <-
+                            sprintf
+                                "the outcome of writing commit %d is unknown (%s); restart the host to settle it."
+                                commitId
+                                reason
+
+                        {
+                            name = "log-replay"
+                            ok = false
+                            detail = d.replayError
+                        }
+
                 d.checks <- d.checks @ (log :: skipped)
             | UnsupportedFormat msg ->
                 d.replayError <- msg
-                d.checks <- d.checks @ [ { name = "log-replay"; ok = false; detail = msg } ]
+
+                d.checks <-
+                    d.checks
+                    @ [
+                        {
+                            name = "log-replay"
+                            ok = false
+                            detail = msg
+                        }
+                    ]
             | Unreadable msg ->
                 d.replayError <- msg
-                d.checks <- d.checks @ [ { name = "log-replay"; ok = false; detail = msg } ]
+
+                d.checks <-
+                    d.checks
+                    @ [
+                        {
+                            name = "log-replay"
+                            ok = false
+                            detail = msg
+                        }
+                    ]
         // 配置检查结果（configOk 派生自 configErrors）
         if not (List.isEmpty d.configErrors) then
-            d.checks <- d.checks @ [ { name = "config"; ok = false; detail = String.concat "; " d.configErrors } ]
+            d.checks <-
+                d.checks
+                @ [
+                    {
+                        name = "config"
+                        ok = false
+                        detail = String.concat "; " d.configErrors
+                    }
+                ]
         elif not (d.checks |> List.exists (fun c -> c.name = "config")) then
-            d.checks <- d.checks @ [ { name = "config"; ok = true; detail = "ok" } ]
+            d.checks <-
+                d.checks
+                @ [
+                    {
+                        name = "config"
+                        ok = true
+                        detail = "ok"
+                    }
+                ]
+
         d
 
     /// 命令行 doctor：独占数据目录前提下的完整诊断。
     let run (configPath: string, dataDir: string) : Diagnosis = runWith None (configPath, dataDir)
 
     /// 主机进程内的只读诊断（「检查主机」）。
-    let runLive (configPath: string, dataDir: string, inspect: unit -> InspectResult) : Diagnosis = runWith (Some inspect) (configPath, dataDir)
+    let runLive (configPath: string, dataDir: string, inspect: unit -> InspectResult) : Diagnosis =
+        runWith (Some inspect) (configPath, dataDir)
 
     let isHealthy (d: Diagnosis) : bool = d.checks |> List.forall _.ok
 
@@ -262,21 +526,27 @@ module Doctor =
     /// 调用方传入 Stderr.redact，保证已注册的密钥值不会随报告离开主机。
     let toChecksJson (redact: string -> string) (d: Diagnosis) : System.Text.Json.Nodes.JsonArray =
         let arr = System.Text.Json.Nodes.JsonArray()
+
         for c in d.checks do
             let o = System.Text.Json.Nodes.JsonObject()
             o["name"] <- c.name
             o["ok"] <- c.ok
             o["detail"] <- redact c.detail
             arr.Add o
+
         arr
 
     let print (d: Diagnosis) : unit =
         let mutable ok = true
+
         for c in d.checks do
             if c.ok then
                 eprintfn "%-16s OK" c.name
             else
                 ok <- false
                 eprintfn "%-16s FAIL: %s" c.name c.detail
+
         eprintfn "overall: %s" (if ok then "PASS" else "FAIL")
-        if not ok then exit 1
+
+        if not ok then
+            exit 1

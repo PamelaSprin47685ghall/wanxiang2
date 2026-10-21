@@ -22,50 +22,59 @@ let inset = 12.0
 let look () =
     // 主题把视口留白写进资源字典：层按它钳位，提示条带也按它留白。
     Application.Current.Resources["Margin.OverlayInset"] <- box (Thickness inset)
-    { Layer =
-        { Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
-          Surface = Brushes.White
-          Edge = Brushes.Gray
-          DialogShadow = BoxShadows()
-          PopupShadow = BoxShadows()
-          PopupGap = 4.0
-          PopupMinWidth = 180.0
-          ScrimFade = TimeSpan.Zero
-          ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut() }
-      Toasts =
-        { Surface = Brushes.White
-          Edge = Brushes.Gray
-          Text = Brushes.Black
-          Accent = (fun _ -> Brushes.Gray)
-          AccentOpacity = 0.6
-          Padding = Thickness(16.0, 12.0)
-          Shadow = BoxShadows()
-          LineHeight = 18.0
-          ColumnSpacing = 12.0
-          Spacing = 8.0
-          Margin = Thickness(24.0, 0.0, 24.0, 32.0)
-          MaxWidth = 480.0
-          BodyMaxHeight = 160.0
-          // 减弱动效：主题给 0
-          Fade = TimeSpan.Zero
-          FadeEasing = Avalonia.Animation.Easings.CubicEaseOut() }
-      Menu =
-        { Text = Brushes.Black
-          Muted = Brushes.Gray
-          Faint = Brushes.LightGray
-          Danger = Brushes.Red
-          Accent = Brushes.Blue
-          Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b))
-          Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
-          IconSlotWidth = 16.0
-          ItemMinHeight = 32.0
-          MaxHeight = 200.0 }
-      MenuMinWidth = 200.0
-      GroupedMenuMinWidth = 240.0
-      DwellFailureMs = 9000.0
-      DwellWarningMs = 6500.0
-      DwellDefaultMs = 4000.0
-      DismissTick = TimeSpan.FromMilliseconds 100.0 }
+
+    {
+        Layer =
+            {
+                Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
+                Surface = Brushes.White
+                Edge = Brushes.Gray
+                DialogShadow = BoxShadows()
+                PopupShadow = BoxShadows()
+                PopupGap = 4.0
+                PopupMinWidth = 180.0
+                ScrimFade = TimeSpan.Zero
+                ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut()
+            }
+        Toasts =
+            {
+                Surface = Brushes.White
+                Edge = Brushes.Gray
+                Text = Brushes.Black
+                Accent = (fun _ -> Brushes.Gray)
+                AccentOpacity = 0.6
+                Padding = Thickness(16.0, 12.0)
+                Shadow = BoxShadows()
+                LineHeight = 18.0
+                ColumnSpacing = 12.0
+                Spacing = 8.0
+                Margin = Thickness(24.0, 0.0, 24.0, 32.0)
+                MaxWidth = 480.0
+                BodyMaxHeight = 160.0
+                // 减弱动效：主题给 0
+                Fade = TimeSpan.Zero
+                FadeEasing = Avalonia.Animation.Easings.CubicEaseOut()
+            }
+        Menu =
+            {
+                Text = Brushes.Black
+                Muted = Brushes.Gray
+                Faint = Brushes.LightGray
+                Danger = Brushes.Red
+                Accent = Brushes.Blue
+                Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b))
+                Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
+                IconSlotWidth = 16.0
+                ItemMinHeight = 32.0
+                MaxHeight = 200.0
+            }
+        MenuMinWidth = 200.0
+        GroupedMenuMinWidth = 240.0
+        DwellFailureMs = 9000.0
+        DwellWarningMs = 6500.0
+        DwellDefaultMs = 4000.0
+        DismissTick = TimeSpan.FromMilliseconds 100.0
+    }
 
 let show (root: Control) w h =
     let window = Window(Width = w, Height = h, Content = root)
@@ -74,7 +83,11 @@ let show (root: Control) w h =
     window
 
 let named (root: Visual) name =
-    root.GetVisualDescendants() |> Seq.choose (function :? Control as c when AutomationProperties.GetName c = name -> Some c | _ -> None) |> Seq.tryHead
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? Control as c when AutomationProperties.GetName c = name -> Some c
+        | _ -> None)
+    |> Seq.tryHead
 
 let key (c: Control) k =
     c.RaiseEvent(KeyEventArgs(Key = k, RoutedEvent = InputElement.KeyDownEvent))
@@ -133,7 +146,16 @@ let ``renderToasts updates strip from ViewState without local timers`` () =
         desk.WireDismiss()
         let window = show root 400.0 300.0
         let now = DateTimeOffset.UtcNow
-        let t1: ToastVS = { Id = 1; Text = "状态一"; Tone = ToastTone.Info; UndoAction = None; ExpiresAt = now.AddSeconds 5.0 }
+
+        let t1: ToastVS =
+            {
+                Id = 1
+                Text = "状态一"
+                Tone = ToastTone.Info
+                UndoAction = None
+                ExpiresAt = now.AddSeconds 5.0
+            }
+
         desk.RenderToasts [ t1 ]
         Assert.True((named root "状态一").IsSome)
         desk.RenderToasts []
@@ -180,17 +202,33 @@ let ``escape closes popup then dialog then newest toast`` () =
 let ``forty item menu keeps long labels bounded and supports directional focus`` () =
     Headless.run (fun () ->
         let root = Grid()
-        let anchor = Button(Content = "打开菜单", HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom)
+
+        let anchor =
+            Button(
+                Content = "打开菜单",
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom
+            )
+
         root.Children.Add anchor
         let desk = OverlayDesk(root, look ())
         desk.WireDismiss()
         let window = show root 360.0 320.0
         anchor.Focus NavigationMethod.Tab |> ignore
         let longLabel = "菜单项 01 " + String.replicate 18 "非常长的名称"
+
         let entries =
-            [ for i in 1..40 ->
-                  let label = if i = 1 then longLabel else sprintf "菜单项 %02d" i
-                  PopupEntry.create label ignore |> (if i % 3 = 0 then PopupEntry.withIcon (fun b -> Border(Background = b)) else id) ]
+            [
+                for i in 1..40 ->
+                    let label = if i = 1 then longLabel else sprintf "菜单项 %02d" i
+
+                    PopupEntry.create label ignore
+                    |> (if i % 3 = 0 then
+                            PopupEntry.withIcon (fun b -> Border(Background = b))
+                        else
+                            id)
+            ]
+
         desk.ShowMenu(anchor, true, entries)
         Dispatcher.UIThread.RunJobs()
         let first = (named root longLabel).Value
@@ -204,7 +242,14 @@ let ``forty item menu keeps long labels bounded and supports directional focus``
         let popup = root.Children[4] :?> Border
         Assert.Same(desk.Layer.PopupCard, popup)
         Assert.True(first.Bounds.Width <= popup.Bounds.Width + 0.5)
-        let scroller = popup.GetVisualDescendants() |> Seq.choose (function :? ScrollViewer as s -> Some s | _ -> None) |> Seq.head
+
+        let scroller =
+            popup.GetVisualDescendants()
+            |> Seq.choose (function
+                | :? ScrollViewer as s -> Some s
+                | _ -> None)
+            |> Seq.head
+
         Assert.True(scroller.Extent.Height > scroller.Viewport.Height)
         window.Close())
 
@@ -218,7 +263,15 @@ let ``activating a menu entry closes the popup before running the action`` () =
         desk.WireDismiss()
         let window = show root 400.0 300.0
         let mutable openDuringAction = true
-        desk.ShowMenu(anchor, false, [ PopupEntry.create "重命名" (fun () -> openDuringAction <- desk.Layer.IsPopupOpen) ])
+
+        desk.ShowMenu(
+            anchor,
+            false,
+            [
+                PopupEntry.create "重命名" (fun () -> openDuringAction <- desk.Layer.IsPopupOpen)
+            ]
+        )
+
         Dispatcher.UIThread.RunJobs()
         key (named root "重命名").Value Key.Enter
         Assert.False openDuringAction
@@ -231,7 +284,10 @@ let ``select button opens grouped options with down`` () =
         let root = Grid()
         let desk = OverlayDesk(root, look ())
         desk.WireDismiss()
-        let b = desk.SelectButton("模型", fun () -> [ "服务", [ PopupEntry.create "甲" ignore ] ])
+
+        let b =
+            desk.SelectButton("模型", fun () -> [ "服务", [ PopupEntry.create "甲" ignore ] ])
+
         root.Children.Add b.View
         let window = show root 400.0 300.0
         key b.View Key.Down
@@ -253,7 +309,10 @@ let ``undo toast action runs once and dedupe keeps the newest`` () =
         Assert.True(desk.TryInvokeToastAction "撤销")
         Assert.Equal(10, undone)
         Assert.False(desk.TryInvokeToastAction "撤销")
-        for i in 1..4 do desk.Toast(sprintf "第%d" i, ToastTone.Info)
+
+        for i in 1..4 do
+            desk.Toast(sprintf "第%d" i, ToastTone.Info)
+
         Assert.True((named root "第1").IsNone)
         Assert.True((named root "第4").IsSome)
         window.Close())

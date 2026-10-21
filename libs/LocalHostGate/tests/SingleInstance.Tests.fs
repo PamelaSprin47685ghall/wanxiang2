@@ -1,4 +1,5 @@
 module SingleInstanceTests
+
 open System
 open System.IO
 open Xunit
@@ -17,7 +18,9 @@ let ``socketPath 带尾分隔符的目录不重复`` () =
     Assert.Equal(Path.Combine("/tmp", "ui.sock"), SingleInstance.socketPath "/tmp/")
 
 let private tempDir () =
-    let d = Path.Combine(Path.GetTempPath(), "wanxiang-si-" + Guid.NewGuid().ToString("N"))
+    let d =
+        Path.Combine(Path.GetTempPath(), "wanxiang-si-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory d |> ignore
     d
 
@@ -25,9 +28,13 @@ let private tempDir () =
 let private waitFor (timeoutMs: int) (pred: unit -> bool) =
     let sw = Diagnostics.Stopwatch.StartNew()
     let mutable ok = false
+
     while not ok && sw.ElapsedMilliseconds < int64 timeoutMs do
         ok <- pred ()
-        if not ok then Threading.Thread.Sleep 20
+
+        if not ok then
+            Threading.Thread.Sleep 20
+
     ok
 
 // SPEC 3：真实的监听进程 + 真实的 Unix 套接字

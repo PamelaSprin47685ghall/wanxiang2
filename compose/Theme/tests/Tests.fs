@@ -247,11 +247,18 @@ let ``reduced motion sets declarative animations duration to zero`` () =
         // 查找呼吸与旋转动效样式
         let breathe =
             styles.Styles
-            |> Seq.choose (function :? Style as s when s.Animations.Count > 0 && (string s.Selector).Contains(StyleClass.animBreathe) -> Some (s.Animations[0] :?> Animation.Animation) | _ -> None)
+            |> Seq.choose (function
+                | :? Style as s when s.Animations.Count > 0 && (string s.Selector).Contains(StyleClass.animBreathe) ->
+                    Some(s.Animations[0] :?> Animation.Animation)
+                | _ -> None)
             |> Seq.head
+
         let spin =
             styles.Styles
-            |> Seq.choose (function :? Style as s when s.Animations.Count > 0 && (string s.Selector).Contains(StyleClass.animSpin) -> Some (s.Animations[0] :?> Animation.Animation) | _ -> None)
+            |> Seq.choose (function
+                | :? Style as s when s.Animations.Count > 0 && (string s.Selector).Contains(StyleClass.animSpin) ->
+                    Some(s.Animations[0] :?> Animation.Animation)
+                | _ -> None)
             |> Seq.head
 
         Assert.True(breathe.Duration > TimeSpan.Zero)

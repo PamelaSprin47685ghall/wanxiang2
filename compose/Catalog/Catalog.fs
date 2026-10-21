@@ -7,21 +7,37 @@ open System.Text.Json.Nodes
 // 模块名与库里相同，F# 按名合并同名模块，旧调用方不用改。
 
 /// 空闲页（没有打开对话）输入框上的模型标签与看图提示。vision = None 表示不改看图提示（只换标签）。
-type IdleModelChip = { label: string; vision: (VisionSupport * string) option }
+type IdleModelChip =
+    {
+        label: string
+        vision: (VisionSupport * string) option
+    }
 
 module Catalog =
 
     /// 迁自旧 AppShell.Render 空闲分支：页面已给出标签就只用它；否则用起步输入里选的模型，再退到默认模型；
     /// 都没有时显示「未选择模型」、看图未知。
-    let idleModelChip (labelOverride: string option) (draftSelection: (string * string) option) (catalog: Catalog) : IdleModelChip =
+    let idleModelChip
+        (labelOverride: string option)
+        (draftSelection: (string * string) option)
+        (catalog: Catalog)
+        : IdleModelChip =
         match labelOverride with
         | Some label -> { label = label; vision = None }
         | None ->
             match draftSelection |> Option.orElse (Catalog.defaultSelection catalog) with
             | Some(providerId, model) ->
                 let text = Catalog.describeModel providerId model catalog
-                { label = text; vision = Some(fst (Catalog.visionOf providerId model catalog), text) }
-            | None -> { label = "未选择模型"; vision = Some(VisionUnknown, "") }
+
+                {
+                    label = text
+                    vision = Some(fst (Catalog.visionOf providerId model catalog), text)
+                }
+            | None ->
+                {
+                    label = "未选择模型"
+                    vision = Some(VisionUnknown, "")
+                }
 
 
 /// 对话预设的纯逻辑（决策 433–436）：套用、另存、描述。界面只负责画。
@@ -32,27 +48,45 @@ module Presets =
     /// 回落到新对话默认模型，并返回 Some 提示文案；不可用的工具静默剔除并计入提示。
     let toSessionConfig (catalog: Catalog) (preset: PresetInfo) : SessionConfig * string option =
         let usable = Catalog.usableProviders catalog
+
         let requested =
-            if String.IsNullOrWhiteSpace preset.provider then None
-            else usable |> List.tryFind (fun p -> p.id = preset.provider)
+            if String.IsNullOrWhiteSpace preset.provider then
+                None
+            else
+                usable |> List.tryFind (fun p -> p.id = preset.provider)
+
         let provider, model, modelNote =
             match requested with
             | Some p ->
                 let model =
-                    if not (String.IsNullOrWhiteSpace preset.model) && List.contains preset.model p.models then preset.model
-                    elif not (String.IsNullOrWhiteSpace p.defaultModel) then p.defaultModel
-                    else p.models |> List.tryHead |> Option.defaultValue ""
+                    if
+                        not (String.IsNullOrWhiteSpace preset.model)
+                        && List.contains preset.model p.models
+                    then
+                        preset.model
+                    elif not (String.IsNullOrWhiteSpace p.defaultModel) then
+                        p.defaultModel
+                    else
+                        p.models |> List.tryHead |> Option.defaultValue ""
+
                 let note =
                     if not (String.IsNullOrWhiteSpace preset.model) && model <> preset.model then
                         Some(sprintf "预设里的模型 %s 已不可用，改用 %s。" preset.model model)
-                    else None
+                    else
+                        None
+
                 p.id, model, note
             | None ->
                 let p, m = Catalog.defaultSelection catalog |> Option.defaultValue ("", "")
+
                 let note =
-                    if String.IsNullOrWhiteSpace preset.provider then None
-                    else Some(sprintf "预设里的模型服务已不可用，改用默认模型 %s。" (Catalog.describeModel p m catalog))
+                    if String.IsNullOrWhiteSpace preset.provider then
+                        None
+                    else
+                        Some(sprintf "预设里的模型服务已不可用，改用默认模型 %s。" (Catalog.describeModel p m catalog))
+
                 p, m, note
+
         let available = catalog.tools |> List.map (fun t -> t.id) |> Set.ofList
         let tools = preset.tools |> List.filter available.Contains
         let dropped = List.length preset.tools - List.length tools
@@ -60,15 +94,24 @@ module Presets =
         let missing =
             preset.tools
             |> List.filter (fun t -> not (available.Contains t))
-            |> List.map (fun t -> match t.LastIndexOf ':' with -1 -> t | i -> t.Substring(i + 1))
+            |> List.map (fun t ->
+                match t.LastIndexOf ':' with
+                | -1 -> t
+                | i -> t.Substring(i + 1))
+
         let toolNote =
-            if dropped = 0 then None
-            elif dropped <= 3 then Some(sprintf "工具 %s 在主机上已没有，已跳过。" (String.Join("、", missing)))
-            else Some(sprintf "有 %d 个工具主机上已没有，已跳过。" dropped)
+            if dropped = 0 then
+                None
+            elif dropped <= 3 then
+                Some(sprintf "工具 %s 在主机上已没有，已跳过。" (String.Join("、", missing)))
+            else
+                Some(sprintf "有 %d 个工具主机上已没有，已跳过。" dropped)
+
         let note =
             match [ modelNote; toolNote ] |> List.choose id with
             | [] -> None
             | parts -> Some(String.concat "" parts)
+
         { SessionConfig.empty with
             provider = provider
             model = model
@@ -77,7 +120,8 @@ module Presets =
             temperature = preset.temperature |> Option.orElse catalog.generation.temperature
             topP = preset.topP |> Option.orElse catalog.generation.topP
             maxTokens = preset.maxTokens |> Option.orElse catalog.generation.maxTokens
-            thinkingBudget = preset.thinkingBudget },
+            thinkingBudget = preset.thinkingBudget
+        },
         note
 
     /// 「存为预设」的上行负载：取对话当前的完整会话配置。id 缺省 = 新建。
@@ -97,29 +141,57 @@ module Presets =
 
     let ofPreset (p: PresetInfo) : SessionConfig =
         { SessionConfig.empty with
-            provider = p.provider; model = p.model; instructions = p.instructions; tools = p.tools
-            temperature = p.temperature; topP = p.topP; maxTokens = p.maxTokens; thinkingBudget = p.thinkingBudget }
+            provider = p.provider
+            model = p.model
+            instructions = p.instructions
+            tools = p.tools
+            temperature = p.temperature
+            topP = p.topP
+            maxTokens = p.maxTokens
+            thinkingBudget = p.thinkingBudget
+        }
 
     /// 一行说明：模型 · 指令首句 · 工具数，用在命令面板副标题和设置列表。
     let describe (catalog: Catalog) (p: PresetInfo) : string =
         let model =
-            if String.IsNullOrWhiteSpace p.provider then "默认模型"
-            else Catalog.describeModel p.provider p.model catalog
+            if String.IsNullOrWhiteSpace p.provider then
+                "默认模型"
+            else
+                Catalog.describeModel p.provider p.model catalog
+
         let instr =
             p.instructions
             |> Option.map (fun i ->
                 let line = i.Split('\n').[0].Trim()
-                if line.Length > 24 then line.Substring(0, 24) + "…" else line)
-        let tools = if List.isEmpty p.tools then None else Some(sprintf "%d 个工具" p.tools.Length)
+
+                if line.Length > 24 then
+                    line.Substring(0, 24) + "…"
+                else
+                    line)
+
+        let tools =
+            if List.isEmpty p.tools then
+                None
+            else
+                Some(sprintf "%d 个工具" p.tools.Length)
+
         String.Join(" · ", [ Some model; instr; tools ] |> List.choose id)
 
     /// 新名字的建议：对话标题，重名时补序号。
     let suggestName (existing: PresetInfo list) (title: string) : string =
         let baseName =
-            let t = if String.IsNullOrWhiteSpace title || title = "新对话" then "我的预设" else title.Trim()
+            let t =
+                if String.IsNullOrWhiteSpace title || title = "新对话" then
+                    "我的预设"
+                else
+                    title.Trim()
+
             if t.Length > 30 then t.Substring(0, 30) else t
+
         let taken = existing |> List.map (fun p -> p.name.ToLowerInvariant()) |> Set.ofList
-        if not (taken.Contains(baseName.ToLowerInvariant())) then baseName
+
+        if not (taken.Contains(baseName.ToLowerInvariant())) then
+            baseName
         else
             Seq.initInfinite (fun i -> sprintf "%s %d" baseName (i + 2))
             |> Seq.find (fun n -> not (taken.Contains(n.ToLowerInvariant())))
@@ -129,14 +201,22 @@ module ModelSwitcher =
     /// 所有可用模型，按模型服务的配置顺序、服务内模型顺序。
     let options (catalog: Catalog) (current: (string * string) option) : ModelOption list =
         let defaultSel = Catalog.defaultSelection catalog
-        [ for p in Catalog.usableProviders catalog do
-              for m in p.models ->
-                  { providerId = p.id
-                    providerLabel = p.label
-                    model = m
-                    isCurrent = current = Some(p.id, m)
-                    isDefault = defaultSel = Some(p.id, m) } ]
+
+        [
+            for p in Catalog.usableProviders catalog do
+                for m in p.models ->
+                    {
+                        providerId = p.id
+                        providerLabel = p.label
+                        model = m
+                        isCurrent = current = Some(p.id, m)
+                        isDefault = defaultSel = Some(p.id, m)
+                    }
+        ]
 
     /// 顶栏芯片文字：模型名（短），服务名放第二层（提示与读屏）。
     let chipText (providerId: string) (model: string) (catalog: Catalog) : string =
-        if String.IsNullOrWhiteSpace model then Catalog.describeModel providerId model catalog else model
+        if String.IsNullOrWhiteSpace model then
+            Catalog.describeModel providerId model catalog
+        else
+            model

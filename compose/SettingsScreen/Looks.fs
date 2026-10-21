@@ -18,8 +18,10 @@ module SettingsLooks =
     let glyphOf (t: ThemeManager) : string -> IBrush -> Control =
         let brand = lazy (ShellBrand(t))
         let size = t.Space Space.GlyphMd :> IObservable<float>
+
         fun name brush ->
             let pick g = IconSet.image g brush size
+
             match name with
             | "logo" -> brand.Value.Logo((t.Metric Metric.LogoEmpty).Value)
             | "alert" -> pick Glyph.Alert
@@ -37,4 +39,3 @@ module SettingsLooks =
             | "sun" -> pick Glyph.Sun
             | "info" -> pick Glyph.Info
             | _ -> pick Glyph.Info
-

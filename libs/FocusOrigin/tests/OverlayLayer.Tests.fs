@@ -17,22 +17,32 @@ let setInset (value: float) =
     Application.Current.Resources["Margin.OverlayInset"] <- box (Thickness value)
 
 let look () =
-    { Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
-      Surface = SolidColorBrush(Colors.White)
-      Edge = SolidColorBrush(Colors.Gray)
-      DialogShadow = BoxShadows()
-      PopupShadow = BoxShadows()
-      PopupGap = 4.0
-      PopupMinWidth = 180.0
-      ScrimFade = TimeSpan.Zero
-      ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut() }
+    {
+        Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
+        Surface = SolidColorBrush(Colors.White)
+        Edge = SolidColorBrush(Colors.Gray)
+        DialogShadow = BoxShadows()
+        PopupShadow = BoxShadows()
+        PopupGap = 4.0
+        PopupMinWidth = 180.0
+        ScrimFade = TimeSpan.Zero
+        ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut()
+    }
 
 /// 浮层落点规则（下方放不下翻到上方，再钳进视口）；组合者实际填入该函数。
 let place ax ay aw ah (w: float) (h: float) vw vh (inset: float) gap alignRight =
     let below = ay + ah + gap
     let x = if alignRight then ax + aw - w else ax
-    let y = if below + h > vh - inset && ay - gap - h >= inset then ay - gap - h else below
-    let clamp v lo hi = if hi < lo then lo else max lo (min v hi)
+
+    let y =
+        if below + h > vh - inset && ay - gap - h >= inset then
+            ay - gap - h
+        else
+            below
+
+    let clamp v lo hi =
+        if hi < lo then lo else max lo (min v hi)
+
     clamp x inset (vw - inset - w), clamp y inset (vh - inset - h)
 
 let show (root: Control) w h =
@@ -97,7 +107,10 @@ let ``popup flips and clamps inside the viewport then restores anchor focus`` ()
         let tall = StackPanel()
         tall.Children.Add first
         tall.Children.Add(Border(Width = 700.0, Height = 700.0))
-        let content = ScrollViewer(Content = tall, HorizontalScrollBarVisibility = Primitives.ScrollBarVisibility.Disabled)
+
+        let content =
+            ScrollViewer(Content = tall, HorizontalScrollBarVisibility = Primitives.ScrollBarVisibility.Disabled)
+
         overlay.ShowPopup(anchor, content, true, 420.0)
         Dispatcher.UIThread.RunJobs()
         let popup = root.Children[4] :?> Border
@@ -155,11 +168,25 @@ let private wheelAt (target: Control) (root: Control) =
     // 目标中心换算到 root 坐标：处理器读的就是相对 root 的点。
     let b = target.Bounds
     let translated = target.TranslatePoint(Point(b.Width / 2.0, b.Height / 2.0), root)
-    let center = if translated.HasValue then translated.Value else Point(b.X + b.Width / 2.0, b.Y + b.Height / 2.0)
+
+    let center =
+        if translated.HasValue then
+            translated.Value
+        else
+            Point(b.X + b.Width / 2.0, b.Y + b.Height / 2.0)
+
     let e =
         PointerWheelEventArgs(
-            target, pointer, root, center, 0UL,
-            PointerPointProperties(), KeyModifiers.None, Vector(0.0, -120.0))
+            target,
+            pointer,
+            root,
+            center,
+            0UL,
+            PointerPointProperties(),
+            KeyModifiers.None,
+            Vector(0.0, -120.0)
+        )
+
     e.RoutedEvent <- InputElement.PointerWheelChangedEvent
     e.Source <- target
     root.RaiseEvent e
@@ -175,7 +202,10 @@ let ``wheel outside an open popup dismisses it without scrolling the content`` (
         let l = look ()
         let overlay = OverlayLayer(root, l, place)
         overlay.WireDismiss()
-        let anchor = Border(Width = 120.0, Height = 40.0, HorizontalAlignment = HorizontalAlignment.Right)
+
+        let anchor =
+            Border(Width = 120.0, Height = 40.0, HorizontalAlignment = HorizontalAlignment.Right)
+
         root.Children.Add anchor
         let window = show root 400.0 300.0
         overlay.ShowPopup(anchor, button "重命名", false)
@@ -194,7 +224,10 @@ let ``wheel inside an open popup is left to the popup itself`` () =
         let l = look ()
         let overlay = OverlayLayer(root, l, place)
         overlay.WireDismiss()
-        let anchor = Border(Width = 120.0, Height = 40.0, HorizontalAlignment = HorizontalAlignment.Right)
+
+        let anchor =
+            Border(Width = 120.0, Height = 40.0, HorizontalAlignment = HorizontalAlignment.Right)
+
         root.Children.Add anchor
         let window = show root 400.0 300.0
         let item = button "重命名"
@@ -224,7 +257,16 @@ let ``对话框里 Tab 圈在内容里循环；嵌套对话框关闭后恢复外
         b.Focus NavigationMethod.Tab |> ignore
         b.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Tab, Source = b))
         Assert.True a.IsFocused
-        a.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Tab, KeyModifiers = KeyModifiers.Shift, Source = a))
+
+        a.RaiseEvent(
+            KeyEventArgs(
+                RoutedEvent = InputElement.KeyDownEvent,
+                Key = Key.Tab,
+                KeyModifiers = KeyModifiers.Shift,
+                Source = a
+            )
+        )
+
         Assert.True b.IsFocused
         overlay.ShowDialog(button "内层", 200.0)
         Dispatcher.UIThread.RunJobs()

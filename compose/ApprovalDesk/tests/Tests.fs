@@ -22,7 +22,11 @@ open Wanxiang2.ApprovalDesk
 open Wanxiang2.DeskTests
 
 let private byId (root: Visual) (id: string) =
-    root.GetVisualDescendants() |> Seq.choose (function :? Control as c when AutomationProperties.GetAutomationId c = id -> Some c | _ -> None) |> Seq.tryHead
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? Control as c when AutomationProperties.GetAutomationId c = id -> Some c
+        | _ -> None)
+    |> Seq.tryHead
 
 let private invoke (control: Control) =
     let peer = ControlAutomationPeer.CreatePeerForElement control
@@ -31,11 +35,22 @@ let private invoke (control: Control) =
 
 let private requested (conv: Guid) =
     ToolApprovalRequested
-        {| approvalId = Guid.NewGuid(); conversationId = conv; generationId = Guid.NewGuid(); callId = "call-1"
-           toolName = "builtin_file_read"; summary = "读取文件 /home/a/notes.txt"
-           arguments = JsonNode.Parse """{"path":"/home/a/notes.txt"}"""; policy = "always"; expiresInSeconds = 60 |}
+        {|
+            approvalId = Guid.NewGuid()
+            conversationId = conv
+            generationId = Guid.NewGuid()
+            callId = "call-1"
+            toolName = "builtin_file_read"
+            summary = "读取文件 /home/a/notes.txt"
+            arguments = JsonNode.Parse """{"path":"/home/a/notes.txt"}"""
+            policy = "always"
+            expiresInSeconds = 60
+        |}
 
-let private idOf = function ToolApprovalRequested d -> d.approvalId | _ -> Guid.Empty
+let private idOf =
+    function
+    | ToolApprovalRequested d -> d.approvalId
+    | _ -> Guid.Empty
 
 let private setup () =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
@@ -63,6 +78,7 @@ let ``审批面板：只显示当前对话的卡片，已处理即移除，断�
         Assert.Equal(2, desk.Pending.Length)
         Assert.Single(desk.Panel.Children) |> ignore
         invoke (byId desk.View "tool-approval-approve").Value
+
         match List.ofSeq sent with
         | [ ToolApprovalDecision d ] ->
             Assert.Equal(idOf ra, d.approvalId)
@@ -73,7 +89,19 @@ let ``审批面板：只显示当前对话的卡片，已处理即移除，断�
         Assert.Equal(2, desk.Pending.Length)
         desk.ApplyConversation(Some b)
         Assert.True((byId desk.View (sprintf "tool-approval-%O" (idOf rb))).IsSome)
-        desk.Handle(ToolApprovalResolved {| approvalId = idOf rb; conversationId = b; status = "approved"; reason = ""; alreadyHandled = false |}) |> Assert.True
+
+        desk.Handle(
+            ToolApprovalResolved
+                {|
+                    approvalId = idOf rb
+                    conversationId = b
+                    status = "approved"
+                    reason = ""
+                    alreadyHandled = false
+                |}
+        )
+        |> Assert.True
+
         Assert.Empty desk.Panel.Children
         Assert.False desk.View.IsVisible
         desk.ApplyConversation(Some a)
@@ -100,7 +128,19 @@ let ``别的对话来审批给提示条，已处理过的结果也给提示条�
         Dispatcher.UIThread.RunJobs()
         Assert.True(toastShown root ApprovalCardText.otherConversationWaitingText)
         Assert.Equal<Set<string>>(set [ "call-1" ], seen[seen.Count - 1])
-        desk.Handle(ToolApprovalResolved {| approvalId = idOf other; conversationId = Guid.Empty; status = "denied"; reason = ""; alreadyHandled = true |}) |> ignore
+
+        desk.Handle(
+            ToolApprovalResolved
+                {|
+                    approvalId = idOf other
+                    conversationId = Guid.Empty
+                    status = "denied"
+                    reason = ""
+                    alreadyHandled = true
+                |}
+        )
+        |> ignore
+
         Dispatcher.UIThread.RunJobs()
         Assert.True(toastShown root (ApprovalCardText.alreadyHandledText "denied"))
         Assert.False(desk.Handle(ToolApprovalDecision {| approvalId = a; approved = true |}))
@@ -111,19 +151,23 @@ let ``审批卡的字色取自主题并随主题切换`` () =
     Headless.run (fun () ->
         let _, _, desk, _, _, window = setup ()
         let a = Guid.NewGuid()
-        let vs: Wanxiang2.WorkspaceState.ApprovalVS = {
-            Items = [
-                {
-                    ApprovalId = Guid.NewGuid()
-                    ToolName = "builtin_file_read"
-                    CallId = "call-1"
-                    Summary = "读取文件"
-                    ArgumentsJson = "{}"
-                    Policy = "always"
-                    ConversationId = a
-                }
-            ]
-        }
+
+        let vs: Wanxiang2.WorkspaceState.ApprovalVS =
+            {
+                Items =
+                    [
+                        {
+                            ApprovalId = Guid.NewGuid()
+                            ToolName = "builtin_file_read"
+                            CallId = "call-1"
+                            Summary = "读取文件"
+                            ArgumentsJson = "{}"
+                            Policy = "always"
+                            ConversationId = a
+                        }
+                    ]
+            }
+
         desk.Render(vs, Some a)
         Dispatcher.UIThread.RunJobs()
         let summary = (byId desk.View "tool-approval-summary").Value :?> TextBlock

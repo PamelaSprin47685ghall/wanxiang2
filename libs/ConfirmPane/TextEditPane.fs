@@ -14,15 +14,19 @@ type TextEditPane(?title: string, ?initial: string, ?confirmLabel: string) =
     let submitted = Event<string>()
     let cancelled = Event<unit>()
     let box = TextBox(AcceptsReturn = true, TextWrapping = Media.TextWrapping.Wrap)
+
     do
         box.Classes.Add "control-stroke"
         box.Classes.Add "text-area"
         box.MinHeight <- 160.0
 
-    let submit () = submitted.Trigger(if isNull box.Text then "" else box.Text)
+    let submit () =
+        submitted.Trigger(if isNull box.Text then "" else box.Text)
+
     let mutable currentLabel = defaultArg confirmLabel "分叉"
 
     let cancelButton = Button(Content = "取消")
+
     do
         cancelButton.Classes.Add "ghost"
         cancelButton.Classes.Add "button-ghost"
@@ -31,27 +35,36 @@ type TextEditPane(?title: string, ?initial: string, ?confirmLabel: string) =
         cancelButton.Click.Add(fun _ -> cancelled.Trigger())
 
     let confirmButton = Button(Content = currentLabel)
+
     do
         AutomationProperties.SetName(confirmButton, currentLabel)
         confirmButton.Classes.Add "primary"
         confirmButton.Classes.Add "button-primary"
         confirmButton.Click.Add(fun _ -> submit ())
 
-    let footerRow = StackPanel(Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8.0)
+    let footerRow =
+        StackPanel(Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8.0)
+
     do
         cancelButton.KeyDown.Add(fun e ->
             if e.Key = Key.Right && confirmButton.IsEnabled then
                 e.Handled <- true
                 confirmButton.Focus NavigationMethod.Directional |> ignore)
+
         confirmButton.KeyDown.Add(fun e ->
             if e.Key = Key.Left && cancelButton.IsEnabled then
                 e.Handled <- true
                 cancelButton.Focus NavigationMethod.Directional |> ignore)
+
         footerRow.Children.Add cancelButton
         footerRow.Children.Add confirmButton
 
-    let titleBlock = TextBlock(Text = defaultArg title "", FontWeight = Media.FontWeight.Medium)
-    let captionBlock = TextBlock(Text = "会以你编辑后的内容新建一个分叉对话，原对话保持不变。", TextWrapping = Media.TextWrapping.Wrap)
+    let titleBlock =
+        TextBlock(Text = defaultArg title "", FontWeight = Media.FontWeight.Medium)
+
+    let captionBlock =
+        TextBlock(Text = "会以你编辑后的内容新建一个分叉对话，原对话保持不变。", TextWrapping = Media.TextWrapping.Wrap)
+
     do captionBlock.Classes.Add "muted"
 
     let view =
@@ -64,11 +77,16 @@ type TextEditPane(?title: string, ?initial: string, ?confirmLabel: string) =
         box.AddHandler(
             InputElement.KeyDownEvent,
             (fun _ (e: KeyEventArgs) ->
-                let ctrl = e.KeyModifiers.HasFlag KeyModifiers.Control || e.KeyModifiers.HasFlag KeyModifiers.Meta
+                let ctrl =
+                    e.KeyModifiers.HasFlag KeyModifiers.Control
+                    || e.KeyModifiers.HasFlag KeyModifiers.Meta
+
                 if e.Key = Key.Enter && ctrl then
                     e.Handled <- true
                     submit ()),
-            Avalonia.Interactivity.RoutingStrategies.Tunnel)
+            Avalonia.Interactivity.RoutingStrategies.Tunnel
+        )
+
         let panel = StackPanel(Orientation = Orientation.Vertical, Spacing = 16.0)
         panel.Children.Add titleBlock
         panel.Children.Add captionBlock
@@ -88,6 +106,7 @@ type TextEditPane(?title: string, ?initial: string, ?confirmLabel: string) =
 
     member this.Render(vs: DialogVS) =
         titleBlock.Text <- vs.Title
+
         match vs.TextEdit with
         | Some te ->
             currentLabel <- te.ConfirmLabel
@@ -96,10 +115,16 @@ type TextEditPane(?title: string, ?initial: string, ?confirmLabel: string) =
             let tip = sprintf "确认“%s”（Ctrl / ⌘ + Enter）" currentLabel
             AutomationProperties.SetHelpText(confirmButton, tip)
             ToolTip.SetTip(confirmButton, tip)
-            if box.Text <> te.Initial && not (String.IsNullOrEmpty te.Initial) then box.Text <- te.Initial
+
+            if box.Text <> te.Initial && not (String.IsNullOrEmpty te.Initial) then
+                box.Text <- te.Initial
+
             confirmButton.IsEnabled <- not te.IsPending
             cancelButton.IsEnabled <- not te.IsPending
         | None -> ()
 
-    [<CLIEvent>] member _.Submitted = submitted.Publish
-    [<CLIEvent>] member _.Cancelled = cancelled.Publish
+    [<CLIEvent>]
+    member _.Submitted = submitted.Publish
+
+    [<CLIEvent>]
+    member _.Cancelled = cancelled.Publish

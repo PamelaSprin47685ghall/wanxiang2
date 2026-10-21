@@ -7,22 +7,32 @@ open System.Text
 /// payload：RS 与 LF 之间的 UTF-8 文本（有 fault 时可能为空）；
 /// fault：None = 完整有效；Some 原因 = 这段字节不可信（截断、非法 UTF-8、游离字节）；
 /// startOffset / endOffset：在字节流中的起止位置（endOffset 不含）。
-type Record = { payload: string; fault: string option; startOffset: int64; endOffset: int64 }
+type Record =
+    {
+        payload: string
+        fault: string option
+        startOffset: int64
+        endOffset: int64
+    }
 
 /// RFC 7464 分帧：RS(0x1E) + 文本 + LF(0x0A)。
 [<RequireQualifiedAccess>]
 module Frame =
     [<Literal>]
     let RS = 0x1Euy
+
     [<Literal>]
     let LF = 0x0Auy
 
     [<Literal>]
     let TornTail = "torn record (no trailing LF)"
+
     [<Literal>]
     let InvalidUtf8 = "invalid UTF-8"
+
     [<Literal>]
     let EmptyRecord = "RS with no record body"
+
     [<Literal>]
     let StrayBytes = "bytes outside any record"
 
@@ -31,9 +41,11 @@ module Frame =
 
     /// 包成一帧。文本内含 RS 会破坏边界，直接拒绝（防呆）。
     let encode (text: string) : byte[] =
-        if text.IndexOf '\u001e' >= 0 then invalidArg (nameof text) "payload must not contain RS (0x1E)"
+        if text.IndexOf '\u001e' >= 0 then
+            invalidArg (nameof text) "payload must not contain RS (0x1E)"
+
         let body = strict.GetBytes text
-        let buf = Array.zeroCreate<byte> (body.Length + 2)
+        let buf = Array.zeroCreate<byte>(body.Length + 2)
         buf[0] <- RS
         Array.blit body 0 buf 1 body.Length
         buf[body.Length + 1] <- LF
@@ -46,23 +58,55 @@ module Frame =
         let result = ResizeArray<Record>()
         let first = data.IndexOf RS
         let lead = if first < 0 then data.Length else first
+
         if lead > 0 then
-            result.Add { payload = ""; fault = Some StrayBytes; startOffset = baseOffset; endOffset = baseOffset + int64 lead }
+            result.Add
+                {
+                    payload = ""
+                    fault = Some StrayBytes
+                    startOffset = baseOffset
+                    endOffset = baseOffset + int64 lead
+                }
+
         let mutable i = lead
+
         while i < data.Length do
             let mutable j = i + 1
-            while j < data.Length && data[j] <> RS do j <- j + 1
+
+            while j < data.Length && data[j] <> RS do
+                j <- j + 1
+
             let len = j - i - 1
+
             if len = 0 then
                 let f = if j = data.Length then TornTail else EmptyRecord
-                result.Add { payload = ""; fault = Some f; startOffset = baseOffset + int64 i; endOffset = baseOffset + int64 j }
+
+                result.Add
+                    {
+                        payload = ""
+                        fault = Some f
+                        startOffset = baseOffset + int64 i
+                        endOffset = baseOffset + int64 j
+                    }
             else
                 let seg = data.Slice(i + 1, len)
                 let complete = seg[seg.Length - 1] = LF
                 let body = if complete then seg.Slice(0, seg.Length - 1) else seg
+
                 let text, fault =
-                    try strict.GetString body, (if complete then None else Some TornTail)
-                    with :? DecoderFallbackException -> "", Some InvalidUtf8
-                result.Add { payload = text; fault = fault; startOffset = baseOffset + int64 i; endOffset = baseOffset + int64 j }
+                    try
+                        strict.GetString body, (if complete then None else Some TornTail)
+                    with :? DecoderFallbackException ->
+                        "", Some InvalidUtf8
+
+                result.Add
+                    {
+                        payload = text
+                        fault = fault
+                        startOffset = baseOffset + int64 i
+                        endOffset = baseOffset + int64 j
+                    }
+
             i <- j
+
         List.ofSeq result

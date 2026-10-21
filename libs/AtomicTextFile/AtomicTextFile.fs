@@ -16,10 +16,20 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
     let dir = Path.GetDirectoryName full
     let gate = obj ()
     let changed = Event<unit>()
-    let mutable lastKnown : string option = None
+    let mutable lastKnown: string option = None
     let mutable disposed = false
-    let mutable watcher : FileSystemWatcher option = None
-    let timer = new Timer((fun _ -> if not (lock gate (fun () -> disposed)) then changed.Trigger()), null, Timeout.Infinite, Timeout.Infinite)
+    let mutable watcher: FileSystemWatcher option = None
+
+    let timer =
+        new Timer(
+            (fun _ ->
+                if not (lock gate (fun () -> disposed)) then
+                    changed.Trigger()),
+            null,
+            Timeout.Infinite,
+            Timeout.Infinite
+        )
+
     let utf8 = UTF8Encoding(false)
 
     let ownerOnly (p: string) =
@@ -29,8 +39,10 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
     let poke () =
         lock gate (fun () ->
             if not disposed then
-                try timer.Change(debounce, Timeout.InfiniteTimeSpan) |> ignore
-                with :? ObjectDisposedException -> ())
+                try
+                    timer.Change(debounce, Timeout.InfiniteTimeSpan) |> ignore
+                with :? ObjectDisposedException ->
+                    ())
 
     member _.Path = full
 
@@ -61,7 +73,8 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
                 let text = File.ReadAllText(full, utf8)
                 lastKnown <- Some text
                 Ok text
-            with e -> Error(sprintf "read failed: %s" e.Message))
+            with e ->
+                Error(sprintf "read failed: %s" e.Message))
 
     /// 原子写入，并记为最后已知原文。失败时原文件不变，临时文件被删掉。
     member this.Write(text: string) : Result<unit, string> = this.WriteCore(text, false)
@@ -74,7 +87,10 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
     member private _.WriteCore(text: string, onlyIfUnchanged: bool) : Result<unit, string> =
         lock gate (fun () ->
             Directory.CreateDirectory dir |> ignore
-            let tmp = Path.Combine(dir, sprintf ".%s.tmp.%d" (Path.GetFileName full) Environment.ProcessId)
+
+            let tmp =
+                Path.Combine(dir, sprintf ".%s.tmp.%d" (Path.GetFileName full) Environment.ProcessId)
+
             try
                 do
                     use fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None)
@@ -82,33 +98,62 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
                     let bytes = utf8.GetBytes text
                     fs.Write(bytes, 0, bytes.Length)
                     fs.Flush true
-                let onDisk = try (if File.Exists full then Some(File.ReadAllText(full, utf8)) else None) with _ -> None
+
+                let onDisk =
+                    try
+                        (if File.Exists full then
+                             Some(File.ReadAllText(full, utf8))
+                         else
+                             None)
+                    with _ ->
+                        None
+
                 if onlyIfUnchanged && onDisk <> lastKnown then
                     File.Delete tmp
                     failwith "file changed on disk since it was last read; not overwriting"
+
                 File.Move(tmp, full, true)
                 lastKnown <- Some text
                 Ok()
             with e ->
-                (try if File.Exists tmp then File.Delete tmp with _ -> ())
+                (try
+                    if File.Exists tmp then
+                        File.Delete tmp
+                 with _ ->
+                     ())
+
                 Error(sprintf "write failed: %s" e.Message))
 
     /// 磁盘原文与最后已知原文不同（含此前从未读写过）时返回磁盘原文，不更新最后已知原文。
     /// 文件不存在或读不了返回 None。
     member _.ExternalEdit() : string option =
         lock gate (fun () ->
-            match (try Some(File.ReadAllText(full, utf8)) with _ -> None) with
+            match
+                (try
+                    Some(File.ReadAllText(full, utf8))
+                 with _ ->
+                     None)
+            with
             | Some text when Some text <> lastKnown -> Some text
             | _ -> None)
 
     /// 把文件权限收紧到仅当前用户可读写（外部创建时 umask 可能放宽）。
     member _.RestrictToOwner() : Result<unit, string> =
-        try ownerOnly full; Ok() with e -> Error e.Message
+        try
+            ownerOnly full
+            Ok()
+        with e ->
+            Error e.Message
 
     interface IDisposable with
         member _.Dispose() =
             lock gate (fun () ->
                 if not disposed then
                     disposed <- true
-                    watcher |> Option.iter (fun w -> w.EnableRaisingEvents <- false; w.Dispose())
+
+                    watcher
+                    |> Option.iter (fun w ->
+                        w.EnableRaisingEvents <- false
+                        w.Dispose())
+
                     timer.Dispose())

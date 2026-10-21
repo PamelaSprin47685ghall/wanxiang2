@@ -14,49 +14,63 @@ module ProviderFailure =
 
     /// 上游响应正文里能识别出的语义信号（状态码不足以区分时使用）。
     let private bodySignals =
-        [ "context_length_exceeded", ContextTooLong
-          "context length", ContextTooLong
-          "maximum context", ContextTooLong
-          "too many tokens", ContextTooLong
-          "reduce the length", ContextTooLong
-          "content_filter", ContentFiltered
-          "content management policy", ContentFiltered
-          "safety", ContentFiltered
-          "model_not_found", ModelNotFound
-          "does not exist", ModelNotFound
-          "invalid_api_key", ProviderAuthFailed
-          "incorrect api key", ProviderAuthFailed ]
+        [
+            "context_length_exceeded", ContextTooLong
+            "context length", ContextTooLong
+            "maximum context", ContextTooLong
+            "too many tokens", ContextTooLong
+            "reduce the length", ContextTooLong
+            "content_filter", ContentFiltered
+            "content management policy", ContentFiltered
+            "safety", ContentFiltered
+            "model_not_found", ModelNotFound
+            "does not exist", ModelNotFound
+            "invalid_api_key", ProviderAuthFailed
+            "incorrect api key", ProviderAuthFailed
+        ]
 
     let private detailOf (text: string) : string = HttpFailureFacts.detail text
 
     let private signalFromBody (text: string) : GenerationErrorKind option =
-        if String.IsNullOrWhiteSpace text then None
+        if String.IsNullOrWhiteSpace text then
+            None
         else
             let lowered = text.ToLowerInvariant()
-            bodySignals |> List.tryPick (fun (needle, kind) -> if lowered.Contains needle then Some kind else None)
+
+            bodySignals
+            |> List.tryPick (fun (needle, kind) -> if lowered.Contains needle then Some kind else None)
 
     let private retryAfterOfClientResult (ex: System.ClientModel.ClientResultException) : int option =
         try
             let response = ex.GetRawResponse()
-            if isNull response then None
+
+            if isNull response then
+                None
             else
                 let mutable value = ""
+
                 if response.Headers.TryGetValue("Retry-After", &value) then
                     HttpFailureFacts.retryAfterOfValue DateTimeOffset.UtcNow value
-                else None
-        with _ -> None
+                else
+                    None
+        with _ ->
+            None
 
-    let retryAfterOfResponse (response: HttpResponseMessage) : int option = HttpFailureFacts.retryAfterOfResponse response
+    let retryAfterOfResponse (response: HttpResponseMessage) : int option =
+        HttpFailureFacts.retryAfterOfResponse response
 
-    let private retryAfterOfHttpException (hre: HttpRequestException) : int option = HttpFailureFacts.retryAfterOfData hre
+    let private retryAfterOfHttpException (hre: HttpRequestException) : int option =
+        HttpFailureFacts.retryAfterOfData hre
 
     let private kindOfStatus (status: int) (body: string) : GenerationErrorKind =
         match signalFromBody body with
         | Some kind -> kind
         | None ->
             match status with
-            | 400 | 422 -> ProviderBadRequest
-            | 401 | 403 -> ProviderAuthFailed
+            | 400
+            | 422 -> ProviderBadRequest
+            | 401
+            | 403 -> ProviderAuthFailed
             | 404 -> ModelNotFound
             | 408 -> ProviderTimeout
             | 429 -> ProviderRateLimited
@@ -97,26 +111,38 @@ module ProviderFailure =
     /// 失败异常里携带的限流信号（决策 241）：SDK 的原始响应头，或自有传输塞进 Data 的解析结果。
     /// 沿 InnerException 往下找，SDK 有时会包一层。
     let rec rateLimitOf (ex: exn) : ProviderRateLimit option =
-        if isNull ex then None
+        if isNull ex then
+            None
         else
             let direct =
                 try
                     match ex with
                     | :? System.ClientModel.ClientResultException as cre ->
                         let response = cre.GetRawResponse()
-                        if isNull response || isNull response.Headers then None
+
+                        if isNull response || isNull response.Headers then
+                            None
                         else
                             let lookup (name: string) =
                                 let mutable value = ""
-                                if response.Headers.TryGetValue(name, &value) && not (String.IsNullOrWhiteSpace value) then Some value
-                                else None
+
+                                if
+                                    response.Headers.TryGetValue(name, &value)
+                                    && not (String.IsNullOrWhiteSpace value)
+                                then
+                                    Some value
+                                else
+                                    None
+
                             ProviderRateLimit.ofHeaders DateTimeOffset.UtcNow lookup
                     | _ when not (isNull ex.Data) && ex.Data.Contains "RateLimit" ->
                         match ex.Data["RateLimit"] with
                         | :? ProviderRateLimit as limit -> Some limit
                         | _ -> None
                     | _ -> None
-                with _ -> None
+                with _ ->
+                    None
+
             match direct with
             | Some _ -> direct
             | None -> rateLimitOf ex.InnerException
@@ -127,61 +153,84 @@ module ProviderFailure =
             let body =
                 try
                     let response = cre.GetRawResponse()
-                    if isNull response then cre.Message
+
+                    if isNull response then
+                        cre.Message
                     else
                         let content = response.Content
                         if isNull content then cre.Message else content.ToString()
-                with _ -> cre.Message
+                with _ ->
+                    cre.Message
+
             let kind =
-                if cre.Status <= 0 then ProviderUnavailable
-                else kindOfStatus cre.Status body
+                if cre.Status <= 0 then
+                    ProviderUnavailable
+                else
+                    kindOfStatus cre.Status body
+
             let message =
                 match kind with
-                | ProviderUnavailable when cre.Status >= 500 ->
-                    serverUnavailableMessage providerLabel (Some cre.Status)
-                | ProviderUnavailable ->
-                    networkErrorMessage providerLabel
-                | other ->
-                    messageOf other providerLabel model
+                | ProviderUnavailable when cre.Status >= 500 -> serverUnavailableMessage providerLabel (Some cre.Status)
+                | ProviderUnavailable -> networkErrorMessage providerLabel
+                | other -> messageOf other providerLabel model
+
             { GenerationError.create kind message with
-                detail = Some(detailOf (if cre.Status > 0 then sprintf "HTTP %d · %s" cre.Status body else cre.Message))
+                detail =
+                    Some(
+                        detailOf (
+                            if cre.Status > 0 then
+                                sprintf "HTTP %d · %s" cre.Status body
+                            else
+                                cre.Message
+                        )
+                    )
                 retryAfterSeconds = retryAfterOfClientResult cre
                 retryable =
                     match kind with
-                    | ProviderRateLimited | ProviderTimeout | ProviderUnavailable | UnknownFailure -> true
-                    | _ -> false }
+                    | ProviderRateLimited
+                    | ProviderTimeout
+                    | ProviderUnavailable
+                    | UnknownFailure -> true
+                    | _ -> false
+            }
         | :? TaskCanceledException
         | :? TimeoutException ->
             GenerationError.create ProviderTimeout (messageOf ProviderTimeout providerLabel model)
             |> GenerationError.withDetail (detailOf ex.Message)
         | :? HttpRequestException as hre ->
             let statusCode = hre.StatusCode |> Option.ofNullable |> Option.map int
+
             let kind =
                 match statusCode with
                 | Some code -> kindOfStatus code hre.Message
                 | None -> ProviderUnavailable
+
             let message =
                 match kind with
                 | ProviderUnavailable ->
                     match statusCode with
-                    | Some code when code >= 500 ->
-                        serverUnavailableMessage providerLabel (Some code)
-                    | _ ->
-                        networkErrorMessage providerLabel
-                | other ->
-                    messageOf other providerLabel model
+                    | Some code when code >= 500 -> serverUnavailableMessage providerLabel (Some code)
+                    | _ -> networkErrorMessage providerLabel
+                | other -> messageOf other providerLabel model
+
             { GenerationError.create kind message with
                 detail = Some(detailOf hre.Message)
                 retryAfterSeconds = retryAfterOfHttpException hre
                 retryable =
                     match kind with
-                    | ProviderRateLimited | ProviderTimeout | ProviderUnavailable | UnknownFailure -> true
-                    | _ -> false }
+                    | ProviderRateLimited
+                    | ProviderTimeout
+                    | ProviderUnavailable
+                    | UnknownFailure -> true
+                    | _ -> false
+            }
         | :? SocketException as se ->
             let msg = networkErrorMessage providerLabel
+
             { GenerationError.create ProviderUnavailable msg with
                 detail = Some(detailOf se.Message)
-                retryable = true }
+                retryable = true
+            }
         | _ ->
             match signalFromBody ex.Message with
             | Some kind ->
@@ -190,16 +239,20 @@ module ProviderFailure =
             | None ->
                 if isNetworkException ex then
                     let msg = networkErrorMessage providerLabel
+
                     { GenerationError.create ProviderUnavailable msg with
                         detail = Some(detailOf ex.Message)
-                        retryable = true }
+                        retryable = true
+                    }
                 else
                     match tryParse5xxStatus ex.Message with
                     | Some status ->
                         let msg = serverUnavailableMessage providerLabel (Some status)
+
                         { GenerationError.create ProviderUnavailable msg with
                             detail = Some(detailOf ex.Message)
-                            retryable = true }
+                            retryable = true
+                        }
                     | None ->
                         GenerationError.create UnknownFailure (messageOf UnknownFailure providerLabel model)
                         |> GenerationError.withDetail (detailOf ex.Message)

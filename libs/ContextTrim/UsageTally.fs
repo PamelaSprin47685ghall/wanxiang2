@@ -19,7 +19,8 @@ type UsageTally() =
         | None, Some y -> Some y
         | None, None -> None
 
-    static let ofNullable (n: Nullable<int64>) = if n.HasValue then Some(int n.Value) else None
+    static let ofNullable (n: Nullable<int64>) =
+        if n.HasValue then Some(int n.Value) else None
 
     /// 计入一轮的用量。
     member _.Add(u: UsageDetails) =

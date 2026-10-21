@@ -19,12 +19,16 @@ type ShellBrand(image: IImage option) =
         let home =
             match Environment.GetEnvironmentVariable "WANXIANG_HOME" with
             | s when not (String.IsNullOrWhiteSpace s) -> s
-            | _ -> IO.Path.Combine(Environment.GetFolderPath Environment.SpecialFolder.UserProfile, ".config", "wanxiang")
+            | _ ->
+                IO.Path.Combine(Environment.GetFolderPath Environment.SpecialFolder.UserProfile, ".config", "wanxiang")
+
         BrandMark.tryLoad
             (Some(Uri "avares://Wanxiang.UI/Assets/logo.png"))
-            [ IO.Path.Combine(AppContext.BaseDirectory, "logo.png")
-              IO.Path.Combine(AppContext.BaseDirectory, "pwa", "logo.png")
-              IO.Path.Combine(home, "logo.png") ]
+            [
+                IO.Path.Combine(AppContext.BaseDirectory, "logo.png")
+                IO.Path.Combine(AppContext.BaseDirectory, "pwa", "logo.png")
+                IO.Path.Combine(home, "logo.png")
+            ]
         |> Option.map (fun b -> b :> IImage)
 
     new(_theme: ThemeManager) = ShellBrand(ShellBrand.LoadImage())
@@ -35,46 +39,70 @@ type ShellBrand(image: IImage option) =
 
 /// 宿主里还没迁出的控件（侧栏、对话视图、输入区）由组合者经这些插槽驱动。
 type ShellHooks =
-    { /// 紧凑模式同步给输入区、侧栏、对话视图
-      ApplyCompactMode: bool -> unit
-      /// 起步居中同步给对话视图
-      ApplyStartMode: bool -> unit
-      FocusComposer: unit -> unit
-      FocusSidebarSearch: unit -> unit
-      /// 触屏优先时不自动聚焦搜索框（软键盘会盖住列表）
-      PrefersTouch: unit -> bool }
+    {
+        /// 紧凑模式同步给输入区、侧栏、对话视图
+        ApplyCompactMode: bool -> unit
+        /// 起步居中同步给对话视图
+        ApplyStartMode: bool -> unit
+        FocusComposer: unit -> unit
+        FocusSidebarSearch: unit -> unit
+        /// 触屏优先时不自动聚焦搜索框（软键盘会盖住列表）
+        PrefersTouch: unit -> bool
+    }
 
 /// 主工作区的接线：NavigationController 决定状态，ShellColumns 把状态投影到 Grid，WorkspaceStack 让起步与续聊共用输入区。
 /// 焦点归宿（D3/D4）在这里：窄屏抽屉打开进搜索框、收起回输入区；桌面折叠时焦点原在侧栏也回输入区；点遮罩与 Escape 同一路径收起抽屉。
 type ShellDesk
-    (shellGrid: Grid,
-     sidebar: Control,
-     splitter: Control,
-     chat: Control,
-     composer: Control,
-     hooks: ShellHooks,
-     initialSidebarCollapsed: bool,
-     sidebarWidth: unit -> float,
-     compactBreakpoint: IObservable<float>,
-     splitterWidthOpt: IObservable<float> option) as this =
+    (
+        shellGrid: Grid,
+        sidebar: Control,
+        splitter: Control,
+        chat: Control,
+        composer: Control,
+        hooks: ShellHooks,
+        initialSidebarCollapsed: bool,
+        sidebarWidth: unit -> float,
+        compactBreakpoint: IObservable<float>,
+        splitterWidthOpt: IObservable<float> option
+    ) as this =
     let mutable breakpoint = 0.0
     do compactBreakpoint.Subscribe(fun v -> breakpoint <- v).Dispose()
     let mutable navigation = NavigationController(initialSidebarCollapsed, breakpoint)
     let mutable lastWidth = 0.0
     let workspace = WorkspaceStack(chat, composer)
-    let initSplitterW = match splitterWidthOpt with Some opt -> (let mutable w = 6.0 in opt.Subscribe(fun v -> w <- v).Dispose(); w) | None -> 6.0
-    let columns = ShellColumns(shellGrid, sidebar, splitter, workspace, 420.0, initSplitterW, sidebarWidth)
+
+    let initSplitterW =
+        match splitterWidthOpt with
+        | Some opt ->
+            (let mutable w = 6.0 in
+             opt.Subscribe(fun v -> w <- v).Dispose()
+             w)
+        | None -> 6.0
+
+    let columns =
+        ShellColumns(shellGrid, sidebar, splitter, workspace, 420.0, initSplitterW, sidebarWidth)
 
     let project (s: NavigationSnapshot) =
-        columns.Apply { Compact = s.compactMode; DrawerOpen = s.compactNavigationOpen; SidebarCollapsed = s.sidebarCollapsed }
+        columns.Apply
+            {
+                Compact = s.compactMode
+                DrawerOpen = s.compactNavigationOpen
+                SidebarCollapsed = s.sidebarCollapsed
+            }
 
     let applyCompactNavigation (opened: bool) =
         let before = navigation.State
         let state = navigation.ApplyCompactNavigation opened
+
         if state.compactMode then
             project state
-            if opened then (if not (hooks.PrefersTouch()) then hooks.FocusSidebarSearch())
-            elif before.compactNavigationOpen then hooks.FocusComposer()
+
+            if opened then
+                (if not (hooks.PrefersTouch()) then
+                     hooks.FocusSidebarSearch())
+            elif before.compactNavigationOpen then
+                hooks.FocusComposer()
+
         state
 
     do
@@ -87,30 +115,59 @@ type ShellDesk
             shellGrid.ColumnDefinitions.Add(ColumnDefinition())
             shellGrid.ColumnDefinitions.Add(ColumnDefinition())
             shellGrid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
+
         shellGrid.ColumnDefinitions[0].MaxWidth <- 420.0
+
         for c in [ sidebar; splitter; workspace :> Control ] do
-            if not (shellGrid.Children.Contains c) then shellGrid.Children.Add c
+            if not (shellGrid.Children.Contains c) then
+                shellGrid.Children.Add c
+
         project navigation.State
+
         splitterWidthOpt
         |> Option.iter (fun opt ->
             opt.Subscribe(fun w ->
                 if not this.State.compactMode && not this.State.sidebarCollapsed then
-                    shellGrid.ColumnDefinitions[1].Width <- GridLength w) |> ignore)
+                    shellGrid.ColumnDefinitions[1].Width <- GridLength w)
+            |> ignore)
         // 断点改了：按当前折叠偏好换一个导航状态机，用上次视口宽度重投影（模式变了抽屉本就收起）
         compactBreakpoint.Subscribe(fun v ->
             if v <> breakpoint then
                 breakpoint <- v
                 navigation <- NavigationController(navigation.State.sidebarCollapsed, v)
+
                 if lastWidth > 0.0 then
                     let _, state = navigation.ApplyViewport lastWidth
                     project state)
         |> ignore
 
     new(theme: ThemeManager, shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth) =
-        ShellDesk(shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth, theme.Metric Metric.CompactBreakpoint, Some(theme.Metric Metric.SidebarSplitterWidth))
+        ShellDesk(
+            shellGrid,
+            sidebar,
+            splitter,
+            chat,
+            composer,
+            hooks,
+            initialSidebarCollapsed,
+            sidebarWidth,
+            theme.Metric Metric.CompactBreakpoint,
+            Some(theme.Metric Metric.SidebarSplitterWidth)
+        )
 
     new(shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth, compactBreakpoint) =
-        ShellDesk(shellGrid, sidebar, splitter, chat, composer, hooks, initialSidebarCollapsed, sidebarWidth, compactBreakpoint, None)
+        ShellDesk(
+            shellGrid,
+            sidebar,
+            splitter,
+            chat,
+            composer,
+            hooks,
+            initialSidebarCollapsed,
+            sidebarWidth,
+            compactBreakpoint,
+            None
+        )
 
     member _.State = navigation.State
     /// 对话区一列（对话视图 + 输入区）
@@ -126,16 +183,26 @@ type ShellDesk
             lastWidth <- width
             let before = navigation.State
             let needsApply, state = navigation.ApplyViewport width
-            if needsApply then project state
-            if NavigationSnapshot.autofocusDrawer before state (hooks.PrefersTouch()) then hooks.FocusSidebarSearch()
+
+            if needsApply then
+                project state
+
+            if NavigationSnapshot.autofocusDrawer before state (hooks.PrefersTouch()) then
+                hooks.FocusSidebarSearch()
+
         navigation.State
 
     /// Ctrl+B：窄屏开合抽屉（打开进搜索框、收起回输入区），桌面折叠侧栏；返回新状态，宿主据此存偏好
     member _.ToggleSidebar() =
         let state = navigation.ToggleSidebar()
         project state
+
         if state.compactMode then
-            if state.compactNavigationOpen then hooks.FocusSidebarSearch() else hooks.FocusComposer()
+            if state.compactNavigationOpen then
+                hooks.FocusSidebarSearch()
+            else
+                hooks.FocusComposer()
+
         state
 
     /// 窄屏抽屉开合（Escape、侧栏行、遮罩都走这里）
@@ -150,6 +217,8 @@ type ShellDesk
     /// 用户拖完分隔条：桌面且未折叠时钳制并写回，返回要存进偏好的宽度
     member _.NoteSidebarDragged() : float option =
         let nav = navigation.State
+
         if not nav.compactMode && not nav.sidebarCollapsed then
             Some(columns.NoteUserSidebarWidth shellGrid.ColumnDefinitions[0].ActualWidth)
-        else None
+        else
+            None

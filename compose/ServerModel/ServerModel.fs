@@ -15,19 +15,41 @@ module ServerModel =
         | :? JsonObject as o ->
             // 思维链（reasoning）不并入对话摘要预览——预览应该让人能识别对话主题
             let mutable typeNode: JsonNode = null
+
             let isReasoning =
-                (o.TryGetPropertyValue("$type", &typeNode) && not (isNull typeNode) && typeNode.GetValueKind() = JsonValueKind.String && typeNode.GetValue<string>() = "reasoning")
+                (o.TryGetPropertyValue("$type", &typeNode)
+                 && not (isNull typeNode)
+                 && typeNode.GetValueKind() = JsonValueKind.String
+                 && typeNode.GetValue<string>() = "reasoning")
                 || (let mutable tn2: JsonNode = null in
-                    o.TryGetPropertyValue("type", &tn2) && not (isNull tn2) && tn2.GetValueKind() = JsonValueKind.String && tn2.GetValue<string>() = "reasoning")
+
+                    o.TryGetPropertyValue("type", &tn2)
+                    && not (isNull tn2)
+                    && tn2.GetValueKind() = JsonValueKind.String
+                    && tn2.GetValue<string>() = "reasoning")
+
             if not isReasoning then
                 let mutable textNode: JsonNode = null
-                if o.TryGetPropertyValue("text", &textNode) && not (isNull textNode) && textNode.GetValueKind() = JsonValueKind.String then
+
+                if
+                    o.TryGetPropertyValue("text", &textNode)
+                    && not (isNull textNode)
+                    && textNode.GetValueKind() = JsonValueKind.String
+                then
                     sb.Append(textNode.GetValue<string>()) |> ignore
+
                 let mutable contentsNode: JsonNode = null
-                if o.TryGetPropertyValue("contents", &contentsNode) && not (isNull contentsNode) && contentsNode.GetValueKind() = JsonValueKind.Array then
-                    for c in contentsNode.AsArray() do messageTextOf c sb
+
+                if
+                    o.TryGetPropertyValue("contents", &contentsNode)
+                    && not (isNull contentsNode)
+                    && contentsNode.GetValueKind() = JsonValueKind.Array
+                then
+                    for c in contentsNode.AsArray() do
+                        messageTextOf c sb
         | :? JsonArray as arr ->
-            for item in arr do messageTextOf item sb
+            for item in arr do
+                messageTextOf item sb
         | _ -> ()
 
     let private lastMessageText (proj: Projection) (conv: Conversation) : string =
@@ -41,6 +63,7 @@ module ServerModel =
     /// 对话列表摘要（决策 125：含最后可见消息摘要、当前运行状态、有效配置摘要，不含完整消息正文）。
     let conversationListItems (proj: Projection) (runtimeStateOf: System.Guid -> string) : JsonArray =
         let arr = JsonArray()
+
         for c in Projection.conversationList proj do
             let o = JsonObject()
             o["conversationId"] <- c.conversationId.ToString("D")
@@ -49,8 +72,19 @@ module ServerModel =
             o["deleted"] <- c.deleted
             o["pinned"] <- c.pinned
             o["archived"] <- c.archived
-            o["createdAt"] <- c.createdAtUtc.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture)
-            o["updatedAt"] <- c.lastActivityAtUtc.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture)
+
+            o["createdAt"] <-
+                c.createdAtUtc.UtcDateTime.ToString(
+                    "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                    System.Globalization.CultureInfo.InvariantCulture
+                )
+
+            o["updatedAt"] <-
+                c.lastActivityAtUtc.UtcDateTime.ToString(
+                    "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                    System.Globalization.CultureInfo.InvariantCulture
+                )
+
             o["messageCount"] <- (Projection.effectiveMessages proj c |> List.length)
             o["isFork"] <- c.parent.IsSome
             // W4（决策 203）：分叉谱系，全部由已有 fork 事实派生，不写新事实；字段缺省即“根对话”，旧客户端忽略它们。
@@ -58,7 +92,11 @@ module ServerModel =
             | Some(parentId, forkAfter) ->
                 o["parentId"] <- parentId.ToString("D")
                 forkAfter |> Option.iter (fun id -> o["forkBaseMessageId"] <- id)
-                c.messages |> List.tryHead |> Option.iter (fun m -> o["forkFirstMessageId"] <- m.commitId)
+
+                c.messages
+                |> List.tryHead
+                |> Option.iter (fun m -> o["forkFirstMessageId"] <- m.commitId)
+
                 match proj.conversations.TryFind parentId with
                 | Some parent ->
                     o["parentTitle"] <- parent.title
@@ -68,12 +106,17 @@ module ServerModel =
                     | Some baseId ->
                         let prefix =
                             Projection.effectiveMessagesAtMap proj.conversations parentId baseId
-                            |> List.filter (fun m -> match forkAfter with Some a -> m.commitId <= a | None -> false)
+                            |> List.filter (fun m ->
+                                match forkAfter with
+                                | Some a -> m.commitId <= a
+                                | None -> false)
                             |> List.length
+
                         o["forkOrdinal"] <- prefix + 1
                     | None -> ()
                 | None -> o["parentDeleted"] <- true
             | None -> ()
+
             o["lastMessage"] <- lastMessageText proj c
             o["runtimeState"] <- runtimeStateOf c.conversationId
             let cfg = JsonObject()
@@ -81,17 +124,23 @@ module ServerModel =
             cfg["model"] <- c.config.model
             o["config"] <- cfg
             arr.Add o
+
         arr
 
     /// 对话完整快照消息数组（决策 27/79：每条消息带全局 commitId 作为消息标识）。
     let conversationMessages (proj: Projection) (conv: Conversation) : JsonArray =
         let arr = JsonArray()
+
         for m in Projection.effectiveMessages proj conv do
             let o = JsonObject()
             o["commitId"] <- m.commitId
-            o["committedAt"] <- m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
+            o["committedAt"] <-
+                m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
             o["payload"] <- m.payloadJson.DeepClone()
             arr.Add o
+
         arr
 
     /// 快照尾部消息（Q127/P1-2：长对话快照只携带尾部，避免大帧；返回 items、最早 commitId、是否还有更早）。
@@ -100,40 +149,64 @@ module ServerModel =
         // 决策 294：只序列化尾部——旧实现先把整段对话逐条 DeepClone 成 JSON 再截尾，
         // 十万条的对话每次打开都要付全量拷贝。
         let all = Projection.effectiveMessages proj conv |> Array.ofList
+
         if limit <= 0 || all.Length <= limit then
             conversationMessages proj conv, 0UL, false
         else
             let tail = JsonArray()
+
             for i in all.Length - limit .. all.Length - 1 do
                 let m = all[i]
                 let o = JsonObject()
                 o["commitId"] <- m.commitId
-                o["committedAt"] <- m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
+                o["committedAt"] <-
+                    m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
                 o["payload"] <- m.payloadJson.DeepClone()
                 tail.Add o
+
             tail, all[all.Length - limit].commitId, true
 
     /// 历史分页切片（Q127：按 commitID 反向；页边界 = beforeCommitId 之前的稳定 ID）。
     /// 返回 (items 升序数组, hasMore)。
-    let historyPageItems (proj: Projection) (conv: Conversation) (beforeCommitId: CommitId) (limit: int) : JsonArray * bool =
+    let historyPageItems
+        (proj: Projection)
+        (conv: Conversation)
+        (beforeCommitId: CommitId)
+        (limit: int)
+        : JsonArray * bool =
         let limit = max 1 (min limit 200)
-        let untilId = if beforeCommitId = 0UL then proj.latestCommitId else beforeCommitId - 1UL
+
+        let untilId =
+            if beforeCommitId = 0UL then
+                proj.latestCommitId
+            else
+                beforeCommitId - 1UL
+
         let msgs =
             Projection.effectiveMessagesAt proj conv.conversationId untilId
             |> List.filter (fun m -> m.commitId < beforeCommitId)
+
         let page = msgs |> List.rev |> List.truncate limit |> List.rev
         let items = JsonArray()
+
         for m in page do
             let o = JsonObject()
             o["commitId"] <- m.commitId
-            o["committedAt"] <- m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
+            o["committedAt"] <-
+                m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
             o["payload"] <- m.payloadJson.DeepClone()
             items.Add o
+
         items, List.length msgs > limit
 
     /// 导出固定可见性水位；分页边界只截取消息，不改变删除／分叉语义。
     let exportPage (proj: Projection) (query: ConversationExportQuery) : Result<ConversationExportPageData, string> =
         let at = query.atCommitId |> Option.defaultValue proj.latestCommitId
+
         match Projection.tryConversation proj query.conversationId with
         | None -> Error "对话不存在，无法导出。"
         | Some conv when conv.deleted -> Error "对话已删除，导出已停止；没有保存不完整文件。"
@@ -141,41 +214,65 @@ module ServerModel =
         | Some _ when query.atCommitId.IsNone && query.beforeCommitId <> 0UL -> Error "导出首页不能指定分页边界。"
         | Some conv ->
             let all = Projection.effectiveMessagesAt proj conv.conversationId at
-            if query.beforeCommitId <> 0UL && not (all |> List.exists (fun m -> m.commitId = query.beforeCommitId)) then
+
+            if
+                query.beforeCommitId <> 0UL
+                && not (all |> List.exists (fun m -> m.commitId = query.beforeCommitId))
+            then
                 Error "导出分页边界不属于这份对话，请重新开始导出。"
             else
                 let mutable rest =
-                    all |> List.rev
+                    all
+                    |> List.rev
                     |> List.skipWhile (fun m -> query.beforeCommitId <> 0UL && m.commitId >= query.beforeCommitId)
+
                 let mutable selected: JsonNode list = []
                 let mutable bytes, count = 0, 0
                 let mutable donePage = false
                 let mutable failure = None
-                while not donePage && not (List.isEmpty rest) && count < ConversationExportLimits.pageMessages do
+
+                while not donePage
+                      && not (List.isEmpty rest)
+                      && count < ConversationExportLimits.pageMessages do
                     let m = rest.Head
                     let node = JsonObject()
                     node["commitId"] <- m.commitId
-                    node["committedAt"] <- m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
+                    node["committedAt"] <-
+                        m.committedAtUtc.UtcDateTime.ToString("o", System.Globalization.CultureInfo.InvariantCulture)
+
                     node["payload"] <- m.payloadJson.DeepClone()
                     let size = System.Text.Encoding.UTF8.GetByteCount(node.ToJsonString())
+
                     if size > ConversationExportLimits.maxMessageBytes then
                         failure <- Some "单条消息超过 16 MiB 导出安全上限；导出已停止，没有截断内容。"
                         donePage <- true
-                    elif count > 0 && bytes + size > ConversationExportLimits.pageBytes then donePage <- true
+                    elif count > 0 && bytes + size > ConversationExportLimits.pageBytes then
+                        donePage <- true
                     else
                         selected <- (node :> JsonNode) :: selected
                         bytes <- bytes + size
                         count <- count + 1
                         rest <- rest.Tail
+
                 match failure with
                 | Some message -> Error message
                 | None ->
-                    Ok { exportId = query.exportId; conversationId = conv.conversationId
-                         atCommitId = at; beforeCommitId = query.beforeCommitId
-                         title = conv.title; totalMessages = all.Length
-                         items = JsonArray(List.toArray selected); hasMore = not (List.isEmpty rest) }
+                    Ok
+                        {
+                            exportId = query.exportId
+                            conversationId = conv.conversationId
+                            atCommitId = at
+                            beforeCommitId = query.beforeCommitId
+                            title = conv.title
+                            totalMessages = all.Length
+                            items = JsonArray(List.toArray selected)
+                            hasMore = not (List.isEmpty rest)
+                        }
+
     /// 消息 JSON 里的附件引用（AttachmentRefs 库）。
-    let attachmentRefsOf (payload: JsonNode) : (string * string * string * int64) list = AttachmentRefs.ofPayload payload
+    let attachmentRefsOf (payload: JsonNode) : (string * string * string * int64) list =
+        AttachmentRefs.ofPayload payload
 
     /// 仍需保留附件的对话集合。
     ///
@@ -183,15 +280,18 @@ module ServerModel =
     /// 父对话被删后子分支照样展示那些消息，因此祖先链必须一并算作存活。
     let private conversationsKeepingAttachments (proj: Projection) : Set<System.Guid> =
         let rec walkUp (acc: Set<System.Guid>) (id: System.Guid) =
-            if acc.Contains id then acc
+            if acc.Contains id then
+                acc
             else
                 let acc = acc.Add id
+
                 match Projection.tryConversation proj id with
                 | Some conv ->
                     match conv.parent with
-                    | Some (parentId, _) -> walkUp acc parentId
+                    | Some(parentId, _) -> walkUp acc parentId
                     | None -> acc
                 | None -> acc
+
         proj.conversations
         |> Map.toSeq
         |> Seq.filter (fun (_, conv) -> not conv.deleted)

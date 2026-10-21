@@ -5,7 +5,8 @@ open System.IO
 open Xunit
 open Snapshot
 
-let tempPath () = Path.Combine(Path.GetTempPath(), "snap-" + Guid.NewGuid().ToString("N"), "s.snap")
+let tempPath () =
+    Path.Combine(Path.GetTempPath(), "snap-" + Guid.NewGuid().ToString("N"), "s.snap")
 
 // SPEC 1：往返与覆盖
 [<Fact>]
@@ -24,15 +25,19 @@ let ``any flipped or truncated byte is Corrupt`` () =
     let p = tempPath ()
     SnapshotFile(p).Save "10,20,30"
     let good = File.ReadAllBytes p
+
     for i in 0 .. good.Length - 1 do
         let b = Array.copy good
         b[i] <- b[i] ^^^ 0x01uy
         File.WriteAllBytes(p, b)
+
         match SnapshotFile(p).Load() with
         | Corrupt _ -> ()
         | r -> failwithf "byte %d flipped but got %A" i r
+
     for cut in 0 .. good.Length - 1 do
         File.WriteAllBytes(p, good[.. cut - 1])
+
         match SnapshotFile(p).Load() with
         | Corrupt _ -> ()
         | r -> failwithf "cut %d but got %A" cut r
@@ -55,6 +60,7 @@ let ``invalid utf8 in header is Corrupt`` () =
     let b = File.ReadAllBytes p
     b[0] <- 0xFFuy
     File.WriteAllBytes(p, b)
+
     match SnapshotFile(p).Load() with
     | Corrupt why -> Assert.Contains("header", why)
     | r -> failwithf "%A" r
@@ -71,9 +77,11 @@ let ``instances are isolated and a corrupt file is replaced by the next save`` (
     Assert.Equal(Loaded "A1", a.Load())
     // 错误之后状态合法：文件被外部弄坏，Load 如实报 Corrupt，下一次 Save 覆盖它
     File.WriteAllBytes(pa, [| 0uy |])
+
     match a.Load() with
     | Corrupt _ -> ()
     | r -> failwithf "%A" r
+
     a.Save "A2"
     Assert.Equal(Loaded "A2", a.Load())
     Assert.False(File.Exists(pa + ".tmp"))

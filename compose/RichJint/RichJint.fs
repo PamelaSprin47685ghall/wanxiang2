@@ -8,8 +8,11 @@ type JintRichBackend() =
 
     let host = JintScriptHost()
 
-    let ensureHljs () = host.LoadOnce("hljs", Wanxiang.UI.RichAssets.hljsCoreScript)
-    let ensureKatex () = host.LoadOnce("katex", Wanxiang.UI.RichAssets.katexScript)
+    let ensureHljs () =
+        host.LoadOnce("hljs", Wanxiang.UI.RichAssets.hljsCoreScript)
+
+    let ensureKatex () =
+        host.LoadOnce("katex", Wanxiang.UI.RichAssets.katexScript)
 
     let ensureLanguage (canonical: string) =
         if Wanxiang.UI.RichAssets.requiresLoad canonical then
@@ -21,27 +24,42 @@ type JintRichBackend() =
             ensureHljs ()
             ensureKatex ()
             // 空跑一次：解释器首次执行语法定义比稳态慢一个量级
-            host.EvaluateString("hljs.highlight(__warm,{language:'javascript',ignoreIllegals:true}).value", [ "__warm", box "let x = 1" ]) |> ignore
-            host.EvaluateString("katex.renderToString('x',{throwOnError:false})", []) |> ignore
-        with _ -> ()
+            host.EvaluateString(
+                "hljs.highlight(__warm,{language:'javascript',ignoreIllegals:true}).value",
+                [ "__warm", box "let x = 1" ]
+            )
+            |> ignore
+
+            host.EvaluateString("katex.renderToString('x',{throwOnError:false})", [])
+            |> ignore
+        with _ ->
+            ()
 
     /// hljs 的 `<span class="hljs-…">` HTML。任何失败（语言脚本缺失、脚本抛错）都是 None。
     member _.HighlightHtml(code: string, canonicalLanguage: string) : string option =
         try
             ensureHljs ()
             ensureLanguage canonicalLanguage
+
             Some(
                 host.EvaluateString(
                     "hljs.highlight(__code,{language:__lang,ignoreIllegals:true}).value",
-                    [ "__code", box code; "__lang", box canonicalLanguage ]))
-        with _ -> None
+                    [ "__code", box code; "__lang", box canonicalLanguage ]
+                )
+            )
+        with _ ->
+            None
 
     /// KaTeX 的 HTML（throwOnError:false：语法错误也给出带 katex-error 的 HTML）。
     member _.MathHtml(tex: string, displayMode: bool) : string option =
         try
             ensureKatex ()
+
             Some(
                 host.EvaluateString(
                     "katex.renderToString(__tex,{displayMode:__display,throwOnError:false,strict:false})",
-                    [ "__tex", box tex; "__display", box displayMode ]))
-        with _ -> None
+                    [ "__tex", box tex; "__display", box displayMode ]
+                )
+            )
+        with _ ->
+            None

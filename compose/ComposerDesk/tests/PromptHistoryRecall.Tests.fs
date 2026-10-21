@@ -23,17 +23,24 @@ let private rig () =
     let styles = ThemeStyles(theme)
     styles.Install Avalonia.Application.Current.Styles
     let sent = ResizeArray<string>()
+
     let actions =
-        { Submit = (fun t -> sent.Add t; true)
-          TextChanged = (fun _ -> ())
-          CaretChanged = (fun _ -> ())
-          StopGeneration = ignore
-          PickAttachment = ignore
-          RemoveAttachment = ignore
-          OpenModelPicker = ignore
-          DropFiles = ignore
-          PasteFromClipboard = (fun () -> false)
-          OpenSessionSettings = ignore }
+        {
+            Submit =
+                (fun t ->
+                    sent.Add t
+                    true)
+            TextChanged = (fun _ -> ())
+            CaretChanged = (fun _ -> ())
+            StopGeneration = ignore
+            PickAttachment = ignore
+            RemoveAttachment = ignore
+            OpenModelPicker = ignore
+            DropFiles = ignore
+            PasteFromClipboard = (fun () -> false)
+            OpenSessionSettings = ignore
+        }
+
     let desk = ComposerDesk(actions)
     let w = Window(Width = 800.0, Height = 300.0, Content = desk.Host)
     w.Resources.MergedDictionaries.Add(theme.Resources :> Avalonia.Controls.IResourceDictionary)
@@ -64,7 +71,12 @@ let ``已接受的发送进历史，Up 召回，Down 退回草稿`` () =
         let desk, sent, w = rig ()
         let input = desk.Box.Input
         // 一次被接受的发送
-        desk.Render { emptyComposerVS () with Enabled = true; Text = "第一条消息" }
+        desk.Render
+            { emptyComposerVS () with
+                Enabled = true
+                Text = "第一条消息"
+            }
+
         desk.Submit()
         Assert.Equal<string list>([ "第一条消息" ], List.ofSeq sent)
         // 发送后输入框清空
@@ -88,7 +100,13 @@ let ``召回中 Esc 退回半截草稿`` () =
     Headless.run (fun () ->
         let desk, _sent, w = rig ()
         let input = desk.Box.Input
-        desk.Render { emptyComposerVS () with Enabled = true; Text = "第一条消息" }
+
+        desk.Render
+            { emptyComposerVS () with
+                Enabled = true
+                Text = "第一条消息"
+            }
+
         desk.Submit()
         input.Text <- "半截草稿"
         input.CaretIndex <- 0
@@ -105,7 +123,12 @@ let ``未被接受的发送不进历史`` () =
         let desk, sent, w = rig ()
         let input = desk.Box.Input
         // 空文本：门控挡住，宿主没接管
-        desk.Render { emptyComposerVS () with Enabled = true; Text = "" }
+        desk.Render
+            { emptyComposerVS () with
+                Enabled = true
+                Text = ""
+            }
+
         desk.Submit()
         Assert.Equal<string list>([], List.ofSeq sent)
         // Up 无历史可召回：输入框内容不变
@@ -121,7 +144,13 @@ let ``有选区时不召回`` () =
     Headless.run (fun () ->
         let desk, _sent, w = rig ()
         let input = desk.Box.Input
-        desk.Render { emptyComposerVS () with Enabled = true; Text = "第一条消息" }
+
+        desk.Render
+            { emptyComposerVS () with
+                Enabled = true
+                Text = "第一条消息"
+            }
+
         desk.Submit()
         input.Text <- "半截草稿"
         input.SelectionStart <- 0
@@ -139,7 +168,13 @@ let ``光标不在行首时不误召回`` () =
     Headless.run (fun () ->
         let desk, _sent, w = rig ()
         let input = desk.Box.Input
-        desk.Render { emptyComposerVS () with Enabled = true; Text = "第一条消息" }
+
+        desk.Render
+            { emptyComposerVS () with
+                Enabled = true
+                Text = "第一条消息"
+            }
+
         desk.Submit()
         input.Text <- "第一行\n第二行"
         input.CaretIndex <- 4
@@ -153,7 +188,13 @@ let ``草稿回填退出召回态`` () =
     Headless.run (fun () ->
         let desk, _sent, w = rig ()
         let input = desk.Box.Input
-        desk.Render { emptyComposerVS () with Enabled = true; Text = "第一条消息" }
+
+        desk.Render
+            { emptyComposerVS () with
+                Enabled = true
+                Text = "第一条消息"
+            }
+
         desk.Submit()
         input.Text <- "半截草稿"
         input.CaretIndex <- 0
@@ -184,17 +225,21 @@ let ``打字到中间光标不被回写拉回末尾`` () =
         let styles = ThemeStyles(theme)
         styles.Install Avalonia.Application.Current.Styles
         let caretSeen = ResizeArray<int>()
+
         let actions =
-            { Submit = (fun _ -> true)
-              TextChanged = (fun _ -> ())
-              CaretChanged = (fun c -> caretSeen.Add c)
-              StopGeneration = ignore
-              PickAttachment = ignore
-              RemoveAttachment = ignore
-              OpenModelPicker = ignore
-              DropFiles = ignore
-              PasteFromClipboard = (fun () -> false)
-              OpenSessionSettings = ignore }
+            {
+                Submit = (fun _ -> true)
+                TextChanged = (fun _ -> ())
+                CaretChanged = (fun c -> caretSeen.Add c)
+                StopGeneration = ignore
+                PickAttachment = ignore
+                RemoveAttachment = ignore
+                OpenModelPicker = ignore
+                DropFiles = ignore
+                PasteFromClipboard = (fun () -> false)
+                OpenSessionSettings = ignore
+            }
+
         let desk = ComposerDesk(actions)
         let w = Window(Width = 800.0, Height = 300.0, Content = desk.Host)
         w.Resources.MergedDictionaries.Add(theme.Resources :> Avalonia.Controls.IResourceDictionary)
@@ -223,17 +268,21 @@ let ``打字时组合者把文本接出去`` () =
         let styles = ThemeStyles(theme)
         styles.Install Avalonia.Application.Current.Styles
         let seen = ResizeArray<string>()
+
         let actions =
-            { Submit = (fun _ -> true)
-              TextChanged = (fun t -> seen.Add t)
-              CaretChanged = (fun _ -> ())
-              StopGeneration = ignore
-              PickAttachment = ignore
-              RemoveAttachment = ignore
-              OpenModelPicker = ignore
-              DropFiles = ignore
-              PasteFromClipboard = (fun () -> false)
-              OpenSessionSettings = ignore }
+            {
+                Submit = (fun _ -> true)
+                TextChanged = (fun t -> seen.Add t)
+                CaretChanged = (fun _ -> ())
+                StopGeneration = ignore
+                PickAttachment = ignore
+                RemoveAttachment = ignore
+                OpenModelPicker = ignore
+                DropFiles = ignore
+                PasteFromClipboard = (fun () -> false)
+                OpenSessionSettings = ignore
+            }
+
         let desk = ComposerDesk(actions)
         let w = Window(Width = 800.0, Height = 300.0, Content = desk.Host)
         w.Resources.MergedDictionaries.Add(theme.Resources :> Avalonia.Controls.IResourceDictionary)

@@ -19,6 +19,9 @@ module ToolCallState =
         | Some(Some err) -> ToolCallState.Failed(Some err)
         | Some None -> ToolCallState.Success
         | None ->
-            if isStreaming && awaiting.Contains callId then ToolCallState.AwaitingApproval
-            elif isStreaming then ToolCallState.Running
-            else ToolCallState.Unknown
+            if isStreaming && awaiting.Contains callId then
+                ToolCallState.AwaitingApproval
+            elif isStreaming then
+                ToolCallState.Running
+            else
+                ToolCallState.Unknown

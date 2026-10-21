@@ -14,27 +14,39 @@ module UploadFacts =
     let maxShrinkInput = 64L * 1024L * 1024L
 
     /// 小写十六进制 SHA-256。
-    let sha256Hex (bytes: byte[]) = Convert.ToHexString(SHA256.HashData bytes).ToLowerInvariant()
+    let sha256Hex (bytes: byte[]) =
+        Convert.ToHexString(SHA256.HashData bytes).ToLowerInvariant()
 
     /// 依次发送的块：(序号, base64)。空文件没有块。
     let chunks (bytes: byte[]) : (int * string) list =
-        [ let mutable offset = 0
-          let mutable index = 0
-          while offset < bytes.Length do
-              let count = min chunkSize (bytes.Length - offset)
-              yield index, Convert.ToBase64String(bytes, offset, count)
-              offset <- offset + count
-              index <- index + 1 ]
+        [
+            let mutable offset = 0
+            let mutable index = 0
+
+            while offset < bytes.Length do
+                let count = min chunkSize (bytes.Length - offset)
+                yield index, Convert.ToBase64String(bytes, offset, count)
+                offset <- offset + count
+                index <- index + 1
+        ]
 
     /// 决策 332：需要缩小（ImageShrink.needsShrink 的结果）且不超过 64 MiB 时先在后台缩小。
-    let shrinkFirst (needsShrink: bool) (byteCount: int64) = needsShrink && byteCount <= maxShrinkInput
+    let shrinkFirst (needsShrink: bool) (byteCount: int64) =
+        needsShrink && byteCount <= maxShrinkInput
 
     /// 读完文件回到界面线程时，上传仍归属发起时的那次连接：已认证、同一主机、同一代连接。
-    let stillOwned (authenticated: bool) (ownerInstance: string) (ownerConnection: int) (instance: string) (connection: int) =
+    let stillOwned
+        (authenticated: bool)
+        (ownerInstance: string)
+        (ownerConnection: int)
+        (instance: string)
+        (connection: int)
+        =
         authenticated && instance = ownerInstance && connection = ownerConnection
 
     /// 剪贴板图片的文件名（本地时间）。
-    let pasteFileName (now: DateTime) = sprintf "paste_%s.png" (now.ToString("yyyyMMdd_HHmmss"))
+    let pasteFileName (now: DateTime) =
+        sprintf "paste_%s.png" (now.ToString("yyyyMMdd_HHmmss"))
 
     let disconnectedText = "连接已断开，请重新选择附件；文件没有发送到其他主机。"
     let shrinkingText (fileName: string) = sprintf "「%s」太大，正在自动缩小…" fileName
@@ -56,4 +68,6 @@ module UploadFacts =
         | NotHandled
 
     let pasteSource (hasFiles: bool) (hasBitmap: bool) =
-        if hasFiles then PasteSource.Files elif hasBitmap then PasteSource.Bitmap else PasteSource.NotHandled
+        if hasFiles then PasteSource.Files
+        elif hasBitmap then PasteSource.Bitmap
+        else PasteSource.NotHandled

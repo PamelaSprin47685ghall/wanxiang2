@@ -12,27 +12,48 @@ module ModelListing =
     /// Anthropic 原生接口不返回能力字段；Claude 3 起全系能看图，更早的只吃文字。
     let anthropicKnown (model: string) : bool option =
         let id = if isNull model then "" else model.Trim().ToLowerInvariant()
-        if id.StartsWith "claude-3" || id.StartsWith "claude-sonnet-4" || id.StartsWith "claude-opus-4"
-           || id.StartsWith "claude-haiku-4" || id.StartsWith "claude-4" || id.StartsWith "claude-sonnet-5"
-           || id.StartsWith "claude-opus-5" then Some true
-        elif id.StartsWith "claude-2" || id.StartsWith "claude-instant" then Some false
-        else None
+
+        if
+            id.StartsWith "claude-3"
+            || id.StartsWith "claude-sonnet-4"
+            || id.StartsWith "claude-opus-4"
+            || id.StartsWith "claude-haiku-4"
+            || id.StartsWith "claude-4"
+            || id.StartsWith "claude-sonnet-5"
+            || id.StartsWith "claude-opus-5"
+        then
+            Some true
+        elif id.StartsWith "claude-2" || id.StartsWith "claude-instant" then
+            Some false
+        else
+            None
 
     let private strings (n: JsonNode) =
         match n with
         | :? JsonArray as a ->
-            [ for x in a do
-                  if not (isNull x) && x.GetValueKind() = JsonValueKind.String then yield x.GetValue<string>().ToLowerInvariant() ]
+            [
+                for x in a do
+                    if not (isNull x) && x.GetValueKind() = JsonValueKind.String then
+                        yield x.GetValue<string>().ToLowerInvariant()
+            ]
         | _ -> []
 
     /// 从 `/models` 的单个条目读能力字段；没有任何能力字段时返回 None（交给名字推断）。
     let ofModelEntry (o: JsonObject) : bool option =
-        let field (name: string) = match o[name] with null -> None | v -> Some v
+        let field (name: string) =
+            match o[name] with
+            | null -> None
+            | v -> Some v
+
         let fromCaps =
             match field "capabilities" with
             | Some(:? JsonArray as a) ->
                 let caps = strings a
-                Some(caps |> List.exists (fun c -> c = "vision" || c = "image" || c = "image_input" || c = "images"))
+
+                Some(
+                    caps
+                    |> List.exists (fun c -> c = "vision" || c = "image" || c = "image_input" || c = "images")
+                )
             | Some(:? JsonObject as c) ->
                 match c["vision"] with
                 | null -> None
@@ -40,10 +61,12 @@ module ModelListing =
                 | v when v.GetValueKind() = JsonValueKind.False -> Some false
                 | _ -> None
             | _ -> None
+
         let fromModalities (n: JsonNode) =
             match n with
             | :? JsonArray as a -> Some(strings a |> List.contains "image")
             | _ -> None
+
         let fromArchitecture =
             match field "architecture" with
             | Some(:? JsonObject as a) ->
@@ -57,6 +80,7 @@ module ModelListing =
                     | _ -> None
                 | m -> fromModalities m
             | _ -> None
+
         fromCaps
         |> Option.orElse fromArchitecture
         |> Option.orElse (field "input_modalities" |> Option.bind fromModalities)
@@ -69,20 +93,23 @@ module ModelListing =
             | :? JsonObject as root ->
                 match root["data"] with
                 | :? JsonArray as items ->
-                    [ for item in items do
-                          match item with
-                          | :? JsonObject as o ->
-                              match o["id"] with
-                              | null -> ()
-                              | id when id.GetValueKind() = JsonValueKind.String ->
-                                  match ofModelEntry o with
-                                  | Some v -> yield id.GetValue<string>(), v
-                                  | None -> ()
-                              | _ -> ()
-                          | _ -> () ]
+                    [
+                        for item in items do
+                            match item with
+                            | :? JsonObject as o ->
+                                match o["id"] with
+                                | null -> ()
+                                | id when id.GetValueKind() = JsonValueKind.String ->
+                                    match ofModelEntry o with
+                                    | Some v -> yield id.GetValue<string>(), v
+                                    | None -> ()
+                                | _ -> ()
+                            | _ -> ()
+                    ]
                 | _ -> []
             | _ -> []
-        with _ -> []
+        with _ ->
+            []
 
     /// Ollama `/api/show` 响应 → 能否看图（新版 Ollama 才有 capabilities）。
     let ofOllamaShow (body: string) : bool option =
@@ -93,7 +120,8 @@ module ModelListing =
                 | :? JsonArray as a -> Some(strings a |> List.contains "vision")
                 | _ -> None
             | _ -> None
-        with _ -> None
+        with _ ->
+            None
 
     /// `/api/version` 响应是否是 Ollama 的（`{"version":"0.x.y"}`）。
     let ofOllamaVersion (body: string) : bool =
@@ -104,7 +132,8 @@ module ModelListing =
                 | null -> false
                 | v -> v.GetValueKind() = JsonValueKind.String && root.Count <= 3
             | _ -> false
-        with _ -> false
+        with _ ->
+            false
 
     let private stringField (name: string) (item: JsonNode) =
         match item with
@@ -112,7 +141,10 @@ module ModelListing =
             match o[name] with
             | null -> None
             | value ->
-                if value.GetValueKind() = JsonValueKind.String then Some(value.GetValue<string>()) else None
+                if value.GetValueKind() = JsonValueKind.String then
+                    Some(value.GetValue<string>())
+                else
+                    None
         | _ -> None
 
     let private arrayField (root: JsonObject) (key: string) =
@@ -130,13 +162,19 @@ module ModelListing =
             match JsonNode.Parse body with
             | :? JsonObject as root ->
                 let fromData = arrayField root "data" |> List.choose (stringField "id")
+
                 let fromModels =
                     arrayField root "models"
                     |> List.choose (stringField "name")
                     |> List.map (fun name ->
-                        if name.StartsWith("models/", StringComparison.Ordinal) then name.Substring 7 else name)
+                        if name.StartsWith("models/", StringComparison.Ordinal) then
+                            name.Substring 7
+                        else
+                            name)
+
                 match fromData @ fromModels with
                 | [] -> Error "响应里没有模型清单（既无 data 也无 models）"
                 | ids -> Ok(ids |> List.distinct |> List.sort)
             | _ -> Error "响应不是 JSON 对象"
-        with _ -> Error "响应不是合法 JSON"
+        with _ ->
+            Error "响应不是合法 JSON"

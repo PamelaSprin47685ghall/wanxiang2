@@ -11,14 +11,21 @@ module ToolSummary =
         match args with
         | :? JsonObject as o ->
             let mutable n: JsonNode = null
-            if o.TryGetPropertyValue(key, &n) && not (isNull n) && n.GetValueKind() = System.Text.Json.JsonValueKind.String then
+
+            if
+                o.TryGetPropertyValue(key, &n)
+                && not (isNull n)
+                && n.GetValueKind() = System.Text.Json.JsonValueKind.String
+            then
                 let s = n.GetValue<string>()
                 if String.IsNullOrWhiteSpace s then None else Some s
-            else None
+            else
+                None
         | _ -> None
 
     /// 内置工具的函数名。
-    let isBuiltin (functionName: string) = functionName.StartsWith("builtin_", StringComparison.Ordinal)
+    let isBuiltin (functionName: string) =
+        functionName.StartsWith("builtin_", StringComparison.Ordinal)
 
     /// 把函数名（`builtin_time` / `mcp_<server>_<tool>`）与参数变成一句话。
     /// 内置工具各有专属描述；MCP 与未知工具回落到「调用 X（展开看参数）」。
@@ -34,8 +41,7 @@ module ToolSummary =
             match stringArg args "path" with
             | Some p -> sprintf "列出文件夹 %s 里的内容" p
             | None -> "列出一个文件夹里的内容（展开看参数）"
-        | name when name.StartsWith("mcp_", StringComparison.Ordinal) ->
-            sprintf "调用 %s（展开看参数）" (name.Substring 4)
+        | name when name.StartsWith("mcp_", StringComparison.Ordinal) -> sprintf "调用 %s（展开看参数）" (name.Substring 4)
         | name when String.IsNullOrWhiteSpace name -> "调用工具（展开看参数）"
         | name -> sprintf "调用 %s（展开看参数）" name
 
@@ -48,16 +54,20 @@ module ToolSummary =
             | "file.read" -> "读取文件"
             | "file.list" -> "列出文件夹"
             | other -> other
-        elif toolId.StartsWith("mcp:", StringComparison.Ordinal) then toolId.Substring 4
-        else toolId
+        elif toolId.StartsWith("mcp:", StringComparison.Ordinal) then
+            toolId.Substring 4
+        else
+            toolId
 
     /// 函数名（`builtin_echo` / `mcp_<server>_<tool>`）的显示名：工具卡标题给人看，
     /// 不直接露出 `builtin_` 前缀这种协议细节（视觉走查 11 号截图）。
     let displayNameOfFunction (functionName: string) : string =
         if isBuiltin functionName then
             displayName ("builtin:" + functionName.Substring("builtin_".Length).Replace("_", "."))
-        elif functionName.StartsWith("mcp_", StringComparison.Ordinal) then functionName.Substring 4
-        else functionName
+        elif functionName.StartsWith("mcp_", StringComparison.Ordinal) then
+            functionName.Substring 4
+        else
+            functionName
 
     /// 拒绝时写入工具结果的固定文案（含「用户拒绝」，模型据此理解并继续）。
     let userDeniedText = "用户拒绝了此次工具调用。"

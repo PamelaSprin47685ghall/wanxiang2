@@ -13,9 +13,11 @@ open Wanxiang2.ConnectPane
 open Wanxiang2.ConnectPane.Tests.Probe
 
 let private rules =
-    { Normalize = fun s -> String(s.ToCharArray() |> Array.filter Char.IsDigit)
-      LetterSpacing = fun d -> if d = "" then 0.0 else 4.0
-      Hint = fun url -> "在 " + url + " 上查看配对码" }
+    {
+        Normalize = fun s -> String(s.ToCharArray() |> Array.filter Char.IsDigit)
+        LetterSpacing = fun d -> if d = "" then 0.0 else 4.0
+        Hint = fun url -> "在 " + url + " 上查看配对码"
+    }
 
 let private make url =
     let p = ConnectPane(url, rules)
@@ -71,7 +73,11 @@ let ``pairing code box normalizes pasted text and auto-submits at six digits`` (
 [<Theory>]
 [<InlineData("", true, false)>]
 [<InlineData("ws://127.0.0.1:8765/ws", false, true)>]
-let ``connect focuses the first field that still needs input`` (defaultUrl: string) (expectUrl: bool) (expectToken: bool) =
+let ``connect focuses the first field that still needs input``
+    (defaultUrl: string)
+    (expectUrl: bool)
+    (expectToken: bool)
+    =
     Headless.run (fun () ->
         let p = make defaultUrl
         Assert.Equal(expectUrl, obj.ReferenceEquals(p.InitialFocus, p.UrlBox))
@@ -86,7 +92,15 @@ let ``failures show a typed retry and announcements hide it`` () =
         p.Fail("主机拒绝了令牌。", Some "重新配对", false)
         Assert.True p.RetryButton.IsVisible
         Assert.Equal("重新配对", AutomationProperties.GetName p.RetryButton)
-        Assert.Equal(AutomationLiveSetting.Assertive, AutomationProperties.GetLiveSetting((descendants p.View |> Seq.find (fun c -> AutomationProperties.GetName c = "主机拒绝了令牌。"))))
+
+        Assert.Equal(
+            AutomationLiveSetting.Assertive,
+            AutomationProperties.GetLiveSetting(
+                (descendants p.View
+                 |> Seq.find (fun c -> AutomationProperties.GetName c = "主机拒绝了令牌。"))
+            )
+        )
+
         click p.RetryButton
         Assert.Equal(1, retries.Value)
         p.Announce "正在连接…"

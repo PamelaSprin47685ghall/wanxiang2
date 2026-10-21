@@ -42,12 +42,13 @@ type ShortcutAction =
 /// 一次按键的平台无关描述。宿主把自己的按键事件映射过来：
 /// key 是按键名（与 Avalonia `Key` 枚举名相同，如 "B"、"OemComma"、"D1"、"Up"）；
 /// ctrl 含 macOS 的 ⌘；noModifiers 表示没有按任何修饰键。
-type ShortcutKey = {
-    key: string
-    ctrl: bool
-    shift: bool
-    noModifiers: bool
-}
+type ShortcutKey =
+    {
+        key: string
+        ctrl: bool
+        shift: bool
+        noModifiers: bool
+    }
 
 module ShortcutRouter =
 
@@ -56,29 +57,52 @@ module ShortcutRouter =
     /// 按键 → 意图。
     let resolveKey (k: ShortcutKey) : ShortcutAction =
         let ctrl, shift, key = k.ctrl, k.shift, k.key
-        if key = "Escape" then ShortcutAction.Escape
-        elif ctrl && key = "B" then ShortcutAction.ToggleSidebar
+
+        if key = "Escape" then
+            ShortcutAction.Escape
+        elif ctrl && key = "B" then
+            ShortcutAction.ToggleSidebar
         // 与指针点右上角叉号同一个动作：桌面端关窗只有一条路，键盘用户也得有。
-        elif ctrl && not shift && key = "W" then ShortcutAction.CloseWindow
-        elif ctrl && key = "N" then ShortcutAction.NewConversation
-        elif ctrl && key = "K" then ShortcutAction.OpenCommandPalette
-        elif ctrl && shift && key = "F" then ShortcutAction.FocusSearch
-        elif ctrl && key = "OemComma" then ShortcutAction.OpenSettings
-        elif ctrl && key = "L" then ShortcutAction.FocusComposer
-        elif ctrl && not shift && key = "M" then ShortcutAction.OpenModelPicker
+        elif ctrl && not shift && key = "W" then
+            ShortcutAction.CloseWindow
+        elif ctrl && key = "N" then
+            ShortcutAction.NewConversation
+        elif ctrl && key = "K" then
+            ShortcutAction.OpenCommandPalette
+        elif ctrl && shift && key = "F" then
+            ShortcutAction.FocusSearch
+        elif ctrl && key = "OemComma" then
+            ShortcutAction.OpenSettings
+        elif ctrl && key = "L" then
+            ShortcutAction.FocusComposer
+        elif ctrl && not shift && key = "M" then
+            ShortcutAction.OpenModelPicker
         // 与顶栏两个跳转按钮完全同一动作；输入框里也能直接翻，不必先移开焦点。
-        elif ctrl && not shift && key = "Up" then ShortcutAction.JumpExchange -1
-        elif ctrl && not shift && key = "Down" then ShortcutAction.JumpExchange 1
-        elif ctrl && not shift && key = "Home" then ShortcutAction.ScrollToBeginning
-        elif ctrl && not shift && key = "End" then ShortcutAction.ScrollToEnd
-        elif ctrl && shift && key = "S" then ShortcutAction.ToggleTheme
-        elif ctrl && shift && key = "E" then ShortcutAction.ExportConversation
-        elif ctrl && shift && key = "C" then ShortcutAction.CopyLastReply
-        elif ctrl && shift && key = "G" then ShortcutAction.RegenerateLast
-        elif ctrl && not shift && key = "Z" then ShortcutAction.UndoPending
+        elif ctrl && not shift && key = "Up" then
+            ShortcutAction.JumpExchange -1
+        elif ctrl && not shift && key = "Down" then
+            ShortcutAction.JumpExchange 1
+        elif ctrl && not shift && key = "Home" then
+            ShortcutAction.ScrollToBeginning
+        elif ctrl && not shift && key = "End" then
+            ShortcutAction.ScrollToEnd
+        elif ctrl && shift && key = "S" then
+            ShortcutAction.ToggleTheme
+        elif ctrl && shift && key = "E" then
+            ShortcutAction.ExportConversation
+        elif ctrl && shift && key = "C" then
+            ShortcutAction.CopyLastReply
+        elif ctrl && shift && key = "G" then
+            ShortcutAction.RegenerateLast
+        elif ctrl && not shift && key = "Z" then
+            ShortcutAction.UndoPending
         elif ctrl && not shift && Array.contains key digits then
             ShortcutAction.OpenConversationAt(Array.IndexOf(digits, key))
-        elif ctrl && (key = "OemQuestion" || key = "Divide") then ShortcutAction.ShowShortcuts
-        elif key = "F1" then ShortcutAction.ShowShortcuts
-        elif key = "F6" && k.noModifiers then ShortcutAction.FocusToast
-        else ShortcutAction.NoShortcut
+        elif ctrl && (key = "OemQuestion" || key = "Divide") then
+            ShortcutAction.ShowShortcuts
+        elif key = "F1" then
+            ShortcutAction.ShowShortcuts
+        elif key = "F6" && k.noModifiers then
+            ShortcutAction.FocusToast
+        else
+            ShortcutAction.NoShortcut

@@ -20,19 +20,39 @@ type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: Set
     let mutable hooks = initialHooks
     let prefsChanged = Event<UiPrefs>()
     let closeRequested = Event<unit>()
+
     let frame =
         SettingsFrame(
-            [ for title, parts in SettingsPart.groups ->
-                  title, [ for p in parts -> { Key = SettingsPart.key p; Label = SettingsPart.label p; Glyph = SettingsPart.glyph p } ] ],
-            SettingsLooks.glyphOf theme)
+            [
+                for title, parts in SettingsPart.groups ->
+                    title,
+                    [
+                        for p in parts ->
+                            {
+                                Key = SettingsPart.key p
+                                Label = SettingsPart.label p
+                                Glyph = SettingsPart.glyph p
+                            }
+                    ]
+            ],
+            SettingsLooks.glyphOf theme
+        )
     // 主题资源字典不在这里挂：同一份字典已有 parent（入口壳挂进 Application.Resources），
     // 一个 ResourceDictionary 只能有一个 owner；DynamicResource 沿可视树查到 Application 即得值。
     let providers = ProvidersDesk(theme, overlay, (fun () -> hooks))
     let tools = ToolsDesk(theme, overlay, (fun () -> hooks))
+
     let general =
-        GeneralDesk(theme, overlay, (fun () -> hooks), initialPrefs, (fun p ->
-            hooks.SavePrefs p
-            prefsChanged.Trigger p))
+        GeneralDesk(
+            theme,
+            overlay,
+            (fun () -> hooks),
+            initialPrefs,
+            (fun p ->
+                hooks.SavePrefs p
+                prefsChanged.Trigger p)
+        )
+
     let devices = DevicesDesk(theme, overlay)
     let memory = SectionMemory<SettingsPart, Control>(SettingsPart.Providers)
     let mutable serverUrl = ""
@@ -59,6 +79,7 @@ type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: Set
     let select (part: SettingsPart) =
         let restoreY = memory.Select(part, Some frame.ContentOffset)
         let changed = restoreY.IsSome
+
         frame.ApplyCaptions(
             SettingsPart.scope part,
             match part with
@@ -67,11 +88,14 @@ type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: Set
             | _ ->
                 match Uri.TryCreate(serverUrl, UriKind.Absolute) with
                 | true, uri -> sprintf "%s · 配置由连接这台主机的客户端共用。" uri.Authority
-                | _ -> "尚未连接主机")
+                | _ -> "尚未连接主机"
+        )
+
         frame.Select(SettingsPart.key part)
         frame.ApplyContent(render part, restoreY)
         // 设备列表是运行时状态：每次切进来都向主机要最新的
-        if part = SettingsPart.Devices && changed then devices.Refresh()
+        if part = SettingsPart.Devices && changed then
+            devices.Refresh()
 
     do
         frame.SelectRequested.Add(fun k -> SettingsPart.ofKey k |> Option.iter select)
@@ -91,20 +115,40 @@ type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: Set
     member this.Render(vs: SettingsVS) =
         let urlChanged = serverUrl <> vs.ServerUrl
         serverUrl <- vs.ServerUrl
+
         match vs.Catalog with
         | Some cat ->
             lastCatalog <- cat
             providers.Render { Catalog = cat }
             tools.Render { Catalog = cat }
-            general.Render { Catalog = cat; InstanceId = vs.InstanceId; ServerUrl = vs.ServerUrl; Prefs = vs.Prefs }
+
+            general.Render
+                {
+                    Catalog = cat
+                    InstanceId = vs.InstanceId
+                    ServerUrl = vs.ServerUrl
+                    Prefs = vs.Prefs
+                }
+
             memory.Invalidate [ SettingsPart.About ]
-            if memory.Current = SettingsPart.About then frame.ApplyContent(render memory.Current, None)
+
+            if memory.Current = SettingsPart.About then
+                frame.ApplyContent(render memory.Current, None)
         | None ->
-            general.Render { Catalog = lastCatalog; InstanceId = vs.InstanceId; ServerUrl = vs.ServerUrl; Prefs = vs.Prefs }
+            general.Render
+                {
+                    Catalog = lastCatalog
+                    InstanceId = vs.InstanceId
+                    ServerUrl = vs.ServerUrl
+                    Prefs = vs.Prefs
+                }
+
         devices.Render vs.Devices
+
         if urlChanged then
             memory.Invalidate [ SettingsPart.About ]
             select memory.Current
+
         match vs.ActiveSection |> Option.bind SettingsPart.ofKey with
         | Some section when memory.Current <> section -> select section
         | _ -> ()
@@ -116,13 +160,16 @@ type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: Set
     member _.ShowSection(part: SettingsPart) = select part
 
     /// 打开设置时的焦点归宿：当前分区的导航键
-    member _.FocusInitial() = frame.FocusNav(SettingsPart.key memory.Current)
+    member _.FocusInitial() =
+        frame.FocusNav(SettingsPart.key memory.Current)
 
     member _.GetSectionScrollOffset(part: SettingsPart) = memory.Offset part
 
     member _.ApplySectionScrollOffset(part: SettingsPart, y: float) =
         memory.ApplyOffset(part, y)
-        if memory.Current = part then frame.ScrollTo y
+
+        if memory.Current = part then
+            frame.ScrollTo y
 
     member _.HasUnsavedChanges = general.HasUnsavedGeneration
 
@@ -140,7 +187,10 @@ type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: Set
     member _.Health = general.Health
     member _.LocalDrafts = general.LocalDrafts
     member _.WireImport(handler: unit -> unit) = general.WireImportHandler handler
-    member _.WirePresets(rename: PresetInfo -> unit, delete: PresetInfo -> unit) = general.WirePresetHandlers(rename, delete)
+
+    member _.WirePresets(rename: PresetInfo -> unit, delete: PresetInfo -> unit) =
+        general.WirePresetHandlers(rename, delete)
+
     member _.PresetsPanel = general.PresetsPanel
 
     /// 本机偏好变了（已调用 SavePrefs 之后）

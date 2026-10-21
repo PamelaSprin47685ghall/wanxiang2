@@ -31,16 +31,19 @@ type DownloadBuffers(?capBytes: int64) =
     /// 开始接收。同键重复 Begin（重试）会重置缓冲并更新文件名，不叠加第二个流。
     member _.Begin(sha256: string, fileName: string) =
         let key = sha256.ToLowerInvariant()
+
         match buffers.TryGetValue key with
         | true, existing ->
             existing.Dispose()
             buffers[key] <- new MemoryStream()
         | _ -> buffers[key] <- new MemoryStream()
+
         names[key] <- fileName
         cappedNotified <- false
 
     member _.Append(sha256: string, bytes: byte[]) : DownloadChunkResult =
         let key = sha256.ToLowerInvariant()
+
         match buffers.TryGetValue key with
         | true, buffer ->
             if int64 buffer.Length + int64 bytes.Length > capBytes then
@@ -58,25 +61,30 @@ type DownloadBuffers(?capBytes: int64) =
     member this.AppendBase64(sha256: string, dataBase64: string) : bool =
         try
             let bytes = Convert.FromBase64String dataBase64
+
             match this.Append(sha256, bytes) with
             | DownloadChunkResult.Capped when not cappedNotified ->
                 cappedNotified <- true
                 true
             | _ -> false
-        with _ -> false
+        with _ ->
+            false
 
     /// 完成接收：取走文件名与字节并移除缓冲。文件名缺失时回落到 sha256。
     member _.Take(sha256: string) : (string * byte[]) option =
         let key = sha256.ToLowerInvariant()
+
         match buffers.TryGetValue key with
         | true, buffer ->
             buffers.Remove key |> ignore
+
             let fileName =
                 match names.TryGetValue key with
                 | true, name ->
                     names.Remove key |> ignore
                     name
                 | _ -> sha256
+
             let bytes = buffer.ToArray()
             buffer.Dispose()
             Some(fileName, bytes)
@@ -86,5 +94,6 @@ type DownloadBuffers(?capBytes: int64) =
     member _.Clear() =
         for entry in buffers do
             entry.Value.Dispose()
+
         buffers.Clear()
         names.Clear()

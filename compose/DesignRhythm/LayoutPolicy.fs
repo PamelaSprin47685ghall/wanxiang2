@@ -80,4 +80,3 @@ module LayoutPolicy =
         elif width < compactBreakpoint then Spacing.space4xl
         elif width < wideLayoutBreakpoint then Spacing.space6xl
         else Spacing.space10xl
-

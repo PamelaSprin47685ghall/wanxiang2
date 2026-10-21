@@ -8,21 +8,33 @@ open Microsoft.Extensions.AI
 ///
 /// 三种传输能吃的东西差别很大，而「递过去被拒」和「悄悄退化成一行说明」
 /// 都是坏结果，所以能力必须由调用方显式声明，转换层只按声明产出。
-type MediaSupport =
-    { image: bool
-      pdf: bool
-      audio: bool }
+type MediaSupport = { image: bool; pdf: bool; audio: bool }
 
 module MediaSupport =
 
     /// OpenAI 兼容传输：chat/completions 的 image_url 只吃图片。
-    let openAiCompatible = { image = true; pdf = false; audio = false }
+    let openAiCompatible =
+        {
+            image = true
+            pdf = false
+            audio = false
+        }
 
     /// Anthropic Messages API：图片与 PDF（document 块）；音频入参该协议没有。
-    let anthropic = { image = true; pdf = true; audio = false }
+    let anthropic =
+        {
+            image = true
+            pdf = true
+            audio = false
+        }
 
     /// Gemini：inlineData 通吃图片、PDF、音频。
-    let gemini = { image = true; pdf = true; audio = true }
+    let gemini =
+        {
+            image = true
+            pdf = true
+            audio = true
+        }
 
     let ofProviderKind (kind: string) =
         match kind with
@@ -44,14 +56,17 @@ module MediaContent =
 
     /// 可直接内联为文本的类型。
     let private textTypes =
-        set [ "application/json"
-              "application/xml"
-              "application/x-yaml"
-              "application/yaml"
-              "application/javascript"
-              "application/typescript"
-              "application/toml"
-              "application/sql" ]
+        set
+            [
+                "application/json"
+                "application/xml"
+                "application/x-yaml"
+                "application/yaml"
+                "application/javascript"
+                "application/typescript"
+                "application/toml"
+                "application/sql"
+            ]
 
     /// 内联文本上限：超过则截断，保住上下文预算。
     let maxInlineTextBytes = 128 * 1024
@@ -68,17 +83,27 @@ module MediaContent =
 
     /// Gemini 文档里列出的音频类型。
     let private audioTypes =
-        set [ "audio/wav"; "audio/mpeg"; "audio/mp3"; "audio/aiff"
-              "audio/aac"; "audio/ogg"; "audio/flac" ]
+        set
+            [
+                "audio/wav"
+                "audio/mpeg"
+                "audio/mp3"
+                "audio/aiff"
+                "audio/aac"
+                "audio/ogg"
+                "audio/flac"
+            ]
 
     let private normalize (mediaType: string) =
-        if isNull mediaType then "" else mediaType.Trim().ToLowerInvariant()
+        if isNull mediaType then
+            ""
+        else
+            mediaType.Trim().ToLowerInvariant()
 
     let isImage (mediaType: string) : bool =
         imageTypes.Contains(normalize mediaType)
 
-    let isPdf (mediaType: string) : bool =
-        pdfTypes.Contains(normalize mediaType)
+    let isPdf (mediaType: string) : bool = pdfTypes.Contains(normalize mediaType)
 
     let isAudio (mediaType: string) : bool =
         let m = normalize mediaType
@@ -89,35 +114,50 @@ module MediaContent =
         m.StartsWith("text/", StringComparison.Ordinal) || textTypes.Contains m
 
     let private formatSize (n: int64) =
-        if n < 1024L then sprintf "%d B" n
-        elif n < 1024L * 1024L then sprintf "%.1f KiB" (float n / 1024.0)
-        else sprintf "%.1f MiB" (float n / (1024.0 * 1024.0))
+        if n < 1024L then
+            sprintf "%d B" n
+        elif n < 1024L * 1024L then
+            sprintf "%.1f KiB" (float n / 1024.0)
+        else
+            sprintf "%.1f MiB" (float n / (1024.0 * 1024.0))
 
     /// 根据文件名推断 Markdown 代码块语言，帮模型正确理解内联文本。
     let private fenceLanguage (fileName: string) =
         let ext =
-            if String.IsNullOrWhiteSpace fileName then ""
-            else IO.Path.GetExtension(fileName).TrimStart('.').ToLowerInvariant()
+            if String.IsNullOrWhiteSpace fileName then
+                ""
+            else
+                IO.Path.GetExtension(fileName).TrimStart('.').ToLowerInvariant()
+
         match ext with
-        | "md" | "markdown" -> "markdown"
+        | "md"
+        | "markdown" -> "markdown"
         | "json" -> "json"
-        | "yml" | "yaml" -> "yaml"
+        | "yml"
+        | "yaml" -> "yaml"
         | "toml" -> "toml"
-        | "xml" | "html" | "htm" -> "xml"
-        | "fs" | "fsx" -> "fsharp"
+        | "xml"
+        | "html"
+        | "htm" -> "xml"
+        | "fs"
+        | "fsx" -> "fsharp"
         | "cs" -> "csharp"
-        | "ts" | "tsx" -> "typescript"
-        | "js" | "jsx" -> "javascript"
+        | "ts"
+        | "tsx" -> "typescript"
+        | "js"
+        | "jsx" -> "javascript"
         | "py" -> "python"
         | "rs" -> "rust"
         | "go" -> "go"
-        | "sh" | "bash" -> "bash"
+        | "sh"
+        | "bash" -> "bash"
         | "sql" -> "sql"
         | "csv" -> "csv"
         | _ -> ""
 
     let private decodeText (bytes: byte[]) : string * bool =
         let text = Encoding.UTF8.GetString bytes
+
         if bytes.Length > maxInlineTextBytes then
             let cut = Encoding.UTF8.GetString(bytes, 0, maxInlineTextBytes)
             cut, true
@@ -126,18 +166,28 @@ module MediaContent =
 
     /// 解析单个附件引用。`loadBlob` 返回 None 表示 blob 已丢失。
     /// `support` 声明当前传输吃得下什么，吃不下的类型给出**说明原因**的占位。
-    let resolve (support: MediaSupport) (loadBlob: string -> byte[] option) ((sha256: string, mediaType: string, fileName: string, size: int64)) : AIContent list =
+    let resolve
+        (support: MediaSupport)
+        (loadBlob: string -> byte[] option)
+        ((sha256: string, mediaType: string, fileName: string, size: int64))
+        : AIContent list =
         let describe (note: string) =
-            [ TextContent(sprintf "【附件】%s（%s，%s）%s" fileName mediaType (formatSize size) note) :> AIContent ]
+            [
+                TextContent(sprintf "【附件】%s（%s，%s）%s" fileName mediaType (formatSize size) note) :> AIContent
+            ]
+
         /// 二进制媒体的共同路径：能力允许且不超限就真发，否则说清为什么没发。
         let binary (label: string) (allowed: bool) (limit: int) (bytes: byte[]) =
             if not allowed then
                 describe " — 当前模型服务的传输不接受该类型，模型只看到这条说明。"
             elif bytes.LongLength > int64 limit then
-                describe (sprintf " — 超过 %s 内联上限，未发送给模型。" (formatSize(int64 limit)))
+                describe (sprintf " — 超过 %s 内联上限，未发送给模型。" (formatSize (int64 limit)))
             else
-                [ TextContent(sprintf "【%s】%s" label fileName) :> AIContent
-                  DataContent(ReadOnlyMemory bytes, normalize mediaType) :> AIContent ]
+                [
+                    TextContent(sprintf "【%s】%s" label fileName) :> AIContent
+                    DataContent(ReadOnlyMemory bytes, normalize mediaType) :> AIContent
+                ]
+
         match loadBlob sha256 with
         | None -> describe " — 内容已丢失，无法读取。"
         | Some bytes when bytes.Length = 0 -> describe " — 空文件。"
@@ -151,7 +201,13 @@ module MediaContent =
             elif isText mediaType then
                 let text, truncated = decodeText bytes
                 let lang = fenceLanguage fileName
-                let suffix = if truncated then sprintf "\n…（已截断，原文件 %s）" (formatSize size) else ""
+
+                let suffix =
+                    if truncated then
+                        sprintf "\n…（已截断，原文件 %s）" (formatSize size)
+                    else
+                        ""
+
                 let body = sprintf "【附件】%s\n```%s\n%s\n```%s" fileName lang text suffix
                 [ TextContent body :> AIContent ]
             else

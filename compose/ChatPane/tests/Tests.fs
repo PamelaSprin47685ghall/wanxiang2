@@ -15,9 +15,19 @@ open Wanxiang2.WorkspaceState
 
 let private rig () =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
-    if not (Application.Current.Resources.MergedDictionaries.Contains (theme.Resources :> Avalonia.Controls.IResourceDictionary)) then
-        Application.Current.Resources.MergedDictionaries.Add (theme.Resources :> Avalonia.Controls.IResourceDictionary)
-    let pane = ChatPane<string>((fun s -> Border(Width = s, Height = s) :> Control), None)
+
+    if
+        not (
+            Application.Current.Resources.MergedDictionaries.Contains(
+                theme.Resources :> Avalonia.Controls.IResourceDictionary
+            )
+        )
+    then
+        Application.Current.Resources.MergedDictionaries.Add(theme.Resources :> Avalonia.Controls.IResourceDictionary)
+
+    let pane =
+        ChatPane<string>((fun s -> Border(Width = s, Height = s) :> Control), None)
+
     let w = Window(Width = 800.0, Height = 600.0, Content = pane.Host)
     w.Show()
     Dispatcher.UIThread.RunJobs()
@@ -46,11 +56,15 @@ let ``贴底跟随与回到最新`` () =
     Headless.run (fun () ->
         let pane, w = rig ()
         pane.HideEmpty()
-        for i in 1 .. 20 do
+
+        for i in 1..20 do
             pane.Messages.Children.Add(Border(Height = 40.0, Width = 200.0))
         // 宿主渲染完同步报告，布局在其后
         pane.Rendered(false, 20, false)
-        for _ in 1 .. 4 do Dispatcher.UIThread.RunJobs()
+
+        for _ in 1..4 do
+            Dispatcher.UIThread.RunJobs()
+
         Assert.True(pane.Follow.AtBottom, "after render")
         // 用户向上：记未读，露钮
         pane.Scroller.ApplyOffset 0.0
@@ -88,39 +102,47 @@ let ``问答跳转端点`` () =
         pane.RefreshJumps(mounted, cards, 0, false)
         Assert.False pane.Nav.CanJumpPrevious
         Assert.True pane.Nav.CanJumpNext
+
         match pane.Jump(1, mounted, cards, 0, false, None) with
         | JumpStep.ScrollTo(i, _) -> Assert.Equal(2, i)
         | other -> Assert.Fail(sprintf "expected ScrollTo, got %A" other)
+
         w.Close())
 
 [<Fact>]
 let ``1000 条消息下 ItemsControl 使用 VirtualizingStackPanel 仅渲染视口行`` () =
     Headless.run (fun () ->
         let pane, w = rig ()
-        let mkMsg i = {
-            Role = "user"
-            Text = sprintf "msg %d" i
-            Reasoning = ""
-            CommitId = Some(uint64 i)
-            ToolCalls = []
-            Attachments = []
-            CommittedAt = None
-            Usage = None
-            IsLastAssistant = false
-            Streaming = false
-            AutoCollapseReasoning = false
-            MissingAttachments = Set.empty
-            AwaitingApproval = Set.empty
-            Index = Some i
-        }
-        let msgs = [ for i in 1 .. 1000 -> mkMsg i ]
-        let vs: ChatVS = {
-            Phase = ChatPhase.Messages msgs
-            Streaming = false
-            ScrollHint = None
-            RevealTarget = None
-            Error = None
-        }
+
+        let mkMsg i =
+            {
+                Role = "user"
+                Text = sprintf "msg %d" i
+                Reasoning = ""
+                CommitId = Some(uint64 i)
+                ToolCalls = []
+                Attachments = []
+                CommittedAt = None
+                Usage = None
+                IsLastAssistant = false
+                Streaming = false
+                AutoCollapseReasoning = false
+                MissingAttachments = Set.empty
+                AwaitingApproval = Set.empty
+                Index = Some i
+            }
+
+        let msgs = [ for i in 1..1000 -> mkMsg i ]
+
+        let vs: ChatVS =
+            {
+                Phase = ChatPhase.Messages msgs
+                Streaming = false
+                ScrollHint = None
+                RevealTarget = None
+                Error = None
+            }
+
         pane.Render(vs)
         Dispatcher.UIThread.RunJobs()
         Assert.True(pane.ItemsControl.IsVisible)
@@ -136,31 +158,59 @@ let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
     Headless.run (fun () ->
         let pane, w = rig ()
         // 空态
-        pane.Render { Phase = ChatPhase.Empty IdleEmptyKind.NotConnected; Streaming = false; ScrollHint = None; RevealTarget = None; Error = None }
+        pane.Render
+            {
+                Phase = ChatPhase.Empty IdleEmptyKind.NotConnected
+                Streaming = false
+                ScrollHint = None
+                RevealTarget = None
+                Error = None
+            }
+
         Assert.True pane.IsEmptyShown
         Assert.False pane.Scroller.Viewer.IsVisible
         // 骨架
-        pane.Render { Phase = ChatPhase.Skeleton; Streaming = false; ScrollHint = None; RevealTarget = None; Error = None }
+        pane.Render
+            {
+                Phase = ChatPhase.Skeleton
+                Streaming = false
+                ScrollHint = None
+                RevealTarget = None
+                Error = None
+            }
+
         Assert.False pane.IsEmptyShown
         Assert.True pane.Skeleton.IsShown
         // 消息
-        let msgs = [ {
-            Role = "user"
-            Text = "hello"
-            Reasoning = ""
-            CommitId = Some 1UL
-            ToolCalls = []
-            Attachments = []
-            CommittedAt = None
-            Usage = None
-            IsLastAssistant = false
-            Streaming = false
-            AutoCollapseReasoning = false
-            MissingAttachments = Set.empty
-            AwaitingApproval = Set.empty
-            Index = Some 1
-        } ]
-        pane.Render { Phase = ChatPhase.Messages msgs; Streaming = false; ScrollHint = None; RevealTarget = None; Error = None }
+        let msgs =
+            [
+                {
+                    Role = "user"
+                    Text = "hello"
+                    Reasoning = ""
+                    CommitId = Some 1UL
+                    ToolCalls = []
+                    Attachments = []
+                    CommittedAt = None
+                    Usage = None
+                    IsLastAssistant = false
+                    Streaming = false
+                    AutoCollapseReasoning = false
+                    MissingAttachments = Set.empty
+                    AwaitingApproval = Set.empty
+                    Index = Some 1
+                }
+            ]
+
+        pane.Render
+            {
+                Phase = ChatPhase.Messages msgs
+                Streaming = false
+                ScrollHint = None
+                RevealTarget = None
+                Error = None
+            }
+
         Assert.False pane.IsEmptyShown
         Assert.False pane.Skeleton.IsShown
         Assert.True pane.Scroller.Viewer.IsVisible
@@ -185,20 +235,27 @@ let ``主体各典型状态结构与可见性状态断言`` () =
         pane.ShowOlderFailure("没能取到更早的消息：超时", fun () -> retried <- true)
         Assert.True pane.Nav.OlderFailureVisible
         Assert.Equal("没能取到更早的消息：超时", pane.Nav.OlderFailureText)
-        let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement pane.Nav.RetryButton
+
+        let peer =
+            Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement pane.Nav.RetryButton
+
         ((peer :> obj) :?> Avalonia.Automation.Provider.IInvokeProvider).Invoke()
         Assert.True retried
         Assert.False pane.Nav.OlderFailureVisible
 
         // 4. 空态各分支
         let emptyCases =
-            [ ChatEmptyState.EmptyConversation, None
-              ChatEmptyState.NoConversation, Some("新对话", ignore)
-              ChatEmptyState.NotConnected, Some("连接主机", ignore)
-              ChatEmptyState.ConnectionFailed "超时", Some("重试", ignore)
-              ChatEmptyState.NoProvider, Some("添加模型", ignore) ]
+            [
+                ChatEmptyState.EmptyConversation, None
+                ChatEmptyState.NoConversation, Some("新对话", ignore)
+                ChatEmptyState.NotConnected, Some("连接主机", ignore)
+                ChatEmptyState.ConnectionFailed "超时", Some("重试", ignore)
+                ChatEmptyState.NoProvider, Some("添加模型", ignore)
+            ]
+
         for st, action in emptyCases do
             pane.ShowEmpty(st, action)
             Assert.True pane.IsEmptyShown
             Assert.False pane.Scroller.Viewer.IsVisible
+
         w.Close())

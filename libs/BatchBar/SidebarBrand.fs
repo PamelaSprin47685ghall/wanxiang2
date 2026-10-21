@@ -47,11 +47,9 @@ type SidebarBrand() =
         b
 
     let logoSlot = Border(VerticalAlignment = VerticalAlignment.Center)
+
     let wordmark =
-        TextBlock(
-            Text = "万象",
-            FontWeight = FontWeight.Medium,
-            VerticalAlignment = VerticalAlignment.Center)
+        TextBlock(Text = "万象", FontWeight = FontWeight.Medium, VerticalAlignment = VerticalAlignment.Center)
 
     let view =
         let brandRow = StackPanel(Orientation = Orientation.Horizontal, Spacing = 8.0)
@@ -80,15 +78,19 @@ type SidebarBrand() =
     member _.LogoSlot = logoSlot
 
     /// 宿主挂载品牌图标（插槽：构造期一次性接入，不随每帧投影变）
-    member _.SlotLogo(logo: Control) =
-        logoSlot.Child <- logo
+    member _.SlotLogo(logo: Control) = logoSlot.Child <- logo
 
     /// 单入口渲染
     member _.Render(vs: SidebarBrandVS) =
         presetButton.IsVisible <- vs.PresetsVisible
         backButton.IsVisible <- vs.Compact
 
-    [<CLIEvent>] member _.BackClicked = back.Publish
-    [<CLIEvent>] member _.NewClicked = create.Publish
+    [<CLIEvent>]
+    member _.BackClicked = back.Publish
+
+    [<CLIEvent>]
+    member _.NewClicked = create.Publish
+
     /// 参数是锚点（预设键）
-    [<CLIEvent>] member _.PresetClicked = preset.Publish
+    [<CLIEvent>]
+    member _.PresetClicked = preset.Publish

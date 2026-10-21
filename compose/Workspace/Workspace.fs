@@ -18,23 +18,28 @@ open Wanxiang2.WorkspaceState
 
 /// 宿主给工作区的几样
 type WorkspaceHooks =
-    { /// 触屏优先：抽屉打开时不自动聚焦搜索框
-      PrefersTouch: unit -> bool
-      /// 偏好里的侧栏宽度
-      SidebarWidth: unit -> float
-      InitialSidebarCollapsed: bool }
+    {
+        /// 触屏优先：抽屉打开时不自动聚焦搜索框
+        PrefersTouch: unit -> bool
+        /// 偏好里的侧栏宽度
+        SidebarWidth: unit -> float
+        InitialSidebarCollapsed: bool
+    }
 
 /// 组合者：主工作区（旧 AppShell.Build 的布局段 + ApplyResponsiveLayout）。
 /// ShellDesk 管列与导航状态，SidebarDesk 是左列，ChatScreen + ComposerDesk 是对话列，OverlayDesk 的根是本工作区的外层。
 /// 视口宽度默认取自身宽度；浏览器宿主用 ObserveViewport 喂 CSS 视口宽（轮询计时器归宿主），之后以它为准。
 type Workspace
-    (theme: ThemeManager,
-     overlayRoot: Grid,
-     sidebar: SidebarDesk,
-     chat: ChatScreen,
-     composer: ComposerDesk,
-     hooks: WorkspaceHooks) =
+    (
+        theme: ThemeManager,
+        overlayRoot: Grid,
+        sidebar: SidebarDesk,
+        chat: ChatScreen,
+        composer: ComposerDesk,
+        hooks: WorkspaceHooks
+    ) =
     let shellGrid = Grid()
+
     let splitter =
         GridSplitter(
             Background = Brushes.Transparent,
@@ -46,30 +51,73 @@ type Workspace
             DragIncrement = 1.0,
             Focusable = true,
             Cursor = new Cursor(StandardCursorType.SizeWestEast),
-            IsVisible = not hooks.InitialSidebarCollapsed)
+            IsVisible = not hooks.InitialSidebarCollapsed
+        )
+
     let host = Grid()
     let sidebarResized = Event<float>()
     let mutable cssWidth: float option = None
 
     let shellHooks: ShellHooks =
-        { ApplyCompactMode =
-            fun compact ->
-                let baseVS = Workspace.project (Workspace.init ())
-                composer.Render { baseVS.Composer with Compact = compact }
-                sidebar.Render({ baseVS.Sidebar with Compact = compact })
-                chat.Render { Messages = []; Streaming = None; Error = None; FontSize = 14.5; Title = None; CanEditTitle = false; IsGenerating = false; GeneratingText = ""; CanStop = false; ConversationChrome = false; CompactMode = compact; AutoCollapseReasoning = false; ReducedMotion = false; Usage = None; MissingAttachments = Set.empty }
-          ApplyStartMode = chat.WireStartMode
-          FocusComposer = composer.Focus
-          FocusSidebarSearch = fun () -> sidebar.FocusSearch()
-          PrefersTouch = hooks.PrefersTouch }
+        {
+            ApplyCompactMode =
+                fun compact ->
+                    let baseVS = Workspace.project (Workspace.init ())
+
+                    composer.Render
+                        { baseVS.Composer with
+                            Compact = compact
+                        }
+
+                    sidebar.Render(
+                        { baseVS.Sidebar with
+                            Compact = compact
+                        }
+                    )
+
+                    chat.Render
+                        {
+                            Messages = []
+                            Streaming = None
+                            Error = None
+                            FontSize = 14.5
+                            Title = None
+                            CanEditTitle = false
+                            IsGenerating = false
+                            GeneratingText = ""
+                            CanStop = false
+                            ConversationChrome = false
+                            CompactMode = compact
+                            AutoCollapseReasoning = false
+                            ReducedMotion = false
+                            Usage = None
+                            MissingAttachments = Set.empty
+                        }
+            ApplyStartMode = chat.WireStartMode
+            FocusComposer = composer.Focus
+            FocusSidebarSearch = fun () -> sidebar.FocusSearch()
+            PrefersTouch = hooks.PrefersTouch
+        }
+
     let shell =
-        ShellDesk(theme, shellGrid, sidebar.View, splitter, chat.Host, composer.Host, shellHooks,
-                  hooks.InitialSidebarCollapsed, hooks.SidebarWidth)
+        ShellDesk(
+            theme,
+            shellGrid,
+            sidebar.View,
+            splitter,
+            chat.Host,
+            composer.Host,
+            shellHooks,
+            hooks.InitialSidebarCollapsed,
+            hooks.SidebarWidth
+        )
 
     /// 宽度以 CSS 视口为准（有的话），否则取自身宽度
     let apply () =
         let width = cssWidth |> Option.defaultValue host.Bounds.Width
-        if width > 0.0 then shell.ApplyViewport width |> ignore
+
+        if width > 0.0 then
+            shell.ApplyViewport width |> ignore
 
     do
         AutomationProperties.SetName(splitter, "调整侧边栏宽度")
@@ -79,8 +127,13 @@ type Workspace
         splitter.DragCompleted.Add(fun _ -> shell.NoteSidebarDragged() |> Option.iter sidebarResized.Trigger)
         host.Children.Add shellGrid
         host.Background <- theme.Brush Wanxiang2.ThemePalette.PaletteKey.Canvas
-        if not (overlayRoot.Children.Contains host) then overlayRoot.Children.Insert(0, host)
-        host.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty then apply ())
+
+        if not (overlayRoot.Children.Contains host) then
+            overlayRoot.Children.Insert(0, host)
+
+        host.PropertyChanged.Add(fun e ->
+            if e.Property = Visual.BoundsProperty then
+                apply ())
 
     /// 工作区根（已插进浮层根的最底层）
     member _.Host: Control = host
@@ -107,8 +160,8 @@ type Workspace
     /// 单入口幂等渲染：以单一状态树的 ShellVS 为准（紧凑/抽屉/起步态/侧栏开合）
     member this.Render(vs: ShellVS) =
         shell.RenderStarting vs.StartingPageVisible
+
         if vs.Compact then
             shell.ApplyCompactNavigation vs.SidebarOpen |> ignore
-        else
-            if vs.SidebarOpen = shell.State.sidebarCollapsed then
-                shell.ToggleSidebar() |> ignore
+        else if vs.SidebarOpen = shell.State.sidebarCollapsed then
+            shell.ToggleSidebar() |> ignore

@@ -46,10 +46,10 @@ module ServerConnectionsTests =
         let res1 = CommandQueued
         let res2 = CommandCommitted 42UL
         let res3 = CommandIdempotent 42UL
-        let res4 = CommandFailed (ValidationError "bad command")
+        let res4 = CommandFailed(ValidationError "bad command")
 
         match res1, res2, res3, res4 with
-        | CommandQueued, CommandCommitted c1, CommandIdempotent c2, CommandFailed (ValidationError _) ->
+        | CommandQueued, CommandCommitted c1, CommandIdempotent c2, CommandFailed(ValidationError _) ->
             Assert.Equal(42UL, c1)
             Assert.Equal(42UL, c2)
         | _ -> Assert.Fail("CommandExecutionResult pattern match failed")
@@ -63,9 +63,10 @@ module ServerConnectionsTests =
     let ``ConnectionRegistry 并发分配 ID 保证全局严格单调且互不冲突`` () =
         let reg = ConnectionRegistry()
         let ids = System.Collections.Concurrent.ConcurrentBag<int>()
-        System.Threading.Tasks.Parallel.For(0, 100, fun _ ->
-            ids.Add(reg.AddPlaceholder())
-        ) |> ignore
+
+        System.Threading.Tasks.Parallel.For(0, 100, fun _ -> ids.Add(reg.AddPlaceholder()))
+        |> ignore
+
         let distinctCount = ids |> Seq.distinct |> Seq.length
         Assert.Equal(100, distinctCount)
 
@@ -73,8 +74,9 @@ module ServerConnectionsTests =
     let ``CommandExecutionResult 错误分支包含具体错误语义`` () =
         let err = CommandIdConflict "version mismatch on head"
         let res = CommandFailed err
+
         match res with
-        | CommandFailed (CommandIdConflict msg) -> Assert.Contains("version mismatch", msg)
+        | CommandFailed(CommandIdConflict msg) -> Assert.Contains("version mismatch", msg)
         | _ -> Assert.Fail("Expected CommandFailed with CommandIdConflict")
 
 
@@ -88,40 +90,46 @@ module ServerConnectionsTests =
         let now = DateTimeOffset.UtcNow
         let msgJson = JsonObject()
         msgJson["role"] <- "user"
-        let m1 = {
-            commitId = 1UL
-            conversationId = convId
-            committedAtUtc = now
-            deletedAtCommitId = None
-            payloadJson = msgJson :> JsonNode
-        }
-        let m2 = {
-            commitId = 2UL
-            conversationId = convId
-            committedAtUtc = now
-            deletedAtCommitId = None
-            payloadJson = msgJson :> JsonNode
-        }
-        let conv = {
-            conversationId = convId
-            title = "Test Conv"
-            createdAtUtc = now
-            lastActivityAtUtc = now
-            config = SessionConfig.empty
-            deleted = false
-            pinned = false
-            archived = false
-            parent = None
-            forkBaseCommitId = None
-            messages = [ m1; m2 ]
-            lastCommitId = Some 5UL
-        }
 
-        let proj = {
-            Projection.empty with
+        let m1 =
+            {
+                commitId = 1UL
+                conversationId = convId
+                committedAtUtc = now
+                deletedAtCommitId = None
+                payloadJson = msgJson :> JsonNode
+            }
+
+        let m2 =
+            {
+                commitId = 2UL
+                conversationId = convId
+                committedAtUtc = now
+                deletedAtCommitId = None
+                payloadJson = msgJson :> JsonNode
+            }
+
+        let conv =
+            {
+                conversationId = convId
+                title = "Test Conv"
+                createdAtUtc = now
+                lastActivityAtUtc = now
+                config = SessionConfig.empty
+                deleted = false
+                pinned = false
+                archived = false
+                parent = None
+                forkBaseCommitId = None
+                messages = [ m1; m2 ]
+                lastCommitId = Some 5UL
+            }
+
+        let proj =
+            { Projection.empty with
                 latestCommitId = 2UL
                 conversations = Map.ofList [ convId, conv ]
-        }
+            }
 
         // limit = 0 -> 不截断
         let tail0, earliest0, hasMore0 = ServerModel.conversationMessagesTail proj conv 0
@@ -145,79 +153,97 @@ module ServerConnectionsTests =
     let ``ServerModel exportPage 参数与前置条件校验契约`` () =
         let convId = Guid.NewGuid()
         let now = DateTimeOffset.UtcNow
-        let conv = {
-            conversationId = convId
-            title = "Export Conv"
-            createdAtUtc = now
-            lastActivityAtUtc = now
-            config = SessionConfig.empty
-            deleted = false
-            pinned = false
-            archived = false
-            parent = None
-            forkBaseCommitId = None
-            messages = []
-            lastCommitId = Some 10UL
-        }
-        let proj = {
-            Projection.empty with
+
+        let conv =
+            {
+                conversationId = convId
+                title = "Export Conv"
+                createdAtUtc = now
+                lastActivityAtUtc = now
+                config = SessionConfig.empty
+                deleted = false
+                pinned = false
+                archived = false
+                parent = None
+                forkBaseCommitId = None
+                messages = []
+                lastCommitId = Some 10UL
+            }
+
+        let proj =
+            { Projection.empty with
                 latestCommitId = 10UL
                 conversations = Map.ofList [ convId, conv ]
-        }
+            }
 
         // 1. 对话不存在
-        let qNonExistent: ConversationExportQuery = {
-            exportId = Guid.NewGuid()
-            conversationId = Guid.NewGuid()
-            atCommitId = None
-            beforeCommitId = 0UL
-        }
+        let qNonExistent: ConversationExportQuery =
+            {
+                exportId = Guid.NewGuid()
+                conversationId = Guid.NewGuid()
+                atCommitId = None
+                beforeCommitId = 0UL
+            }
+
         match ServerModel.exportPage proj qNonExistent with
         | Error msg -> Assert.Contains("对话不存在", msg)
         | Ok _ -> Assert.Fail("Expected error for non-existent conversation")
 
         // 2. 对话已删除
         let deletedConv = { conv with deleted = true }
-        let projWithDeleted = { proj with conversations = Map.ofList [ convId, deletedConv ] }
-        let qDeleted: ConversationExportQuery = {
-            exportId = Guid.NewGuid()
-            conversationId = convId
-            atCommitId = None
-            beforeCommitId = 0UL
-        }
+
+        let projWithDeleted =
+            { proj with
+                conversations = Map.ofList [ convId, deletedConv ]
+            }
+
+        let qDeleted: ConversationExportQuery =
+            {
+                exportId = Guid.NewGuid()
+                conversationId = convId
+                atCommitId = None
+                beforeCommitId = 0UL
+            }
+
         match ServerModel.exportPage projWithDeleted qDeleted with
         | Error msg -> Assert.Contains("对话已删除", msg)
         | Ok _ -> Assert.Fail("Expected error for deleted conversation")
 
         // 3. atCommitId 超过 latestCommitId
-        let qStaleAt: ConversationExportQuery = {
-            exportId = Guid.NewGuid()
-            conversationId = convId
-            atCommitId = Some 99UL
-            beforeCommitId = 0UL
-        }
+        let qStaleAt: ConversationExportQuery =
+            {
+                exportId = Guid.NewGuid()
+                conversationId = convId
+                atCommitId = Some 99UL
+                beforeCommitId = 0UL
+            }
+
         match ServerModel.exportPage proj qStaleAt with
         | Error msg -> Assert.Contains("导出水位已失效", msg)
         | Ok _ -> Assert.Fail("Expected error for stale atCommitId")
 
         // 4. 导出首页不能指定分页边界
-        let qBadFirstPage: ConversationExportQuery = {
-            exportId = Guid.NewGuid()
-            conversationId = convId
-            atCommitId = None
-            beforeCommitId = 5UL
-        }
+        let qBadFirstPage: ConversationExportQuery =
+            {
+                exportId = Guid.NewGuid()
+                conversationId = convId
+                atCommitId = None
+                beforeCommitId = 5UL
+            }
+
         match ServerModel.exportPage proj qBadFirstPage with
         | Error msg -> Assert.Contains("导出首页不能指定分页边界", msg)
         | Ok _ -> Assert.Fail("Expected error for non-zero beforeCommitId without atCommitId")
 
         // 5. 正常导出空对话页面
-        let qOk: ConversationExportQuery = {
-            exportId = Guid.NewGuid()
-            conversationId = convId
-            atCommitId = Some 10UL
-            beforeCommitId = 0UL
-        }
+        let qOk: ConversationExportQuery =
+            {
+                exportId = Guid.NewGuid()
+                conversationId = convId
+                atCommitId = Some 10UL
+                beforeCommitId = 0UL
+            }
+
         match ServerModel.exportPage proj qOk with
         | Ok pageData ->
             Assert.Equal(convId, pageData.conversationId)
@@ -242,34 +268,40 @@ module ServerConnectionsTests =
         contents.Add textItem
         reasoningPayload["contents"] <- contents
 
-        let m1 = {
-            commitId = 3UL
-            conversationId = convId
-            committedAtUtc = now
-            deletedAtCommitId = None
-            payloadJson = reasoningPayload :> JsonNode
-        }
+        let m1 =
+            {
+                commitId = 3UL
+                conversationId = convId
+                committedAtUtc = now
+                deletedAtCommitId = None
+                payloadJson = reasoningPayload :> JsonNode
+            }
 
-        let conv = {
-            conversationId = convId
-            title = "List Item Conv"
-            createdAtUtc = now
-            lastActivityAtUtc = now
-            config = { SessionConfig.empty with provider = "prov1"; model = "model1" }
-            deleted = false
-            pinned = true
-            archived = false
-            parent = None
-            forkBaseCommitId = None
-            messages = [ m1 ]
-            lastCommitId = Some 3UL
-        }
+        let conv =
+            {
+                conversationId = convId
+                title = "List Item Conv"
+                createdAtUtc = now
+                lastActivityAtUtc = now
+                config =
+                    { SessionConfig.empty with
+                        provider = "prov1"
+                        model = "model1"
+                    }
+                deleted = false
+                pinned = true
+                archived = false
+                parent = None
+                forkBaseCommitId = None
+                messages = [ m1 ]
+                lastCommitId = Some 3UL
+            }
 
-        let proj = {
-            Projection.empty with
+        let proj =
+            { Projection.empty with
                 latestCommitId = 3UL
                 conversations = Map.ofList [ convId, conv ]
-        }
+            }
 
         let listItems = ServerModel.conversationListItems proj (fun _ -> "idle")
         Assert.Equal(1, listItems.Count)
@@ -292,7 +324,9 @@ module ServerConnectionsTests =
     [<Fact>]
     let ``TolerantReader 契约：识别 wanxiang 专属命名空间与标准事件，忽略外部自定义事件`` () =
         // 1. wanxiang 专属命名空间 CUSTOM 事件
-        let wanxiangCustomJson = """{"type":"CUSTOM","name":"wanxiang.dev/chat.user-message.enqueue","value":{"foo":"bar"}}"""
+        let wanxiangCustomJson =
+            """{"type":"CUSTOM","name":"wanxiang.dev/chat.user-message.enqueue","value":{"foo":"bar"}}"""
+
         match Wanxiang.Agui.TolerantReader.parse wanxiangCustomJson with
         | Wanxiang.Agui.ParsedEvent.Custom(name, value) ->
             Assert.True(name.StartsWith Wanxiang.Agui.Capabilities.Namespace)
@@ -300,7 +334,9 @@ module ServerConnectionsTests =
         | _ -> Assert.Fail("Expected Custom event for wanxiang namespace")
 
         // 2. 外部别家 CUSTOM 事件 -> 合法解析但非 wanxiang 命名空间
-        let foreignCustomJson = """{"type":"CUSTOM","name":"other.vendor/action","value":{}}"""
+        let foreignCustomJson =
+            """{"type":"CUSTOM","name":"other.vendor/action","value":{}}"""
+
         match Wanxiang.Agui.TolerantReader.parse foreignCustomJson with
         | Wanxiang.Agui.ParsedEvent.Custom(name, _) ->
             Assert.False(name.StartsWith Wanxiang.Agui.Capabilities.Namespace)
@@ -308,15 +344,17 @@ module ServerConnectionsTests =
 
         // 3. 畸形 JSON -> 产生 Malformed 结果
         let malformedJson = """{"type": 12345}"""
+
         match Wanxiang.Agui.TolerantReader.parse malformedJson with
-        | Wanxiang.Agui.ParsedEvent.Malformed reason ->
-            Assert.NotEmpty(reason)
+        | Wanxiang.Agui.ParsedEvent.Malformed reason -> Assert.NotEmpty(reason)
         | _ -> Assert.Fail("Expected Malformed for invalid type field")
 
     [<Fact>]
     let ``TolerantReader 扁平 value 与嵌套外壳归一化语义`` () =
         // 验证扁平字段对象能够被安全解析为 JsonObject
-        let flatJson = """{"type":"CUSTOM","name":"wanxiang.dev/ping","value":{"clientTime":1000}}"""
+        let flatJson =
+            """{"type":"CUSTOM","name":"wanxiang.dev/ping","value":{"clientTime":1000}}"""
+
         match Wanxiang.Agui.TolerantReader.parse flatJson with
         | Wanxiang.Agui.ParsedEvent.Custom(_, value) ->
             let vo = Assert.IsAssignableFrom<JsonObject>(value)
@@ -338,6 +376,7 @@ module ServerConnectionsTests =
         let invalidProviderJson = JsonObject()
         invalidProviderJson["id"] <- "" // 空 ID 必须被拒绝
         invalidProviderJson["kind"] <- "openai"
+
         match ConfigMutation.upsertProvider cfg invalidProviderJson with
         | Error errs ->
             Assert.NotEmpty errs
@@ -349,8 +388,7 @@ module ServerConnectionsTests =
         invalidMcpJson["id"] <- "test-mcp"
         // 既无 command 又无 url
         match ConfigMutation.upsertMcp cfg invalidMcpJson with
-        | Error errs ->
-            Assert.NotEmpty errs
+        | Error errs -> Assert.NotEmpty errs
         | Ok _ -> Assert.Fail("Expected error for mcp server missing both command and url")
 
         // 3. 删除不存在的 Provider 严格返回 Error 错误清单
@@ -368,6 +406,7 @@ module ServerConnectionsTests =
     [<Fact>]
     let ``Stderr 凭据脱敏规则：按长度降序替换，短密钥不破坏长密钥的完整匹配`` () =
         Stderr.clearSecrets ()
+
         try
             let longSecret = "sk-wanxiang-super-secret-key-12345"
             let shortSecret = "sk-wanxiang"
@@ -389,6 +428,7 @@ module ServerConnectionsTests =
     [<Fact>]
     let ``Stderr 短密钥过滤与幂等注册契约：长度小于 8 的字符串或空白字符不予注册`` () =
         Stderr.clearSecrets ()
+
         try
             // 长度小于 8 或全空白的不注册
             Stderr.registerSecrets [ "1234567"; "   "; "" ]
@@ -415,11 +455,13 @@ module ServerConnectionsTests =
         item1["id"] <- 101UL
         items.Add item1
 
-        let catchUpEv: WireEvent = AuthorityCatchUp {|
-            fromCursor = fromCursor
-            toCommitId = toCommitId
-            items = items
-        |}
+        let catchUpEv: WireEvent =
+            AuthorityCatchUp
+                {|
+                    fromCursor = fromCursor
+                    toCommitId = toCommitId
+                    items = items
+                |}
 
         match catchUpEv with
         | AuthorityCatchUp d ->
@@ -427,8 +469,3 @@ module ServerConnectionsTests =
             Assert.Equal(164UL, d.toCommitId)
             Assert.Equal(1, d.items.Count)
         | _ -> Assert.Fail("Expected AuthorityCatchUp event variant")
-
-
-
-
-

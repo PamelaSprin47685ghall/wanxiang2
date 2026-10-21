@@ -23,6 +23,7 @@ module Envelope =
         // id 用字符串承载：uint64 超出 double 精确范围
         o["id"] <- JsonValue.Create(c.id.ToString CultureInfo.InvariantCulture)
         o["at"] <- JsonValue.Create(c.at.ToString("o", CultureInfo.InvariantCulture))
+
         match c.stamp with
         | Some s ->
             let so = JsonObject()
@@ -30,8 +31,12 @@ module Envelope =
             so["hash"] <- JsonValue.Create s.hash
             o["stamp"] <- so
         | None -> ()
+
         let arr = JsonArray()
-        for e in c.events do arr.Add(e.DeepClone())
+
+        for e in c.events do
+            arr.Add(e.DeepClone())
+
         o["events"] <- arr
         o.ToJsonString()
 
@@ -40,18 +45,37 @@ module Envelope =
             match JsonNode.Parse text with
             | :? JsonObject as o ->
                 let v = o["v"].GetValue<int>()
-                if v > Version then NewerVersion v
-                elif v <> Version then Invalid(sprintf "unknown version %d" v)
+
+                if v > Version then
+                    NewerVersion v
+                elif v <> Version then
+                    Invalid(sprintf "unknown version %d" v)
                 else
                     let evs = o["events"].AsArray() |> List.ofSeq
-                    if evs |> List.exists isNull then Invalid "null event" else
-                    Parsed
-                            { id = UInt64.Parse(o["id"].GetValue<string>(), CultureInfo.InvariantCulture)
-                              at = DateTimeOffset.Parse(o["at"].GetValue<string>(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
-                              stamp =
-                                match o["stamp"] with
-                                | :? JsonObject as s -> Some { commandId = s["id"].GetValue<string>(); hash = s["hash"].GetValue<string>() }
-                                | _ -> None
-                              events = evs |> List.map _.DeepClone() }
+
+                    if evs |> List.exists isNull then
+                        Invalid "null event"
+                    else
+                        Parsed
+                            {
+                                id = UInt64.Parse(o["id"].GetValue<string>(), CultureInfo.InvariantCulture)
+                                at =
+                                    DateTimeOffset.Parse(
+                                        o["at"].GetValue<string>(),
+                                        CultureInfo.InvariantCulture,
+                                        DateTimeStyles.RoundtripKind
+                                    )
+                                stamp =
+                                    match o["stamp"] with
+                                    | :? JsonObject as s ->
+                                        Some
+                                            {
+                                                commandId = s["id"].GetValue<string>()
+                                                hash = s["hash"].GetValue<string>()
+                                            }
+                                    | _ -> None
+                                events = evs |> List.map _.DeepClone()
+                            }
             | _ -> Invalid "record is not a JSON object"
-        with e -> Invalid e.Message
+        with e ->
+            Invalid e.Message

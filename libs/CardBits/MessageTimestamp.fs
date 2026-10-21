@@ -10,6 +10,7 @@ module MessageTimestamp =
     let format (now: DateTimeOffset) (local: DateTimeOffset) : string =
         let today = now.Date
         let days = (today - local.Date).TotalDays
+
         if days < 1.0 then local.ToString "HH:mm"
         elif days < 2.0 then local.ToString "'昨天' HH:mm"
         elif local.Year = now.Year then local.ToString "M月d日 HH:mm"

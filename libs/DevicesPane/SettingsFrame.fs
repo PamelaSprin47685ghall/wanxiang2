@@ -15,10 +15,12 @@ open Avalonia.Threading
 
 /// 一个分区入口
 type SettingsNavItem =
-    { Key: string
-      Label: string
-      /// 图标名（Glyph 槽）
-      Glyph: string }
+    {
+        Key: string
+        Label: string
+        /// 图标名（Glyph 槽）
+        Glyph: string
+    }
 
 /// 设置页外框（迁自旧 Views/SettingsView.fs 的界面部分）：头部「设置 / 返回对话」、分组的分区导航（读屏 Tab / TabItem、
 /// 上下左右与 Home / End 循环移动）、范围说明、内容区（滚动、最宽封顶）、窄屏时导航转为顶部横条。
@@ -41,23 +43,47 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
     let mutable compact: bool option = None
     let mutable subtle = 0.6
 
-    let navScroll = ScrollViewer(Content = navPanel, HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden)
+    let navScroll =
+        ScrollViewer(
+            Content = navPanel,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Hidden
+        )
+
     let nav = Border(Child = navScroll)
     do nav.Bind(Border.BackgroundProperty, Dyn.res "Palette.Rail") |> ignore
     do nav.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
     let contentFrame = Border(HorizontalAlignment = HorizontalAlignment.Stretch)
-    let content = ScrollViewer(Content = contentFrame, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalContentAlignment = HorizontalAlignment.Stretch)
+
+    let content =
+        ScrollViewer(
+            Content = contentFrame,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch
+        )
 
     let refreshStates () =
         for KeyValue(key, button) in buttons do
             let selected = key = current
             // 选中底是本地值；未选中时清掉，让主题的悬停样式生效
-            if selected then button.Bind(Button.BackgroundProperty, Dyn.res "Palette.Selected") |> ignore else button.ClearValue Button.BackgroundProperty
+            if selected then
+                button.Bind(Button.BackgroundProperty, Dyn.res "Palette.Selected") |> ignore
+            else
+                button.ClearValue Button.BackgroundProperty
+
             accents[key].IsVisible <- selected
             let label = captions[key].Text
             AutomationProperties.SetItemStatus(button, (if selected then "当前分区" else ""))
             AutomationProperties.SetHelpText(button, (if selected then label + "，当前分区" else label))
-            if selected then captions[key].Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore else captions[key].Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+
+            if selected then
+                captions[key].Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text")
+                |> ignore
+            else
+                captions[key].Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+                |> ignore
+
             captions[key].FontWeight <- (if selected then FontWeight.Bold else FontWeight.Medium)
             glyphs[key].Opacity <- (if selected then 1.0 else subtle)
 
@@ -72,7 +98,9 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
         focusKey target
 
     let step (dir: int) =
-        let idx = all |> List.tryFindIndex (fun i -> i.Key = current) |> Option.defaultValue 0
+        let idx =
+            all |> List.tryFindIndex (fun i -> i.Key = current) |> Option.defaultValue 0
+
         let n = all.Length
         move all[((idx + dir) % n + n) % n].Key
 
@@ -84,12 +112,22 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
                 let t = TextBlock(Text = "[" + item.Glyph + "]")
                 t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
                 t :> Control
+
         glyph.VerticalAlignment <- VerticalAlignment.Center
         let caption = Ui.smallText item.Label
         caption.FontWeight <- FontWeight.Medium
         caption.VerticalAlignment <- VerticalAlignment.Center
         // 选中左缘强调条：独立元素叠画，不进布局流、不抢焦点
-        let accent = Border(HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Stretch, IsHitTestVisible = false, Focusable = false, IsVisible = false, Width = 2.0)
+        let accent =
+            Border(
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                IsHitTestVisible = false,
+                Focusable = false,
+                IsVisible = false,
+                Width = 2.0
+            )
+
         accent.Bind(Border.BackgroundProperty, Dyn.res "Palette.Accent") |> ignore
         let grid = Grid()
         grid.Children.Add accent
@@ -97,7 +135,17 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
         stack.Children.Add glyph
         stack.Children.Add caption
         grid.Children.Add stack
-        let host = Button(Content = grid, MinHeight = 38.0, Padding = Thickness(16.0, 12.0), CornerRadius = CornerRadius 8.0, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left)
+
+        let host =
+            Button(
+                Content = grid,
+                MinHeight = 38.0,
+                Padding = Thickness(16.0, 12.0),
+                CornerRadius = CornerRadius 8.0,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left
+            )
+
         host.Classes.Add "surface"
         host.Classes.Add "menu-item"
         host.Classes.Add "hover-plain"
@@ -105,12 +153,15 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
         AutomationProperties.SetName(host, item.Label)
         host.Tag <- item.Key
         AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.TabItem)
+
         host.KeyDown.Add(fun e ->
             match e.Key with
-            | Key.Up | Key.Left ->
+            | Key.Up
+            | Key.Left ->
                 e.Handled <- true
                 step -1
-            | Key.Down | Key.Right ->
+            | Key.Down
+            | Key.Right ->
                 e.Handled <- true
                 step 1
             | Key.Home ->
@@ -120,6 +171,7 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
                 e.Handled <- true
                 move (List.last all).Key
             | _ -> ())
+
         buttons[item.Key] <- host
         captions[item.Key] <- caption
         glyphs[item.Key] <- glyph
@@ -133,6 +185,7 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
 
     let applyLayout () =
         let xs, md, xl, s2, _, _ = spaces
+
         match compact with
         | Some true ->
             DockPanel.SetDock(nav, Dock.Top)
@@ -152,20 +205,30 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
             nav.BorderThickness <- Thickness(0.0, 0.0, border, 0.0)
             navPanel.Orientation <- Orientation.Vertical
             navScroll.HorizontalScrollBarVisibility <- ScrollBarVisibility.Hidden
+
         for l in groupLabels do
             l.IsVisible <- (compact <> Some true)
             l.Margin <- Thickness(xl, s2, xl, md)
 
     let mutable s8 = 0.0
+
     let applyPadding () =
         let _, _, _, s2, s4, s6 = spaces
-        contentFrame.Padding <- (if compact = Some true then Thickness(s2, s2, s2, s6) else Thickness(s6, s4, s6, s8))
+
+        contentFrame.Padding <-
+            (if compact = Some true then
+                 Thickness(s2, s2, s2, s6)
+             else
+                 Thickness(s6, s4, s6, s8))
 
     let mutable breakpoint = 720.0
+
     let applyResponsive () =
         let width = this.Bounds.Width
+
         if width > 0.0 then
             let next = width < breakpoint
+
             if compact <> Some next then
                 let previous = content.Offset
                 compact <- Some next
@@ -182,18 +245,33 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
         title.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
         title.FontWeight <- FontWeight.Medium
         title.VerticalAlignment <- VerticalAlignment.Center
-        let dock = DockPanel(LastChildFill = false, VerticalAlignment = VerticalAlignment.Center)
+
+        let dock =
+            DockPanel(LastChildFill = false, VerticalAlignment = VerticalAlignment.Center)
+
         DockPanel.SetDock(title, Dock.Left)
         DockPanel.SetDock(closeButton, Dock.Right)
         dock.Children.Add title
         dock.Children.Add closeButton
-        let header = Border(Child = dock, Height = 48.0, Padding = Thickness(16.0, 0.0, 16.0, 0.0), BorderThickness = Thickness(0.0, 0.0, 0.0, 1.0))
+
+        let header =
+            Border(
+                Child = dock,
+                Height = 48.0,
+                Padding = Thickness(16.0, 0.0, 16.0, 0.0),
+                BorderThickness = Thickness(0.0, 0.0, 0.0, 1.0)
+            )
+
         header.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
+
         for group, items in groups do
             let label = Ui.sectionLabel group
             groupLabels.Add label
             navPanel.Children.Add label
-            for item in items do navPanel.Children.Add(navButton item)
+
+            for item in items do
+                navPanel.Children.Add(navButton item)
+
         AutomationProperties.SetName(nav, "设置分区导航")
         AutomationProperties.SetControlTypeOverride(nav, Nullable AutomationControlType.Tab)
         spaces <- (4.0, 12.0, 16.0, 20.0, 32.0, 40.0)
@@ -218,7 +296,11 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
         layout.Children.Add header
         layout.Children.Add split
         this.Child <- layout
-        this.PropertyChanged.Add(fun a -> if a.Property = Visual.BoundsProperty then applyResponsive ())
+
+        this.PropertyChanged.Add(fun a ->
+            if a.Property = Visual.BoundsProperty then
+                applyResponsive ())
+
         applyLayout ()
         applyPadding ()
         refreshStates ()
@@ -232,6 +314,7 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
     member _.Select(key: string) =
         current <- key
         refreshStates ()
+
         match buttons.TryGetValue key with
         | true, b -> b.BringIntoView()
         | _ -> ()

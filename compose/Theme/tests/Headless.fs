@@ -22,4 +22,3 @@ module Headless =
     /// 在 Avalonia UI 线程上同步执行测试体。
     let run (body: unit -> unit) : unit =
         session.Value.Dispatch(Action body, CancellationToken.None).GetAwaiter().GetResult()
-

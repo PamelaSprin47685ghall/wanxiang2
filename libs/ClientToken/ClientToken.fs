@@ -13,12 +13,16 @@ module ClientToken =
 
     /// 新令牌（256 bit 密码学随机）。
     let generate () : string =
-        let b64 = Convert.ToBase64String(RandomNumberGenerator.GetBytes 32).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+        let b64 =
+            Convert.ToBase64String(RandomNumberGenerator.GetBytes 32).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+
         Prefix + b64
 
     /// 存进配置的哈希。
     let hash (token: string) : string =
-        SHA256.HashData(Encoding.UTF8.GetBytes token) |> Convert.ToHexString |> _.ToLowerInvariant()
+        SHA256.HashData(Encoding.UTF8.GetBytes token)
+        |> Convert.ToHexString
+        |> _.ToLowerInvariant()
 
     /// 常量时间比较两个字符串（例如两个哈希）。
     let fixedTimeEquals (a: string) (b: string) : bool =
@@ -26,8 +30,12 @@ module ClientToken =
 
     /// 令牌原文是否对应这个哈希（常量时间）。
     let matches (token: string) (storedHash: string) : bool =
-        not (isNull token) && not (isNull storedHash) && fixedTimeEquals (hash token) storedHash
+        not (isNull token)
+        && not (isNull storedHash)
+        && fixedTimeEquals (hash token) storedHash
 
     /// 设备的稳定标识：哈希的前 16 位十六进制。界面与设备管理用它指代设备，不能用于认证。
     let deviceId (tokenHash: string) : string =
-        if isNull tokenHash then "" elif tokenHash.Length <= 16 then tokenHash else tokenHash.Substring(0, 16)
+        if isNull tokenHash then ""
+        elif tokenHash.Length <= 16 then tokenHash
+        else tokenHash.Substring(0, 16)

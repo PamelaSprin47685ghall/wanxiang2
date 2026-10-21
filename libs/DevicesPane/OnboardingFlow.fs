@@ -45,7 +45,8 @@ type OnboardingFlow() =
     let mutable discoveryStarted = false
     let mutable status = { text = ""; isError = false }
 
-    let setStatus text isError = status <- { text = text; isError = isError }
+    let setStatus text isError =
+        status <- { text = text; isError = isError }
 
     let fail message =
         step <- OnboardingStep.Idle
@@ -65,7 +66,8 @@ type OnboardingFlow() =
             useAlternate <- false
             setStatus "" false
             true
-        else false
+        else
+            false
 
     /// 「改用兼容端点 / 改回原生接口」（只在空闲时生效）。
     member _.ToggleAlternate() : bool =
@@ -73,7 +75,8 @@ type OnboardingFlow() =
             useAlternate <- not useAlternate
             setStatus "已切换传输，请再点「连接」重试。" false
             true
-        else false
+        else
+            false
 
     /// 切换按钮上的文字。
     member _.SwitchLabel = if useAlternate then "改回原生接口" else "改用兼容端点"
@@ -86,7 +89,8 @@ type OnboardingFlow() =
         elif needsKey && System.String.IsNullOrWhiteSpace key then
             setStatus "还没有填写密钥。请先粘贴 API Key，再点「连接」。" true
             OnboardingInput.MissingKey
-        else OnboardingInput.Ready
+        else
+            OnboardingInput.Ready
 
     /// 开始保存这个模型服务。只在空闲时生效。
     member _.Begin(providerId: string) : bool =
@@ -95,11 +99,13 @@ type OnboardingFlow() =
             attempt <- Some providerId
             setStatus "正在保存模型服务…" false
             true
-        else false
+        else
+            false
 
     /// 第一次保存的结果。成功进入探测（宿主随后发起探测）并返回 true。label：实际使用的模型服务名称。
     member _.Saved(ok: bool, label: string) : bool =
-        if step <> OnboardingStep.Saving then false
+        if step <> OnboardingStep.Saving then
+            false
         elif ok then
             step <- OnboardingStep.Probing
             setStatus (sprintf "正在向 %s 获取模型列表…" label) false
@@ -112,7 +118,8 @@ type OnboardingFlow() =
     member _.Probed(providerId: string, ok: bool, failureMessage: string) : OnboardingProbe =
         match step, attempt with
         | OnboardingStep.Probing, Some id when id = providerId ->
-            if ok then OnboardingProbe.Apply id
+            if ok then
+                OnboardingProbe.Apply id
             else
                 fail failureMessage
                 OnboardingProbe.Failed id
@@ -141,7 +148,8 @@ type OnboardingFlow() =
             step <- OnboardingStep.Saving
             setStatus "正在保存本机 Ollama…" false
             true
-        else false
+        else
+            false
 
     /// 本机 Ollama 保存的结果（一次写入就带清单与默认模型，不再探测）。
     member _.LocalSaved(ok: bool, providerId: string, defaultModel: string) =
@@ -164,7 +172,8 @@ type OnboardingFlow() =
 
     /// 卡片显示时发现本机 Ollama：每次显示只探一次，返回是否应发起。
     member _.StartDiscovery() : bool =
-        if discoveryStarted then false
+        if discoveryStarted then
+            false
         else
             discoveryStarted <- true
             true
@@ -176,7 +185,8 @@ type OnboardingFlow() =
         | None -> false
 
     /// 发现面板上的说明。
-    static member DiscoveredText(count: int) = sprintf "发现本机 Ollama 正在运行，有 %d 个模型。" count
+    static member DiscoveredText(count: int) =
+        sprintf "发现本机 Ollama 正在运行，有 %d 个模型。" count
 
     /// 卡片收起后复位（只在空闲时）；返回 true 时宿主清空密钥框。
     member _.Reset() : bool =
@@ -186,4 +196,5 @@ type OnboardingFlow() =
             attempt <- None
             discoveryStarted <- false
             true
-        else false
+        else
+            false

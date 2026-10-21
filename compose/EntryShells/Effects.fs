@@ -35,23 +35,25 @@ module ScrollAnchorMath =
 
 /// 副作用执行器接收槽：各字段与契约 Effect 变体一一对应。
 type EffectSink =
-    { Focus: FocusTarget -> unit
-      ScrollChat: ScrollCommand -> unit
-      SendWire: WireEvent -> unit
-      After: int * obj -> unit
-      Every: string * int -> unit
-      StopEvery: string -> unit
-      ShowToast: string * ToastTone -> unit
-      Clipboard: string -> unit
-      OpenLink: string -> unit
-      SaveDownload: string * byte array -> unit
-      ApplyTheme: ThemeKind -> unit
-      SetWindowBusy: bool -> unit
-      CloseWindow: unit -> unit
-      PrefsSave: UiPrefs -> unit
-      PrefsLoad: unit -> unit
-      DraftWrite: DraftWrite -> unit
-      BrowserHook: string -> unit }
+    {
+        Focus: FocusTarget -> unit
+        ScrollChat: ScrollCommand -> unit
+        SendWire: WireEvent -> unit
+        After: int * obj -> unit
+        Every: string * int -> unit
+        StopEvery: string -> unit
+        ShowToast: string * ToastTone -> unit
+        Clipboard: string -> unit
+        OpenLink: string -> unit
+        SaveDownload: string * byte array -> unit
+        ApplyTheme: ThemeKind -> unit
+        SetWindowBusy: bool -> unit
+        CloseWindow: unit -> unit
+        PrefsSave: UiPrefs -> unit
+        PrefsLoad: unit -> unit
+        DraftWrite: DraftWrite -> unit
+        BrowserHook: string -> unit
+    }
 
     /// 按序执行 Effect 列表。
     /// 对于 Focus 和 ScrollChat，内部经 Dispatcher.UIThread.Post(..., Input) 保证布局完成后落地
@@ -59,8 +61,7 @@ type EffectSink =
     member this.Run(effects: Effect list) : unit =
         for effect in effects do
             match effect with
-            | Effect.Focus target ->
-                Dispatcher.UIThread.Post((fun () -> this.Focus target), DispatcherPriority.Input)
+            | Effect.Focus target -> Dispatcher.UIThread.Post((fun () -> this.Focus target), DispatcherPriority.Input)
             | Effect.ScrollChat cmd ->
                 Dispatcher.UIThread.Post((fun () -> this.ScrollChat cmd), DispatcherPriority.Input)
             | Effect.SendWire ev -> this.SendWire ev
@@ -73,9 +74,9 @@ type EffectSink =
             | Effect.SaveDownload(fileName, bytes) -> this.SaveDownload(fileName, bytes)
             | Effect.ApplyTheme theme -> this.ApplyTheme theme
             | Effect.SetWindowBusy busy -> this.SetWindowBusy busy
-            | Effect.CloseWindow -> this.CloseWindow ()
+            | Effect.CloseWindow -> this.CloseWindow()
             | Effect.PrefsSave prefs -> this.PrefsSave prefs
-            | Effect.PrefsLoad -> this.PrefsLoad ()
+            | Effect.PrefsLoad -> this.PrefsLoad()
             | Effect.DraftWrite dw -> this.DraftWrite dw
             | Effect.BrowserHook hookId -> this.BrowserHook hookId
 
@@ -95,40 +96,44 @@ type EffectSink =
             | Effect.SaveDownload(fileName, bytes) -> this.SaveDownload(fileName, bytes)
             | Effect.ApplyTheme theme -> this.ApplyTheme theme
             | Effect.SetWindowBusy busy -> this.SetWindowBusy busy
-            | Effect.CloseWindow -> this.CloseWindow ()
+            | Effect.CloseWindow -> this.CloseWindow()
             | Effect.PrefsSave prefs -> this.PrefsSave prefs
-            | Effect.PrefsLoad -> this.PrefsLoad ()
+            | Effect.PrefsLoad -> this.PrefsLoad()
             | Effect.DraftWrite dw -> this.DraftWrite dw
             | Effect.BrowserHook hookId -> this.BrowserHook hookId
 
 /// 控件名字典 / 引用查找接口，用于根据 FocusTarget 查找 IControl 并聚焦。
 type FocusResolver =
-    { /// 通过名称或标识查找控件；未找到返回 None
-      FindNamedControl: string -> Control option
-      /// 输入区控件
-      ComposerInput: unit -> Control option
-      /// 侧栏搜索控件
-      SidebarSearch: unit -> Control option
-      /// 对话行控件
-      ConversationRow: Guid -> Control option
-      /// 问答卡片控件
-      ExchangeMessage: string -> Control option
-      /// 对话框初始焦点控件
-      DialogInitial: unit -> Control option
-      /// 侧栏展开/收起切换钮
-      DrawerToggle: unit -> Control option
-      /// 提示条焦点控件
-      Toast: unit -> Control option }
+    {
+        /// 通过名称或标识查找控件；未找到返回 None
+        FindNamedControl: string -> Control option
+        /// 输入区控件
+        ComposerInput: unit -> Control option
+        /// 侧栏搜索控件
+        SidebarSearch: unit -> Control option
+        /// 对话行控件
+        ConversationRow: Guid -> Control option
+        /// 问答卡片控件
+        ExchangeMessage: string -> Control option
+        /// 对话框初始焦点控件
+        DialogInitial: unit -> Control option
+        /// 侧栏展开/收起切换钮
+        DrawerToggle: unit -> Control option
+        /// 提示条焦点控件
+        Toast: unit -> Control option
+    }
 
     static member Empty =
-        { FindNamedControl = fun _ -> None
-          ComposerInput = fun () -> None
-          SidebarSearch = fun () -> None
-          ConversationRow = fun _ -> None
-          ExchangeMessage = fun _ -> None
-          DialogInitial = fun () -> None
-          DrawerToggle = fun () -> None
-          Toast = fun () -> None }
+        {
+            FindNamedControl = fun _ -> None
+            ComposerInput = fun () -> None
+            SidebarSearch = fun () -> None
+            ConversationRow = fun _ -> None
+            ExchangeMessage = fun _ -> None
+            DialogInitial = fun () -> None
+            DrawerToggle = fun () -> None
+            Toast = fun () -> None
+        }
 
 module EffectRunner =
 
@@ -136,30 +141,35 @@ module EffectRunner =
     let dispatchFocus (resolver: FocusResolver) (target: FocusTarget) : unit =
         let controlOpt =
             match target with
-            | FocusTarget.ComposerInput -> resolver.ComposerInput ()
-            | FocusTarget.SidebarSearch -> resolver.SidebarSearch ()
+            | FocusTarget.ComposerInput -> resolver.ComposerInput()
+            | FocusTarget.SidebarSearch -> resolver.SidebarSearch()
             | FocusTarget.Row convId -> resolver.ConversationRow convId
             | FocusTarget.Exchange msgId -> resolver.ExchangeMessage msgId
-            | FocusTarget.DialogInitial -> resolver.DialogInitial ()
-            | FocusTarget.DrawerToggle -> resolver.DrawerToggle ()
-            | FocusTarget.Toast -> resolver.Toast ()
+            | FocusTarget.DialogInitial -> resolver.DialogInitial()
+            | FocusTarget.DrawerToggle -> resolver.DrawerToggle()
+            | FocusTarget.Toast -> resolver.Toast()
             | FocusTarget.None_ -> None
-        controlOpt |> Option.iter (fun c ->
+
+        controlOpt
+        |> Option.iter (fun c ->
             try
                 if c.Focusable && c.IsEnabled && c.IsEffectivelyVisible then
                     c.Focus() |> ignore
-            with _ -> ())
+            with _ ->
+                ())
 
     /// 执行滚动分派（在 UI 线程上运行）
-    let dispatchScrollChat (scroller: ScrollViewer option) (anchorRef: (float * float) option ref) (cmd: ScrollCommand) : unit =
+    let dispatchScrollChat
+        (scroller: ScrollViewer option)
+        (anchorRef: (float * float) option ref)
+        (cmd: ScrollCommand)
+        : unit =
         match scroller with
         | None -> ()
         | Some viewer ->
             match cmd with
-            | ScrollCommand.End ->
-                viewer.ScrollToEnd()
-            | ScrollCommand.Beginning ->
-                viewer.ScrollToHome()
+            | ScrollCommand.End -> viewer.ScrollToEnd()
+            | ScrollCommand.Beginning -> viewer.ScrollToHome()
             | ScrollCommand.ToExchange _msgId ->
                 // 查到该消息并滚至可视区（由调用方后续或在此处扩展）
                 ()
@@ -172,5 +182,8 @@ module EffectRunner =
                 | None -> ()
                 | Some(oldExtent, oldOffset) ->
                     anchorRef.Value <- None
-                    let newOffset = ScrollAnchorMath.computeRestoredOffset oldExtent oldOffset viewer.Extent.Height
+
+                    let newOffset =
+                        ScrollAnchorMath.computeRestoredOffset oldExtent oldOffset viewer.Extent.Height
+
                     viewer.Offset <- Vector(viewer.Offset.X, newOffset)

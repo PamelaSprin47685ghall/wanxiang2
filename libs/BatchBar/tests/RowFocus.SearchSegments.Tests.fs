@@ -1,4 +1,5 @@
 module RowFocusSearchSegmentsTests
+
 open System
 open System.IO
 open System.Text
@@ -10,10 +11,21 @@ let render () =
     let sb = StringBuilder()
     let line (s: string) = sb.Append(s).Append('\n') |> ignore
     let js (s: string) = Text.Json.JsonSerializer.Serialize s
+
     for q in RowFocusSearchSegmentsSamples.queries do
         line (sprintf "terms %s -> %s" (js q) (SidebarText.terms q |> List.map js |> String.concat ","))
+
         for t in RowFocusSearchSegmentsSamples.texts do
-            line (sprintf "segments %s %s -> %s" (js q) (js t) (SidebarText.segments q t |> List.map (fun s -> sprintf "%s%s" (if s.isMatch then "*" else "") (js s.text)) |> String.concat ","))
+            line (
+                sprintf
+                    "segments %s %s -> %s"
+                    (js q)
+                    (js t)
+                    (SidebarText.segments q t
+                     |> List.map (fun s -> sprintf "%s%s" (if s.isMatch then "*" else "") (js s.text))
+                     |> String.concat ",")
+            )
+
     sb.ToString()
 
 
@@ -38,6 +50,7 @@ let ``single term highlights only the matched substring, keeping original casing
 [<Fact>]
 let ``segments always reassemble the original text exactly`` () =
     let text = "存储模型的方案讨论与回顾"
+
     for query in [ "存储"; "存储 方案"; "方案 存储"; "型"; "讨论 回顾"; "xyz"; "存储 存储" ] do
         let spans = SidebarText.segments query text
         Assert.Equal(text, spans |> List.map _.text |> String.concat "")
@@ -98,4 +111,12 @@ let ``terms helper splits on spaces and tabs and drops duplicates`` () =
 
 [<Fact>]
 let ``null text is one empty plain segment`` () =
-    Assert.Equal<SidebarText.Segment list>([ { SidebarText.Segment.text = ""; SidebarText.Segment.isMatch = false } ], SidebarText.segments "a" null)
+    Assert.Equal<SidebarText.Segment list>(
+        [
+            {
+                SidebarText.Segment.text = ""
+                SidebarText.Segment.isMatch = false
+            }
+        ],
+        SidebarText.segments "a" null
+    )

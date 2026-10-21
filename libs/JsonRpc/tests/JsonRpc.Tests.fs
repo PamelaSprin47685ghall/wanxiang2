@@ -14,9 +14,19 @@ let ``envelopes omit empty params; notifications have no id`` () =
 
 [<Fact>]
 let ``result wins, else error text, else a readable reason`` () =
-    Assert.Equal(Ok "1", JsonRpc.resultOf (JsonNode.Parse """{"result":1}""") |> Result.map _.ToJsonString())
+    Assert.Equal(
+        Ok "1",
+        JsonRpc.resultOf (JsonNode.Parse """{"result":1}""")
+        |> Result.map _.ToJsonString()
+    )
+
     Assert.Equal(Error """{"message":"x"}""", JsonRpc.resultOf (JsonRpc.errorNode "x") |> Result.map _.ToJsonString())
-    Assert.Equal(Error "MCP 响应既无 result 也无 error", JsonRpc.resultOf (JsonNode.Parse "{}") |> Result.map _.ToJsonString())
+
+    Assert.Equal(
+        Error "MCP 响应既无 result 也无 error",
+        JsonRpc.resultOf (JsonNode.Parse "{}") |> Result.map _.ToJsonString()
+    )
+
     Assert.Equal(Error "MCP 响应不是 JSON 对象", JsonRpc.resultOf (JsonNode.Parse "[]") |> Result.map _.ToJsonString())
 
 [<Fact>]

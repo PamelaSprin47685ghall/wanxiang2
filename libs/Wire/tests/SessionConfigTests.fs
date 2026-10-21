@@ -19,7 +19,9 @@ module SessionConfigValidate =
         let cfg =
             { SessionConfig.empty with
                 provider = "openai"
-                model = "gpt-4o" }
+                model = "gpt-4o"
+            }
+
         Assert.Empty(SessionConfig.validate cfg)
         Assert.True(SessionConfig.isValid cfg)
 
@@ -28,7 +30,8 @@ module SessionConfigValidate =
         let baseCfg =
             { SessionConfig.empty with
                 provider = "openai"
-                model = "gpt-4o" }
+                model = "gpt-4o"
+            }
         // 下界与上界本身合法
         Assert.True(SessionConfig.isValid { baseCfg with temperature = Some 0.0 })
         Assert.True(SessionConfig.isValid { baseCfg with temperature = Some 2.0 })
@@ -43,7 +46,9 @@ module SessionConfigValidate =
         let baseCfg =
             { SessionConfig.empty with
                 provider = "openai"
-                model = "gpt-4o" }
+                model = "gpt-4o"
+            }
+
         Assert.True(SessionConfig.isValid { baseCfg with topP = Some 1.0 })
         let p0 = SessionConfig.validate { baseCfg with topP = Some 0.0 }
         Assert.Contains("topP: 需在 0–1 之间", p0)
@@ -55,7 +60,9 @@ module SessionConfigValidate =
         let baseCfg =
             { SessionConfig.empty with
                 provider = "openai"
-                model = "gpt-4o" }
+                model = "gpt-4o"
+            }
+
         Assert.True(SessionConfig.isValid { baseCfg with maxTokens = Some 1 })
         let m0 = SessionConfig.validate { baseCfg with maxTokens = Some 0 }
         Assert.Contains("maxTokens: 需为正整数", m0)
@@ -67,7 +74,9 @@ module SessionConfigValidate =
         // 同时缺 provider、缺 model、temperature 越界 → 3 条问题
         let cfg =
             { SessionConfig.empty with
-                temperature = Some 3.0 }
+                temperature = Some 3.0
+            }
+
         let problems = SessionConfig.validate cfg
         Assert.Equal(3, problems.Length)
         Assert.Contains("provider: 必填", problems)

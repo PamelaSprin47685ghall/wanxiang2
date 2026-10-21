@@ -24,22 +24,45 @@ let ``call ids are made from name and index and give the name back`` () =
 [<Fact>]
 let ``functionResponse takes the name from the call in the same request when the id has none`` () =
     let foreign =
-        [ ChatMessage(ChatRole.Assistant, [| TextContent "查一下" :> AIContent; FunctionCallContent("call1", "search", null) :> AIContent |])
-          ChatMessage(ChatRole.Tool, [| FunctionResultContent("call1", box "{\"ok\":true}") :> AIContent |]) ]
+        [
+            ChatMessage(
+                ChatRole.Assistant,
+                [|
+                    TextContent "查一下" :> AIContent
+                    FunctionCallContent("call1", "search", null) :> AIContent
+                |]
+            )
+            ChatMessage(ChatRole.Tool, [| FunctionResultContent("call1", box "{\"ok\":true}") :> AIContent |])
+        ]
+
     Assert.Contains("\"functionResponse\":{\"name\":\"search\"", (GeminiRequest.build foreign null 0).ToJsonString())
     // Gemini 自己的「名字@序号」仍然解析出名字（此时两者一致）
     let own =
-        [ ChatMessage(ChatRole.Assistant, [| FunctionCallContent("search@0", "search", null) :> AIContent |])
-          ChatMessage(ChatRole.Tool, [| FunctionResultContent("search@0", box "ok") :> AIContent |]) ]
+        [
+            ChatMessage(ChatRole.Assistant, [| FunctionCallContent("search@0", "search", null) :> AIContent |])
+            ChatMessage(ChatRole.Tool, [| FunctionResultContent("search@0", box "ok") :> AIContent |])
+        ]
+
     Assert.Contains("\"functionResponse\":{\"name\":\"search\"", (GeminiRequest.build own null 0).ToJsonString())
     // 都找不到（历史里没有那次调用）才退回解析 id：保持旧行为
-    let orphan = [ ChatMessage(ChatRole.Tool, [| FunctionResultContent("legacy-call", box "ok") :> AIContent |]) ]
-    Assert.Contains("\"functionResponse\":{\"name\":\"legacy-call\"", (GeminiRequest.build orphan null 0).ToJsonString())
+    let orphan =
+        [
+            ChatMessage(ChatRole.Tool, [| FunctionResultContent("legacy-call", box "ok") :> AIContent |])
+        ]
+
+    Assert.Contains(
+        "\"functionResponse\":{\"name\":\"legacy-call\"",
+        (GeminiRequest.build orphan null 0).ToJsonString()
+    )
 
 [<Fact>]
 let ``thought parts are reasoning, calls are numbered in arrival order`` () =
     let s = GeminiStream()
-    match s.Feed """{"candidates":[{"content":{"parts":[{"text":"t","thought":true},{"functionCall":{"name":"f","args":{}}},{"functionCall":{"name":"f"}}]}}]}""" with
+
+    match
+        s.Feed
+            """{"candidates":[{"content":{"parts":[{"text":"t","thought":true},{"functionCall":{"name":"f","args":{}}},{"functionCall":{"name":"f"}}]}}]}"""
+    with
     | GeminiStep.Updates [ a; b; c ] ->
         Assert.IsType<TextReasoningContent>(a.Contents[0]) |> ignore
         Assert.Equal("f@0", (b.Contents[0] :?> FunctionCallContent).CallId)
@@ -55,6 +78,9 @@ let ``error object in a 200 stream is a failure; malformed data throws`` () =
 [<Fact>]
 let ``total tokens fall back to prompt plus output when upstream omits it`` () =
     let s = GeminiStream()
-    s.Feed """{"usageMetadata":{"promptTokenCount":2,"candidatesTokenCount":5}}""" |> ignore
+
+    s.Feed """{"usageMetadata":{"promptTokenCount":2,"candidatesTokenCount":5}}"""
+    |> ignore
+
     let usage = (s.Closing().Contents[0] :?> UsageContent).Details
     Assert.Equal(System.Nullable 7L, usage.TotalTokenCount)

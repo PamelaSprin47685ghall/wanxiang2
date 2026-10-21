@@ -7,5 +7,7 @@ open Xunit
 
 [<Fact>]
 let ``ConfigMutation behaves byte for byte like the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "config-mutation.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "config-mutation.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

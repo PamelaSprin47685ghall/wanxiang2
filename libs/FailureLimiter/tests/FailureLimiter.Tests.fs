@@ -18,7 +18,10 @@ let ``freezes at the threshold per key, expires, clears`` () =
     Assert.False(l.IsFrozen(t0 + s 20.0, "b"))
     Assert.True(l.IsFrozen(t0 + TimeSpan.FromMinutes 4.0, "a"))
     Assert.False(l.IsFrozen(t0 + s 20.0 + TimeSpan.FromMinutes 5.0, "a"))
-    for i in 0..2 do l.RecordFailure(t0 + TimeSpan.FromMinutes 10.0 + s (float i), "a") |> ignore
+
+    for i in 0..2 do
+        l.RecordFailure(t0 + TimeSpan.FromMinutes 10.0 + s (float i), "a") |> ignore
+
     Assert.True(l.IsFrozen(t0 + TimeSpan.FromMinutes 10.0 + s 2.0, "a"))
     l.Clear "a"
     Assert.False(l.IsFrozen(t0 + TimeSpan.FromMinutes 10.0 + s 2.0, "a"))
@@ -35,21 +38,31 @@ let ``old failures slide out of the window`` () =
 [<Fact>]
 let ``many distinct keys stay bounded`` () =
     let l = FailureLimiter(TimeSpan.FromMinutes 1.0, 3, TimeSpan.FromMinutes 5.0, 100)
-    for i in 1..1000 do l.RecordFailure(t0 + s (float i), sprintf "k%d" i) |> ignore
+
+    for i in 1..1000 do
+        l.RecordFailure(t0 + s (float i), sprintf "k%d" i) |> ignore
+
     Assert.True(l.TrackedKeys <= 161, sprintf "tracked %d" l.TrackedKeys)
 
 // SPEC 4：非法参数拒绝构造
 [<Fact>]
 let ``max failures must be positive`` () =
-    Assert.Throws<ArgumentException>(fun () -> FailureLimiter(TimeSpan.FromMinutes 1.0, 0, TimeSpan.Zero) |> ignore) |> ignore
+    Assert.Throws<ArgumentException>(fun () -> FailureLimiter(TimeSpan.FromMinutes 1.0, 0, TimeSpan.Zero) |> ignore)
+    |> ignore
 
 [<Fact>]
 let ``retune keeps counted failures and existing freezes`` () =
     let t0 = System.DateTimeOffset.Parse "2026-01-01T00:00:00Z"
-    let l = FailureLimiter(System.TimeSpan.FromMinutes 1.0, 3, System.TimeSpan.FromMinutes 5.0)
+
+    let l =
+        FailureLimiter(System.TimeSpan.FromMinutes 1.0, 3, System.TimeSpan.FromMinutes 5.0)
+
     l.RecordFailure(t0, "a") |> ignore
     l.RecordFailure(t0, "a") |> ignore
-    for _ in 1 .. 3 do l.RecordFailure(t0, "f") |> ignore
+
+    for _ in 1..3 do
+        l.RecordFailure(t0, "f") |> ignore
+
     l.Retune(System.TimeSpan.FromMinutes 1.0, 3, System.TimeSpan.FromMinutes 9.0)
     Assert.Equal(Some(t0 + System.TimeSpan.FromMinutes 5.0), l.FrozenUntil(t0, "f"))
     Assert.True(l.RecordFailure(t0, "a"))

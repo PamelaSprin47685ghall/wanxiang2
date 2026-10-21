@@ -69,57 +69,59 @@ type Glyph =
 module IconSet =
 
     /// 全部图标
-    let all : Glyph list =
-        [ Glyph.Search
-          Glyph.Plus
-          Glyph.Minus
-          Glyph.Close
-          Glyph.Check
-          Glyph.CheckCircle
-          Glyph.ChevronsUp
-          Glyph.ChevronsDown
-          Glyph.ChevronDown
-          Glyph.ChevronUp
-          Glyph.ChevronRight
-          Glyph.ChevronLeft
-          Glyph.ArrowDown
-          Glyph.ArrowUp
-          Glyph.ArrowLeft
-          Glyph.Paperclip
-          Glyph.Send
-          Glyph.Stop
-          Glyph.Copy
-          Glyph.Fork
-          Glyph.Refresh
-          Glyph.Trash
-          Glyph.Pencil
-          Glyph.Pin
-          Glyph.Archive
-          Glyph.Gear
-          Glyph.Sliders
-          Glyph.Sun
-          Glyph.Moon
-          Glyph.Wrench
-          Glyph.Server
-          Glyph.Key
-          Glyph.Devices
-          Glyph.TextWrap
-          Glyph.Download
-          Glyph.Upload
-          Glyph.Alert
-          Glyph.Info
-          Glyph.PanelLeft
-          Glyph.Message
-          Glyph.More
-          Glyph.Link
-          Glyph.ExternalLink
-          Glyph.File
-          Glyph.Image
-          Glyph.Clock
-          Glyph.Sparkle
-          Glyph.Keyboard
-          Glyph.LogOut
-          Glyph.Database ]
+    let all: Glyph list =
+        [
+            Glyph.Search
+            Glyph.Plus
+            Glyph.Minus
+            Glyph.Close
+            Glyph.Check
+            Glyph.CheckCircle
+            Glyph.ChevronsUp
+            Glyph.ChevronsDown
+            Glyph.ChevronDown
+            Glyph.ChevronUp
+            Glyph.ChevronRight
+            Glyph.ChevronLeft
+            Glyph.ArrowDown
+            Glyph.ArrowUp
+            Glyph.ArrowLeft
+            Glyph.Paperclip
+            Glyph.Send
+            Glyph.Stop
+            Glyph.Copy
+            Glyph.Fork
+            Glyph.Refresh
+            Glyph.Trash
+            Glyph.Pencil
+            Glyph.Pin
+            Glyph.Archive
+            Glyph.Gear
+            Glyph.Sliders
+            Glyph.Sun
+            Glyph.Moon
+            Glyph.Wrench
+            Glyph.Server
+            Glyph.Key
+            Glyph.Devices
+            Glyph.TextWrap
+            Glyph.Download
+            Glyph.Upload
+            Glyph.Alert
+            Glyph.Info
+            Glyph.PanelLeft
+            Glyph.Message
+            Glyph.More
+            Glyph.Link
+            Glyph.ExternalLink
+            Glyph.File
+            Glyph.Image
+            Glyph.Clock
+            Glyph.Sparkle
+            Glyph.Keyboard
+            Glyph.LogOut
+            Glyph.Database
+        ]
 
     /// 语义名对应的 Lucide 字形
     let kind (glyph: Glyph) : PackIconLucideKind =
@@ -176,12 +178,18 @@ module IconSet =
         | Glyph.Database -> PackIconLucideKind.Database
 
     // DrawingImage 每次调用都新建，视图重建时反复请求，因此按 (画笔实例, 字形) 缓存；画笔被回收时缓存跟着回收
-    let private cache = ConditionalWeakTable<IBrush, ConcurrentDictionary<PackIconLucideKind, DrawingImage>>()
+    let private cache =
+        ConditionalWeakTable<IBrush, ConcurrentDictionary<PackIconLucideKind, DrawingImage>>()
 
     /// 字形图像（同一画笔、同一字形返回同一实例）
     let drawing (glyph: Glyph) (brush: IBrush) : IImage =
-        let perBrush = cache.GetValue(brush, fun _ -> ConcurrentDictionary<PackIconLucideKind, DrawingImage>())
-        perBrush.GetOrAdd(kind glyph, fun k -> LucideImageExtension(Kind = k, Brush = brush).ProvideValue(null) :?> DrawingImage)
+        let perBrush =
+            cache.GetValue(brush, fun _ -> ConcurrentDictionary<PackIconLucideKind, DrawingImage>())
+
+        perBrush.GetOrAdd(
+            kind glyph,
+            fun k -> LucideImageExtension(Kind = k, Brush = brush).ProvideValue(null) :?> DrawingImage
+        )
 
     /// 图标控件：只设画笔、宽高（绑到活尺寸）与居中
     let image (glyph: Glyph) (brush: IBrush) (size: IObservable<float>) : Control =

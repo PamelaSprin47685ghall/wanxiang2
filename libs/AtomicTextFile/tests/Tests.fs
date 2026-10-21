@@ -6,7 +6,8 @@ open System.Threading
 open Xunit
 open AtomicTextFile
 
-let tempPath () = Path.Combine(Path.GetTempPath(), "atf-" + Guid.NewGuid().ToString("N"), "a.toml")
+let tempPath () =
+    Path.Combine(Path.GetTempPath(), "atf-" + Guid.NewGuid().ToString("N"), "a.toml")
 
 // SPEC 1：写后读等于原文；不留临时文件；权限 0600
 [<Fact>]
@@ -16,6 +17,7 @@ let ``write then read round-trips, leaves no temp file, owner-only`` () =
     Assert.Equal(Ok(), f.Write "a = 1\n汉字")
     Assert.Equal(Ok "a = 1\n汉字", f.Read())
     Assert.Equal<string[]>([| p |], Directory.GetFiles(Path.GetDirectoryName p))
+
     if not (OperatingSystem.IsWindows()) then
         Assert.Equal(UnixFileMode.UserRead ||| UnixFileMode.UserWrite, File.GetUnixFileMode p)
 
@@ -42,9 +44,15 @@ let ``external changes raise Changed once after debounce`` () =
     Thread.Sleep 300
     let mutable n = 0
     f.Changed.Add(fun () -> Interlocked.Increment &n |> ignore)
-    for i in 1..5 do File.WriteAllText(p, string i)
+
+    for i in 1..5 do
+        File.WriteAllText(p, string i)
+
     let deadline = DateTime.UtcNow.AddSeconds 5.0
-    while Volatile.Read &n = 0 && DateTime.UtcNow < deadline do Thread.Sleep 20
+
+    while Volatile.Read &n = 0 && DateTime.UtcNow < deadline do
+        Thread.Sleep 20
+
     Thread.Sleep 500
     Assert.Equal(1, Volatile.Read &n)
 

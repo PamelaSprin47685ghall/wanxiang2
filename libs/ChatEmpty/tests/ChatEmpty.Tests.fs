@@ -15,12 +15,16 @@ open Wanxiang2.ChatEmpty.Tests
 open Wanxiang2.WorkspaceState
 
 let rec private all (c: Control) : Control list =
-    c :: [ for x in c.GetLogicalChildren() do
-             match x with
-             | :? Control as cc -> yield! all cc
-             | _ -> () ]
+    c
+    :: [
+        for x in c.GetLogicalChildren() do
+            match x with
+            | :? Control as cc -> yield! all cc
+            | _ -> ()
+    ]
 
-let private named (root: Control) name = all root |> List.find (fun c -> AutomationProperties.GetName c = name)
+let private named (root: Control) name =
+    all root |> List.find (fun c -> AutomationProperties.GetName c = name)
 
 let private invoke (c: Control) =
     let peer = ControlAutomationPeer.CreatePeerForElement c
@@ -70,6 +74,7 @@ let ``Render 单入口：根据 ChatPhase 渲染对应空态`` () =
         Assert.True e.IsShown
         e.Render(ChatPhase.Skeleton)
         Assert.False e.IsShown)
+
 [<Fact>]
 let ``没有起手式回调时不画起手式行；品牌空态包在分组卡里`` () =
     Headless.run (fun () ->

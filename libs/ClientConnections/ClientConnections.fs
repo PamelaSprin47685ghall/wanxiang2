@@ -19,10 +19,13 @@ module CredentialStore =
             lines
             |> Array.tryPick (fun line ->
                 let t = line.Trim()
+
                 if t.StartsWith(key + " =") || t.StartsWith(key + "=") then
                     let v = t.Substring(t.IndexOf '=' + 1).Trim().Trim('"')
                     if String.IsNullOrWhiteSpace v then None else Some v
-                else None)
+                else
+                    None)
+
         match get "url", get "token" with
         | Some url, Some token -> Some(url, token)
         | _ -> None
@@ -32,6 +35,7 @@ module CredentialStore =
     let parseConnections (json: string) : (string * string * string) list =
         try
             let results = Collections.Generic.List<string * string * string>()
+
             if not (String.IsNullOrWhiteSpace json) then
                 match JsonNode.Parse json with
                 | null -> ()
@@ -39,17 +43,26 @@ module CredentialStore =
                     for item in node.AsArray() do
                         if not (isNull item) && item.GetValueKind() = JsonValueKind.Object then
                             let o = item.AsObject()
+
                             let getStr (k: string) =
                                 let mutable n: JsonNode = null
-                                if o.TryGetPropertyValue(k, &n) && not (isNull n) then n.GetValue<string>() else ""
+
+                                if o.TryGetPropertyValue(k, &n) && not (isNull n) then
+                                    n.GetValue<string>()
+                                else
+                                    ""
+
                             let instanceId = getStr "instanceId"
                             let url = getStr "url"
                             let token = getStr "token"
+
                             if not (String.IsNullOrWhiteSpace url) && not (String.IsNullOrWhiteSpace token) then
                                 results.Add(url, token, instanceId)
                 | _ -> ()
+
             List.ofSeq results
-        with _ -> []
+        with _ ->
+            []
 
     /// 浏览器默认连接地址：与页面同源（https → wss，http → ws）。wsPath 是协议的 WebSocket 路径（ChatDomain 的 Constants.WsPath）。
     let serverUrlOfPage (wsPath: string) (href: string) : string =

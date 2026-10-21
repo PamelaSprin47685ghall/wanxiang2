@@ -9,7 +9,7 @@ open Wanxiang2.__NAME__
 [<Fact>]
 let ``bump raises changed and shows the count in a real window`` () =
     Headless.run (fun () ->
-        let w = __NAME__()
+        let w = __NAME__ ()
         w.Render { Visible = true; Text = "" }
         let win = Window(Content = w)
         win.Show()
@@ -24,7 +24,7 @@ let ``bump raises changed and shows the count in a real window`` () =
 [<Fact>]
 let ``render is idempotent and drives visibility from the view state`` () =
     Headless.run (fun () ->
-        let w = __NAME__()
+        let w = __NAME__ ()
         let vs = { Visible = true; Text = "hi" }
         w.Render vs
         w.Render vs

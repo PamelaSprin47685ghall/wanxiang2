@@ -1,4 +1,5 @@
 module SecretTextTests
+
 open Xunit
 open Wanxiang.Server
 
@@ -6,7 +7,11 @@ open Wanxiang.Server
 let ``凭据替换与键值兜底打码`` () =
     Assert.Equal("a *** b ***", SecretText.replaceKnown [ "sk-1"; " " ] "a sk-1 b sk-1")
     let toml = "[p]\n  apiKey = \"x\"\ntoken=1\nname = \"n\"\nsecretish"
-    Assert.Equal("[p]\n  apiKey = \"***\"\ntoken= \"***\"\nname = \"n\"\nsecretish", SecretText.maskAssignments [ "apiKey"; "token"; "secret" ] toml)
+
+    Assert.Equal(
+        "[p]\n  apiKey = \"***\"\ntoken= \"***\"\nname = \"n\"\nsecretish",
+        SecretText.maskAssignments [ "apiKey"; "token"; "secret" ] toml
+    )
 
 [<Fact>]
 let ``空白或空的凭据不替换任何东西`` () =

@@ -8,5 +8,7 @@ open Xunit
 
 [<Fact>]
 let ``bytes sent to MCP servers and results given to the model equal the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "mcp.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "mcp.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

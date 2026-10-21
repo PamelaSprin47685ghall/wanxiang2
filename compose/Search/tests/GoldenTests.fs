@@ -8,5 +8,7 @@ open Xunit
 
 [<Fact>]
 let ``search result bytes equal the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "search.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "search.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

@@ -16,6 +16,7 @@ type ApprovalDesk<'Item, 'Outcome, 'Memo>(memo: 'Outcome -> 'Memo, recentLimit: 
     let remember id m =
         recent[id] <- m
         order.Enqueue id
+
         while order.Count > recentLimit do
             match order.TryDequeue() with
             | true, old -> recent.TryRemove old |> ignore
@@ -23,7 +24,9 @@ type ApprovalDesk<'Item, 'Outcome, 'Memo>(memo: 'Outcome -> 'Memo, recentLimit: 
 
     /// 登记一个审批，返回等待结果的任务。续体异步执行，结束方不会被等待者卡住。
     member _.Open(id: Guid, item: 'Item) : Task<'Outcome> =
-        let tcs = TaskCompletionSource<'Outcome>(TaskCreationOptions.RunContinuationsAsynchronously)
+        let tcs =
+            TaskCompletionSource<'Outcome>(TaskCreationOptions.RunContinuationsAsynchronously)
+
         pending[id] <- (item, tcs)
         tcs.Task
 
@@ -37,6 +40,7 @@ type ApprovalDesk<'Item, 'Outcome, 'Memo>(memo: 'Outcome -> 'Memo, recentLimit: 
                     remember id m
                     Some(item, tcs, m)
                 | _ -> None)
+
         match taken with
         | Some(item, tcs, m) ->
             beforeComplete item m

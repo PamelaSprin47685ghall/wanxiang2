@@ -8,5 +8,7 @@ open Xunit
 
 [<Fact>]
 let ``approval events and outcomes equal the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "approval.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "approval.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

@@ -1,4 +1,5 @@
 module ConfigFeedbackTests
+
 open System
 open Xunit
 open Wanxiang.UI
@@ -11,7 +12,10 @@ let ``config tracker expires silent requests and resolves only once`` () =
     let mutable result = None
     tracker.Track(id, "ok", fun ok -> result <- Some ok)
     Assert.Empty(tracker.Expire(DateTimeOffset.UtcNow, TimeSpan.FromSeconds 12.0))
-    let expired = tracker.Expire(DateTimeOffset.UtcNow.AddSeconds 13.0, TimeSpan.FromSeconds 12.0)
+
+    let expired =
+        tracker.Expire(DateTimeOffset.UtcNow.AddSeconds 13.0, TimeSpan.FromSeconds 12.0)
+
     Assert.Equal(1, expired.Length)
     expired |> List.iter (fun f -> f.onCompleted false)
     Assert.Equal(Some false, result)

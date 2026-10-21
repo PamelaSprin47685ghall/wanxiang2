@@ -6,7 +6,10 @@ open Wanxiang.Server
 
 [<Fact>]
 let ``text items are joined by newline; reasoning and tool parts are skipped`` () =
-    let m = JsonNode.Parse """{"role":"assistant","contents":[{"$type":"text","text":"一"},{"$type":"reasoning","text":"想"},{"$type":"functionCall","name":"f"},{"type":"reasoning","text":"x"},{"$type":"text","text":"二"}]}"""
+    let m =
+        JsonNode.Parse
+            """{"role":"assistant","contents":[{"$type":"text","text":"一"},{"$type":"reasoning","text":"想"},{"$type":"functionCall","name":"f"},{"type":"reasoning","text":"x"},{"$type":"text","text":"二"}]}"""
+
     Assert.Equal("一\n二", MessageText.visible 100 m)
 
 [<Fact>]

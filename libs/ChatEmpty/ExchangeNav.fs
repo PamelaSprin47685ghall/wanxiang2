@@ -13,7 +13,12 @@ open Avalonia.Markup.Xaml.MarkupExtensions
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 阅读导航端点态与「更早一页取失败」行内提示（旧 ChatView 的 canJump*、olderFailureBanner）。
@@ -22,9 +27,12 @@ type ExchangeNav() =
     let mutable canPrev = false
     let mutable canNext = false
     let mutable retry: unit -> unit = ignore
+
     let message =
         TextBlock(TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, FontSize = 12.5)
+
     do message.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+
     let retryButton =
         let b = Button(Content = "重试")
         b.Focusable <- true
@@ -35,6 +43,7 @@ type ExchangeNav() =
         AutomationProperties.SetName(b, "重试加载更早消息")
         b.Click.Add(fun _ -> retry ())
         b
+
     let banner =
         let row = Grid(ColumnSpacing = 12.0)
         row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
@@ -43,6 +52,7 @@ type ExchangeNav() =
         Grid.SetColumn(retryButton, 1)
         row.Children.Add message
         row.Children.Add retryButton
+
         let border =
             Border(
                 Name = "older-page-failure",
@@ -54,8 +64,12 @@ type ExchangeNav() =
                 Padding = Thickness(16.0, 8.0),
                 Margin = Thickness(16.0, 8.0, 16.0, 0.0),
                 MaxWidth = 748.0,
-                IsVisible = false)
-        border.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceRaised") |> ignore
+                IsVisible = false
+            )
+
+        border.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceRaised")
+        |> ignore
+
         border.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Warning") |> ignore
         AutomationProperties.SetLiveSetting(message, AutomationLiveSetting.Polite)
         border
@@ -76,9 +90,11 @@ type ExchangeNav() =
 
     /// 决策 310：更早一页取失败。挂起的「上一轮」由宿主撤掉；这里只挂提示与重试
     member _.ShowOlderFailure(text: string, onRetry: unit -> unit) =
-        retry <- (fun () ->
-            banner.IsVisible <- false
-            onRetry ())
+        retry <-
+            (fun () ->
+                banner.IsVisible <- false
+                onRetry ())
+
         message.Text <- text
         AutomationProperties.SetName(message, text)
         banner.IsVisible <- true

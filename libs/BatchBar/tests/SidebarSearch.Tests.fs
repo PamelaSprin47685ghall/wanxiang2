@@ -50,9 +50,13 @@ let ``Sidebar search navigation moves focus and handles escape`` () =
     Headless.run (fun () ->
         let s, w = make ()
         let seen = ResizeArray<Key>()
+
         s.Keys.Add(fun a ->
             seen.Add a.Key
-            if a.Key = Key.Down then a.Handled <- true)
+
+            if a.Key = Key.Down then
+                a.Handled <- true)
+
         s.Focus true
         press w Key.Down
         press w Key.Enter
@@ -86,12 +90,15 @@ let ``search input reports changes and the empty hint clears on click, enter and
 let ``render SearchBoxVS updates text and empty hint`` () =
     Headless.run (fun () ->
         let s, _ = make ()
-        s.Render {
-            Text = "query"
-            EmptyHintVisible = true
-            Active = true
-            Debouncing = false
-        }
+
+        s.Render
+            {
+                Text = "query"
+                EmptyHintVisible = true
+                Active = true
+                Debouncing = false
+            }
+
         Assert.Equal("query", s.Text)
         Assert.True s.EmptyHint.IsVisible
         Assert.Equal(1.0, s.ClearButton.Opacity))

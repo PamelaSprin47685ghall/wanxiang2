@@ -27,11 +27,14 @@ type ProgressThrottle() =
     /// 有新进度要显示。force = 急件（阶段切换、终态、保存反馈）；highFrequency = 读取中
     member _.Request(now: DateTimeOffset, force: bool, highFrequency: bool) : ProgressRefresh =
         let elapsedMs = (now - lastRefresh).TotalMilliseconds
-        if force || not highFrequency || elapsedMs >= ProgressThrottle.WindowMs then ProgressRefresh.Now
+
+        if force || not highFrequency || elapsedMs >= ProgressThrottle.WindowMs then
+            ProgressRefresh.Now
         elif not pending then
             pending <- true
             ProgressRefresh.Schedule(ProgressThrottle.WindowMs - elapsedMs)
-        else ProgressRefresh.Skip
+        else
+            ProgressRefresh.Skip
 
     /// 宿主刚渲染了一帧（任何原因）：记下时刻，尾巴作废
     member _.Rendered(now: DateTimeOffset) =

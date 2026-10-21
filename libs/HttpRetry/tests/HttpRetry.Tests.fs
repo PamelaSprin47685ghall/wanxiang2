@@ -24,9 +24,17 @@ type Scripted(codes: HttpStatusCode list) =
     inherit HttpMessageHandler()
     let mutable rest = codes
     member val Calls = 0 with get, set
+
     override this.SendAsync(_r, _ct) =
         this.Calls <- this.Calls + 1
-        let code = match rest with c :: tail -> rest <- tail; c | [] -> HttpStatusCode.OK
+
+        let code =
+            match rest with
+            | c :: tail ->
+                rest <- tail
+                c
+            | [] -> HttpStatusCode.OK
+
         let r = new HttpResponseMessage(code)
         r.Headers.RetryAfter <- Headers.RetryConditionHeaderValue(TimeSpan.FromMilliseconds 1.0)
         Task.FromResult r
@@ -34,13 +42,31 @@ type Scripted(codes: HttpStatusCode list) =
 let send (codes: HttpStatusCode list) (retries: int) =
     let h = new Scripted(codes)
     use http = new HttpClient(h)
-    let r = (HttpRetry.sendWithRetry http (fun () -> new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1/")) retries CancellationToken.None).Result
+
+    let r =
+        (HttpRetry.sendWithRetry
+            http
+            (fun () -> new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1/"))
+            retries
+            CancellationToken.None)
+            .Result
+
     r.StatusCode, h.Calls
 
 [<Fact>]
 let ``transient failures are retried up to the limit, then the last response is returned`` () =
     Assert.Equal((HttpStatusCode.OK, 3), send [ HttpStatusCode.ServiceUnavailable; HttpStatusCode.TooManyRequests ] 2)
-    Assert.Equal((HttpStatusCode.ServiceUnavailable, 2), send [ HttpStatusCode.ServiceUnavailable; HttpStatusCode.ServiceUnavailable; HttpStatusCode.ServiceUnavailable ] 1)
+
+    Assert.Equal(
+        (HttpStatusCode.ServiceUnavailable, 2),
+        send
+            [
+                HttpStatusCode.ServiceUnavailable
+                HttpStatusCode.ServiceUnavailable
+                HttpStatusCode.ServiceUnavailable
+            ]
+            1
+    )
 
 [<Fact>]
 let ``non-transient failures and zero retries are not retried`` () =

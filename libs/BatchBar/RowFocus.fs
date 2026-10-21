@@ -33,9 +33,12 @@ type RowFocus() =
 
     /// 邻位下标：被删行还在则下一行优先，其次上一行；已不在则按上次行焦点位置钳制。没有行为 None。
     member _.NeighborIndexAfterDelete(removedId: string) : int option =
-        if visible.Length = 0 then None
+        if visible.Length = 0 then
+            None
         else
-            let clamp () = Some(min (max focusedIndex 0) (visible.Length - 1))
+            let clamp () =
+                Some(min (max focusedIndex 0) (visible.Length - 1))
+
             match Guid.TryParse removedId with
             | true, removed ->
                 match visible |> Array.tryFindIndex ((=) removed) with
@@ -69,6 +72,7 @@ type RowFocus() =
                 pending <- None
                 if visible |> Array.contains id then Some id else None
             | None -> None
+
         match intent, restoreId with
         | Some id, _ -> Some id
         | None, Some id when visible |> Array.contains id -> Some id

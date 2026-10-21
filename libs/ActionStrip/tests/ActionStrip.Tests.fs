@@ -9,7 +9,8 @@ open Xunit
 open Wanxiang2.ActionStrip
 open Wanxiang2.ActionStrip.Tests
 
-let private opacity (c: Control) = c.GetBaseValue(Visual.OpacityProperty).Value
+let private opacity (c: Control) =
+    c.GetBaseValue(Visual.OpacityProperty).Value
 
 [<Fact>]
 let ``空行也占一个命中区高`` () =
@@ -34,11 +35,19 @@ let ``按钮是方形命中区、带读屏名并执行动作`` () =
     Headless.run (fun () ->
         let s = ActionStrip(StripRest.Hidden)
         let mutable hits = 0
-        let b = s.Add(StripGlyph.Refresh, "重新生成", "重新生成", "丢弃最后一次回复并重新生成", fun () -> hits <- hits + 1)
+
+        let b =
+            s.Add(StripGlyph.Refresh, "重新生成", "重新生成", "丢弃最后一次回复并重新生成", fun () -> hits <- hits + 1)
+
         Assert.Equal(30.0, b.Width)
         Assert.Equal("丢弃最后一次回复并重新生成", AutomationProperties.GetHelpText b)
         Assert.Contains("icon-button", b.Classes)
-        Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement b) |> ignore
+
+        Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(
+            Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement b
+        )
+        |> ignore
+
         b.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent, b))
         Assert.Equal(1, hits)
         s.ApplyIcon(b, StripGlyph.Check, Brushes.Green)

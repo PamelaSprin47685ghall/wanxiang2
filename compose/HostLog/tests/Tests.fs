@@ -9,11 +9,26 @@ open Wanxiang.Server
 let ``runtime truncation record carries the decision-40 fields with the raw commit redacted`` () =
     Stderr.registerSecrets [ "title-secret-xyz" ]
     let g = Guid("11111111-2222-3333-4444-555555555555")
-    let commit = Events.Commit.create 7UL (DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)) [ EventData.ConversationRenamed { conversationId = g; title = "title-secret-xyz" } ]
+
+    let commit =
+        Events.Commit.create
+            7UL
+            (DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero))
+            [
+                EventData.ConversationRenamed
+                    {
+                        conversationId = g
+                        title = "title-secret-xyz"
+                    }
+            ]
+
     Stderr.truncated commit "log.jsonseq" 42L (Poisoned "disk")
     let line = List.last (Stderr.recentErrorLines ())
     Stderr.clearSecrets ()
-    let expectedRaw = (CommitCodec.commitToJsonLine commit).Replace("title-secret-xyz", "***")
+
+    let expectedRaw =
+        (CommitCodec.commitToJsonLine commit).Replace("title-secret-xyz", "***")
+
     let o = Text.Json.Nodes.JsonNode.Parse(line).AsObject()
     Assert.Equal("jsonseq-tail-truncated", string o["event"])
     Assert.Equal("runtime-commit", string o["phase"])

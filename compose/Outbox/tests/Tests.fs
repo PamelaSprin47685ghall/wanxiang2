@@ -11,8 +11,16 @@ open Wanxiang.UI
 let ``a send whose conversation was never confirmed falls back into the start draft`` () =
     let conv = Guid.NewGuid()
     let drafts, outbox = ComposerDrafts(), MessageOutbox()
+
     let creation =
-        CreateConversation {| invocationId = Guid.NewGuid(); conversationId = conv; title = "新对话"; config = SessionConfig.empty |}
+        CreateConversation
+            {|
+                invocationId = Guid.NewGuid()
+                conversationId = conv
+                title = "新对话"
+                config = SessionConfig.empty
+            |}
+
     let item = outbox.Stage("host-1", conv, "对话还没建成", [], Some creation)
     outbox.ApplyState(PendingMessage.invocationId item, UnconfirmedMessage "断线")
     let snapshot = DraftPolicy.snapshotOf drafts outbox (fun _ -> DateTimeOffset.UtcNow)
@@ -25,9 +33,18 @@ let ``a send whose conversation was never confirmed falls back into the start dr
 let ``an unconfirmed send comes back as retryable with the original invocation id`` () =
     let conv = Guid.NewGuid()
     let drafts, outbox = ComposerDrafts(), MessageOutbox()
+
     let attachment =
-        { attachmentId = Guid.NewGuid(); sha256 = String('b', 64); size = 10L; mediaType = "text/plain"
-          fileName = "a.txt"; ready = true; failed = false }
+        {
+            attachmentId = Guid.NewGuid()
+            sha256 = String('b', 64)
+            size = 10L
+            mediaType = "text/plain"
+            fileName = "a.txt"
+            ready = true
+            failed = false
+        }
+
     let item = outbox.Stage("host-1", conv, "还没确认的消息", [ attachment ], None)
     outbox.ApplyState(PendingMessage.invocationId item, UnconfirmedMessage "连接已断开")
     let snapshot = DraftPolicy.snapshotOf drafts outbox (fun _ -> DateTimeOffset.UtcNow)
@@ -43,19 +60,38 @@ let ``an unconfirmed send comes back as retryable with the original invocation i
     Assert.Equal("还没确认的消息", back.text)
     Assert.Equal(1, back.attachments.Length)
     // 重试发出的命令载荷与原命令逐字相同（主机据此幂等核对，不会重复保存）。
-    Assert.Equal<string>(
-        WireCodec.encodeCommand item.command,
-        WireCodec.encodeCommand back.command)
+    Assert.Equal<string>(WireCodec.encodeCommand item.command, WireCodec.encodeCommand back.command)
 
 [<Fact>]
 let ``drafts are isolated per conversation and per host`` () =
     let convA, convB = Guid.NewGuid(), Guid.NewGuid()
+
     let snapshot =
-        { drafts =
-            [ { instanceId = "host-1"; conversationId = Some convA; text = "一号机甲"; attachments = [] }
-              { instanceId = "host-1"; conversationId = Some convB; text = "一号机乙"; attachments = [] }
-              { instanceId = "host-2"; conversationId = Some convA; text = "二号机甲"; attachments = [] } ]
-          unsent = [] }
+        {
+            drafts =
+                [
+                    {
+                        instanceId = "host-1"
+                        conversationId = Some convA
+                        text = "一号机甲"
+                        attachments = []
+                    }
+                    {
+                        instanceId = "host-1"
+                        conversationId = Some convB
+                        text = "一号机乙"
+                        attachments = []
+                    }
+                    {
+                        instanceId = "host-2"
+                        conversationId = Some convA
+                        text = "二号机甲"
+                        attachments = []
+                    }
+                ]
+            unsent = []
+        }
+
     let drafts, outbox = ComposerDrafts(), MessageOutbox()
     DraftPolicy.restoreInto snapshot "host-1" drafts outbox |> ignore
     Assert.Equal("一号机甲", (drafts.Get("host-1", Some convA)).text)
@@ -70,11 +106,25 @@ let ``drafts are isolated per conversation and per host`` () =
 [<Fact>]
 let ``saving while connected to one host keeps another host's stored drafts`` () =
     let stored =
-        { drafts = [ { instanceId = "host-2"; conversationId = None; text = "另一台机器上的草稿"; attachments = [] } ]
-          unsent = [] }
+        {
+            drafts =
+                [
+                    {
+                        instanceId = "host-2"
+                        conversationId = None
+                        text = "另一台机器上的草稿"
+                        attachments = []
+                    }
+                ]
+            unsent = []
+        }
+
     let drafts = ComposerDrafts()
     (drafts.Get("host-1", None)).text <- "这台机器"
-    let current = DraftPolicy.snapshotOf drafts (MessageOutbox()) (fun _ -> DateTimeOffset.UtcNow)
+
+    let current =
+        DraftPolicy.snapshotOf drafts (MessageOutbox()) (fun _ -> DateTimeOffset.UtcNow)
+
     let merged = DraftPolicy.mergeForSave stored (Set.ofList [ "host-1" ]) current
     Assert.Equal<string list>([ "另一台机器上的草稿"; "这台机器" ], merged.drafts |> List.map _.text)
 
@@ -82,10 +132,28 @@ let ``saving while connected to one host keeps another host's stored drafts`` ()
 [<Fact>]
 let ``command tracker expires newer commands but leaves message delivery to outbox`` () =
     let tracker = CommandFeedbackTracker()
-    let cont = ContinueResponse {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); messageJson = System.Text.Json.Nodes.JsonObject() |}
-    let send = SendUserMessage {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); messageJson = System.Text.Json.Nodes.JsonObject() |}
+
+    let cont =
+        ContinueResponse
+            {|
+                invocationId = Guid.NewGuid()
+                conversationId = Guid.NewGuid()
+                messageJson = System.Text.Json.Nodes.JsonObject()
+            |}
+
+    let send =
+        SendUserMessage
+            {|
+                invocationId = Guid.NewGuid()
+                conversationId = Guid.NewGuid()
+                messageJson = System.Text.Json.Nodes.JsonObject()
+            |}
+
     tracker.Track(cont, None, ignore)
     tracker.Track(send, None, ignore)
-    let expired = tracker.Expire(DateTimeOffset.UtcNow.AddMinutes 1.0, TimeSpan.FromSeconds 12.0)
+
+    let expired =
+        tracker.Expire(DateTimeOffset.UtcNow.AddMinutes 1.0, TimeSpan.FromSeconds 12.0)
+
     Assert.Equal(1, expired.Length)
     Assert.Equal(1, tracker.Count)

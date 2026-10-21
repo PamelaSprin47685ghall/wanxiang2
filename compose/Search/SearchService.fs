@@ -27,7 +27,8 @@ module SearchService =
     let terms (query: string) : string list = TextMatch.terms query
 
     /// 提取消息的可搜索正文：只取 `text` 内容项，跳过思维链；单条上限 `maxMessageChars`（库 MessageText）。
-    let textOf (payload: JsonNode) : string = MessageText.visible SearchLimits.maxMessageChars payload
+    let textOf (payload: JsonNode) : string =
+        MessageText.visible SearchLimits.maxMessageChars payload
 
     let private firstMatch = TextMatch.firstMatch
 
@@ -49,17 +50,22 @@ module SearchService =
             let mutable truncated = false
             let mutable hasMore = false
             let mutable stop = List.isEmpty words
+
             let conversations =
                 proj.conversations.Values
                 |> Seq.filter (fun c -> not c.deleted && (q.includeArchived || not c.archived))
                 |> Seq.sortByDescending (fun c -> c.lastCommitId |> Option.defaultValue 0UL)
+
             use e = conversations.GetEnumerator()
+
             while not stop && e.MoveNext() do
                 let c = e.Current
                 let mutable rest = List.rev c.messages
+
                 while not stop && not (List.isEmpty rest) do
                     let m = rest.Head
                     rest <- rest.Tail
+
                     if m.deletedAtCommitId.IsNone then
                         if scanned >= SearchLimits.maxScannedMessages then
                             truncated <- true
@@ -67,6 +73,7 @@ module SearchService =
                         else
                             scanned <- scanned + 1
                             let text = textOf m.payloadJson
+
                             match firstMatch words text with
                             | None -> ()
                             | Some(index, length) ->
@@ -85,21 +92,36 @@ module SearchService =
                                         o["archived"] <- c.archived
                                         o["messageId"] <- m.commitId
                                         o["commitId"] <- m.commitId
+
                                         o["role"] <-
                                             (let mutable r: JsonNode = null
-                                             if (match m.payloadJson with
-                                                 | :? JsonObject as po -> po.TryGetPropertyValue("role", &r) && not (isNull r) && r.GetValueKind() = JsonValueKind.String
-                                                 | _ -> false)
-                                             then r.GetValue<string>() else "")
+
+                                             if
+                                                 (match m.payloadJson with
+                                                  | :? JsonObject as po ->
+                                                      po.TryGetPropertyValue("role", &r)
+                                                      && not (isNull r)
+                                                      && r.GetValueKind() = JsonValueKind.String
+                                                  | _ -> false)
+                                             then
+                                                 r.GetValue<string>()
+                                             else
+                                                 "")
+
                                         o["snippet"] <- snippet
                                         o["matchStart"] <- start
                                         o["matchLength"] <- length
                                         items.Add o
+
                                     hits <- hits + 1
-            Ok { queryId = q.queryId
-                 query = q.query
-                 offset = offset
-                 items = items
-                 hasMore = hasMore
-                 truncated = truncated
-                 atCommitId = proj.latestCommitId }
+
+            Ok
+                {
+                    queryId = q.queryId
+                    query = q.query
+                    offset = offset
+                    items = items
+                    hasMore = hasMore
+                    truncated = truncated
+                    atCommitId = proj.latestCommitId
+                }

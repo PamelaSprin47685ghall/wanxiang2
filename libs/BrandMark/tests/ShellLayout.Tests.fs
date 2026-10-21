@@ -33,8 +33,19 @@ let fixture () =
     shell.Children.Add chatColumn
     shell, sidebar, list, splitter, chatColumn, composer, input
 
-let wide = { Compact = false; DrawerOpen = false; SidebarCollapsed = false }
-let compact = { Compact = true; DrawerOpen = true; SidebarCollapsed = false }
+let wide =
+    {
+        Compact = false
+        DrawerOpen = false
+        SidebarCollapsed = false
+    }
+
+let compact =
+    {
+        Compact = true
+        DrawerOpen = true
+        SidebarCollapsed = false
+    }
 
 // 迁自旧 UiStabilityTests（MainLayoutController 的投影用例）。
 [<Fact>]
@@ -44,7 +55,10 @@ let ``main layout controller projects navigation state onto the shell grid`` () 
         let window = Window(Width = 1000.0, Height = 640.0, Content = shell)
         window.Show()
         let savedWidth = sidebarDefault
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> savedWidth)
+
+        let controller =
+            ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> savedWidth)
+
         let compactSeen = ResizeArray<bool>()
         controller.CompactApplied.Add compactSeen.Add
         let collapsed = { wide with SidebarCollapsed = true }
@@ -90,7 +104,10 @@ let ``collapsing the sidebar moves focus from the sidebar to the composer`` () =
         let shell, sidebar, list, splitter, chatColumn, composer, input = fixture ()
         let window = Window(Width = 1000.0, Height = 640.0, Content = shell)
         window.Show()
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> sidebarDefault)
+
+        let controller =
+            ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> sidebarDefault)
+
         controller.FocusHomeRequested.Add(fun () -> input.Focus() |> ignore)
         controller.Apply wide
         list.Focus() |> ignore
@@ -101,9 +118,16 @@ let ``collapsing the sidebar moves focus from the sidebar to the composer`` () =
         Assert.True(list.IsFocused, "对照组：不折叠时焦点必须留在侧栏")
         controller.Apply { wide with SidebarCollapsed = true }
         Dispatcher.UIThread.RunJobs()
+
         match window.FocusManager.GetFocusedElement() with
-        | :? Control as focused -> Assert.True((composer :> Visual).IsVisualAncestorOf focused || obj.ReferenceEquals(focused, input), "折叠后焦点必须落在输入区内")
+        | :? Control as focused ->
+            Assert.True(
+                (composer :> Visual).IsVisualAncestorOf focused
+                || obj.ReferenceEquals(focused, input),
+                "折叠后焦点必须落在输入区内"
+            )
         | _ -> Assert.Fail "折叠后焦点不得为 null"
+
         window.Close())
 
 [<Fact>]
@@ -112,7 +136,10 @@ let ``compact drawer scrim follows drawer state and dismisses on press`` () =
         let shell, sidebar, _, splitter, chatColumn, _, _ = fixture ()
         let window = Window(Width = 600.0, Height = 640.0, Content = shell)
         window.Show()
-        let controller = ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> sidebarDefault)
+
+        let controller =
+            ShellColumns(shell, sidebar, splitter, chatColumn, sidebarMax, splitterW, fun () -> sidebarDefault)
+
         let mutable dismissed = 0
         controller.ScrimPressed.Add(fun () -> dismissed <- dismissed + 1)
         controller.Apply compact
@@ -120,7 +147,18 @@ let ``compact drawer scrim follows drawer state and dismisses on press`` () =
         Assert.Equal(1, controller.Scrim.ZIndex)
         Assert.True(controller.Scrim.Classes.Contains "scrim")
         let pointer = new Pointer(1, PointerType.Mouse, true)
-        let args = PointerPressedEventArgs(controller.Scrim, pointer, shell, Point(10.0, 10.0), 0UL, PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed), KeyModifiers.None)
+
+        let args =
+            PointerPressedEventArgs(
+                controller.Scrim,
+                pointer,
+                shell,
+                Point(10.0, 10.0),
+                0UL,
+                PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+                KeyModifiers.None
+            )
+
         controller.Scrim.RaiseEvent args
         Assert.Equal(1, dismissed)
         Assert.True args.Handled

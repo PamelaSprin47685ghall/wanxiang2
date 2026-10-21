@@ -1,4 +1,5 @@
 module CommitTimelineTests
+
 open System.Text.Json.Nodes
 open Xunit
 open Wanxiang.Client
@@ -29,7 +30,10 @@ let ``without 删除匹配项，保留非对象项与顺序，不改原数组`` 
 [<Fact>]
 let ``prependOlder 去重、丢弃无 commitId 的项并报告最早一条`` () =
     let cur = arr """[{"commitId":5},{"commitId":6}]"""
-    let older = arr """[{"commitId":3},{"commitId":5},"junk",{"commitId":0},{"commitId":4}]"""
+
+    let older =
+        arr """[{"commitId":3},{"commitId":5},"junk",{"commitId":0},{"commitId":4}]"""
+
     let merged, earliest = CommitTimeline.prependOlder older cur
     Assert.Equal("""[{"commitId":3},{"commitId":4},{"commitId":5},{"commitId":6}]""", merged.ToJsonString())
     Assert.Equal(Some 3UL, earliest)
@@ -43,4 +47,5 @@ let ``prependOlder 没有新项时最早一条为 None，现有列表原样保�
 
 [<Fact>]
 let ``commitId 不是整数时抛出（与旧实现一致）`` () =
-    Assert.ThrowsAny<exn>(fun () -> CommitTimeline.contains 1UL (arr """[{"commitId":"1"}]""") |> ignore) |> ignore
+    Assert.ThrowsAny<exn>(fun () -> CommitTimeline.contains 1UL (arr """[{"commitId":"1"}]""") |> ignore)
+    |> ignore

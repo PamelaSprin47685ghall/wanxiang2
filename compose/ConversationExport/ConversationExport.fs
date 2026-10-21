@@ -15,13 +15,14 @@ type ConversationExportStatus =
     | ExportFailed of message: string
     | ExportCancelled
 
-type ConversationExportDocument = {
-    title: string
-    atCommitId: CommitId
-    messages: MessageView list
-    /// 决策 312：原始提交（commitId / committedAt / payload），供 JSON 导出原样落盘。
-    raw: JsonObject list
-}
+type ConversationExportDocument =
+    {
+        title: string
+        atCommitId: CommitId
+        messages: MessageView list
+        /// 决策 312：原始提交（commitId / committedAt / payload），供 JSON 导出原样落盘。
+        raw: JsonObject list
+    }
 
 /// 单次导出的内存状态。所有页验证完整后才允许取出文档，失败／取消立即释放不完整数据，不保存不完整文件。
 type ConversationExportController(conversationId: Guid, ?maxBytes: int64) =
@@ -61,7 +62,15 @@ type ConversationExportController(conversationId: Guid, ?maxBytes: int64) =
         atCommitId <- 0UL
         lastActivity <- DateTimeOffset.UtcNow
         status <- ExportReading(0, None)
-        let next = { exportId = Guid.CreateVersion7(); conversationId = conversationId; atCommitId = None; beforeCommitId = 0UL }
+
+        let next =
+            {
+                exportId = Guid.CreateVersion7()
+                conversationId = conversationId
+                atCommitId = None
+                beforeCommitId = 0UL
+            }
+
         query <- Some next
         next
 
@@ -70,7 +79,8 @@ type ConversationExportController(conversationId: Guid, ?maxBytes: int64) =
         status <- ExportCancelled
 
     member _.Fail(exportId: Guid, message: string) =
-        if query |> Option.exists (fun current -> current.exportId = exportId) then fail message
+        if query |> Option.exists (fun current -> current.exportId = exportId) then
+            fail message
 
     member _.Disconnect() =
         match status with
@@ -88,49 +98,113 @@ type ConversationExportController(conversationId: Guid, ?maxBytes: int64) =
         // 取消后、另一份导出或已经处理过的页一律不再接管状态。
         match query with
         | None -> None
-        | Some expected when expected.exportId <> page.exportId || expected.beforeCommitId <> page.beforeCommitId -> None
+        | Some expected when
+            expected.exportId <> page.exportId
+            || expected.beforeCommitId <> page.beforeCommitId
+            ->
+            None
         | Some expected ->
             try
-                if page.conversationId <> conversationId then failwith "主机返回了其他对话的内容。"
-                if expected.atCommitId |> Option.exists ((<>) page.atCommitId) then failwith "导出水位发生变化。"
-                if total |> Option.exists ((<>) page.totalMessages) then failwith "导出消息数量发生变化。"
-                if isNull page.items || page.items.Count > ConversationExportLimits.pageMessages then failwith "导出分页大小无效。"
+                if page.conversationId <> conversationId then
+                    failwith "主机返回了其他对话的内容。"
+
+                if expected.atCommitId |> Option.exists ((<>) page.atCommitId) then
+                    failwith "导出水位发生变化。"
+
+                if total |> Option.exists ((<>) page.totalMessages) then
+                    failwith "导出消息数量发生变化。"
+
+                if isNull page.items || page.items.Count > ConversationExportLimits.pageMessages then
+                    failwith "导出分页大小无效。"
+
                 let ids =
-                    page.items |> Seq.map (fun item ->
+                    page.items
+                    |> Seq.map (fun item ->
                         let node = item.AsObject()
-                        if isNull node["payload"] || not (node["payload"] :? JsonObject) then failwith "导出消息载荷缺失。"
-                        node["commitId"].GetValue<uint64>()) |> List.ofSeq
-                if ids |> List.exists (fun id -> id = 0UL || id > page.atCommitId || (expected.beforeCommitId <> 0UL && id >= expected.beforeCommitId)) then
-                    failwith "导出消息超出分页边界。"
-                if ids |> List.pairwise |> List.exists (fun (a, b) -> a >= b) then failwith "导出消息重复或顺序错误。"
-                let count = received + ids.Length
-                if page.totalMessages < 0 || count > page.totalMessages then failwith "导出消息数量不符。"
-                if page.hasMore && (List.isEmpty ids || count >= page.totalMessages) then failwith "导出分页没有继续前进。"
-                if not page.hasMore && count <> page.totalMessages then failwith "导出内容不完整。"
-                bytes <- bytes + int64 (Encoding.UTF8.GetByteCount(page.items.ToJsonString()))
-                if bytes > byteLimit then failwith (sprintf "对话超过 %s 导出安全上限；已停止，没有保存不完整文件。" (AttachmentRef.formatSize byteLimit))
-                let parsed =
-                    page.items |> Seq.map (fun item ->
-                        let message = MessageView.ofSnapshotItem item
-                        if MessageView.hasVisibleBody message || not (List.isEmpty message.toolResults) then message
-                        else
-                            { message with text = "暂不能显示这条消息，保留原始 JSON：\n\n    " + item["payload"].ToJsonString().Replace("\n", "\n    ") })
+
+                        if isNull node["payload"] || not (node["payload"] :? JsonObject) then
+                            failwith "导出消息载荷缺失。"
+
+                        node["commitId"].GetValue<uint64>())
                     |> List.ofSeq
+
+                if
+                    ids
+                    |> List.exists (fun id ->
+                        id = 0UL
+                        || id > page.atCommitId
+                        || (expected.beforeCommitId <> 0UL && id >= expected.beforeCommitId))
+                then
+                    failwith "导出消息超出分页边界。"
+
+                if ids |> List.pairwise |> List.exists (fun (a, b) -> a >= b) then
+                    failwith "导出消息重复或顺序错误。"
+
+                let count = received + ids.Length
+
+                if page.totalMessages < 0 || count > page.totalMessages then
+                    failwith "导出消息数量不符。"
+
+                if page.hasMore && (List.isEmpty ids || count >= page.totalMessages) then
+                    failwith "导出分页没有继续前进。"
+
+                if not page.hasMore && count <> page.totalMessages then
+                    failwith "导出内容不完整。"
+
+                bytes <- bytes + int64 (Encoding.UTF8.GetByteCount(page.items.ToJsonString()))
+
+                if bytes > byteLimit then
+                    failwith (sprintf "对话超过 %s 导出安全上限；已停止，没有保存不完整文件。" (AttachmentRef.formatSize byteLimit))
+
+                let parsed =
+                    page.items
+                    |> Seq.map (fun item ->
+                        let message = MessageView.ofSnapshotItem item
+
+                        if MessageView.hasVisibleBody message || not (List.isEmpty message.toolResults) then
+                            message
+                        else
+                            { message with
+                                text =
+                                    "暂不能显示这条消息，保留原始 JSON：\n\n    "
+                                    + item["payload"].ToJsonString().Replace("\n", "\n    ")
+                            })
+                    |> List.ofSeq
+
                 if total.IsNone then
                     title <- page.title
                     atCommitId <- page.atCommitId
                     total <- Some page.totalMessages
+
                 received <- count
                 pages <- parsed :: pages
-                rawPages <- (page.items |> Seq.map (fun item -> item.DeepClone().AsObject()) |> List.ofSeq) :: rawPages
+
+                rawPages <-
+                    (page.items |> Seq.map (fun item -> item.DeepClone().AsObject()) |> List.ofSeq)
+                    :: rawPages
+
                 lastActivity <- DateTimeOffset.UtcNow
+
                 if page.hasMore then
-                    let next = { expected with atCommitId = Some atCommitId; beforeCommitId = ids.Head }
+                    let next =
+                        { expected with
+                            atCommitId = Some atCommitId
+                            beforeCommitId = ids.Head
+                        }
+
                     query <- Some next
                     status <- ExportReading(received, total)
                     Some next
                 else
-                    document <- Some { title = title; atCommitId = atCommitId; messages = pages |> List.collect id; raw = rawPages |> List.collect id }
+                    document <-
+                        Some
+                            {
+                                title = title
+                                atCommitId = atCommitId
+                                messages = pages |> List.collect id
+                                raw = rawPages |> List.collect id
+                            }
+
                     pages <- []
                     rawPages <- []
                     query <- None

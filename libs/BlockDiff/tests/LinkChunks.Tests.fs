@@ -1,4 +1,5 @@
 module LinkChunksTests
+
 open System
 open System.IO
 open System.Text
@@ -39,16 +40,11 @@ let ``a lone punctuation chunk stays in place`` () =
 [<Fact>]
 let ``LinkChunks.safeChunk does not slice surrogate pairs into separate chunks`` () =
     // A long text mixing emojis, surrogate pairs, and ZWJ sequences
-    let emojiText =
-        "👨‍👩‍👧‍👦🇨🇳𠮷野家👍🏽"
-        + "🎉🚀💡🔥✨🎈"
-        + "𠮷𠮷𠮷𠮷𠮷"
-        + "👩‍💻👨‍💻🧑‍🌾"
-        + "❤️🧡💛💚💙💜"
+    let emojiText = "👨‍👩‍👧‍👦🇨🇳𠮷野家👍🏽" + "🎉🚀💡🔥✨🎈" + "𠮷𠮷𠮷𠮷𠮷" + "👩‍💻👨‍💻🧑‍🌾" + "❤️🧡💛💚💙💜"
 
     let chunks = LinkChunks.safeChunk 5 emojiText
     Assert.NotEmpty chunks
-    
+
     // Total text elements must match original
     let rejoined = String.Concat chunks
     Assert.Equal(emojiText, rejoined)
@@ -59,11 +55,15 @@ let ``LinkChunks.safeChunk does not slice surrogate pairs into separate chunks``
         // Chunk cannot start with low surrogate
         Assert.False(Char.IsLowSurrogate chunk[0], sprintf "Chunk starts with lone low surrogate: %s" chunk)
         // Chunk cannot end with high surrogate
-        Assert.False(Char.IsHighSurrogate chunk[chunk.Length - 1], sprintf "Chunk ends with lone high surrogate: %s" chunk)
+        Assert.False(
+            Char.IsHighSurrogate chunk[chunk.Length - 1],
+            sprintf "Chunk ends with lone high surrogate: %s" chunk
+        )
 
         // Internal surrogate integrity
         for i in 0 .. chunk.Length - 1 do
             let ch = chunk[i]
+
             if Char.IsHighSurrogate ch then
                 Assert.True(i + 1 < chunk.Length, "High surrogate must have following low surrogate in chunk")
                 Assert.True(Char.IsLowSurrogate chunk[i + 1], "High surrogate must be followed by low surrogate")

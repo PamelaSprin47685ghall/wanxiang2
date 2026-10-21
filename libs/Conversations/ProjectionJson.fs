@@ -13,7 +13,11 @@ module ProjectionJson =
 
     let private tryGet (o: JsonObject) (k: string) : JsonNode option =
         let mutable n: JsonNode = null
-        if o.TryGetPropertyValue(k, &n) && not (isNull n) then Some n else None
+
+        if o.TryGetPropertyValue(k, &n) && not (isNull n) then
+            Some n
+        else
+            None
 
     let private tryStr (o: JsonObject) (k: string) : string option =
         match tryGet o k with
@@ -80,31 +84,39 @@ module ProjectionJson =
         o["conversationId"] <- m.conversationId.ToString("D")
         o["payloadJson"] <- m.payloadJson.DeepClone()
         o["committedAtUtc"] <- m.committedAtUtc.UtcDateTime.ToString("o")
+
         match m.deletedAtCommitId with
         | Some d -> o["deletedAtCommitId"] <- d.ToString(CultureInfo.InvariantCulture)
         | None -> ()
+
         o
 
     let private messageFromJson (o: JsonObject) : MessageRecord option =
-        match tryUInt64 o "commitId", tryGuid o "conversationId", tryGet o "payloadJson", tryDateTime o "committedAtUtc" with
+        match
+            tryUInt64 o "commitId", tryGuid o "conversationId", tryGet o "payloadJson", tryDateTime o "committedAtUtc"
+        with
         | Some cid, Some conv, Some payload, Some at ->
             Some
-                { commitId = cid
-                  conversationId = conv
-                  payloadJson = payload.DeepClone()
-                  committedAtUtc = at
-                  deletedAtCommitId = tryUInt64 o "deletedAtCommitId" }
+                {
+                    commitId = cid
+                    conversationId = conv
+                    payloadJson = payload.DeepClone()
+                    committedAtUtc = at
+                    deletedAtCommitId = tryUInt64 o "deletedAtCommitId"
+                }
         | _ -> None
 
     let private parentToJson (p: (Guid * uint64 option) option) : JsonNode =
         match p with
         | None -> null
-        | Some (g, after) ->
+        | Some(g, after) ->
             let o = JsonObject()
             o["parentId"] <- g.ToString("D")
+
             match after with
             | Some a -> o["afterId"] <- a.ToString(CultureInfo.InvariantCulture)
             | None -> ()
+
             o :> JsonNode
 
     let private parentFromJson (v: JsonNode) : ((Guid * uint64 option) option) option =
@@ -127,17 +139,23 @@ module ProjectionJson =
         o["pinned"] <- c.pinned
         o["archived"] <- c.archived
         o["parent"] <- parentToJson c.parent
+
         match c.forkBaseCommitId with
         | Some b -> o["forkBaseCommitId"] <- b.ToString(CultureInfo.InvariantCulture)
         | None -> ()
+
         o["config"] <- config c.config
         let arr = JsonArray()
+
         for m in c.messages do
             arr.Add(messageToJson m)
+
         o["messages"] <- arr
+
         match c.lastCommitId with
         | Some l -> o["lastCommitId"] <- l.ToString(CultureInfo.InvariantCulture)
         | None -> ()
+
         o
 
     let private conversationFromJson (config: JsonObject -> 'C) (o: JsonObject) : Conversation<'C> option =
@@ -155,17 +173,20 @@ module ProjectionJson =
                 match tryGet o "parent" with
                 | Some v -> parentFromJson v
                 | None -> Some None
+
             match parent with
             | None -> None
             | Some parentVal ->
                 match tryGet o "config" with
                 | Some v when v.GetValueKind() = JsonValueKind.Object ->
                     let cfgNode = v.AsObject()
+
                     let messages =
                         match tryGet o "messages" with
                         | Some v when v.GetValueKind() = JsonValueKind.Array ->
                             let mutable ok = true
                             let list = ResizeArray<MessageRecord>()
+
                             for item in v.AsArray() do
                                 if item <> null && item.GetValueKind() = JsonValueKind.Object then
                                     match messageFromJson (item.AsObject()) with
@@ -173,23 +194,27 @@ module ProjectionJson =
                                     | None -> ok <- false
                                 else
                                     ok <- false
+
                             if ok then Some(List.ofSeq list) else None
                         | _ -> None
+
                     match messages with
                     | Some msgs ->
                         Some
-                            { conversationId = cid
-                              title = title
-                              createdAtUtc = created
-                              lastActivityAtUtc = lastAct
-                              deleted = deleted
-                              pinned = pinned
-                              archived = archived
-                              parent = parentVal
-                              forkBaseCommitId = tryUInt64 o "forkBaseCommitId"
-                              config = config cfgNode
-                              messages = msgs
-                              lastCommitId = tryUInt64 o "lastCommitId" }
+                            {
+                                conversationId = cid
+                                title = title
+                                createdAtUtc = created
+                                lastActivityAtUtc = lastAct
+                                deleted = deleted
+                                pinned = pinned
+                                archived = archived
+                                parent = parentVal
+                                forkBaseCommitId = tryUInt64 o "forkBaseCommitId"
+                                config = config cfgNode
+                                messages = msgs
+                                lastCommitId = tryUInt64 o "lastCommitId"
+                            }
                     | None -> None
                 | _ -> None
         | _ -> None
@@ -198,8 +223,10 @@ module ProjectionJson =
     let toJson (config: 'C -> JsonObject) (p: Projection<'C>) : JsonObject =
         let o = JsonObject()
         let convs = JsonArray()
+
         for KeyValue(_, c) in p.conversations do
             convs.Add(conversationToJson config c)
+
         o["conversations"] <- convs
         o["latestCommitId"] <- p.latestCommitId.ToString(CultureInfo.InvariantCulture)
         o
@@ -210,6 +237,7 @@ module ProjectionJson =
             | Some v when v.GetValueKind() = JsonValueKind.Array ->
                 let mutable ok = true
                 let map = System.Collections.Generic.Dictionary<Guid, Conversation<'C>>()
+
                 for item in v.AsArray() do
                     if item <> null && item.GetValueKind() = JsonValueKind.Object then
                         match conversationFromJson config (item.AsObject()) with
@@ -217,8 +245,18 @@ module ProjectionJson =
                         | None -> ok <- false
                     else
                         ok <- false
-                if ok then Some(map |> Seq.map (fun kv -> kv.Key, kv.Value) |> Map.ofSeq) else None
+
+                if ok then
+                    Some(map |> Seq.map (fun kv -> kv.Key, kv.Value) |> Map.ofSeq)
+                else
+                    None
             | _ -> None
+
         match convs, tryUInt64 o "latestCommitId" with
-        | Some c, Some latest -> Some { conversations = c; latestCommitId = latest }
+        | Some c, Some latest ->
+            Some
+                {
+                    conversations = c
+                    latestCommitId = latest
+                }
         | _ -> None

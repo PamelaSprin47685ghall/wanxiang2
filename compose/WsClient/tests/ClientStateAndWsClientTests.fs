@@ -44,7 +44,15 @@ module ClientStateAndWsClientTests =
     [<Fact>]
     let ``WsClient TrySendCommand when disconnected safely returns false`` () =
         let client = new WsClient()
-        let cmd = ClientCommand.RenameConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); title = "test" |}
+
+        let cmd =
+            ClientCommand.RenameConversation
+                {|
+                    invocationId = Guid.NewGuid()
+                    conversationId = Guid.NewGuid()
+                    title = "test"
+                |}
+
         let task = client.TrySendCommandAsync(cmd)
         let sent = task.GetAwaiter().GetResult()
         Assert.False(sent)
@@ -52,7 +60,15 @@ module ClientStateAndWsClientTests =
     [<Fact>]
     let ``WsClient TrySendCommandAtGeneration when disconnected safely returns false`` () =
         let client = new WsClient()
-        let cmd = ClientCommand.RenameConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); title = "test" |}
+
+        let cmd =
+            ClientCommand.RenameConversation
+                {|
+                    invocationId = Guid.NewGuid()
+                    conversationId = Guid.NewGuid()
+                    title = "test"
+                |}
+
         let task = client.TrySendCommandAtGenerationAsync(1, cmd)
         let sent = task.GetAwaiter().GetResult()
         Assert.False(sent)
@@ -72,7 +88,10 @@ module ClientStateAndWsClientTests =
         cts.Cancel()
         let uri = Uri("ws://127.0.0.1:65534/test")
         let task = client.ConnectAsync(uri, cts.Token)
-        Assert.ThrowsAny<Exception>(fun () -> task.GetAwaiter().GetResult() |> ignore) |> ignore
+
+        Assert.ThrowsAny<Exception>(fun () -> task.GetAwaiter().GetResult() |> ignore)
+        |> ignore
+
         Assert.False(client.IsConnected)
         Assert.Equal(1, client.ConnectionGeneration)
 
@@ -82,9 +101,21 @@ module ClientStateAndWsClientTests =
         use cts = new CancellationTokenSource()
         cts.Cancel()
         let uri = Uri("ws://127.0.0.1:65534/test")
-        try client.ConnectWithGenerationAsync(uri, cts.Token).GetAwaiter().GetResult() |> ignore with _ -> ()
+
+        try
+            client.ConnectWithGenerationAsync(uri, cts.Token).GetAwaiter().GetResult()
+            |> ignore
+        with _ ->
+            ()
+
         Assert.Equal(1, client.ConnectionGeneration)
-        try client.ConnectWithGenerationAsync(uri, cts.Token).GetAwaiter().GetResult() |> ignore with _ -> ()
+
+        try
+            client.ConnectWithGenerationAsync(uri, cts.Token).GetAwaiter().GetResult()
+            |> ignore
+        with _ ->
+            ()
+
         Assert.Equal(2, client.ConnectionGeneration)
 
     [<Fact>]
@@ -92,7 +123,22 @@ module ClientStateAndWsClientTests =
         let client = new WsClient()
         let t1 = client.SendAsync(WireEvent.Ping)
         t1.GetAwaiter().GetResult()
-        let cmd = ClientCommand.ForkConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); parentConversationId = Guid.NewGuid(); forkAfterId = None; config = { SessionConfig.empty with provider = "p"; model = "m" }; editedMessageJson = JsonObject() |}
+
+        let cmd =
+            ClientCommand.ForkConversation
+                {|
+                    invocationId = Guid.NewGuid()
+                    conversationId = Guid.NewGuid()
+                    parentConversationId = Guid.NewGuid()
+                    forkAfterId = None
+                    config =
+                        { SessionConfig.empty with
+                            provider = "p"
+                            model = "m"
+                        }
+                    editedMessageJson = JsonObject()
+                |}
+
         let t2 = client.SendCommandAsync(cmd)
         t2.GetAwaiter().GetResult()
         Assert.False(client.IsConnected)
@@ -107,8 +153,12 @@ module ClientStateAndWsClientTests =
 
         use _s1 = client.EventReceived.Subscribe(fun _ -> eventCount <- eventCount + 1)
         use _s2 = client.Closed.Subscribe(fun _ -> closedCount <- closedCount + 1)
-        use _s3 = client.ConnectionEventReceived.Subscribe(fun _ -> connEventCount <- connEventCount + 1)
-        use _s4 = client.ConnectionClosed.Subscribe(fun _ -> connClosedCount <- connClosedCount + 1)
+
+        use _s3 =
+            client.ConnectionEventReceived.Subscribe(fun _ -> connEventCount <- connEventCount + 1)
+
+        use _s4 =
+            client.ConnectionClosed.Subscribe(fun _ -> connClosedCount <- connClosedCount + 1)
 
         Assert.Equal(0, eventCount)
         Assert.Equal(0, closedCount)
@@ -133,7 +183,16 @@ module ClientStateAndWsClientTests =
     [<Fact>]
     let ``WsClient detachConnection cancels and disposes previous cts and increments generation`` () =
         let client = new WsClient()
-        let detachMethod = client.GetType().GetMethod("detachConnection", System.Reflection.BindingFlags.NonPublic ||| System.Reflection.BindingFlags.Instance)
+
+        let detachMethod =
+            client
+                .GetType()
+                .GetMethod(
+                    "detachConnection",
+                    System.Reflection.BindingFlags.NonPublic
+                    ||| System.Reflection.BindingFlags.Instance
+                )
+
         if isNull detachMethod then
             // If let-bound local function in constructor, it is tested via Disconnect()
             client.Disconnect()
@@ -190,17 +249,20 @@ module ClientStateAndWsClientTests =
 
         let sid = Guid.NewGuid()
         let msgs = JsonArray()
+
         let snap =
             ConversationSnapshot
-                {| conversationId = sid
-                   title = "Test Conversation"
-                   lastCommitId = 10UL
-                   runtimeState = "idle"
-                   messages = msgs
-                   snapshotEarliestCommitId = 1UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = SessionConfig.empty |}
+                {|
+                    conversationId = sid
+                    title = "Test Conversation"
+                    lastCommitId = 10UL
+                    runtimeState = "idle"
+                    messages = msgs
+                    snapshotEarliestCommitId = 1UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
 
         state.Handle snap
 
@@ -214,15 +276,18 @@ module ClientStateAndWsClientTests =
         // Existing view update branch
         let snap2 =
             ConversationSnapshot
-                {| conversationId = sid
-                   title = "Updated Existing"
-                   lastCommitId = 15UL
-                   runtimeState = "generating"
-                   messages = msgs
-                   snapshotEarliestCommitId = 1UL
-                   generationId = None
-                   snapshotHasMore = true
-                   config = SessionConfig.empty |}
+                {|
+                    conversationId = sid
+                    title = "Updated Existing"
+                    lastCommitId = 15UL
+                    runtimeState = "generating"
+                    messages = msgs
+                    snapshotEarliestCommitId = 1UL
+                    generationId = None
+                    snapshotHasMore = true
+                    config = SessionConfig.empty
+                |}
+
         state.Handle snap2
         let updated = state.Conversations[sid]
         Assert.Equal("Updated Existing", updated.title)
@@ -242,24 +307,35 @@ module ClientStateAndWsClientTests =
 
         let snap =
             ConversationSnapshot
-                {| conversationId = sid
-                   title = "Paging Conversation"
-                   lastCommitId = 2UL
-                   runtimeState = "idle"
-                   messages = msgs
-                   snapshotEarliestCommitId = 2UL
-                   generationId = None
-                   snapshotHasMore = true
-                   config = SessionConfig.empty |}
+                {|
+                    conversationId = sid
+                    title = "Paging Conversation"
+                    lastCommitId = 2UL
+                    runtimeState = "idle"
+                    messages = msgs
+                    snapshotEarliestCommitId = 2UL
+                    generationId = None
+                    snapshotHasMore = true
+                    config = SessionConfig.empty
+                |}
+
         state.Handle snap
 
         let item1 = JsonObject()
         item1["commitId"] <- 1UL
         let older = JsonArray()
         older.Add item1
-        older.Add (item2.DeepClone())
+        older.Add(item2.DeepClone())
 
-        state.Handle(HistoryPage {| conversationId = sid; beforeCommitId = 2UL; items = older; hasMore = false |})
+        state.Handle(
+            HistoryPage
+                {|
+                    conversationId = sid
+                    beforeCommitId = 2UL
+                    items = older
+                    hasMore = false
+                |}
+        )
 
         let curr = state.Conversations[sid]
         Assert.Equal(2, curr.messages.Count)
@@ -267,23 +343,35 @@ module ClientStateAndWsClientTests =
         Assert.False(curr.pageHasMore)
 
         // Non-existent conversation does nothing
-        state.Handle(HistoryPage {| conversationId = Guid.NewGuid(); beforeCommitId = 1UL; items = JsonArray(); hasMore = false |})
+        state.Handle(
+            HistoryPage
+                {|
+                    conversationId = Guid.NewGuid()
+                    beforeCommitId = 1UL
+                    items = JsonArray()
+                    hasMore = false
+                |}
+        )
 
     [<Fact>]
     let ``ClientState MessageCommitted appends message, updates watermark, deduplicates and raises event`` () =
         let state = ClientState()
         let sid = Guid.NewGuid()
+
         let snap =
             ConversationSnapshot
-                {| conversationId = sid
-                   title = "Live Conversation"
-                   lastCommitId = 0UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = SessionConfig.empty |}
+                {|
+                    conversationId = sid
+                    title = "Live Conversation"
+                    lastCommitId = 0UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+
         state.Handle snap
 
         let mutable convFired = false
@@ -293,7 +381,15 @@ module ClientStateAndWsClientTests =
         msgPayload["commitId"] <- 1UL
         msgPayload["content"] <- "new live message"
 
-        state.Handle(MessageCommitted {| conversationId = sid; commitId = 1UL; committedAt = DateTimeOffset.UtcNow; payload = msgPayload |})
+        state.Handle(
+            MessageCommitted
+                {|
+                    conversationId = sid
+                    commitId = 1UL
+                    committedAt = DateTimeOffset.UtcNow
+                    payload = msgPayload
+                |}
+        )
 
         Assert.True(convFired)
         let curr = state.Conversations[sid]
@@ -302,11 +398,28 @@ module ClientStateAndWsClientTests =
         Assert.Equal(1UL, state.LatestCommitId)
 
         // Duplicate MessageCommitted is ignored
-        state.Handle(MessageCommitted {| conversationId = sid; commitId = 1UL; committedAt = DateTimeOffset.UtcNow; payload = msgPayload |})
+        state.Handle(
+            MessageCommitted
+                {|
+                    conversationId = sid
+                    commitId = 1UL
+                    committedAt = DateTimeOffset.UtcNow
+                    payload = msgPayload
+                |}
+        )
+
         Assert.Equal(1, curr.messages.Count)
 
         // Non-existent conversation MessageCommitted is ignored
-        state.Handle(MessageCommitted {| conversationId = Guid.NewGuid(); commitId = 2UL; committedAt = DateTimeOffset.UtcNow; payload = msgPayload |})
+        state.Handle(
+            MessageCommitted
+                {|
+                    conversationId = Guid.NewGuid()
+                    commitId = 2UL
+                    committedAt = DateTimeOffset.UtcNow
+                    payload = msgPayload
+                |}
+        )
 
     [<Fact>]
     let ``ClientState ConversationUpdated updates title and removes deleted messages`` () =
@@ -323,22 +436,32 @@ module ClientStateAndWsClientTests =
 
         let snap =
             ConversationSnapshot
-                {| conversationId = sid
-                   title = "Original Title"
-                   lastCommitId = 2UL
-                   runtimeState = "idle"
-                   messages = msgs
-                   snapshotEarliestCommitId = 1UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = SessionConfig.empty |}
+                {|
+                    conversationId = sid
+                    title = "Original Title"
+                    lastCommitId = 2UL
+                    runtimeState = "idle"
+                    messages = msgs
+                    snapshotEarliestCommitId = 1UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+
         state.Handle snap
 
         let change = JsonObject()
         change["title"] <- "Updated Title"
         change["deletedMessage"] <- 1UL
 
-        state.Handle(ConversationUpdated {| conversationId = sid; commitId = 15UL; change = change |})
+        state.Handle(
+            ConversationUpdated
+                {|
+                    conversationId = sid
+                    commitId = 15UL
+                    change = change
+                |}
+        )
 
         let curr = state.Conversations[sid]
         Assert.Equal("Updated Title", curr.title)
@@ -346,28 +469,48 @@ module ClientStateAndWsClientTests =
         Assert.Equal(15UL, curr.lastCommitId)
 
         // Null change branch
-        state.Handle(ConversationUpdated {| conversationId = sid; commitId = 20UL; change = null |})
+        state.Handle(
+            ConversationUpdated
+                {|
+                    conversationId = sid
+                    commitId = 20UL
+                    change = null
+                |}
+        )
+
         Assert.Equal(20UL, curr.lastCommitId)
 
         // Non-existent conversation
-        state.Handle(ConversationUpdated {| conversationId = Guid.NewGuid(); commitId = 30UL; change = change |})
+        state.Handle(
+            ConversationUpdated
+                {|
+                    conversationId = Guid.NewGuid()
+                    commitId = 30UL
+                    change = change
+                |}
+        )
+
         Assert.Equal(30UL, state.LatestCommitId)
 
     [<Fact>]
     let ``ClientState AuthorityCatchUp replays deltas, message.committed, WireCodec and commit formats`` () =
         let state = ClientState()
         let sid = Guid.NewGuid()
+
         let snap =
             ConversationSnapshot
-                {| conversationId = sid
-                   title = "CatchUp Conv"
-                   lastCommitId = 0UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = SessionConfig.empty |}
+                {|
+                    conversationId = sid
+                    title = "CatchUp Conv"
+                    lastCommitId = 0UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+
         state.Handle snap
 
         let events = JsonArray()
@@ -394,7 +537,14 @@ module ClientStateAndWsClientTests =
         ev2["payload"] <- p2
         events.Add ev2
 
-        state.Handle(AuthorityCatchUp {| fromCursor = 0UL; toCommitId = 5UL; items = events |})
+        state.Handle(
+            AuthorityCatchUp
+                {|
+                    fromCursor = 0UL
+                    toCommitId = 5UL
+                    items = events
+                |}
+        )
 
         let curr = state.Conversations[sid]
         Assert.Equal(2, curr.messages.Count)
@@ -404,44 +554,89 @@ module ClientStateAndWsClientTests =
     let ``ClientState GenerationStarted and GenerationFinished update runtimeState`` () =
         let state = ClientState()
         let sid = Guid.NewGuid()
+
         let snap =
             ConversationSnapshot
-                {| conversationId = sid
-                   title = "Gen Status Conv"
-                   lastCommitId = 1UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = SessionConfig.empty |}
+                {|
+                    conversationId = sid
+                    title = "Gen Status Conv"
+                    lastCommitId = 1UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+
         state.Handle snap
 
-        state.Handle(GenerationStarted {| conversationId = sid; generationId = Guid.NewGuid(); providerId = "p"; model = "m" |})
+        state.Handle(
+            GenerationStarted
+                {|
+                    conversationId = sid
+                    generationId = Guid.NewGuid()
+                    providerId = "p"
+                    model = "m"
+                |}
+        )
+
         Assert.Equal("generating", state.Conversations[sid].runtimeState)
 
-        state.Handle(GenerationFinished {| conversationId = sid; generationId = Guid.NewGuid(); status = "idle"; error = None; usage = None |})
+        state.Handle(
+            GenerationFinished
+                {|
+                    conversationId = sid
+                    generationId = Guid.NewGuid()
+                    status = "idle"
+                    error = None
+                    usage = None
+                |}
+        )
+
         Assert.Equal("idle", state.Conversations[sid].runtimeState)
 
         // Unmatched conversationId does not crash
-        state.Handle(GenerationStarted {| conversationId = Guid.NewGuid(); generationId = Guid.NewGuid(); providerId = "p"; model = "m" |})
-        state.Handle(GenerationFinished {| conversationId = Guid.NewGuid(); generationId = Guid.NewGuid(); status = "idle"; error = None; usage = None |})
+        state.Handle(
+            GenerationStarted
+                {|
+                    conversationId = Guid.NewGuid()
+                    generationId = Guid.NewGuid()
+                    providerId = "p"
+                    model = "m"
+                |}
+        )
+
+        state.Handle(
+            GenerationFinished
+                {|
+                    conversationId = Guid.NewGuid()
+                    generationId = Guid.NewGuid()
+                    status = "idle"
+                    error = None
+                    usage = None
+                |}
+        )
 
     [<Fact>]
     let ``ClientState CursorAdvanced, AdvanceCursor, and AdvanceCursorTo`` () =
         let state = ClientState()
         let sid = Guid.NewGuid()
+
         let snap =
             ConversationSnapshot
-                {| conversationId = sid
-                   title = "Cursor Conv"
-                   lastCommitId = 100UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = SessionConfig.empty |}
+                {|
+                    conversationId = sid
+                    title = "Cursor Conv"
+                    lastCommitId = 100UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+
         state.Handle snap
         Assert.Equal(100UL, state.LatestCommitId)
 
@@ -457,6 +652,7 @@ module ClientStateAndWsClientTests =
 
         // CursorAdvancedEvent generates correct wire event
         let wireEv = state.CursorAdvancedEvent()
+
         match wireEv with
         | CursorAdvanced d -> Assert.Equal(120UL, d.id)
         | other -> Assert.Fail($"Expected CursorAdvanced, got {other}")
@@ -487,28 +683,45 @@ type private MockWsServer(onClient: WebSocket -> CancellationToken -> Task) =
     do
         listener.Prefixes.Add(sprintf "http://127.0.0.1:%d/mockws/" port)
         listener.Start()
+
         Task.Run(fun () ->
             task {
                 try
                     while not cts.IsCancellationRequested && listener.IsListening do
                         let! context = listener.GetContextAsync()
+
                         if context.Request.IsWebSocketRequest then
                             let! wsContext = context.AcceptWebSocketAsync(null)
                             Task.Run(fun () -> onClient wsContext.WebSocket cts.Token) |> ignore
                         else
                             context.Response.StatusCode <- 400
                             context.Response.Close()
-                with _ -> ()
-            } :> Task) |> ignore
+                with _ ->
+                    ()
+            }
+            :> Task)
+        |> ignore
 
     member _.Uri = Uri(sprintf "ws://127.0.0.1:%d/mockws/" port)
     member _.Port = port
 
     interface IDisposable with
         member _.Dispose() =
-            try cts.Cancel() with _ -> ()
-            try listener.Stop() with _ -> ()
-            try listener.Close() with _ -> ()
+            try
+                cts.Cancel()
+            with _ ->
+                ()
+
+            try
+                listener.Stop()
+            with _ ->
+                ()
+
+            try
+                listener.Close()
+            with _ ->
+                ()
+
             cts.Dispose()
 
 module WsClientLiveNetworkTests =
@@ -516,21 +729,26 @@ module WsClientLiveNetworkTests =
     [<Fact>]
     let ``WsClient live connection lifecycle, generation, and clean disconnect`` () =
         task {
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    let buf = Array.zeroCreate<byte> 1024
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let buf = Array.zeroCreate<byte> 1024
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
 
             let mutable closedFired = false
             let mutable closedExn: exn option = None
+
             client.Closed.Add(fun err ->
                 closedFired <- true
                 closedExn <- err)
@@ -548,20 +766,25 @@ module WsClientLiveNetworkTests =
             Assert.Equal(2, client.ConnectionGeneration)
             // Disconnect 故意递增 generation 剥离旧连接，防迟到回调，不触发 closedFired
             Assert.False(client.IsConnected)
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient ConnectAsync convenience method connects cleanly`` () =
         task {
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
@@ -572,18 +795,22 @@ module WsClientLiveNetworkTests =
 
             client.Disconnect()
             Assert.False(client.IsConnected)
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient connection superseded during connect raises OperationCanceledException`` () =
         task {
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                        ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                            ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
@@ -599,36 +826,46 @@ module WsClientLiveNetworkTests =
             // 「抛 superseded」与「静默取消」都算通过，这条用例什么也没钉住。
             let mutable caughtSuperseded = false
             let mutable otherFailure = ""
+
             try
                 let! _ = connectTask
                 ()
             with
-            | :? OperationCanceledException as oce when oce.Message.Contains("superseded") ->
-                caughtSuperseded <- true
+            | :? OperationCanceledException as oce when oce.Message.Contains("superseded") -> caughtSuperseded <- true
             | :? OperationCanceledException as oce -> otherFailure <- "OperationCanceledException: " + oce.Message
             | ex -> otherFailure <- ex.GetType().Name + ": " + ex.Message
 
-            Assert.True(caughtSuperseded, "连接被 Disconnect 抢占时应抛 superseded，实际: " + (if otherFailure = "" then "没有抛异常" else otherFailure))
+            Assert.True(
+                caughtSuperseded,
+                "连接被 Disconnect 抢占时应抛 superseded，实际: "
+                + (if otherFailure = "" then "没有抛异常" else otherFailure)
+            )
             // Disconnect 至少把代号推进了一代（连接请求里的代号不再是当前代号）。
             Assert.True(client.ConnectionGeneration >= 2, sprintf "代号应推进，实际 %d" client.ConnectionGeneration)
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient live send with generation check, command and wire event roundtrip`` () =
         task {
             let receivedMessages = Collections.Concurrent.ConcurrentQueue<string>()
 
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    let buf = Array.zeroCreate<byte> 4096
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! res = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            if res.MessageType = WebSocketMessageType.Text && res.Count > 0 then
-                                let text = Encoding.UTF8.GetString(buf, 0, res.Count)
-                                receivedMessages.Enqueue(text)
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let buf = Array.zeroCreate<byte> 4096
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! res = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+
+                                if res.MessageType = WebSocketMessageType.Text && res.Count > 0 then
+                                    let text = Encoding.UTF8.GetString(buf, 0, res.Count)
+                                    receivedMessages.Enqueue(text)
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
@@ -642,7 +879,20 @@ module WsClientLiveNetworkTests =
 
             // TrySendCommandAsync
             let convId = Guid.NewGuid()
-            let cmd = CreateConversation {| invocationId = Guid.NewGuid(); conversationId = convId; title = "Live Test"; config = { SessionConfig.empty with provider = "p"; model = "m" } |}
+
+            let cmd =
+                CreateConversation
+                    {|
+                        invocationId = Guid.NewGuid()
+                        conversationId = convId
+                        title = "Live Test"
+                        config =
+                            { SessionConfig.empty with
+                                provider = "p"
+                                model = "m"
+                            }
+                    |}
+
             let! send2 = client.TrySendCommandAsync(cmd)
             Assert.True(send2)
 
@@ -669,29 +919,37 @@ module WsClientLiveNetworkTests =
             // Wait brief moment for server to receive
             // 按条件轮询（≤10s），不按墙钟固定等待：满载下接收循环可能晚于固定延时。
             let mutable waitedMs = 0
+
             while not (receivedMessages.Count >= 5) && waitedMs < 10000 do
                 do! Task.Delay 10
                 waitedMs <- waitedMs + 10
+
             Assert.True(receivedMessages.Count >= 5)
 
             client.Disconnect()
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient sendGate concurrency and serialization under parallel load`` () =
         task {
             let receivedCount = ref 0
 
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    let buf = Array.zeroCreate<byte> 4096
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! res = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            if res.MessageType = WebSocketMessageType.Text && res.Count > 0 then
-                                Interlocked.Increment(receivedCount) |> ignore
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let buf = Array.zeroCreate<byte> 4096
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! res = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+
+                                if res.MessageType = WebSocketMessageType.Text && res.Count > 0 then
+                                    Interlocked.Increment(receivedCount) |> ignore
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
@@ -699,10 +957,17 @@ module WsClientLiveNetworkTests =
 
             // Launch 20 concurrent sends. Under SemaphoreSlim(1, 1), they must queue and send cleanly without socket collisions
             let tasks =
-                [ 1 .. 20 ]
+                [ 1..20 ]
                 |> List.map (fun i ->
                     task {
-                        let cmd = RenameConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); title = $"Title {i}" |}
+                        let cmd =
+                            RenameConversation
+                                {|
+                                    invocationId = Guid.NewGuid()
+                                    conversationId = Guid.NewGuid()
+                                    title = $"Title {i}"
+                                |}
+
                         return! client.TrySendCommandAsync(cmd)
                     })
 
@@ -712,13 +977,16 @@ module WsClientLiveNetworkTests =
             // Wait brief moment to verify server receives all 20 frames
             // 按条件轮询（≤10s），不按墙钟固定等待：满载下接收循环可能晚于固定延时。
             let mutable waitedMs = 0
+
             while not (!receivedCount >= 20) && waitedMs < 10000 do
                 do! Task.Delay 10
                 waitedMs <- waitedMs + 10
+
             Assert.Equal(20, !receivedCount)
 
             client.Disconnect()
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient ReceiveLoop handles text frames, multi-chunk fragmentation, and ignores unknown or broken JSON`` () =
@@ -728,16 +996,20 @@ module WsClientLiveNetworkTests =
 
             let serverTcs = new TaskCompletionSource<WebSocket>()
 
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    serverTcs.TrySetResult(ws) |> ignore
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        serverTcs.TrySetResult(ws) |> ignore
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
@@ -762,7 +1034,9 @@ module WsClientLiveNetworkTests =
             do! serverWs.SendAsync(chunk2, WebSocketMessageType.Text, true, cts.Token)
 
             // 3. Send unknown event type (should be safely ignored by tryDecode)
-            let unknownBytes = Encoding.UTF8.GetBytes("{\"type\":\"wanxiang.future.event\",\"payload\":{}}")
+            let unknownBytes =
+                Encoding.UTF8.GetBytes("{\"type\":\"wanxiang.future.event\",\"payload\":{}}")
+
             do! serverWs.SendAsync(ArraySegment<byte>(unknownBytes), WebSocketMessageType.Text, true, cts.Token)
 
             // 4. Send malformed JSON (should be safely caught and ignored)
@@ -775,36 +1049,48 @@ module WsClientLiveNetworkTests =
             // Give client ReceiveLoop time to process
             // 按条件轮询（≤10s），不按墙钟固定等待：满载下接收循环可能晚于固定延时。
             let mutable waitedMs = 0
-            while not (receivedEvents.Count >= 3 && connectionEvents.Count >= 3) && waitedMs < 10000 do
+
+            while not (receivedEvents.Count >= 3 && connectionEvents.Count >= 3)
+                  && waitedMs < 10000 do
                 do! Task.Delay 10
                 waitedMs <- waitedMs + 10
+
             do! Task.Delay 100 // 再留一小段，抓多收
 
             // Must have received exactly the 3 valid ping events (normal + reassembled multi-chunk + final ping)
             Assert.Equal(3, receivedEvents.Count)
             Assert.Equal(3, connectionEvents.Count)
-            Assert.All(connectionEvents, fun (g, ev) ->
-                Assert.Equal(gen, g)
-                Assert.Equal(WireEvent.Ping, ev))
+
+            Assert.All(
+                connectionEvents,
+                fun (g, ev) ->
+                    Assert.Equal(gen, g)
+                    Assert.Equal(WireEvent.Ping, ev)
+            )
 
             client.Disconnect()
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient ReceiveLoop stale generation drops events from previous connection`` () =
         task {
             let serverTcs = new TaskCompletionSource<WebSocket>()
 
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    serverTcs.TrySetResult(ws) |> ignore
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        serverTcs.TrySetResult(ws) |> ignore
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
@@ -821,36 +1107,50 @@ module WsClientLiveNetworkTests =
 
             // Server sends an event on the old WebSocket
             let pingBytes = Encoding.UTF8.GetBytes(WireAgui.encode WireEvent.Ping)
+
             try
-                do! serverWs.SendAsync(ArraySegment<byte>(pingBytes), WebSocketMessageType.Text, true, CancellationToken.None)
-            with _ -> ()
+                do!
+                    serverWs.SendAsync(
+                        ArraySegment<byte>(pingBytes),
+                        WebSocketMessageType.Text,
+                        true,
+                        CancellationToken.None
+                    )
+            with _ ->
+                ()
 
             do! Task.Delay(100)
             // Stale generation must have dropped the event
             Assert.Equal(0, eventsReceived)
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient ReceiveLoop handles binary frame and closes with error`` () =
         task {
             let serverTcs = new TaskCompletionSource<WebSocket>()
 
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    serverTcs.TrySetResult(ws) |> ignore
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        serverTcs.TrySetResult(ws) |> ignore
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
 
             let mutable closedFired = false
             let mutable closedExn: exn option = None
+
             client.Closed.Add(fun err ->
                 closedFired <- true
                 closedExn <- err)
@@ -864,6 +1164,7 @@ module WsClientLiveNetworkTests =
 
             // 按条件轮询（≤10s），不按墙钟固定等待：满载下接收循环可能晚于固定延时。
             let mutable waitedMs = 0
+
             while not (closedFired) && waitedMs < 10000 do
                 do! Task.Delay 10
                 waitedMs <- waitedMs + 10
@@ -873,29 +1174,35 @@ module WsClientLiveNetworkTests =
             Assert.Contains("binary frame", closedExn.Value.Message)
             client.Disconnect()
             Assert.False(client.IsConnected)
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient ReceiveLoop handles clean close frame from server`` () =
         task {
             let serverTcs = new TaskCompletionSource<WebSocket>()
 
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    serverTcs.TrySetResult(ws) |> ignore
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        serverTcs.TrySetResult(ws) |> ignore
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
 
             let mutable closedFired = false
             let mutable closedExn: exn option = None
+
             client.Closed.Add(fun err ->
                 closedFired <- true
                 closedExn <- err)
@@ -911,29 +1218,35 @@ module WsClientLiveNetworkTests =
             // Disconnect 故意递增 generation 剥离旧连接，防迟到回调，不触发 closedFired
             Assert.False(client.IsConnected)
             Assert.False(client.IsConnected)
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient ReceiveLoop handles abrupt socket abort`` () =
         task {
             let serverTcs = new TaskCompletionSource<WebSocket>()
 
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    serverTcs.TrySetResult(ws) |> ignore
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        serverTcs.TrySetResult(ws) |> ignore
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
 
             let mutable closedFired = false
             let mutable closedExn: exn option = None
+
             client.Closed.Add(fun err ->
                 closedFired <- true
                 closedExn <- err)
@@ -943,10 +1256,15 @@ module WsClientLiveNetworkTests =
 
             // Abrupt abort on server socket
             serverWs.Abort()
-            try (serverWs :> IDisposable).Dispose() with _ -> ()
+
+            try
+                (serverWs :> IDisposable).Dispose()
+            with _ ->
+                ()
 
             // 按条件轮询（≤10s），不按墙钟固定等待：满载下接收循环可能晚于固定延时。
             let mutable waitedMs = 0
+
             while not (closedFired) && waitedMs < 10000 do
                 do! Task.Delay 10
                 waitedMs <- waitedMs + 10
@@ -954,7 +1272,8 @@ module WsClientLiveNetworkTests =
             Assert.True(closedFired)
             Assert.True(Option.isSome closedExn)
             Assert.False(client.IsConnected)
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient TrySend when disconnected or canceled safely returns false`` () =
@@ -965,7 +1284,19 @@ module WsClientLiveNetworkTests =
             let! r1 = client.TrySendAsync(WireEvent.Ping)
             Assert.False(r1)
 
-            let cmd = CreateConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); title = "Test"; config = { SessionConfig.empty with provider = "p"; model = "m" } |}
+            let cmd =
+                CreateConversation
+                    {|
+                        invocationId = Guid.NewGuid()
+                        conversationId = Guid.NewGuid()
+                        title = "Test"
+                        config =
+                            { SessionConfig.empty with
+                                provider = "p"
+                                model = "m"
+                            }
+                    |}
+
             let! r2 = client.TrySendCommandAsync(cmd)
             Assert.False(r2)
 
@@ -979,7 +1310,8 @@ module WsClientLiveNetworkTests =
             client.Disconnect()
             let! r5 = client.TrySendAsync(WireEvent.Ping)
             Assert.False(r5)
-        } :> Task
+        }
+        :> Task
 
 // ============================================================================
 // 6. Reconnection Backoff State Machine & Automatic Lifecycle Tests
@@ -991,15 +1323,19 @@ module ReconnectionAndLifecycleTests =
     let ``WsClient reconnect lifecycle across server restarts with incremented generation`` () =
         task {
             // First server instance
-            let server1 = new MockWsServer(fun ws ct ->
-                task {
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            let server1 =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
@@ -1016,15 +1352,19 @@ module ReconnectionAndLifecycleTests =
             Assert.Equal(2, client.ConnectionGeneration)
 
             // Spin up new server on fresh port
-            use server2 = new MockWsServer(fun ws ct ->
-                task {
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server2 =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             // Reconnect to server 2
             let! gen2 = client.ConnectWithGenerationAsync(server2.Uri, cts.Token)
@@ -1032,12 +1372,25 @@ module ReconnectionAndLifecycleTests =
             Assert.True(client.IsConnected)
 
             // Commands send successfully on new connection
-            let cmd = CreateConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid(); title = "New Gen Session"; config = { SessionConfig.empty with provider = "p"; model = "m" } |}
+            let cmd =
+                CreateConversation
+                    {|
+                        invocationId = Guid.NewGuid()
+                        conversationId = Guid.NewGuid()
+                        title = "New Gen Session"
+                        config =
+                            { SessionConfig.empty with
+                                provider = "p"
+                                model = "m"
+                            }
+                    |}
+
             let! ok = client.TrySendCommandAsync(cmd)
             Assert.True(ok)
 
             client.Disconnect()
-        } :> Task
+        }
+        :> Task
 // ============================================================================
 // 7. Targeted Edge-Case & Deep Invariant Tests for WsClient and ClientState
 // ============================================================================
@@ -1047,46 +1400,54 @@ module TargetedClientEdgeAndResilienceTests =
     [<Fact>]
     let ``WsClient binary frame receives error and closes connection cleanly`` () =
         task {
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    let binaryData = [| 0xDEuy; 0xADuy; 0xBEuy; 0xEFuy |]
-                    do! ws.SendAsync(ArraySegment<byte>(binaryData), WebSocketMessageType.Binary, true, ct)
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let binaryData = [| 0xDEuy; 0xADuy; 0xBEuy; 0xEFuy |]
+                        do! ws.SendAsync(ArraySegment<byte>(binaryData), WebSocketMessageType.Binary, true, ct)
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
 
             let mutable closedWithBinaryExn = false
+
             client.Closed.Add(fun errOpt ->
                 match errOpt with
-                | Some ex when ex.Message.Contains("binary frame received") ->
-                    closedWithBinaryExn <- true
+                | Some ex when ex.Message.Contains("binary frame received") -> closedWithBinaryExn <- true
                 | _ -> ())
 
             let! gen = client.ConnectWithGenerationAsync(server.Uri, cts.Token)
             Assert.Equal(1, gen)
 
             let mutable attempts = 0
+
             while not closedWithBinaryExn && attempts < 50 do
                 do! Task.Delay 50
                 attempts <- attempts + 1
 
             Assert.True(closedWithBinaryExn, "ReceiveLoop must trigger closed event with binary frame exception")
             client.Disconnect()
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``WsClient TrySendAsync resilience against disconnected socket and cancelled token`` () =
         task {
-            use server = new MockWsServer(fun ws ct ->
-                task {
-                    let buf = Array.zeroCreate<byte> 512
-                    while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
-                        try
-                            let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
-                            ()
-                        with _ -> ()
-                } :> Task)
+            use server =
+                new MockWsServer(fun ws ct ->
+                    task {
+                        let buf = Array.zeroCreate<byte> 512
+
+                        while ws.State = WebSocketState.Open && not ct.IsCancellationRequested do
+                            try
+                                let! _ = ws.ReceiveAsync(ArraySegment<byte>(buf), ct)
+                                ()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
 
             let client = new WsClient()
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 5.0)
@@ -1103,9 +1464,18 @@ module TargetedClientEdgeAndResilienceTests =
             let! resAfterDisconnect = client.TrySendAsync(WireEvent.Ping)
             Assert.False(resAfterDisconnect)
 
-            let! resCmdAfterDisconnect = client.TrySendCommandAsync(ClientCommand.DeleteConversation {| invocationId = Guid.NewGuid(); conversationId = Guid.NewGuid() |})
+            let! resCmdAfterDisconnect =
+                client.TrySendCommandAsync(
+                    ClientCommand.DeleteConversation
+                        {|
+                            invocationId = Guid.NewGuid()
+                            conversationId = Guid.NewGuid()
+                        |}
+                )
+
             Assert.False(resCmdAfterDisconnect)
-        } :> Task
+        }
+        :> Task
 
     [<Fact>]
     let ``ClientState HistoryPage handles non-JsonObject items and updates pagination`` () =
@@ -1114,20 +1484,36 @@ module TargetedClientEdgeAndResilienceTests =
 
         state.Handle(
             ConversationSnapshot
-                {| conversationId = convId
-                   title = "History Test"
-                   lastCommitId = 0UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = { SessionConfig.empty with provider = "p"; model = "m" } |})
+                {|
+                    conversationId = convId
+                    title = "History Test"
+                    lastCommitId = 0UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config =
+                        { SessionConfig.empty with
+                            provider = "p"
+                            model = "m"
+                        }
+                |}
+        )
 
         let initPayload = System.Text.Json.Nodes.JsonObject()
         initPayload["role"] <- "user"
         initPayload["content"] <- "initial"
-        state.Handle(MessageCommitted {| conversationId = convId; commitId = 10UL; committedAt = DateTimeOffset.UtcNow; payload = initPayload |})
+
+        state.Handle(
+            MessageCommitted
+                {|
+                    conversationId = convId
+                    commitId = 10UL
+                    committedAt = DateTimeOffset.UtcNow
+                    payload = initPayload
+                |}
+        )
 
         let historyItems = System.Text.Json.Nodes.JsonArray()
         historyItems.Add(System.Text.Json.Nodes.JsonValue.Create("non-object-item"))
@@ -1146,7 +1532,15 @@ module TargetedClientEdgeAndResilienceTests =
         duplicateObj["content"] <- "dup history"
         historyItems.Add(duplicateObj)
 
-        let histPageEv = HistoryPage {| conversationId = convId; beforeCommitId = 10UL; items = historyItems; hasMore = true |}
+        let histPageEv =
+            HistoryPage
+                {|
+                    conversationId = convId
+                    beforeCommitId = 10UL
+                    items = historyItems
+                    hasMore = true
+                |}
+
         state.Handle(histPageEv)
 
         let conv = state.Conversations[convId]
@@ -1161,15 +1555,23 @@ module TargetedClientEdgeAndResilienceTests =
 
         state.Handle(
             ConversationSnapshot
-                {| conversationId = convId
-                   title = "Corrupted List Test"
-                   lastCommitId = 0UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = { SessionConfig.empty with provider = "p"; model = "m" } |})
+                {|
+                    conversationId = convId
+                    title = "Corrupted List Test"
+                    lastCommitId = 0UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config =
+                        { SessionConfig.empty with
+                            provider = "p"
+                            model = "m"
+                        }
+                |}
+        )
+
         let conv = state.Conversations[convId]
 
         conv.messages.Add(System.Text.Json.Nodes.JsonValue.Create("corrupted-primitive"))
@@ -1177,12 +1579,30 @@ module TargetedClientEdgeAndResilienceTests =
 
         let payload = System.Text.Json.Nodes.JsonObject()
         payload["content"] <- "clean message"
-        state.Handle(MessageCommitted {| conversationId = convId; commitId = 20UL; committedAt = DateTimeOffset.UtcNow; payload = payload |})
+
+        state.Handle(
+            MessageCommitted
+                {|
+                    conversationId = convId
+                    commitId = 20UL
+                    committedAt = DateTimeOffset.UtcNow
+                    payload = payload
+                |}
+        )
 
         Assert.Equal(20UL, conv.lastCommitId)
         Assert.Equal(20UL, state.LatestCommitId)
 
-        state.Handle(MessageCommitted {| conversationId = convId; commitId = 20UL; committedAt = DateTimeOffset.UtcNow; payload = payload |})
+        state.Handle(
+            MessageCommitted
+                {|
+                    conversationId = convId
+                    commitId = 20UL
+                    committedAt = DateTimeOffset.UtcNow
+                    payload = payload
+                |}
+        )
+
         Assert.Equal(3, conv.messages.Count)
 
     [<Fact>]
@@ -1192,15 +1612,23 @@ module TargetedClientEdgeAndResilienceTests =
 
         state.Handle(
             ConversationSnapshot
-                {| conversationId = convId
-                   title = "Delete Test"
-                   lastCommitId = 0UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = { SessionConfig.empty with provider = "p"; model = "m" } |})
+                {|
+                    conversationId = convId
+                    title = "Delete Test"
+                    lastCommitId = 0UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config =
+                        { SessionConfig.empty with
+                            provider = "p"
+                            model = "m"
+                        }
+                |}
+        )
+
         let conv = state.Conversations[convId]
 
         let msgToDelete = System.Text.Json.Nodes.JsonObject()
@@ -1219,15 +1647,29 @@ module TargetedClientEdgeAndResilienceTests =
         changeObj["deletedMessage"] <- 30UL
         changeObj["title"] <- "Renamed After Delete"
 
-        state.Handle(ConversationUpdated {| conversationId = convId; commitId = 35UL; change = changeObj |})
+        state.Handle(
+            ConversationUpdated
+                {|
+                    conversationId = convId
+                    commitId = 35UL
+                    change = changeObj
+                |}
+        )
 
         Assert.Equal("Renamed After Delete", conv.title)
         Assert.Equal(35UL, conv.lastCommitId)
         Assert.Equal(2, conv.messages.Count)
-        let hasDeleted = conv.messages |> Seq.exists (fun m ->
-            match m with
-            | :? System.Text.Json.Nodes.JsonObject as o when o.ContainsKey("commitId") && o["commitId"].GetValue<uint64>() = 30UL -> true
-            | _ -> false)
+
+        let hasDeleted =
+            conv.messages
+            |> Seq.exists (fun m ->
+                match m with
+                | :? System.Text.Json.Nodes.JsonObject as o when
+                    o.ContainsKey("commitId") && o["commitId"].GetValue<uint64>() = 30UL
+                    ->
+                    true
+                | _ -> false)
+
         Assert.False(hasDeleted)
 
     [<Fact>]
@@ -1237,15 +1679,22 @@ module TargetedClientEdgeAndResilienceTests =
 
         state.Handle(
             ConversationSnapshot
-                {| conversationId = convId
-                   title = "CatchUp Wire Format"
-                   lastCommitId = 0UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = { SessionConfig.empty with provider = "p"; model = "m" } |})
+                {|
+                    conversationId = convId
+                    title = "CatchUp Wire Format"
+                    lastCommitId = 0UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config =
+                        { SessionConfig.empty with
+                            provider = "p"
+                            model = "m"
+                        }
+                |}
+        )
 
         let item1 = System.Text.Json.Nodes.JsonObject()
         item1["type"] <- "message.committed"
@@ -1271,36 +1720,65 @@ module TargetedClientEdgeAndResilienceTests =
         catchUpArr.Add(item2)
         catchUpArr.Add(pingObj)
 
-        let catchUpEv = AuthorityCatchUp {| fromCursor = 0UL; toCommitId = 45UL; items = catchUpArr |}
+        let catchUpEv =
+            AuthorityCatchUp
+                {|
+                    fromCursor = 0UL
+                    toCommitId = 45UL
+                    items = catchUpArr
+                |}
+
         state.Handle(catchUpEv)
 
         let conv = state.Conversations[convId]
         Assert.Equal(2, conv.messages.Count)
 
     [<Fact>]
-    let ``ClientState AuthorityCatchUp decodes string commit lines and handles AgentMessageRecorded and MessageDeleted`` () =
+    let ``ClientState AuthorityCatchUp decodes string commit lines and handles AgentMessageRecorded and MessageDeleted``
+        ()
+        =
         let state = ClientState()
         let convId = Guid.NewGuid()
 
         state.Handle(
             ConversationSnapshot
-                {| conversationId = convId
-                   title = "CatchUp String NDJSON"
-                   lastCommitId = 0UL
-                   runtimeState = "idle"
-                   messages = JsonArray()
-                   snapshotEarliestCommitId = 0UL
-                   generationId = None
-                   snapshotHasMore = false
-                   config = { SessionConfig.empty with provider = "p"; model = "m" } |})
+                {|
+                    conversationId = convId
+                    title = "CatchUp String NDJSON"
+                    lastCommitId = 0UL
+                    runtimeState = "idle"
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    generationId = None
+                    snapshotHasMore = false
+                    config =
+                        { SessionConfig.empty with
+                            provider = "p"
+                            model = "m"
+                        }
+                |}
+        )
+
         let conv = state.Conversations[convId]
 
-        let commit1Json = sprintf """{"formatVersion":1,"id":"50","committedAtUtc":"2026-09-30T12:00:00.000Z","events":[{"type":"agent-message-recorded","version":1,"data":{"conversationId":"%s","payload":{"role":"assistant","content":"catchup string answer"}}}]}""" (convId.ToString("D"))
+        let commit1Json =
+            sprintf
+                """{"formatVersion":1,"id":"50","committedAtUtc":"2026-09-30T12:00:00.000Z","events":[{"type":"agent-message-recorded","version":1,"data":{"conversationId":"%s","payload":{"role":"assistant","content":"catchup string answer"}}}]}"""
+                (convId.ToString("D"))
+
         let stringValueItem = System.Text.Json.Nodes.JsonValue.Create(commit1Json)
 
         let catchUpArr1 = System.Text.Json.Nodes.JsonArray()
         catchUpArr1.Add(stringValueItem)
-        let catchUp1 = AuthorityCatchUp {| fromCursor = 0UL; toCommitId = 50UL; items = catchUpArr1 |}
+
+        let catchUp1 =
+            AuthorityCatchUp
+                {|
+                    fromCursor = 0UL
+                    toCommitId = 50UL
+                    items = catchUpArr1
+                |}
+
         state.Handle(catchUp1)
 
         Assert.Equal(50UL, conv.lastCommitId)
@@ -1309,15 +1787,25 @@ module TargetedClientEdgeAndResilienceTests =
         state.Handle(catchUp1)
         Assert.Equal(1, conv.messages.Count)
 
-        let commit2Json = sprintf """{"formatVersion":1,"id":"55","committedAtUtc":"2026-09-30T12:05:00.000Z","events":[{"type":"message.deleted","version":1,"data":{"conversationId":"%s","messageCommitId":50}}]}""" (convId.ToString("D"))
+        let commit2Json =
+            sprintf
+                """{"formatVersion":1,"id":"55","committedAtUtc":"2026-09-30T12:05:00.000Z","events":[{"type":"message.deleted","version":1,"data":{"conversationId":"%s","messageCommitId":50}}]}"""
+                (convId.ToString("D"))
+
         let stringValueItem2 = System.Text.Json.Nodes.JsonValue.Create(commit2Json)
 
         let catchUpArr2 = System.Text.Json.Nodes.JsonArray()
         catchUpArr2.Add(stringValueItem2)
-        let catchUp2 = AuthorityCatchUp {| fromCursor = 50UL; toCommitId = 55UL; items = catchUpArr2 |}
+
+        let catchUp2 =
+            AuthorityCatchUp
+                {|
+                    fromCursor = 50UL
+                    toCommitId = 55UL
+                    items = catchUpArr2
+                |}
+
         state.Handle(catchUp2)
 
         Assert.Equal(55UL, conv.lastCommitId)
         Assert.Equal(0, conv.messages.Count)
-
-

@@ -15,10 +15,13 @@ open Avalonia.VisualTree
 module ImeShield =
     let presenterOf (tb: TextBox) =
         tb.GetVisualDescendants()
-        |> Seq.tryPick (function :? TextPresenter as p -> Some p | _ -> None)
+        |> Seq.tryPick (function
+            | :? TextPresenter as p -> Some p
+            | _ -> None)
 
     let isComposing (tb: TextBox) =
-        presenterOf tb |> Option.exists (fun p -> not (String.IsNullOrEmpty p.PreeditText))
+        presenterOf tb
+        |> Option.exists (fun p -> not (String.IsNullOrEmpty p.PreeditText))
 
     /// 组合期间归输入法的键。
     let isImeOwnedKey (k: Key) =
@@ -36,9 +39,11 @@ module ImeShield =
         lock gate (fun () ->
             if not installed then
                 installed <- true
+
                 InputElement.KeyDownEvent.AddClassHandler<TextBox>(
                     (fun (tb: TextBox) (e: KeyEventArgs) ->
                         if not e.Handled && shouldSwallow (isComposing tb) e.Key then
                             e.Handled <- true),
-                    RoutingStrategies.Tunnel)
+                    RoutingStrategies.Tunnel
+                )
                 |> ignore)

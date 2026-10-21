@@ -14,8 +14,7 @@ module PairingHint =
     /// 地址是否指向本机（决定配对码提示该怎么拿）。
     let isLoopbackUrl (url: string) : bool =
         match Uri.TryCreate((if isNull url then "" else url.Trim()), UriKind.Absolute) with
-        | true, uri ->
-            uri.IsLoopback || uri.Host = "localhost"
+        | true, uri -> uri.IsLoopback || uri.Host = "localhost"
         | _ -> false
 
     /// 配对码从哪里拿：本机与远端不同。

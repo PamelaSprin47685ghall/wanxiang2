@@ -19,11 +19,13 @@ module AnthropicTransportTests =
 
     type MockHttpHandler(handler: HttpRequestMessage -> HttpResponseMessage) =
         inherit HttpMessageHandler()
+
         override _.SendAsync(request: HttpRequestMessage, _cancellationToken: CancellationToken) =
             Task.FromResult(handler request)
 
     type AsyncMockHttpHandler(handler: HttpRequestMessage -> CancellationToken -> Task<HttpResponseMessage>) =
         inherit HttpMessageHandler()
+
         override _.SendAsync(request: HttpRequestMessage, cancellationToken: CancellationToken) =
             handler request cancellationToken
 
@@ -41,25 +43,36 @@ module AnthropicTransportTests =
             enabled = true
             promptCaching = false
             headers = Map.empty
-            extraJson = None; visionOverrides = Map.empty
+            extraJson = None
+            visionOverrides = Map.empty
         }
 
-    let private createClient (handler: HttpMessageHandler) (baseUrl: string option) (apiKey: string option) (thinkingBudget: int option) : IChatClient =
+    let private createClient
+        (handler: HttpMessageHandler)
+        (baseUrl: string option)
+        (apiKey: string option)
+        (thinkingBudget: int option)
+        : IChatClient =
         let provider = createProvider baseUrl apiKey
         let httpClient = new HttpClient(handler)
-        new AnthropicChatClient(provider, "claude-3-5-sonnet-20241022", httpClient, defaultArg thinkingBudget 0) :> IChatClient
+
+        new AnthropicChatClient(provider, "claude-3-5-sonnet-20241022", httpClient, defaultArg thinkingBudget 0)
+        :> IChatClient
 
     let private drainStream (stream: IAsyncEnumerable<ChatResponseUpdate>) =
         task {
             let updates = List<ChatResponseUpdate>()
             let enumerator = stream.GetAsyncEnumerator()
             let mutable hasNext = true
+
             while hasNext do
                 let! next = enumerator.MoveNextAsync()
+
                 if next then
                     updates.Add(enumerator.Current)
                 else
                     hasNext <- false
+
             let! _ = enumerator.DisposeAsync()
             return updates :> IReadOnlyList<ChatResponseUpdate>
         }
@@ -73,28 +86,31 @@ module AnthropicTransportTests =
     [<Fact>]
     let ``GetStreamingResponseAsync parses message_start text_delta and message_stop properly`` () =
         task {
-            let ssePayload = [
-                """event: message_start
+            let ssePayload =
+                [
+                    """event: message_start
 data: {"type":"message_start","message":{"id":"msg_123","model":"claude-3-5-sonnet","usage":{"input_tokens":25,"output_tokens":1}}}"""
-                """event: content_block_start
+                    """event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello "}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"world!"}}"""
-                """event: content_block_stop
+                    """event: content_block_stop
 data: {"type":"content_block_stop","index":0}"""
-                """event: message_delta
+                    """event: message_delta
 data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":12}}"""
-                """event: message_stop
+                    """event: message_stop
 data: {"type":"message_stop"}"""
-            ]
+                ]
 
             let mutable capturedRequest: HttpRequestMessage option = None
-            let handler = new MockHttpHandler(fun req ->
-                capturedRequest <- Some req
-                sseResponse ssePayload
-            )
+
+            let handler =
+                new MockHttpHandler(fun req ->
+                    capturedRequest <- Some req
+                    sseResponse ssePayload)
+
             use client = createClient handler None (Some "sk-ant-test-key") None
             let messages = [ ChatMessage(ChatRole.User, "Hi") ]
 
@@ -107,19 +123,26 @@ data: {"type":"message_stop"}"""
             Assert.Equal("2023-06-01", req.Headers.GetValues("anthropic-version") |> Seq.head)
 
             Assert.True(updates.Count >= 3)
+
             let textDeltas =
                 updates
                 |> Seq.choose (fun u -> if String.IsNullOrEmpty u.Text then None else Some u.Text)
                 |> String.concat ""
+
             Assert.Equal("Hello world!", textDeltas)
 
             let finalUpdate = updates |> Seq.last
             Assert.Equal<Nullable<ChatFinishReason>>(Nullable ChatFinishReason.Stop, finalUpdate.FinishReason)
             Assert.Equal("msg_123", finalUpdate.ResponseId)
             Assert.NotNull(finalUpdate.Contents)
+
             let usageContent =
                 finalUpdate.Contents
-                |> Seq.tryPick (fun c -> match c with :? UsageContent as u -> Some u.Details | _ -> None)
+                |> Seq.tryPick (fun c ->
+                    match c with
+                    | :? UsageContent as u -> Some u.Details
+                    | _ -> None)
+
             Assert.True(usageContent.IsSome)
             let usage = usageContent.Value
             Assert.Equal(Nullable 25L, usage.InputTokenCount)
@@ -130,25 +153,30 @@ data: {"type":"message_stop"}"""
     [<Fact>]
     let ``GetStreamingResponseAsync custom baseUrl and thinking budget appends beta header`` () =
         task {
-            let ssePayload = [
-                """event: message_start
+            let ssePayload =
+                [
+                    """event: message_start
 data: {"type":"message_start","message":{"id":"msg_think","usage":{"input_tokens":10,"output_tokens":2}}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Let me ponder..."}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Result"}}"""
-                """event: message_delta
+                    """event: message_delta
 data: {"type":"message_delta","delta":{"stop_reason":"max_tokens"}}"""
-                """event: message_stop
+                    """event: message_stop
 data: {"type":"message_stop"}"""
-            ]
+                ]
 
             let mutable capturedRequest: HttpRequestMessage option = None
-            let handler = new MockHttpHandler(fun req ->
-                capturedRequest <- Some req
-                sseResponse ssePayload
-            )
-            use client = createClient handler (Some "https://proxy.example.com/anthropic/") (Some "ant-key") (Some 2048)
+
+            let handler =
+                new MockHttpHandler(fun req ->
+                    capturedRequest <- Some req
+                    sseResponse ssePayload)
+
+            use client =
+                createClient handler (Some "https://proxy.example.com/anthropic/") (Some "ant-key") (Some 2048)
+
             let messages = [ ChatMessage(ChatRole.User, "Deep think") ]
 
             let! updates = drainStream (client.GetStreamingResponseAsync(messages))
@@ -167,10 +195,9 @@ data: {"type":"message_stop"}"""
                     |> Seq.tryPick (fun c ->
                         match c with
                         | :? TextContent as tc when tc.RawRepresentation = box "thinking" -> Some tc.Text
-                        | _ -> None
-                    )
-                )
+                        | _ -> None))
                 |> Seq.toList
+
             Assert.Equal<string list>([ "Let me ponder..." ], reasoningUpdates)
 
             let lastUpdate = updates |> Seq.last
@@ -180,22 +207,23 @@ data: {"type":"message_stop"}"""
     [<Fact>]
     let ``GetStreamingResponseAsync handles tool_use block and emits FunctionCallContent on block stop`` () =
         task {
-            let ssePayload = [
-                """event: message_start
+            let ssePayload =
+                [
+                    """event: message_start
 data: {"type":"message_start","message":{"id":"msg_tool","usage":{"input_tokens":100,"output_tokens":5}}}"""
-                """event: content_block_start
+                    """event: content_block_start
 data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"call_abc123","name":"lookup_weather"}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"city\":"}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\"Beijing\"}"}}"""
-                """event: content_block_stop
+                    """event: content_block_stop
 data: {"type":"content_block_stop","index":1}"""
-                """event: message_delta
+                    """event: message_delta
 data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":40}}"""
-                """event: message_stop
+                    """event: message_stop
 data: {"type":"message_stop"}"""
-            ]
+                ]
 
             let handler = new MockHttpHandler(fun _ -> sseResponse ssePayload)
             use client = createClient handler None (Some "key") None
@@ -207,8 +235,10 @@ data: {"type":"message_stop"}"""
                 updates
                 |> Seq.choose (fun u ->
                     u.Contents
-                    |> Seq.tryPick (fun c -> match c with :? FunctionCallContent as fcc -> Some fcc | _ -> None)
-                )
+                    |> Seq.tryPick (fun c ->
+                        match c with
+                        | :? FunctionCallContent as fcc -> Some fcc
+                        | _ -> None))
                 |> Seq.toList
 
             Assert.Single(toolCalls) |> ignore
@@ -226,18 +256,19 @@ data: {"type":"message_stop"}"""
     [<Fact>]
     let ``GetStreamingResponseAsync handles malformed tool_use input json gracefully without crashing`` () =
         task {
-            let ssePayload = [
-                """event: message_start
+            let ssePayload =
+                [
+                    """event: message_start
 data: {"type":"message_start","message":{"id":"msg_bad_json","usage":{"input_tokens":50,"output_tokens":5}}}"""
-                """event: content_block_start
+                    """event: content_block_start
 data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"call_bad","name":"bad_func"}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{not valid json..."}}"""
-                """event: content_block_stop
+                    """event: content_block_stop
 data: {"type":"content_block_stop","index":0}"""
-                """event: message_stop
+                    """event: message_stop
 data: {"type":"message_stop"}"""
-            ]
+                ]
 
             let handler = new MockHttpHandler(fun _ -> sseResponse ssePayload)
             use client = createClient handler None (Some "key") None
@@ -249,8 +280,10 @@ data: {"type":"message_stop"}"""
                 updates
                 |> Seq.choose (fun u ->
                     u.Contents
-                    |> Seq.tryPick (fun c -> match c with :? FunctionCallContent as fcc -> Some fcc | _ -> None)
-                )
+                    |> Seq.tryPick (fun c ->
+                        match c with
+                        | :? FunctionCallContent as fcc -> Some fcc
+                        | _ -> None))
                 |> Seq.toList
 
             Assert.Empty(toolCalls)
@@ -259,20 +292,28 @@ data: {"type":"message_stop"}"""
     [<Fact>]
     let ``GetStreamingResponseAsync handles non-success HTTP status with error body`` () =
         task {
-            let handler = new MockHttpHandler(fun _ ->
-                let resp = new HttpResponseMessage(HttpStatusCode.BadRequest)
-                resp.Content <- new StringContent("""{"type":"error","error":{"type":"invalid_request_error","message":"max_tokens exceeds limit"}}""", Encoding.UTF8, "application/json")
-                resp
-            )
+            let handler =
+                new MockHttpHandler(fun _ ->
+                    let resp = new HttpResponseMessage(HttpStatusCode.BadRequest)
+
+                    resp.Content <-
+                        new StringContent(
+                            """{"type":"error","error":{"type":"invalid_request_error","message":"max_tokens exceeds limit"}}""",
+                            Encoding.UTF8,
+                            "application/json"
+                        )
+
+                    resp)
+
             use client = createClient handler None (Some "key") None
             let messages = [ ChatMessage(ChatRole.User, "Test") ]
 
-            let! ex = Assert.ThrowsAsync<HttpRequestException>(fun () ->
-                task {
-                    let! _ = drainStream (client.GetStreamingResponseAsync(messages))
-                    ()
-                }
-            )
+            let! ex =
+                Assert.ThrowsAsync<HttpRequestException>(fun () ->
+                    task {
+                        let! _ = drainStream (client.GetStreamingResponseAsync(messages))
+                        ()
+                    })
 
             Assert.Contains("max_tokens exceeds limit", ex.Message)
             Assert.Contains("400", ex.Message)
@@ -281,20 +322,21 @@ data: {"type":"message_stop"}"""
     [<Fact>]
     let ``GetStreamingResponseAsync handles non-success HTTP status with plain text error body`` () =
         task {
-            let handler = new MockHttpHandler(fun _ ->
-                let resp = new HttpResponseMessage(HttpStatusCode.InternalServerError)
-                resp.Content <- new StringContent("Server crashed hard", Encoding.UTF8, "text/plain")
-                resp
-            )
+            let handler =
+                new MockHttpHandler(fun _ ->
+                    let resp = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+                    resp.Content <- new StringContent("Server crashed hard", Encoding.UTF8, "text/plain")
+                    resp)
+
             use client = createClient handler None (Some "key") None
             let messages = [ ChatMessage(ChatRole.User, "Crash") ]
 
-            let! ex = Assert.ThrowsAsync<HttpRequestException>(fun () ->
-                task {
-                    let! _ = drainStream (client.GetStreamingResponseAsync(messages))
-                    ()
-                }
-            )
+            let! ex =
+                Assert.ThrowsAsync<HttpRequestException>(fun () ->
+                    task {
+                        let! _ = drainStream (client.GetStreamingResponseAsync(messages))
+                        ()
+                    })
 
             Assert.Contains("Server crashed hard", ex.Message)
             Assert.Contains("500", ex.Message)
@@ -303,23 +345,24 @@ data: {"type":"message_stop"}"""
     [<Fact>]
     let ``GetStreamingResponseAsync throws when stream contains error event type`` () =
         task {
-            let ssePayload = [
-                """event: message_start
+            let ssePayload =
+                [
+                    """event: message_start
 data: {"type":"message_start","message":{"id":"msg_err","usage":{"input_tokens":10,"output_tokens":1}}}"""
-                """event: error
+                    """event: error
 data: {"type":"error","error":{"type":"overloaded_error","message":"Anthropic is currently overloaded."}}"""
-            ]
+                ]
 
             let handler = new MockHttpHandler(fun _ -> sseResponse ssePayload)
             use client = createClient handler None (Some "key") None
             let messages = [ ChatMessage(ChatRole.User, "Test") ]
 
-            let! ex = Assert.ThrowsAsync<HttpRequestException>(fun () ->
-                task {
-                    let! _ = drainStream (client.GetStreamingResponseAsync(messages))
-                    ()
-                }
-            )
+            let! ex =
+                Assert.ThrowsAsync<HttpRequestException>(fun () ->
+                    task {
+                        let! _ = drainStream (client.GetStreamingResponseAsync(messages))
+                        ()
+                    })
 
             Assert.Contains("Anthropic is currently overloaded.", ex.Message)
         }
@@ -327,21 +370,22 @@ data: {"type":"error","error":{"type":"overloaded_error","message":"Anthropic is
     [<Fact>]
     let ``GetStreamingResponseAsync handles empty stream and ignores unrecognized event lines and empty comments`` () =
         task {
-            let ssePayload = [
-                ": keepalive comment"
-                "event: ping"
-                "data: {\"type\":\"ping\"}"
-                "event: unknown_custom_event"
-                "data: {\"type\":\"unknown_custom_event\"}"
-                "data: not json at all"
-                ""
-                "event: message_start"
-                "data: null"
-                "event: message_delta"
-                "data: {\"type\":\"message_delta\",\"delta\":{}}"
-                "event: message_stop"
-                "data: {}"
-            ]
+            let ssePayload =
+                [
+                    ": keepalive comment"
+                    "event: ping"
+                    "data: {\"type\":\"ping\"}"
+                    "event: unknown_custom_event"
+                    "data: {\"type\":\"unknown_custom_event\"}"
+                    "data: not json at all"
+                    ""
+                    "event: message_start"
+                    "data: null"
+                    "event: message_delta"
+                    "data: {\"type\":\"message_delta\",\"delta\":{}}"
+                    "event: message_stop"
+                    "data: {}"
+                ]
 
             let handler = new MockHttpHandler(fun _ -> sseResponse ssePayload)
             use client = createClient handler None (Some "key") None
@@ -363,7 +407,11 @@ data: {"type":"error","error":{"type":"overloaded_error","message":"Anthropic is
                 task {
                     let stream = new MemoryStream()
                     let writer = new StreamWriter(stream, Encoding.UTF8, 1024, true)
-                    writer.Write("event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_cancel\"}}\n\n")
+
+                    writer.Write(
+                        "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_cancel\"}}\n\n"
+                    )
+
                     writer.Flush()
                     stream.Position <- 0L
 
@@ -378,31 +426,35 @@ data: {"type":"error","error":{"type":"overloaded_error","message":"Anthropic is
 
             cts.Cancel()
 
-            let! _ = Assert.ThrowsAnyAsync<OperationCanceledException>(fun () ->
-                task {
-                    let stream = client.GetStreamingResponseAsync(messages, cancellationToken = cts.Token)
-                    let! _ = drainStream stream
-                    ()
-                }
-            )
+            let! _ =
+                Assert.ThrowsAnyAsync<OperationCanceledException>(fun () ->
+                    task {
+                        let stream =
+                            client.GetStreamingResponseAsync(messages, cancellationToken = cts.Token)
+
+                        let! _ = drainStream stream
+                        ()
+                    })
+
             ()
         }
 
     [<Fact>]
     let ``GetResponseAsync buffers streaming updates and returns single ChatResponse`` () =
         task {
-            let ssePayload = [
-                """event: message_start
+            let ssePayload =
+                [
+                    """event: message_start
 data: {"type":"message_start","message":{"id":"msg_full","usage":{"input_tokens":15,"output_tokens":0}}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Complete "}}"""
-                """event: content_block_delta
+                    """event: content_block_delta
 data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"result."}}"""
-                """event: message_delta
+                    """event: message_delta
 data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":8}}"""
-                """event: message_stop
+                    """event: message_stop
 data: {"type":"message_stop"}"""
-            ]
+                ]
 
             let handler = new MockHttpHandler(fun _ -> sseResponse ssePayload)
             use client = createClient handler None (Some "key") None
@@ -420,7 +472,9 @@ data: {"type":"message_stop"}"""
 
     [<Fact>]
     let ``GetService returns expected service instance or null`` () =
-        let handler = new MockHttpHandler(fun _ -> new HttpResponseMessage(HttpStatusCode.OK))
+        let handler =
+            new MockHttpHandler(fun _ -> new HttpResponseMessage(HttpStatusCode.OK))
+
         use client = createClient handler None (Some "key") None
 
         let selfService = client.GetService(typeof<AnthropicChatClient>, null)

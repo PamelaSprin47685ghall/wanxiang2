@@ -1,4 +1,5 @@
 module ToolArgsPreviewTests
+
 open System
 open System.IO
 open Xunit

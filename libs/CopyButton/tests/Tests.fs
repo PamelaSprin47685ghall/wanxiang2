@@ -8,7 +8,14 @@ open Wanxiang2.WorkspaceState
 
 let private setup () =
     let mutable now = DateTimeOffset(2026, 10, 14, 0, 0, 0, TimeSpan.Zero)
-    let look = { FadeOpacity = 0.6; Hold = TimeSpan.FromMilliseconds 1500.0; Fade = TimeSpan.FromMilliseconds 150.0 }
+
+    let look =
+        {
+            FadeOpacity = 0.6
+            Hold = TimeSpan.FromMilliseconds 1500.0
+            Fade = TimeSpan.FromMilliseconds 150.0
+        }
+
     let b = Button()
     let c = CopyButton(b, look, (fun () -> now))
     b, c, (fun ms -> now <- now.AddMilliseconds ms)
@@ -64,16 +71,27 @@ let ``离开可视树立即复位；淡出到期回到确认态`` () =
 let ``单入口 Render(CopyButtonVS) 幂等生效`` () =
     Headless.run (fun () ->
         let b, c, _ = setup ()
+
         let vs: CopyButtonVS =
-            { State = CopyButtonState.Confirmed
-              Text = "hi"
-              Tip = "已复制"
-              Name = "已复制"
-              ExpiresAt = None }
+            {
+                State = CopyButtonState.Confirmed
+                Text = "hi"
+                Tip = "已复制"
+                Name = "已复制"
+                ExpiresAt = None
+            }
+
         c.Render vs
         Assert.Equal(CopyState.Confirmed, c.State)
         Assert.Equal(1.0, b.Opacity)
         Assert.Equal("已复制", string (ToolTip.GetTip b))
-        c.Render { vs with State = CopyButtonState.Idle; Tip = "复制"; Name = "复制" }
+
+        c.Render
+            { vs with
+                State = CopyButtonState.Idle
+                Tip = "复制"
+                Name = "复制"
+            }
+
         Assert.Equal(CopyState.Default, c.State)
         Assert.Equal("复制", string (ToolTip.GetTip b)))

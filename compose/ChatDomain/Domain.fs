@@ -56,9 +56,12 @@ type WanxiangError =
 module WanxiangError =
     /// 字节数的人话写法：MiB 精度只为可读，不为对账。
     let private formatBytes (bytes: int64) : string =
-        if bytes < 1024L then sprintf "%d B" bytes
-        elif bytes < 1024L * 1024L then sprintf "%.1f KiB" (float bytes / 1024.0)
-        else sprintf "%.1f MiB" (float bytes / (1024.0 * 1024.0))
+        if bytes < 1024L then
+            sprintf "%d B" bytes
+        elif bytes < 1024L * 1024L then
+            sprintf "%.1f KiB" (float bytes / 1024.0)
+        else
+            sprintf "%.1f MiB" (float bytes / (1024.0 * 1024.0))
 
     let code (err: WanxiangError) : string =
         match err with
@@ -93,15 +96,18 @@ module WanxiangError =
         | ConversationIdTaken id -> sprintf "conversation id %O already taken" id
         | ForkParentNotFound id -> sprintf "fork parent %O not found" id
         | ForkPointInvalid m -> m
-        | GenerationNotFound (c, g) -> sprintf "generation %O not found in conversation %O" g c
+        | GenerationNotFound(c, g) -> sprintf "generation %O not found in conversation %O" g c
         | GenerationBusy c -> sprintf "conversation %O already has an active generation" c
         | NotAuthenticated -> "not authenticated"
-        | ProtocolMismatch (s, c) -> sprintf "protocol version mismatch: server=%d client=%d" s c
+        | ProtocolMismatch(s, c) -> sprintf "protocol version mismatch: server=%d client=%d" s c
         | UnknownEventType t -> sprintf "unknown event type: %s" t
         | Poisoned m -> sprintf "poisoned: %s" m
-        | AttachmentTooLarge (limitBytes, actualBytes) ->
-            sprintf "附件过大：上限 %s，本次 %s。请压缩文件后重试，或调大 network.maxAttachmentBytes。" (formatBytes limitBytes) (formatBytes actualBytes)
-        | AttachmentHashMismatch (e, a) -> sprintf "attachment hash mismatch: expected %s actual %s" e a
+        | AttachmentTooLarge(limitBytes, actualBytes) ->
+            sprintf
+                "附件过大：上限 %s，本次 %s。请压缩文件后重试，或调大 network.maxAttachmentBytes。"
+                (formatBytes limitBytes)
+                (formatBytes actualBytes)
+        | AttachmentHashMismatch(e, a) -> sprintf "attachment hash mismatch: expected %s actual %s" e a
         | AttachmentIncomplete aid -> sprintf "attachment %O is incomplete" aid
         | ConfigRejected m -> m
         | AuthRejected m -> m

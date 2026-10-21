@@ -21,14 +21,26 @@ open Wanxiang2.SettingsScreen
 open Wanxiang2.WorkspaceState
 open Wanxiang2.DeskTests
 
-let private all (root: Visual) = root.GetVisualDescendants() |> Seq.choose (function :? Control as c -> Some c | _ -> None) |> List.ofSeq
-let private byId (root: Visual) id = all root |> List.tryFind (fun c -> AutomationProperties.GetAutomationId c = id)
-let private byName (root: Visual) name = all root |> List.tryFind (fun c -> AutomationProperties.GetName c = name)
+let private all (root: Visual) =
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? Control as c -> Some c
+        | _ -> None)
+    |> List.ofSeq
+
+let private byId (root: Visual) id =
+    all root |> List.tryFind (fun c -> AutomationProperties.GetAutomationId c = id)
+
+let private byName (root: Visual) name =
+    all root |> List.tryFind (fun c -> AutomationProperties.GetName c = name)
+
 let private textOf (root: Visual) =
     Dispatcher.UIThread.RunJobs()
+
     match TopLevel.GetTopLevel root with
     | null -> ()
     | top -> top.UpdateLayout()
+
     String.Join("\n", Desk.texts root)
 
 let private invoke (c: Control) =
@@ -37,16 +49,32 @@ let private invoke (c: Control) =
     Dispatcher.UIThread.RunJobs()
 
 let private prefs: UiPrefs =
-    { theme = FollowSystem; fontScale = 14.0; autoCollapseReasoning = true; codeWrap = false; sidebarWidth = 280.0
-      sidebarCollapsed = false; showArchived = false; reduceMotion = false; enterSends = true; persistDrafts = true
-      windowWidth = 1200.0; windowHeight = 800.0; windowX = 0; windowY = 0; hasWindowPosition = false }
+    {
+        theme = FollowSystem
+        fontScale = 14.0
+        autoCollapseReasoning = true
+        codeWrap = false
+        sidebarWidth = 280.0
+        sidebarCollapsed = false
+        showArchived = false
+        reduceMotion = false
+        enterSends = true
+        persistDrafts = true
+        windowWidth = 1200.0
+        windowHeight = 800.0
+        windowX = 0
+        windowY = 0
+        hasWindowPosition = false
+    }
 
 type private Harness =
-    { theme: ThemeManager
-      overlay: OverlayDesk
-      screen: SettingsScreen
-      root: Grid
-      window: Window }
+    {
+        theme: ThemeManager
+        overlay: OverlayDesk
+        screen: SettingsScreen
+        root: Grid
+        window: Window
+    }
 
 let private setup (hooks: SettingsHooks) =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
@@ -58,44 +86,80 @@ let private setup (hooks: SettingsHooks) =
     // 主题资源字典在生产里由入口壳挂进 Application.Resources（见 compose/EntryShells/App.fs）；
     // 无头界面测试没有入口壳，DynamicResource 查不到值，这里挂到本用例自己的窗口上
     // （每个用例一份 ThemeManager，不能共用 Application 上那一份，否则改的是另一份活值）。
-    if not (window.Resources.MergedDictionaries.Contains (theme.Resources :> Avalonia.Controls.IResourceDictionary)) then
-        window.Resources.MergedDictionaries.Add (theme.Resources :> Avalonia.Controls.IResourceDictionary)
+    if not (window.Resources.MergedDictionaries.Contains(theme.Resources :> Avalonia.Controls.IResourceDictionary)) then
+        window.Resources.MergedDictionaries.Add(theme.Resources :> Avalonia.Controls.IResourceDictionary)
+
     Dispatcher.UIThread.RunJobs()
-    { theme = theme; overlay = overlay; screen = screen; root = root; window = window }
+
+    {
+        theme = theme
+        overlay = overlay
+        screen = screen
+        root = root
+        window = window
+    }
 
 let private device id name : DeviceInfo =
-    { id = id; name = name; createdAt = Some(DateTimeOffset(2026, 10, 1, 8, 0, 0, TimeSpan.Zero)); lastSeen = None
-      revoked = false; online = false; current = false; desktop = false }
+    {
+        id = id
+        name = name
+        createdAt = Some(DateTimeOffset(2026, 10, 1, 8, 0, 0, TimeSpan.Zero))
+        lastSeen = None
+        revoked = false
+        online = false
+        current = false
+        desktop = false
+    }
 
 let private provider: ProviderInfo =
-    { id = "test-prov"; label = "Test Provider"; kind = "openai"; baseUrl = "https://api.test.com/v1"; hasApiKey = true
-      models = [ "old-model" ]; defaultModel = "old-model"; timeoutSeconds = 120; maxRetries = 2; enabled = true
-      visionOverrides = Map.empty; visionDetected = Map.empty }
+    {
+        id = "test-prov"
+        label = "Test Provider"
+        kind = "openai"
+        baseUrl = "https://api.test.com/v1"
+        hasApiKey = true
+        models = [ "old-model" ]
+        defaultModel = "old-model"
+        timeoutSeconds = 120
+        maxRetries = 2
+        enabled = true
+        visionOverrides = Map.empty
+        visionDetected = Map.empty
+    }
 
 // 设置的唯一输入是 WorkspaceState 投影（W7-B）：测试直接构造它，没有本地 empty 可依赖。
 let private devicesVS () : SettingsDevicesVS =
-    { ServerUrl = ""
-      Devices = []
-      CanInvite = false
-      Invite = None
-      InviteRejected = None
-      LoadNote = None
-      IsLoading = false
-      Now = DateTimeOffset.UtcNow }
+    {
+        ServerUrl = ""
+        Devices = []
+        CanInvite = false
+        Invite = None
+        InviteRejected = None
+        LoadNote = None
+        IsLoading = false
+        Now = DateTimeOffset.UtcNow
+    }
 
 let private screenVS (prefs: UiPrefs) : SettingsVS =
-    { ActiveSection = None
-      Catalog = None
-      InstanceId = ""
-      ServerUrl = ""
-      Prefs = prefs
-      Devices = devicesVS () }
+    {
+        ActiveSection = None
+        Catalog = None
+        InstanceId = ""
+        ServerUrl = ""
+        Prefs = prefs
+        Devices = devicesVS ()
+    }
 
 // 迁自 DevicesUiTests 的同名用例
 [<Fact>]
 let ``settings has a devices section in the host group`` () =
     Assert.Contains(SettingsPart.Devices, SettingsPart.all)
-    let group = SettingsPart.groups |> List.find (fun (_, parts) -> List.contains SettingsPart.Devices parts) |> snd
+
+    let group =
+        SettingsPart.groups
+        |> List.find (fun (_, parts) -> List.contains SettingsPart.Devices parts)
+        |> snd
+
     Assert.Contains(SettingsPart.Providers, group)
     Assert.Equal("设备", SettingsPart.label SettingsPart.Devices)
     Assert.Equal(SettingsPart.scope SettingsPart.Providers, SettingsPart.scope SettingsPart.Devices)
@@ -108,7 +172,11 @@ let ``selecting the devices section requests the list once`` () =
         h.screen.Devices.ListRequested.Add requests.Add
         Dispatcher.UIThread.RunJobs()
         Assert.Empty requests
-        let nav = all h.screen.View |> List.find (fun c -> AutomationProperties.GetHelpText c = "设备")
+
+        let nav =
+            all h.screen.View
+            |> List.find (fun c -> AutomationProperties.GetHelpText c = "设备")
+
         invoke nav
         Assert.Equal(1, requests.Count)
         Assert.Equal(SettingsPart.Devices, h.screen.Current)
@@ -131,22 +199,58 @@ let ``device list marks current desktop online and revoked and sorts revoked las
         let h = setup SettingsHooks.none
         h.screen.ShowSection SettingsPart.Devices
         let now = DateTimeOffset.UtcNow
+
         h.screen.Devices.Render(
             { devicesVS () with
                 Devices =
-                    [ { device "dev-revoked" "旧手机" with revoked = true }
-                      { device "dev-phone" "手机" with online = true }
-                      { device "dev-desktop" "wanxiang-desktop" with desktop = true; current = true; online = true }
-                      { device "dev-pad" "平板" with lastSeen = Some(now - TimeSpan.FromMinutes 5.0) } ]
+                    [
+                        { device "dev-revoked" "旧手机" with
+                            revoked = true
+                        }
+                        { device "dev-phone" "手机" with
+                            online = true
+                        }
+                        { device "dev-desktop" "wanxiang-desktop" with
+                            desktop = true
+                            current = true
+                            online = true
+                        }
+                        { device "dev-pad" "平板" with
+                            lastSeen = Some(now - TimeSpan.FromMinutes 5.0)
+                        }
+                    ]
                 CanInvite = true
-                Now = now })
+                Now = now
+            }
+        )
+
         Dispatcher.UIThread.RunJobs()
+
         let rows =
             all h.screen.View
-            |> List.choose (fun c -> let id = AutomationProperties.GetAutomationId c in if not (isNull id) && id.StartsWith "devices-row-" then Some id else None)
-        Assert.Equal<string list>([ "devices-row-dev-desktop"; "devices-row-dev-phone"; "devices-row-dev-pad"; "devices-row-dev-revoked" ], rows)
+            |> List.choose (fun c ->
+                let id = AutomationProperties.GetAutomationId c in
+
+                if not (isNull id) && id.StartsWith "devices-row-" then
+                    Some id
+                else
+                    None)
+
+        Assert.Equal<string list>(
+            [
+                "devices-row-dev-desktop"
+                "devices-row-dev-phone"
+                "devices-row-dev-pad"
+                "devices-row-dev-revoked"
+            ],
+            rows
+        )
+
         let text = textOf h.screen.View
-        for s in [ "这台设备"; "桌面"; "在线"; "已吊销"; "5 分钟前在线"; "本机桌面客户端" ] do Assert.Contains(s, text)
+
+        for s in [ "这台设备"; "桌面"; "在线"; "已吊销"; "5 分钟前在线"; "本机桌面客户端" ] do
+            Assert.Contains(s, text)
+
         Assert.True((byId h.screen.View "devices-revoke-dev-desktop").IsNone)
         Assert.True((byId h.screen.View "devices-revoke-dev-phone").IsSome)
         Assert.True((byId h.screen.View "devices-rename-dev-desktop").IsNone)
@@ -163,10 +267,14 @@ let ``rename edits inline trims and sends the new name`` () =
         h.screen.ShowSection SettingsPart.Devices
         let renames = ResizeArray<string * string>()
         h.screen.Devices.RenameRequested.Add renames.Add
+
         h.screen.Devices.Render(
             { devicesVS () with
                 Devices = [ device "dev-phone" "手机" ]
-                CanInvite = true })
+                CanInvite = true
+            }
+        )
+
         invoke (byId h.screen.View "devices-rename-dev-phone").Value
         let box = (byId h.screen.View "devices-name-dev-phone").Value :?> TextBox
         Assert.Equal("手机", box.Text)
@@ -200,12 +308,21 @@ let ``invite card shows grouped code address qr and countdown`` () =
         let d = h.screen.Devices
         d.WireLanSource(fun () -> [])
         let now = DateTimeOffset.UtcNow
+
         d.Render(
             { devicesVS () with
                 ServerUrl = "ws://192.168.1.5:8765/ws"
                 CanInvite = true
-                Invite = Some { code = "012345"; expiresAtUtc = now + TimeSpan.FromMinutes 5.0 }
-                Now = now })
+                Invite =
+                    Some
+                        {
+                            code = "012345"
+                            expiresAtUtc = now + TimeSpan.FromMinutes 5.0
+                        }
+                Now = now
+            }
+        )
+
         Assert.True((textOf h.screen.View).Contains "5:00 后失效")
         d.Tick(now + TimeSpan.FromMinutes 5.0 + TimeSpan.FromSeconds 1.0)
         Assert.Contains("已过期", textOf h.screen.View)
@@ -223,18 +340,43 @@ let ``SettingsView navigates sections, remembers scroll positions and invalidate
         Assert.Equal(40.0, h.screen.GetSectionScrollOffset SettingsPart.Tools)
         h.screen.ShowSection SettingsPart.About
         Assert.Equal(SettingsPart.About, h.screen.Current)
-        h.screen.Render { screenVS prefs with InstanceId = "inst-1"; ServerUrl = "ws://host.example:8765/ws" }
+
+        h.screen.Render
+            { screenVS prefs with
+                InstanceId = "inst-1"
+                ServerUrl = "ws://host.example:8765/ws"
+            }
+
         Assert.Contains("inst-1", textOf h.screen.View)
         h.screen.ShowSection SettingsPart.Generation
         Assert.Contains("host.example:8765 · 配置由连接这台主机的客户端共用。", textOf h.screen.View)
         h.window.Close())
 
 [<Fact>]
-let ``SettingsProviders saveCore with invalid advanced field automatically expands advanced layer and focuses error`` () =
+let ``SettingsProviders saveCore with invalid advanced field automatically expands advanced layer and focuses error``
+    ()
+    =
     Headless.run (fun () ->
         let upserts = ResizeArray<JsonObject>()
-        let h = setup { SettingsHooks.none with UpsertProvider = fun p cb -> upserts.Add p; cb true }
-        h.screen.Render { screenVS prefs with Catalog = Some { Catalog.empty with providers = [ provider ] } }
+
+        let h =
+            setup
+                { SettingsHooks.none with
+                    UpsertProvider =
+                        fun p cb ->
+                            upserts.Add p
+                            cb true
+                }
+
+        h.screen.Render
+            { screenVS prefs with
+                Catalog =
+                    Some
+                        { Catalog.empty with
+                            providers = [ provider ]
+                        }
+            }
+
         h.screen.Providers.ApplyOpenEditor "test-prov"
         Dispatcher.UIThread.RunJobs()
         let editor = h.screen.Providers.Session.Value.Editor
@@ -254,8 +396,26 @@ let ``SettingsProviders ApplyProbe updates draft models in open editor and cache
     Headless.run (fun () ->
         let upserts = ResizeArray<JsonObject>()
         let probes = ResizeArray<string>()
-        let h = setup { SettingsHooks.none with UpsertProvider = (fun p cb -> upserts.Add p; cb true); ProbeProvider = probes.Add }
-        h.screen.Render { screenVS prefs with Catalog = Some { Catalog.empty with providers = [ provider ] } }
+
+        let h =
+            setup
+                { SettingsHooks.none with
+                    UpsertProvider =
+                        (fun p cb ->
+                            upserts.Add p
+                            cb true)
+                    ProbeProvider = probes.Add
+                }
+
+        h.screen.Render
+            { screenVS prefs with
+                Catalog =
+                    Some
+                        { Catalog.empty with
+                            providers = [ provider ]
+                        }
+            }
+
         h.screen.Providers.ApplyOpenEditor "test-prov"
         Dispatcher.UIThread.RunJobs()
         let editor = h.screen.Providers.Session.Value.Editor
@@ -279,8 +439,21 @@ let ``SettingsGeneral SaveGenerationCore validates numeric ranges and generates 
     Headless.run (fun () ->
         let payloads = ResizeArray<JsonObject>()
         let mutable reply = true
-        let h = setup { SettingsHooks.none with UpdateGeneration = fun p cb -> payloads.Add p; cb reply }
-        h.screen.Render { screenVS prefs with Catalog = Some Catalog.empty }
+
+        let h =
+            setup
+                { SettingsHooks.none with
+                    UpdateGeneration =
+                        fun p cb ->
+                            payloads.Add p
+                            cb reply
+                }
+
+        h.screen.Render
+            { screenVS prefs with
+                Catalog = Some Catalog.empty
+            }
+
         h.screen.ShowSection SettingsPart.Generation
         let g = h.screen.General.Generation
         g.TemperatureBox.Text <- "5"
@@ -299,8 +472,25 @@ let ``SettingsTools ShowEditor validates id, command/url, timeout and saves vali
     Headless.run (fun () ->
         let mcp = ResizeArray<JsonObject>()
         let gens = ResizeArray<JsonObject>()
-        let h = setup { SettingsHooks.none with UpsertMcp = (fun p cb -> mcp.Add p; cb true); UpdateGeneration = (fun p cb -> gens.Add p; cb true) }
-        h.screen.Render { screenVS prefs with Catalog = Some Catalog.empty }
+
+        let h =
+            setup
+                { SettingsHooks.none with
+                    UpsertMcp =
+                        (fun p cb ->
+                            mcp.Add p
+                            cb true)
+                    UpdateGeneration =
+                        (fun p cb ->
+                            gens.Add p
+                            cb true)
+                }
+
+        h.screen.Render
+            { screenVS prefs with
+                Catalog = Some Catalog.empty
+            }
+
         h.screen.ShowSection SettingsPart.Tools
         invoke (byName h.screen.View "添加 MCP 服务").Value
         let ed = h.screen.Tools.McpEditor.Value
@@ -346,16 +536,25 @@ let ``密钥为空时不发起任何请求并就地说明`` () =
         let upserts = ResizeArray<JsonObject>()
         let discarded = ResizeArray<string>()
         let probes = ResizeArray<string>()
+
         let card =
             OnboardingDesk(
-                theme, overlay,
-                { UpsertProvider = (fun p cb -> upserts.Add p; cb true)
-                  DiscardProvider = discarded.Add
-                  ProbeProvider = probes.Add
-                  TakenIds = (fun () -> [])
-                  DiscoverLocal = (fun () -> Threading.Tasks.Task.FromResult None)
-                  OpenAdvanced = ignore
-                  Report = ignore })
+                theme,
+                overlay,
+                {
+                    UpsertProvider =
+                        (fun p cb ->
+                            upserts.Add p
+                            cb true)
+                    DiscardProvider = discarded.Add
+                    ProbeProvider = probes.Add
+                    TakenIds = (fun () -> [])
+                    DiscoverLocal = (fun () -> Threading.Tasks.Task.FromResult None)
+                    OpenAdvanced = ignore
+                    Report = ignore
+                }
+            )
+
         root.Children.Insert(0, card.View)
         let window = Desk.show root 900.0 700.0
         invoke (byName card.View "连接").Value
@@ -375,7 +574,13 @@ let ``密钥为空时不发起任何请求并就地说明`` () =
 let ``点检查主机走宿主出口，且不重复发`` () =
     Headless.run (fun () ->
         let requests = ResizeArray<unit>()
-        let h = setup { SettingsHooks.none with RequestDoctorCheck = fun () -> requests.Add() }
+
+        let h =
+            setup
+                { SettingsHooks.none with
+                    RequestDoctorCheck = fun () -> requests.Add()
+                }
+
         h.screen.ShowSection SettingsPart.About
         Dispatcher.UIThread.RunJobs()
         invoke (byId h.screen.General.AboutView "check-host").Value

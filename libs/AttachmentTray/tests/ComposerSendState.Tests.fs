@@ -7,12 +7,14 @@ open Wanxiang.UI
 
 
 let input atts =
-    { host = HostAvailable
-      generation = Idle
-      text = HasText
-      attachments = atts
-      vision = VisionAllowed
-      sendKey = EnterSends }
+    {
+        host = HostAvailable
+        generation = Idle
+        text = HasText
+        attachments = atts
+        vision = VisionAllowed
+        sendKey = EnterSends
+    }
 
 [<Fact>]
 let ``uploading or failed attachments block sending`` () =
@@ -28,15 +30,28 @@ let ``uploading or failed attachments block sending`` () =
 
 [<Fact>]
 let ``an image on a non-vision model blocks send with the given message`` () =
-    let v = ComposerSendState.decide { input [ ComposerSendStateSamples.img ] with vision = VisionForbidden "不能看图" }
+    let v =
+        ComposerSendState.decide
+            { input [ ComposerSendStateSamples.img ] with
+                vision = VisionForbidden "不能看图"
+            }
+
     Assert.True v.VisionBlocked
-    Assert.Equal(SendGate.Blocked (BlockReason.ModelCannotSeeImage "不能看图"), v.gate)
+    Assert.Equal(SendGate.Blocked(BlockReason.ModelCannotSeeImage "不能看图"), v.gate)
     Assert.False v.SendEnabled
     Assert.Equal("不能看图", v.SendTip)
 
 [<Fact>]
 let ``a ready attachment alone is enough; nothing at all is not`` () =
-    Assert.Equal(SendGate.Send, (ComposerSendState.decide { input [ ComposerSendStateSamples.ok ] with text = EmptyText }).gate)
+    Assert.Equal(
+        SendGate.Send,
+        (ComposerSendState.decide
+            { input [ ComposerSendStateSamples.ok ] with
+                text = EmptyText
+            })
+            .gate
+    )
+
     let v = ComposerSendState.decide { input [] with text = EmptyText }
     Assert.Equal(SendGate.Blocked BlockReason.EmptyContent, v.gate)
     Assert.False v.SendEnabled
@@ -44,7 +59,12 @@ let ``a ready attachment alone is enough; nothing at all is not`` () =
 
 [<Fact>]
 let ``while generating the send key is stop and the queue key appears`` () =
-    let v = ComposerSendState.decide { input [] with generation = Generating CanStop }
+    let v =
+        ComposerSendState.decide
+            { input [] with
+                generation = Generating CanStop
+            }
+
     Assert.Equal(SendGate.Stop, v.gate)
     Assert.True v.SendEnabled
     Assert.Equal("停止生成", v.SendLabel)
@@ -55,7 +75,15 @@ let ``while generating the send key is stop and the queue key appears`` () =
 [<Fact>]
 let ``offline uses the reason or a default`` () =
     Assert.Equal("连接已断开", (ComposerSendState.decide { input [] with host = HostDisabled "" }).SendTip)
-    Assert.Equal("主机忙", (ComposerSendState.decide { input [] with host = HostDisabled "主机忙" }).SendTip)
+
+    Assert.Equal(
+        "主机忙",
+        (ComposerSendState.decide
+            { input [] with
+                host = HostDisabled "主机忙"
+            })
+            .SendTip
+    )
 
 [<Fact>]
 let ``submit treats a failed attachment as not ready`` () =

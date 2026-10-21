@@ -1,4 +1,5 @@
 module GenerationDraftProbeSlotTests
+
 open Xunit
 open Wanxiang.UI
 

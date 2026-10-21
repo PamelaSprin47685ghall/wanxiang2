@@ -11,8 +11,25 @@ module ProviderCheck =
             providers
             |> List.collect (fun (pid, enabled, hasKey, baseUrl) ->
                 let problems =
-                    [ if enabled && not hasKey then Some "enabled but no apiKey" else None
-                      if enabled && String.IsNullOrWhiteSpace baseUrl then Some "enabled but empty baseUrl" else None ]
+                    [
+                        if enabled && not hasKey then
+                            Some "enabled but no apiKey"
+                        else
+                            None
+                        if enabled && String.IsNullOrWhiteSpace baseUrl then
+                            Some "enabled but empty baseUrl"
+                        else
+                            None
+                    ]
                     |> List.choose id
-                if List.isEmpty problems then [] else [ sprintf "%s: %s" pid (String.concat "; " problems) ])
-        List.isEmpty issues, (if List.isEmpty issues then "ok" else String.concat "; " issues)
+
+                if List.isEmpty problems then
+                    []
+                else
+                    [ sprintf "%s: %s" pid (String.concat "; " problems) ])
+
+        List.isEmpty issues,
+        (if List.isEmpty issues then
+             "ok"
+         else
+             String.concat "; " issues)

@@ -10,20 +10,80 @@ module ImportLimits =
 /// 客户端写命令（fire-and-forget 事件 payload 的解码结果）。
 /// 所有命令由客户端预生成 invocationId（UUIDv7）；网络重试必须复用。
 type ClientCommand =
-    | CreateConversation of {| invocationId: Guid; conversationId: Guid; title: string; config: SessionConfig |}
-    | ForkConversation of {| invocationId: Guid; conversationId: Guid; parentConversationId: Guid; forkAfterId: CommitId option; config: SessionConfig; editedMessageJson: JsonNode |}
-    | SendUserMessage of {| invocationId: Guid; conversationId: Guid; messageJson: JsonNode |}
-    | RenameConversation of {| invocationId: Guid; conversationId: Guid; title: string |}
-    | DeleteConversation of {| invocationId: Guid; conversationId: Guid |}
-    | DeleteMessage of {| invocationId: Guid; conversationId: Guid; messageCommitId: CommitId |}
-    | UpdateConversationConfig of {| invocationId: Guid; conversationId: Guid; config: SessionConfig |}
-    | SetConversationFlags of {| invocationId: Guid; conversationId: Guid; pinned: bool; archived: bool |}
+    | CreateConversation of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            title: string
+            config: SessionConfig
+        |}
+    | ForkConversation of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            parentConversationId: Guid
+            forkAfterId: CommitId option
+            config: SessionConfig
+            editedMessageJson: JsonNode
+        |}
+    | SendUserMessage of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            messageJson: JsonNode
+        |}
+    | RenameConversation of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            title: string
+        |}
+    | DeleteConversation of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+        |}
+    | DeleteMessage of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            messageCommitId: CommitId
+        |}
+    | UpdateConversationConfig of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            config: SessionConfig
+        |}
+    | SetConversationFlags of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            pinned: bool
+            archived: bool
+        |}
     /// 重新生成：删除末尾的助手/工具消息（tombstone），再对同一批用户消息重跑一次生成。
-    | RegenerateResponse of {| invocationId: Guid; conversationId: Guid |}
+    | RegenerateResponse of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+        |}
     /// 继续生成（决策 230）：把中途失败留下的半截助手回复落盘，再从它接着生成。
-    | ContinueResponse of {| invocationId: Guid; conversationId: Guid; messageJson: JsonNode |}
+    | ContinueResponse of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            messageJson: JsonNode
+        |}
     /// 导入（决策 313）：用导出的 JSON 新建一个对话并按序记录消息；不触发生成、不恢复分叉关系。
-    | ImportConversation of {| invocationId: Guid; conversationId: Guid; title: string; config: SessionConfig; messages: JsonArray |}
+    | ImportConversation of
+        {|
+            invocationId: Guid
+            conversationId: Guid
+            title: string
+            config: SessionConfig
+            messages: JsonArray
+        |}
 
 module ClientCommand =
 
@@ -73,6 +133,7 @@ module ClientCommand =
     /// 业务载荷（不含传输元数据）。commandId 由领域方对它做 RFC 8785 规范化后计算；规范化不是线协议的事。
     let businessPayload (cmd: ClientCommand) : JsonObject =
         let o = JsonObject()
+
         match cmd with
         | CreateConversation d ->
             o["conversationId"] <- d.conversationId.ToString("D")
@@ -81,7 +142,10 @@ module ClientCommand =
         | ForkConversation d ->
             o["conversationId"] <- d.conversationId.ToString("D")
             o["parentConversationId"] <- d.parentConversationId.ToString("D")
-            match d.forkAfterId with Some id -> o["forkAfterId"] <- id | None -> ()
+
+            match d.forkAfterId with
+            | Some id -> o["forkAfterId"] <- id
+            | None -> ()
             // fork 配置由父会话投影继承（决策 81），config 不参与 canonical/commandId（客户端可空）
             o["editedMessage"] <- d.editedMessageJson.DeepClone()
         | SendUserMessage d ->
@@ -90,8 +154,7 @@ module ClientCommand =
         | RenameConversation d ->
             o["conversationId"] <- d.conversationId.ToString("D")
             o["title"] <- d.title
-        | DeleteConversation d ->
-            o["conversationId"] <- d.conversationId.ToString("D")
+        | DeleteConversation d -> o["conversationId"] <- d.conversationId.ToString("D")
         | DeleteMessage d ->
             o["conversationId"] <- d.conversationId.ToString("D")
             o["messageCommitId"] <- d.messageCommitId
@@ -102,8 +165,7 @@ module ClientCommand =
             o["conversationId"] <- d.conversationId.ToString("D")
             o["pinned"] <- d.pinned
             o["archived"] <- d.archived
-        | RegenerateResponse d ->
-            o["conversationId"] <- d.conversationId.ToString("D")
+        | RegenerateResponse d -> o["conversationId"] <- d.conversationId.ToString("D")
         | ContinueResponse d ->
             o["conversationId"] <- d.conversationId.ToString("D")
             o["message"] <- d.messageJson.DeepClone()

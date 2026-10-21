@@ -14,8 +14,13 @@ module Assembly =
 
     let toCommit (c: Ledger.Commit<EventData>) : Events.Commit =
         let b = Events.Commit.create c.id c.at c.events
+
         match c.stamp with
-        | Some s -> { b with commandId = Some s.commandId; commandHash = Some s.hash }
+        | Some s ->
+            { b with
+                commandId = Some s.commandId
+                commandHash = Some s.hash
+            }
         | None -> b
 
     let ofCommit (c: Events.Commit) : Ledger.Commit<EventData> =
@@ -23,21 +28,35 @@ module Assembly =
             match c.commandId, c.commandHash with
             | Some cid, Some h -> Some(({ commandId = cid; hash = h }: Ledger.Stamp))
             | _ -> None
-        { id = c.id; at = c.committedAtUtc; stamp = stamp; events = c.events }
+
+        {
+            id = c.id
+            at = c.committedAtUtc
+            stamp = stamp
+            events = c.events
+        }
 
     let codec: Codec<Projection, EventData> =
-        { encodeEvent = fun e -> CommitCodec.eventDataToJson e :> JsonNode
-          decodeEvent =
-            fun n ->
-                match n with
-                | :? JsonObject as o -> (match CommitCodec.tryEventFromJson o with Some e -> Ok e | None -> Error "unknown or malformed event")
-                | _ -> Error "event is not an object"
-          encodeState = fun p -> ProjectionCodec.toJson p :> JsonNode
-          decodeState =
-            fun n ->
-                match n with
-                | :? JsonObject as o -> (match ProjectionCodec.tryFromJson o with Some p -> Ok p | None -> Error "projection malformed")
-                | _ -> Error "projection is not an object" }
+        {
+            encodeEvent = fun e -> CommitCodec.eventDataToJson e :> JsonNode
+            decodeEvent =
+                fun n ->
+                    match n with
+                    | :? JsonObject as o ->
+                        (match CommitCodec.tryEventFromJson o with
+                         | Some e -> Ok e
+                         | None -> Error "unknown or malformed event")
+                    | _ -> Error "event is not an object"
+            encodeState = fun p -> ProjectionCodec.toJson p :> JsonNode
+            decodeState =
+                fun n ->
+                    match n with
+                    | :? JsonObject as o ->
+                        (match ProjectionCodec.tryFromJson o with
+                         | Some p -> Ok p
+                         | None -> Error "projection malformed")
+                    | _ -> Error "projection is not an object"
+        }
 
     let fold (p: Projection) (c: Ledger.Commit<EventData>) : Result<Projection, WanxiangError> =
         Projection.applyCommit p (toCommit c)
@@ -51,17 +70,26 @@ module Assembly =
 
     let openStore (dataDir: string) (policy: SnapshotPolicy) : LedgerStore<Projection, EventData, WanxiangError> =
         DataPaths.ensureDataDirs dataDir
-        new LedgerStore<Projection, EventData, WanxiangError>(DataPaths.eventsDir dataDir, fold, Projection.empty, codec, policy)
+
+        new LedgerStore<Projection, EventData, WanxiangError>(
+            DataPaths.eventsDir dataDir,
+            fold,
+            Projection.empty,
+            codec,
+            policy
+        )
 
 /// 提交请求（由 Server 层规划后送入存储）。
 type CommitSubmit =
-    { events: EventData list
-      commandId: string option
-      /// 只用于诊断，不持久化
-      commandType: string option
-      commandHash: string option
-      /// 测试可注入时间；None = UtcNow
-      nowUtc: DateTimeOffset option }
+    {
+        events: EventData list
+        commandId: string option
+        /// 只用于诊断，不持久化
+        commandType: string option
+        commandHash: string option
+        /// 测试可注入时间；None = UtcNow
+        nowUtc: DateTimeOffset option
+    }
 
 type SubmitResult =
     | Committed of Events.Commit
@@ -73,7 +101,16 @@ type SubmitResult =
 /// 旧领域面向 LedgerStore 的薄壳：只做类型映射。onCommitted 在提交成功后同步调用。
 type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: SnapshotPolicy) =
     // 默认：每 1000 条存快照；关闭时由调用方决定（只读降级时不存，免得固化损坏前的投影）。
-    let store = Assembly.openStore dataDir (defaultArg policy { everyCommits = Some 1000; onClose = false })
+    let store =
+        Assembly.openStore
+            dataDir
+            (defaultArg
+                policy
+                {
+                    everyCommits = Some 1000
+                    onClose = false
+                })
+
     let mutable stopped = false
     let mutable onCommitted = defaultArg onCommitted ignore
 
@@ -84,34 +121,54 @@ type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: S
     member _.Startup = store.Startup
     member _.LastSnapshotError = store.LastSnapshotError
     member _.IsReadOnly = store.Health <> Healthy
-    member _.Projection : Projection = store.State
-    member _.LastCommitId : CommitId = store.LastId
-    member _.Stamps : Map<string, string * CommitId> = store.Stamps
-    member _.Checkpoint : Checkpoint = store.Checkpoint
+    member _.Projection: Projection = store.State
+    member _.LastCommitId: CommitId = store.LastId
+    member _.Stamps: Map<string, string * CommitId> = store.Stamps
+    member _.Checkpoint: Checkpoint = store.Checkpoint
 
     member _.Submit(submit: CommitSubmit) : SubmitResult =
-        if stopped then CommitFailed(Poisoned "store stopped")
+        if stopped then
+            CommitFailed(Poisoned "store stopped")
         else
             let at = submit.nowUtc |> Option.defaultWith (fun () -> DateTimeOffset.UtcNow)
+
             let answer =
                 match submit.commandId, submit.commandHash with
                 | Some cid, Some h -> store.Submit(submit.events, at, { commandId = cid; hash = h })
                 | _ -> store.Submit(submit.events, at)
+
             match answer with
             | Submitted.Committed c ->
                 let c = Assembly.toCommit c
-                (try onCommitted c with _ -> ())
+
+                (try
+                    onCommitted c
+                 with _ ->
+                     ())
+
                 Committed c
             | Submitted.Duplicate c -> IdempotentReplay(Assembly.toCommit c)
             | Submitted.Conflict _ ->
-                CommandIdRejected(CommandIdConflict(sprintf "commandId %s reused with different payload" (defaultArg submit.commandId "")))
+                CommandIdRejected(
+                    CommandIdConflict(
+                        sprintf "commandId %s reused with different payload" (defaultArg submit.commandId "")
+                    )
+                )
             | Submitted.Rejected e -> CommitFailed e
             | Submitted.NotWritten why -> CommitFailed(Poisoned("append failed: " + why))
-            | Submitted.Unknown(id, why) -> CommitFailed(Poisoned(sprintf "outcome of commit %d unknown; read-only: %s" id why))
+            | Submitted.Unknown(id, why) ->
+                CommitFailed(Poisoned(sprintf "outcome of commit %d unknown; read-only: %s" id why))
             | Submitted.ReadOnly why -> CommitFailed(Poisoned("event log read-only: " + why))
 
     member this.SubmitEvents(events: EventData list) : SubmitResult =
-        this.Submit { events = events; commandId = None; commandType = None; commandHash = None; nowUtc = None }
+        this.Submit
+            {
+                events = events
+                commandId = None
+                commandType = None
+                commandHash = None
+                nowUtc = None
+            }
 
     /// 游标之后的提交（catch-up）。limit = None 返回全部剩余。
     member _.CommitsAfter(cursor: CommitId, ?limit: int) : Events.Commit list =
@@ -133,18 +190,30 @@ type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: S
         member this.Dispose() = this.Shutdown()
 
 /// 打开时的只读结论（doctor / 启动 / 诊断用）。打开本身不改日志字节。
-type Damage = { file: string; byteOffset: int64; reason: string }
-type RepairPlan = { damage: Damage; affectedFiles: string list }
+type Damage =
+    {
+        file: string
+        byteOffset: int64
+        reason: string
+    }
+
+type RepairPlan =
+    {
+        damage: Damage
+        affectedFiles: string list
+    }
 
 /// 打开时看到的最长有效前缀。
 type ReplayOutcome =
-    { projection: Projection
-      lastCommitId: CommitId
-      checkpoint: Checkpoint
-      /// 快照用没用上、续播了几条（LedgerStore.Startup）
-      startup: Startup
-      /// commandId -> (hash, commitId)
-      stamps: Map<string, string * CommitId> }
+    {
+        projection: Projection
+        lastCommitId: CommitId
+        checkpoint: Checkpoint
+        /// 快照用没用上、续播了几条（LedgerStore.Startup）
+        startup: Startup
+        /// commandId -> (hash, commitId)
+        stamps: Map<string, string * CommitId>
+    }
 
 type InspectResult =
     | Healthy of ReplayOutcome
@@ -160,51 +229,81 @@ type InspectResult =
 module Inspect =
 
     let ofStore (s: EventStore) : InspectResult =
-        let o = { projection = s.Projection; lastCommitId = s.LastCommitId; checkpoint = s.Checkpoint; startup = s.Startup; stamps = s.Stamps }
+        let o =
+            {
+                projection = s.Projection
+                lastCommitId = s.LastCommitId
+                checkpoint = s.Checkpoint
+                startup = s.Startup
+                stamps = s.Stamps
+            }
+
         match s.Health with
         | Health.Healthy -> Healthy o
-        | Health.NewerFormat(at, why) ->
-            UnsupportedFormat(sprintf "event log %s at byte %d" why at)
+        | Health.NewerFormat(at, why) -> UnsupportedFormat(sprintf "event log %s at byte %d" why at)
         | Health.Damaged(at, why) ->
             let f = DataPaths.logFile s.DataDir
-            RepairRequired(o, { damage = { file = f; byteOffset = at; reason = why }; affectedFiles = [ f ] })
+
+            RepairRequired(
+                o,
+                {
+                    damage =
+                        {
+                            file = f
+                            byteOffset = at
+                            reason = why
+                        }
+                    affectedFiles = [ f ]
+                }
+            )
         | Health.OutcomeUnknown(id, why) -> OutcomeUnknown(o, id, why)
 
     /// 不持锁、不写字节地看一眼（宿主正在运行时给外部 doctor / 支持包用）。
     let peek (dataDir: string) : Inspection =
-        LedgerStore<Projection, EventData, WanxiangError>.Inspect(DataPaths.eventsDir dataDir, Assembly.codec, Assembly.fold, Projection.empty)
+        LedgerStore<Projection, EventData, WanxiangError>
+            .Inspect(DataPaths.eventsDir dataDir, Assembly.codec, Assembly.fold, Projection.empty)
 
     /// 打开、读结论、关闭（不存快照）。
     let run (dataDir: string) : InspectResult =
         try
             use s = new EventStore(dataDir, policy = SnapshotPolicy.Manual)
             ofStore s
-        with e -> Unreadable e.Message
+        with e ->
+            Unreadable e.Message
 
     /// 命令行 doctor / 支持包：能独占就完整打开；宿主持锁时改为不持锁检查。
     let runOrPeek (dataDir: string) : InspectResult =
         let opened =
-            try Ok(new EventStore(dataDir, policy = SnapshotPolicy.Manual))
+            try
+                Ok(new EventStore(dataDir, policy = SnapshotPolicy.Manual))
             with
             | :? InvalidOperationException as e -> Error(Choice1Of2 e.Message)
             | e -> Error(Choice2Of2 e.Message)
+
         match opened with
         | Ok s ->
             use s = s
             ofStore s
-        | Error(Choice1Of2 _) -> (try HostOwned(peek dataDir) with e -> Unreadable e.Message)
+        | Error(Choice1Of2 _) ->
+            (try
+                HostOwned(peek dataDir)
+             with e ->
+                 Unreadable e.Message)
         | Error(Choice2Of2 m) -> Unreadable m
 
 module Repair =
 
     /// 在已打开（已持锁）的存储上修复：截到损坏点。
     let repairWith (s: EventStore) : Result<string list, string> =
-        try s.Repair() |> Result.map (fun _ -> [ DataPaths.logFile s.DataDir ])
-        with e -> Error(sprintf "repair failed: %s" e.Message)
+        try
+            s.Repair() |> Result.map (fun _ -> [ DataPaths.logFile s.DataDir ])
+        with e ->
+            Error(sprintf "repair failed: %s" e.Message)
 
     /// 显式修复（doctor --fix；调用方先建证据包）：截到损坏点。返回被改动的文件。
     let repair (dataDir: string) : Result<string list, string> =
         try
             use s = new EventStore(dataDir, policy = SnapshotPolicy.Manual)
             s.Repair() |> Result.map (fun _ -> [ DataPaths.logFile dataDir ])
-        with e -> Error(sprintf "repair failed: %s" e.Message)
+        with e ->
+            Error(sprintf "repair failed: %s" e.Message)

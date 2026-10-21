@@ -20,6 +20,7 @@ module ToolNames =
     let parseMcpId (id: string) : (string * string) option =
         if id.StartsWith("mcp:", StringComparison.Ordinal) then
             let rest = id.Substring 4
+
             match rest.IndexOf '/' with
             | -1 -> None
             | i -> Some(rest.Substring(0, i), rest.Substring(i + 1))

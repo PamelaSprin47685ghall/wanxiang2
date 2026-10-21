@@ -1,4 +1,5 @@
 module ToolErrorSummaryTests
+
 open System
 open System.IO
 open Xunit
@@ -58,7 +59,8 @@ let ``no error pattern yields no summary`` (resultText: string, _isStreaming: bo
 [<InlineData("command not found", "command not found")>]
 [<InlineData("bash: mytool: command not found", "bash: mytool: command not found")>]
 [<InlineData("zsh: command not found: mytool", "zsh: command not found: mytool")>]
-[<InlineData("fatal: not a git repository (or any of the parent directories): .git", "not a git repository (or any of the parent directories): .git")>]
+[<InlineData("fatal: not a git repository (or any of the parent directories): .git",
+             "not a git repository (or any of the parent directories): .git")>]
 [<InlineData("fatal:   ", "执行失败")>]
 [<InlineData("""{"status":"error","message":"rate limit exceeded"}""", "rate limit exceeded")>]
 [<InlineData("""{"status":"error"}""", "执行失败")>]

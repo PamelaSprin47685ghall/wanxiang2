@@ -13,13 +13,22 @@ module ProviderSse =
 
     /// 从 HTTP 响应头读出限流信号（决策 241）。头名不区分大小写，响应头与内容头都看。
     let rateLimitOfResponse (response: HttpResponseMessage) : ProviderRateLimit option =
-        if isNull response then None
+        if isNull response then
+            None
         else
             let lookup (name: string) =
                 let mutable values: Collections.Generic.IEnumerable<string> = null
-                if not (isNull response.Headers) && response.Headers.TryGetValues(name, &values) then Seq.tryHead values
-                elif not (isNull response.Content) && response.Content.Headers.TryGetValues(name, &values) then Seq.tryHead values
-                else None
+
+                if not (isNull response.Headers) && response.Headers.TryGetValues(name, &values) then
+                    Seq.tryHead values
+                elif
+                    not (isNull response.Content)
+                    && response.Content.Headers.TryGetValues(name, &values)
+                then
+                    Seq.tryHead values
+                else
+                    None
+
             ProviderRateLimit.ofHeaders DateTimeOffset.UtcNow lookup
 
     /// 非 2xx 抛带状态码的 HttpRequestException；限流 / 额度头随异常带走（Data["RateLimit"]）。
@@ -31,10 +40,13 @@ module ProviderSse =
                 match rateLimitOfResponse response with
                 | Some limit -> ex.Data["RateLimit"] <- box limit
                 | None -> ()
-            with _ -> ()
+            with _ ->
+                ()
+
             raise ex
 
-    let sendWithRetry http makeRequest maxRetries ct = HttpRetry.sendWithRetry http makeRequest maxRetries ct
+    let sendWithRetry http makeRequest maxRetries ct =
+        HttpRetry.sendWithRetry http makeRequest maxRetries ct
 
     let tryString (node: JsonNode) key = JsonPick.tryString node key
     let tryInt (node: JsonNode) key = JsonPick.tryInt node key

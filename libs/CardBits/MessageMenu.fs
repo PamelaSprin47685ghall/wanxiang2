@@ -39,12 +39,14 @@ type LinkSink =
 
 /// 右键菜单的全部门控输入（零裸布尔，全由事实 DU 构成）
 type MessageMenuFacts =
-    { generation: MenuGeneration
-      role: MessageRole
-      position: ReplyPosition
-      text: string
-      commitId: uint64 option
-      linkSink: LinkSink }
+    {
+        generation: MenuGeneration
+        role: MessageRole
+        position: ReplyPosition
+        text: string
+        commitId: uint64 option
+        linkSink: LinkSink
+    }
 
 /// 旧 Views/MessageCard.fs messageMenuEntries 的门控；执行体、图标仍归 MessageCard
 module MessageMenu =
@@ -62,17 +64,23 @@ module MessageMenu =
 
     /// 生成中整体为空；其余各项与脚注行 hover 按钮同源
     let entries (facts: MessageMenuFacts) =
-        if facts.generation = MenuGeneration.Streaming then []
+        if facts.generation = MenuGeneration.Streaming then
+            []
         else
-            [ if not (String.IsNullOrWhiteSpace facts.text) then MessageMenuItem.Copy
-              if facts.role = MessageRole.User then MessageMenuItem.EditAndFork
-              if isReplySide facts.role && facts.position = ReplyPosition.LastAssistant then MessageMenuItem.Regenerate
-              match facts.commitId with
-              | Some c when facts.linkSink = LinkSink.Available -> MessageMenuItem.CopyLink c
-              | _ -> ()
-              match facts.commitId with
-              | Some c -> MessageMenuItem.Delete c
-              | None -> () ]
+            [
+                if not (String.IsNullOrWhiteSpace facts.text) then
+                    MessageMenuItem.Copy
+                if facts.role = MessageRole.User then
+                    MessageMenuItem.EditAndFork
+                if isReplySide facts.role && facts.position = ReplyPosition.LastAssistant then
+                    MessageMenuItem.Regenerate
+                match facts.commitId with
+                | Some c when facts.linkSink = LinkSink.Available -> MessageMenuItem.CopyLink c
+                | _ -> ()
+                match facts.commitId with
+                | Some c -> MessageMenuItem.Delete c
+                | None -> ()
+            ]
 
     let label =
         function
@@ -85,7 +93,8 @@ module MessageMenu =
     /// 快捷键提示：最新回复的复制与重新生成有全局快捷键
     let hint (facts: MessageMenuFacts) =
         function
-        | MessageMenuItem.Copy when isReplySide facts.role && facts.position = ReplyPosition.LastAssistant -> "Ctrl+Shift+C"
+        | MessageMenuItem.Copy when isReplySide facts.role && facts.position = ReplyPosition.LastAssistant ->
+            "Ctrl+Shift+C"
         | MessageMenuItem.Regenerate -> "Ctrl+Shift+G"
         | _ -> ""
 

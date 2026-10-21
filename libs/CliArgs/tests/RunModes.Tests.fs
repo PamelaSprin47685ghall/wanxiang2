@@ -1,8 +1,15 @@
 module RunModesTests
+
 open Xunit
 open Wanxiang.App
 
-let private s server client pwa fix : RunSwitches = { server = server; client = client; pwa = pwa; fix = fix }
+let private s server client pwa fix : RunSwitches =
+    {
+        server = server
+        client = client
+        pwa = pwa
+        fix = fix
+    }
 
 [<Fact>]
 let ``命令行优先于 TOML，TOML 优先于程序默认`` () =

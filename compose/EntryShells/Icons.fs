@@ -37,70 +37,70 @@ module Icons =
     // 名的是形状（官方惯例），注释写的是万象里的用途。
 
     /// 搜索
-    let search : IBrush -> Control = glyph Glyph.Search
+    let search: IBrush -> Control = glyph Glyph.Search
     /// 关闭
-    let close : IBrush -> Control = glyph Glyph.Close
+    let close: IBrush -> Control = glyph Glyph.Close
     /// 确认
-    let check : IBrush -> Control = glyph Glyph.Check
+    let check: IBrush -> Control = glyph Glyph.Check
     /// 跳到开头
-    let chevronsUp : IBrush -> Control = glyph Glyph.ChevronsUp
+    let chevronsUp: IBrush -> Control = glyph Glyph.ChevronsUp
     /// 跳到结尾
-    let chevronsDown : IBrush -> Control = glyph Glyph.ChevronsDown
+    let chevronsDown: IBrush -> Control = glyph Glyph.ChevronsDown
     /// 展开
-    let chevronDown : IBrush -> Control = glyph Glyph.ChevronDown
+    let chevronDown: IBrush -> Control = glyph Glyph.ChevronDown
     /// 下一级
-    let chevronRight : IBrush -> Control = glyph Glyph.ChevronRight
+    let chevronRight: IBrush -> Control = glyph Glyph.ChevronRight
     /// 上一级
-    let chevronLeft : IBrush -> Control = glyph Glyph.ChevronLeft
+    let chevronLeft: IBrush -> Control = glyph Glyph.ChevronLeft
     /// 附件
-    let paperclip : IBrush -> Control = glyph Glyph.Paperclip
+    let paperclip: IBrush -> Control = glyph Glyph.Paperclip
     /// 发送（纸飞机；官方无线上发送实心图标）
-    let send : IBrush -> Control = glyph Glyph.Send
+    let send: IBrush -> Control = glyph Glyph.Send
     /// 停止生成
-    let stop : IBrush -> Control = glyph Glyph.Stop
+    let stop: IBrush -> Control = glyph Glyph.Stop
     /// 复制
-    let copy : IBrush -> Control = glyph Glyph.Copy
+    let copy: IBrush -> Control = glyph Glyph.Copy
     /// 派生对话
-    let fork : IBrush -> Control = glyph Glyph.Fork
+    let fork: IBrush -> Control = glyph Glyph.Fork
     /// 刷新
-    let refresh : IBrush -> Control = glyph Glyph.Refresh
+    let refresh: IBrush -> Control = glyph Glyph.Refresh
     /// 删除
-    let trash : IBrush -> Control = glyph Glyph.Trash
+    let trash: IBrush -> Control = glyph Glyph.Trash
     /// 编辑
-    let pencil : IBrush -> Control = glyph Glyph.Pencil
+    let pencil: IBrush -> Control = glyph Glyph.Pencil
     /// 置顶
-    let pin : IBrush -> Control = glyph Glyph.Pin
+    let pin: IBrush -> Control = glyph Glyph.Pin
     /// 归档
-    let archive : IBrush -> Control = glyph Glyph.Archive
+    let archive: IBrush -> Control = glyph Glyph.Archive
     /// 配置项
-    let sliders : IBrush -> Control = glyph Glyph.Sliders
+    let sliders: IBrush -> Control = glyph Glyph.Sliders
     /// 主机
-    let server : IBrush -> Control = glyph Glyph.Server
+    let server: IBrush -> Control = glyph Glyph.Server
     /// 认证令牌
-    let key : IBrush -> Control = glyph Glyph.Key
+    let key: IBrush -> Control = glyph Glyph.Key
     /// 设备（手机 + 显示器）：设置「设备」分区用；钥匙易被读成「密钥/API Key」
-    let devices : IBrush -> Control = glyph Glyph.Devices
+    let devices: IBrush -> Control = glyph Glyph.Devices
     /// 下载
-    let download : IBrush -> Control = glyph Glyph.Download
+    let download: IBrush -> Control = glyph Glyph.Download
     /// 导入（决策 313）
-    let upload : IBrush -> Control = glyph Glyph.Upload
+    let upload: IBrush -> Control = glyph Glyph.Upload
     /// 说明
-    let info : IBrush -> Control = glyph Glyph.Info
+    let info: IBrush -> Control = glyph Glyph.Info
     /// 侧栏
-    let panelLeft : IBrush -> Control = glyph Glyph.PanelLeft
+    let panelLeft: IBrush -> Control = glyph Glyph.PanelLeft
     /// 消息
-    let message : IBrush -> Control = glyph Glyph.Message
+    let message: IBrush -> Control = glyph Glyph.Message
     /// 更多操作
-    let more : IBrush -> Control = glyph Glyph.More
+    let more: IBrush -> Control = glyph Glyph.More
     /// 链接（复制消息链接；与「复制」区分开，视觉走查 r8）
-    let link : IBrush -> Control = glyph Glyph.Link
+    let link: IBrush -> Control = glyph Glyph.Link
     /// 文件
-    let file : IBrush -> Control = glyph Glyph.File
+    let file: IBrush -> Control = glyph Glyph.File
     /// 图片
-    let image : IBrush -> Control = glyph Glyph.Image
+    let image: IBrush -> Control = glyph Glyph.Image
     /// 时间
-    let clock : IBrush -> Control = glyph Glyph.Clock
+    let clock: IBrush -> Control = glyph Glyph.Clock
     /// 快捷键
-    let keyboard : IBrush -> Control = glyph Glyph.Keyboard
+    let keyboard: IBrush -> Control = glyph Glyph.Keyboard
     /// 数据目录
-    let database : IBrush -> Control = glyph Glyph.Database
+    let database: IBrush -> Control = glyph Glyph.Database

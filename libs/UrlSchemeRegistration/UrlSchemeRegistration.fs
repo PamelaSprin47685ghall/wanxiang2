@@ -8,16 +8,20 @@ module UrlSchemeRegistration =
 
     /// Linux 桌面文件：`%u` 把链接交给万象；NoDisplay 不在应用菜单里多出一个图标。
     let desktopEntry (command: string) =
-        String.concat "\n"
-            [ "[Desktop Entry]"
-              "Type=Application"
-              "Name=万象"
-              "Comment=打开万象消息链接"
-              sprintf "Exec=%s %%u" command
-              "Terminal=false"
-              "NoDisplay=true"
-              "MimeType=x-scheme-handler/wanxiang;"
-              "" ]
+        String.concat
+            "\n"
+            [
+                "[Desktop Entry]"
+                "Type=Application"
+                "Name=万象"
+                "Comment=打开万象消息链接"
+                sprintf "Exec=%s %%u" command
+                "Terminal=false"
+                "NoDisplay=true"
+                "MimeType=x-scheme-handler/wanxiang;"
+                ""
+            ]
 
     /// 引号包住含空格的路径（桌面文件与注册表命令都用）。
-    let quote (path: string) = if path.Contains ' ' then "\"" + path + "\"" else path
+    let quote (path: string) =
+        if path.Contains ' ' then "\"" + path + "\"" else path

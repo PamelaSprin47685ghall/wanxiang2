@@ -1,4 +1,5 @@
 module RowFocusSidebarSelectionTests
+
 open System
 open Xunit
 open Wanxiang.UI

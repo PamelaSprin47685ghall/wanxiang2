@@ -13,7 +13,11 @@ module SearchStatusAction =
         | SearchStatusAction.LoadMore -> "显示更多"
 
 /// 命中区末尾的一行状态（文字为旧 Sidebar.Rebuild 原文）。
-type SearchStatusLine = { text: string; action: SearchStatusAction option }
+type SearchStatusLine =
+    {
+        text: string
+        action: SearchStatusAction option
+    }
 
 /// 消息正文搜索的会话状态（迁自旧 Views/Sidebar.fs 的 searchHits、searchHitsQuery、searchPending、
 /// searchHasMore、searchTruncated、searchError 及其读写方法）。
@@ -27,7 +31,8 @@ type SearchSession<'hit>() =
     let mutable truncated = false
     let mutable error: string option = None
 
-    static member Normalize(text: string) = (if isNull text then "" else text).Trim()
+    static member Normalize(text: string) =
+        (if isNull text then "" else text).Trim()
 
     /// 发起新查询。canSend：宿主能发（已接线且已连接）。返回应发出的查询词（跳过 0 条）；不发返回 None。
     member _.Begin(text: string, canSend: bool) : string option =
@@ -36,6 +41,7 @@ type SearchSession<'hit>() =
         hasMore <- false
         truncated <- false
         error <- None
+
         if canSend && q <> "" then
             query <- q
             pending <- true
@@ -50,7 +56,8 @@ type SearchSession<'hit>() =
         if query <> "" && not pending then
             pending <- true
             Some(query, List.length hits)
-        else None
+        else
+            None
 
     /// 失败后重试：返回 (查询词, 跳过条数)；没有查询时为 None。
     member _.Retry() : (string * int) option =
@@ -58,7 +65,8 @@ type SearchSession<'hit>() =
             error <- None
             pending <- true
             Some(query, List.length hits)
-        else None
+        else
+            None
 
     /// 一页结果到达；offset > 0 是追加页。返回是否被接受（词已变的迟到结果返回 false）。
     member _.Apply(pageQuery: string, pageHits: 'hit list, pageHasMore: bool, pageTruncated: bool, offset: int) : bool =
@@ -69,7 +77,8 @@ type SearchSession<'hit>() =
             pending <- false
             error <- None
             true
-        else false
+        else
+            false
 
     /// 查询失败。返回是否属于当前查询词。
     member _.Fail(failedQuery: string, message: string) : bool =
@@ -77,7 +86,8 @@ type SearchSession<'hit>() =
             pending <- false
             error <- Some message
             true
-        else false
+        else
+            false
 
     /// 断开连接：在途结果不会再来，不让「正在搜索」挂着。
     member _.Disconnected() = pending <- false
@@ -94,14 +104,38 @@ type SearchSession<'hit>() =
     member _.Section(boxText: string) : ('hit list * SearchStatusLine list) option =
         let q = SearchSession<'hit>.Normalize boxText
         let current = q <> "" && query = q
+
         if current && (pending || error.IsSome || not (List.isEmpty hits)) then
             let lines =
                 match error with
-                | Some message -> [ { text = sprintf "消息搜索失败：%s" message; action = Some SearchStatusAction.Retry } ]
+                | Some message ->
+                    [
+                        {
+                            text = sprintf "消息搜索失败：%s" message
+                            action = Some SearchStatusAction.Retry
+                        }
+                    ]
                 | None when pending ->
-                    [ { text = (if List.isEmpty hits then "正在搜索消息…" else "正在加载更多…"); action = None } ]
+                    [
+                        {
+                            text = (if List.isEmpty hits then "正在搜索消息…" else "正在加载更多…")
+                            action = None
+                        }
+                    ]
                 | None ->
-                    [ if hasMore then { text = "还有更多匹配的消息"; action = Some SearchStatusAction.LoadMore }
-                      if truncated then { text = "结果已截断：只显示了最近的一部分匹配，请换更具体的词。"; action = None } ]
+                    [
+                        if hasMore then
+                            {
+                                text = "还有更多匹配的消息"
+                                action = Some SearchStatusAction.LoadMore
+                            }
+                        if truncated then
+                            {
+                                text = "结果已截断：只显示了最近的一部分匹配，请换更具体的词。"
+                                action = None
+                            }
+                    ]
+
             Some(hits, lines)
-        else None
+        else
+            None

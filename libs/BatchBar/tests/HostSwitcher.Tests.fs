@@ -21,11 +21,15 @@ let private make () =
 let ``host switcher shows authority, connection text and exposes reconnect click`` () =
     Headless.run (fun () ->
         let h, _ = make ()
-        h.Render({
-            ServerUrl = "https://example.com:8443/path"
-            Connected = true
-            StatusText = "已连接"
-        })
+
+        h.Render(
+            {
+                ServerUrl = "https://example.com:8443/path"
+                Connected = true
+                StatusText = "已连接"
+            }
+        )
+
         Assert.Contains("example.com:8443", textOf h.View)
         Assert.Equal("已连接", h.ConnectionText)
         Assert.True h.IsConnected
@@ -33,22 +37,29 @@ let ``host switcher shows authority, connection text and exposes reconnect click
         h.ReconnectClicked.Add(fun () -> n.Value <- n.Value + 1)
         click h.StatusRow
         Assert.Equal(1, n.Value)
-        h.Render({
-            ServerUrl = "not-a-url"
-            Connected = true
-            StatusText = "已连接"
-        })
+
+        h.Render(
+            {
+                ServerUrl = "not-a-url"
+                Connected = true
+                StatusText = "已连接"
+            }
+        )
+
         Assert.Contains("选择主机", textOf h.View))
 
 [<Fact>]
 let ``settings and palette buttons fire and render VS works`` () =
     Headless.run (fun () ->
         let h, _ = make ()
-        h.Render({
-            ServerUrl = "http://localhost:8080"
-            Connected = true
-            StatusText = "已就绪"
-        })
+
+        h.Render(
+            {
+                ServerUrl = "http://localhost:8080"
+                Connected = true
+                StatusText = "已就绪"
+            }
+        )
         // 命令面板入口走插槽，不在每帧投影里
         Assert.False h.PaletteButton.IsVisible
         h.SlotPalette true

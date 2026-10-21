@@ -6,14 +6,25 @@ open Xunit
 open Wanxiang2.ThemePalette
 
 let private name (k: PaletteKey) = sprintf "%A" k
+
 let private color mode key =
     let k = ThemePalette.keys |> List.find (fun k -> name k = key)
-    ThemePalette.color (if mode = "Light" then PaletteMode.Light else PaletteMode.Dark) k
+
+    ThemePalette.color
+        (if mode = "Light" then
+             PaletteMode.Light
+         else
+             PaletteMode.Dark)
+        k
 
 [<Fact>]
 let ``both modes cover every key and differ on the canvas`` () =
     Assert.Equal(ThemePalette.keys.Length, ThemePalette.keys |> List.distinct |> List.length)
-    Assert.NotEqual(ThemePalette.color PaletteMode.Light PaletteKey.Canvas, ThemePalette.color PaletteMode.Dark PaletteKey.Canvas)
+
+    Assert.NotEqual(
+        ThemePalette.color PaletteMode.Light PaletteKey.Canvas,
+        ThemePalette.color PaletteMode.Dark PaletteKey.Canvas
+    )
 
 [<Fact>]
 let ``surface soft follows the surface of the same mode`` () =

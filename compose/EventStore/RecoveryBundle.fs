@@ -34,6 +34,7 @@ module RecoveryBundle =
             manifest["reason"] <- plan.damage.reason
             let files = JsonArray()
             let plannedActions = JsonArray()
+
             for f in plan.affectedFiles do
                 // 复制原文件并核对哈希（损坏现场保留；VerifiedCopy 库）
                 let origSha, size = VerifiedCopy.copyInto originalDir f
@@ -44,12 +45,15 @@ module RecoveryBundle =
                 files.Add entry
                 let action = JsonObject()
                 action["path"] <- f
+
                 if f = plan.damage.file then
                     action["action"] <- "truncate"
                     action["offset"] <- plan.damage.byteOffset
                 else
                     action["action"] <- "delete"
+
                 plannedActions.Add action
+
             manifest["files"] <- files
             manifest["plannedActions"] <- plannedActions
             // 写 diagnosis.json
@@ -60,14 +64,25 @@ module RecoveryBundle =
             damage["reason"] <- plan.damage.reason
             diagnosis["damage"] <- damage
             diagnosis["affectedFiles"] <- files.DeepClone()
-            File.WriteAllText(Path.Combine(dir, "diagnosis.json"), diagnosis.ToJsonString(JsonSerializerOptions(JsonSerializerDefaults.General)))
+
+            File.WriteAllText(
+                Path.Combine(dir, "diagnosis.json"),
+                diagnosis.ToJsonString(JsonSerializerOptions(JsonSerializerDefaults.General))
+            )
             // 写 manifest.json
-            File.WriteAllText(Path.Combine(dir, "manifest.json"), manifest.ToJsonString(JsonSerializerOptions(JsonSerializerDefaults.General)))
+            File.WriteAllText(
+                Path.Combine(dir, "manifest.json"),
+                manifest.ToJsonString(JsonSerializerOptions(JsonSerializerDefaults.General))
+            )
             // flush 文件与目录元数据（尽力而为；平台不支持时忽略）
             try
-                use mfs = new FileStream(Path.Combine(dir, "manifest.json"), FileMode.Open, FileAccess.ReadWrite)
+                use mfs =
+                    new FileStream(Path.Combine(dir, "manifest.json"), FileMode.Open, FileAccess.ReadWrite)
+
                 mfs.Flush(true)
-            with _ -> ()
+            with _ ->
+                ()
+
             Ok dir
         with e ->
             Error(sprintf "recovery bundle creation failed: %s" e.Message)

@@ -20,10 +20,15 @@ let private press (w: Window) k mods =
 [<Fact>]
 let ``shortcuts dialog displays sections and closes on button click`` () =
     Headless.run (fun () ->
-        let p = ShortcutHelpPane([ "全局与导航", [ "Ctrl / ⌘ + N", "新建对话" ]; "对话行", [ "F2", "重命名当前对话" ] ])
+        let p =
+            ShortcutHelpPane([ "全局与导航", [ "Ctrl / ⌘ + N", "新建对话" ]; "对话行", [ "F2", "重命名当前对话" ] ])
+
         let _ = host p.View
         let text = textOf p.View
-        for s in [ "键盘快捷键"; "全局与导航"; "Ctrl / ⌘ + N"; "新建对话"; "对话行"; "F2" ] do Assert.Contains(s, text)
+
+        for s in [ "键盘快捷键"; "全局与导航"; "Ctrl / ⌘ + N"; "新建对话"; "对话行"; "F2" ] do
+            Assert.Contains(s, text)
+
         Assert.Same(p.CloseButton, p.InitialFocus)
         Assert.Equal("关闭快捷键帮助 (Esc / Enter)", AutomationProperties.GetHelpText p.CloseButton)
         let n = ref 0

@@ -23,57 +23,81 @@ module internal E2e =
         let dir = tempDir ()
         let configPath = Path.Combine(dir, "config.toml")
         let mutable server: Wanxiang.Server.ServerApp option = None
+
         do
             let instanceId = Guid.CreateVersion7()
             let hash = ClientToken.ClientToken.hash token
+
             let cfg =
                 { AppConfig.defaults instanceId with
                     listen = sprintf "127.0.0.1:%d" port
-                    generation = { (AppConfig.defaults instanceId).generation with autoTitle = false }
+                    generation =
+                        { (AppConfig.defaults instanceId).generation with
+                            autoTitle = false
+                        }
                     providers =
                         Map.ofList
-                            [ "test-provider",
-                              { id = "test-provider"
-                                kind = "openai"
-                                label = "Test Provider"
-                                baseUrl = defaultArg providerUrl "http://127.0.0.1:1/v1"
-                                apiKey = None
-                                models = [ "test-model" ]
-                                defaultModel = "test-model"
-                                timeoutSeconds = ProviderConfig.defaultTimeoutSeconds
-                                maxRetries = 0
-                                enabled = true
-                                promptCaching = false
-                                headers = Map.empty
-                                extraJson = None; visionOverrides = Map.empty } ]
+                            [
+                                "test-provider",
+                                {
+                                    id = "test-provider"
+                                    kind = "openai"
+                                    label = "Test Provider"
+                                    baseUrl = defaultArg providerUrl "http://127.0.0.1:1/v1"
+                                    apiKey = None
+                                    models = [ "test-model" ]
+                                    defaultModel = "test-model"
+                                    timeoutSeconds = ProviderConfig.defaultTimeoutSeconds
+                                    maxRetries = 0
+                                    enabled = true
+                                    promptCaching = false
+                                    headers = Map.empty
+                                    extraJson = None
+                                    visionOverrides = Map.empty
+                                }
+                            ]
                     authClients =
-                        [ { tokenHash = hash
-                            name = "e2e-test"
-                            createdAtUtc = DateTimeOffset.UtcNow
-                            lastSeenUtc = None
-                            revoked = false } ] }
+                        [
+                            {
+                                tokenHash = hash
+                                name = "e2e-test"
+                                createdAtUtc = DateTimeOffset.UtcNow
+                                lastSeenUtc = None
+                                revoked = false
+                            }
+                        ]
+                }
+
             File.WriteAllText(configPath, TomlCodec.serialize cfg)
+
             match initialCommits with
             | Some commits ->
                 DataPaths.ensureDataDirs dir
                 // 种子也按 RFC 7464 记录写（RS + JSON + LF），与运行期写入器一致。
                 let path = DataPaths.logFile dir
+
                 let bytes =
-                    commits
-                    |> List.map (fun c -> Wanxiang.Store.Assembly.frame c)
-                    |> Array.concat
+                    commits |> List.map (fun c -> Wanxiang.Store.Assembly.frame c) |> Array.concat
+
                 File.WriteAllBytes(path, bytes)
             | None -> ()
+
             let app = new Wanxiang.Server.ServerApp(dir, configPath, false, None, ignore)
             app.Start(false)
             server <- Some app
+
         member _.CommitCount =
             Directory.GetFiles(DataPaths.eventsDir dir, "*.jsonseq")
-            |> Array.sumBy (fun path -> System.IO.File.ReadAllText(path).Split(char 0x1E) |> Array.filter (fun seg -> seg.Trim().Length > 0) |> Array.length)
+            |> Array.sumBy (fun path ->
+                System.IO.File.ReadAllText(path).Split(char 0x1E)
+                |> Array.filter (fun seg -> seg.Trim().Length > 0)
+                |> Array.length)
+
         member _.Dispose() =
             match server with
             | Some s -> (s :> IDisposable).Dispose()
             | None -> ()
+
             cleanup dir
 
 
@@ -85,10 +109,13 @@ module internal E2e =
     let normalizeAgui (node: JsonNode) : JsonObject =
         let o = node.AsObject()
         let wireType = o["type"].GetValue<string>()
+
         if wireType = "CUSTOM" then
             let name = o["name"].GetValue<string>()
+
             if name.StartsWith "wanxiang.dev/" then
                 let inner = name.Substring "wanxiang.dev/".Length
+
                 match o["value"] with
                 | :? JsonObject as v when v.ContainsKey "payload" ->
                     // value 里存的就是原外壳
@@ -102,7 +129,12 @@ module internal E2e =
                 | _ ->
                     let wrapped = JsonObject()
                     wrapped["type"] <- inner
-                    wrapped["payload"] <- (match o["value"] with null -> JsonObject() :> JsonNode | v -> v.DeepClone())
+
+                    wrapped["payload"] <-
+                        (match o["value"] with
+                         | null -> JsonObject() :> JsonNode
+                         | v -> v.DeepClone())
+
                     wrapped
             else
                 o
@@ -141,6 +173,7 @@ module internal E2e =
                     | "cancelled" -> "cancelled"
                     | "interrupted" -> "cancelled"
                     | _ -> "completed"
+
                 pl["status"] <- wanxiangStatus
                 w["payload"] <- pl
                 w
@@ -163,13 +196,19 @@ module internal E2e =
             | _ -> o
 
     let recvEvent (ws: ClientWebSocket) (ct: CancellationToken) : JsonObject =
-        let buffer = Array.zeroCreate<byte> (1024 * 1024)
+        let buffer = Array.zeroCreate<byte>(1024 * 1024)
         let ms = new MemoryStream()
         let mutable finished = false
+
         while not finished do
-            let result = ws.ReceiveAsync(ArraySegment<byte>(buffer), ct).GetAwaiter().GetResult()
+            let result =
+                ws.ReceiveAsync(ArraySegment<byte>(buffer), ct).GetAwaiter().GetResult()
+
             ms.Write(buffer, 0, result.Count)
-            if result.EndOfMessage then finished <- true
+
+            if result.EndOfMessage then
+                finished <- true
+
         let text = Encoding.UTF8.GetString(ms.ToArray())
         (JsonNode.Parse(text) |> normalizeAgui)
 
@@ -177,22 +216,27 @@ module internal E2e =
         // 手写 {type,payload} 事件统一折成 CUSTOM wanxiang.dev/<type> 承载（value = 原对象）。
         let carrier =
             let t = ev["type"].GetValue<string>()
-            if t = "CUSTOM" then ev
+
+            if t = "CUSTOM" then
+                ev
             else
                 let ce = JsonObject()
                 ce["type"] <- "CUSTOM"
                 ce["name"] <- sprintf "wanxiang.dev/%s" t
                 ce["value"] <- ev.DeepClone()
                 ce
+
         let bytes = Encoding.UTF8.GetBytes(carrier.ToJsonString())
         ws.SendAsync(ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, ct).GetAwaiter().GetResult()
 
     let waitFor (ws: ClientWebSocket) (ct: CancellationToken) (predicate: JsonObject -> bool) : JsonObject =
         let mutable ev = recvEvent ws ct
         let mutable attempts = 0
+
         while not (predicate ev) && attempts < 50 do
             ev <- recvEvent ws ct
             attempts <- attempts + 1
+
         ev
 
     let conn (port: int) (token: string) (ct: CancellationToken) : ClientWebSocket =
@@ -219,17 +263,23 @@ let ``e2e write command succeeds after snapshot cursor advance`` () =
     let port = pickPort ()
     let token = ClientToken.ClientToken.generate ()
     let handle = E2e.ServerHandle(port, token)
+
     try
         use cts = new CancellationTokenSource(TimeSpan.FromSeconds 15.0)
         let ws = E2e.conn port token cts.Token
         // 等待 auth.accepted
-        let authEv = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+        let authEv =
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+
         Assert.Equal("auth.accepted", authEv["type"].GetValue<string>())
         // observe 列表
         let obs = JsonObject()
         obs["type"] <- "conversation-list.observe"
         E2e.send ws obs cts.Token
-        let listSnap = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
+        let listSnap =
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
         let listPayload = listSnap["payload"].AsObject()
         let lastCommit = listPayload["lastCommitId"].GetValue<uint64>()
         // 推进游标
@@ -251,9 +301,11 @@ let ``e2e write command succeeds after snapshot cursor advance`` () =
         create["payload"] <- cp
         E2e.send ws create cts.Token
         // 期望 command.committed 而非 command.rejected
-        let resp = E2e.waitFor ws cts.Token (fun o ->
-            let t = o["type"].GetValue<string>()
-            t = "command.committed" || t = "command.rejected")
+        let resp =
+            E2e.waitFor ws cts.Token (fun o ->
+                let t = o["type"].GetValue<string>()
+                t = "command.committed" || t = "command.rejected")
+
         let t = resp["type"].GetValue<string>()
         Assert.Equal("command.committed", t)
         ws.Dispose()
@@ -267,42 +319,73 @@ let ``e2e observe advance cursor then enqueue gets response and push`` () =
     let token = ClientToken.ClientToken.generate ()
     let dir = tempDir ()
     let configPath = Path.Combine(dir, "config.toml")
+
     try
         DataPaths.ensureDataDirs dir
         let convId = Guid.NewGuid()
+
         let cfg =
             { AppConfig.defaults (Guid.NewGuid()) with
                 listen = sprintf "127.0.0.1:%d" port
                 authClients =
-                    [ { tokenHash = ClientToken.ClientToken.hash token
-                        name = "e2e"
-                        createdAtUtc = DateTimeOffset.UtcNow
-                        lastSeenUtc = None
-                        revoked = false } ] }
+                    [
+                        {
+                            tokenHash = ClientToken.ClientToken.hash token
+                            name = "e2e"
+                            createdAtUtc = DateTimeOffset.UtcNow
+                            lastSeenUtc = None
+                            revoked = false
+                        }
+                    ]
+            }
+
         File.WriteAllText(configPath, TomlCodec.serialize cfg)
         let eventsFile = DataPaths.logFile dir
+
         let commits =
-            [ Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = convId; title = "A"; config = Helpers.testConfig () } ] ]
+            [
+                Events.Commit.create
+                    1UL
+                    DateTimeOffset.UtcNow
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "A"
+                                config = Helpers.testConfig ()
+                            }
+                    ]
+            ]
+
         Directory.CreateDirectory(Path.GetDirectoryName eventsFile) |> ignore
         File.WriteAllBytes(eventsFile, commits |> List.map Wanxiang.Store.Assembly.frame |> Array.concat)
         let app = new Wanxiang.Server.ServerApp(dir, configPath, false, None, ignore)
         app.Start(false)
+
         try
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 15.0)
             let ws = E2e.conn port token cts.Token
-            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+            |> ignore
             // P2-6：列表观察者应收到 generation 状态变化推送（轻量 conversation.updated）
             let obsList = JsonObject()
             obsList["type"] <- "conversation-list.observe"
             E2e.send ws obsList cts.Token
-            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot") |> ignore
+
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+            |> ignore
+
             let obs = JsonObject()
             obs["type"] <- "conversation.observe"
             let op = JsonObject()
             op["threadId"] <- convId.ToString("D")
             obs["payload"] <- op
             E2e.send ws obs cts.Token
-            let snap = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.snapshot")
+
+            let snap =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.snapshot")
+
             let last = (snap["payload"].AsObject()["lastCommitId"]).GetValue<uint64>()
             let adv = JsonObject()
             adv["type"] <- "cursor.advanced"
@@ -320,14 +403,21 @@ let ``e2e observe advance cursor then enqueue gets response and push`` () =
             enq["payload"] <- ep
             E2e.send ws enq cts.Token
             // 事件顺序：message-committed → command.committed → generation.finished → conversation.updated(idle) → command.accepted
-            let gotPush = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.message-committed")
+            let gotPush =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.message-committed")
+
             Assert.NotNull gotPush
             // P2-6：列表观察者应收到 generation 生命周期推送（provider 缺失 → 直接 finished(failed)）
-            let gotListUpdate = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.updated")
+            let gotListUpdate =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.updated")
+
             Assert.NotNull gotListUpdate
             let change = (gotListUpdate["payload"].AsObject()["change"]).AsObject()
             Assert.Equal("idle", (change["runtimeState"]).GetValue<string>())
-            let gotAccepted = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "command.accepted")
+
+            let gotAccepted =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "command.accepted")
+
             Assert.NotNull gotAccepted
             ws.Dispose()
         finally
@@ -343,22 +433,32 @@ let ``e2e slow client (never reads) does not block other clients' commits`` () =
     let port = pickPort ()
     let token = ClientToken.ClientToken.generate ()
     let handle = E2e.ServerHandle(port, token)
+
     try
         use cts = new CancellationTokenSource(TimeSpan.FromSeconds 15.0)
         let ct = cts.Token
         // 慢客户端 A：连接 + 认证后**不再读取**（主机发送队列持续积压）
         use slow = E2e.conn port token ct
-        E2e.waitFor slow ct (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+        E2e.waitFor slow ct (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+        |> ignore
+
         let obsList = JsonObject()
         obsList["type"] <- "conversation-list.observe"
         E2e.send slow obsList ct
         // 正常客户端 B：认证 + 提交
         use fast = E2e.conn port token ct
-        E2e.waitFor fast ct (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+        E2e.waitFor fast ct (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+        |> ignore
+
         let obsListB = JsonObject()
         obsListB["type"] <- "conversation-list.observe"
         E2e.send fast obsListB ct
-        let listSnap = E2e.waitFor fast ct (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
+        let listSnap =
+            E2e.waitFor fast ct (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
         let listPayload = listSnap["payload"].AsObject()
         let lastCommit = listPayload["lastCommitId"].GetValue<uint64>()
         let adv = JsonObject()
@@ -368,7 +468,7 @@ let ``e2e slow client (never reads) does not block other clients' commits`` () =
         adv["payload"] <- ap
         E2e.send fast adv ct
         // 连续多次提交：慢客户端队列满后（若阻塞 coordinator 则会卡住 B）
-        for i in 1 .. 5 do
+        for i in 1..5 do
             let convId = Guid.NewGuid()
             let create = JsonObject()
             create["type"] <- "conversation.create"
@@ -379,14 +479,19 @@ let ``e2e slow client (never reads) does not block other clients' commits`` () =
             cp["config"] <- JsonObject()
             create["payload"] <- cp
             E2e.send fast create ct
-            let resp = E2e.waitFor fast ct (fun o ->
-                let t = o["type"].GetValue<string>()
-                t = "command.committed" || t = "command.rejected")
+
+            let resp =
+                E2e.waitFor fast ct (fun o ->
+                    let t = o["type"].GetValue<string>()
+                    t = "command.committed" || t = "command.rejected")
+
             let t = resp["type"].GetValue<string>()
+
             if t <> "command.committed" then
                 let rp = resp["payload"].AsObject()
                 let code = rp["code"].GetValue<string>()
                 failwithf "commit %d rejected with code %s (payload %s)" i code (rp.ToJsonString())
+
             Assert.Equal("command.committed", t)
             // 推进游标到新提交（决策 33/35：客户端确认应用后才继续）
             let committedPayload = resp["payload"].AsObject()
@@ -409,36 +514,106 @@ let ``e2e history paging slices by commit id`` () =
     let token = ClientToken.ClientToken.generate ()
     let dir = tempDir ()
     let configPath = Path.Combine(dir, "config.toml")
+
     try
         // 预写日志：对话创建 + 5 条消息（id 1..6）
         DataPaths.ensureDataDirs dir
         let convId = Guid.NewGuid()
+
         let cfg =
             { AppConfig.defaults (Guid.NewGuid()) with
                 listen = sprintf "127.0.0.1:%d" port
                 authClients =
-                    [ { tokenHash = ClientToken.ClientToken.hash token
-                        name = "e2e"
-                        createdAtUtc = DateTimeOffset.UtcNow
-                        lastSeenUtc = None
-                        revoked = false } ] }
+                    [
+                        {
+                            tokenHash = ClientToken.ClientToken.hash token
+                            name = "e2e"
+                            createdAtUtc = DateTimeOffset.UtcNow
+                            lastSeenUtc = None
+                            revoked = false
+                        }
+                    ]
+            }
+
         File.WriteAllText(configPath, TomlCodec.serialize cfg)
         let eventsFile = DataPaths.logFile dir
+
         let commits =
-            [ Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = convId; title = "分页"; config = Helpers.testConfig () } ]
-              Events.Commit.create 2UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = Helpers.userMessageJson "m1" } ]
-              Events.Commit.create 3UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = Helpers.assistantMessageJson "m2" } ]
-              Events.Commit.create 4UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = Helpers.userMessageJson "m3" } ]
-              Events.Commit.create 5UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = Helpers.assistantMessageJson "m4" } ]
-              Events.Commit.create 6UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = Helpers.userMessageJson "m5" } ] ]
+            [
+                Events.Commit.create
+                    1UL
+                    DateTimeOffset.UtcNow
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "分页"
+                                config = Helpers.testConfig ()
+                            }
+                    ]
+                Events.Commit.create
+                    2UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = Helpers.userMessageJson "m1"
+                            }
+                    ]
+                Events.Commit.create
+                    3UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = Helpers.assistantMessageJson "m2"
+                            }
+                    ]
+                Events.Commit.create
+                    4UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = Helpers.userMessageJson "m3"
+                            }
+                    ]
+                Events.Commit.create
+                    5UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = Helpers.assistantMessageJson "m4"
+                            }
+                    ]
+                Events.Commit.create
+                    6UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = Helpers.userMessageJson "m5"
+                            }
+                    ]
+            ]
+
         Directory.CreateDirectory(Path.GetDirectoryName eventsFile) |> ignore
         File.WriteAllBytes(eventsFile, commits |> List.map Wanxiang.Store.Assembly.frame |> Array.concat)
         let app = new Wanxiang.Server.ServerApp(dir, configPath, false, None, ignore)
         app.Start(false)
+
         try
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 15.0)
             let ws = E2e.conn port token cts.Token
-            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+            |> ignore
             // observe 对话 → 快照含全部 5 条（未超快照上限）+ hasMore=false
             let obs = JsonObject()
             obs["type"] <- "conversation.observe"
@@ -446,7 +621,10 @@ let ``e2e history paging slices by commit id`` () =
             op["threadId"] <- convId.ToString("D")
             obs["payload"] <- op
             E2e.send ws obs cts.Token
-            let snap = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.snapshot")
+
+            let snap =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.snapshot")
+
             let sp = snap["payload"].AsObject()
             Assert.Equal(5, sp["messages"].AsArray().Count)
             Assert.False(sp["snapshotHasMore"].GetValue<bool>())
@@ -466,7 +644,10 @@ let ``e2e history paging slices by commit id`` () =
             hp["limit"] <- 2
             hr["payload"] <- hp
             E2e.send ws hr cts.Token
-            let page = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "history.page")
+
+            let page =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "history.page")
+
             let pp = page["payload"].AsObject()
             let items = pp["items"].AsArray()
             Assert.Equal(2, items.Count)
@@ -485,12 +666,34 @@ let ``e2e attachment upload and download round trip`` () =
     let port = pickPort ()
     let token = ClientToken.ClientToken.generate ()
     let handle = E2e.ServerHandle(port, token)
+
     try
         use cts = new CancellationTokenSource(TimeSpan.FromSeconds 15.0)
         let ws = E2e.conn port token cts.Token
-        E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+        E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+        |> ignore
         // 1x1 PNG：声明 octet-stream，主机嗅探为 image/png（P2-2/Q176）
-        let png = [| 0x89uy; 0x50uy; 0x4Euy; 0x47uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy; 0x00uy; 0x00uy; 0x00uy; 0x0Duy; 0x49uy; 0x48uy; 0x44uy; 0x52uy |]
+        let png =
+            [|
+                0x89uy
+                0x50uy
+                0x4Euy
+                0x47uy
+                0x0Duy
+                0x0Auy
+                0x1Auy
+                0x0Auy
+                0x00uy
+                0x00uy
+                0x00uy
+                0x0Duy
+                0x49uy
+                0x48uy
+                0x44uy
+                0x52uy
+            |]
+
         let hash = Convert.ToHexString(SHA256.HashData png).ToLowerInvariant()
         let aid = Guid.NewGuid()
         let beginEv = JsonObject()
@@ -518,7 +721,10 @@ let ``e2e attachment upload and download round trip`` () =
         cpp["sha256"] <- hash
         complete["payload"] <- cpp
         E2e.send ws complete cts.Token
-        let committed = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.committed")
+
+        let committed =
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.committed")
+
         Assert.Equal(hash, (committed["payload"].AsObject()["sha256"]).GetValue<string>())
         // 下载：begin 应回传嗅探 mediaType 与 fileName（P2-7/Q176）
         let req = JsonObject()
@@ -527,15 +733,23 @@ let ``e2e attachment upload and download round trip`` () =
         rp["sha256"] <- hash
         req["payload"] <- rp
         E2e.send ws req cts.Token
-        let dbegin = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.download-begin")
+
+        let dbegin =
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.download-begin")
+
         let dp = dbegin["payload"].AsObject()
         Assert.Equal("image/png", dp["mediaType"].GetValue<string>())
         Assert.Equal("sniff.png", dp["fileName"].GetValue<string>())
         Assert.Equal(int64 png.Length, dp["size"].GetValue<int64>())
         // 接收全部块
-        let dchunk = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.download-chunk")
+        let dchunk =
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.download-chunk")
+
         Assert.Equal(Convert.ToBase64String png, (dchunk["payload"].AsObject()["data"]).GetValue<string>())
-        E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.download-complete") |> ignore
+
+        E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.download-complete")
+        |> ignore
+
         ws.Dispose()
     finally
         handle.Dispose()
@@ -546,19 +760,28 @@ let ``e2e stale client write command is rejected`` () =
     let port = pickPort ()
     let token = ClientToken.ClientToken.generate ()
     let handle = E2e.ServerHandle(port, token)
+
     try
         use cts = new CancellationTokenSource(TimeSpan.FromSeconds 15.0)
         let ws = E2e.conn port token cts.Token
-        E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+        E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+        |> ignore
         // 不 observe 也不推进游标（游标保持 0）
         // 直接尝试创建对话 —— 需要全局最新水位；空库时 latestCommitId=0，可能成功。
         // 先通过另一连接创建一条提交使全局水位 > 0
         let ws2 = E2e.conn port token cts.Token
-        E2e.waitFor ws2 cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+        E2e.waitFor ws2 cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+        |> ignore
+
         let obs2 = JsonObject()
         obs2["type"] <- "conversation-list.observe"
         E2e.send ws2 obs2 cts.Token
-        let snap2 = E2e.waitFor ws2 cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
+        let snap2 =
+            E2e.waitFor ws2 cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
         let snap2Payload = snap2["payload"].AsObject()
         let last2 = snap2Payload["lastCommitId"].GetValue<uint64>()
         let adv2 = JsonObject()
@@ -577,9 +800,11 @@ let ``e2e stale client write command is rejected`` () =
         cp["config"] <- JsonNode.Parse("""{"provider":"openai","model":"test-model"}""")
         create["payload"] <- cp
         E2e.send ws2 create cts.Token
+
         E2e.waitFor ws2 cts.Token (fun o ->
             let t = o["type"].GetValue<string>()
-            t = "command.committed" || t = "command.rejected") |> ignore
+            t = "command.committed" || t = "command.rejected")
+        |> ignore
         // 现在 ws1 游标仍为 0，全局水位已 > 0 → 创建新对话应被 stale 拒绝
         let convId2 = Guid.NewGuid()
         let create2 = JsonObject()
@@ -591,9 +816,12 @@ let ``e2e stale client write command is rejected`` () =
         cp2["config"] <- JsonNode.Parse("""{"provider":"openai","model":"test-model"}""")
         create2["payload"] <- cp2
         E2e.send ws create2 cts.Token
-        let resp = E2e.waitFor ws cts.Token (fun o ->
-            let t = o["type"].GetValue<string>()
-            t = "command.committed" || t = "command.rejected")
+
+        let resp =
+            E2e.waitFor ws cts.Token (fun o ->
+                let t = o["type"].GetValue<string>()
+                t = "command.committed" || t = "command.rejected")
+
         Assert.Equal("command.rejected", resp["type"].GetValue<string>())
         let respPayload = resp["payload"].AsObject()
         let code = respPayload["code"].GetValue<string>()
@@ -609,15 +837,21 @@ let ``e2e empty session config is filled from toml default provider`` () =
     let port = pickPort ()
     let token = ClientToken.ClientToken.generate ()
     let handle = E2e.ServerHandle(port, token)
+
     try
         use cts = new CancellationTokenSource(TimeSpan.FromSeconds 15.0)
         let ws = E2e.conn port token cts.Token
-        E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+        E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+        |> ignore
         // 推进游标（快照后）
         let obs = JsonObject()
         obs["type"] <- "conversation-list.observe"
         E2e.send ws obs cts.Token
-        let listSnap = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
+        let listSnap =
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
         let listPayload = listSnap["payload"].AsObject()
         let lastCommit = listPayload["lastCommitId"].GetValue<uint64>()
         let adv = JsonObject()
@@ -637,9 +871,12 @@ let ``e2e empty session config is filled from toml default provider`` () =
         cp["config"] <- JsonNode.Parse("""{"provider":"","model":""}""")
         create["payload"] <- cp
         E2e.send ws create cts.Token
-        let resp = E2e.waitFor ws cts.Token (fun o ->
-            let t = o["type"].GetValue<string>()
-            t = "command.committed" || t = "command.rejected")
+
+        let resp =
+            E2e.waitFor ws cts.Token (fun o ->
+                let t = o["type"].GetValue<string>()
+                t = "command.committed" || t = "command.rejected")
+
         Assert.Equal("command.committed", resp["type"].GetValue<string>())
         // observe 该对话并验证 config 已被主机填充为 test-provider/test-model
         let ob = JsonObject()
@@ -648,21 +885,28 @@ let ``e2e empty session config is filled from toml default provider`` () =
         op["threadId"] <- convId.ToString("D")
         ob["payload"] <- op
         E2e.send ws ob cts.Token
-        let snap = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.snapshot")
+
+        let snap =
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.snapshot")
         // 对话列表摘要带 config（ServerModel.conversationListItems）
         let listObs = JsonObject()
         listObs["type"] <- "conversation-list.observe"
         E2e.send ws listObs cts.Token
-        let snap2 = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
+        let snap2 =
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
         let snapPayload2 = snap2["payload"].AsObject()
         let itemsNode = snapPayload2["items"]
         let items = itemsNode.AsArray()
+
         let found =
             items
             |> Seq.tryFind (fun i ->
                 let io = i.AsObject()
                 let cidNode = io["conversationId"]
                 cidNode.GetValue<string>() = convId.ToString("D"))
+
         match found with
         | Some item ->
             let io = item.AsObject()
@@ -670,6 +914,7 @@ let ``e2e empty session config is filled from toml default provider`` () =
             Assert.Equal("test-provider", cfg["provider"].GetValue<string>())
             Assert.Equal("test-model", cfg["model"].GetValue<string>())
         | None -> failwith "created conversation not in list"
+
         ws.Dispose()
     finally
         handle.Dispose()
@@ -683,40 +928,56 @@ let ``e2e deleting a conversation never sweeps attachment blobs`` () =
     let token = ClientToken.ClientToken.generate ()
     let dir = tempDir ()
     let configPath = Path.Combine(dir, "config.toml")
+
     try
         DataPaths.ensureDataDirs dir
+
         let cfg =
             { AppConfig.defaults (Guid.NewGuid()) with
                 listen = sprintf "127.0.0.1:%d" port
                 providers =
                     Map.ofList
-                        [ "test-provider",
-                          { id = "test-provider"
-                            kind = "openai"
-                            label = "Test Provider"
-                            baseUrl = "http://127.0.0.1:1/v1"
-                            apiKey = None
-                            models = [ "test-model" ]
-                            defaultModel = "test-model"
-                            timeoutSeconds = ProviderConfig.defaultTimeoutSeconds
-                            maxRetries = 0
-                            enabled = true
-                            promptCaching = false
-                            headers = Map.empty
-                            extraJson = None; visionOverrides = Map.empty } ]
+                        [
+                            "test-provider",
+                            {
+                                id = "test-provider"
+                                kind = "openai"
+                                label = "Test Provider"
+                                baseUrl = "http://127.0.0.1:1/v1"
+                                apiKey = None
+                                models = [ "test-model" ]
+                                defaultModel = "test-model"
+                                timeoutSeconds = ProviderConfig.defaultTimeoutSeconds
+                                maxRetries = 0
+                                enabled = true
+                                promptCaching = false
+                                headers = Map.empty
+                                extraJson = None
+                                visionOverrides = Map.empty
+                            }
+                        ]
                 authClients =
-                    [ { tokenHash = ClientToken.ClientToken.hash token
-                        name = "e2e"
-                        createdAtUtc = DateTimeOffset.UtcNow
-                        lastSeenUtc = None
-                        revoked = false } ] }
+                    [
+                        {
+                            tokenHash = ClientToken.ClientToken.hash token
+                            name = "e2e"
+                            createdAtUtc = DateTimeOffset.UtcNow
+                            lastSeenUtc = None
+                            revoked = false
+                        }
+                    ]
+            }
+
         File.WriteAllText(configPath, TomlCodec.serialize cfg)
         let app = new Wanxiang.Server.ServerApp(dir, configPath, false, None, ignore)
         app.Start(false)
+
         try
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 20.0)
             let ws = E2e.conn port token cts.Token
-            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+            |> ignore
             // 上传一个从不挂到任何消息上的 blob：天然孤儿
             let bytes = Text.Encoding.UTF8.GetBytes "orphan blob survives delete"
             let hash = Convert.ToHexString(SHA256.HashData bytes).ToLowerInvariant()
@@ -746,16 +1007,23 @@ let ``e2e deleting a conversation never sweeps attachment blobs`` () =
             cpp["sha256"] <- hash
             complete["payload"] <- cpp
             E2e.send ws complete cts.Token
-            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.committed") |> ignore
+
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "attachment.committed")
+            |> ignore
             // mtime 倒签一天：旧清扫的 10 分钟 grace 会把它当过期孤儿删掉
-            let blobPath = Path.Combine(dir, "attachments", hash.Substring(0, 2), hash.Substring(2, 2), hash)
+            let blobPath =
+                Path.Combine(dir, "attachments", hash.Substring(0, 2), hash.Substring(2, 2), hash)
+
             Assert.True(File.Exists blobPath)
             File.SetLastWriteTimeUtc(blobPath, DateTime.UtcNow - TimeSpan.FromDays 1.0)
             // 建对话再删掉：旧代码在每次 conversation.deleted 后调度后台清扫
             let obs = JsonObject()
             obs["type"] <- "conversation-list.observe"
             E2e.send ws obs cts.Token
-            let snap = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
+            let snap =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation-list.snapshot")
+
             let adv = JsonObject()
             adv["type"] <- "cursor.advanced"
             let ap = JsonObject()
@@ -772,9 +1040,12 @@ let ``e2e deleting a conversation never sweeps attachment blobs`` () =
             ccp["config"] <- JsonNode.Parse("""{"provider":"","model":""}""")
             create["payload"] <- ccp
             E2e.send ws create cts.Token
-            let created = E2e.waitFor ws cts.Token (fun o ->
-                let t = o["type"].GetValue<string>()
-                t = "command.committed" || t = "command.rejected")
+
+            let created =
+                E2e.waitFor ws cts.Token (fun o ->
+                    let t = o["type"].GetValue<string>()
+                    t = "command.committed" || t = "command.rejected")
+
             Assert.Equal("command.committed", created["type"].GetValue<string>())
             let adv2 = JsonObject()
             adv2["type"] <- "cursor.advanced"
@@ -789,9 +1060,12 @@ let ``e2e deleting a conversation never sweeps attachment blobs`` () =
             dp["threadId"] <- convId.ToString("D")
             delete["payload"] <- dp
             E2e.send ws delete cts.Token
-            let deleted = E2e.waitFor ws cts.Token (fun o ->
-                let t = o["type"].GetValue<string>()
-                t = "command.committed" || t = "command.rejected")
+
+            let deleted =
+                E2e.waitFor ws cts.Token (fun o ->
+                    let t = o["type"].GetValue<string>()
+                    t = "command.committed" || t = "command.rejected")
+
             Assert.Equal("command.committed", deleted["type"].GetValue<string>())
             Thread.Sleep(3500)
             Assert.True(File.Exists blobPath)
@@ -809,32 +1083,61 @@ let ``e2e damaged log starts read-only degraded and rejects writes without touch
     let token = ClientToken.ClientToken.generate ()
     let dir = tempDir ()
     let configPath = Path.Combine(dir, "config.toml")
+
     try
         let convId = Guid.NewGuid()
+
         let cfg =
             { AppConfig.defaults (Guid.NewGuid()) with
                 listen = sprintf "127.0.0.1:%d" port
                 authClients =
-                    [ { tokenHash = ClientToken.ClientToken.hash token
-                        name = "e2e-degraded"
-                        createdAtUtc = DateTimeOffset.UtcNow
-                        lastSeenUtc = None
-                        revoked = false } ] }
+                    [
+                        {
+                            tokenHash = ClientToken.ClientToken.hash token
+                            name = "e2e-degraded"
+                            createdAtUtc = DateTimeOffset.UtcNow
+                            lastSeenUtc = None
+                            revoked = false
+                        }
+                    ]
+            }
+
         File.WriteAllText(configPath, TomlCodec.serialize cfg)
         // 预写：一条有效提交 + 尾部半条损坏记录（模拟崩溃残余）
         DataPaths.ensureDataDirs dir
         let path = DataPaths.logFile dir
-        let c1 = Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = convId
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
         let frame = Wanxiang.Store.Assembly.frame (c1)
-        File.WriteAllBytes(path, Array.append frame (Text.Encoding.UTF8.GetBytes "\u001E{\"formatVersion\":2,\"commitId\":\"2\",\"broken"))
+
+        File.WriteAllBytes(
+            path,
+            Array.append frame (Text.Encoding.UTF8.GetBytes "\u001E{\"formatVersion\":2,\"commitId\":\"2\",\"broken")
+        )
+
         let bytesBefore = File.ReadAllBytes path
 
         let app = new Wanxiang.Server.ServerApp(dir, configPath, false, None, ignore)
         app.Start(false)
+
         try
             use cts = new CancellationTokenSource(TimeSpan.FromSeconds 15.0)
             let ws = E2e.conn port token cts.Token
-            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted") |> ignore
+
+            E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "auth.accepted")
+            |> ignore
             // 历史可读：observe 对话 → 快照含 id=1 的对话
             let obs = JsonObject()
             obs["type"] <- "conversation.observe"
@@ -842,7 +1145,10 @@ let ``e2e damaged log starts read-only degraded and rejects writes without touch
             op["threadId"] <- convId.ToString("D")
             obs["payload"] <- op
             E2e.send ws obs cts.Token
-            let snap = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.snapshot")
+
+            let snap =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "conversation.snapshot")
+
             Assert.NotNull snap
             // 写命令被拒绝（command.rejected）
             let cmd = JsonObject()
@@ -854,7 +1160,10 @@ let ``e2e damaged log starts read-only degraded and rejects writes without touch
             cp["config"] <- JsonObject()
             cmd["payload"] <- cp
             E2e.send ws cmd cts.Token
-            let rejected = E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "command.rejected")
+
+            let rejected =
+                E2e.waitFor ws cts.Token (fun o -> o["type"].GetValue<string>() = "command.rejected")
+
             let code = ((rejected["payload"].AsObject())["code"]).GetValue<string>()
             Assert.Equal("poisoned", (code: string))
             ws.Dispose()

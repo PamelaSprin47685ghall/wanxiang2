@@ -1,4 +1,5 @@
 module ProviderPresetsTests
+
 open Xunit
 open Wanxiang.UI
 
@@ -17,7 +18,12 @@ let ``ProviderPresets all list`` () =
 let ``常用 4 家置顶，原生与兼容端点合并为一个条目`` () =
     Assert.Equal<string list>([ "openai"; "claude"; "gemini"; "ollama" ], ProviderPresets.featured |> List.map _.key)
     Assert.Equal(ProviderPresets.all.Length, (ProviderPresets.featured @ ProviderPresets.more).Length)
-    Assert.Empty(ProviderPresets.all |> List.filter (fun p -> p.key.EndsWith "-compat" || p.label.Contains "兼容端点（"))
+
+    Assert.Empty(
+        ProviderPresets.all
+        |> List.filter (fun p -> p.key.EndsWith "-compat" || p.label.Contains "兼容端点（")
+    )
+
     Assert.Equal(ProviderPresets.all.Length, ProviderPresets.all |> List.map _.key |> List.distinct |> List.length)
     let claude = ProviderPresets.tryFind "claude" |> Option.get
     Assert.Equal("anthropic", claude.kind)
@@ -25,10 +31,22 @@ let ``常用 4 家置顶，原生与兼容端点合并为一个条目`` () =
     let gemini = ProviderPresets.tryFind "gemini" |> Option.get
     Assert.Equal("gemini", gemini.kind)
     Assert.True(gemini.alternate.IsSome)
-    Assert.Equal(Some "claude", ProviderPresets.matchByBaseUrl "https://api.anthropic.com/v1/" |> Option.map _.key)
-    Assert.Equal(Some "gemini", ProviderPresets.matchByBaseUrl "https://generativelanguage.googleapis.com/v1beta/openai" |> Option.map _.key)
+
+    Assert.Equal(
+        Some "claude",
+        ProviderPresets.matchByBaseUrl "https://api.anthropic.com/v1/"
+        |> Option.map _.key
+    )
+
+    Assert.Equal(
+        Some "gemini",
+        ProviderPresets.matchByBaseUrl "https://generativelanguage.googleapis.com/v1beta/openai"
+        |> Option.map _.key
+    )
+
     for p in ProviderPresets.all do
         Assert.True(supported.Contains p.kind)
+
         match p.alternate with
         | Some(k, _) -> Assert.True(supported.Contains k)
         | None -> ()
@@ -36,7 +54,9 @@ let ``常用 4 家置顶，原生与兼容端点合并为一个条目`` () =
 // 迁自旧 NativeTransportTests。
 [<Fact>]
 let ``预设表里存在原生传输的选项`` () =
-    let kinds = ProviderPresets.all |> List.map (fun p -> p.kind) |> List.distinct |> List.sort
+    let kinds =
+        ProviderPresets.all |> List.map (fun p -> p.kind) |> List.distinct |> List.sort
+
     Assert.Contains("anthropic", kinds)
     Assert.Contains("gemini", kinds)
     Assert.Contains("openai", kinds)

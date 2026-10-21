@@ -5,7 +5,12 @@ open Xunit
 open Wanxiang.Core
 open Wanxiang.UI
 
-let private msg role text = { MessageView.empty with role = role; text = text }
+let private msg role text =
+    { MessageView.empty with
+        role = role
+        text = text
+    }
+
 let private now = DateTimeOffset(2026, 10, 12, 12, 0, 0, TimeSpan.Zero)
 
 // 迁自旧 UiControllersTests。
@@ -38,7 +43,12 @@ let ``ConversationRuns delta updates streaming message`` () =
     let genId = Guid.NewGuid()
     runs.Start(convId, genId)
 
-    let msg = { MessageView.empty with role = "assistant"; text = "Hello " }
+    let msg =
+        { MessageView.empty with
+            role = "assistant"
+            text = "Hello "
+        }
+
     let ok = runs.Delta(convId, genId, msg)
     Assert.True(ok)
     Assert.Equal("Hello ", runs.Get(Some convId).message.Value.text)
@@ -63,7 +73,7 @@ let ``ConversationRuns finish without error archives entry to retired ledger wit
     Assert.True(Option.isNone r.message)
 
     // Verifying retirement FIFO queue bounds (capacity = 1024)
-    for _ in 1 .. 1050 do
+    for _ in 1..1050 do
         let gid = Guid.NewGuid()
         runs.Start(convId, gid)
         runs.Finish(convId, gid, None, None) |> ignore
@@ -78,13 +88,15 @@ let ``ConversationRuns finish with error records error in state`` () =
     let genId = Guid.NewGuid()
     runs.Start(convId, genId)
 
-    let genErr = {
-        kind = GenerationErrorKind.ProviderTimeout
-        message = "Network timeout"
-        detail = None
-        retryable = true
-        retryAfterSeconds = Some 5
-    }
+    let genErr =
+        {
+            kind = GenerationErrorKind.ProviderTimeout
+            message = "Network timeout"
+            detail = None
+            retryable = true
+            retryAfterSeconds = Some 5
+        }
+
     runs.Finish(convId, genId, Some genErr, None) |> ignore
 
     let r = runs.Get(Some convId)
@@ -126,7 +138,11 @@ let ``ConversationRuns state machine and FIFO retirement capacity`` () =
     Assert.Equal(Some genId, r1.generationId)
 
     // 3. Delta
-    let msg = { MessageView.empty with text = "生成中..." }
+    let msg =
+        { MessageView.empty with
+            text = "生成中..."
+        }
+
     let accepted = runs.Delta(convId, genId, msg)
     Assert.True(accepted)
     Assert.Equal("生成中...", runs.Get(Some convId).message.Value.text)
@@ -177,7 +193,10 @@ let ``230 成功结束或空回复不留半截`` () =
     let g2 = Guid.NewGuid()
     runs.Start(conv, g2)
     runs.Delta(conv, g2, msg "assistant" "   ") |> ignore
-    runs.Finish(conv, g2, Some(GenerationError.create ProviderTimeout "x"), None) |> ignore
+
+    runs.Finish(conv, g2, Some(GenerationError.create ProviderTimeout "x"), None)
+    |> ignore
+
     Assert.True((runs.Get(Some conv)).partial.IsNone)
 
 // 迁自旧 PartialPersistAndUrlSchemeTests。
@@ -186,7 +205,13 @@ let ``250 刷新后客户端从主机恢复半截与错误卡；正在生成时�
     let runs = ConversationRuns()
     let conv, gen = Guid.NewGuid(), Guid.NewGuid()
     let err = GenerationError.create ProviderTimeout "超时"
-    let msg = { MessageView.empty with role = "assistant"; text = "半截" }
+
+    let msg =
+        { MessageView.empty with
+            role = "assistant"
+            text = "半截"
+        }
+
     Assert.True(runs.RestorePartial(conv, gen, msg, Some err))
     let run = runs.Get(Some conv)
     Assert.Equal(Some "半截", run.partial |> Option.map _.text)
@@ -203,8 +228,17 @@ let ``250 刷新后客户端从主机恢复半截与错误卡；正在生成时�
 let ``retry countdown deadline is fixed at finish time and survives re-reads`` () =
     let gid = Guid.CreateVersion7()
     let err = GenerationError.create ProviderRateLimited "限流"
-    RetryCountdown.notice gid { ProviderRateLimit.empty with resetSeconds = Some 60; remainingRequests = Some 0 } now
+
+    RetryCountdown.notice
+        gid
+        { ProviderRateLimit.empty with
+            resetSeconds = Some 60
+            remainingRequests = Some 0
+        }
+        now
+
     RetryCountdown.attach gid err (now.AddSeconds 2.0)
+
     match RetryCountdown.tryGet err (now.AddSeconds 30.0) with
     | Some info ->
         Assert.Equal(now.AddSeconds 60.0, info.retryAt)
@@ -216,8 +250,19 @@ let ``retry countdown deadline is fixed at finish time and survives re-reads`` (
 [<Fact>]
 let ``non retryable errors never get a countdown`` () =
     let gid = Guid.CreateVersion7()
-    let err = { GenerationError.create ProviderAuthFailed "密钥无效" with retryAfterSeconds = Some 10 }
-    RetryCountdown.notice gid { ProviderRateLimit.empty with retryAfterSeconds = Some 10 } now
+
+    let err =
+        { GenerationError.create ProviderAuthFailed "密钥无效" with
+            retryAfterSeconds = Some 10
+        }
+
+    RetryCountdown.notice
+        gid
+        { ProviderRateLimit.empty with
+            retryAfterSeconds = Some 10
+        }
+        now
+
     RetryCountdown.attach gid err now
     Assert.Equal(None, RetryCountdown.tryGet err now)
 
@@ -288,6 +333,7 @@ let ``生成结束：当前对话的失败只进卡片，不叠提示`` () =
 let ``生成结束：非当前对话的失败只给一句提示`` () =
     let err = GenerationError.create ProviderRateLimited "限流了"
     let outcome = GenerationOutcome.errorOf "failed" (Some err)
+
     match GenerationOutcome.notice "failed" outcome false with
     | FinishNotice.FailureToast text ->
         // 提示是面向用户的一句话：错误说明加上该类别的行动建议。
@@ -322,12 +368,27 @@ let ``生成结束：一次真实的生成序列走完，状态从生成中退�
     Assert.True(running.error.IsNone)
 
     // 2. 流式增量：消息进状态，错误仍空。
-    Assert.True(runs.Delta(conv, gen, { MessageView.empty with role = "assistant"; text = "生成中" }))
+    Assert.True(
+        runs.Delta(
+            conv,
+            gen,
+            { MessageView.empty with
+                role = "assistant"
+                text = "生成中"
+            }
+        )
+    )
+
     Assert.Equal(Some "生成中", runs.Get(Some conv).message |> Option.map _.text)
     Assert.True(runs.Get(Some conv).error.IsNone)
 
     // 3. 结束（成功）：回到空闲，消息清空，错误仍空，用量记下。
-    let usage = { GenerationUsage.empty with totalTokens = Some 42; durationMs = Some 1200L }
+    let usage =
+        { GenerationUsage.empty with
+            totalTokens = Some 42
+            durationMs = Some 1200L
+        }
+
     Assert.True(runs.Finish(conv, gen, None, Some usage))
     let finished = runs.Get(Some conv)
     Assert.False(finished.running)
@@ -341,7 +402,16 @@ let ``生成结束：一次失败的生成序列把错误落进状态，提示�
     let runs = ConversationRuns()
     let conv, gen = Guid.NewGuid(), Guid.NewGuid()
     runs.Start(conv, gen)
-    runs.Delta(conv, gen, { MessageView.empty with role = "assistant"; text = "半句" }) |> ignore
+
+    runs.Delta(
+        conv,
+        gen,
+        { MessageView.empty with
+            role = "assistant"
+            text = "半句"
+        }
+    )
+    |> ignore
 
     // 主机报限流：错误原样落进状态，结局判定说是失败。
     let err = GenerationError.create ProviderRateLimited "限流了"

@@ -8,5 +8,7 @@ open Xunit
 
 [<Fact>]
 let ``requests and decoded updates equal the old implementation byte for byte`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "transports.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "transports.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

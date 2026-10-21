@@ -10,7 +10,13 @@ module StoreLaunch =
 
     /// 打开存储；数据目录被占用与读不了分开报（文字与旧实现相同）。
     let private openStore (dataDir: string) (manual: bool) : Result<EventStore, string> =
-        try Ok(if manual then new EventStore(dataDir, policy = LedgerStore.SnapshotPolicy.Manual) else new EventStore(dataDir))
+        try
+            Ok(
+                if manual then
+                    new EventStore(dataDir, policy = LedgerStore.SnapshotPolicy.Manual)
+                else
+                    new EventStore(dataDir)
+            )
         with
         | :? InvalidOperationException as e -> Error(sprintf "data directory locked: %s" e.Message)
         | e -> Error(sprintf "event log not readable: %s" e.Message)
@@ -28,18 +34,27 @@ module StoreLaunch =
                     | Error e -> Error e
                     | Ok bundle ->
                         logInfo (sprintf "recovery bundle created at %s" bundle)
+
                         match Repair.repairWith store with
                         | Ok truncatedFiles ->
                             for f in truncatedFiles do
                                 logInfo (sprintf "truncated %s" f)
+
                             Ok truncatedFiles
                         | Error e -> Error e
                 | OutcomeUnknown(_, commitId, reason) ->
-                    logInfo (sprintf "outcome of commit %d unknown (%s); reopening settled it, nothing to truncate" commitId reason)
+                    logInfo (
+                        sprintf
+                            "outcome of commit %d unknown (%s); reopening settled it, nothing to truncate"
+                            commitId
+                            reason
+                    )
+
                     Ok []
                 | HostOwned _ -> Error "the event log is held by a running host; stop it first"
                 | UnsupportedFormat msg -> Error msg
                 | Unreadable msg -> Error msg
+
             store.Shutdown()
             result |> Result.map ignore |> Result.mapError (sprintf "fix failed: %s")
 
@@ -50,17 +65,31 @@ module StoreLaunch =
         | Error e -> Error e
         | Ok store ->
             let r = Inspect.ofStore store
+
             match r with
-            | Healthy o | RepairRequired(o, _) ->
+            | Healthy o
+            | RepairRequired(o, _) ->
                 match o.startup.snapshot with
-                | LedgerStore.Used through -> logInfo (sprintf "snapshot %d loaded; replayed %d commits after it" through o.startup.replayedCommits)
+                | LedgerStore.Used through ->
+                    logInfo (
+                        sprintf "snapshot %d loaded; replayed %d commits after it" through o.startup.replayedCommits
+                    )
                 | LedgerStore.Absent -> logInfo "no snapshot; full replay"
                 | LedgerStore.Discarded why -> logInfo (sprintf "snapshot discarded (%s); full replay" why)
             | _ -> ()
+
             match r with
-            | Healthy _ | HostOwned _ -> Ok store
+            | Healthy _
+            | HostOwned _ -> Ok store
             | OutcomeUnknown(o, commitId, reason) ->
-                logInfo (sprintf "outcome of commit %d unknown (%s); starting read-only (valid through commit %d)" commitId reason o.lastCommitId)
+                logInfo (
+                    sprintf
+                        "outcome of commit %d unknown (%s); starting read-only (valid through commit %d)"
+                        commitId
+                        reason
+                        o.lastCommitId
+                )
+
                 Ok store
             | RepairRequired(o, plan) ->
                 logInfo (
@@ -68,7 +97,9 @@ module StoreLaunch =
                         "event log damaged at %s (%s); starting read-only degraded mode (valid through commit %d). Run `wanxiang doctor --fix` to repair."
                         plan.damage.file
                         plan.damage.reason
-                        o.lastCommitId)
+                        o.lastCommitId
+                )
+
                 Ok store
             | UnsupportedFormat msg -> Error(sprintf "unsupported event log format: %s" msg)
             | Unreadable msg -> Error(sprintf "event log not readable: %s" msg)

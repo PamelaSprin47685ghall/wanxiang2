@@ -50,12 +50,18 @@ module WireAgui =
                 let e = RunFinishedEvent()
                 e.ThreadId <- d.conversationId.ToString("D")
                 e.RunId <- d.generationId.ToString("D")
-                d.usage |> Option.iter (fun u ->
+
+                d.usage
+                |> Option.iter (fun u ->
                     let tu = TokenUsage()
                     u.promptTokens |> Option.iter (fun v -> tu.InputTokens <- Nullable(int64 v))
-                    u.completionTokens |> Option.iter (fun v -> tu.OutputTokens <- Nullable(int64 v))
+
+                    u.completionTokens
+                    |> Option.iter (fun v -> tu.OutputTokens <- Nullable(int64 v))
+
                     u.totalTokens |> Option.iter (fun v -> tu.TotalTokens <- Nullable(int64 v))
                     e.Usage <- ResizeArray<TokenUsage>([ tu ]))
+
                 e :> BaseEvent
             | "cancelled" ->
                 // 标准面：RunFinishedOutcome 有派生类 RunFinishedCancelledOutcome（可构造）。
@@ -70,7 +76,14 @@ module WireAgui =
                 // 客户端无法把失败归到对话，该对话会永远停在「生成中」，错误卡与恢复动作也出不来。
                 let ce = CustomEvent()
                 ce.Name <- sprintf "%s%s" Capabilities.Namespace (WireEvent.typeName ev)
-                ce.Value <- Nullable(WireCodec.payloadOf ev |> JsonDocument.Parse |> fun doc -> doc.RootElement.Clone())
+
+                ce.Value <-
+                    Nullable(
+                        WireCodec.payloadOf ev
+                        |> JsonDocument.Parse
+                        |> fun doc -> doc.RootElement.Clone()
+                    )
+
                 ce :> BaseEvent
         | GenerationDelta d ->
             // 增量按 MAF 内容形状分派到 AG-UI 标准面（能用标准语义的都用标准）：
@@ -86,26 +99,50 @@ module WireAgui =
                     | :? JsonArray as arr when arr.Count > 0 -> Some arr[0]
                     | _ -> None
                 | _ -> None
+
             let messageId = d.generationId.ToString("D")
+
             match firstContent () with
-            | Some (:? JsonObject as c) ->
-                match (match c["$type"] with null -> null | t -> t.GetValue<string>()) with
+            | Some(:? JsonObject as c) ->
+                match
+                    (match c["$type"] with
+                     | null -> null
+                     | t -> t.GetValue<string>())
+                with
                 | "text" ->
                     let e = TextMessageChunkEvent()
                     e.MessageId <- messageId
-                    (match c["text"] with null -> () | t -> e.Delta <- t.GetValue<string>())
+
+                    (match c["text"] with
+                     | null -> ()
+                     | t -> e.Delta <- t.GetValue<string>())
+
                     e :> BaseEvent
                 | "functionCall" ->
                     // 一个 MAF functionCall 内容 → AG-UI 工具调用三元组（START/ARGS/END）。
                     // AG-UI 单帧单事件，取 START 承载身份；ARGS/END 由后续 delta 补齐时同样分派。
                     let e = ToolCallStartEvent()
-                    (match c["callId"] with null -> () | t -> e.ToolCallId <- t.GetValue<string>())
-                    (match c["name"] with null -> () | t -> e.ToolCallName <- t.GetValue<string>())
+
+                    (match c["callId"] with
+                     | null -> ()
+                     | t -> e.ToolCallId <- t.GetValue<string>())
+
+                    (match c["name"] with
+                     | null -> ()
+                     | t -> e.ToolCallName <- t.GetValue<string>())
+
                     e :> BaseEvent
                 | "functionResult" ->
                     let e = ToolCallResultEvent()
-                    (match c["callId"] with null -> () | t -> e.ToolCallId <- t.GetValue<string>())
-                    (match c["result"] with null -> () | t -> e.Content <- AGUIContent.op_Implicit (t.ToString()))
+
+                    (match c["callId"] with
+                     | null -> ()
+                     | t -> e.ToolCallId <- t.GetValue<string>())
+
+                    (match c["result"] with
+                     | null -> ()
+                     | t -> e.Content <- AGUIContent.op_Implicit (t.ToString()))
+
                     e.MessageId <- messageId
                     e :> BaseEvent
                 | _ -> customDelta d
@@ -145,118 +182,186 @@ module WireAgui =
         | ParsedEvent.Unrecognized _ -> Ok None
         | ParsedEvent.Custom(name, value: JsonNode) ->
             if not (name.StartsWith Capabilities.Namespace) then
-                Ok None    // 别家的 CUSTOM：合法忽略
+                Ok None // 别家的 CUSTOM：合法忽略
             else
                 let wireType = name.Substring Capabilities.Namespace.Length
+
                 match value with
                 | :? JsonObject as vo when vo.ContainsKey "type" ->
                     // value 已是 {type,payload} 形态
                     match WireCodec.tryDecode (value.ToJsonString()) with
                     | Ok ev -> Ok(Some ev)
-                    | Error e when e.StartsWith WireCodec.unknownEventTypePrefix -> Ok None    // 55.8 R1：未知类型忽略
+                    | Error e when e.StartsWith WireCodec.unknownEventTypePrefix -> Ok None // 55.8 R1：未知类型忽略
                     | Error e -> Error(sprintf "custom %s: %s" wireType e)
                 | :? JsonObject as vo ->
                     // value 是扁平字段：折成 {type,payload}（字段名出入站一致）
                     let wrapped = JsonObject()
                     wrapped["type"] <- wireType
                     wrapped["payload"] <- vo.DeepClone()
+
                     match WireCodec.tryDecode (wrapped.ToJsonString()) with
                     | Ok ev -> Ok(Some ev)
-                    | Error e when e.StartsWith WireCodec.unknownEventTypePrefix -> Ok None    // 55.8 R1：未知类型忽略
+                    | Error e when e.StartsWith WireCodec.unknownEventTypePrefix -> Ok None // 55.8 R1：未知类型忽略
                     | Error e -> Error(sprintf "custom %s: %s" wireType e)
                 | _ ->
                     // CUSTOM value 不是对象（数组/裸值）：无法承载语义事件，忽略并告警（增量安全）。
                     Ok None
-        | ParsedEvent.Known (aguiEv: BaseEvent) ->
+        | ParsedEvent.Known(aguiEv: BaseEvent) ->
             // 标准 AG-UI 面反向映射回语义事件
             match aguiEv with
             | :? RunStartedEvent as e ->
                 Ok(
                     Some(
                         GenerationStarted
-                            {| conversationId = (match Guid.TryParse e.ThreadId with true, g -> g | _ -> Guid.Empty)
-                               generationId = (match Guid.TryParse e.RunId with true, g -> g | _ -> Guid.Empty)
-                               providerId = ""
-                               model = "" |}))
+                            {|
+                                conversationId =
+                                    (match Guid.TryParse e.ThreadId with
+                                     | true, g -> g
+                                     | _ -> Guid.Empty)
+                                generationId =
+                                    (match Guid.TryParse e.RunId with
+                                     | true, g -> g
+                                     | _ -> Guid.Empty)
+                                providerId = ""
+                                model = ""
+                            |}
+                    )
+                )
             | :? TextMessageChunkEvent as e ->
                 Ok(
                     Some(
                         GenerationDelta
-                            {  conversationId = Guid.Empty
-                               generationId = (match Guid.TryParse e.MessageId with true, g -> g | _ -> Guid.Empty)
-                               payload = (let p = JsonObject() in p["text"] <- e.Delta; p) }))
+                            {
+                                conversationId = Guid.Empty
+                                generationId =
+                                    (match Guid.TryParse e.MessageId with
+                                     | true, g -> g
+                                     | _ -> Guid.Empty)
+                                payload =
+                                    (let p = JsonObject() in
+                                     p["text"] <- e.Delta
+                                     p)
+                            }
+                    )
+                )
             | :? ReasoningMessageChunkEvent as e ->
                 // 推理增量：以 MAF 内容形状承载（text 内容项）
                 Ok(
                     Some(
                         GenerationDelta
-                            {  conversationId = Guid.Empty
-                               generationId = (match Guid.TryParse e.MessageId with true, g -> g | _ -> Guid.Empty)
-                               payload =
-                                   (let p = JsonObject()
-                                    p["role"] <- "assistant"
-                                    let cs = JsonArray()
-                                    let c = JsonObject()
-                                    c["$type"] <- "text"
-                                    c["text"] <- e.Delta
-                                    cs.Add c
-                                    p["contents"] <- cs
-                                    p) }))
+                            {
+                                conversationId = Guid.Empty
+                                generationId =
+                                    (match Guid.TryParse e.MessageId with
+                                     | true, g -> g
+                                     | _ -> Guid.Empty)
+                                payload =
+                                    (let p = JsonObject()
+                                     p["role"] <- "assistant"
+                                     let cs = JsonArray()
+                                     let c = JsonObject()
+                                     c["$type"] <- "text"
+                                     c["text"] <- e.Delta
+                                     cs.Add c
+                                     p["contents"] <- cs
+                                     p)
+                            }
+                    )
+                )
             | :? ToolCallStartEvent as e ->
                 Ok(
                     Some(
                         GenerationDelta
-                            {  conversationId = Guid.Empty
-                               generationId = Guid.Empty
-                               payload =
-                                   (let p = JsonObject()
-                                    p["role"] <- "assistant"
-                                    let cs = JsonArray()
-                                    let c = JsonObject()
-                                    c["$type"] <- "functionCall"
-                                    c["callId"] <- e.ToolCallId
-                                    c["name"] <- e.ToolCallName
-                                    cs.Add c
-                                    p["contents"] <- cs
-                                    p) }))
+                            {
+                                conversationId = Guid.Empty
+                                generationId = Guid.Empty
+                                payload =
+                                    (let p = JsonObject()
+                                     p["role"] <- "assistant"
+                                     let cs = JsonArray()
+                                     let c = JsonObject()
+                                     c["$type"] <- "functionCall"
+                                     c["callId"] <- e.ToolCallId
+                                     c["name"] <- e.ToolCallName
+                                     cs.Add c
+                                     p["contents"] <- cs
+                                     p)
+                            }
+                    )
+                )
             | :? ToolCallResultEvent as e ->
                 Ok(
                     Some(
                         GenerationDelta
-                            {  conversationId = Guid.Empty
-                               generationId = (match Guid.TryParse e.MessageId with true, g -> g | _ -> Guid.Empty)
-                               payload =
-                                   (let p = JsonObject()
-                                    p["role"] <- "tool"
-                                    let cs = JsonArray()
-                                    let c = JsonObject()
-                                    c["$type"] <- "functionResult"
-                                    c["callId"] <- e.ToolCallId
-                                    c["result"] <- (match box e.Content with null -> null | c -> (string c))
-                                    cs.Add c
-                                    p["contents"] <- cs
-                                    p) }))
+                            {
+                                conversationId = Guid.Empty
+                                generationId =
+                                    (match Guid.TryParse e.MessageId with
+                                     | true, g -> g
+                                     | _ -> Guid.Empty)
+                                payload =
+                                    (let p = JsonObject()
+                                     p["role"] <- "tool"
+                                     let cs = JsonArray()
+                                     let c = JsonObject()
+                                     c["$type"] <- "functionResult"
+                                     c["callId"] <- e.ToolCallId
+
+                                     c["result"] <-
+                                         (match box e.Content with
+                                          | null -> null
+                                          | c -> (string c))
+
+                                     cs.Add c
+                                     p["contents"] <- cs
+                                     p)
+                            }
+                    )
+                )
             | :? RunFinishedEvent as e ->
                 // Outcome 派生类判 cancelled；其余按 completed。
                 let status =
                     match e.Outcome with
                     | :? RunFinishedCancelledOutcome -> "cancelled"
                     | _ -> "completed"
+
                 Ok(
                     Some(
                         GenerationFinished
-                            {| conversationId = (match Guid.TryParse e.ThreadId with true, g -> g | _ -> Guid.Empty)
-                               generationId = (match Guid.TryParse e.RunId with true, g -> g | _ -> Guid.Empty)
-                               status = status
-                               error = None
-                               usage = None |}))
+                            {|
+                                conversationId =
+                                    (match Guid.TryParse e.ThreadId with
+                                     | true, g -> g
+                                     | _ -> Guid.Empty)
+                                generationId =
+                                    (match Guid.TryParse e.RunId with
+                                     | true, g -> g
+                                     | _ -> Guid.Empty)
+                                status = status
+                                error = None
+                                usage = None
+                            |}
+                    )
+                )
             | :? RunErrorEvent as e ->
                 Ok(
                     Some(
                         GenerationFinished
-                            {| conversationId = Guid.Empty
-                               generationId = Guid.Empty
-                               status = "failed"
-                               error = Some { kind = Wanxiang.Core.GenerationErrorKind.UnknownFailure; message = e.Message; detail = None; retryable = true; retryAfterSeconds = None }
-                               usage = None |}))
-            | _ -> Ok None    // 认识但当前不消费的标准事件（STATE_DELTA 等）：忽略
+                            {|
+                                conversationId = Guid.Empty
+                                generationId = Guid.Empty
+                                status = "failed"
+                                error =
+                                    Some
+                                        {
+                                            kind = Wanxiang.Core.GenerationErrorKind.UnknownFailure
+                                            message = e.Message
+                                            detail = None
+                                            retryable = true
+                                            retryAfterSeconds = None
+                                        }
+                                usage = None
+                            |}
+                    )
+                )
+            | _ -> Ok None // 认识但当前不消费的标准事件（STATE_DELTA 等）：忽略

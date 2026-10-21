@@ -19,22 +19,47 @@ let private healthy (dir: string) : ReplayOutcome =
 let private repairRequired (dir: string) : ReplayOutcome * RepairPlan =
     match Inspect.run dir with
     | Healthy _ -> failwith "expected repair required"
-    | RepairRequired (o, p) -> o, p
+    | RepairRequired(o, p) -> o, p
     | UnsupportedFormat msg -> failwith msg
     | Unreadable msg -> failwith msg
 
 [<Fact>]
 let ``test_replay_tail_truncate`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         // 手工写两条提交
-        let commit1 = Events.Commit.create 1UL (DateTimeOffset.UtcNow) [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
+        let commit1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset.UtcNow)
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
         let convId =
             match commit1.events.Head with
             | ConversationCreated d -> d.conversationId
             | _ -> Guid.Empty
-        let commit2 = Events.Commit.create 2UL (DateTimeOffset.UtcNow) [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "你好" } ]
+
+        let commit2 =
+            Events.Commit.create
+                2UL
+                (DateTimeOffset.UtcNow)
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = userMessageJson "你好"
+                        }
+                ]
+
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         File.AppendAllBytes(path, Wanxiang.Store.Assembly.frame commit1)
@@ -51,9 +76,23 @@ let ``test_replay_tail_truncate`` () =
 [<Fact>]
 let ``test_replay_id_gap`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
-        let c1 = Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         File.AppendAllBytes(path, Wanxiang.Store.Assembly.frame c1)
@@ -67,8 +106,7 @@ let ``test_replay_id_gap`` () =
         // 显式修复：截尾到有效前缀
         match Repair.repair dir with
         | Error e -> failwith e
-        | Ok truncated ->
-            Assert.Contains(path, truncated)
+        | Ok truncated -> Assert.Contains(path, truncated)
         // 修复后重新检查应健康
         let outcome2 = healthy dir
         Assert.Equal(1UL, outcome2.lastCommitId)
@@ -78,10 +116,36 @@ let ``test_replay_id_gap`` () =
 [<Fact>]
 let ``id 空洞触发截尾`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
-        let c1 = Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
-        let c3 = Events.Commit.create 3UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = newConversationId (); title = "C"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
+        let c3 =
+            Events.Commit.create
+                3UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "C"
+                            config = testConfig ()
+                        }
+                ]
+
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         File.AppendAllBytes(path, Wanxiang.Store.Assembly.frame c1)
@@ -94,9 +158,23 @@ let ``id 空洞触发截尾`` () =
 [<Fact>]
 let ``doctor 只读模式不修改损坏日志`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
-        let c1 = Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         File.AppendAllBytes(path, Wanxiang.Store.Assembly.frame c1)
@@ -111,7 +189,9 @@ let ``doctor 只读模式不修改损坏日志`` () =
 
 [<Fact>]
 let ``test_replay_nonexistent_events_dir`` () =
-    let dir = Path.Combine(Path.GetTempPath(), "wanxiang-nonexistent-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "wanxiang-nonexistent-" + Guid.NewGuid().ToString("N"))
+
     try
         let outcome = healthy dir
         Assert.Equal(0UL, outcome.lastCommitId)
@@ -121,6 +201,7 @@ let ``test_replay_nonexistent_events_dir`` () =
 [<Fact>]
 let ``test_replay_empty_events_dir`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let outcome = healthy dir
@@ -131,6 +212,7 @@ let ``test_replay_empty_events_dir`` () =
 [<Fact>]
 let ``test_replay_zero_byte_event_file`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -145,13 +227,19 @@ let ``test_replay_zero_byte_event_file`` () =
 [<Fact>]
 let ``test_replay_projection_apply_error_fix_false`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         // commit 1 删除了一个根本不存在的对话 -> Projection.applyCommit 会返回 Error
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ EventData.ConversationDeleted { conversationId = Guid.NewGuid() } ]
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day))
+                [ EventData.ConversationDeleted { conversationId = Guid.NewGuid() } ]
+
         let frame = Wanxiang.Store.Assembly.frame c1
         File.WriteAllBytes(path, frame)
         let _, plan = repairRequired dir
@@ -162,14 +250,33 @@ let ``test_replay_projection_apply_error_fix_false`` () =
 [<Fact>]
 let ``test_replay_projection_apply_error_fix_true_truncates_at_commit`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
         let convId = newConversationId ()
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
-        let c2 = Events.Commit.create 2UL (DateTimeOffset(day)) [ EventData.ConversationDeleted { conversationId = Guid.NewGuid() } ] // 不存在，apply 失败
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = convId
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
+        let c2 =
+            Events.Commit.create
+                2UL
+                (DateTimeOffset(day))
+                [ EventData.ConversationDeleted { conversationId = Guid.NewGuid() } ] // 不存在，apply 失败
+
         let frame1 = Wanxiang.Store.Assembly.frame (c1)
         let frame2 = Wanxiang.Store.Assembly.frame (c2)
         File.WriteAllBytes(path, Array.append frame1 frame2)
@@ -177,6 +284,7 @@ let ``test_replay_projection_apply_error_fix_true_truncates_at_commit`` () =
         let outcome, plan = repairRequired dir
         Assert.Equal(1UL, outcome.lastCommitId)
         Assert.Contains(path, plan.damage.file)
+
         match Repair.repair dir with
         | Error e -> failwith e
         | Ok truncated ->
@@ -189,13 +297,39 @@ let ``test_replay_projection_apply_error_fix_true_truncates_at_commit`` () =
 [<Fact>]
 let ``test_replay_commit_id_gap_fix_false`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
-        let c3 = Events.Commit.create 3UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = newConversationId (); title = "B"; config = testConfig () } ] // 缺少 2
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
+        let c3 =
+            Events.Commit.create
+                3UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "B"
+                            config = testConfig ()
+                        }
+                ] // 缺少 2
+
         let frame1 = Wanxiang.Store.Assembly.frame (c1)
         let frame3 = Wanxiang.Store.Assembly.frame (c3)
         File.WriteAllBytes(path, Array.append frame1 frame3)
@@ -208,22 +342,50 @@ let ``test_replay_commit_id_gap_fix_false`` () =
 [<Fact>]
 let ``test_replay_commit_id_gap_fix_true_truncates_at_gap`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
-        let c3 = Events.Commit.create 3UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = newConversationId (); title = "B"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
+        let c3 =
+            Events.Commit.create
+                3UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "B"
+                            config = testConfig ()
+                        }
+                ]
+
         let frame1 = Wanxiang.Store.Assembly.frame (c1)
         let frame3 = Wanxiang.Store.Assembly.frame (c3)
         File.WriteAllBytes(path, Array.append frame1 frame3)
 
         let outcome, plan = repairRequired dir
         Assert.Equal(1UL, outcome.lastCommitId)
+
         match Repair.repair dir with
         | Error e -> failwith e
         | Ok _ -> ()
+
         Assert.Equal(int64 frame1.Length, FileInfo(path).Length)
     finally
         cleanup dir
@@ -231,12 +393,26 @@ let ``test_replay_commit_id_gap_fix_true_truncates_at_gap`` () =
 [<Fact>]
 let ``test_replay_whitespace_only_record_is_damage`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
         let json1 = Wanxiang.Store.Assembly.envelope c1
         // 构造：RS + RS + "   \n" + RS + json1 + "\n"
         use ms = new MemoryStream()
@@ -258,12 +434,26 @@ let ``test_replay_whitespace_only_record_is_damage`` () =
 [<Fact>]
 let ``test_replay_crlf_record_ending`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = newConversationId (); title = "CRLF"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "CRLF"
+                            config = testConfig ()
+                        }
+                ]
+
         let json1 = Wanxiang.Store.Assembly.envelope c1
         // 构造带 \r\n 的记录：RS + json + \r\n
         use ms = new MemoryStream()
@@ -280,12 +470,26 @@ let ``test_replay_crlf_record_ending`` () =
 [<Fact>]
 let ``test_replay_record_without_lf_at_eof_is_torn_tail`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
         let path = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = newConversationId (); title = "NoLF"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "NoLF"
+                            config = testConfig ()
+                        }
+                ]
+
         let json1 = Wanxiang.Store.Assembly.envelope c1
         // 末尾没有 \n：RS + json (无换行)
         use ms = new MemoryStream()
@@ -304,12 +508,26 @@ let ``test_replay_record_without_lf_at_eof_is_torn_tail`` () =
 [<Fact>]
 let ``test_replay_record_without_lf_followed_immediately_by_new_rs_triggers_truncation`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
         let p = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName p) |> ignore
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
         let frame1 = Wanxiang.Store.Assembly.frame (c1)
         use ms = new MemoryStream()
         ms.Write(frame1, 0, frame1.Length)
@@ -322,6 +540,7 @@ let ``test_replay_record_without_lf_followed_immediately_by_new_rs_triggers_trun
         File.WriteAllBytes(p, ms.ToArray())
         let outcome, plan = repairRequired dir
         Assert.Equal(1UL, outcome.lastCommitId)
+
         match Repair.repair dir with
         | Error e -> failwith e
         | Ok truncated ->
@@ -333,6 +552,7 @@ let ``test_replay_record_without_lf_followed_immediately_by_new_rs_triggers_trun
 [<Fact>]
 let ``test_replay_truncation_failure_returns_error`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -343,7 +563,11 @@ let ``test_replay_truncation_failure_returns_error`` () =
         // POSIX / Linux 语义：FileShare.Read 不阻止同用户写打开，因此用文件系统只读权限模拟截尾失败。
         // scanFile 以只读方式打开能正常扫描到损坏点；但 truncateFile 以 FileAccess.Write 打开时
         // 必因缺少写权限抛出 UnauthorizedAccessException，走 truncateFile 的 with e -> false 分支！
-        try File.SetUnixFileMode(p, UnixFileMode.UserRead) with _ -> ()
+        try
+            File.SetUnixFileMode(p, UnixFileMode.UserRead)
+        with _ ->
+            ()
+
         try
             match Repair.repair dir with
             | Ok _ -> failwith "expected error because file truncation should fail"
@@ -353,13 +577,17 @@ let ``test_replay_truncation_failure_returns_error`` () =
                 Assert.Contains("log.jsonseq", e)
         finally
             // 恢复写权限，确保 cleanup 能顺利删除临时目录与文件
-            try File.SetUnixFileMode(p, UnixFileMode.UserRead ||| UnixFileMode.UserWrite) with _ -> ()
+            try
+                File.SetUnixFileMode(p, UnixFileMode.UserRead ||| UnixFileMode.UserWrite)
+            with _ ->
+                ()
     finally
         cleanup dir
 
 [<Fact>]
 let ``inspect 绝不修改文件（含级联删除候选）`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day1 = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -367,8 +595,33 @@ let ``inspect 绝不修改文件（含级联删除候选）`` () =
         let p1 = DataPaths.logFile dir
         let p2 = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName p1) |> ignore
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day1)) [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
-        let c2 = Events.Commit.create 2UL (DateTimeOffset(day2)) [ ConversationCreated { conversationId = newConversationId (); title = "B"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day1))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
+        let c2 =
+            Events.Commit.create
+                2UL
+                (DateTimeOffset(day2))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "B"
+                            config = testConfig ()
+                        }
+                ]
+
         File.WriteAllBytes(p1, Wanxiang.Store.Assembly.frame (c1))
         File.WriteAllBytes(p2, Wanxiang.Store.Assembly.frame (c2))
         // 在 p2 尾部追加坏记录 → p2 是损坏点，p2 自身会被截尾
@@ -386,6 +639,7 @@ let ``inspect 绝不修改文件（含级联删除候选）`` () =
 [<Fact>]
 let ``recovery bundle 建立后修复才执行（算法 B）`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let day1 = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -393,8 +647,33 @@ let ``recovery bundle 建立后修复才执行（算法 B）`` () =
         let p1 = DataPaths.logFile dir
         let p2 = DataPaths.logFile dir
         Directory.CreateDirectory(Path.GetDirectoryName p1) |> ignore
-        let c1 = Events.Commit.create 1UL (DateTimeOffset(day1)) [ ConversationCreated { conversationId = newConversationId (); title = "A"; config = testConfig () } ]
-        let c2 = Events.Commit.create 2UL (DateTimeOffset(day2)) [ ConversationCreated { conversationId = newConversationId (); title = "B"; config = testConfig () } ]
+
+        let c1 =
+            Events.Commit.create
+                1UL
+                (DateTimeOffset(day1))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+
+        let c2 =
+            Events.Commit.create
+                2UL
+                (DateTimeOffset(day2))
+                [
+                    ConversationCreated
+                        {
+                            conversationId = newConversationId ()
+                            title = "B"
+                            config = testConfig ()
+                        }
+                ]
+
         File.WriteAllBytes(p1, Wanxiang.Store.Assembly.frame (c1))
         File.AppendAllBytes(p2, Wanxiang.Store.Assembly.frame (c2))
         File.AppendAllText(p2, "\u001e" + "garbage-no-lf")
@@ -407,7 +686,10 @@ let ``recovery bundle 建立后修复才执行（算法 B）`` () =
             Assert.True(File.Exists(Path.Combine(bundleDir, "diagnosis.json")))
             // original/ 含全部受影响文件
             for f in plan.affectedFiles do
-                Assert.True(File.Exists(Path.Combine(bundleDir, "original", Path.GetFileName f)), sprintf "missing backup of %s" f)
+                Assert.True(
+                    File.Exists(Path.Combine(bundleDir, "original", Path.GetFileName f)),
+                    sprintf "missing backup of %s" f
+                )
         // 修复
         match Repair.repair dir with
         | Error e -> failwith e

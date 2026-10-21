@@ -42,11 +42,16 @@ module SupportBundle =
     /// 存储布局：events/attachments/snapshots/recovery 的文件清单（名称 + 大小，不含内容）。
     let private storageLayoutJson (dataDir: string) : JsonObject =
         let o = JsonObject()
+
         let dirs =
-            [ "events", DataPaths.eventsDir dataDir
-              "attachments", DataPaths.attachmentsDir dataDir
-              "recovery", Path.Combine(dataDir, "recovery") ]
+            [
+                "events", DataPaths.eventsDir dataDir
+                "attachments", DataPaths.attachmentsDir dataDir
+                "recovery", Path.Combine(dataDir, "recovery")
+            ]
+
         let filesArr = JsonArray()
+
         for (label, dir) in dirs do
             if Directory.Exists dir then
                 for f in Directory.GetFiles(dir) do
@@ -55,17 +60,23 @@ module SupportBundle =
                     entry["file"] <- Path.GetFileName f
                     entry["size"] <- FileInfo(f).Length
                     filesArr.Add entry
+
         o["files"] <- filesArr
         o
 
     /// 快照状态（算法 L 的当前结论）。
     let private snapshotStatusJson (dataDir: string) : JsonObject =
         let o = JsonObject()
+
         let startup =
             match Inspect.runOrPeek dataDir with
-            | Healthy r | RepairRequired(r, _) | OutcomeUnknown(r, _, _) -> Ok r.startup
+            | Healthy r
+            | RepairRequired(r, _)
+            | OutcomeUnknown(r, _, _) -> Ok r.startup
             | HostOwned i -> Ok i.startup
-            | UnsupportedFormat m | Unreadable m -> Error m
+            | UnsupportedFormat m
+            | Unreadable m -> Error m
+
         match startup with
         | Ok st ->
             match st.snapshot with
@@ -74,8 +85,13 @@ module SupportBundle =
                 o["status"] <- "valid"
                 o["throughCommitId"] <- through
                 o["replayedCommits"] <- st.replayedCommits
-            | LedgerStore.Discarded reason -> o["status"] <- "discarded"; o["reason"] <- reason
-        | Error m -> o["status"] <- "unchecked"; o["reason"] <- m
+            | LedgerStore.Discarded reason ->
+                o["status"] <- "discarded"
+                o["reason"] <- reason
+        | Error m ->
+            o["status"] <- "unchecked"
+            o["reason"] <- m
+
         o
 
     /// 脱敏配置：apiKey/token 值替换为 ***（与 Stderr.redact 同一规则）。
@@ -88,7 +104,9 @@ module SupportBundle =
             |> Seq.filter (fun k -> not (String.IsNullOrWhiteSpace k))
             |> Seq.toList
         // 兜底：任何形如 apiKey = "..." 的行直接打码（防止未注册的密钥泄漏）。规则在 SecretText 库。
-        text |> SecretText.replaceKnown secrets |> SecretText.maskAssignments [ "apiKey"; "token"; "secret" ]
+        text
+        |> SecretText.replaceKnown secrets
+        |> SecretText.maskAssignments [ "apiKey"; "token"; "secret" ]
 
     /// 创建 support bundle。`configPath` 不存在时 config.redacted.toml 写错误说明。
     /// 返回 bundle 目录完整路径。
@@ -105,13 +123,15 @@ module SupportBundle =
                 match Wanxiang.Config.TomlCodec.tryParse (File.ReadAllText configPath) with
                 | Ok cfg -> diag["instanceId"] <- string cfg.instanceId
                 | Error _ -> ()
+
             let diagnosis = Doctor.run (configPath, dataDir)
             diag["configOk"] <- diagnosis.checks |> List.exists (fun c -> c.name = "config" && c.ok)
             diag["configErrors"] <- JsonArray([| for e in diagnosis.configErrors -> JsonNode.op_Implicit e |])
+
             let logStatus =
                 match Inspect.runOrPeek dataDir with
                 | Healthy _ -> "healthy"
-                | OutcomeUnknown (o, commitId, reason) ->
+                | OutcomeUnknown(o, commitId, reason) ->
                     diag["lastCommitId"] <- o.lastCommitId
                     diag["unknownCommitId"] <- commitId
                     diag["reason"] <- reason
@@ -119,6 +139,7 @@ module SupportBundle =
                 | HostOwned i ->
                     diag["hostRunning"] <- true
                     diag["lastCommitId"] <- i.lastId
+
                     match i.health with
                     | LedgerStore.Healthy -> "healthy"
                     | LedgerStore.NewerFormat(offset, reason) ->
@@ -137,7 +158,7 @@ module SupportBundle =
                         diag["unknownCommitId"] <- commitId
                         diag["reason"] <- reason
                         "outcome-unknown"
-                | RepairRequired (o, plan) ->
+                | RepairRequired(o, plan) ->
                     diag["lastCommitId"] <- o.lastCommitId
                     diag["damageFile"] <- plan.damage.file
                     diag["damageOffset"] <- plan.damage.byteOffset
@@ -149,15 +170,18 @@ module SupportBundle =
                 | Unreadable msg ->
                     diag["message"] <- msg
                     "unreadable"
+
             diag["logStatus"] <- logStatus
             diag["lockOk"] <- diagnosis.checks |> List.exists (fun c -> c.name = "data-lock" && c.ok)
             let checksArr = JsonArray()
+
             for c in diagnosis.checks do
                 let co = JsonObject()
                 co["name"] <- c.name
                 co["ok"] <- c.ok
                 co["detail"] <- c.detail
                 checksArr.Add(co :> JsonNode)
+
             diag["checks"] <- checksArr
             writeJson (Path.Combine(outPath, "diagnosis.json")) diag
             // versions.json
@@ -172,10 +196,12 @@ module SupportBundle =
                     | Error errs -> "# config parse failed:\n" + String.concat "\n" errs
                 else
                     sprintf "# config file not found: %s" configPath
+
             File.WriteAllText(Path.Combine(outPath, "config.redacted.toml"), configOut)
             // storage-layout.json
             writeJson (Path.Combine(outPath, "storage-layout.json")) (storageLayoutJson dataDir)
             // snapshot-status.json
             writeJson (Path.Combine(outPath, "snapshot-status.json")) (snapshotStatusJson dataDir)
             Ok outPath
-        with e -> Error(sprintf "support bundle creation failed: %s" e.Message)
+        with e ->
+            Error(sprintf "support bundle creation failed: %s" e.Message)

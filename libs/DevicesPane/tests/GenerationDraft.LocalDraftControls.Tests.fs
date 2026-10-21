@@ -1,4 +1,5 @@
 module GenerationDraftLocalDraftControlsTests
+
 open Xunit
 open Wanxiang.UI
 

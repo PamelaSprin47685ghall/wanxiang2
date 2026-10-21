@@ -14,7 +14,12 @@ open Avalonia.Media
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 输入区模型芯片（原生 Button + 矢量箭头实现）：
@@ -25,8 +30,12 @@ type ModelChip() =
         TextBlock(
             Text = "未选择模型",
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis)
-    do caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+            TextTrimming = TextTrimming.CharacterEllipsis
+        )
+
+    do
+        caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
 
     let chevron =
         Path(
@@ -36,11 +45,19 @@ type ModelChip() =
             Fill = Brushes.Transparent,
             VerticalAlignment = VerticalAlignment.Center,
             Width = 14.0,
-            Height = 14.0)
+            Height = 14.0
+        )
+
     do chevron.Bind(Path.StrokeProperty, Dyn.res "Palette.TextFaint") |> ignore
 
     let host =
-        let b = Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), VerticalAlignment = VerticalAlignment.Center)
+        let b =
+            Button(
+                Focusable = true,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         b.Classes.Add "ghost"
         b.Classes.Add "button-ghost"
         b
@@ -53,7 +70,13 @@ type ModelChip() =
         host.MinHeight <- if compact then 32.0 else 26.0
 
     do
-        let row = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0, VerticalAlignment = VerticalAlignment.Center)
+        let row =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 4.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         row.Children.Add caption
         row.Children.Add chevron
         host.Content <- row
@@ -72,16 +95,20 @@ type ModelChip() =
     member _.ApplyLabel(text: string) =
         let empty = String.IsNullOrWhiteSpace text || text = "未选择模型"
         caption.Text <- if String.IsNullOrWhiteSpace text then "未选择模型" else text
+
         if empty then
-            caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+            caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+            |> ignore
         else
             caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+
         AutomationProperties.SetName(host, caption.Text)
 
     /// 单入口幂等渲染
     member this.Render(model: string option, isCompact: bool) =
         compact <- isCompact
         applyWidth ()
+
         match model with
         | Some label when not (String.IsNullOrWhiteSpace label) -> this.ApplyLabel label
         | _ -> this.ApplyLabel "未选择模型"

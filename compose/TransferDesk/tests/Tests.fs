@@ -33,40 +33,83 @@ let private userMessageJson (text: string) : JsonNode =
     o["contents"] <- contents
     o
 
-let private testConfig () = { SessionConfig.empty with provider = "openai"; model = "test-model" }
+let private testConfig () =
+    { SessionConfig.empty with
+        provider = "openai"
+        model = "test-model"
+    }
 
 let private append events (proj: Projection) =
-    let commit = Events.Commit.create (proj.latestCommitId + 1UL) DateTimeOffset.UtcNow events
+    let commit =
+        Events.Commit.create (proj.latestCommitId + 1UL) DateTimeOffset.UtcNow events
+
     match Projection.applyCommit proj commit with
     | Ok updated -> updated
     | Error error -> failwith (WanxiangError.message error)
 
 let private fixture count =
     let id = Guid.NewGuid()
-    let mutable proj = Projection.empty |> append [ ConversationCreated { conversationId = id; title = "旅行计划"; config = testConfig () } ]
-    for n in 1 .. count do
-        proj <- proj |> append [ AgentMessageRecorded { conversationId = id; payloadJson = userMessageJson (sprintf "message-%04d" n) } ]
+
+    let mutable proj =
+        Projection.empty
+        |> append
+            [
+                ConversationCreated
+                    {
+                        conversationId = id
+                        title = "旅行计划"
+                        config = testConfig ()
+                    }
+            ]
+
+    for n in 1..count do
+        proj <-
+            proj
+            |> append
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = id
+                            payloadJson = userMessageJson (sprintf "message-%04d" n)
+                        }
+                ]
+
     proj, id
 
 let private forkLineage parent =
-    { parentId = Some parent; parentTitle = Some "原对话"; parentDeleted = false; forkOrdinal = Some 3
-      forkBaseMessageId = Some 4UL; forks = [ Guid.NewGuid(), "子分叉", Some 9UL ] }
+    {
+        parentId = Some parent
+        parentTitle = Some "原对话"
+        parentDeleted = false
+        forkOrdinal = Some 3
+        forkBaseMessageId = Some 4UL
+        forks = [ Guid.NewGuid(), "子分叉", Some 9UL ]
+    }
 
 let private exported count =
     let proj, id = fixture count
     let controller = ConversationExportController id
     let mutable next = Some(controller.Start())
+
     while next.IsSome do
-        next <- controller.Accept(match ServerModel.exportPage proj next.Value with Ok p -> p | Error e -> failwith e)
+        next <-
+            controller.Accept(
+                match ServerModel.exportPage proj next.Value with
+                | Ok p -> p
+                | Error e -> failwith e
+            )
+
     let doc = controller.Document.Value
     ConversationTransfer.toJson id doc.title doc.atCommitId DateTimeOffset.UtcNow (forkLineage (Guid.NewGuid())) doc.raw
 
-let private theme () = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
+let private theme () =
+    new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
 
 let private invoke (control: Control) =
     ControlAutomationPeer.CreatePeerForElement control
     |> Assert.IsAssignableFrom<IInvokeProvider>
     |> fun provider -> provider.Invoke()
+
     Dispatcher.UIThread.RunJobs()
 
 // 迁自 R14TransferTests。
@@ -78,7 +121,17 @@ let ``313 导入对话框：选文件前不能导入，预览通过后才发命�
         let overlay = OverlayDesk(root, Desk.look ())
         let submitted = ResizeArray<ImportPreview>()
         let mutable finish: bool -> unit = ignore
-        let dialog = ImportDesk(theme (), overlay, (fun () -> window :> TopLevel), fun p onDone -> submitted.Add p; finish <- onDone)
+
+        let dialog =
+            ImportDesk(
+                theme (),
+                overlay,
+                (fun () -> window :> TopLevel),
+                fun p onDone ->
+                    submitted.Add p
+                    finish <- onDone
+            )
+
         dialog.Show()
         Dispatcher.UIThread.RunJobs()
         Assert.True overlay.Layer.IsDialogOpen
@@ -111,16 +164,31 @@ let ``312 导出对话框同一次读取备好 Markdown 和 JSON，并显示隐�
         let window = Desk.show root 900.0 700.0
         let overlay = OverlayDesk(root, Desk.look ())
         let requested = ResizeArray<ConversationExportQuery>()
+
         let dialog =
-            ExportDesk(theme (), overlay, id, "旅行计划", (fun q -> requested.Add q; Task.FromResult true), (fun () -> window :> TopLevel), forkLineage (Guid.NewGuid()))
+            ExportDesk(
+                theme (),
+                overlay,
+                id,
+                "旅行计划",
+                (fun q ->
+                    requested.Add q
+                    Task.FromResult true),
+                (fun () -> window :> TopLevel),
+                forkLineage (Guid.NewGuid())
+            )
+
         dialog.Show()
         Dispatcher.UIThread.RunJobs()
         let mutable i = 0
+
         while i < requested.Count do
             match ServerModel.exportPage proj requested[i] with
             | Ok p -> dialog.Handle p
             | Error e -> failwith e
+
             i <- i + 1
+
         Dispatcher.UIThread.RunJobs()
         Assert.Contains("「原对话」第 3 条消息的分叉", dialog.MarkdownText.Value)
         Assert.Contains("message-0003", dialog.MarkdownText.Value)
@@ -140,7 +208,17 @@ let ``cancel stays in the dialog and offers the retry entry`` () =
         let root = Grid()
         let window = Desk.show root 480.0 600.0
         let overlay = OverlayDesk(root, Desk.look ())
-        let dialog = ExportDesk(theme (), overlay, Guid.NewGuid(), "取消后可重试", (fun _ -> Task.FromResult true), fun () -> window :> TopLevel)
+
+        let dialog =
+            ExportDesk(
+                theme (),
+                overlay,
+                Guid.NewGuid(),
+                "取消后可重试",
+                (fun _ -> Task.FromResult true),
+                fun () -> window :> TopLevel
+            )
+
         dialog.Show()
         Dispatcher.UIThread.RunJobs()
         let byName name = (Desk.named root name).Value
@@ -150,7 +228,14 @@ let ``cancel stays in the dialog and offers the retry entry`` () =
         let retry = byName "重新导出"
         Assert.True retry.IsVisible
         invoke retry
-        let bars = root.GetVisualDescendants() |> Seq.choose (function :? ProgressBar as bar -> Some bar | _ -> None) |> Seq.toList
+
+        let bars =
+            root.GetVisualDescendants()
+            |> Seq.choose (function
+                | :? ProgressBar as bar -> Some bar
+                | _ -> None)
+            |> Seq.toList
+
         Assert.Equal(1, bars.Length)
         Assert.True bars.Head.IsVisible
         Assert.False retry.IsVisible
@@ -170,7 +255,17 @@ let ``export progress bar is determinate under reduced motion`` () =
         let root = Grid()
         let window = Desk.show root 480.0 600.0
         let overlay = OverlayDesk(root, Desk.look ())
-        let dialog = ExportDesk(t, overlay, Guid.NewGuid(), "减弱动效", (fun _ -> Task.FromResult true), fun () -> window :> TopLevel)
+
+        let dialog =
+            ExportDesk(
+                t,
+                overlay,
+                Guid.NewGuid(),
+                "减弱动效",
+                (fun _ -> Task.FromResult true),
+                fun () -> window :> TopLevel
+            )
+
         dialog.Show()
         Dispatcher.UIThread.RunJobs()
         Assert.True dialog.Sheet.Progress.IsVisible

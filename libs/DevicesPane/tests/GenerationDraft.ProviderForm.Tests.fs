@@ -1,4 +1,5 @@
 module GenerationDraftProviderFormTests
+
 open System
 open System.IO
 open Xunit
@@ -27,11 +28,22 @@ let ``models split on newline and comma and dedupe`` () =
 
 [<Fact>]
 let ``vision lists must name listed models and not both`` () =
-    Assert.Equal<(ProviderField * string) list>([ ProviderField.VisionNo, "“qwen”同时写在两栏里，请只保留一栏。" ], (ProviderForm.validate { ok with visionYes = "qwen"; visionNo = "qwen" }).errors)
+    Assert.Equal<(ProviderField * string) list>(
+        [ ProviderField.VisionNo, "“qwen”同时写在两栏里，请只保留一栏。" ],
+        (ProviderForm.validate
+            { ok with
+                visionYes = "qwen"
+                visionNo = "qwen"
+            })
+            .errors
+    )
+
     Assert.Equal(ProviderField.VisionYes, fst (ProviderForm.validate { ok with visionYes = "gpt" }).errors.Head)
 
 [<Fact>]
 let ``loopback forms`` () =
-    for u in [ "http://127.0.0.1:1"; "http://localhost"; "http://[::1]:2" ] do Assert.True(ProviderForm.isLoopbackUrl u)
+    for u in [ "http://127.0.0.1:1"; "http://localhost"; "http://[::1]:2" ] do
+        Assert.True(ProviderForm.isLoopbackUrl u)
+
     Assert.False(ProviderForm.isLoopbackUrl "https://api.openai.com/v1")
     Assert.False(ProviderForm.isLoopbackUrl " ")

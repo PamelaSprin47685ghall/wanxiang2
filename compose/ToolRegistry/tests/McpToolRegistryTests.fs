@@ -19,20 +19,29 @@ open Wanxiang.Server
 module McpToolRegistryTests =
 
     /// 取自旧 Helpers.testConfig：只用到 tools 字段。
-    let private testConfig () = { SessionConfig.empty with provider = "openai"; model = "test-model" }
+    let private testConfig () =
+        { SessionConfig.empty with
+            provider = "openai"
+            model = "test-model"
+        }
 
-    let private jsonOptions = System.Text.Json.JsonSerializerOptions(Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping)
+    let private jsonOptions =
+        System.Text.Json.JsonSerializerOptions(
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        )
 
     let private defaultMcpConfig id =
-        { id = id
-          label = id
-          enabled = true
-          command = None
-          args = []
-          env = Map.empty
-          url = None
-          maxConcurrency = None
-          callTimeoutSeconds = 5 }
+        {
+            id = id
+            label = id
+            enabled = true
+            command = None
+            args = []
+            env = Map.empty
+            url = None
+            maxConcurrency = None
+            callTimeoutSeconds = 5
+        }
 
 
     // =========================================================================
@@ -49,13 +58,30 @@ module McpToolRegistryTests =
         Assert.True((registry.GetMcpClient "mcp1").IsNone)
 
         // 添加一个已禁用的 MCP 服务
-        let srvDisabled = { defaultMcpConfig "mcp1" with enabled = false }
-        currentAppConfig <- { currentAppConfig with mcpServers = Map.ofList [ "mcp1", srvDisabled ] }
+        let srvDisabled =
+            { defaultMcpConfig "mcp1" with
+                enabled = false
+            }
+
+        currentAppConfig <-
+            { currentAppConfig with
+                mcpServers = Map.ofList [ "mcp1", srvDisabled ]
+            }
+
         Assert.True((registry.GetMcpClient "mcp1").IsNone)
 
         // 启用 MCP 服务
-        let srvEnabled = { defaultMcpConfig "mcp1" with enabled = true; command = Some "echo" }
-        currentAppConfig <- { currentAppConfig with mcpServers = Map.ofList [ "mcp1", srvEnabled ] }
+        let srvEnabled =
+            { defaultMcpConfig "mcp1" with
+                enabled = true
+                command = Some "echo"
+            }
+
+        currentAppConfig <-
+            { currentAppConfig with
+                mcpServers = Map.ofList [ "mcp1", srvEnabled ]
+            }
+
         let client1 = registry.GetMcpClient "mcp1"
         Assert.True(client1.IsSome)
 
@@ -65,13 +91,22 @@ module McpToolRegistryTests =
 
         // 修改配置（如 args 变化导致指纹变化），旧客户端排空，创建新客户端
         let srvModified = { srvEnabled with args = [ "arg1" ] }
-        currentAppConfig <- { currentAppConfig with mcpServers = Map.ofList [ "mcp1", srvModified ] }
+
+        currentAppConfig <-
+            { currentAppConfig with
+                mcpServers = Map.ofList [ "mcp1", srvModified ]
+            }
+
         let client2 = registry.GetMcpClient "mcp1"
         Assert.True(client2.IsSome)
         Assert.False(Object.ReferenceEquals(client1.Value, client2.Value))
 
         // 配置中删除，调用 PruneRemoved
-        currentAppConfig <- { currentAppConfig with mcpServers = Map.empty }
+        currentAppConfig <-
+            { currentAppConfig with
+                mcpServers = Map.empty
+            }
+
         registry.PruneRemoved()
         Assert.True((registry.GetMcpClient "mcp1").IsNone)
 
@@ -94,7 +129,9 @@ module McpToolRegistryTests =
         // BuildTools 与 MissingTools 边界检查
         let sessionCfg =
             { testConfig () with
-                tools = [ "builtin:calculator"; "mcp:nonexistent/tool"; "invalid_format_tool" ] }
+                tools = [ "builtin:calculator"; "mcp:nonexistent/tool"; "invalid_format_tool" ]
+            }
+
         let missing = registry.MissingTools sessionCfg
         Assert.Contains("mcp:nonexistent/tool", missing)
         Assert.Contains("invalid_format_tool", missing)
@@ -104,4 +141,3 @@ module McpToolRegistryTests =
         Assert.True(builtTools.Length >= 0)
 
         registry.Dispose()
-

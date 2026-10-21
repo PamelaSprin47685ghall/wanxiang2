@@ -28,41 +28,42 @@ module AgentCoverageMessageTests =
 
     type FakeHttpMessageHandler(handler: HttpRequestMessage -> HttpResponseMessage) =
         inherit HttpMessageHandler()
-        override _.SendAsync(request, cancellationToken) =
-            Task.FromResult(handler request)
+        override _.SendAsync(request, cancellationToken) = Task.FromResult(handler request)
 
     type AsyncFakeHttpMessageHandler(handler: HttpRequestMessage -> CancellationToken -> Task<HttpResponseMessage>) =
         inherit HttpMessageHandler()
-        override _.SendAsync(request, cancellationToken) =
-            handler request cancellationToken
+        override _.SendAsync(request, cancellationToken) = handler request cancellationToken
 
-    let dummyProvider kind : ProviderConfig = {
-        id = "test-provider"
-        kind = kind
-        label = "Test Provider"
-        baseUrl = "https://api.example.com/v1"
-        apiKey = Some "test-key"
-        defaultModel = "default-model"
-        models = [ "model-a"; "model-b" ]
-        timeoutSeconds = 30
-        maxRetries = 2
-        enabled = true
-        promptCaching = false
-        headers = Map.empty
-        extraJson = None; visionOverrides = Map.empty
-    }
+    let dummyProvider kind : ProviderConfig =
+        {
+            id = "test-provider"
+            kind = kind
+            label = "Test Provider"
+            baseUrl = "https://api.example.com/v1"
+            apiKey = Some "test-key"
+            defaultModel = "default-model"
+            models = [ "model-a"; "model-b" ]
+            timeoutSeconds = 30
+            maxRetries = 2
+            enabled = true
+            promptCaching = false
+            headers = Map.empty
+            extraJson = None
+            visionOverrides = Map.empty
+        }
 
-    let dummySession : SessionConfig = {
-        provider = "test-provider"
-        model = "model-a"
-        instructions = Some "System prompt instructions"
-        tools = []
-        temperature = Some 0.7
-        topP = Some 0.9
-        maxTokens = Some 1024
-        thinkingBudget = Some 0
-        extraJson = None
-    }
+    let dummySession: SessionConfig =
+        {
+            provider = "test-provider"
+            model = "model-a"
+            instructions = Some "System prompt instructions"
+            tools = []
+            temperature = Some 0.7
+            topP = Some 0.9
+            maxTokens = Some 1024
+            thinkingBudget = Some 0
+            extraJson = None
+        }
 
     // =========================================================================
     // 2. MessageSerde 序列化、反序列化与边界输入测试
@@ -146,7 +147,8 @@ module AgentCoverageMessageTests =
         Assert.Equal("Direct assistant message", MessageSerde.textOf deserialized)
 
         // 2. Loose JSON from client
-        let clientJson = """
+        let clientJson =
+            """
         {
             "role": "assistant",
             "contents": [
@@ -154,6 +156,7 @@ module AgentCoverageMessageTests =
             ]
         }
         """
+
         let node = JsonNode.Parse clientJson
         let parsedOpt = MessageSerde.fromJsonNodeWith true node
         Assert.True(parsedOpt.IsSome)
@@ -234,7 +237,10 @@ module AgentCoverageMessageTests =
         let call = FunctionCallContent("call_123", "calculator", Dictionary<string, obj>())
         let toolMsg = MessageSerde.toolResultMessage call "{\"result\": 42}"
         Assert.Equal(ChatRole.Tool, toolMsg.Role)
-        let resContent = Assert.IsType<FunctionResultContent>(Assert.Single(toolMsg.Contents))
+
+        let resContent =
+            Assert.IsType<FunctionResultContent>(Assert.Single(toolMsg.Contents))
+
         Assert.Equal("call_123", resContent.CallId)
         Assert.Equal("{\"result\": 42}", resContent.Result.ToString())
 
@@ -258,13 +264,21 @@ module AgentCoverageMessageTests =
     let ``MessageSerde fromJsonNodeWith parses untagged, tagged, and attachment contents`` () =
         let makeUntaggedMsg (role: string) (contents: JsonNode list) =
             let o = JsonObject()
-            if not (String.IsNullOrEmpty role) then o.["role"] <- role
+
+            if not (String.IsNullOrEmpty role) then
+                o.["role"] <- role
+
             let arr = JsonArray()
-            for c in contents do arr.Add c
+
+            for c in contents do
+                arr.Add c
+
             o.["contents"] <- arr
             o :> JsonNode
 
-        let msgAssistant = MessageSerde.fromJsonNodeWith true (makeUntaggedMsg "assistant" [])
+        let msgAssistant =
+            MessageSerde.fromJsonNodeWith true (makeUntaggedMsg "assistant" [])
+
         Assert.Equal(ChatRole.Assistant, msgAssistant.Value.Role)
 
         let msgSystem = MessageSerde.fromJsonNodeWith true (makeUntaggedMsg "system" [])
@@ -294,7 +308,16 @@ module AgentCoverageMessageTests =
 
         let nonObjItem = JsonValue.Create 42
 
-        let complexMsgNode = makeUntaggedMsg "user" [ textItem :> JsonNode; emptyTextItem :> JsonNode; attItem :> JsonNode; nonObjItem :> JsonNode ]
+        let complexMsgNode =
+            makeUntaggedMsg
+                "user"
+                [
+                    textItem :> JsonNode
+                    emptyTextItem :> JsonNode
+                    attItem :> JsonNode
+                    nonObjItem :> JsonNode
+                ]
+
         let parsed = MessageSerde.fromJsonNodeWith false complexMsgNode
         Assert.True(parsed.IsSome)
         Assert.Single(parsed.Value.Contents) |> ignore
@@ -368,20 +391,36 @@ module AgentCoverageMessageTests =
 
     [<Fact>]
     let ``AttachmentContent resolve handles missing blob`` () =
-        let ref = { sha256 = "abc"; mediaType = "text/plain"; fileName = "hello.txt"; size = 10L }
+        let ref =
+            {
+                sha256 = "abc"
+                mediaType = "text/plain"
+                fileName = "hello.txt"
+                size = 10L
+            }
+
         let support = MediaSupport.ofProviderKind "anthropic"
         let contents = AttachmentContent.resolve support (fun _ -> None) ref
         Assert.Single(contents) |> ignore
+
         match contents.[0] with
         | :? TextContent as tc -> Assert.Contains("内容已丢失", tc.Text)
         | _ -> Assert.Fail("Expected TextContent")
 
     [<Fact>]
     let ``AttachmentContent resolve handles empty blob`` () =
-        let ref = { sha256 = "abc"; mediaType = "text/plain"; fileName = "empty.txt"; size = 0L }
+        let ref =
+            {
+                sha256 = "abc"
+                mediaType = "text/plain"
+                fileName = "empty.txt"
+                size = 0L
+            }
+
         let support = MediaSupport.ofProviderKind "anthropic"
         let contents = AttachmentContent.resolve support (fun _ -> Some [||]) ref
         Assert.Single(contents) |> ignore
+
         match contents.[0] with
         | :? TextContent as tc -> Assert.Contains("空文件", tc.Text)
         | _ -> Assert.Fail("Expected TextContent")
@@ -389,10 +428,19 @@ module AgentCoverageMessageTests =
     [<Fact>]
     let ``AttachmentContent resolve handles normal text file`` () =
         let textBytes = Encoding.UTF8.GetBytes "let x = 42"
-        let ref = { sha256 = "abc"; mediaType = "text/plain"; fileName = "test.fs"; size = int64 textBytes.Length }
+
+        let ref =
+            {
+                sha256 = "abc"
+                mediaType = "text/plain"
+                fileName = "test.fs"
+                size = int64 textBytes.Length
+            }
+
         let support = MediaSupport.ofProviderKind "anthropic"
         let contents = AttachmentContent.resolve support (fun _ -> Some textBytes) ref
         Assert.Single(contents) |> ignore
+
         match contents.[0] with
         | :? TextContent as tc ->
             Assert.Contains("```fsharp", tc.Text)
@@ -403,10 +451,19 @@ module AgentCoverageMessageTests =
     let ``AttachmentContent resolve handles truncated text file`` () =
         let largeText = String('a', 130 * 1024)
         let textBytes = Encoding.UTF8.GetBytes largeText
-        let ref = { sha256 = "abc"; mediaType = "text/plain"; fileName = "large.txt"; size = int64 textBytes.Length }
+
+        let ref =
+            {
+                sha256 = "abc"
+                mediaType = "text/plain"
+                fileName = "large.txt"
+                size = int64 textBytes.Length
+            }
+
         let support = MediaSupport.ofProviderKind "anthropic"
         let contents = AttachmentContent.resolve support (fun _ -> Some textBytes) ref
         Assert.Single(contents) |> ignore
+
         match contents.[0] with
         | :? TextContent as tc -> Assert.Contains("已截断", tc.Text)
         | _ -> Assert.Fail("Expected TextContent")
@@ -414,10 +471,19 @@ module AgentCoverageMessageTests =
     [<Fact>]
     let ``AttachmentContent resolve handles supported image`` () =
         let imgBytes = [| 0uy; 1uy; 2uy; 3uy |]
-        let ref = { sha256 = "abc"; mediaType = "image/png"; fileName = "pic.png"; size = 4L }
+
+        let ref =
+            {
+                sha256 = "abc"
+                mediaType = "image/png"
+                fileName = "pic.png"
+                size = 4L
+            }
+
         let support = MediaSupport.ofProviderKind "anthropic"
         let contents = AttachmentContent.resolve support (fun _ -> Some imgBytes) ref
         Assert.Equal(2, contents.Length)
+
         match contents.[0], contents.[1] with
         | (:? TextContent as tc), (:? DataContent as dc) ->
             Assert.Contains("附件图片", tc.Text)
@@ -428,28 +494,65 @@ module AgentCoverageMessageTests =
     [<Fact>]
     let ``AttachmentContent resolve handles unsupported or oversize media`` () =
         let imgBytes = [| 1uy; 2uy |]
-        let refImg = { sha256 = "abc"; mediaType = "image/png"; fileName = "pic.png"; size = 2L }
-        let noSupport = { MediaSupport.image = false; pdf = false; audio = false }
+
+        let refImg =
+            {
+                sha256 = "abc"
+                mediaType = "image/png"
+                fileName = "pic.png"
+                size = 2L
+            }
+
+        let noSupport =
+            {
+                MediaSupport.image = false
+                pdf = false
+                audio = false
+            }
+
         let contents = AttachmentContent.resolve noSupport (fun _ -> Some imgBytes) refImg
         Assert.Single(contents) |> ignore
+
         match contents.[0] with
         | :? TextContent as tc -> Assert.Contains("当前模型服务的传输不接受该类型", tc.Text)
         | _ -> Assert.Fail("Expected TextContent")
 
         // 超过大小限制
         let hugeImgBytes = Array.zeroCreate (9 * 1024 * 1024)
-        let refHuge = { sha256 = "huge"; mediaType = "image/png"; fileName = "huge.png"; size = int64 hugeImgBytes.Length }
-        let contentsHuge = AttachmentContent.resolve (MediaSupport.ofProviderKind "anthropic") (fun _ -> Some hugeImgBytes) refHuge
+
+        let refHuge =
+            {
+                sha256 = "huge"
+                mediaType = "image/png"
+                fileName = "huge.png"
+                size = int64 hugeImgBytes.Length
+            }
+
+        let contentsHuge =
+            AttachmentContent.resolve (MediaSupport.ofProviderKind "anthropic") (fun _ -> Some hugeImgBytes) refHuge
+
         Assert.Single(contentsHuge) |> ignore
+
         match contentsHuge.[0] with
         | :? TextContent as tc -> Assert.Contains("超过", tc.Text)
         | _ -> Assert.Fail("Expected TextContent")
 
         // 未知二进制
         let binBytes = [| 0xCAuy; 0xFEuy; 0xBAuy; 0xBEuy |]
-        let refBin = { sha256 = "bin"; mediaType = "application/octet-stream"; fileName = "app.exe"; size = 4L }
-        let contentsBin = AttachmentContent.resolve (MediaSupport.ofProviderKind "anthropic") (fun _ -> Some binBytes) refBin
+
+        let refBin =
+            {
+                sha256 = "bin"
+                mediaType = "application/octet-stream"
+                fileName = "app.exe"
+                size = 4L
+            }
+
+        let contentsBin =
+            AttachmentContent.resolve (MediaSupport.ofProviderKind "anthropic") (fun _ -> Some binBytes) refBin
+
         Assert.Single(contentsBin) |> ignore
+
         match contentsBin.[0] with
         | :? TextContent as tc -> Assert.Contains("二进制内容不进上下文", tc.Text)
         | _ -> Assert.Fail("Expected TextContent")
@@ -458,9 +561,16 @@ module AgentCoverageMessageTests =
     let ``AttachmentContent appendTo correctly adds to chat message`` () =
         let msg = ChatMessage(ChatRole.User, "initial prompt")
         let imgBytes = [| 9uy; 8uy |]
-        let ref = { sha256 = "abc"; mediaType = "image/png"; fileName = "pic.png"; size = 2L }
+
+        let ref =
+            {
+                sha256 = "abc"
+                mediaType = "image/png"
+                fileName = "pic.png"
+                size = 2L
+            }
+
         let support = MediaSupport.ofProviderKind "anthropic"
-        let resMsg = AttachmentContent.appendTo support (fun _ -> Some imgBytes) [ref] msg
+        let resMsg = AttachmentContent.appendTo support (fun _ -> Some imgBytes) [ ref ] msg
         Assert.Equal(3, resMsg.Contents.Count)
         Assert.Equal("initial prompt", (resMsg.Contents.[0] :?> TextContent).Text)
-

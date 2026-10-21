@@ -15,26 +15,28 @@ open Wanxiang2.ModelChip
 
 /// 输入区对外的动作（旧 ComposerActions）
 type ComposerDeskActions =
-    { /// true 表示内容已由本地待发送记录接管
-      Submit: string -> bool
-      /// 输入框里的文字变了（每次按键都来一次）。
-      ///
-      /// 控件库不认识状态树，所以「文字变了」要由宿主接出去——草稿落盘、
-      /// 发送门控读的都是状态树里的那一份文本。
-      TextChanged: string -> unit
-      /// 插入点变了（光标移动、选区变化、输入法组合中的位置更新）。
-      ///
-      /// 必须接出去：输入区的回写只在**文本不同**时发生（`libs/AttachmentTray/ComposerBox.fs`
-      /// 的 `if input.Text <> vs.Text`），所以文本一旦相同就不会再写回——
-      /// 这时候光标位置只可能靠这个回调保持同步，否则打字打到一半光标会被拉回末尾。
-      CaretChanged: int -> unit
-      StopGeneration: unit -> unit
-      PickAttachment: unit -> unit
-      RemoveAttachment: Guid -> unit
-      OpenModelPicker: Control -> unit
-      DropFiles: IStorageItem list -> unit
-      PasteFromClipboard: unit -> bool
-      OpenSessionSettings: unit -> unit }
+    {
+        /// true 表示内容已由本地待发送记录接管
+        Submit: string -> bool
+        /// 输入框里的文字变了（每次按键都来一次）。
+        ///
+        /// 控件库不认识状态树，所以「文字变了」要由宿主接出去——草稿落盘、
+        /// 发送门控读的都是状态树里的那一份文本。
+        TextChanged: string -> unit
+        /// 插入点变了（光标移动、选区变化、输入法组合中的位置更新）。
+        ///
+        /// 必须接出去：输入区的回写只在**文本不同**时发生（`libs/AttachmentTray/ComposerBox.fs`
+        /// 的 `if input.Text <> vs.Text`），所以文本一旦相同就不会再写回——
+        /// 这时候光标位置只可能靠这个回调保持同步，否则打字打到一半光标会被拉回末尾。
+        CaretChanged: int -> unit
+        StopGeneration: unit -> unit
+        PickAttachment: unit -> unit
+        RemoveAttachment: Guid -> unit
+        OpenModelPicker: Control -> unit
+        DropFiles: IStorageItem list -> unit
+        PasteFromClipboard: unit -> bool
+        OpenSessionSettings: unit -> unit
+    }
 
 /// 组合者：ComposerBox + AttachmentTray + ModelChip，发送门控走 ComposerSendState，看图判断走 ModelVision（旧 Views/Composer.fs）。
 /// 业务事实零本地副本：一切从 Render 收到的 ComposerVS 投影（在途态清单见本库 AGENTS.md）。
@@ -74,11 +76,13 @@ type ComposerDesk(actions: ComposerDeskActions) =
     let keyHook (e: KeyEventArgs) =
         let input = box.Input
         let hasSelection = input.SelectionStart <> input.SelectionEnd
+
         if e.Key = Key.Escape then
             if hasSelection then
                 input.ClearSelection()
                 true
-            elif recall (history.Escape()) then true
+            elif recall (history.Escape()) then
+                true
             elif input.IsFocused then
                 match TopLevel.GetTopLevel input with
                 | null -> ()
@@ -86,21 +90,26 @@ type ComposerDesk(actions: ComposerDeskActions) =
                     match top.FocusManager with
                     | null -> ()
                     | fm -> fm.Focus(null, NavigationMethod.Unspecified, KeyModifiers.None) |> ignore
+
                 true
-            else false
+            else
+                false
         elif e.Key = Key.Up && e.KeyModifiers = KeyModifiers.None then
             recall (history.Up(input.Text, input.CaretIndex, hasSelection))
         elif e.Key = Key.Down && e.KeyModifiers = KeyModifiers.None then
             recall (history.Down(input.Text, input.CaretIndex, hasSelection))
-        else false
+        else
+            false
 
     let thumbs = Collections.Generic.Dictionary<Guid, IImage>()
     let notes = Collections.Generic.Dictionary<Guid, string>()
+
     /// 在途（登记 AGENTS.md）：最近一帧 ComposerVS。门控不止在 Render 时算——
     /// 文本变化（TextChanged / Text 属性）与非每帧命令（缩略图、缩小说明、草稿回填）都要按最新帧重算，
     /// 这里存的就是「最新帧」本身，是帧的缓存不是业务事实的第二权威（与 SidebarDesk.lastVS 同一口径）。
     let mutable last: Wanxiang2.WorkspaceState.ComposerVS =
         (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Composer
+
     /// 输入区四周留白：主题部分走动态资源键（宽屏 Margin.Composer：顶=Space.X2l、底=Space.Xl；
     /// 窄屏 Margin.ComposerCompact：左右=Space.Xl、底=Space.Md），水平档随自身宽度取
     /// （LayoutPolicy.horizontalInset，旧 ApplyComposerPadding）。本组合者不再订阅主题活值。
@@ -111,26 +120,51 @@ type ComposerDesk(actions: ComposerDeskActions) =
 
     let applyPadding () =
         let compact = last.Compact
+
         if paddedCompact <> Some compact then
             paddedCompact <- Some compact
             marginBinding |> Option.iter (fun d -> d.Dispose())
-            let key = if compact then "Margin.ComposerCompact" else "Margin.Composer"
-            marginBinding <- Some (host.Bind(Layoutable.MarginProperty, Dyn.res key) :> IDisposable)
+
+            let key =
+                if compact then
+                    "Margin.ComposerCompact"
+                else
+                    "Margin.Composer"
+
+            marginBinding <- Some(host.Bind(Layoutable.MarginProperty, Dyn.res key) :> IDisposable)
         // 宽屏水平留白按自身宽度取档；窄屏的左右留白由 Margin.ComposerCompact 给
-        let inset = if compact then 0.0 else LayoutPolicy.horizontalInset host.Bounds.Width
+        let inset =
+            if compact then
+                0.0
+            else
+                LayoutPolicy.horizontalInset host.Bounds.Width
+
         host.Padding <- Thickness(inset, 0.0, inset, 0.0)
 
     let facts (a: Wanxiang2.WorkspaceState.AttachmentVS) : ComposerAttachment =
         let stage =
-            if RestoredAttachments.isRestored a.Id then AttachmentStage.Restored
-            elif a.Failed then AttachmentStage.Failed
-            elif a.Ready then AttachmentStage.Ready
-            else AttachmentStage.Uploading
-        let kind = if MediaTypes.isImage a.MediaType then AttachmentKind.Image else AttachmentKind.OtherFile
+            if RestoredAttachments.isRestored a.Id then
+                AttachmentStage.Restored
+            elif a.Failed then
+                AttachmentStage.Failed
+            elif a.Ready then
+                AttachmentStage.Ready
+            else
+                AttachmentStage.Uploading
+
+        let kind =
+            if MediaTypes.isImage a.MediaType then
+                AttachmentKind.Image
+            else
+                AttachmentKind.OtherFile
+
         { stage = stage; kind = kind }
 
     let hostOf (vs: Wanxiang2.WorkspaceState.ComposerVS) =
-        if vs.Enabled then HostAvailable else HostDisabled(vs.DisabledReason |> Option.defaultValue "")
+        if vs.Enabled then
+            HostAvailable
+        else
+            HostDisabled(vs.DisabledReason |> Option.defaultValue "")
 
     let generationOf (vs: Wanxiang2.WorkspaceState.ComposerVS) =
         match vs.Send.State with
@@ -138,58 +172,87 @@ type ComposerDesk(actions: ComposerDeskActions) =
         | _ -> Idle
 
     let visionOf (vs: Wanxiang2.WorkspaceState.ComposerVS) =
-        if vs.Vision = VisionNo then VisionForbidden (ModelVision.blockedMessage vs.VisionLabel)
-        else VisionAllowed
+        if vs.Vision = VisionNo then
+            VisionForbidden(ModelVision.blockedMessage vs.VisionLabel)
+        else
+            VisionAllowed
 
     let refresh () =
         let v =
             ComposerSendState.decide
-                { host = hostOf last
-                  generation = generationOf last
-                  text = if String.IsNullOrWhiteSpace box.Text then EmptyText else HasText
-                  attachments = last.Tray |> List.map facts
-                  vision = visionOf last
-                  sendKey = if last.EnterSends then EnterSends else CtrlEnterSends }
+                {
+                    host = hostOf last
+                    generation = generationOf last
+                    text =
+                        if String.IsNullOrWhiteSpace box.Text then
+                            EmptyText
+                        else
+                            HasText
+                    attachments = last.Tray |> List.map facts
+                    vision = visionOf last
+                    sendKey = if last.EnterSends then EnterSends else CtrlEnterSends
+                }
+
         box.ApplySend
-            { VisionBlocked = v.VisionBlocked
-              VisionMessage = v.VisionMessage
-              SendEnabled = v.SendEnabled
-              QueueEnabled = v.QueueEnabled
-              QueueVisible = v.QueueVisible
-              SendTip = v.SendTip
-              SendLabel = v.SendLabel
-              QueueTip = v.QueueTip }
+            {
+                VisionBlocked = v.VisionBlocked
+                VisionMessage = v.VisionMessage
+                SendEnabled = v.SendEnabled
+                QueueEnabled = v.QueueEnabled
+                QueueVisible = v.QueueVisible
+                SendTip = v.SendTip
+                SendLabel = v.SendLabel
+                QueueTip = v.QueueTip
+            }
 
     let trayItem (a: Wanxiang2.WorkspaceState.AttachmentVS) : TrayItem =
         let restored = RestoredAttachments.isRestored a.Id
         let f = facts a
         let size = AttachmentRef.formatSize a.Size
-        let note = match notes.TryGetValue a.Id with | true, n -> Some n | _ -> None
-        { Id = a.Id
-          FileName = a.FileName
-          SizeText = size
-          StateText = ComposerSendState.chipState f.stage size
-          Tip = ComposerSendState.chipTip f.stage size
-          Name =
-            if restored then sprintf "附件需重新选择：%s，可移除或重新添加这个文件" a.FileName
-            elif a.Failed then sprintf "附件上传失败：%s（%s），可移除或重新添加" a.FileName size
-            else
-                match note with
-                | Some n -> sprintf "附件：%s（%s），%s" a.FileName size n
-                | None -> sprintf "附件：%s（%s）" a.FileName size
-          Failed = a.Failed
-          Ready = a.Ready
-          IsImage = (f.kind = AttachmentKind.Image)
-          ShrinkNote = note
-          Thumbnail = match thumbs.TryGetValue a.Id with | true, t -> Some t | _ -> None }
 
-    let renderItems () = tray.Render(last.Tray |> List.map trayItem, last.Compact)
+        let note =
+            match notes.TryGetValue a.Id with
+            | true, n -> Some n
+            | _ -> None
+
+        {
+            Id = a.Id
+            FileName = a.FileName
+            SizeText = size
+            StateText = ComposerSendState.chipState f.stage size
+            Tip = ComposerSendState.chipTip f.stage size
+            Name =
+                if restored then
+                    sprintf "附件需重新选择：%s，可移除或重新添加这个文件" a.FileName
+                elif a.Failed then
+                    sprintf "附件上传失败：%s（%s），可移除或重新添加" a.FileName size
+                else
+                    match note with
+                    | Some n -> sprintf "附件：%s（%s），%s" a.FileName size n
+                    | None -> sprintf "附件：%s（%s）" a.FileName size
+            Failed = a.Failed
+            Ready = a.Ready
+            IsImage = (f.kind = AttachmentKind.Image)
+            ShrinkNote = note
+            Thumbnail =
+                match thumbs.TryGetValue a.Id with
+                | true, t -> Some t
+                | _ -> None
+        }
+
+    let renderItems () =
+        tray.Render(last.Tray |> List.map trayItem, last.Compact)
 
     let submit (text: string) =
-        if ComposerSendState.canSubmit
+        if
+            ComposerSendState.canSubmit
                 (hostOf last)
-                (if String.IsNullOrWhiteSpace text then EmptyText else HasText)
-                (last.Tray |> List.map facts) then
+                (if String.IsNullOrWhiteSpace text then
+                     EmptyText
+                 else
+                     HasText)
+                (last.Tray |> List.map facts)
+        then
             if actions.Submit text then
                 // 只有**已被接受**的发送才记进历史（门控没过、或宿主没接管，都不算）。
                 history.Record text
@@ -199,7 +262,11 @@ type ComposerDesk(actions: ComposerDeskActions) =
     do
         box.SlotPending pending.Host
         applyPadding ()
-        host.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty && not last.Compact then applyPadding ())
+
+        host.PropertyChanged.Add(fun e ->
+            if e.Property = Visual.BoundsProperty && not last.Compact then
+                applyPadding ())
+
         box.SlotTray tray.Host
         box.SlotModel chip.Host
         chip.OnOpen actions.OpenModelPicker
@@ -230,6 +297,7 @@ type ComposerDesk(actions: ComposerDeskActions) =
                 refresh ()
                 // 文字变了要接出去：草稿落盘与发送门控读的都是状态树里的那一份文本。
                 actions.TextChanged t
+
         box.Input.PropertyChanged.Add(fun e ->
             if e.Property.Name = "Text" then
                 match e.NewValue with
@@ -244,9 +312,13 @@ type ComposerDesk(actions: ComposerDeskActions) =
         // `TextChanging` / `TextInput` / `TextInputMethodClientRequested`），
         // 光标变化走 `INotifyPropertyChanged` 的 `CaretIndex` 属性通知。
         box.Input.PropertyChanged.Add(fun e ->
-            if e.Property.Name = "CaretIndex" then actions.CaretChanged box.Input.CaretIndex)
+            if e.Property.Name = "CaretIndex" then
+                actions.CaretChanged box.Input.CaretIndex)
         // TextChanged 晚于 Text 属性派发：属性一变就同步重算门控，写字后立即回车不读旧门控
-        box.Input.PropertyChanged.Add(fun e -> if e.Property = TextBox.TextProperty then refresh ())
+        box.Input.PropertyChanged.Add(fun e ->
+            if e.Property = TextBox.TextProperty then
+                refresh ())
+
         refresh ()
 
     member _.Host: Control = box.Host
@@ -279,14 +351,18 @@ type ComposerDesk(actions: ComposerDeskActions) =
     /// 图片缩略图（已解码；宿主负责解码与释放。非每帧命令：宿主侧解码结果，VS 不承载）
     member _.ApplyThumbnail(attachmentId: Guid, image: IImage) =
         thumbs.[attachmentId] <- image
-        if last.Tray |> List.exists (fun a -> a.Id = attachmentId) then renderItems ()
+
+        if last.Tray |> List.exists (fun a -> a.Id = attachmentId) then
+            renderItems ()
 
     member _.HasThumbnail(attachmentId: Guid) = thumbs.ContainsKey attachmentId
 
     /// 图片压缩说明（非每帧命令：上传管线就地生成，VS 不承载）
     member _.ApplyShrinkNote(attachmentId: Guid, note: string) =
         notes.[attachmentId] <- note
-        if last.Tray |> List.exists (fun a -> a.Id = attachmentId) then renderItems ()
+
+        if last.Tray |> List.exists (fun a -> a.Id = attachmentId) then
+            renderItems ()
 
     member _.ShrinkNote(attachmentId: Guid) =
         match notes.TryGetValue attachmentId with
@@ -294,7 +370,14 @@ type ComposerDesk(actions: ComposerDeskActions) =
         | _ -> ""
 
     /// 未确认消息（宿主直注插槽，非每帧投影）
-    member _.SlotPendingMessages(items: PendingMessage list, activeConversationId: Guid option, canRetry: bool, retry: Guid -> unit, openConversation: Guid -> unit) =
+    member _.SlotPendingMessages
+        (
+            items: PendingMessage list,
+            activeConversationId: Guid option,
+            canRetry: bool,
+            retry: Guid -> unit,
+            openConversation: Guid -> unit
+        ) =
         pending.Render(items, activeConversationId, canRetry, retry, openConversation)
 
     member _.Pending = pending
@@ -309,6 +392,7 @@ type ComposerDesk(actions: ComposerDeskActions) =
         history.Reset()
         box.ApplyDraftText text
         refresh ()
+
     member _.Focus() = box.Focus()
     member _.WireImeProbe(f) = box.WireImeProbe f
     member _.WireKeyHook(f) = box.WireKeyHook f

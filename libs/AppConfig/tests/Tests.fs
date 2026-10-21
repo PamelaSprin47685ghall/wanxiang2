@@ -114,6 +114,7 @@ let ``TOML parses every section and survives a serialize roundtrip`` () =
         Assert.Equal(1, cfg.authClients.Length)
         // roundtrip
         let text = TomlCodec.serialize cfg
+
         match TomlCodec.tryParse text with
         | Error errs -> failwith (String.concat "; " errs)
         | Ok cfg2 ->
@@ -135,7 +136,9 @@ let ``unknown TOML field rejects the whole config`` () =
 
 [<Fact>]
 let ``malformed token hash rejects the whole config`` () =
-    let bad = sampleToml.Replace("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "short")
+    let bad =
+        sampleToml.Replace("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "short")
+
     match TomlCodec.tryParse bad with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "tokenHash")
     | Ok _ -> failwith "invalid token hash should be rejected"
@@ -143,6 +146,7 @@ let ``malformed token hash rejects the whole config`` () =
 [<Fact>]
 let ``MCP id colliding with a provider id is rejected`` () =
     let bad = sampleToml.Replace("[mcp.fs]", "[mcp.openai]")
+
     match TomlCodec.tryParse bad with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "conflicts")
     | Ok _ -> failwith "id conflict should be rejected"
@@ -158,8 +162,8 @@ let ``只填证书或只填私钥都被拒绝`` () =
 [<Fact>]
 let ``证书文件不存在时拒绝启动`` () =
     let errors =
-        errorsOf (
-            withNetwork "tlsCertPath = \"/tmp/does-not-exist.pem\"\ntlsKeyPath = \"/tmp/also-missing.pem\"")
+        errorsOf (withNetwork "tlsCertPath = \"/tmp/does-not-exist.pem\"\ntlsKeyPath = \"/tmp/also-missing.pem\"")
+
     Assert.Contains("network.tlsCertPath: file not found: /tmp/does-not-exist.pem", errors)
     Assert.Contains("network.tlsKeyPath: file not found: /tmp/also-missing.pem", errors)
 
@@ -167,16 +171,19 @@ let ``证书文件不存在时拒绝启动`` () =
 let ``证书路径齐备时被接受并能往返 TOML`` () =
     let dir = Path.Combine(Path.GetTempPath(), $"wanxiang-tls-{Guid.NewGuid():N}")
     Directory.CreateDirectory dir |> ignore
+
     try
         let cert = Path.Combine(dir, "cert.pem")
         let key = Path.Combine(dir, "key.pem")
         File.WriteAllText(cert, "-----BEGIN CERTIFICATE-----")
         File.WriteAllText(key, "-----BEGIN PRIVATE KEY-----")
+
         match TomlCodec.tryParse (withNetwork $"tlsCertPath = \"{cert}\"\ntlsKeyPath = \"{key}\"") with
         | Error errors -> failwith $"应当接受，却报错：{errors}"
         | Ok cfg ->
             Assert.Equal(cert, cfg.tlsCertPath)
             Assert.Equal(key, cfg.tlsKeyPath)
+
             match TomlCodec.tryParse (TomlCodec.serialize cfg) with
             | Error errors -> failwith $"回写后无法重新解析：{errors}"
             | Ok again ->
@@ -227,6 +234,7 @@ let ``configVersion 1 配置能够成功解析并显式升级到当前模型`` (
         // 写回统一输出当前版本
         let serialized = TomlCodec.serialize cfg
         Assert.Contains("configVersion = 2", serialized)
+
         match TomlCodec.tryParse serialized with
         | Error errs -> failwith (String.concat "; " errs)
         | Ok cfg2 ->
@@ -236,11 +244,13 @@ let ``configVersion 1 配置能够成功解析并显式升级到当前模型`` (
 [<Fact>]
 let ``不支持的 configVersion 返回明确错误`` () =
     let v0 = sampleToml.Replace("configVersion = 2", "configVersion = 0")
+
     match TomlCodec.tryParse v0 with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "configVersion 0 not supported")
     | Ok _ -> failwith "version 0 should be rejected"
 
     let v99 = sampleToml.Replace("configVersion = 2", "configVersion = 99")
+
     match TomlCodec.tryParse v99 with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "configVersion 99 not supported")
     | Ok _ -> failwith "version 99 should be rejected"
@@ -259,12 +269,16 @@ let ``TOML 语法畸形时返回错误列表`` () =
 
 [<Fact>]
 let ``顶层缺少或非法 instanceId 报错`` () =
-    let noId = sampleToml.Replace("instanceId = \"11111111-1111-1111-1111-111111111111\"", "")
+    let noId =
+        sampleToml.Replace("instanceId = \"11111111-1111-1111-1111-111111111111\"", "")
+
     match TomlCodec.tryParse noId with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "instanceId: required UUID")
     | Ok _ -> failwith "缺少 instanceId 应当报错"
 
-    let badId = sampleToml.Replace("11111111-1111-1111-1111-111111111111", "not-a-valid-guid")
+    let badId =
+        sampleToml.Replace("11111111-1111-1111-1111-111111111111", "not-a-valid-guid")
+
     match TomlCodec.tryParse badId with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "instanceId: required UUID")
     | Ok _ -> failwith "非法 instanceId 应当报错"
@@ -272,75 +286,101 @@ let ``顶层缺少或非法 instanceId 报错`` () =
 [<Fact>]
 let ``runtime 节非表或未知字段报错`` () =
     let notTable = sampleToml.Replace("[runtime]\nserver = true", "runtime = \"bad\"")
+
     match TomlCodec.tryParse notTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "runtime: expected table")
     | Ok _ -> failwith "runtime 非表应报错"
 
-    let unknownKey = sampleToml.Replace("[runtime]\nserver = true", "[runtime]\nunknown = true\nserver = true")
+    let unknownKey =
+        sampleToml.Replace("[runtime]\nserver = true", "[runtime]\nunknown = true\nserver = true")
+
     match TomlCodec.tryParse unknownKey with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "runtime.unknown: unknown field")
     | Ok _ -> failwith "runtime 未知键应报错"
 
 [<Fact>]
 let ``network 节非表、缺少listen、非法尺寸与未知字段报错`` () =
-    let notTable = "network = 123\n" + (sampleToml.Replace("[network]\nlisten", "#network\n#listen"))
+    let notTable =
+        "network = 123\n"
+        + (sampleToml.Replace("[network]\nlisten", "#network\n#listen"))
+
     match TomlCodec.tryParse notTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network: expected table")
     | Ok _ -> failwith "network 非表应报错"
 
-    let emptyListen = sampleToml.Replace("listen = \"127.0.0.1:9999\"", "listen = \"   \"")
+    let emptyListen =
+        sampleToml.Replace("listen = \"127.0.0.1:9999\"", "listen = \"   \"")
+
     match TomlCodec.tryParse emptyListen with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network.listen: required")
     | Ok _ -> failwith "空 listen 应报错"
 
-    let badMaxAtt = sampleToml.Replace("maxAttachmentBytes = 1048576", "maxAttachmentBytes = 0")
+    let badMaxAtt =
+        sampleToml.Replace("maxAttachmentBytes = 1048576", "maxAttachmentBytes = 0")
+
     match TomlCodec.tryParse badMaxAtt with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network.maxAttachmentBytes: must be positive")
     | Ok _ -> failwith "maxAttachmentBytes <= 0 应报错"
 
     let badChunk = sampleToml.Replace("chunkSizeBytes = 65536", "chunkSizeBytes = -1")
+
     match TomlCodec.tryParse badChunk with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network.chunkSizeBytes: must be positive")
     | Ok _ -> failwith "chunkSizeBytes <= 0 应报错"
 
-    let unknownField = sampleToml.Replace("[network]\nlisten", "[network]\nextraNet = 1\nlisten")
+    let unknownField =
+        sampleToml.Replace("[network]\nlisten", "[network]\nextraNet = 1\nlisten")
+
     match TomlCodec.tryParse unknownField with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network.extraNet: unknown field")
     | Ok _ -> failwith "network 未知字段应报错"
 
 [<Fact>]
 let ``pairing 节非表与未知字段报错`` () =
-    let notTable = sampleToml.Replace("configVersion = 2\n", "configVersion = 2\npairing = false\n")
+    let notTable =
+        sampleToml.Replace("configVersion = 2\n", "configVersion = 2\npairing = false\n")
+
     match TomlCodec.tryParse notTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "pairing: expected table")
     | Ok _ -> failwith "pairing 非表应报错"
-    let unknownField = sampleToml + "
+
+    let unknownField =
+        sampleToml
+        + "
 [pairing]
 unknown = 1
 "
+
     match TomlCodec.tryParse unknownField with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "pairing.unknown: unknown field")
     | Ok _ -> failwith "pairing 未知键应报错"
 
 [<Fact>]
 let ``generation 节各参数边界校验与未知键报错`` () =
-    let notTable = "generation = 1\n" + (sampleToml.Replace("[generation]\ntemperature", "#generation\n#temperature"))
+    let notTable =
+        "generation = 1\n"
+        + (sampleToml.Replace("[generation]\ntemperature", "#generation\n#temperature"))
+
     match TomlCodec.tryParse notTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "generation: expected table")
     | Ok _ -> failwith "generation 非表应报错"
 
-    let unknownKey = sampleToml.Replace("[generation]\ntemperature", "[generation]\nfoo = 1\ntemperature")
+    let unknownKey =
+        sampleToml.Replace("[generation]\ntemperature", "[generation]\nfoo = 1\ntemperature")
+
     match TomlCodec.tryParse unknownKey with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "generation.foo: unknown field")
     | Ok _ -> failwith "generation 未知键应报错"
 
     // temperature < 0.0 或 > 2.0
     let tempLow = sampleToml.Replace("temperature = 0.7", "temperature = -0.1")
+
     match TomlCodec.tryParse tempLow with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "generation.temperature: must be within [0, 2]")
     | Ok _ -> failwith "temp < 0 应报错"
 
     let tempHigh = sampleToml.Replace("temperature = 0.7", "temperature = 2.1")
+
     match TomlCodec.tryParse tempHigh with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "generation.temperature: must be within [0, 2]")
     | Ok _ -> failwith "temp > 2 应报错"
@@ -381,22 +421,31 @@ let ``generation 节各参数边界校验与未知键报错`` () =
 
 [<Fact>]
 let ``tools 节非表、未知键、超时非正及相对路径报错`` () =
-    let notTable = "tools = 1\n" + (sampleToml.Replace("[tools]\ncallTimeoutSeconds", "#tools\n#callTimeoutSeconds"))
+    let notTable =
+        "tools = 1\n"
+        + (sampleToml.Replace("[tools]\ncallTimeoutSeconds", "#tools\n#callTimeoutSeconds"))
+
     match TomlCodec.tryParse notTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "tools: expected table")
     | Ok _ -> failwith "tools 非表应报错"
 
-    let unknownKey = sampleToml.Replace("[tools]\ncallTimeoutSeconds", "[tools]\nunknown = 1\ncallTimeoutSeconds")
+    let unknownKey =
+        sampleToml.Replace("[tools]\ncallTimeoutSeconds", "[tools]\nunknown = 1\ncallTimeoutSeconds")
+
     match TomlCodec.tryParse unknownKey with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "tools.unknown: unknown field")
     | Ok _ -> failwith "tools 未知键应报错"
 
-    let badTimeout = sampleToml.Replace("callTimeoutSeconds = 20", "callTimeoutSeconds = 0")
+    let badTimeout =
+        sampleToml.Replace("callTimeoutSeconds = 20", "callTimeoutSeconds = 0")
+
     match TomlCodec.tryParse badTimeout with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "tools.callTimeoutSeconds: must be positive")
     | Ok _ -> failwith "callTimeoutSeconds <= 0 应报错"
 
-    let relativeRoot = sampleToml.Replace("[tools]\n", "[tools]\nfileReadRoots = [\"relative/path\"]\n")
+    let relativeRoot =
+        sampleToml.Replace("[tools]\n", "[tools]\nfileReadRoots = [\"relative/path\"]\n")
+
     match TomlCodec.tryParse relativeRoot with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "must be an absolute path")
     | Ok _ -> failwith "非绝对路径 fileReadRoots 应报错"
@@ -404,53 +453,74 @@ let ``tools 节非表、未知键、超时非正及相对路径报错`` () =
 [<Fact>]
 let ``providers 节非表、不支持类型、空/相对端点、空模型、默认模型不存在与参数校验`` () =
     let notTable =
-        sampleToml.Replace("configVersion = 2\n", "configVersion = 2\nproviders = 1\n")
-                  .Replace("[providers.openai]\nkind = \"openai\"\nlabel = \"OpenAI\"\nbaseUrl = \"https://api.openai.com/v1\"\napiKey = \"sk-test\"\nmodels = [\"gpt-4o-mini\", \"gpt-4o\"]\ndefaultModel = \"gpt-4o-mini\"\ntimeoutSeconds = 90\nmaxRetries = 3\nenabled = true\n", "")
+        sampleToml
+            .Replace("configVersion = 2\n", "configVersion = 2\nproviders = 1\n")
+            .Replace(
+                "[providers.openai]\nkind = \"openai\"\nlabel = \"OpenAI\"\nbaseUrl = \"https://api.openai.com/v1\"\napiKey = \"sk-test\"\nmodels = [\"gpt-4o-mini\", \"gpt-4o\"]\ndefaultModel = \"gpt-4o-mini\"\ntimeoutSeconds = 90\nmaxRetries = 3\nenabled = true\n",
+                ""
+            )
+
     match TomlCodec.tryParse notTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "providers: expected table")
     | Ok _ -> failwith "providers 非表应报错"
 
-    let providerNotTable = sampleToml.Replace("[providers.openai]\nkind", "[providers]\nopenai = \"bad\"\n#kind")
+    let providerNotTable =
+        sampleToml.Replace("[providers.openai]\nkind", "[providers]\nopenai = \"bad\"\n#kind")
+
     match TomlCodec.tryParse providerNotTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "providers.openai: expected table")
     | Ok _ -> failwith "provider 项非表应报错"
 
-    let unknownField = sampleToml.Replace("[providers.openai]\nkind", "[providers.openai]\nunknown = 1\nkind")
+    let unknownField =
+        sampleToml.Replace("[providers.openai]\nkind", "[providers.openai]\nunknown = 1\nkind")
+
     match TomlCodec.tryParse unknownField with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "providers.openai.unknown: unknown field")
     | Ok _ -> failwith "provider 未知键应报错"
 
-    let unsupportedKind = sampleToml.Replace("kind = \"openai\"", "kind = \"unsupported_xyz\"")
+    let unsupportedKind =
+        sampleToml.Replace("kind = \"openai\"", "kind = \"unsupported_xyz\"")
+
     match TomlCodec.tryParse unsupportedKind with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "unsupported kind")
     | Ok _ -> failwith "不支持 kind 应报错"
 
-    let emptyBaseUrl = sampleToml.Replace("baseUrl = \"https://api.openai.com/v1\"", "baseUrl = \" \"")
+    let emptyBaseUrl =
+        sampleToml.Replace("baseUrl = \"https://api.openai.com/v1\"", "baseUrl = \" \"")
+
     match TomlCodec.tryParse emptyBaseUrl with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "providers.openai.baseUrl: required")
     | Ok _ -> failwith "空 baseUrl 应报错"
 
-    let notAbsoluteUrl = sampleToml.Replace("baseUrl = \"https://api.openai.com/v1\"", "baseUrl = \"api.openai.com/v1\"")
+    let notAbsoluteUrl =
+        sampleToml.Replace("baseUrl = \"https://api.openai.com/v1\"", "baseUrl = \"api.openai.com/v1\"")
+
     match TomlCodec.tryParse notAbsoluteUrl with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "providers.openai.baseUrl: must be an absolute URL")
     | Ok _ -> failwith "非绝对 baseUrl 应报错"
 
-    let emptyModels = sampleToml.Replace("models = [\"gpt-4o-mini\", \"gpt-4o\"]", "models = []")
+    let emptyModels =
+        sampleToml.Replace("models = [\"gpt-4o-mini\", \"gpt-4o\"]", "models = []")
+
     match TomlCodec.tryParse emptyModels with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "at least one model required")
     | Ok _ -> failwith "空 models 列表应报错"
 
-    let badDefaultModel = sampleToml.Replace("defaultModel = \"gpt-4o-mini\"", "defaultModel = \"non-existent\"")
+    let badDefaultModel =
+        sampleToml.Replace("defaultModel = \"gpt-4o-mini\"", "defaultModel = \"non-existent\"")
+
     match TomlCodec.tryParse badDefaultModel with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "is not in models")
     | Ok _ -> failwith "defaultModel 不在 models 里应报错"
 
     let badTimeout = sampleToml.Replace("timeoutSeconds = 90", "timeoutSeconds = 0")
+
     match TomlCodec.tryParse badTimeout with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "timeoutSeconds: must be positive")
     | Ok _ -> failwith "timeoutSeconds <= 0 应报错"
 
     let badRetries = sampleToml.Replace("maxRetries = 3", "maxRetries = -1")
+
     match TomlCodec.tryParse badRetries with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "maxRetries: must not be negative")
     | Ok _ -> failwith "maxRetries < 0 应报错"
@@ -458,49 +528,64 @@ let ``providers 节非表、不支持类型、空/相对端点、空模型、默
 [<Fact>]
 let ``mcp 节非表、项非表、command与url互斥/均缺、url非绝对及并发超时校验`` () =
     let notTable =
-        sampleToml.Replace("configVersion = 2\n", "configVersion = 2\nmcp = 1\n")
-                  .Replace("[mcp.fs]\ncommand = \"npx\"\nargs = [\"-y\", \"server\"]\nmaxConcurrency = 2\ncallTimeoutSeconds = 45\n", "")
+        sampleToml
+            .Replace("configVersion = 2\n", "configVersion = 2\nmcp = 1\n")
+            .Replace(
+                "[mcp.fs]\ncommand = \"npx\"\nargs = [\"-y\", \"server\"]\nmaxConcurrency = 2\ncallTimeoutSeconds = 45\n",
+                ""
+            )
+
     match TomlCodec.tryParse notTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp: expected table")
     | Ok _ -> failwith "mcp 非表应报错"
 
-    let mcpNotTable = sampleToml.Replace("[mcp.fs]\ncommand", "[mcp]\nfs = false\n#command")
+    let mcpNotTable =
+        sampleToml.Replace("[mcp.fs]\ncommand", "[mcp]\nfs = false\n#command")
+
     match TomlCodec.tryParse mcpNotTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs: expected table")
     | Ok _ -> failwith "mcp.fs 非表应报错"
 
-    let unknownKey = sampleToml.Replace("[mcp.fs]\ncommand", "[mcp.fs]\nunknown = 1\ncommand")
+    let unknownKey =
+        sampleToml.Replace("[mcp.fs]\ncommand", "[mcp.fs]\nunknown = 1\ncommand")
+
     match TomlCodec.tryParse unknownKey with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs.unknown: unknown field")
     | Ok _ -> failwith "mcp.fs 未知字段应报错"
 
     // 缺少 command 与 url
     let neither = sampleToml.Replace("command = \"npx\"", "#no command")
+
     match TomlCodec.tryParse neither with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "either command or url is required")
     | Ok _ -> failwith "缺少 command 和 url 应报错"
 
     // 同时提供 command 与 url
-    let both = sampleToml.Replace("command = \"npx\"", "command = \"npx\"\n" +
-                                  "url = \"https://mcp.local\"")
+    let both =
+        sampleToml.Replace("command = \"npx\"", "command = \"npx\"\n" + "url = \"https://mcp.local\"")
+
     match TomlCodec.tryParse both with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mutually exclusive")
     | Ok _ -> failwith "command 和 url 互斥应报错"
 
     // url 不是绝对 URL
     let badUrl = sampleToml.Replace("command = \"npx\"", "url = \"bad-url\"")
+
     match TomlCodec.tryParse badUrl with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs.url: must be an absolute URL")
     | Ok _ -> failwith "非绝对 URL 应报错"
 
     // callTimeoutSeconds <= 0
-    let badTimeout = sampleToml.Replace("callTimeoutSeconds = 45", "callTimeoutSeconds = 0")
+    let badTimeout =
+        sampleToml.Replace("callTimeoutSeconds = 45", "callTimeoutSeconds = 0")
+
     match TomlCodec.tryParse badTimeout with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs.callTimeoutSeconds: must be positive")
     | Ok _ -> failwith "callTimeoutSeconds <= 0 应报错"
 
     // maxConcurrency <= 0
     let badConcurrency = sampleToml.Replace("maxConcurrency = 2", "maxConcurrency = 0")
+
     match TomlCodec.tryParse badConcurrency with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs.maxConcurrency: must be positive")
     | Ok _ -> failwith "maxConcurrency <= 0 应报错"
@@ -508,42 +593,66 @@ let ``mcp 节非表、项非表、command与url互斥/均缺、url非绝对及�
 [<Fact>]
 let ``auth 节非表、clients非表数组、未知键、tokenHash缺失及大小写格式校验`` () =
     let notTable =
-        sampleToml.Replace("configVersion = 2\n", "configVersion = 2\nauth = 1\n")
-                  .Replace("[[auth.clients]]\ntokenHash = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\nname = \"test\"\ncreatedAt = \"2026-01-01T00:00:00Z\"\nrevoked = false\n", "")
+        sampleToml
+            .Replace("configVersion = 2\n", "configVersion = 2\nauth = 1\n")
+            .Replace(
+                "[[auth.clients]]\ntokenHash = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\nname = \"test\"\ncreatedAt = \"2026-01-01T00:00:00Z\"\nrevoked = false\n",
+                ""
+            )
+
     match TomlCodec.tryParse notTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "auth: expected table")
     | Ok _ -> failwith "auth 非表应报错"
 
-    let unknownAuthKey = sampleToml.Replace("[[auth.clients]]", "[auth]\nunknown = true\n[[auth.clients]]")
+    let unknownAuthKey =
+        sampleToml.Replace("[[auth.clients]]", "[auth]\nunknown = true\n[[auth.clients]]")
+
     match TomlCodec.tryParse unknownAuthKey with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "auth.unknown: unknown field")
     | Ok _ -> failwith "auth 未知键应报错"
 
     let clientsNotArray =
-        sampleToml.Replace("[[auth.clients]]\ntokenHash = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\nname = \"test\"\ncreatedAt = \"2026-01-01T00:00:00Z\"\nrevoked = false",
-                           "[auth]\nclients = \"string\"")
+        sampleToml.Replace(
+            "[[auth.clients]]\ntokenHash = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\nname = \"test\"\ncreatedAt = \"2026-01-01T00:00:00Z\"\nrevoked = false",
+            "[auth]\nclients = \"string\""
+        )
+
     match TomlCodec.tryParse clientsNotArray with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "auth.clients: expected array of tables")
     | Ok _ -> failwith "auth.clients 非表数组应报错"
 
-    let unknownClientKey = sampleToml.Replace("[[auth.clients]]\ntokenHash", "[[auth.clients]]\nunknown = 1\ntokenHash")
+    let unknownClientKey =
+        sampleToml.Replace("[[auth.clients]]\ntokenHash", "[[auth.clients]]\nunknown = 1\ntokenHash")
+
     match TomlCodec.tryParse unknownClientKey with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "auth.clients[].unknown: unknown field")
     | Ok _ -> failwith "auth.clients 元素未知键应报错"
 
-    let missingHash = sampleToml.Replace("tokenHash = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"", "")
+    let missingHash =
+        sampleToml.Replace("tokenHash = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"", "")
+
     match TomlCodec.tryParse missingHash with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "auth.clients[]: missing tokenHash")
     | Ok _ -> failwith "缺少 tokenHash 应报错"
 
     // tokenHash 大写
-    let uppercaseHash = sampleToml.Replace("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    let uppercaseHash =
+        sampleToml.Replace(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        )
+
     match TomlCodec.tryParse uppercaseHash with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "auth.clients[]: tokenHash must be lowercase")
     | Ok _ -> failwith "大写 tokenHash 应报错"
 
     // tokenHash 含有非 16 进制字符
-    let nonHexHash = sampleToml.Replace("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz")
+    let nonHexHash =
+        sampleToml.Replace(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaz"
+        )
+
     match TomlCodec.tryParse nonHexHash with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "tokenHash must be lowercase hex sha256")
     | Ok _ -> failwith "非十六进制 tokenHash 应报错"
@@ -551,27 +660,37 @@ let ``auth 节非表、clients非表数组、未知键、tokenHash缺失及大�
 [<Fact>]
 let ``v1 配置错误分支全面覆盖（缺少id、非表结构、字段越界、冲突校验）`` () =
     // v1 缺少 instanceId
-    let noId = sampleTomlV1.Replace("instanceId = \"22222222-2222-2222-2222-222222222222\"", "")
+    let noId =
+        sampleTomlV1.Replace("instanceId = \"22222222-2222-2222-2222-222222222222\"", "")
+
     match TomlCodec.tryParse noId with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "instanceId: required UUID")
     | Ok _ -> failwith "v1 缺少 instanceId 应报错"
 
     // v1 network 非表
-    let netNotTable = "network = false\n" + (sampleTomlV1.Replace("[network]\nlisten", "#network\n#listen"))
+    let netNotTable =
+        "network = false\n"
+        + (sampleTomlV1.Replace("[network]\nlisten", "#network\n#listen"))
+
     match TomlCodec.tryParse netNotTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network: expected table")
     | Ok _ -> failwith "v1 network 非表应报错"
 
     // v1 network 未知键
-    let netUnknown = sampleTomlV1.Replace("[network]\nlisten", "[network]\nunknown = 1\nlisten")
+    let netUnknown =
+        sampleTomlV1.Replace("[network]\nlisten", "[network]\nunknown = 1\nlisten")
+
     match TomlCodec.tryParse netUnknown with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network.unknown: unknown field")
     | Ok _ -> failwith "v1 network 未知键应报错"
 
     // v1 network 参数越界
-    let netBad = sampleTomlV1.Replace("listen = \"127.0.0.1:8765\"", "listen = \" \"")
-                             .Replace("maxAttachmentBytes = 67108864", "maxAttachmentBytes = -1")
-                             .Replace("chunkSizeBytes = 262144", "chunkSizeBytes = 0")
+    let netBad =
+        sampleTomlV1
+            .Replace("listen = \"127.0.0.1:8765\"", "listen = \" \"")
+            .Replace("maxAttachmentBytes = 67108864", "maxAttachmentBytes = -1")
+            .Replace("chunkSizeBytes = 262144", "chunkSizeBytes = 0")
+
     match TomlCodec.tryParse netBad with
     | Error errs ->
         Assert.Contains(errs, fun e -> e.Contains "network.listen: required")
@@ -580,36 +699,51 @@ let ``v1 配置错误分支全面覆盖（缺少id、非表结构、字段越界
     | Ok _ -> failwith "v1 network 越界应报错"
 
     // v1 pairing 非表与未知键
-    let pairNotTable = "pairing = 1\n" + (sampleTomlV1.Replace("[pairing]\nfailureWindowMinutes", "#pairing\n#failureWindowMinutes"))
+    let pairNotTable =
+        "pairing = 1\n"
+        + (sampleTomlV1.Replace("[pairing]\nfailureWindowMinutes", "#pairing\n#failureWindowMinutes"))
+
     match TomlCodec.tryParse pairNotTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "pairing: expected table")
     | Ok _ -> failwith "v1 pairing 非表应报错"
 
-    let pairUnknown = sampleTomlV1.Replace("[pairing]\nfailureWindowMinutes", "[pairing]\nunknown = 1\nfailureWindowMinutes")
+    let pairUnknown =
+        sampleTomlV1.Replace("[pairing]\nfailureWindowMinutes", "[pairing]\nunknown = 1\nfailureWindowMinutes")
+
     match TomlCodec.tryParse pairUnknown with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "pairing.unknown: unknown field")
     | Ok _ -> failwith "v1 pairing 未知键应报错"
 
     // v1 providers 非表、项非表与未知键
-    let provNotTable = "providers = 1\n" + (sampleTomlV1.Replace("[providers.openai]", "#[providers.openai]"))
+    let provNotTable =
+        "providers = 1\n"
+        + (sampleTomlV1.Replace("[providers.openai]", "#[providers.openai]"))
+
     match TomlCodec.tryParse provNotTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "providers: expected table")
     | Ok _ -> failwith "v1 providers 非表应报错"
 
-    let provItemNotTable = sampleTomlV1.Replace("[providers.openai]\nkind", "[providers]\nopenai = 1\n#kind")
+    let provItemNotTable =
+        sampleTomlV1.Replace("[providers.openai]\nkind", "[providers]\nopenai = 1\n#kind")
+
     match TomlCodec.tryParse provItemNotTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "providers.openai: expected table")
     | Ok _ -> failwith "v1 providers 项非表应报错"
 
-    let provUnknown = sampleTomlV1.Replace("[providers.openai]\nkind", "[providers.openai]\nunknown = 1\nkind")
+    let provUnknown =
+        sampleTomlV1.Replace("[providers.openai]\nkind", "[providers.openai]\nunknown = 1\nkind")
+
     match TomlCodec.tryParse provUnknown with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "providers.openai.unknown: unknown field")
     | Ok _ -> failwith "v1 provider 未知键应报错"
 
     // v1 provider 错误校验
-    let provBad = sampleTomlV1.Replace("kind = \"openai\"", "kind = \"bad_kind\"")
-                              .Replace("baseUrl = \"https://api.openai.com/v1\"", "baseUrl = \"not-url\"")
-                              .Replace("model = \"gpt-4o\"", "model = \" \"")
+    let provBad =
+        sampleTomlV1
+            .Replace("kind = \"openai\"", "kind = \"bad_kind\"")
+            .Replace("baseUrl = \"https://api.openai.com/v1\"", "baseUrl = \"not-url\"")
+            .Replace("model = \"gpt-4o\"", "model = \" \"")
+
     match TomlCodec.tryParse provBad with
     | Error errs ->
         Assert.Contains(errs, fun e -> e.Contains "unsupported kind")
@@ -619,49 +753,60 @@ let ``v1 配置错误分支全面覆盖（缺少id、非表结构、字段越界
 
     // v1 mcp 非表、项非表、未知键、二选一校验、url非绝对、并发非正
     let mcpNotTable = "mcp = 1\n" + (sampleTomlV1.Replace("[mcp.fs]", "#[mcp.fs]"))
+
     match TomlCodec.tryParse mcpNotTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp: expected table")
     | Ok _ -> failwith "v1 mcp 非表应报错"
 
-    let mcpItemNotTable = sampleTomlV1.Replace("[mcp.fs]\ncommand", "[mcp]\nfs = 1\n#command")
+    let mcpItemNotTable =
+        sampleTomlV1.Replace("[mcp.fs]\ncommand", "[mcp]\nfs = 1\n#command")
+
     match TomlCodec.tryParse mcpItemNotTable with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs: expected table")
     | Ok _ -> failwith "v1 mcp 项非表应报错"
 
-    let mcpUnknown = sampleTomlV1.Replace("[mcp.fs]\ncommand", "[mcp.fs]\nunknown = 1\ncommand")
+    let mcpUnknown =
+        sampleTomlV1.Replace("[mcp.fs]\ncommand", "[mcp.fs]\nunknown = 1\ncommand")
+
     match TomlCodec.tryParse mcpUnknown with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs.unknown: unknown field")
     | Ok _ -> failwith "v1 mcp 未知键应报错"
 
     let mcpNeither = sampleTomlV1.Replace("command = \"node\"", "#neither")
+
     match TomlCodec.tryParse mcpNeither with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "either command or url is required")
     | Ok _ -> failwith "v1 mcp 无 command/url 应报错"
 
-    let mcpBoth = sampleTomlV1.Replace("command = \"node\"", "command = \"node\"\n" +
-                                      "url = \"https://mcp.local\"")
+    let mcpBoth =
+        sampleTomlV1.Replace("command = \"node\"", "command = \"node\"\n" + "url = \"https://mcp.local\"")
+
     match TomlCodec.tryParse mcpBoth with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mutually exclusive")
     | Ok _ -> failwith "v1 mcp 冲突应报错"
 
     let mcpBadUrl = sampleTomlV1.Replace("command = \"node\"", "url = \"not-url\"")
+
     match TomlCodec.tryParse mcpBadUrl with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs.url: must be an absolute URL")
     | Ok _ -> failwith "v1 mcp 非绝对 URL 应报错"
 
     let mcpBadConc = sampleTomlV1.Replace("maxConcurrency = 4", "maxConcurrency = 0")
+
     match TomlCodec.tryParse mcpBadConc with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "mcp.fs.maxConcurrency: must be positive")
     | Ok _ -> failwith "v1 mcp 并发 <= 0 应报错"
 
     let mcpIdConflict = sampleTomlV1.Replace("[mcp.fs]", "[mcp.openai]")
+
     match TomlCodec.tryParse mcpIdConflict with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "id conflicts with provider id")
     | Ok _ -> failwith "v1 mcp id 冲突应报错"
 
 [<Fact>]
 let ``复杂配置往返：包含extraJson递归(对象/数组/值/数字/布尔/字符串)、环境变量、headers与自定义选项`` () =
-    let tomlWithAll = """
+    let tomlWithAll =
+        """
 configVersion = 2
 instanceId = "33333333-3333-3333-3333-333333333333"
 [runtime]
@@ -726,6 +871,7 @@ createdAt = "2026-02-01T12:00:00Z"
 lastSeen = "2026-02-02T15:30:00Z"
 revoked = true
 """
+
     match TomlCodec.tryParse tomlWithAll with
     | Error errs -> failwith (String.concat "; " errs)
     | Ok cfg ->
@@ -769,6 +915,7 @@ revoked = true
         Assert.Contains("Remote MCP", serialized)
         // lastSeen 只读不写：主机记账不进用户配置文件。
         Assert.DoesNotContain("lastSeen", serialized)
+
         match TomlCodec.tryParse serialized with
         | Error errs -> failwith (String.concat "; " errs)
         | Ok cfg2 ->
@@ -787,24 +934,31 @@ revoked = true
 
 [<Fact>]
 let ``ProviderConfig 辅助函数：displayName, hasModel, resolveModel 覆盖`` () =
-    let pNoLabel = {
-        id = "my-p"
-        kind = "openai"
-        label = ""
-        baseUrl = "https://example.com"
-        apiKey = None
-        models = [ "gpt-4"; "gpt-3.5" ]
-        defaultModel = "gpt-4"
-        timeoutSeconds = 60
-        maxRetries = 0
-        enabled = true
-        promptCaching = false
-        headers = Map.empty
-        extraJson = None; visionOverrides = Map.empty
-    }
+    let pNoLabel =
+        {
+            id = "my-p"
+            kind = "openai"
+            label = ""
+            baseUrl = "https://example.com"
+            apiKey = None
+            models = [ "gpt-4"; "gpt-3.5" ]
+            defaultModel = "gpt-4"
+            timeoutSeconds = 60
+            maxRetries = 0
+            enabled = true
+            promptCaching = false
+            headers = Map.empty
+            extraJson = None
+            visionOverrides = Map.empty
+        }
+
     Assert.Equal("my-p", ProviderConfig.displayName pNoLabel)
 
-    let pWithLabel = { pNoLabel with label = "My Super Provider" }
+    let pWithLabel =
+        { pNoLabel with
+            label = "My Super Provider"
+        }
+
     Assert.Equal("My Super Provider", ProviderConfig.displayName pWithLabel)
 
     Assert.True(ProviderConfig.hasModel "gpt-4" pNoLabel)
@@ -821,22 +975,29 @@ let ``ProviderConfig 辅助函数：displayName, hasModel, resolveModel 覆盖``
     let pNoDefault = { pNoLabel with defaultModel = "" }
     Assert.Equal("gpt-4", ProviderConfig.resolveModel "not-exist" pNoDefault)
     // 4. models 为空 -> 回落空字符串
-    let pEmptyModels = { pNoLabel with models = []; defaultModel = "" }
+    let pEmptyModels =
+        { pNoLabel with
+            models = []
+            defaultModel = ""
+        }
+
     Assert.Equal("", ProviderConfig.resolveModel "not-exist" pEmptyModels)
 
 [<Fact>]
 let ``McpServerConfig 辅助函数：displayName 覆盖`` () =
-    let mNoLabel = {
-        id = "mcp1"
-        label = "   "
-        command = Some "run"
-        args = []
-        env = Map.empty
-        url = None
-        maxConcurrency = None
-        callTimeoutSeconds = 60
-        enabled = true
-    }
+    let mNoLabel =
+        {
+            id = "mcp1"
+            label = "   "
+            command = Some "run"
+            args = []
+            env = Map.empty
+            url = None
+            maxConcurrency = None
+            callTimeoutSeconds = 60
+            enabled = true
+        }
+
     Assert.Equal("mcp1", McpServerConfig.displayName mNoLabel)
     let mWithLabel = { mNoLabel with label = "MCP Server 1" }
     Assert.Equal("MCP Server 1", McpServerConfig.displayName mWithLabel)
@@ -849,35 +1010,42 @@ let ``AppConfig usableProviders, defaultProvider, tryProvider 覆盖`` () =
     Assert.True(AppConfig.defaultProvider cfg |> Option.isNone)
     Assert.True(AppConfig.tryProvider "p1" cfg |> Option.isNone)
 
-    let p1 = {
-        id = "p-beta"
-        kind = "openai"
-        label = ""
-        baseUrl = "https://b.com"
-        apiKey = None
-        models = [ "m1" ]
-        defaultModel = "m1"
-        timeoutSeconds = 60
-        maxRetries = 0
-        enabled = true
-        promptCaching = false
-        headers = Map.empty
-        extraJson = None; visionOverrides = Map.empty
-    }
-    let p2 = { p1 with id = "p-alpha" }
-    let pDisabled = { p1 with id = "p-disabled"; enabled = false }
-    let pNoModels = { p1 with id = "p-nomodels"; models = [] }
+    let p1 =
+        {
+            id = "p-beta"
+            kind = "openai"
+            label = ""
+            baseUrl = "https://b.com"
+            apiKey = None
+            models = [ "m1" ]
+            defaultModel = "m1"
+            timeoutSeconds = 60
+            maxRetries = 0
+            enabled = true
+            promptCaching = false
+            headers = Map.empty
+            extraJson = None
+            visionOverrides = Map.empty
+        }
 
-    let cfgWithProviders = {
-        cfg with
-            providers =
-                Map.ofList [
-                    p1.id, p1
-                    p2.id, p2
-                    pDisabled.id, pDisabled
-                    pNoModels.id, pNoModels
-                ]
-    }
+    let p2 = { p1 with id = "p-alpha" }
+
+    let pDisabled =
+        { p1 with
+            id = "p-disabled"
+            enabled = false
+        }
+
+    let pNoModels =
+        { p1 with
+            id = "p-nomodels"
+            models = []
+        }
+
+    let cfgWithProviders =
+        { cfg with
+            providers = Map.ofList [ p1.id, p1; p2.id, p2; pDisabled.id, pDisabled; pNoModels.id, pNoModels ]
+        }
     // usableProviders 应过滤 disabled 和 无模型的，且按 id 排序（p-alpha 在前）
     let usable = AppConfig.usableProviders cfgWithProviders
     Assert.Equal(2, usable.Length)
@@ -892,4 +1060,3 @@ let ``AppConfig usableProviders, defaultProvider, tryProvider 覆盖`` () =
     // tryProvider
     Assert.True((AppConfig.tryProvider "p-beta" cfgWithProviders).IsSome)
     Assert.True((AppConfig.tryProvider "non-existent" cfgWithProviders).IsNone)
-

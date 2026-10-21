@@ -34,32 +34,34 @@ type Timing =
 /// 时长初始值：照抄旧 MotionLedger。只有数据；活的可变值归主题管理者。
 module MotionTimings =
 
-    let all : Timing list =
-        [ Timing.BusySpinnerFrame
-          Timing.CopyConfirmationHold
-          Timing.SearchInputDebounce
-          Timing.ConversationSkeletonDelay
-          Timing.HostViewportPoll
-          Timing.ToastDismissTick
-          Timing.ToastDwellFailure
-          Timing.ToastDwellWarning
-          Timing.ToastDwellDefault
-          Timing.OutboxDeliveryCheckTick
-          Timing.ExportExpiryCheckTick
-          Timing.OlderPageTimeout
-          Timing.HostRequestTimeout
-          Timing.OlderPageCheckTick
-          Timing.ImportResponseTimeout
-          Timing.ProgressTextThrottle
-          Timing.ThemeColorTransition
-          Timing.ControlStateTransition
-          Timing.CaretBreathPhase
-          Timing.CopyConfirmationFade
-          Timing.ScrimFade
-          Timing.DisclosureChevronRotate
-          Timing.ControlRowFade
-          Timing.ToastFade
-          Timing.OutboxConfirmTimeout ]
+    let all: Timing list =
+        [
+            Timing.BusySpinnerFrame
+            Timing.CopyConfirmationHold
+            Timing.SearchInputDebounce
+            Timing.ConversationSkeletonDelay
+            Timing.HostViewportPoll
+            Timing.ToastDismissTick
+            Timing.ToastDwellFailure
+            Timing.ToastDwellWarning
+            Timing.ToastDwellDefault
+            Timing.OutboxDeliveryCheckTick
+            Timing.ExportExpiryCheckTick
+            Timing.OlderPageTimeout
+            Timing.HostRequestTimeout
+            Timing.OlderPageCheckTick
+            Timing.ImportResponseTimeout
+            Timing.ProgressTextThrottle
+            Timing.ThemeColorTransition
+            Timing.ControlStateTransition
+            Timing.CaretBreathPhase
+            Timing.CopyConfirmationFade
+            Timing.ScrimFade
+            Timing.DisclosureChevronRotate
+            Timing.ControlRowFade
+            Timing.ToastFade
+            Timing.OutboxConfirmTimeout
+        ]
 
     /// 初始毫秒数
     let initialMs (timing: Timing) : float =
@@ -112,4 +114,7 @@ type MotionSwitch() =
 
     /// 经开关门控的时长：减弱动效时为零（瞬时切换）
     member _.Duration(milliseconds: float) : TimeSpan =
-        if reduced then TimeSpan.Zero else TimeSpan.FromMilliseconds milliseconds
+        if reduced then
+            TimeSpan.Zero
+        else
+            TimeSpan.FromMilliseconds milliseconds

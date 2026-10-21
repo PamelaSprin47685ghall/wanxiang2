@@ -5,11 +5,12 @@ open System.Text.Json
 open System.Text.Json.Nodes
 
 /// doctor 的一项检查结果（只读展示）。
-type DoctorCheck = {
-    name: string
-    ok: bool
-    detail: string
-}
+type DoctorCheck =
+    {
+        name: string
+        ok: bool
+        detail: string
+    }
 
 type DoctorState =
     | NotRun
@@ -22,18 +23,40 @@ module DoctorCheck =
 
     /// 把线上 checks 数组读成列表；缺字段的项被跳过（宽容读）。
     let parseChecks (items: JsonArray) : DoctorCheck list =
-        [ for item in items do
-              if not (isNull item) && item.GetValueKind() = JsonValueKind.Object then
-                  let o = item.AsObject()
-                  let str key =
-                      let mutable n: JsonNode = null
-                      if o.TryGetPropertyValue(key, &n) && not (isNull n) && n.GetValueKind() = JsonValueKind.String then n.GetValue<string>() else ""
-                  let ok =
-                      let mutable n: JsonNode = null
-                      o.TryGetPropertyValue("ok", &n) && not (isNull n) && n.GetValueKind() = JsonValueKind.True
-                  match str "name" with
-                  | "" -> ()
-                  | name -> yield { name = name; ok = ok; detail = str "detail" } ]
+        [
+            for item in items do
+                if not (isNull item) && item.GetValueKind() = JsonValueKind.Object then
+                    let o = item.AsObject()
+
+                    let str key =
+                        let mutable n: JsonNode = null
+
+                        if
+                            o.TryGetPropertyValue(key, &n)
+                            && not (isNull n)
+                            && n.GetValueKind() = JsonValueKind.String
+                        then
+                            n.GetValue<string>()
+                        else
+                            ""
+
+                    let ok =
+                        let mutable n: JsonNode = null
+
+                        o.TryGetPropertyValue("ok", &n)
+                        && not (isNull n)
+                        && n.GetValueKind() = JsonValueKind.True
+
+                    match str "name" with
+                    | "" -> ()
+                    | name ->
+                        yield
+                            {
+                                name = name
+                                ok = ok
+                                detail = str "detail"
+                            }
+        ]
 
     /// 检查项的用户词（只改可见层；协议名与 doctor 命令行输出不变）。
     let label (name: string) : string =
@@ -81,7 +104,10 @@ type HostHealth() =
     member _.ClearConfigIssue() : bool =
         let had = configIssue.IsSome
         configIssue <- None
-        if had then changed.Trigger()
+
+        if had then
+            changed.Trigger()
+
         had
 
     member _.BeginCheck() =

@@ -11,26 +11,33 @@ open Wanxiang.Protocol
 /// 存的是编码后的 `generation.partial` 事件本身，读回即可原样下发。
 type PartialReplyStore(directory: string option) =
     let items = ConcurrentDictionary<Guid, WireEvent>()
-    let pathOf (convId: Guid) = directory |> Option.map (fun d -> Path.Combine(d, convId.ToString("D") + ".json"))
+
+    let pathOf (convId: Guid) =
+        directory
+        |> Option.map (fun d -> Path.Combine(d, convId.ToString("D") + ".json"))
 
     do
         match directory with
         | Some d ->
             try
                 Directory.CreateDirectory d |> ignore
+
                 for file in Directory.GetFiles(d, "*.json") do
                     try
                         match WireCodec.tryDecode (File.ReadAllText file) with
                         | Ok(GenerationPartial p as ev) -> items[p.conversationId] <- ev
                         | _ -> ()
-                    with ex -> eprintfn "[wanxiang] 跳过无法读取的半截回复 %s：%s" file ex.Message
-            with _ -> ()
+                    with ex ->
+                        eprintfn "[wanxiang] 跳过无法读取的半截回复 %s：%s" file ex.Message
+            with _ ->
+                ()
         | None -> ()
 
     member _.Save(ev: WireEvent) =
         match ev with
         | GenerationPartial p ->
             items[p.conversationId] <- ev
+
             match pathOf p.conversationId with
             | Some path ->
                 try
@@ -51,5 +58,9 @@ type PartialReplyStore(directory: string option) =
     member _.Clear(convId: Guid) =
         if items.TryRemove(convId) |> fst then
             match pathOf convId with
-            | Some path -> (try File.Delete path with _ -> ())
+            | Some path ->
+                (try
+                    File.Delete path
+                 with _ ->
+                     ())
             | None -> ()

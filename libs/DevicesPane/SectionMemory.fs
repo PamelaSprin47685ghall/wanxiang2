@@ -20,21 +20,30 @@ type SectionMemory<'section, 'built when 'section: equality>(initial: 'section) 
 
     /// 数据变化后需要重建的分区：丢弃缓存。
     member _.Invalidate(sections: 'section list) =
-        for s in sections do built.Remove s |> ignore
+        for s in sections do
+            built.Remove s |> ignore
 
     /// 切换分区。currentOffset 是离开时当前分区的滚动位置（没有滚动容器时为 None）。
     /// 分区变了才记下旧分区位置（位置大于 0，或该分区还没记过），并返回新分区应恢复的位置；没变返回 None。
     member _.Select(section: 'section, currentOffset: float option) : float option =
         let changed = current <> section
+
         if changed then
-            currentOffset |> Option.iter (fun y ->
-                if y > 0.0 || not (offsets.ContainsKey current) then offsets[current] <- y)
+            currentOffset
+            |> Option.iter (fun y ->
+                if y > 0.0 || not (offsets.ContainsKey current) then
+                    offsets[current] <- y)
+
         current <- section
+
         if changed then
-            Some(match offsets.TryGetValue section with
-                 | true, y -> y
-                 | _ -> 0.0)
-        else None
+            Some(
+                match offsets.TryGetValue section with
+                | true, y -> y
+                | _ -> 0.0
+            )
+        else
+            None
 
     member _.Offset(section: 'section) : float =
         match offsets.TryGetValue section with

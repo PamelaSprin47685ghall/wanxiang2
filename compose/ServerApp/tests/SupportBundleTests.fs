@@ -17,39 +17,57 @@ module SupportBundle =
         let path = Path.Combine(dir, "config.toml")
         let cfg = AppConfig.defaults (Guid.NewGuid())
         let instanceId = cfg.instanceId
+
         let withKey =
             { cfg with
                 providers =
                     Map.ofList
-                        [ "openai",
-                          { id = "openai"
-                            kind = "openai"
-                            label = "OpenAI"
-                            baseUrl = "https://api.openai.com/v1"
-                            apiKey = Some "sk-secret-key-123456789"
-                            models = [ "gpt-4o" ]
-                            defaultModel = "gpt-4o"
-                            timeoutSeconds = 120
-                            maxRetries = 0
-                            promptCaching = false
-                            enabled = true
-                            headers = Map.empty
-                            extraJson = None; visionOverrides = Map.empty } ] }
+                        [
+                            "openai",
+                            {
+                                id = "openai"
+                                kind = "openai"
+                                label = "OpenAI"
+                                baseUrl = "https://api.openai.com/v1"
+                                apiKey = Some "sk-secret-key-123456789"
+                                models = [ "gpt-4o" ]
+                                defaultModel = "gpt-4o"
+                                timeoutSeconds = 120
+                                maxRetries = 0
+                                promptCaching = false
+                                enabled = true
+                                headers = Map.empty
+                                extraJson = None
+                                visionOverrides = Map.empty
+                            }
+                        ]
+            }
+
         File.WriteAllText(path, Wanxiang.Config.TomlCodec.serialize withKey)
         path, instanceId
 
     [<Fact>]
     let ``bundle 生成全部必需文件且不含密钥`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath, cfgInstanceId = writeConfig dir
             let outPath = Path.Combine(dir, "bundle")
+
             match SupportBundle.create dir configPath outPath with
             | Error e -> failwith e
             | Ok _ ->
                 // 必需文件
-                for f in [ "diagnosis.json"; "versions.json"; "recent-errors.jsonl"; "config.redacted.toml"; "storage-layout.json"; "snapshot-status.json" ] do
+                for f in
+                    [
+                        "diagnosis.json"
+                        "versions.json"
+                        "recent-errors.jsonl"
+                        "config.redacted.toml"
+                        "storage-layout.json"
+                        "snapshot-status.json"
+                    ] do
                     Assert.True(File.Exists(Path.Combine(outPath, f)), sprintf "%s missing" f)
                 // 配置脱敏：apiKey 值被替换
                 let cfgText = File.ReadAllText(Path.Combine(outPath, "config.redacted.toml"))
@@ -60,7 +78,10 @@ module SupportBundle =
                 Assert.Contains(sprintf "\"storageFormatVersion\":%d" Constants.FormatVersion, versions)
                 Assert.Contains(sprintf "\"configFormatVersion\":%d" AppConfig.CurrentVersion, versions)
                 // diagnosis.json 可追溯到来源实例（§18 关联 ID）
-                let diag = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(outPath, "diagnosis.json"))) :?> System.Text.Json.Nodes.JsonObject
+                let diag =
+                    System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(outPath, "diagnosis.json")))
+                    :?> System.Text.Json.Nodes.JsonObject
+
                 Assert.True(diag.ContainsKey "instanceId", "diagnosis.json missing instanceId")
                 Assert.Equal(string cfgInstanceId, string diag["instanceId"])
                 // snapshot-status.json
@@ -72,18 +93,33 @@ module SupportBundle =
     [<Fact>]
     let ``bundle 的 diagnosis 反映损坏日志状态`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath, _ = writeConfig dir
             // 制造损坏日志
             let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
             let convId = newConversationId ()
-            let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
+
+            let c1 =
+                Events.Commit.create
+                    1UL
+                    (DateTimeOffset(day))
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "A"
+                                config = testConfig ()
+                            }
+                    ]
+
             let p = DataPaths.logFile dir
             Directory.CreateDirectory(Path.GetDirectoryName p) |> ignore
             File.WriteAllBytes(p, Wanxiang.Store.Assembly.frame (c1))
             File.AppendAllText(p, "\u001e" + "garbage-no-lf")
             let outPath = Path.Combine(dir, "bundle")
+
             match SupportBundle.create dir configPath outPath with
             | Error e -> failwith e
             | Ok _ ->
@@ -97,6 +133,7 @@ module SupportBundle =
     [<Fact>]
     let ``recent-errors.jsonl 收集 Stderr 错误且已脱敏`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath, _ = writeConfig dir
@@ -104,6 +141,7 @@ module SupportBundle =
             Wanxiang.Server.Stderr.registerSecrets [ "sk-secret-key-123456789" ]
             Wanxiang.Server.Stderr.write "test-error" [ "message", "failed with sk-secret-key-123456789" ]
             let outPath = Path.Combine(dir, "bundle")
+
             match SupportBundle.create dir configPath outPath with
             | Error e -> failwith e
             | Ok _ ->
@@ -119,16 +157,31 @@ module SupportBundle =
     [<Fact>]
     let ``storage-layout.json 列出事件文件但不含内容`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath, _ = writeConfig dir
             let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
             let convId = newConversationId ()
-            let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = convId; title = "机密对话"; config = testConfig () } ]
+
+            let c1 =
+                Events.Commit.create
+                    1UL
+                    (DateTimeOffset(day))
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "机密对话"
+                                config = testConfig ()
+                            }
+                    ]
+
             let p = DataPaths.logFile dir
             Directory.CreateDirectory(Path.GetDirectoryName p) |> ignore
             File.WriteAllBytes(p, Wanxiang.Store.Assembly.frame (c1))
             let outPath = Path.Combine(dir, "bundle")
+
             match SupportBundle.create dir configPath outPath with
             | Error e -> failwith e
             | Ok _ ->

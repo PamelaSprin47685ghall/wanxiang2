@@ -31,14 +31,23 @@ let ``navigation controller owns compact and collapsed state transitions`` () =
 [<Fact>]
 let ``drawer autofocus matches old ApplyResponsiveLayout`` () =
     let old (before: NavigationSnapshot) (state: NavigationSnapshot) (prefersTouch: bool) =
-        state.compactMode && state.compactNavigationOpen
+        state.compactMode
+        && state.compactNavigationOpen
         && not (before.compactMode && before.compactNavigationOpen)
         && not prefersTouch
+
     let all =
-        [ for c in [ false; true ] do
-            for o in [ false; true ] do
-                for s in [ false; true ] do
-                    { compactMode = c; compactNavigationOpen = o; sidebarCollapsed = s } ]
+        [
+            for c in [ false; true ] do
+                for o in [ false; true ] do
+                    for s in [ false; true ] do
+                        {
+                            compactMode = c
+                            compactNavigationOpen = o
+                            sidebarCollapsed = s
+                        }
+        ]
+
     for b in all do
         for a in all do
             for t in [ false; true ] do

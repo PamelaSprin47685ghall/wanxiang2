@@ -23,7 +23,8 @@ type BatchBar() =
             Text = "已选 0 项",
             FontWeight = FontWeight.Medium,
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis)
+            TextTrimming = TextTrimming.CharacterEllipsis
+        )
 
     let cancelButton =
         let b = Button(Content = "✕")
@@ -69,7 +70,10 @@ type BatchBar() =
         let b = Border(IsVisible = false)
         b.Classes.Add "grouping-card"
         b.Padding <- Thickness(16.0, 8.0)
-        let dock = DockPanel(LastChildFill = false, VerticalAlignment = VerticalAlignment.Center)
+
+        let dock =
+            DockPanel(LastChildFill = false, VerticalAlignment = VerticalAlignment.Center)
+
         DockPanel.SetDock(cancelButton, Dock.Left)
         DockPanel.SetDock(selectAllButton, Dock.Right)
         dock.Children.Add cancelButton
@@ -82,15 +86,18 @@ type BatchBar() =
         let b = Border(IsVisible = false)
         b.Classes.Add "surface"
         b.Padding <- Thickness(8.0)
+
         let wire (left: Control) (right: Control) =
             left.KeyDown.Add(fun e ->
                 if e.Key = Key.Right && right.IsEnabled && right.IsEffectivelyVisible then
                     e.Handled <- true
                     right.Focus NavigationMethod.Directional |> ignore)
+
             right.KeyDown.Add(fun e ->
                 if e.Key = Key.Left && left.IsEnabled && left.IsEffectivelyVisible then
                     e.Handled <- true
                     left.Focus NavigationMethod.Directional |> ignore)
+
         wire pinButton archiveButton
         wire archiveButton deleteButton
         let grid = Grid()
@@ -144,8 +151,17 @@ type BatchBar() =
             header.IsVisible <- true
             bar.IsVisible <- true
 
-    [<CLIEvent>] member _.ExitClicked = exit.Publish
-    [<CLIEvent>] member _.SelectAllClicked = selectAll.Publish
-    [<CLIEvent>] member _.PinClicked = pin.Publish
-    [<CLIEvent>] member _.ArchiveClicked = archive.Publish
-    [<CLIEvent>] member _.DeleteClicked = delete.Publish
+    [<CLIEvent>]
+    member _.ExitClicked = exit.Publish
+
+    [<CLIEvent>]
+    member _.SelectAllClicked = selectAll.Publish
+
+    [<CLIEvent>]
+    member _.PinClicked = pin.Publish
+
+    [<CLIEvent>]
+    member _.ArchiveClicked = archive.Publish
+
+    [<CLIEvent>]
+    member _.DeleteClicked = delete.Publish

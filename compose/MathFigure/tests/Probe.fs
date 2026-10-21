@@ -10,7 +10,8 @@ open Avalonia.Media
 open Avalonia.Media.Imaging
 
 /// 金样两边共用：同一段落、同一画布，量出布局并对像素取哈希。
-let f (v: float) = v.ToString("0.###", Globalization.CultureInfo.InvariantCulture)
+let f (v: float) =
+    v.ToString("0.###", Globalization.CultureInfo.InvariantCulture)
 
 let ink = SolidColorBrush(Color.Parse "#1F2328")
 
@@ -20,10 +21,16 @@ let private pixels (control: Control) =
     use bmp = new RenderTargetBitmap(PixelSize(w, h), Vector(96.0, 96.0))
     bmp.Render control
     let stride = w * 4
-    let buffer = Array.zeroCreate<byte> (stride * h)
-    let handle = Runtime.InteropServices.GCHandle.Alloc(buffer, Runtime.InteropServices.GCHandleType.Pinned)
-    try bmp.CopyPixels(PixelRect(0, 0, w, h), handle.AddrOfPinnedObject(), buffer.Length, stride)
-    finally handle.Free()
+    let buffer = Array.zeroCreate<byte>(stride * h)
+
+    let handle =
+        Runtime.InteropServices.GCHandle.Alloc(buffer, Runtime.InteropServices.GCHandleType.Pinned)
+
+    try
+        bmp.CopyPixels(PixelRect(0, 0, w, h), handle.AddrOfPinnedObject(), buffer.Length, stride)
+    finally
+        handle.Free()
+
     Convert.ToHexString(SHA256.HashData buffer).Substring(0, 16).ToLowerInvariant()
 
 let private show (content: Control) =
@@ -44,6 +51,7 @@ let probe
     : string =
     let sb = StringBuilder()
     let line (s: string) = sb.Append(s).Append('\n') |> ignore
+
     if displayMode then
         match tryBlock () with
         | None -> line "block: none"
@@ -53,16 +61,38 @@ let probe
             panel.Children.Add host
             let win = show panel
             let figure = (host :?> Border).Child
-            line (sprintf "block: host=%s,%s,%s,%s figure=%s,%s,%s,%s baseline=%s pad=%s px=%s"
-                    (f host.Bounds.X) (f host.Bounds.Y) (f host.Bounds.Width) (f host.Bounds.Height)
-                    (f figure.Bounds.X) (f figure.Bounds.Y) (f figure.Bounds.Width) (f figure.Bounds.Height)
-                    (f (baseline figure)) (f (host :?> Border).Padding.Top) (pixels panel))
+
+            line (
+                sprintf
+                    "block: host=%s,%s,%s,%s figure=%s,%s,%s,%s baseline=%s pad=%s px=%s"
+                    (f host.Bounds.X)
+                    (f host.Bounds.Y)
+                    (f host.Bounds.Width)
+                    (f host.Bounds.Height)
+                    (f figure.Bounds.X)
+                    (f figure.Bounds.Y)
+                    (f figure.Bounds.Width)
+                    (f figure.Bounds.Height)
+                    (f (baseline figure))
+                    (f (host :?> Border).Padding.Top)
+                    (pixels panel)
+            )
+
             win.Close()
     else
         match tryInline () with
         | None -> line "inline: none"
         | Some figure ->
-            let block = TextBlock(FontFamily = body, FontSize = 14.5, LineHeight = 14.5 * 1.62, Foreground = ink, Width = 400.0, TextWrapping = TextWrapping.Wrap)
+            let block =
+                TextBlock(
+                    FontFamily = body,
+                    FontSize = 14.5,
+                    LineHeight = 14.5 * 1.62,
+                    Foreground = ink,
+                    Width = 400.0,
+                    TextWrapping = TextWrapping.Wrap
+                )
+
             block.Inlines <- InlineCollection()
             block.Inlines.Add(Run "前文 x ")
             block.Inlines.Add(container figure)
@@ -70,9 +100,21 @@ let probe
             let win = show block
             block.InvalidateVisual()
             win.UpdateLayout()
-            line (sprintf "inline: block=%s,%s figure=%s,%s,%s,%s baseline=%s name=%s px=%s"
-                    (f block.Bounds.Width) (f block.Bounds.Height)
-                    (f figure.Bounds.X) (f figure.Bounds.Y) (f figure.Bounds.Width) (f figure.Bounds.Height)
-                    (f (baseline figure)) (string (Avalonia.Automation.AutomationProperties.GetName figure)) (pixels block))
+
+            line (
+                sprintf
+                    "inline: block=%s,%s figure=%s,%s,%s,%s baseline=%s name=%s px=%s"
+                    (f block.Bounds.Width)
+                    (f block.Bounds.Height)
+                    (f figure.Bounds.X)
+                    (f figure.Bounds.Y)
+                    (f figure.Bounds.Width)
+                    (f figure.Bounds.Height)
+                    (f (baseline figure))
+                    (string (Avalonia.Automation.AutomationProperties.GetName figure))
+                    (pixels block)
+            )
+
             win.Close()
+
     sb.ToString()

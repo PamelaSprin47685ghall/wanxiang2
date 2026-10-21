@@ -1,4 +1,5 @@
 module GenerationDraftProviderProbeTextTests
+
 open System
 open System.IO
 open Xunit
@@ -23,6 +24,8 @@ let ``failure shows the parsed message as a failure`` () =
 
 [<Fact>]
 let ``vision summary lists at most twelve`` () =
-    let s = ProviderProbeText.visionSummary [ for i in 1..20 -> string i ] (fun _ -> VisionVerdict.No, VisionWhy.User)
+    let s =
+        ProviderProbeText.visionSummary [ for i in 1..20 -> string i ] (fun _ -> VisionVerdict.No, VisionWhy.User)
+
     Assert.Equal(12, s.Split('\n').Length)
     Assert.Equal("1：只吃文字（你的指定）", s.Split('\n').[0])

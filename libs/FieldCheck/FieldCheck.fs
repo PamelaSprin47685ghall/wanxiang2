@@ -16,7 +16,12 @@ open Avalonia.Markup.Xaml.MarkupExtensions
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 字段级校验反馈（迁自旧 Controls/Primitives.fs 的 Ui.fieldValidationMessage / setFieldError / clearFieldError /
@@ -38,8 +43,12 @@ type FieldCheck() =
 
     member private _.SetInvalid(shell: Border, invalid: bool) =
         shell.SetValue(invalidProperty, invalid) |> ignore
-        if invalid then shell.Classes.Add FieldCheck.InvalidClass |> ignore
-        else shell.Classes.Remove FieldCheck.InvalidClass |> ignore
+
+        if invalid then
+            shell.Classes.Add FieldCheck.InvalidClass |> ignore
+        else
+            shell.Classes.Remove FieldCheck.InvalidClass |> ignore
+
         let key = if invalid then "Palette.Danger" else "Palette.Border"
         shell.Bind(Border.BorderBrushProperty, Dyn.res key) |> ignore
 
@@ -48,45 +57,58 @@ type FieldCheck() =
         match messages.TryGetValue box with
         | true, message -> message
         | _ ->
-            let message = TextBlock(Text = "", TextWrapping = TextWrapping.Wrap, IsVisible = false)
+            let message =
+                TextBlock(Text = "", TextWrapping = TextWrapping.Wrap, IsVisible = false)
+
             message.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
             message.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
-            message.Bind(TextBlock.LineHeightProperty, Dyn.res "Metric.CaptionLineHeight") |> ignore
+
+            message.Bind(TextBlock.LineHeightProperty, Dyn.res "Metric.CaptionLineHeight")
+            |> ignore
+
             message.Bind(Layoutable.MarginProperty, Dyn.res "Margin.FieldError") |> ignore
             messages.Add(box, message)
             // 用户开始修正（文本真的变了）才清错误：聚焦切换时 Avalonia 会重放同一文本并抛 TextChanged，
             // 不比较旧值就会把刚写好的提示自己清掉。
             let mutable lastText = box.Text
+
             box.PropertyChanged.Add(fun args ->
                 if args.Property = TextBox.TextProperty then
                     let current = box.Text
                     let changed = current <> lastText
                     lastText <- current
+
                     if changed && message.IsVisible then
                         message.Text <- ""
                         message.IsVisible <- false
                         AutomationProperties.SetHelpText(box, "")
+
                         match box.Parent with
                         | :? Border as shell -> this.SetInvalid(shell, false)
                         | _ -> ())
+
             message
 
     member this.ApplyError(box: TextBox, message: string) =
         let line = this.MessageFor box
         line.Text <- message
         line.IsVisible <- not (String.IsNullOrWhiteSpace message)
+
         match box.Parent with
         | :? Border as shell -> this.SetInvalid(shell, true)
         | _ -> ()
+
         AutomationProperties.SetHelpText(box, message)
 
     member this.Clear(box: TextBox) =
         let line = this.MessageFor box
         line.Text <- ""
         line.IsVisible <- false
+
         match box.Parent with
         | :? Border as shell -> this.SetInvalid(shell, false)
         | _ -> ()
+
         AutomationProperties.SetHelpText(box, "")
 
     member _.HasError(box: TextBox) =
@@ -100,11 +122,13 @@ type FieldCheck() =
         | None -> ()
         | Some region ->
             for box in boxes do
-                box.GetObservable(TextBox.TextProperty).Subscribe(fun (_: string) ->
-                    if region.IsVisible then
-                        region.IsVisible <- false
-                        region.Text <- ""
-                        AutomationProperties.SetName(region, ""))
+                box
+                    .GetObservable(TextBox.TextProperty)
+                    .Subscribe(fun (_: string) ->
+                        if region.IsVisible then
+                            region.IsVisible <- false
+                            region.Text <- ""
+                            AutomationProperties.SetName(region, ""))
                 |> ignore
 
     /// 提交后的统一反馈。errors 按字段顺序给出。
@@ -114,9 +138,15 @@ type FieldCheck() =
         let focusField (box: TextBox) =
             box.BringIntoView()
             box.Focus(NavigationMethod.Directional) |> ignore
+
         let single (box: TextBox, message: string) =
             focusField box
-            if String.IsNullOrWhiteSpace message then None else Some message
+
+            if String.IsNullOrWhiteSpace message then
+                None
+            else
+                Some message
+
         match errors with
         | [] ->
             summary |> Option.iter (fun region -> region.IsVisible <- false)

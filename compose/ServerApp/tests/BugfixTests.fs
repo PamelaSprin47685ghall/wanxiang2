@@ -14,23 +14,45 @@ open Wanxiang.Tests.Helpers
 [<Fact>]
 let ``attachment chunk exceeds configured limit is rejected`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let store = AttachmentStore(dir, 1024L, 8) // chunkSizeBytes = 8
         let payload = "0123456789" |> Text.Encoding.UTF8.GetBytes
         let hash = Convert.ToHexString(SHA256.HashData payload).ToLowerInvariant()
         let aid = Guid.NewGuid()
-        store.Begin(1, aid, int64 payload.Length, hash, "text/plain", "x.txt") |> function Ok () -> () | Error e -> failwith (WanxiangError.message e)
+
+        store.Begin(1, aid, int64 payload.Length, hash, "text/plain", "x.txt")
+        |> function
+            | Ok() -> ()
+            | Error e -> failwith (WanxiangError.message e)
+
         match store.AppendChunk(aid, 0, Convert.ToBase64String payload) with
-        | Error (ValidationError m) -> Assert.Contains("limit", m)
+        | Error(ValidationError m) -> Assert.Contains("limit", m)
         | r -> failwithf "oversized chunk should be rejected, got %A" r
         // 合法块（≤8 字节）可以追加
         let aid2 = Guid.NewGuid()
-        store.Begin(1, aid2, int64 payload.Length, hash, "text/plain", "x.txt") |> ignore
+
+        store.Begin(1, aid2, int64 payload.Length, hash, "text/plain", "x.txt")
+        |> ignore
+
         let chunk1 = Convert.ToBase64String(payload[0..7])
-        store.AppendChunk(aid2, 0, chunk1) |> function Ok () -> () | Error e -> failwith (WanxiangError.message e)
-        store.AppendChunk(aid2, 1, Convert.ToBase64String(payload[8..])) |> function Ok () -> () | Error e -> failwith (WanxiangError.message e)
-        store.Complete(aid2, hash) |> function Ok _ -> () | Error e -> failwith (WanxiangError.message e)
+
+        store.AppendChunk(aid2, 0, chunk1)
+        |> function
+            | Ok() -> ()
+            | Error e -> failwith (WanxiangError.message e)
+
+        store.AppendChunk(aid2, 1, Convert.ToBase64String(payload[8..]))
+        |> function
+            | Ok() -> ()
+            | Error e -> failwith (WanxiangError.message e)
+
+        store.Complete(aid2, hash)
+        |> function
+            | Ok _ -> ()
+            | Error e -> failwith (WanxiangError.message e)
+
         store.Dispose()
     finally
         cleanup dir
@@ -39,14 +61,19 @@ let ``attachment chunk exceeds configured limit is rejected`` () =
 [<Fact>]
 let ``attachment fileName is sanitized`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let store = AttachmentStore(dir, 1024L)
         let payload = "abc" |> Text.Encoding.UTF8.GetBytes
         let hash = Convert.ToHexString(SHA256.HashData payload).ToLowerInvariant()
         let aid = Guid.NewGuid()
-        store.Begin(1, aid, 3L, hash, "text/plain", "\u0000bad\u0001name\u001f.txt") |> ignore
+
+        store.Begin(1, aid, 3L, hash, "text/plain", "\u0000bad\u0001name\u001f.txt")
+        |> ignore
+
         store.AppendChunk(aid, 0, Convert.ToBase64String payload) |> ignore
+
         match store.Complete(aid, hash) with
         | Ok ref -> Assert.Equal("badname.txt", ref.fileName)
         | Error e -> failwith (WanxiangError.message e)
@@ -55,9 +82,11 @@ let ``attachment fileName is sanitized`` () =
         let aid2 = Guid.NewGuid()
         store.Begin(1, aid2, 3L, hash, "text/plain", longName) |> ignore
         store.AppendChunk(aid2, 0, Convert.ToBase64String payload) |> ignore
+
         match store.Complete(aid2, hash) with
         | Ok ref -> Assert.True(ref.fileName.Length <= 255)
         | Error e -> failwith (WanxiangError.message e)
+
         store.Dispose()
     finally
         cleanup dir
@@ -67,15 +96,35 @@ let ``attachment fileName is sanitized`` () =
 [<Fact>]
 let ``attachment media type sniffed and metadata persisted`` () =
     let dir = tempDir ()
+
     try
         DataPaths.ensureDataDirs dir
         let store = AttachmentStore(dir, 1024L)
         // 1x1 PNG 魔数
-        let png = [| 0x89uy; 0x50uy; 0x4Euy; 0x47uy; 0x0Duy; 0x0Auy; 0x1Auy; 0x0Auy; 0x00uy; 0x00uy; 0x00uy; 0x0Duy |]
+        let png =
+            [|
+                0x89uy
+                0x50uy
+                0x4Euy
+                0x47uy
+                0x0Duy
+                0x0Auy
+                0x1Auy
+                0x0Auy
+                0x00uy
+                0x00uy
+                0x00uy
+                0x0Duy
+            |]
+
         let hash = Convert.ToHexString(SHA256.HashData png).ToLowerInvariant()
         let aid = Guid.NewGuid()
-        store.Begin(1, aid, int64 png.Length, hash, "application/octet-stream", "pic.png") |> ignore
+
+        store.Begin(1, aid, int64 png.Length, hash, "application/octet-stream", "pic.png")
+        |> ignore
+
         store.AppendChunk(aid, 0, Convert.ToBase64String png) |> ignore
+
         match store.Complete(aid, hash) with
         | Ok ref ->
             Assert.Equal("image/png", ref.mediaType)
@@ -83,7 +132,7 @@ let ``attachment media type sniffed and metadata persisted`` () =
         | Error e -> failwith (WanxiangError.message e)
         // 下载元数据回传（P2-7）
         match store.Metadata hash with
-        | Some (mediaType, fileName, size) ->
+        | Some(mediaType, fileName, size) ->
             Assert.Equal("image/png", mediaType)
             Assert.Equal("pic.png", fileName)
             Assert.Equal(int64 png.Length, size)
@@ -92,11 +141,16 @@ let ``attachment media type sniffed and metadata persisted`` () =
         let text = "hello" |> Text.Encoding.UTF8.GetBytes
         let thash = Convert.ToHexString(SHA256.HashData text).ToLowerInvariant()
         let aid3 = Guid.NewGuid()
-        store.Begin(1, aid3, int64 text.Length, thash, "application/x-custom", "t.bin") |> ignore
+
+        store.Begin(1, aid3, int64 text.Length, thash, "application/x-custom", "t.bin")
+        |> ignore
+
         store.AppendChunk(aid3, 0, Convert.ToBase64String text) |> ignore
+
         match store.Complete(aid3, thash) with
         | Ok ref -> Assert.Equal("application/x-custom", ref.mediaType)
         | Error e -> failwith (WanxiangError.message e)
+
         store.Dispose()
     finally
         cleanup dir
@@ -105,17 +159,75 @@ let ``attachment media type sniffed and metadata persisted`` () =
 [<Fact>]
 let ``snapshot tail caps long conversation`` () =
     let dir = tempDir ()
+
     try
         let convId = newConversationId ()
+
         let commits =
-            [ Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
-              Events.Commit.create 2UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m1" } ]
-              Events.Commit.create 3UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = assistantMessageJson "m2" } ]
-              Events.Commit.create 4UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m3" } ]
-              Events.Commit.create 5UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = assistantMessageJson "m4" } ] ]
+            [
+                Events.Commit.create
+                    1UL
+                    DateTimeOffset.UtcNow
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "A"
+                                config = testConfig ()
+                            }
+                    ]
+                Events.Commit.create
+                    2UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = userMessageJson "m1"
+                            }
+                    ]
+                Events.Commit.create
+                    3UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = assistantMessageJson "m2"
+                            }
+                    ]
+                Events.Commit.create
+                    4UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = userMessageJson "m3"
+                            }
+                    ]
+                Events.Commit.create
+                    5UL
+                    DateTimeOffset.UtcNow
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = assistantMessageJson "m4"
+                            }
+                    ]
+            ]
+
         let proj =
             commits
-            |> List.fold (fun p c -> Projection.applyCommit p c |> function Ok p -> p | Error e -> failwith (WanxiangError.message e)) Projection.empty
+            |> List.fold
+                (fun p c ->
+                    Projection.applyCommit p c
+                    |> function
+                        | Ok p -> p
+                        | Error e -> failwith (WanxiangError.message e))
+                Projection.empty
+
         let conv = Projection.tryConversation proj convId |> Option.get
         // 不截断：全量 + hasMore=false
         let all, e0, hasMore0 = ServerModel.conversationMessagesTail proj conv 0
@@ -136,16 +248,82 @@ let ``snapshot tail caps long conversation`` () =
 [<Fact>]
 let ``history paging slices by commit id`` () =
     let convId = newConversationId ()
+
     let commits =
-        [ Events.Commit.create 1UL DateTimeOffset.UtcNow [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
-          Events.Commit.create 2UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m1" } ]
-          Events.Commit.create 3UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = assistantMessageJson "m2" } ]
-          Events.Commit.create 4UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m3" } ]
-          Events.Commit.create 5UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = assistantMessageJson "m4" } ]
-          Events.Commit.create 6UL DateTimeOffset.UtcNow [ AgentMessageRecorded { conversationId = convId; payloadJson = userMessageJson "m5" } ] ]
+        [
+            Events.Commit.create
+                1UL
+                DateTimeOffset.UtcNow
+                [
+                    ConversationCreated
+                        {
+                            conversationId = convId
+                            title = "A"
+                            config = testConfig ()
+                        }
+                ]
+            Events.Commit.create
+                2UL
+                DateTimeOffset.UtcNow
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = userMessageJson "m1"
+                        }
+                ]
+            Events.Commit.create
+                3UL
+                DateTimeOffset.UtcNow
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = assistantMessageJson "m2"
+                        }
+                ]
+            Events.Commit.create
+                4UL
+                DateTimeOffset.UtcNow
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = userMessageJson "m3"
+                        }
+                ]
+            Events.Commit.create
+                5UL
+                DateTimeOffset.UtcNow
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = assistantMessageJson "m4"
+                        }
+                ]
+            Events.Commit.create
+                6UL
+                DateTimeOffset.UtcNow
+                [
+                    AgentMessageRecorded
+                        {
+                            conversationId = convId
+                            payloadJson = userMessageJson "m5"
+                        }
+                ]
+        ]
+
     let proj =
         commits
-        |> List.fold (fun p c -> Projection.applyCommit p c |> function Ok p -> p | Error e -> failwith (WanxiangError.message e)) Projection.empty
+        |> List.fold
+            (fun p c ->
+                Projection.applyCommit p c
+                |> function
+                    | Ok p -> p
+                    | Error e -> failwith (WanxiangError.message e))
+            Projection.empty
+
     let conv = Projection.tryConversation proj convId |> Option.get
     // beforeCommitId=6, limit=2 → [4,5], hasMore（还有 2,3）
     let items, hasMore = ServerModel.historyPageItems proj conv 6UL 2
@@ -166,7 +344,11 @@ let ``history paging slices by commit id`` () =
 /// P2-3：附件引用提取（Q179：doctor 可达性检查与客户端展示共用）。
 [<Fact>]
 let ``attachment refs are extracted from message payload`` () =
-    let payload = JsonNode.Parse("""{"role":"user","contents":[{"text":"hi"},{"type":"attachment","sha256":"aabbccdd","size":42,"mediaType":"image/png","fileName":"x.png"}]}""")
+    let payload =
+        JsonNode.Parse(
+            """{"role":"user","contents":[{"text":"hi"},{"type":"attachment","sha256":"aabbccdd","size":42,"mediaType":"image/png","fileName":"x.png"}]}"""
+        )
+
     match ServerModel.attachmentRefsOf payload with
     | [ (sha, mediaType, fileName, size) ] ->
         Assert.Equal("aabbccdd", sha)
@@ -179,6 +361,7 @@ let ``attachment refs are extracted from message payload`` () =
 [<Fact>]
 let ``stderr redacts registered secrets`` () =
     let secret = "sk-test-secret-value-123456"
+
     try
         Stderr.registerSecrets [ secret ]
         // redact 精确替换已知密钥
@@ -212,7 +395,7 @@ let ``stderr redact replaces longer secrets first`` () =
 /// D6：超限错误携带 (上限, 实际)，文案点名 MiB 上限、实际大小与 remedy。
 [<Fact>]
 let ``oversize attachment error names the MiB cap, actual size, and remedy`` () =
-    let err = AttachmentTooLarge (64L * 1024L * 1024L, 100L * 1024L * 1024L)
+    let err = AttachmentTooLarge(64L * 1024L * 1024L, 100L * 1024L * 1024L)
     Assert.Equal("attachment-too-large", WanxiangError.code err)
     let msg = WanxiangError.message err
     Assert.Contains("64.0 MiB", msg)

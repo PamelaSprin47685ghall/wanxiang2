@@ -1,4 +1,5 @@
 module UsageTallyTests
+
 open System
 open Microsoft.Extensions.AI
 open Xunit
@@ -6,14 +7,20 @@ open Wanxiang.Server
 
 let private u (i: int64 option) (o: int64 option) (c: int64 option) (t: int64 option) =
     let d = UsageDetails()
-    let n = function Some v -> Nullable v | None -> Nullable()
+
+    let n =
+        function
+        | Some v -> Nullable v
+        | None -> Nullable()
+
     d.InputTokenCount <- n i
     d.OutputTokenCount <- n o
     d.CachedInputTokenCount <- n c
     d.TotalTokenCount <- n t
     d
 
-let private all (t: UsageTally) = t.PromptTokens, t.CompletionTokens, t.CachedTokens, t.TotalTokens
+let private all (t: UsageTally) =
+    t.PromptTokens, t.CompletionTokens, t.CachedTokens, t.TotalTokens
 
 [<Fact>]
 let ``没有任何一轮时全部为 None`` () =

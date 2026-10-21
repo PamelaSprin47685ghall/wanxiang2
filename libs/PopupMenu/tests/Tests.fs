@@ -12,16 +12,18 @@ open Xunit
 open Wanxiang2.PopupMenu
 
 let look () =
-    { Text = Brushes.Black
-      Muted = Brushes.Gray
-      Faint = Brushes.LightGray
-      Danger = Brushes.Red
-      Accent = Brushes.Blue
-      Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b, Name = "check"))
-      Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
-      IconSlotWidth = 16.0
-      ItemMinHeight = 32.0
-      MaxHeight = 200.0 }
+    {
+        Text = Brushes.Black
+        Muted = Brushes.Gray
+        Faint = Brushes.LightGray
+        Danger = Brushes.Red
+        Accent = Brushes.Blue
+        Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b, Name = "check"))
+        Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
+        IconSlotWidth = 16.0
+        ItemMinHeight = 32.0
+        MaxHeight = 200.0
+    }
 
 let show (content: Control) =
     let window = Window(Width = 360.0, Height = 320.0, Content = content)
@@ -30,10 +32,18 @@ let show (content: Control) =
     window
 
 let byName (root: Visual) name =
-    root.GetVisualDescendants() |> Seq.choose (function :? Control as c when AutomationProperties.GetName c = name -> Some c | _ -> None) |> Seq.head
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? Control as c when AutomationProperties.GetName c = name -> Some c
+        | _ -> None)
+    |> Seq.head
 
 let textOf (root: Visual) text =
-    root.GetVisualDescendants() |> Seq.choose (function :? TextBlock as t when t.Text = text -> Some t | _ -> None) |> Seq.head
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? TextBlock as t when t.Text = text -> Some t
+        | _ -> None)
+    |> Seq.head
 
 let key (c: Control) k =
     let e = KeyEventArgs(Key = k, RoutedEvent = InputElement.KeyDownEvent)
@@ -64,7 +74,10 @@ let ``select button and menu items keep full opacity until pressed`` () =
         let l = look ()
         let b = SelectButton(l, "模型")
         Assert.Equal(1.0, b.View.Opacity, 3)
-        let menu = (PopupMenu.build l ignore [ PopupEntry.create "重命名" ignore |> PopupEntry.withHint "F2" ]).Value
+
+        let menu =
+            (PopupMenu.build l ignore [ PopupEntry.create "重命名" ignore |> PopupEntry.withHint "F2" ]).Value
+
         let window = show menu
         let item = byName menu "重命名" :?> Border
         Assert.Equal(1.0, item.Opacity, 3)
@@ -91,11 +104,19 @@ let ``forty item menu supports directional focus and scrolls`` () =
     Headless.run (fun () ->
         let l = look ()
         let longLabel = "菜单项 01 " + String.replicate 18 "非常长的名称"
+
         let entries =
-            [ for i in 1..40 ->
-                  let label = if i = 1 then longLabel else sprintf "菜单项 %02d" i
-                  PopupEntry.create label ignore
-                  |> (if i % 3 = 0 then PopupEntry.withIcon (fun b -> Border(Background = b)) else id) ]
+            [
+                for i in 1..40 ->
+                    let label = if i = 1 then longLabel else sprintf "菜单项 %02d" i
+
+                    PopupEntry.create label ignore
+                    |> (if i % 3 = 0 then
+                            PopupEntry.withIcon (fun b -> Border(Background = b))
+                        else
+                            id)
+            ]
+
         let menu = (PopupMenu.build l ignore entries).Value
         let window = show menu
         let first = byName menu longLabel
@@ -136,7 +157,10 @@ let ``enter and space activate the entry and grouped menus skip empty groups`` (
         let b = PopupEntry.create "乙" ignore |> PopupEntry.asDanger
         Assert.True((PopupMenu.buildGrouped l ignore [ "空", [] ]).IsNone)
         Assert.True((PopupMenu.build l ignore []).IsNone)
-        let menu = (PopupMenu.buildGrouped l (fun e -> hits.Add e.Label) [ "服务一", [ a ]; "空", []; "服务二", [ b ] ]).Value
+
+        let menu =
+            (PopupMenu.buildGrouped l (fun e -> hits.Add e.Label) [ "服务一", [ a ]; "空", []; "服务二", [ b ] ]).Value
+
         let window = show menu
         let panel = (menu :?> ScrollViewer).Content :?> StackPanel
         // 头、项、分隔、头、项
@@ -145,7 +169,14 @@ let ``enter and space activate the entry and grouped menus skip empty groups`` (
         let ib = byName menu "乙"
         Assert.True(ib.Classes.Contains "hover-danger")
         Assert.True(ia.Classes.Contains "hover-plain")
-        Assert.True(ia.GetVisualDescendants() |> Seq.exists (function :? Control as c -> c.Name = "check" | _ -> false))
+
+        Assert.True(
+            ia.GetVisualDescendants()
+            |> Seq.exists (function
+                | :? Control as c -> c.Name = "check"
+                | _ -> false)
+        )
+
         key ia Key.Enter |> ignore
         key ib Key.Space |> ignore
         Assert.Equal<string list>([ "甲"; "乙" ], List.ofSeq hits)

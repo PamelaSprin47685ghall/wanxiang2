@@ -20,15 +20,20 @@ type MarkdownStream(view: MarkdownView) =
     member _.Update(raw: string) =
         if diff.Accept raw then
             let plan = diff.Diff(Markdown.parse raw)
+
             if panel.Children.Count > plan.KeepControls then
                 panel.Children.RemoveRange(plan.KeepControls, panel.Children.Count - plan.KeepControls)
+
             for control, margin in plan.Restore do
                 control.Margin <- margin
+
             for block in plan.Render do
                 let controls = view.RenderBlock block
                 diff.Mounted(block, controls |> List.map (fun c -> c, c.Margin))
+
                 for control in controls do
                     panel.Children.Add control
+
             if panel.Children.Count > 0 then
                 let last = panel.Children[panel.Children.Count - 1]
                 let m = last.Margin

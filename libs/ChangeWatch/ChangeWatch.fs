@@ -9,7 +9,8 @@ type ChangeWatch<'value when 'value: equality>(initial: 'value option) =
 
     /// 读到新值：变了返回 true 并记下；没变返回 false。
     member _.Observe(value: 'value) : bool =
-        if last = Some value then false
+        if last = Some value then
+            false
         else
             last <- Some value
             true

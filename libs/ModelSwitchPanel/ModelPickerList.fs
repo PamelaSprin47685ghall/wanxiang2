@@ -16,7 +16,9 @@ module ModelPickerList =
     let groups (providerOf: 'T -> string) (query: string) (shown: 'T list) =
         let grouped = shown |> List.groupBy providerOf
         let showHeaders = String.IsNullOrWhiteSpace query && grouped.Length > 1
-        grouped |> List.map (fun (label, items) -> (if showHeaders then Some label else None), items)
+
+        grouped
+        |> List.map (fun (label, items) -> (if showHeaders then Some label else None), items)
 
     /// 回车：第一条命中
     let enterPick (shown: 'T list) = List.tryHead shown
@@ -26,9 +28,12 @@ module ModelPickerList =
 
     /// 列表内上下：current 为 -1 表示没有焦点项；空列表 None
     let move (up: bool) (current: int) (count: int) =
-        if count <= 0 then None
-        elif up && current <= 0 then Some PickerMove.ToSearch
-        else Some(PickerMove.Focus(if up then current - 1 else min (count - 1) (current + 1)))
+        if count <= 0 then
+            None
+        elif up && current <= 0 then
+            Some PickerMove.ToSearch
+        else
+            Some(PickerMove.Focus(if up then current - 1 else min (count - 1) (current + 1)))
 
     let emptyText = "没有匹配的模型。"
     let searchHelp = "输入筛选，回车选第一条，下方向键进入列表，Esc 关闭"

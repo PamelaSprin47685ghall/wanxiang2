@@ -19,7 +19,8 @@ type ToastDwell(dwellMs: float, hasAction: bool) =
 
     /// 计时器每跳一次调用；返回 true 表示该撤下了。
     member _.Tick(intervalMs: float) : bool =
-        if paused then false
+        if paused then
+            false
         else
             remainingMs <- remainingMs - intervalMs
             remainingMs <= 0.0

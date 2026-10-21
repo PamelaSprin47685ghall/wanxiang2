@@ -38,7 +38,8 @@ module Program =
     /// 桌面对应物是文件（UiPrefsFile / PaletteRecentFile）；这里只做浏览器落点。
     module private LocalText =
 
-        let private key (path: string) = "wanxiang.local:" + IO.Path.GetFileName path
+        let private key (path: string) =
+            "wanxiang.local:" + IO.Path.GetFileName path
 
         /// 读取；无则 None（localStorage 不可用同样当没有）。
         let read (path: string) : string option =
@@ -62,17 +63,23 @@ module Program =
         let timer = DispatcherTimer(Interval = span)
         timer.Tick.Add(fun _ -> action ())
         timer.Start()
+
         { new IDisposable with
-            member _.Dispose() = timer.Stop() }
+            member _.Dispose() = timer.Stop()
+        }
 
     let private after (span: TimeSpan) (action: unit -> unit) : IDisposable =
         let timer = DispatcherTimer(Interval = span)
+
         timer.Tick.Add(fun _ ->
             timer.Stop()
             action ())
+
         timer.Start()
+
         { new IDisposable with
-            member _.Dispose() = timer.Stop() }
+            member _.Dispose() = timer.Stop()
+        }
 
     // ---- WebSocket 客户端（WsClient）----
     let private ws = WsClient()
@@ -81,14 +88,18 @@ module Program =
     /// 连接（地址由组合者给出：保存的凭据或连接对话框里输入的地址）；返回连接代次。
     let private connectAsync (url: string) : Async<int> =
         async {
-            let! epoch = ws.ConnectWithGenerationAsync(Uri url, Threading.CancellationToken.None) |> Async.AwaitTask
+            let! epoch =
+                ws.ConnectWithGenerationAsync(Uri url, Threading.CancellationToken.None)
+                |> Async.AwaitTask
+
             connectionEpoch <- epoch
             return epoch
         }
 
     /// 认证事件只发在建立它的那一代连接上（换主机后的旧认证绝不落到新连接）。
     let private sendAuth (epoch: int) (ev: WireEvent) =
-        if epoch = connectionEpoch then ws.TrySendAtGenerationAsync(epoch, ev) |> ignore
+        if epoch = connectionEpoch then
+            ws.TrySendAtGenerationAsync(epoch, ev) |> ignore
 
     let private send (ev: WireEvent) = ws.SendAsync ev |> ignore
 
@@ -107,15 +118,25 @@ module Program =
     let private browserResumeEpoch () = BrowserPage.ResumeEpoch()
     let private browserPageUrl () = BrowserPage.Url()
     let private browserConversationSucceeded () = BrowserPage.ConversationSucceeded()
-    let private browserAddHidden (handler: unit -> unit) = BrowserPage.add_Hidden(fun () -> handler ())
+
+    let private browserAddHidden (handler: unit -> unit) =
+        BrowserPage.add_Hidden (fun () -> handler ())
 
     // ---- 视图与组合者 ----
     // 视图工厂要先拿到动作记录（工厂方法在组合者上），所以组合者在根视图工厂里先建好；
     // 端口回调（缩略图 / 剪贴板 / 文件 IO）都要在运行时读这几个活实例。
-    let mutable private overlay: Wanxiang2.OverlayDesk.OverlayDesk = Unchecked.defaultof<_>
-    let mutable private composerDesk: Wanxiang2.ComposerDesk.ComposerDesk = Unchecked.defaultof<_>
-    let mutable private chatDesk: Wanxiang2.ChatScreen.ChatScreen = Unchecked.defaultof<_>
-    let mutable private paletteDesk: Wanxiang2.PaletteDesk.PaletteDesk = Unchecked.defaultof<_>
+    let mutable private overlay: Wanxiang2.OverlayDesk.OverlayDesk =
+        Unchecked.defaultof<_>
+
+    let mutable private composerDesk: Wanxiang2.ComposerDesk.ComposerDesk =
+        Unchecked.defaultof<_>
+
+    let mutable private chatDesk: Wanxiang2.ChatScreen.ChatScreen =
+        Unchecked.defaultof<_>
+
+    let mutable private paletteDesk: Wanxiang2.PaletteDesk.PaletteDesk =
+        Unchecked.defaultof<_>
+
     let mutable private tint: Wanxiang2.CodeTint.CodeTint = Unchecked.defaultof<_>
     /// 代码块折行的宿主侧记忆（与 MessageCards 共享同一实例）。
     let private wrapMemory = Wanxiang2.MarkdownView.CodeWrapMemory(false)
@@ -129,7 +150,10 @@ module Program =
 
     /// 入口持有的 TopLevel（浏览器没有 Window：根视图即容器）。
     let private topLevel () : TopLevel =
-        if isNull rootGrid then null else TopLevel.GetTopLevel rootGrid
+        if isNull rootGrid then
+            null
+        else
+            TopLevel.GetTopLevel rootGrid
 
     // ---- 提示条（OverlayDesk）----
     let private toast (text: string) (tone: ShellToastTone) =
@@ -163,10 +187,12 @@ module Program =
             if dark then
                 Wanxiang2.ThemePalette.PaletteMode.Dark
             else
-                Wanxiang2.ThemePalette.PaletteMode.Light)
+                Wanxiang2.ThemePalette.PaletteMode.Light
+        )
 
     /// 减弱动效开关（组合者按偏好调用）。
-    let private setReducedMotion (value: bool) = SharedTheme.manager.Motion.ApplyReduced value
+    let private setReducedMotion (value: bool) =
+        SharedTheme.manager.Motion.ApplyReduced value
 
     /// 代码折行偏好：转交构造 MessageCards 时用的 CodeWrapMemory 实例（渲染期读取的默认值）。
     let private setCodeWrap (value: bool) = wrapMemory.Wrapped <- value
@@ -261,12 +287,16 @@ module Program =
                     let! file =
                         top.StorageProvider.SaveFilePickerAsync(FilePickerSaveOptions(SuggestedFileName = fileName))
                         |> Async.AwaitTask
+
                     if not (isNull file) then
                         use! stream = file.OpenWriteAsync() |> Async.AwaitTask
                         do! stream.WriteAsync(bytes, 0, bytes.Length) |> Async.AwaitTask
-                        Dispatcher.UIThread.Post(fun () -> toast (UploadFacts.savedText fileName) ShellToastTone.Success)
+
+                        Dispatcher.UIThread.Post(fun () ->
+                            toast (UploadFacts.savedText fileName) ShellToastTone.Success)
                 with ex ->
-                    Dispatcher.UIThread.Post(fun () -> toast (UploadFacts.saveFailedText ex.Message) ShellToastTone.Failure)
+                    Dispatcher.UIThread.Post(fun () ->
+                        toast (UploadFacts.saveFailedText ex.Message) ShellToastTone.Failure)
             }
             |> Async.Start
 
@@ -289,6 +319,7 @@ module Program =
         | top ->
             // 归属在打开选择窗口前取：用户在选择窗口里的期间换主机 / 重连，读完就不上传。
             let owner = shell.UploadOwner()
+
             async {
                 try
                     let! picked =
@@ -297,13 +328,19 @@ module Program =
                                 AllowMultiple = true,
                                 Title = "添加附件",
                                 FileTypeFilter =
-                                    [ for (label, patterns, mimes) in MediaTypes.pickerFilters ->
-                                          FilePickerFileType(label, Patterns = patterns, MimeTypes = mimes) ]))
+                                    [
+                                        for (label, patterns, mimes) in MediaTypes.pickerFilters ->
+                                            FilePickerFileType(label, Patterns = patterns, MimeTypes = mimes)
+                                    ]
+                            )
+                        )
                         |> Async.AwaitTask
+
                     for file in picked do
                         let! bytes = readStorageFile file
                         let name = file.Name
                         post (fun () -> shell.AttachFiles owner [ (name, bytes) ])
+
                     post (fun () -> composerDesk.Focus())
                 with ex ->
                     post (fun () ->
@@ -318,6 +355,7 @@ module Program =
         | null -> ()
         | _ ->
             let owner = shell.UploadOwner()
+
             async {
                 try
                     for item in items do
@@ -328,10 +366,12 @@ module Program =
                             post (fun () -> shell.AttachFiles owner [ (name, bytes) ])
                         | _ ->
                             let path = item.TryGetLocalPath()
+
                             if not (String.IsNullOrEmpty path) && File.Exists path then
                                 let bytes = File.ReadAllBytes path
                                 let name = Path.GetFileName path
                                 post (fun () -> shell.AttachFiles owner [ (name, bytes) ])
+
                     post (fun () -> composerDesk.Focus())
                 with ex ->
                     post (fun () ->
@@ -348,18 +388,23 @@ module Program =
         | top ->
             try
                 let clipboard = top.Clipboard
-                if isNull clipboard then false
+
+                if isNull clipboard then
+                    false
                 else
                     let formatsTask = clipboard.GetDataFormatsAsync()
+
                     if formatsTask.Wait(100) && not (isNull formatsTask.Result) then
                         let formats = formatsTask.Result
                         let hasFiles = formats |> Seq.exists (fun f -> f = DataFormat.File)
                         let hasBitmap = formats |> Seq.exists (fun f -> f = DataFormat.Bitmap)
+
                         match UploadFacts.pasteSource hasFiles hasBitmap with
                         | UploadFacts.PasteSource.Files ->
                             async {
                                 try
                                     let! files = clipboard.TryGetFilesAsync() |> Async.AwaitTask
+
                                     if not (isNull files) && files.Length > 0 then
                                         post (fun () -> dropFiles (List.ofArray files))
                                 with ex ->
@@ -368,17 +413,21 @@ module Program =
                                         composerDesk.Focus())
                             }
                             |> Async.Start
+
                             true
                         | UploadFacts.PasteSource.Bitmap ->
                             let owner = shell.UploadOwner()
+
                             async {
                                 try
                                     let! bitmap = clipboard.TryGetBitmapAsync() |> Async.AwaitTask
+
                                     if not (isNull bitmap) then
                                         use buffer = new MemoryStream()
                                         bitmap.Save(buffer, PngBitmapEncoderOptions())
                                         let bytes = buffer.ToArray()
                                         let name = UploadFacts.pasteFileName DateTime.Now
+
                                         post (fun () ->
                                             shell.AttachFiles owner [ (name, bytes) ]
                                             composerDesk.Focus())
@@ -388,6 +437,7 @@ module Program =
                                         composerDesk.Focus())
                             }
                             |> Async.Start
+
                             true
                         | UploadFacts.PasteSource.NotHandled -> false
                     else
@@ -411,14 +461,17 @@ module Program =
                         | _ -> None
             with _ ->
                 None
+
         match captured with
         | None -> fun () -> false
         | Some control ->
             fun () ->
                 try
-                    if control.IsEnabled
-                       && control.IsEffectivelyVisible
-                       && not (isNull (TopLevel.GetTopLevel control)) then
+                    if
+                        control.IsEnabled
+                        && control.IsEffectivelyVisible
+                        && not (isNull (TopLevel.GetTopLevel control))
+                    then
                         control.Focus() |> ignore
                         true
                     else
@@ -474,49 +527,68 @@ module Program =
         let theme = SharedTheme.manager
         let brush k = theme.Brush k :> Avalonia.Media.IBrush
         let metric m = theme.Metric m :> IObservable<float>
-        { Layer =
-            { Scrim = brush Wanxiang2.ThemePalette.PaletteKey.Scrim
-              Surface = brush Wanxiang2.ThemePalette.PaletteKey.Surface
-              Edge = brush Wanxiang2.ThemePalette.PaletteKey.Border
-              DialogShadow = Avalonia.Media.BoxShadows()
-              PopupShadow = Avalonia.Media.BoxShadows()
-              PopupGap = 4.0
-              PopupMinWidth = 180.0
-              ScrimFade = TimeSpan.Zero
-              ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut() }
-          Toasts =
-            { Surface = brush Wanxiang2.ThemePalette.PaletteKey.SurfaceRaised
-              Edge = brush Wanxiang2.ThemePalette.PaletteKey.Border
-              Text = brush Wanxiang2.ThemePalette.PaletteKey.Text
-              Accent = fun _ -> brush Wanxiang2.ThemePalette.PaletteKey.Accent
-              AccentOpacity = 0.6
-              Padding = Thickness(16.0, 12.0)
-              Shadow = Avalonia.Media.BoxShadows()
-              LineHeight = 18.0
-              ColumnSpacing = 12.0
-              Spacing = 8.0
-              Margin = Thickness(24.0, 0.0, 24.0, 32.0)
-              MaxWidth = 480.0
-              BodyMaxHeight = 160.0
-              Fade = TimeSpan.Zero
-              FadeEasing = Avalonia.Animation.Easings.CubicEaseOut() }
-          Menu =
-            { Text = brush Wanxiang2.ThemePalette.PaletteKey.Text
-              Muted = brush Wanxiang2.ThemePalette.PaletteKey.TextMuted
-              Faint = brush Wanxiang2.ThemePalette.PaletteKey.TextFaint
-              Danger = brush Wanxiang2.ThemePalette.PaletteKey.Danger
-              Accent = brush Wanxiang2.ThemePalette.PaletteKey.Accent
-              Check = fun b -> Wanxiang2.IconSet.IconSet.image Wanxiang2.IconSet.Glyph.Check b (metric Wanxiang2.ThemeMetrics.Metric.IconGlyph)
-              Chevron = fun b -> Wanxiang2.IconSet.IconSet.image Wanxiang2.IconSet.Glyph.ChevronRight b (metric Wanxiang2.ThemeMetrics.Metric.IconGlyph)
-              IconSlotWidth = 16.0
-              ItemMinHeight = 32.0
-              MaxHeight = 200.0 }
-          MenuMinWidth = 200.0
-          GroupedMenuMinWidth = 240.0
-          DwellFailureMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellFailure).Value
-          DwellWarningMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellWarning).Value
-          DwellDefaultMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellDefault).Value
-          DismissTick = TimeSpan.FromMilliseconds 100.0 }
+
+        {
+            Layer =
+                {
+                    Scrim = brush Wanxiang2.ThemePalette.PaletteKey.Scrim
+                    Surface = brush Wanxiang2.ThemePalette.PaletteKey.Surface
+                    Edge = brush Wanxiang2.ThemePalette.PaletteKey.Border
+                    DialogShadow = Avalonia.Media.BoxShadows()
+                    PopupShadow = Avalonia.Media.BoxShadows()
+                    PopupGap = 4.0
+                    PopupMinWidth = 180.0
+                    ScrimFade = TimeSpan.Zero
+                    ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut()
+                }
+            Toasts =
+                {
+                    Surface = brush Wanxiang2.ThemePalette.PaletteKey.SurfaceRaised
+                    Edge = brush Wanxiang2.ThemePalette.PaletteKey.Border
+                    Text = brush Wanxiang2.ThemePalette.PaletteKey.Text
+                    Accent = fun _ -> brush Wanxiang2.ThemePalette.PaletteKey.Accent
+                    AccentOpacity = 0.6
+                    Padding = Thickness(16.0, 12.0)
+                    Shadow = Avalonia.Media.BoxShadows()
+                    LineHeight = 18.0
+                    ColumnSpacing = 12.0
+                    Spacing = 8.0
+                    Margin = Thickness(24.0, 0.0, 24.0, 32.0)
+                    MaxWidth = 480.0
+                    BodyMaxHeight = 160.0
+                    Fade = TimeSpan.Zero
+                    FadeEasing = Avalonia.Animation.Easings.CubicEaseOut()
+                }
+            Menu =
+                {
+                    Text = brush Wanxiang2.ThemePalette.PaletteKey.Text
+                    Muted = brush Wanxiang2.ThemePalette.PaletteKey.TextMuted
+                    Faint = brush Wanxiang2.ThemePalette.PaletteKey.TextFaint
+                    Danger = brush Wanxiang2.ThemePalette.PaletteKey.Danger
+                    Accent = brush Wanxiang2.ThemePalette.PaletteKey.Accent
+                    Check =
+                        fun b ->
+                            Wanxiang2.IconSet.IconSet.image
+                                Wanxiang2.IconSet.Glyph.Check
+                                b
+                                (metric Wanxiang2.ThemeMetrics.Metric.IconGlyph)
+                    Chevron =
+                        fun b ->
+                            Wanxiang2.IconSet.IconSet.image
+                                Wanxiang2.IconSet.Glyph.ChevronRight
+                                b
+                                (metric Wanxiang2.ThemeMetrics.Metric.IconGlyph)
+                    IconSlotWidth = 16.0
+                    ItemMinHeight = 32.0
+                    MaxHeight = 200.0
+                }
+            MenuMinWidth = 200.0
+            GroupedMenuMinWidth = 240.0
+            DwellFailureMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellFailure).Value
+            DwellWarningMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellWarning).Value
+            DwellDefaultMs = theme.Timing(Wanxiang2.MotionSwitch.Timing.ToastDwellDefault).Value
+            DismissTick = TimeSpan.FromMilliseconds 100.0
+        }
 
     /// 各 Desk 的动作记录全部来自组合者（同一套行为文案与命令），入口不再自己接回调；
     /// 只有三个真正读 IO 的入口（选文件 / 拖入 / 粘贴）以闭包注入。
@@ -529,7 +601,8 @@ module Program =
         // 浏览器端没有系统字体：整棵可视树必须显式用内嵌的 Sarasa，
         // 否则所有没单独指定字体的控件（标签、侧栏、引导页…）的中文都是豆腐块。
         // `TextElement.FontFamilyProperty` 是 inherits 的附加属性，设在根上整棵树继承。
-        root.SetValue(Avalonia.Controls.Documents.TextElement.FontFamilyProperty, SharedTheme.manager.FontFamily.Value) |> ignore
+        root.SetValue(Avalonia.Controls.Documents.TextElement.FontFamilyProperty, SharedTheme.manager.FontFamily.Value)
+        |> ignore
         // 输入方式（触屏 / 键鼠）的隧道监听挂在根控件上（旧 InputSense.Track MainView）。
         SharedTheme.input.Track root
         let ov = Wanxiang2.OverlayDesk.OverlayDesk(root, overlayLook ())
@@ -537,8 +610,7 @@ module Program =
         let brandLogo = SharedTheme.logo
 
         let composer =
-            Wanxiang2.ComposerDesk.ComposerDesk(
-                shell.ComposerActions(pickFiles, dropFiles, pasteFromClipboard))
+            Wanxiang2.ComposerDesk.ComposerDesk(shell.ComposerActions(pickFiles, dropFiles, pasteFromClipboard))
 
         composerDesk <- composer
         // 提示条的动作按钮持焦时条被移除（点动作、F6 后撤销、过期）：
@@ -548,14 +620,16 @@ module Program =
         let approval = Wanxiang2.ApprovalDesk.ApprovalDesk(theme, ov, send)
 
         let tintHost: Wanxiang2.CodeTint.CodeTintHost =
-            { HighlightHtml =
-                fun (code, lang) ->
-                    match RichBackend.current () with
-                    | Some backend -> backend.HighlightHtml(code, lang)
-                    | None -> None
-              Background = fun work -> work ()
-              After = fun ms action -> after (TimeSpan.FromMilliseconds(float ms)) action |> ignore
-              Synchronous = true }
+            {
+                HighlightHtml =
+                    fun (code, lang) ->
+                        match RichBackend.current () with
+                        | Some backend -> backend.HighlightHtml(code, lang)
+                        | None -> None
+                Background = fun work -> work ()
+                After = fun ms action -> after (TimeSpan.FromMilliseconds(float ms)) action |> ignore
+                Synchronous = true
+            }
 
         let codeTint = Wanxiang2.CodeTint.CodeTint(tintHost)
         tint <- codeTint
@@ -563,16 +637,19 @@ module Program =
         let cards =
             Wanxiang2.MessageCardView.MessageCards(
                 Wanxiang2.MessageCardView.CardLooks.ofTheme theme styles,
-                { Tint = codeTint
-                  MathHtml =
-                    fun (tex, display) ->
-                        match RichBackend.current () with
-                        | Some backend -> backend.MathHtml(tex, display)
-                        | None -> None
-                  Wrap = wrapMemory
-                  Clock = Wanxiang2.MessageCardView.CaretClock()
-                  Touch = Wanxiang2.MessageCardView.CardTouch()
-                  Now = fun () -> DateTimeOffset.UtcNow })
+                {
+                    Tint = codeTint
+                    MathHtml =
+                        fun (tex, display) ->
+                            match RichBackend.current () with
+                            | Some backend -> backend.MathHtml(tex, display)
+                            | None -> None
+                    Wrap = wrapMemory
+                    Clock = Wanxiang2.MessageCardView.CaretClock()
+                    Touch = Wanxiang2.MessageCardView.CardTouch()
+                    Now = fun () -> DateTimeOffset.UtcNow
+                }
+            )
 
         let chat =
             Wanxiang2.ChatScreen.ChatScreen(
@@ -582,15 +659,19 @@ module Program =
                 approval,
                 ov,
                 brandLogo,
-                shell.ChatActions())
+                shell.ChatActions()
+            )
 
         chatDesk <- chat
 
-        let sidebar = Wanxiang2.SidebarDesk.SidebarDesk(theme, ov, shell.SidebarActions(), brandLogo)
+        let sidebar =
+            Wanxiang2.SidebarDesk.SidebarDesk(theme, ov, shell.SidebarActions(), brandLogo)
 
-        let settings = Wanxiang2.SettingsScreen.SettingsScreen(theme, ov, shell.SettingsHooks(), prefsLoad ())
+        let settings =
+            Wanxiang2.SettingsScreen.SettingsScreen(theme, ov, shell.SettingsHooks(), prefsLoad ())
 
-        let onboarding = Wanxiang2.SettingsScreen.OnboardingDesk(theme, ov, shell.OnboardingHooks())
+        let onboarding =
+            Wanxiang2.SettingsScreen.OnboardingDesk(theme, ov, shell.OnboardingHooks())
 
         let workspace =
             Wanxiang2.Workspace.Workspace(
@@ -599,51 +680,59 @@ module Program =
                 sidebar,
                 chat,
                 composer,
-                shell.WorkspaceHooks(fun () -> SharedTheme.input.PrefersTouch))
+                shell.WorkspaceHooks(fun () -> SharedTheme.input.PrefersTouch)
+            )
 
-        let palette = Wanxiang2.PaletteDesk.PaletteDesk(theme, ov, fun () -> SharedTheme.input.PrefersTouch)
+        let palette =
+            Wanxiang2.PaletteDesk.PaletteDesk(theme, ov, fun () -> SharedTheme.input.PrefersTouch)
+
         paletteDesk <- palette
         let modelSwitch = Wanxiang2.ModelSwitchDesk.ModelSwitchDesk(theme, ov)
         let dialogs = Wanxiang2.DialogsDesk.DialogsDesk(theme, ov)
 
-        { Sidebar = sidebar
-          Chat = chat
-          Composer = composer
-          Settings = settings
-          Onboarding = onboarding
-          Workspace = workspace
-          Approval = approval
-          Palette = palette
-          ModelSwitch = modelSwitch
-          Overlay = ov
-          Dialogs = dialogs
-          NewExportDesk =
-            fun sendQuery lineage conversationId title ->
-                Wanxiang2.TransferDesk.ExportDesk(
-                    Wanxiang2.TransferDesk.TransferLook.exportOf theme,
-                    Wanxiang2.TransferDesk.TransferTiming.ofThemeWithAfter theme after,
-                    ov,
-                    conversationId,
-                    title,
-                    sendQuery,
-                    topLevel,
-                    lineage)
-          NewImportDesk =
-            fun submit ->
-                Wanxiang2.TransferDesk.ImportDesk(
-                    Wanxiang2.TransferDesk.TransferLook.importOf theme,
-                    Wanxiang2.TransferDesk.TransferTiming.ofThemeWithAfter theme after,
-                    ov,
-                    topLevel,
-                    submit)
-          SettingsHostVisible = fun visible -> settings.View.IsVisible <- visible
-          WorkspaceHostVisible = fun visible -> workspace.Host.IsVisible <- visible
-          SettingsFocusInitial = fun () -> settings.FocusInitial()
-          SettingsShowSection =
-            fun section ->
-                section
-                |> Option.iter (fun s ->
-                    Wanxiang2.SettingsScreen.SettingsPart.ofKey s |> Option.iter settings.ShowSection) }
+        {
+            Sidebar = sidebar
+            Chat = chat
+            Composer = composer
+            Settings = settings
+            Onboarding = onboarding
+            Workspace = workspace
+            Approval = approval
+            Palette = palette
+            ModelSwitch = modelSwitch
+            Overlay = ov
+            Dialogs = dialogs
+            NewExportDesk =
+                fun sendQuery lineage conversationId title ->
+                    Wanxiang2.TransferDesk.ExportDesk(
+                        Wanxiang2.TransferDesk.TransferLook.exportOf theme,
+                        Wanxiang2.TransferDesk.TransferTiming.ofThemeWithAfter theme after,
+                        ov,
+                        conversationId,
+                        title,
+                        sendQuery,
+                        topLevel,
+                        lineage
+                    )
+            NewImportDesk =
+                fun submit ->
+                    Wanxiang2.TransferDesk.ImportDesk(
+                        Wanxiang2.TransferDesk.TransferLook.importOf theme,
+                        Wanxiang2.TransferDesk.TransferTiming.ofThemeWithAfter theme after,
+                        ov,
+                        topLevel,
+                        submit
+                    )
+            SettingsHostVisible = fun visible -> settings.View.IsVisible <- visible
+            WorkspaceHostVisible = fun visible -> workspace.Host.IsVisible <- visible
+            SettingsFocusInitial = fun () -> settings.FocusInitial()
+            SettingsShowSection =
+                fun section ->
+                    section
+                    |> Option.iter (fun s ->
+                        Wanxiang2.SettingsScreen.SettingsPart.ofKey s
+                        |> Option.iter settings.ShowSection)
+        }
 
     // ---- 唯一副作用执行器（Effect Runner）雏形（浏览器端）----
     let private pwaPrependAnchor: (float * float) option ref = ref None
@@ -656,7 +745,8 @@ module Program =
             | FocusTarget.DialogInitial -> ()
             | FocusTarget.DrawerToggle -> ()
             | FocusTarget.Toast ->
-                if not (isNull (box overlay)) then overlay.FocusToastAction() |> ignore
+                if not (isNull (box overlay)) then
+                    overlay.FocusToastAction() |> ignore
             | FocusTarget.Row _ -> ()
             | FocusTarget.Exchange _ -> ()
             | FocusTarget.None_ -> ()
@@ -664,63 +754,75 @@ module Program =
     let private resolvePwaScrollChat (cmd: ScrollCommand) =
         if not (isNull (box chatDesk)) then
             let viewer = chatDesk.Pane.Scroller.Viewer
+
             match cmd with
-            | ScrollCommand.End ->
-                chatDesk.SmoothScrollToEnd()
-            | ScrollCommand.Beginning ->
-                chatDesk.SmoothScrollToBeginning()
+            | ScrollCommand.End -> chatDesk.SmoothScrollToEnd()
+            | ScrollCommand.Beginning -> chatDesk.SmoothScrollToBeginning()
             | ScrollCommand.ToExchange msgId ->
                 // 定位目标（搜索命中 / 消息链接）：滚到那条消息并短暂高亮
                 match UInt64.TryParse msgId with
                 | true, commit -> chatDesk.RevealAndHighlight commit |> ignore
                 | false, _ -> ()
-            | ScrollCommand.PreparePrepend ->
-                pwaPrependAnchor.Value <- Some(viewer.Extent.Height, viewer.Offset.Y)
+            | ScrollCommand.PreparePrepend -> pwaPrependAnchor.Value <- Some(viewer.Extent.Height, viewer.Offset.Y)
             | ScrollCommand.RestorePrepend ->
                 match pwaPrependAnchor.Value with
                 | None -> ()
                 | Some(oldExtent, oldOffset) ->
                     pwaPrependAnchor.Value <- None
-                    let newOffset = ScrollAnchorMath.computeRestoredOffset oldExtent oldOffset viewer.Extent.Height
+
+                    let newOffset =
+                        ScrollAnchorMath.computeRestoredOffset oldExtent oldOffset viewer.Extent.Height
+
                     chatDesk.Pane.Scroller.PinOffset newOffset
 
-    let private pwaEffectSink : EffectSink =
-        { Focus = resolvePwaFocus
-          ScrollChat = resolvePwaScrollChat
-          SendWire = send
-          After = fun (ms, action) ->
-              after (TimeSpan.FromMilliseconds(float ms)) (fun () ->
-                  match action with
-                  | :? (unit -> unit) as fn -> fn ()
-                  | _ -> ())
-              |> ignore
-          Every = fun (_handle, ms) ->
-              every (TimeSpan.FromMilliseconds(float ms)) (fun () -> ()) |> ignore
-          StopEvery = fun _handle -> ()
-          ShowToast = fun (text, tone) ->
-              let shellTone =
-                  match tone with
-                  | Wanxiang2.WorkspaceState.ToastTone.Success -> ShellToastTone.Success
-                  | Wanxiang2.WorkspaceState.ToastTone.Warning -> ShellToastTone.Warning
-                  | Wanxiang2.WorkspaceState.ToastTone.Failure -> ShellToastTone.Failure
-                  | _ -> ShellToastTone.Info
-              toast text shellTone
-          Clipboard = copyToClipboard
-          OpenLink = openLink
-          SaveDownload = fun (f, b) -> saveDownload f b
-          ApplyTheme = fun theme ->
-              let isDark =
-                  match theme with
-                  | ThemeKind.Dark -> true
-                  | ThemeKind.Light -> false
-                  | ThemeKind.System -> systemPrefersDark ()
-              SharedTheme.manager.Apply(if isDark then Wanxiang2.ThemePalette.PaletteMode.Dark else Wanxiang2.ThemePalette.PaletteMode.Light)
-          SetWindowBusy = fun _ -> ()
-          CloseWindow = fun () -> ()
-          PrefsSave = prefsSave
-          PrefsLoad = fun () -> prefsLoad () |> ignore
-          DraftWrite = applyDraftWrite
-          BrowserHook = fun _ -> () }
+    let private pwaEffectSink: EffectSink =
+        {
+            Focus = resolvePwaFocus
+            ScrollChat = resolvePwaScrollChat
+            SendWire = send
+            After =
+                fun (ms, action) ->
+                    after (TimeSpan.FromMilliseconds(float ms)) (fun () ->
+                        match action with
+                        | :? (unit -> unit) as fn -> fn ()
+                        | _ -> ())
+                    |> ignore
+            Every = fun (_handle, ms) -> every (TimeSpan.FromMilliseconds(float ms)) (fun () -> ()) |> ignore
+            StopEvery = fun _handle -> ()
+            ShowToast =
+                fun (text, tone) ->
+                    let shellTone =
+                        match tone with
+                        | Wanxiang2.WorkspaceState.ToastTone.Success -> ShellToastTone.Success
+                        | Wanxiang2.WorkspaceState.ToastTone.Warning -> ShellToastTone.Warning
+                        | Wanxiang2.WorkspaceState.ToastTone.Failure -> ShellToastTone.Failure
+                        | _ -> ShellToastTone.Info
+
+                    toast text shellTone
+            Clipboard = copyToClipboard
+            OpenLink = openLink
+            SaveDownload = fun (f, b) -> saveDownload f b
+            ApplyTheme =
+                fun theme ->
+                    let isDark =
+                        match theme with
+                        | ThemeKind.Dark -> true
+                        | ThemeKind.Light -> false
+                        | ThemeKind.System -> systemPrefersDark ()
+
+                    SharedTheme.manager.Apply(
+                        if isDark then
+                            Wanxiang2.ThemePalette.PaletteMode.Dark
+                        else
+                            Wanxiang2.ThemePalette.PaletteMode.Light
+                    )
+            SetWindowBusy = fun _ -> ()
+            CloseWindow = fun () -> ()
+            PrefsSave = prefsSave
+            PrefsLoad = fun () -> prefsLoad () |> ignore
+            DraftWrite = applyDraftWrite
+            BrowserHook = fun _ -> ()
+        }
 
     /// 视图组装入口（Root 与 Build 都调它）：只组装一次，重复调用返回同一批实例。
     let private buildViews () : ShellViews =
@@ -733,56 +835,60 @@ module Program =
 
     /// ShellPorts 全字段。
     let private ports: ShellPorts =
-        { Connect = connectAsync
-          SendAuth = sendAuth
-          Send = send
-          SendCommand = sendCommand
-          SendAtGeneration = sendAtGeneration
-          After = after
-          Every = every
-          Post = post
-          Toast = toast
-          ToastUndo = toastUndo
-          CopyToClipboard = copyToClipboard
-          OpenLink = openLink
-          SaveDownload = saveDownload
-          ApplyDraftWrite = applyDraftWrite
-          LoadLocalDraft =
-            fun () ->
-                // 端口要求 Async；IDraftBackend 返回 Task，用 AwaitTask 转换。
-                draftBackend.Load() |> Async.AwaitTask
-          PrefsLoad = prefsLoad
-          PrefsSave = prefsSave
-          TryLoadClientToml = tryLoadClientToml
-          TryLoadBrowserConnection = tryLoadBrowserConnection
-          SaveBrowserConnection = saveBrowserConnection
-          BrowserViewportWidth = browserViewportWidth
-          BrowserResumeEpoch = browserResumeEpoch
-          BrowserPageUrl = browserPageUrl
-          BrowserConversationSucceeded = browserConversationSucceeded
-          BrowserAddHidden = browserAddHidden
-          SystemPrefersDark = systemPrefersDark
-          DefaultServerUrl = CredentialStore.defaultServerUrl
-          ApplyTheme = applyTheme
-          SetReducedMotion = setReducedMotion
-          SetCodeWrap = setCodeWrap
-          CaptureFocus = captureFocus
-          IsEditingText = isEditingText
-          ConnectionGeneration = connectionGeneration
-          IsConnected = isConnected
-          SubscribeHostEvents = subscribeHostEvents
-          SubscribeClosed = subscribeClosed
-          MakeThumbnail = makeThumbnail
-          CloseWindow = closeWindow
-          ClientName = clientName
-          EffectSink = pwaEffectSink
-          BuildViews = buildViews }
+        {
+            Connect = connectAsync
+            SendAuth = sendAuth
+            Send = send
+            SendCommand = sendCommand
+            SendAtGeneration = sendAtGeneration
+            After = after
+            Every = every
+            Post = post
+            Toast = toast
+            ToastUndo = toastUndo
+            CopyToClipboard = copyToClipboard
+            OpenLink = openLink
+            SaveDownload = saveDownload
+            ApplyDraftWrite = applyDraftWrite
+            LoadLocalDraft =
+                fun () ->
+                    // 端口要求 Async；IDraftBackend 返回 Task，用 AwaitTask 转换。
+                    draftBackend.Load() |> Async.AwaitTask
+            PrefsLoad = prefsLoad
+            PrefsSave = prefsSave
+            TryLoadClientToml = tryLoadClientToml
+            TryLoadBrowserConnection = tryLoadBrowserConnection
+            SaveBrowserConnection = saveBrowserConnection
+            BrowserViewportWidth = browserViewportWidth
+            BrowserResumeEpoch = browserResumeEpoch
+            BrowserPageUrl = browserPageUrl
+            BrowserConversationSucceeded = browserConversationSucceeded
+            BrowserAddHidden = browserAddHidden
+            SystemPrefersDark = systemPrefersDark
+            DefaultServerUrl = CredentialStore.defaultServerUrl
+            ApplyTheme = applyTheme
+            SetReducedMotion = setReducedMotion
+            SetCodeWrap = setCodeWrap
+            CaptureFocus = captureFocus
+            IsEditingText = isEditingText
+            ConnectionGeneration = connectionGeneration
+            IsConnected = isConnected
+            SubscribeHostEvents = subscribeHostEvents
+            SubscribeClosed = subscribeClosed
+            MakeThumbnail = makeThumbnail
+            CloseWindow = closeWindow
+            ClientName = clientName
+            EffectSink = pwaEffectSink
+            BuildViews = buildViews
+        }
 
     /// 组合者：视图构造要先拿动作记录，所以在根视图工厂里先建好（构造只读偏好，不碰控件）。
     let private ensureShell () : ShellComposer =
         let _ = pwaEffectSink
+
         if obj.ReferenceEquals(shell, null) then
             shell <- ShellComposer(ports)
+
         shell
 
     /// 顶层按键入口那一半（决策 454）：焦点不在本视图里时（PWA 首屏、点了画布空白处），
@@ -793,6 +899,7 @@ module Program =
             | null -> ()
             | top ->
                 topKeysHooked <- true
+
                 top.KeyDown.Add(fun e ->
                     let inside =
                         match e.Source with
@@ -800,7 +907,12 @@ module Program =
                             obj.ReferenceEquals(v, rootGrid)
                             || Avalonia.VisualTree.VisualExtensions.IsVisualAncestorOf(rootGrid, v)
                         | _ -> false
-                    if not e.Handled && not inside && shell.HandleShortcut(Wanxiang.UI.KeyShortcut.resolve e) then
+
+                    if
+                        not e.Handled
+                        && not inside
+                        && shell.HandleShortcut(Wanxiang.UI.KeyShortcut.resolve e)
+                    then
                         e.Handled <- true)
 
     /// 快捷键：根视图这一半照旧（本视图内的按键），顶层那一半只处理来源不在根视图里的按键，
@@ -831,8 +943,8 @@ module Program =
 
     /// 命令面板「最近使用」的持久化（决策 452）：启动装入，每次执行条目后与页面转入后台时写回。
     let private subscribePaletteRecent () =
-        paletteDesk.Run.Add(fun _ -> paletteRecentSave (shell.PaletteRecent ()))
-        BrowserPage.add_Hidden(fun () -> paletteRecentSave (shell.PaletteRecent ()))
+        paletteDesk.Run.Add(fun _ -> paletteRecentSave (shell.PaletteRecent()))
+        BrowserPage.add_Hidden (fun () -> paletteRecentSave (shell.PaletteRecent()))
 
     /// App.Build：视图挂载后调用 ShellComposer.Build（协议事件、连接关闭由组合者经端口自行订阅）。
     let private buildApp (_view: Control) =
@@ -849,7 +961,12 @@ module Program =
             // 浏览器没有 Window.Opened。根视图挂上后的下一帧就是 firstFrame。
             // exit 模式不在这一帧退出；组合者在 listReady / chatReady 调 requestExit。
             StartupTrace.requestExit <- fun () -> Environment.Exit 0
-            Dispatcher.UIThread.Post(Action(fun () -> StartupTrace.mark "firstFrame" |> ignore), DispatcherPriority.Render)
+
+            Dispatcher.UIThread.Post(
+                Action(fun () -> StartupTrace.mark "firstFrame" |> ignore),
+                DispatcherPriority.Render
+            )
+
         shell.AutoConnect()
 
     /// 根视图工厂（App.Root）：MainView 由 ShellComposer 驱动，这里给根 Grid。
@@ -857,6 +974,7 @@ module Program =
         if isNull rootGrid then
             ensureShell () |> ignore
             buildViews () |> ignore
+
         rootGrid :> Control
 
     [<EntryPoint>]
@@ -865,9 +983,7 @@ module Program =
             // 强制 WebGL（不准软渲染）：WebGL2 → WebGL1，不回退 Software2D。
             let options =
                 BrowserPlatformOptions(
-                    RenderingMode =
-                        [| BrowserRenderingMode.WebGL2
-                           BrowserRenderingMode.WebGL1 |],
+                    RenderingMode = [| BrowserRenderingMode.WebGL2; BrowserRenderingMode.WebGL1 |],
                     FrameworkAssetPathResolver = fun fileName -> $"./{fileName}?v=20261012b"
                 )
             // 代码着色与公式排版交给浏览器自带的 JS 引擎；脚本正文仍是 .NET 侧的内嵌资源
@@ -881,17 +997,17 @@ module Program =
             // App 静态端口（EntryShells.App）：PWA 分支只挂 SingleView。
             App.Root <- Some rootFactory
             App.Build <- Some buildApp
+
             App.FlushDrafts <-
                 Some(fun () ->
                     if not (obj.ReferenceEquals(shell, null)) then
                         // 关窗（浏览器：页面转入后台）先落草稿，再落面板「最近使用」，同一拍。
-                        paletteRecentSave (shell.PaletteRecent ()))
+                        paletteRecentSave (shell.PaletteRecent()))
+
             App.LoadPrefs <- Some prefsLoad
             App.SavePrefs <- Some prefsSave
-            do!
-                AppBuilder
-                    .Configure<App>()
-                    .StartBrowserAppAsync("out", options)
+            do! AppBuilder.Configure<App>().StartBrowserAppAsync("out", options)
         }
         |> ignore
+
         0

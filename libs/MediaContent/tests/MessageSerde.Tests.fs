@@ -7,7 +7,9 @@ open Wanxiang.Agent
 
 [<Fact>]
 let ``loose client json keeps text and skips attachments, refs are extracted`` () =
-    let node = JsonNode.Parse """{"role":"user","contents":[{"text":"hi"},{"type":"attachment","sha256":"AB","size":3}]}"""
+    let node =
+        JsonNode.Parse """{"role":"user","contents":[{"text":"hi"},{"type":"attachment","sha256":"AB","size":3}]}"""
+
     let msg = (MessageSerde.fromJsonNode node).Value
     Assert.Equal("hi", MessageSerde.textOf msg)
     Assert.Equal("user", MessageSerde.roleName msg)

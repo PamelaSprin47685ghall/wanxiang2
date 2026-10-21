@@ -11,13 +11,34 @@ module PwaAssets =
 
     let locate (appBaseDir: string) : string option =
         let candidate = Path.Combine(appBaseDir, "pwa")
-        if Directory.Exists candidate then Some candidate
+
+        if Directory.Exists candidate then
+            Some candidate
         else
             let baseDir = Path.GetFullPath(Path.Combine(appBaseDir, "..", "..", "..", ".."))
-            let publishCandidates = [
-                Path.Combine(baseDir, "Wanxiang.Pwa", "bin", "Debug", "net10.0-browser", "browser-wasm", "AppBundle")
-                Path.Combine(baseDir, "Wanxiang.Pwa", "bin", "Release", "net10.0-browser", "browser-wasm", "AppBundle")
-            ]
+
+            let publishCandidates =
+                [
+                    Path.Combine(
+                        baseDir,
+                        "Wanxiang.Pwa",
+                        "bin",
+                        "Debug",
+                        "net10.0-browser",
+                        "browser-wasm",
+                        "AppBundle"
+                    )
+                    Path.Combine(
+                        baseDir,
+                        "Wanxiang.Pwa",
+                        "bin",
+                        "Release",
+                        "net10.0-browser",
+                        "browser-wasm",
+                        "AppBundle"
+                    )
+                ]
+
             match publishCandidates |> List.tryFind Directory.Exists with
             | Some p -> Some(Path.GetFullPath p)
             | None ->

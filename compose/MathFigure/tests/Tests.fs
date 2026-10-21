@@ -11,7 +11,8 @@ open Xunit
 open Wanxiang2.ThemeFonts
 open Wanxiang2.MathFigure
 
-let private golden = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "figure.txt"))
+let private golden =
+    File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "figure.txt"))
 
 /// 金样里每条公式的 HTML（旧生成器现场由 RichJint 产出）
 let private htmls =
@@ -30,7 +31,8 @@ let private seedResources () =
     r["Padding.MathBlock"] <- box (Thickness(0.0, 8.0))
 
 let private run tex disp html (l: MathFigureMetrics) =
-    Probe.probe (FontFamily ThemeFonts.body)
+    Probe.probe
+        (FontFamily ThemeFonts.body)
         (fun () -> MathFigures.tryInline l html 14.5 tex)
         (fun () -> MathFigures.tryBlock l html 14.5 tex)
         MathFigures.inlineContainer
@@ -42,13 +44,20 @@ let ``inline and display formulas lay out and paint exactly like the old MathVis
     Headless.run (fun () ->
         seedResources ()
         let sb = Text.StringBuilder()
+
         Scenario.math
         |> List.iteri (fun i (tex, disp) ->
             let ink, l = look ()
             ink.Color <- Probe.ink.Color
-            sb.Append("== ").Append(JsonSerializer.Serialize tex).Append(if disp then " display\n" else "\n") |> ignore
-            sb.Append("html: ").Append(JsonSerializer.Serialize(Option.toObj htmls.[i])).Append('\n') |> ignore
+
+            sb.Append("== ").Append(JsonSerializer.Serialize tex).Append(if disp then " display\n" else "\n")
+            |> ignore
+
+            sb.Append("html: ").Append(JsonSerializer.Serialize(Option.toObj htmls.[i])).Append('\n')
+            |> ignore
+
             sb.Append(run tex disp htmls.[i] l) |> ignore)
+
         Assert.Equal(golden, sb.ToString()))
 
 [<Fact>]
@@ -82,11 +91,13 @@ let ``body font change relays out glyphs with the new family`` () =
         let win = Window(Content = figure)
         win.Show()
         Dispatcher.UIThread.RunJobs()
+
         let cjk () =
             figure.Picture.Value.Marks
             |> List.pick (function
                 | MathMark.Glyph(t, _, tf, _) when t.Contains "中" -> Some tf.FontFamily.Name
                 | _ -> None)
+
         Assert.Equal("Sarasa Gothic SC", cjk ())
         Application.Current.Resources["FontFamily.Body"] <- box (FontFamily ThemeFonts.mono)
         Dispatcher.UIThread.RunJobs()
@@ -121,7 +132,16 @@ let ``inline container aligns to bottom and figures announce their source`` () =
 let ``katex glyph families come from the embedded fonts`` () =
     Headless.run (fun () ->
         let tf = Typeface(ThemeFonts.family "KaTeX_Main")
-        let picture = MathDraw.tryLayout (FontFamily ThemeFonts.body) Brushes.Black 14.5 htmls.[9].Value |> Result.toOption |> Option.get
+
+        let picture =
+            MathDraw.tryLayout (FontFamily ThemeFonts.body) Brushes.Black 14.5 htmls.[9].Value
+            |> Result.toOption
+            |> Option.get
+
         let families =
-            picture.Marks |> List.choose (function MathMark.Glyph(_, _, t, _) -> Some t.FontFamily.Name | _ -> None)
+            picture.Marks
+            |> List.choose (function
+                | MathMark.Glyph(_, _, t, _) -> Some t.FontFamily.Name
+                | _ -> None)
+
         Assert.Contains(tf.FontFamily.Name, families))

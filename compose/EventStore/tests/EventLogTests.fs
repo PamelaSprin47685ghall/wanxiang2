@@ -14,8 +14,17 @@ open Wanxiang.Store
 module EventLogTests =
 
     let private commit (commitId: CommitId) (bootId: Guid) : Events.Commit =
-        Events.Commit.create commitId DateTimeOffset.UnixEpoch
-            [ ConversationCreated { conversationId = Guid.NewGuid(); title = "t"; config = SessionConfig.empty } ]
+        Events.Commit.create
+            commitId
+            DateTimeOffset.UnixEpoch
+            [
+                ConversationCreated
+                    {
+                        conversationId = Guid.NewGuid()
+                        title = "t"
+                        config = SessionConfig.empty
+                    }
+            ]
         |> Events.Commit.withOrigin bootId "wanxiang"
 
     // ---------- RFC 7464 分帧 ----------
@@ -23,7 +32,11 @@ module EventLogTests =
     [<Fact>]
     let ``three intact commits round trip through CommitCodec`` () =
         let boot = Guid.NewGuid()
-        let lines = [ 1UL; 2UL; 3UL ] |> List.map (fun i -> CommitCodec.commitToJsonLine (commit i boot))
+
+        let lines =
+            [ 1UL; 2UL; 3UL ]
+            |> List.map (fun i -> CommitCodec.commitToJsonLine (commit i boot))
+
         for line in lines do
             match CommitCodec.tryCommitFromJsonLine line with
             | Some c -> ()
@@ -32,19 +45,23 @@ module EventLogTests =
     [<Fact>]
     let ``a truncated tail is detected by Inspect.run as RepairRequired`` () =
         let boot = Guid.NewGuid()
+
         let good =
             [ 1UL; 2UL ]
             |> List.map (fun i -> Wanxiang.Store.Assembly.frame ((commit i boot)))
             |> Array.concat
+
         let half = Encoding.UTF8.GetBytes "\u001E{\"formatVersion\":1,\"id\":\"3\""
         let dir = Helpers.tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let path = DataPaths.logFile dir
             File.WriteAllBytes(path, Array.append good half)
+
             match Inspect.run dir with
             | Healthy outcome -> Assert.Equal(2UL, outcome.lastCommitId)
-            | RepairRequired (outcome, _) -> Assert.Equal(2UL, outcome.lastCommitId)
+            | RepairRequired(outcome, _) -> Assert.Equal(2UL, outcome.lastCommitId)
             | _ -> failwith "unexpected"
         finally
             Helpers.cleanup dir
@@ -52,15 +69,20 @@ module EventLogTests =
     [<Fact>]
     let ``a corrupted middle segment triggers RepairRequired`` () =
         let boot = Guid.NewGuid()
-        let seg i = Wanxiang.Store.Assembly.frame ((commit i boot))
+
+        let seg i =
+            Wanxiang.Store.Assembly.frame ((commit i boot))
+
         let data = Array.concat [ seg 1UL; JsonSeq.Frame.encode "{not json"; seg 2UL ]
         let dir = Helpers.tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let path = DataPaths.logFile dir
             File.WriteAllBytes(path, data)
+
             match Inspect.run dir with
-            | RepairRequired (o, plan) ->
+            | RepairRequired(o, plan) ->
                 Assert.Equal(1UL, o.lastCommitId)
                 Assert.Equal(int64 (seg 1UL).Length, plan.damage.byteOffset)
             | _ -> failwith "expected repair required"
@@ -70,15 +92,23 @@ module EventLogTests =
     [<Fact>]
     let ``a commit id gap is detected by Inspect.run`` () =
         let boot = Guid.NewGuid()
-        let data = Array.concat [ Wanxiang.Store.Assembly.frame ((commit 1UL boot))
-                                  Wanxiang.Store.Assembly.frame ((commit 5UL boot)) ]
+
+        let data =
+            Array.concat
+                [
+                    Wanxiang.Store.Assembly.frame ((commit 1UL boot))
+                    Wanxiang.Store.Assembly.frame ((commit 5UL boot))
+                ]
+
         let dir = Helpers.tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let path = DataPaths.logFile dir
             File.WriteAllBytes(path, data)
+
             match Inspect.run dir with
-            | RepairRequired (outcome, _) -> Assert.Equal(1UL, outcome.lastCommitId)
+            | RepairRequired(outcome, _) -> Assert.Equal(1UL, outcome.lastCommitId)
             | _ -> failwith "expected repair required"
         finally
             Helpers.cleanup dir
@@ -87,16 +117,24 @@ module EventLogTests =
     let ``a first record not starting at id 1 is rejected`` () =
         // Replay 的 expectedId 从 1 开始：第一条记录 id=9 即损坏（无前缀可保留）。
         let dir = Helpers.tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
             let path = DataPaths.logFile dir
             Directory.CreateDirectory(Path.GetDirectoryName path) |> ignore
-            let data = Array.concat [ Wanxiang.Store.Assembly.frame ((commit 9UL (Guid.NewGuid())))
-                                      Wanxiang.Store.Assembly.frame ((commit 1UL (Guid.NewGuid()))) ]
+
+            let data =
+                Array.concat
+                    [
+                        Wanxiang.Store.Assembly.frame ((commit 9UL (Guid.NewGuid())))
+                        Wanxiang.Store.Assembly.frame ((commit 1UL (Guid.NewGuid())))
+                    ]
+
             File.WriteAllBytes(path, data)
+
             match Inspect.run dir with
-            | RepairRequired (outcome, _) -> Assert.Equal(0UL, outcome.lastCommitId)
+            | RepairRequired(outcome, _) -> Assert.Equal(0UL, outcome.lastCommitId)
             | _ -> failwith "expected repair required"
         finally
             Helpers.cleanup dir
@@ -112,6 +150,7 @@ module EventLogTests =
     [<Fact>]
     let ``a record written by this code parses back with all required fields`` () =
         let original = commit 42UL (Guid.NewGuid())
+
         match CommitCodec.tryCommitFromJsonLine (CommitCodec.commitToJsonLine original) with
         | Some parsed ->
             Assert.Equal(original.id, parsed.id)
@@ -130,7 +169,8 @@ module EventLogTests =
 
     [<Fact>]
     let ``a foreign format version is rejected rather than silently accepted`` () =
-        let json = """{"formatVersion":99,"id":"1","bootId":"00000000-0000-0000-0000-000000000000","source":"x","committedAtUtc":"2026-01-01T00:00:00.000Z","events":[]}"""
+        let json =
+            """{"formatVersion":99,"id":"1","bootId":"00000000-0000-0000-0000-000000000000","source":"x","committedAtUtc":"2026-01-01T00:00:00.000Z","events":[]}"""
         // 未来版本：CommitCodec 拒绝（tryCommitFromJsonLine 返回 None），Replay 判定 UnsupportedFormat
         Assert.Null(CommitCodec.tryCommitFromJsonLine json)
 

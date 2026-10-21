@@ -11,32 +11,43 @@ open Wanxiang.Core
 module ForkLineage =
 
     /// 面包屑文案。父对话已删除时只说“原对话已删除”，该分叉仍是完整可用的对话（决策 202）。
-    let breadcrumb (summaries: ConversationSummary list) (lineage: Map<Guid, ForkLineage>) (conversationId: Guid) : ForkBreadcrumb option =
+    let breadcrumb
+        (summaries: ConversationSummary list)
+        (lineage: Map<Guid, ForkLineage>)
+        (conversationId: Guid)
+        : ForkBreadcrumb option =
         match lineage.TryFind conversationId with
         | None -> None
         | Some l ->
             let parent = summaries |> List.tryFind (fun s -> s.id = l.parentId)
             let available = parent.IsSome && not l.parentDeleted
+
             if not available then
                 Some
-                    { parentId = l.parentId
-                      parentAvailable = false
-                      text = "原对话已删除"
-                      description = "这个分叉的原对话已被删除，分叉本身仍可正常使用。" }
+                    {
+                        parentId = l.parentId
+                        parentAvailable = false
+                        text = "原对话已删除"
+                        description = "这个分叉的原对话已被删除，分叉本身仍可正常使用。"
+                    }
             else
                 let title =
                     match parent with
                     | Some p -> p.title
                     | None -> l.parentTitle |> Option.defaultValue "原对话"
+
                 let text =
                     match l.forkOrdinal with
                     | Some n -> sprintf "来自「%s」第 %d 条消息的分叉" title n
                     | None -> sprintf "来自「%s」的分叉" title
+
                 Some
-                    { parentId = l.parentId
-                      parentAvailable = true
-                      text = text
-                      description = text + "，点击回到原对话" }
+                    {
+                        parentId = l.parentId
+                        parentAvailable = true
+                        text = text
+                        description = text + "，点击回到原对话"
+                    }
 
     /// 同一消息位置的版本。`messageCommitId` 是当前对话里这条用户消息，`prevCommitId` 是它前一条消息（第一条为 None）。
     /// - 这条消息是某个分叉自己的第一条消息（被编辑过的那条）：版本 = 父对话原文 + 同一分叉点的全部分叉；
@@ -50,10 +61,12 @@ module ForkLineage =
         (prevCommitId: uint64 option)
         : SiblingVersions option =
         let byId = summaries |> List.map (fun s -> s.id, s) |> dict
+
         let owner, after, isForkOwn =
             match lineage.TryFind conversationId with
             | Some l when l.forkFirstMessageId = Some messageCommitId -> l.parentId, l.forkBaseMessageId, true
             | _ -> conversationId, prevCommitId, false
+
         let forks =
             lineage
             |> Map.toList
@@ -61,21 +74,38 @@ module ForkLineage =
             // 创建顺序：被编辑那条消息的 commitId 单调递增（缺省排最后），再按创建时间、id 稳定
             |> List.sortBy (fun (id, l) -> defaultArg l.forkFirstMessageId UInt64.MaxValue, byId[id].createdAt, id)
             |> List.map fst
+
         let originalAvailable =
             byId.ContainsKey owner
-            && (not isForkOwn || not (lineage.TryFind conversationId |> Option.exists (fun l -> l.parentDeleted)))
+            && (not isForkOwn
+                || not (lineage.TryFind conversationId |> Option.exists (fun l -> l.parentDeleted)))
+
         let targets = (if originalAvailable then [ owner ] else []) @ forks
-        let index = if isForkOwn then targets |> List.tryFindIndex ((=) conversationId) else Some 0
+
+        let index =
+            if isForkOwn then
+                targets |> List.tryFindIndex ((=) conversationId)
+            else
+                Some 0
+
         match index with
-        | Some i when List.length targets >= 2 -> Some { index = i; count = List.length targets; targets = targets }
+        | Some i when List.length targets >= 2 ->
+            Some
+                {
+                    index = i
+                    count = List.length targets
+                    targets = targets
+                }
         | _ -> None
 
 module PendingDeletion =
 
     /// 列表视图：隐去宽限期内的行。
     let visible (summaries: ConversationSummary list) (state: PendingDeletions) : ConversationSummary list =
-        if List.isEmpty state.batches then summaries
-        else summaries |> List.filter (fun s -> not (PendingDeletion.isPending s.id state))
+        if List.isEmpty state.batches then
+            summaries
+        else
+            summaries |> List.filter (fun s -> not (PendingDeletion.isPending s.id state))
 
 /// 导出谱系与导入上限：ConversationTransfer 管文件格式，这里接上列表行与协议上限（决策 312/313）。
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -92,16 +122,21 @@ module ConversationTransfer =
         (conversationId: Guid)
         : ExportLineage =
         let own = lineage.TryFind conversationId
-        let titleOf id = summaries |> List.tryFind (fun s -> s.id = id) |> Option.map _.title
+
+        let titleOf id =
+            summaries |> List.tryFind (fun s -> s.id = id) |> Option.map _.title
+
         let forks =
             lineage
             |> Map.toList
             |> List.filter (fun (_, l) -> l.parentId = conversationId)
             |> List.choose (fun (id, l) -> titleOf id |> Option.map (fun t -> id, t, l.forkBaseMessageId))
-        { parentId = own |> Option.map _.parentId
-          parentTitle = own |> Option.bind (fun l -> titleOf l.parentId |> Option.orElse l.parentTitle)
-          parentDeleted = own |> Option.exists (fun l -> l.parentDeleted || (titleOf l.parentId).IsNone)
-          forkOrdinal = own |> Option.bind _.forkOrdinal
-          forkBaseMessageId = own |> Option.bind _.forkBaseMessageId
-          forks = forks }
 
+        {
+            parentId = own |> Option.map _.parentId
+            parentTitle = own |> Option.bind (fun l -> titleOf l.parentId |> Option.orElse l.parentTitle)
+            parentDeleted = own |> Option.exists (fun l -> l.parentDeleted || (titleOf l.parentId).IsNone)
+            forkOrdinal = own |> Option.bind _.forkOrdinal
+            forkBaseMessageId = own |> Option.bind _.forkBaseMessageId
+            forks = forks
+        }

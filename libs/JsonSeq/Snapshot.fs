@@ -24,7 +24,8 @@ type SnapshotFile(path: string) =
 
     static let magic = "wanxiang-snapshot"
 
-    static let hashHex (bytes: byte[]) = SHA256.HashData bytes |> Convert.ToHexString |> _.ToLowerInvariant()
+    static let hashHex (bytes: byte[]) =
+        SHA256.HashData bytes |> Convert.ToHexString |> _.ToLowerInvariant()
 
     member _.Path = path
 
@@ -33,32 +34,46 @@ type SnapshotFile(path: string) =
         let full = Path.GetFullPath path
         Directory.CreateDirectory(Path.GetDirectoryName full) |> ignore
         let body = Encoding.UTF8.GetBytes text
-        let header = Encoding.UTF8.GetBytes(sprintf "%s %d %s\n" magic version (hashHex body))
+
+        let header =
+            Encoding.UTF8.GetBytes(sprintf "%s %d %s\n" magic version (hashHex body))
+
         let tmp = full + ".tmp"
+
         do
             use fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None)
             fs.Write(header, 0, header.Length)
             fs.Write(body, 0, body.Length)
             fs.Flush true
+
         File.Move(tmp, full, true)
 
     /// 读取并校验。
     member _.Load() : Loaded =
-        if not (File.Exists path) then Missing
+        if not (File.Exists path) then
+            Missing
         else
             try
                 let bytes = File.ReadAllBytes path
                 let nl = Array.IndexOf(bytes, 0x0Auy)
-                if nl < 0 then Corrupt "missing header"
+
+                if nl < 0 then
+                    Corrupt "missing header"
                 else
                     let parts = strict.GetString(bytes, 0, nl).Split ' '
                     let body = bytes[nl + 1 ..]
-                    if parts.Length <> 3 || parts[0] <> magic then Corrupt "bad header"
-                    elif parts[1] <> string version then Corrupt(sprintf "unsupported version %s" parts[1])
-                    elif parts[2] <> hashHex body then Corrupt "checksum mismatch"
+
+                    if parts.Length <> 3 || parts[0] <> magic then
+                        Corrupt "bad header"
+                    elif parts[1] <> string version then
+                        Corrupt(sprintf "unsupported version %s" parts[1])
+                    elif parts[2] <> hashHex body then
+                        Corrupt "checksum mismatch"
                     else
-                        try Loaded(strict.GetString body)
-                        with :? DecoderFallbackException -> Corrupt "invalid UTF-8"
+                        try
+                            Loaded(strict.GetString body)
+                        with :? DecoderFallbackException ->
+                            Corrupt "invalid UTF-8"
             with
             | :? DecoderFallbackException -> Corrupt "invalid UTF-8 in header"
             | e -> Corrupt e.Message

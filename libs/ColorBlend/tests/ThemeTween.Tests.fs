@@ -1,4 +1,5 @@
 module ThemeTweenTests
+
 open System
 open System.IO
 open Xunit
@@ -22,7 +23,9 @@ let ``the latest switch takes over from the logical current color`` () =
     let tw = ThemeTween<int>()
     tw.Apply(t0, false, 200.0, [ 1, gray 0uy, gray 200uy ]) |> ignore
     // 中途没有帧也照样从逻辑当前色（100）起步
-    tw.Apply(t0.AddMilliseconds 100.0, false, 200.0, [ 1, gray 0uy, gray 0uy ]) |> ignore
+    tw.Apply(t0.AddMilliseconds 100.0, false, 200.0, [ 1, gray 0uy, gray 0uy ])
+    |> ignore
+
     let f = tw.Frame(t0.AddMilliseconds 100.0, 200.0)
     Assert.Equal(gray 100uy, snd f.Colors.Head)
 

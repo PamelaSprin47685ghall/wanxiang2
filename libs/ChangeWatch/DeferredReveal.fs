@@ -18,7 +18,8 @@ type DeferredReveal<'key when 'key: equality>(delay: TimeSpan) =
     /// 为这个键武装。已为同一个键武装时什么也不做，返回 false（不重启计时）；
     /// 换了键或刚解除过，返回 true，宿主应停掉旧计时并按 Due 重新计时。
     member _.Arm(key: 'key, now: DateTimeOffset) : bool =
-        if armedFor = Some key then false
+        if armedFor = Some key then
+            false
         else
             armedFor <- Some key
             due <- Some(now + delay)

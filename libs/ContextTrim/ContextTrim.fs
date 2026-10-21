@@ -19,6 +19,7 @@ module ContextTrim =
                 | :? TextReasoningContent as r -> (if isNull r.Text then 0 else r.Text.Length)
                 | :? DataContent -> 1200 // 一张图的定价量级，避免图片被当成零成本
                 | _ -> 64)
+
         8 + textLength / 2
 
     /// 工具调用与其结果必须成对出现，否则上游会拒绝整个请求。
@@ -29,17 +30,26 @@ module ContextTrim =
     /// 按条数与 token 预算裁剪，保留最近的对话。
     let trim (maxMessages: int) (maxTokens: int) (msgs: ChatMessage list) : ChatMessage list =
         let byCount =
-            if maxMessages <= 0 || List.length msgs <= maxMessages then msgs
-            else msgs |> List.skip (List.length msgs - maxMessages)
+            if maxMessages <= 0 || List.length msgs <= maxMessages then
+                msgs
+            else
+                msgs |> List.skip (List.length msgs - maxMessages)
+
         let byBudget =
-            if maxTokens <= 0 then byCount
+            if maxTokens <= 0 then
+                byCount
             else
                 let rec keep (acc: ChatMessage list) (budget: int) (rest: ChatMessage list) =
                     match rest with
                     | [] -> acc
                     | m :: tail ->
                         let cost = estimateTokens m
-                        if budget - cost < 0 && List.length acc >= minKeptTail then acc
-                        else keep (m :: acc) (budget - cost) tail
+
+                        if budget - cost < 0 && List.length acc >= minKeptTail then
+                            acc
+                        else
+                            keep (m :: acc) (budget - cost) tail
+
                 keep [] maxTokens (List.rev byCount)
+
         dropOrphanToolResults byBudget

@@ -4,7 +4,8 @@ open System
 open Xunit
 open Wanxiang.Server
 
-let fixedNow () = DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.Zero)
+let fixedNow () =
+    DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.Zero)
 
 [<Fact>]
 let ``error lines carry the envelope, typed fields and redacted text`` () =
@@ -12,8 +13,22 @@ let ``error lines carry the envelope, typed fields and redacted text`` () =
     let log = JsonLinesLog(lines.Add, fixedNow, 2)
     log.RegisterSecrets [ "sk-12345678"; "sk-12345678-long"; "short" ]
     log.ApplyInstanceId "i1"
-    log.Error("e", [ "s", box "key sk-12345678-long and sk-12345678 and short"; "n", box 3; "u", box 7UL; "b", box true; "z", null ])
-    Assert.Equal("""{"level":"error","event":"e","utc":"2026-01-02T03:04:05.0000000Z","instanceId":"i1","s":"key *** and *** and short","n":3,"u":7,"b":true,"z":null}""", lines[0])
+
+    log.Error(
+        "e",
+        [
+            "s", box "key sk-12345678-long and sk-12345678 and short"
+            "n", box 3
+            "u", box 7UL
+            "b", box true
+            "z", null
+        ]
+    )
+
+    Assert.Equal(
+        """{"level":"error","event":"e","utc":"2026-01-02T03:04:05.0000000Z","instanceId":"i1","s":"key *** and *** and short","n":3,"u":7,"b":true,"z":null}""",
+        lines[0]
+    )
 
 [<Fact>]
 let ``exceptions get a stack field; info is not kept as a recent error; recent is bounded`` () =

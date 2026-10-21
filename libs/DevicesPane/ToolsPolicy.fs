@@ -18,7 +18,10 @@ module ToolsPolicy =
         tools["fileReadRoots"] <- JsonArray([| for r in roots -> JsonNode.op_Implicit r |])
         let pol = JsonObject()
         pol["default"] <- policyDefault
-        for KeyValue(id, p) in policy do pol[id] <- p
+
+        for KeyValue(id, p) in policy do
+            pol[id] <- p
+
         tools["policy"] <- pol
         tools["exposeDebug"] <- exposeDebug
         let root = JsonObject()

@@ -11,14 +11,27 @@ open Wanxiang.Protocol
 open Wanxiang.Server
 
 let partialMessage (text: string) : JsonNode =
-    JsonNode.Parse(sprintf """{"role":"assistant","contents":[{"$type":"text","text":%s}]}""" (Text.Json.JsonSerializer.Serialize text))
+    JsonNode.Parse(
+        sprintf
+            """{"role":"assistant","contents":[{"$type":"text","text":%s}]}"""
+            (Text.Json.JsonSerializer.Serialize text)
+    )
 
 let tempDir () =
-    let d = Path.Combine(Path.GetTempPath(), "wx-partial-" + Guid.NewGuid().ToString("N"))
+    let d =
+        Path.Combine(Path.GetTempPath(), "wx-partial-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory d |> ignore
     d
 
-let partial conv = GenerationPartial {| conversationId = conv; generationId = Guid.NewGuid(); message = partialMessage "半截"; error = None |}
+let partial conv =
+    GenerationPartial
+        {|
+            conversationId = conv
+            generationId = Guid.NewGuid()
+            message = partialMessage "半截"
+            error = None
+        |}
 
 [<Fact>]
 let ``saved partial survives restart and clear deletes the file`` () =

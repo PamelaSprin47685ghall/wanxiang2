@@ -7,7 +7,8 @@ open Wanxiang.Core
 /// 以及与领域相关的两种截尾记录。
 module Stderr =
 
-    let private log = JsonLinesLog((fun line -> eprintfn "%s" line), (fun () -> System.DateTimeOffset.UtcNow), 200)
+    let private log =
+        JsonLinesLog((fun line -> eprintfn "%s" line), (fun () -> System.DateTimeOffset.UtcNow), 200)
 
     let setInstanceId (id: string) = log.ApplyInstanceId id
     let registerSecrets (secrets: string seq) = log.RegisterSecrets secrets
@@ -20,14 +21,16 @@ module Stderr =
     let truncated (commit: Events.Commit) (file: string) (byteOffset: int64) (err: WanxiangError) =
         write
             "jsonseq-tail-truncated"
-            [ "phase", "runtime-commit"
-              "file", file
-              "commitId", commit.id
-              "byteOffset", byteOffset
-              "exceptionType", WanxiangError.code err
-              "exceptionMessage", WanxiangError.message err
-              "action", "truncated-and-id-reused"
-              "rawCommit", redact (CommitCodec.commitToJsonLine commit) ]
+            [
+                "phase", "runtime-commit"
+                "file", file
+                "commitId", commit.id
+                "byteOffset", byteOffset
+                "exceptionType", WanxiangError.code err
+                "exceptionMessage", WanxiangError.message err
+                "action", "truncated-and-id-reused"
+                "rawCommit", redact (CommitCodec.commitToJsonLine commit)
+            ]
 
     /// 启动截尾记录。
     let replayTruncated (file: string) (reason: string) =

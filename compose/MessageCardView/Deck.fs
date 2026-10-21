@@ -16,6 +16,7 @@ type CardDeck<'Key when 'Key: equality>(panel: Panel) =
     member _.Show(desired: ('Key option * (unit -> Control)) list) =
         let wanted = Array.ofList desired
         let mutable common = 0
+
         while common < mounted.Length
               && common < wanted.Length
               && (match mounted[common], fst wanted[common] with
@@ -27,28 +28,34 @@ type CardDeck<'Key when 'Key: equality>(panel: Panel) =
             panel.Children.RemoveAt(panel.Children.Count - 1)
 
         let _ =
-            [ for index in common .. wanted.Length - 1 do
-                  let key, create = wanted[index]
-                  let card =
-                      match key with
-                      | None -> create ()
-                      | Some k ->
-                          match cache.TryGetValue k with
-                          | true, cached -> cached
-                          | _ ->
-                              let created = create ()
-                              cache[k] <- created
-                              created
-                  panel.Children.Add card
-                  card ]
+            [
+                for index in common .. wanted.Length - 1 do
+                    let key, create = wanted[index]
+
+                    let card =
+                        match key with
+                        | None -> create ()
+                        | Some k ->
+                            match cache.TryGetValue k with
+                            | true, cached -> cached
+                            | _ ->
+                                let created = create ()
+                                cache[k] <- created
+                                created
+
+                    panel.Children.Add card
+                    card
+            ]
 
         mounted <- wanted |> Array.map fst
         // 缓存只留这一帧用到的身份
         let live = HashSet<'Key>()
+
         for key in mounted do
             match key with
             | Some k -> live.Add k |> ignore
             | None -> ()
+
         if cache.Count > live.Count then
             for stale in cache.Keys |> Seq.filter (live.Contains >> not) |> Array.ofSeq do
                 cache.Remove stale |> ignore

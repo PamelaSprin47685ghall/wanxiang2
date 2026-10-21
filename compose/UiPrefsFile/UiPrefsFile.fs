@@ -10,10 +10,12 @@ module UiPrefsFile =
     /// 取值边界的唯一事实来源在设计层。数值与宿主 Tokens.sidebarWidth/sidebarMinWidth/sidebarMaxWidth
     /// 及 LayoutPolicy.desktopMinWidth 一致（wanxiang2 侧同源：ThemeMetrics / DesignRhythm）。
     let limits: UiPrefLimits =
-        { sidebarWidth = 284.0
-          sidebarMinWidth = 232.0
-          sidebarMaxWidth = 420.0
-          windowMinWidth = 700.0 }
+        {
+            sidebarWidth = 284.0
+            sidebarMinWidth = 232.0
+            sidebarMaxWidth = 420.0
+            windowMinWidth = 700.0
+        }
 
     let defaults = UiPrefs.defaults limits
 
@@ -24,7 +26,8 @@ module UiPrefsFile =
         try
             let p = filePath ()
             if File.Exists p then Some(File.ReadAllText p) else None
-        with _ -> None
+        with _ ->
+            None
 
     let load () : UiPrefs = UiPrefs.parse limits (readText ())
 
@@ -36,14 +39,17 @@ module UiPrefsFile =
             let tmp = path + ".tmp"
             File.WriteAllText(tmp, text)
             File.Move(tmp, path, true)
+
             if not (OperatingSystem.IsBrowser()) then
                 // Q118：本机偏好文件按最小用户权限落盘（与 TOML/日志/附件一致）
-                try File.SetUnixFileMode(path, UnixFileMode.UserRead ||| UnixFileMode.UserWrite) with _ -> ()
+                try
+                    File.SetUnixFileMode(path, UnixFileMode.UserRead ||| UnixFileMode.UserWrite)
+                with _ ->
+                    ()
         with _ ->
             ()
 
     /// 偏好 → 是否深色。浏览器与桌面都由调用方给出系统是否深色；
     /// 返回 bool 而非宿主设计层的 ThemeMode（wanxiang2 无 ThemeMode，主题模式归 ThemePalette 的 PaletteMode），
     /// 由调用方映射成自己的主题模式。
-    let resolveTheme (prefs: UiPrefs) (systemIsDark: bool) : bool =
-        UiPrefs.isDark prefs systemIsDark
+    let resolveTheme (prefs: UiPrefs) (systemIsDark: bool) : bool = UiPrefs.isDark prefs systemIsDark

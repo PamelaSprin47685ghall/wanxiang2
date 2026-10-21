@@ -23,6 +23,7 @@ type SidebarSearch() =
         tb.Classes.Add "control-stroke"
         tb.VerticalAlignment <- VerticalAlignment.Center
         tb
+
     let changed = Event<string>()
     let debounced = Event<string>()
     let keys = Event<SearchKeyArgs>()
@@ -42,13 +43,21 @@ type SidebarSearch() =
         clearButton.Opacity <- (if visible then 1.0 else 0.0)
         clearButton.IsHitTestVisible <- visible
         clearButton.Focusable <- visible
-        AutomationProperties.SetAccessibilityView(clearButton, if visible then AccessibilityView.Default else AccessibilityView.Raw)
+
+        AutomationProperties.SetAccessibilityView(
+            clearButton,
+            if visible then
+                AccessibilityView.Default
+            else
+                AccessibilityView.Raw
+        )
 
     let hintTitle =
         let t = TextBlock(Text = "未找到匹配对话")
         t.FontWeight <- FontWeight.Medium
         t.TextAlignment <- TextAlignment.Center
         t
+
     let hintSub =
         let t = TextBlock(Text = "点击清空，或按 Enter / Esc 恢复")
         t.TextAlignment <- TextAlignment.Center
@@ -70,22 +79,24 @@ type SidebarSearch() =
         AutomationProperties.SetName(b, "未找到匹配对话，点击清空搜索")
         ToolTip.SetTip(b, "点击清空搜索（Esc）")
         b.Click.Add(fun _ -> clear.Trigger())
+
         b.KeyDown.Add(fun e ->
             if e.Key = Key.Escape then
                 e.Handled <- true
                 clear.Trigger())
+
         b
 
     let searchIcon =
-        TextBlock(
-            Text = "🔍",
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = Thickness(0.0, 0.0, 8.0, 0.0))
+        TextBlock(Text = "🔍", VerticalAlignment = VerticalAlignment.Center, Margin = Thickness(0.0, 0.0, 8.0, 0.0))
 
     let view =
         AutomationProperties.SetName(box, "搜索对话")
         reserve false
-        let row = DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
+
+        let row =
+            DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
+
         DockPanel.SetDock(searchIcon, Dock.Left)
         DockPanel.SetDock(clearButton, Dock.Right)
         clearButton.Margin <- Thickness(8.0, 0.0, 0.0, 0.0)
@@ -101,11 +112,14 @@ type SidebarSearch() =
             let txt = if isNull box.Text then "" else box.Text
             reserve (not (String.IsNullOrWhiteSpace txt))
             changed.Trigger txt)
+
         box.KeyDown.Add(fun e ->
             if e.Key = Key.Down || e.Key = Key.Enter || e.Key = Key.Escape then
                 let args = SearchKeyArgs(e.Key)
                 keys.Trigger args
-                if args.Handled || e.Key = Key.Escape then e.Handled <- true)
+
+                if args.Handled || e.Key = Key.Escape then
+                    e.Handled <- true)
 
     /// 搜索区
     member _.View = view :> Control
@@ -117,7 +131,8 @@ type SidebarSearch() =
     member _.Text
         with get () = if isNull box.Text then "" else box.Text
         and set (v: string) =
-            if box.Text <> v then box.Text <- v
+            if box.Text <> v then
+                box.Text <- v
 
     /// 单入口渲染
     member this.Render(vs: SearchBoxVS) =
@@ -131,17 +146,29 @@ type SidebarSearch() =
     /// 聚焦
     member _.Focus(selectAll: bool) =
         box.Focus() |> ignore
-        if selectAll || String.IsNullOrEmpty box.Text then box.SelectAll()
+
+        if selectAll || String.IsNullOrEmpty box.Text then
+            box.SelectAll()
 
     member _.ApplyEmptyHint(visible: bool) = hint.IsVisible <- visible
-    member _.FocusEmptyHint() = hint.Focus NavigationMethod.Directional |> ignore
+
+    member _.FocusEmptyHint() =
+        hint.Focus NavigationMethod.Directional |> ignore
 
     /// 每次输入即时上报
-    [<CLIEvent>] member _.Changed = changed.Publish
+    [<CLIEvent>]
+    member _.Changed = changed.Publish
+
     /// 防抖到点，外部或 Tick 发出
-    [<CLIEvent>] member _.Debounced = debounced.Publish
+    [<CLIEvent>]
+    member _.Debounced = debounced.Publish
+
     member _.TriggerDebounced(text: string) = debounced.Trigger text
+
     /// Down / Enter / Escape
-    [<CLIEvent>] member _.Keys = keys.Publish
+    [<CLIEvent>]
+    member _.Keys = keys.Publish
+
     /// 清空请求
-    [<CLIEvent>] member _.ClearRequested = clear.Publish
+    [<CLIEvent>]
+    member _.ClearRequested = clear.Publish

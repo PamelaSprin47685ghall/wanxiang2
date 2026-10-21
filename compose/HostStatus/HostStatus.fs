@@ -24,7 +24,11 @@ type HostStatus() =
         |> List.truncate HostStatus.MaxErrors
         |> List.map (fun e ->
             let text = (redact e).Replace('\r', ' ').Replace('\n', ' ').Trim()
-            if text.Length > HostStatus.MaxErrorChars then text.Substring(0, HostStatus.MaxErrorChars) + "…" else text)
+
+            if text.Length > HostStatus.MaxErrorChars then
+                text.Substring(0, HostStatus.MaxErrorChars) + "…"
+            else
+                text)
 
     /// 记录一次拒绝并返回要广播的事件。
     member _.Reject(redact: string -> string, errors: string list) : WireEvent =
@@ -32,6 +36,7 @@ type HostStatus() =
             match HostStatus.Sanitize redact errors with
             | [] -> [ "配置文件无法读取" ]
             | xs -> xs
+
         let summary = "配置有误，仍在使用上一份有效配置：" + List.head clean
         lock sync (fun () -> rejection <- Some(summary, clean))
         HostConfigRejected {| summary = summary; errors = clean |}
@@ -41,7 +46,8 @@ type HostStatus() =
 
     member _.Current: WireEvent option =
         lock sync (fun () ->
-            rejection |> Option.map (fun (summary, errors) -> HostConfigRejected {| summary = summary; errors = errors |}))
+            rejection
+            |> Option.map (fun (summary, errors) -> HostConfigRejected {| summary = summary; errors = errors |}))
 
     /// 「检查主机」的实现，由 ServerApp 注入；缺省表示主机尚未就绪。
     member val DoctorRunner: (unit -> Doctor.Diagnosis) option = None with get, set
@@ -55,14 +61,32 @@ type HostStatus() =
                 o["name"] <- "doctor"
                 o["ok"] <- false
                 o["detail"] <- "主机尚未就绪"
-                DoctorReport {| requestId = requestId; ok = false; checks = JsonArray(o) |}
+
+                DoctorReport
+                    {|
+                        requestId = requestId
+                        ok = false
+                        checks = JsonArray(o)
+                    |}
             | Some run ->
                 try
                     let d = run ()
-                    DoctorReport {| requestId = requestId; ok = Doctor.isHealthy d; checks = Doctor.toChecksJson redact d |}
+
+                    DoctorReport
+                        {|
+                            requestId = requestId
+                            ok = Doctor.isHealthy d
+                            checks = Doctor.toChecksJson redact d
+                        |}
                 with e ->
                     let o = JsonObject()
                     o["name"] <- "doctor"
                     o["ok"] <- false
                     o["detail"] <- redact e.Message
-                    DoctorReport {| requestId = requestId; ok = false; checks = JsonArray(o) |})
+
+                    DoctorReport
+                        {|
+                            requestId = requestId
+                            ok = false
+                            checks = JsonArray(o)
+                        |})

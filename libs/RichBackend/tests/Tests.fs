@@ -12,6 +12,7 @@ type FakeBackend(highlight: string option, math: string option) =
 let ``install 后 current 返回同一实例`` () =
     let fake = FakeBackend(Some "<span>", Some "<math>")
     RichBackend.install fake
+
     match RichBackend.current () with
     | Some value -> Assert.Same(box fake, box value)
     | None -> Assert.Fail("expected a backend after install")
@@ -22,6 +23,7 @@ let ``install 覆盖前一个后端`` () =
     let second = FakeBackend(Some "x", None)
     RichBackend.install first
     RichBackend.install second
+
     match RichBackend.current () with
     | Some value -> Assert.Same(box second, box value)
     | None -> Assert.Fail("expected the second backend")

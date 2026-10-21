@@ -7,7 +7,10 @@ open Wanxiang.UI
 
 let private ticksUntilExpired (d: ToastDwell) =
     let mutable n = 1
-    while not (d.Tick 200.0) do n <- n + 1
+
+    while not (d.Tick 200.0) do
+        n <- n + 1
+
     n
 
 [<Fact>]
@@ -24,7 +27,10 @@ let ``an inline action stays at least eight seconds`` () =
 let ``hover and a focused action pause the countdown`` () =
     let d = ToastDwell(400.0, false)
     d.PointerEntered()
-    for _ in 1 .. 10 do Assert.False(d.Tick 200.0)
+
+    for _ in 1..10 do
+        Assert.False(d.Tick 200.0)
+
     d.ActionFocused()
     d.PointerExited true
     Assert.False(d.Tick 200.0)

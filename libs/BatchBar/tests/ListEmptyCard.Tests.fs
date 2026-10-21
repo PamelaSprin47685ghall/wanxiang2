@@ -39,7 +39,7 @@ let ``card swaps only on style flip and keeps the shared action button`` () =
 let ``render SidebarEmptyKind shows corresponding card`` () =
     Headless.run (fun () ->
         let c = make ()
-        c.Render(Some (SidebarEmptyKind.NotConnected true))
+        c.Render(Some(SidebarEmptyKind.NotConnected true))
         Assert.True c.IsVisible
         Assert.Contains("连接主机后", textOf c.View)
         c.Render(Some SidebarEmptyKind.Loading)

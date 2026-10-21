@@ -8,7 +8,11 @@ open Wanxiang.App
 let private withDir f =
     let d = Path.Combine(Path.GetTempPath(), "wx-ct-" + Guid.NewGuid().ToString("N"))
     Directory.CreateDirectory d |> ignore
-    try f d finally Directory.Delete(d, true)
+
+    try
+        f d
+    finally
+        Directory.Delete(d, true)
 
 [<Fact>]
 let ``写入后读回同一令牌，格式与旧实现相同`` () =
@@ -57,6 +61,7 @@ let ``取第一条 token 行，容忍空白与无引号`` () =
 let ``目录不存在时写入返回错误而不抛`` () =
     withDir (fun d ->
         let f = ClientTomlFile(Path.Combine(d, "missing", "client.toml"))
+
         match f.Write("h", "t") with
         | Error _ -> ()
         | Ok() -> failwith "expected error")

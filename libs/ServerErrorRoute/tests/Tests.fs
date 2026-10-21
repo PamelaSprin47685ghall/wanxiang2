@@ -12,4 +12,7 @@ let ``D9 消息记账失败进当前对话的错误卡，没有当前对话时 t
 
 [<Fact>]
 let ``缺失附件按小写 sha256 标记`` () =
-    Assert.Equal(ServerErrorRoute.MissingAttachment "abcdef", ServerErrorRoute.classify false "attachment ABCDEF not found")
+    Assert.Equal(
+        ServerErrorRoute.MissingAttachment "abcdef",
+        ServerErrorRoute.classify false "attachment ABCDEF not found"
+    )

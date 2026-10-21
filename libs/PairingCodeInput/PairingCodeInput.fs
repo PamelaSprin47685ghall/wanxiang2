@@ -29,7 +29,8 @@ type PairingAutoSubmit() =
             if digits <> submitted then
                 submitted <- digits
                 true
-            else false
+            else
+                false
         else
             submitted <- ""
             false

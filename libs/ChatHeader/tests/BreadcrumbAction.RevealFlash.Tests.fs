@@ -1,4 +1,5 @@
 module BreadcrumbActionRevealFlashTests
+
 open System
 open System.IO
 open Xunit

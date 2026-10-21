@@ -14,8 +14,7 @@ open Wanxiang.Tests.Helpers
 
 module ChatOrchestratorTests =
 
-    let private dummyCommit =
-        Events.Commit.create 10UL DateTimeOffset.UtcNow []
+    let private dummyCommit = Events.Commit.create 10UL DateTimeOffset.UtcNow []
 
     [<Fact>]
     let ``SubmitOutcome ofSubmitResult correctly maps all commit outcomes`` () =
@@ -30,13 +29,13 @@ module ChatOrchestratorTests =
         | Error e -> Assert.Fail(sprintf "Expected Ok, got %A" e)
 
         // 4. CommandIdRejected
-        match SubmitOutcome.ofSubmitResult (CommandIdRejected (CommandIdConflict "conflict")) with
-        | Error (CommandIdConflict msg) -> Assert.Contains("conflict", msg)
+        match SubmitOutcome.ofSubmitResult (CommandIdRejected(CommandIdConflict "conflict")) with
+        | Error(CommandIdConflict msg) -> Assert.Contains("conflict", msg)
         | other -> Assert.Fail(sprintf "Expected CommandIdConflict, got %A" other)
 
         // 5. CommitFailed
-        match SubmitOutcome.ofSubmitResult (CommitFailed (ValidationError "validation fail")) with
-        | Error (ValidationError msg) -> Assert.Contains("validation fail", msg)
+        match SubmitOutcome.ofSubmitResult (CommitFailed(ValidationError "validation fail")) with
+        | Error(ValidationError msg) -> Assert.Contains("validation fail", msg)
         | other -> Assert.Fail(sprintf "Expected ValidationError, got %A" other)
 
     [<Fact>]
@@ -67,35 +66,39 @@ module ChatOrchestratorTests =
 
     [<Fact>]
     let ``GenerationUsage 累加规则：各轮 token 无损合并，duration 取最新`` () =
-        let u1 = {
-            promptTokens = Some 100
-            completionTokens = Some 20
-            cachedTokens = Some 10
-            totalTokens = Some 120
-            durationMs = Some 150L
-        }
-        let u2 = {
-            promptTokens = Some 50
-            completionTokens = Some 30
-            cachedTokens = None
-            totalTokens = Some 80
-            durationMs = Some 250L
-        }
+        let u1 =
+            {
+                promptTokens = Some 100
+                completionTokens = Some 20
+                cachedTokens = Some 10
+                totalTokens = Some 120
+                durationMs = Some 150L
+            }
+
+        let u2 =
+            {
+                promptTokens = Some 50
+                completionTokens = Some 30
+                cachedTokens = None
+                totalTokens = Some 80
+                durationMs = Some 250L
+            }
         // 模拟 addUsage 累加逻辑
         let sumOpt a b =
             match a, b with
-            | Some x, Some y -> Some (x + y)
+            | Some x, Some y -> Some(x + y)
             | Some x, None -> Some x
             | None, Some y -> Some y
             | None, None -> None
 
-        let combined = {
-            promptTokens = sumOpt u1.promptTokens u2.promptTokens
-            completionTokens = sumOpt u1.completionTokens u2.completionTokens
-            cachedTokens = sumOpt u1.cachedTokens u2.cachedTokens
-            totalTokens = sumOpt u1.totalTokens u2.totalTokens
-            durationMs = u2.durationMs
-        }
+        let combined =
+            {
+                promptTokens = sumOpt u1.promptTokens u2.promptTokens
+                completionTokens = sumOpt u1.completionTokens u2.completionTokens
+                cachedTokens = sumOpt u1.cachedTokens u2.cachedTokens
+                totalTokens = sumOpt u1.totalTokens u2.totalTokens
+                durationMs = u2.durationMs
+            }
 
         Assert.Equal(Some 150, combined.promptTokens)
         Assert.Equal(Some 50, combined.completionTokens)
@@ -106,12 +109,14 @@ module ChatOrchestratorTests =
     [<Fact>]
     let ``ConversationRuntime 状态初始化与排队队列维护`` () =
         let convId = Guid.NewGuid()
-        let runtime: ConversationRuntime = {
-            conversationId = convId
-            generation = None
-            pendingQueue = []
-            pendingInvocationIds = Set.empty
-        }
+
+        let runtime: ConversationRuntime =
+            {
+                conversationId = convId
+                generation = None
+                pendingQueue = []
+                pendingInvocationIds = Set.empty
+            }
 
         Assert.Equal(convId, runtime.conversationId)
         Assert.True(runtime.generation.IsNone)
@@ -121,11 +126,15 @@ module ChatOrchestratorTests =
         // 模拟向排队队列追加命令（对齐 ClientCommand.SendUserMessage 真实契约）
         let invId = Guid.NewGuid()
         let rawJson = JsonObject()
-        let cmd = SendUserMessage {|
-            invocationId = invId
-            conversationId = convId
-            messageJson = rawJson :> JsonNode
-        |}
+
+        let cmd =
+            SendUserMessage
+                {|
+                    invocationId = invId
+                    conversationId = convId
+                    messageJson = rawJson :> JsonNode
+                |}
+
         runtime.pendingQueue <- (cmd, rawJson :> JsonNode) :: runtime.pendingQueue
         runtime.pendingInvocationIds <- runtime.pendingInvocationIds.Add(invId)
 
@@ -135,7 +144,10 @@ module ChatOrchestratorTests =
     [<Fact>]
     let ``GenerationError 配置失效格式化包含模型服务标识`` () =
         let providerId = "unconfigured-ai-provider"
-        let err = GenerationError.create ConfigInvalid (sprintf "对话使用的模型服务「%s」不在当前配置中。" providerId)
+
+        let err =
+            GenerationError.create ConfigInvalid (sprintf "对话使用的模型服务「%s」不在当前配置中。" providerId)
+
         Assert.Equal(ConfigInvalid, err.kind)
         Assert.Contains(providerId, err.message)
         Assert.False(err.retryable)
@@ -148,32 +160,41 @@ module ChatOrchestratorTests =
     [<Fact>]
     let ``ConversationRuntime 排队去重：相同 invocationId 幂等忽略，不同 invocationId FIFO 保序`` () =
         let convId = Guid.NewGuid()
-        let rt: ConversationRuntime = {
-            conversationId = convId
-            generation = None
-            pendingQueue = []
-            pendingInvocationIds = Set.empty
-        }
+
+        let rt: ConversationRuntime =
+            {
+                conversationId = convId
+                generation = None
+                pendingQueue = []
+                pendingInvocationIds = Set.empty
+            }
 
         let invId1 = Guid.NewGuid()
         let invId2 = Guid.NewGuid()
         let rawJson = JsonObject()
 
-        let cmd1 = SendUserMessage {|
-            invocationId = invId1
-            conversationId = convId
-            messageJson = rawJson :> JsonNode
-        |}
-        let cmd2 = SendUserMessage {|
-            invocationId = invId2
-            conversationId = convId
-            messageJson = rawJson :> JsonNode
-        |}
+        let cmd1 =
+            SendUserMessage
+                {|
+                    invocationId = invId1
+                    conversationId = convId
+                    messageJson = rawJson :> JsonNode
+                |}
+
+        let cmd2 =
+            SendUserMessage
+                {|
+                    invocationId = invId2
+                    conversationId = convId
+                    messageJson = rawJson :> JsonNode
+                |}
 
         // 模拟 HandleSendUserMessage 入队去重逻辑
         let enqueue (cmd: ClientCommand) (json: JsonNode) =
             let invId = ClientCommand.invocationId cmd
-            if rt.pendingInvocationIds.Contains invId then ()
+
+            if rt.pendingInvocationIds.Contains invId then
+                ()
             else
                 rt.pendingQueue <- rt.pendingQueue @ [ cmd, json ]
                 rt.pendingInvocationIds <- rt.pendingInvocationIds.Add invId
@@ -195,19 +216,36 @@ module ChatOrchestratorTests =
 
     [<Fact>]
     let ``SessionConfig 思维链预算层级回退契约：对话显式设置优先于全局默认`` () =
-        let defaultAppConfig = {
-            AppConfig.defaults (Guid.NewGuid()) with
-                generation = { (AppConfig.defaults (Guid.NewGuid())).generation with thinkingBudget = 2048 }
-        }
+        let defaultAppConfig =
+            { AppConfig.defaults (Guid.NewGuid()) with
+                generation =
+                    { (AppConfig.defaults (Guid.NewGuid())).generation with
+                        thinkingBudget = 2048
+                    }
+            }
 
         // 1. 对话显式设置 4096 -> 优先使用 4096
-        let explicitConfig = { SessionConfig.empty with thinkingBudget = Some 4096 }
-        let budget1 = explicitConfig.thinkingBudget |> Option.defaultValue defaultAppConfig.generation.thinkingBudget
+        let explicitConfig =
+            { SessionConfig.empty with
+                thinkingBudget = Some 4096
+            }
+
+        let budget1 =
+            explicitConfig.thinkingBudget
+            |> Option.defaultValue defaultAppConfig.generation.thinkingBudget
+
         Assert.Equal(4096, budget1)
 
         // 2. 对话未显式设置 (None) -> 回退到全局默认 2048
-        let fallbackConfig = { SessionConfig.empty with thinkingBudget = None }
-        let budget2 = fallbackConfig.thinkingBudget |> Option.defaultValue defaultAppConfig.generation.thinkingBudget
+        let fallbackConfig =
+            { SessionConfig.empty with
+                thinkingBudget = None
+            }
+
+        let budget2 =
+            fallbackConfig.thinkingBudget
+            |> Option.defaultValue defaultAppConfig.generation.thinkingBudget
+
         Assert.Equal(2048, budget2)
 
     [<Fact>]
@@ -226,12 +264,14 @@ module ChatOrchestratorTests =
     [<Fact>]
     let ``工具名称消歧归一化：支持 builtin: 与 mcp: 前缀转换为模型安全标识`` () =
         let normalize (name: string) =
-            if String.IsNullOrWhiteSpace name then ""
+            if String.IsNullOrWhiteSpace name then
+                ""
             elif name.StartsWith("builtin:", StringComparison.Ordinal) then
                 "builtin_" + name.Substring("builtin:".Length).Replace(".", "_")
             elif name.StartsWith("mcp:", StringComparison.Ordinal) then
                 "mcp_" + name.Substring("mcp:".Length).Replace("/", "_").Replace("-", "_")
-            else name
+            else
+                name
 
         Assert.Equal("builtin_search_web", normalize "builtin:search.web")
         Assert.Equal("mcp_filesystem_read_file", normalize "mcp:filesystem/read-file")
@@ -251,6 +291,7 @@ module ChatOrchestratorTests =
     [<Fact>]
     let ``对话删除后内存运行时被移除且可重建（R5 无界集合）`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let outcome = replayOutcome dir
@@ -259,6 +300,7 @@ module ChatOrchestratorTests =
             let appCfg = AppConfig.defaults instanceId
             let registry = new ToolRegistry((fun () -> appCfg), ignore)
             let proj = coord.Projection
+
             let orch =
                 ChatOrchestrator(
                     coord,
@@ -267,14 +309,19 @@ module ChatOrchestratorTests =
                     registry,
                     (fun () -> appCfg),
                     (fun _ -> None),
-                    ignore)
+                    ignore
+                )
             // 1. 发消息创建 runtime（provider 缺失 → 生成失败，但 runtime 已创建）
             let convId = newConversationId ()
+
             let cmd =
                 SendUserMessage
-                    {| invocationId = Guid.NewGuid()
-                       conversationId = convId
-                       messageJson = userMessageJson "hello" |}
+                    {|
+                        invocationId = Guid.NewGuid()
+                        conversationId = convId
+                        messageJson = userMessageJson "hello"
+                    |}
+
             orch.HandleSendUserMessage cmd
             Assert.Equal(1, orch.RuntimeCount)
             // 2. 删除对话 → runtime 移除
@@ -283,15 +330,15 @@ module ChatOrchestratorTests =
             // 3. 同对话再次发消息 → runtime 可重建（无残留状态冲突）
             let cmd2 =
                 SendUserMessage
-                    {| invocationId = Guid.NewGuid()
-                       conversationId = convId
-                       messageJson = userMessageJson "again" |}
+                    {|
+                        invocationId = Guid.NewGuid()
+                        conversationId = convId
+                        messageJson = userMessageJson "again"
+                    |}
+
             orch.HandleSendUserMessage cmd2
             Assert.Equal(1, orch.RuntimeCount)
             orch.OnConversationDeleted convId
             Assert.Equal(0, orch.RuntimeCount)
         finally
             cleanup dir
-
-
-

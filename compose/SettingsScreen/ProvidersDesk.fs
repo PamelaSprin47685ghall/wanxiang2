@@ -19,8 +19,10 @@ open Wanxiang2.ProvidersPane
 /// - ApplyProbe: 探活结果回填与提示
 /// 当前打开的模型服务编辑器（测试与宿主可读）
 type ProviderEditorSession =
-    { Editor: ProviderEditor
-      ProviderId: string option }
+    {
+        Editor: ProviderEditor
+        ProviderId: string option
+    }
 
 /// 设置 → 模型服务的协作（旧 Views/SettingsProviders.fs）：列表行状态、预设套用与分歧判定、传输切换、
 /// 探活归属与结果缓存（ProbeSlot）、校验（ProviderForm + FieldCheck）、保存往返、更多菜单。界面归 ProvidersPane。
@@ -30,9 +32,13 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
     let probeSlot = ProbeSlot()
     let mutable catalog = Catalog.empty
     let mutable session: ProviderEditorSession option = None
+
     /// 探活挂钩：ApplyProbe 到达时清 pending、回填模型、写常驻失败行
-    let mutable probeEditor: ((bool -> unit) * (string list -> unit) * (string -> unit)) option = None
-    let icon g = fun brush -> IconSet.image g brush (theme.Space Space.GlyphMd)
+    let mutable probeEditor: ((bool -> unit) * (string list -> unit) * (string -> unit)) option =
+        None
+
+    let icon g =
+        fun brush -> IconSet.image g brush (theme.Space Space.GlyphMd)
 
     let toast msg tone = overlay.Toast(msg, tone)
 
@@ -41,16 +47,25 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
         | Some p -> p.needsApiKey
         | None -> true
 
-    let configured (p: ProviderInfo) = p.hasApiKey || not (presetNeedsKey p.baseUrl) || ProviderForm.isLoopbackUrl p.baseUrl
+    let configured (p: ProviderInfo) =
+        p.hasApiKey
+        || not (presetNeedsKey p.baseUrl)
+        || ProviderForm.isLoopbackUrl p.baseUrl
 
     let rowOf (p: ProviderInfo) : ProviderRow =
         let ok = configured p
-        { Id = p.id
-          Label = p.label
-          Meta = sprintf "%s · %d 个模型%s" p.baseUrl (List.length p.models) (if ok then "" else " · 未设置密钥")
-          Enabled = p.enabled
-          Dot = (if not p.enabled then ProviderDot.Disabled elif ok then ProviderDot.Configured else ProviderDot.MissingKey)
-          IsDefault = Catalog.isGlobalDefault p.id catalog }
+
+        {
+            Id = p.id
+            Label = p.label
+            Meta = sprintf "%s · %d 个模型%s" p.baseUrl (List.length p.models) (if ok then "" else " · 未设置密钥")
+            Enabled = p.enabled
+            Dot =
+                (if not p.enabled then ProviderDot.Disabled
+                 elif ok then ProviderDot.Configured
+                 else ProviderDot.MissingKey)
+            IsDefault = Catalog.isGlobalDefault p.id catalog
+        }
 
     let transportLabel kind =
         match kind with
@@ -58,20 +73,30 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
         | "gemini" -> "Google 原生 · generateContent（支持多模态与 systemInstruction）"
         | _ -> "OpenAI 兼容 · /v1/chat/completions"
 
-    let text (box: TextBox) = if isNull box.Text then "" else box.Text
+    let text (box: TextBox) =
+        if isNull box.Text then "" else box.Text
 
     let rec showEditor (existing: ProviderInfo option) =
-        let editor = ProviderEditor(existing.IsNone, (fun box -> Some(check.MessageFor box :> Control)), SettingsLooks.glyphOf theme)
+        let editor =
+            ProviderEditor(
+                existing.IsNone,
+                (fun box -> Some(check.MessageFor box :> Control)),
+                SettingsLooks.glyphOf theme
+            )
+
         let mutable active = true
         let takenIds = catalog.providers |> List.map (fun p -> p.id)
+
         let initialPreset =
             match existing with
             | Some p -> ProviderPresets.matchByBaseUrl p.baseUrl
             | None -> ProviderPresets.tryFind "openai"
+
         let mutable kind =
             match existing with
             | Some p when not (String.IsNullOrWhiteSpace p.kind) -> p.kind
             | _ -> initialPreset |> Option.map (fun x -> x.kind) |> Option.defaultValue "openai"
+
         let mutable current = initialPreset
         let mutable applying = false
         /// 探活往返与常驻失败行（与界面同源，一次性投影）
@@ -82,18 +107,23 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
             match initialPreset with
             | Some p -> p.label
             | None -> "自定义 OpenAI 兼容端点"
+
         let mutable presetHint =
             match initialPreset with
             | Some p -> p.hint
             | None -> ""
+
         let syncKind () =
             let transport =
                 match current with
                 | Some p when p.alternate.IsSome -> Some(if kind = p.kind then "改用兼容端点" else "改用原生接口")
                 | _ -> None
+
             editor.ApplyPresetCaption(presetLabel, presetHint, "传输：" + transportLabel kind, transport)
+
         let applyPreset (preset: ProviderPreset) =
             applying <- true
+
             try
                 kind <- preset.kind
                 current <- Some preset
@@ -105,11 +135,13 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
                 presetLabel <- preset.label
                 presetHint <- preset.hint
                 syncKind ()
+
                 if existing.IsNone then
                     editor.IdBox.Text <- ProviderPresets.suggestId preset takenIds
                     editor.LabelBox.Text <- preset.label
             finally
                 applying <- false
+
         /// 预设一旦被手改就不再是预设：按钮文案回到「自定义」，hint 清空
         let markCustomIfDiverged () =
             if not applying then
@@ -120,33 +152,48 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
                         |> Array.map (fun s -> s.Trim())
                         |> Array.filter (String.IsNullOrWhiteSpace >> not)
                         |> Array.distinct
-                    let normPreset = p.models |> List.map (fun s -> s.Trim()) |> List.filter (String.IsNullOrWhiteSpace >> not) |> Array.ofList
+
+                    let normPreset =
+                        p.models
+                        |> List.map (fun s -> s.Trim())
+                        |> List.filter (String.IsNullOrWhiteSpace >> not)
+                        |> Array.ofList
+
                     let url = ProviderPresets.normalizeBaseUrl ((text editor.UrlBox).Trim())
+
                     let same =
                         url = ProviderPresets.normalizeBaseUrl p.baseUrl
                         || (match p.alternate with
                             | Some(_, alt) -> url = ProviderPresets.normalizeBaseUrl alt
                             | None -> false)
+
                     if not same || norm <> normPreset then
                         current <- None
                         presetLabel <- "自定义"
                         presetHint <- ""
                         syncKind ()
                 | None -> ()
+
         let presetEntry (preset: ProviderPreset) =
             PopupEntry.create preset.label (fun () -> applyPreset preset)
             |> PopupEntry.markSelected (current = Some preset)
+
         editor.PresetClicked.Add(fun anchor ->
             overlay.ShowGroupedMenu(
                 anchor,
                 false,
-                [ "常用", ProviderPresets.featured |> List.map presetEntry
-                  "更多", ProviderPresets.more |> List.map presetEntry ]))
+                [
+                    "常用", ProviderPresets.featured |> List.map presetEntry
+                    "更多", ProviderPresets.more |> List.map presetEntry
+                ]
+            ))
+
         editor.TransportClicked.Add(fun () ->
             match current with
             | Some preset when preset.alternate.IsSome ->
                 let altKind, altUrl = preset.alternate.Value
                 applying <- true
+
                 try
                     if kind = preset.kind then
                         kind <- altKind
@@ -156,8 +203,10 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
                         editor.UrlBox.Text <- preset.baseUrl
                 finally
                     applying <- false
+
                 syncKind ()
             | _ -> ())
+
         editor.ApplyPresetCaption(presetLabel, presetHint, "传输：" + transportLabel kind, None)
         editor.UrlBox.TextChanged.Add(fun _ -> markCustomIfDiverged ())
         editor.ModelsBox.TextChanged.Add(fun _ -> markCustomIfDiverged ())
@@ -168,6 +217,7 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
             let auto =
                 ProviderProbeText.visionSummary p.models (fun m ->
                     let support, source = Catalog.visionOf p.id m catalog
+
                     (match support with
                      | VisionYes -> VisionVerdict.Yes
                      | VisionNo -> VisionVerdict.No
@@ -176,10 +226,19 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
                      | VisionFromUser -> VisionWhy.User
                      | VisionFromProvider -> VisionWhy.Provider
                      | VisionFromName -> VisionWhy.Name))
+
             editor.ApplyVisionCurrent(
-                (if String.IsNullOrWhiteSpace auto then "保存后点「获取模型列表」，能读到模型服务提供的看图信息。" else "当前判断：\n" + auto),
+                (if String.IsNullOrWhiteSpace auto then
+                     "保存后点「获取模型列表」，能读到模型服务提供的看图信息。"
+                 else
+                     "当前判断：\n" + auto),
                 (p.visionOverrides |> Map.filter (fun _ v -> v) |> Map.keys |> String.concat "\n"),
-                (p.visionOverrides |> Map.filter (fun _ v -> not v) |> Map.keys |> String.concat "\n"))
+                (p.visionOverrides
+                 |> Map.filter (fun _ v -> not v)
+                 |> Map.keys
+                 |> String.concat "\n")
+            )
+
             editor.IdBox.Text <- p.id
             editor.LockId()
             editor.LabelBox.Text <- p.label
@@ -194,17 +253,23 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
         | None ->
             editor.ApplyVisionCurrent("保存后点「获取模型列表」，能读到模型服务提供的看图信息。", "", "")
             initialPreset |> Option.iter applyPreset
+
         syncKind ()
+
         editor.ProbeClicked.Add(fun () ->
             let id = (text editor.IdBox).Trim()
-            if String.IsNullOrWhiteSpace id then toast "先填写稳定标识再探测。" ToastTone.Warning
-            elif not (List.contains id takenIds) then toast "先保存模型服务，然后再探测模型列表。" ToastTone.Warning
+
+            if String.IsNullOrWhiteSpace id then
+                toast "先填写稳定标识再探测。" ToastTone.Warning
+            elif not (List.contains id takenIds) then
+                toast "先保存模型服务，然后再探测模型列表。" ToastTone.Warning
             else
                 check.Clear editor.UrlBox
                 probePending <- true
                 probeStatus <- ""
                 editor.ApplyProbeState(probePending, probeStatus)
                 probeSlot.Open id
+
                 probeEditor <-
                     Some(
                         (fun value ->
@@ -213,36 +278,47 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
                         (fun models ->
                             editor.ModelsBox.Text <- String.Join("\n", models)
                             let d = (text editor.DefaultModelBox).Trim()
+
                             if String.IsNullOrWhiteSpace d || not (List.contains d models) then
                                 editor.DefaultModelBox.Text <- models |> List.tryHead |> Option.defaultValue ""),
                         (fun message ->
                             probeStatus <- message
-                            editor.ApplyProbeState(probePending, probeStatus)))
+                            editor.ApplyProbeState(probePending, probeStatus))
+                    )
+
                 (hooks ()).ProbeProvider id
                 toast "正在向模型服务请求模型列表…" ToastTone.Info)
+
         editor.SaveRequested.Add(fun () ->
-            for box in editor.Boxes do check.Clear box
+            for box in editor.Boxes do
+                check.Clear box
+
             editor.Summary.IsVisible <- false
             editor.Summary.Text <- ""
+
             let r =
                 ProviderForm.validate
-                    { isNew = existing.IsNone
-                      takenIds = takenIds
-                      existing = existing |> Option.map (fun p -> p.timeoutSeconds, p.maxRetries)
-                      id = text editor.IdBox
-                      label = text editor.LabelBox
-                      url = ProviderPresets.normalizeBaseUrl (text editor.UrlBox)
-                      models = text editor.ModelsBox
-                      defaultModel = text editor.DefaultModelBox
-                      timeout = text editor.TimeoutBox
-                      retries = text editor.RetriesBox
-                      visionYes = text editor.VisionYesBox
-                      visionNo = text editor.VisionNoBox }
+                    {
+                        isNew = existing.IsNone
+                        takenIds = takenIds
+                        existing = existing |> Option.map (fun p -> p.timeoutSeconds, p.maxRetries)
+                        id = text editor.IdBox
+                        label = text editor.LabelBox
+                        url = ProviderPresets.normalizeBaseUrl (text editor.UrlBox)
+                        models = text editor.ModelsBox
+                        defaultModel = text editor.DefaultModelBox
+                        timeout = text editor.TimeoutBox
+                        retries = text editor.RetriesBox
+                        visionYes = text editor.VisionYesBox
+                        visionNo = text editor.VisionNoBox
+                    }
+
             match r.autoPicked with
             | Some m ->
                 editor.DefaultModelBox.Text <- m
                 toast (ProviderForm.autoPickedNote m) ToastTone.Info
             | None -> ()
+
             let boxOf field =
                 match field with
                 | ProviderField.Id -> editor.IdBox
@@ -254,48 +330,95 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
                 | ProviderField.Retries -> editor.RetriesBox
                 | ProviderField.VisionYes -> editor.VisionYesBox
                 | ProviderField.VisionNo -> editor.VisionNoBox
+
             let errors = r.errors |> List.map (fun (f, m) -> boxOf f, m)
+
             if errors.IsEmpty then
                 let key = text editor.KeyBox
+
                 let payload =
-                    ProviderPresets.payload r.id r.label kind r.url (if isNull editor.KeyBox.Text then None else Some(key.Trim()))
-                        r.models r.defaultModel editor.Enabled r.timeout r.retries
+                    ProviderPresets.payload
+                        r.id
+                        r.label
+                        kind
+                        r.url
+                        (if isNull editor.KeyBox.Text then None else Some(key.Trim()))
+                        r.models
+                        r.defaultModel
+                        editor.Enabled
+                        r.timeout
+                        r.retries
+
                 let overrides = JsonObject()
-                for m in r.visionYes do overrides[m] <- true
-                for m in r.visionNo do overrides[m] <- false
+
+                for m in r.visionYes do
+                    overrides[m] <- true
+
+                for m in r.visionNo do
+                    overrides[m] <- false
+
                 payload["visionOverrides"] <- overrides
+
                 let needsKey =
                     match ProviderPresets.matchByBaseUrl r.url with
                     | Some preset -> preset.needsApiKey
                     | None -> not (ProviderForm.isLoopbackUrl r.url)
-                let hadKey = existing |> Option.map (fun p -> p.hasApiKey) |> Option.defaultValue false
+
+                let hadKey =
+                    existing |> Option.map (fun p -> p.hasApiKey) |> Option.defaultValue false
+
                 if String.IsNullOrWhiteSpace key && needsKey && not hadKey then
                     toast "尚未填写 API Key：已先保存，在模型服务列表点「编辑」补上后才能对话。" ToastTone.Info
+
                 editor.ApplyPending true
+
                 (hooks ()).UpsertProvider payload (fun ok ->
                     editor.ApplyPending false
-                    if ok && active then overlay.CloseDialog()
-                    elif not ok then toast "保存失败，请重试。" ToastTone.Failure)
+
+                    if ok && active then
+                        overlay.CloseDialog()
+                    elif not ok then
+                        toast "保存失败，请重试。" ToastTone.Failure)
             else
                 // 错误落在收起的高级区：先展开，便于看到并聚焦
-                if not editor.IsAdvanced && errors |> List.exists (fun (b, _) -> List.contains b editor.AdvancedBoxes) then
+                if
+                    not editor.IsAdvanced
+                    && errors |> List.exists (fun (b, _) -> List.contains b editor.AdvancedBoxes)
+                then
                     editor.ApplyAdvanced true
-                for box, m in errors do check.ApplyError(box, m)
-                FieldCheck.Apply(errors, Some editor.Summary) |> Option.iter (fun m -> toast m ToastTone.Warning))
+
+                for box, m in errors do
+                    check.ApplyError(box, m)
+
+                FieldCheck.Apply(errors, Some editor.Summary)
+                |> Option.iter (fun m -> toast m ToastTone.Warning))
+
         editor.CancelRequested.Add(fun () -> overlay.CloseDialog())
-        let height = (theme.Metric Metric.DialogContentMaxHeight).Subscribe(fun h -> (editor.View :?> ScrollViewer).MaxHeight <- h)
-        session <- Some { Editor = editor; ProviderId = existing |> Option.map (fun p -> p.id) }
+
+        let height =
+            (theme.Metric Metric.DialogContentMaxHeight)
+                .Subscribe(fun h -> (editor.View :?> ScrollViewer).MaxHeight <- h)
+
+        session <-
+            Some
+                {
+                    Editor = editor
+                    ProviderId = existing |> Option.map (fun p -> p.id)
+                }
+
         overlay.ShowDialog(
             editor.View,
             (theme.Metric Metric.SettingsDialogWidth).Value,
-            onClosed = (fun () ->
-                active <- false
-                height.Dispose()
-                probeSlot.Close()
-                probeEditor <- None
-                session <- None),
+            onClosed =
+                (fun () ->
+                    active <- false
+                    height.Dispose()
+                    probeSlot.Close()
+                    probeEditor <- None
+                    session <- None),
             canDismiss = (fun () -> not editor.IsPending),
-            initialFocus = editor.InitialFocus)
+            initialFocus = editor.InitialFocus
+        )
 
     let setGeneration (o: JsonObject) = (hooks ()).UpdateGeneration o ignore
 
@@ -304,36 +427,55 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
         | None -> ()
         | Some p ->
             let isDefault = Catalog.isGlobalDefault p.id catalog
+
             overlay.ShowMenu(
                 anchor,
                 true,
-                [ PopupEntry.create "获取模型列表" (fun () ->
-                      toast "正在向模型服务请求模型列表…" ToastTone.Info
-                      (hooks ()).ProbeProvider p.id)
-                  |> PopupEntry.withIcon (icon Glyph.Refresh)
-                  (if isDefault then
-                       PopupEntry.create "取消默认" (fun () ->
-                           let o = JsonObject()
-                           o["defaultProvider"] <- ""
-                           o["defaultModel"] <- ""
-                           setGeneration o)
-                   else
-                       PopupEntry.create "设为默认模型服务" (fun () ->
-                           let o = JsonObject()
-                           o["defaultProvider"] <- p.id
-                           o["defaultModel"] <- p.defaultModel
-                           setGeneration o))
-                  PopupEntry.create (if p.enabled then "停用" else "启用") (fun () ->
-                      (hooks ()).UpsertProvider
-                          (ProviderPresets.payload p.id p.label p.kind p.baseUrl None p.models p.defaultModel (not p.enabled) p.timeoutSeconds p.maxRetries)
-                          ignore)
-                  PopupEntry.create "删除" (fun () -> (hooks ()).DeleteProvider p.id)
-                  |> PopupEntry.withIcon (icon Glyph.Trash)
-                  |> PopupEntry.asDanger ])
+                [
+                    PopupEntry.create "获取模型列表" (fun () ->
+                        toast "正在向模型服务请求模型列表…" ToastTone.Info
+                        (hooks ()).ProbeProvider p.id)
+                    |> PopupEntry.withIcon (icon Glyph.Refresh)
+                    (if isDefault then
+                         PopupEntry.create "取消默认" (fun () ->
+                             let o = JsonObject()
+                             o["defaultProvider"] <- ""
+                             o["defaultModel"] <- ""
+                             setGeneration o)
+                     else
+                         PopupEntry.create "设为默认模型服务" (fun () ->
+                             let o = JsonObject()
+                             o["defaultProvider"] <- p.id
+                             o["defaultModel"] <- p.defaultModel
+                             setGeneration o))
+                    PopupEntry.create (if p.enabled then "停用" else "启用") (fun () ->
+                        (hooks ()).UpsertProvider
+                            (ProviderPresets.payload
+                                p.id
+                                p.label
+                                p.kind
+                                p.baseUrl
+                                None
+                                p.models
+                                p.defaultModel
+                                (not p.enabled)
+                                p.timeoutSeconds
+                                p.maxRetries)
+                            ignore)
+                    PopupEntry.create "删除" (fun () -> (hooks ()).DeleteProvider p.id)
+                    |> PopupEntry.withIcon (icon Glyph.Trash)
+                    |> PopupEntry.asDanger
+                ]
+            )
 
     do
         pane.AddClicked.Add(fun () -> showEditor None)
-        pane.EditClicked.Add(fun id -> catalog.providers |> List.tryFind (fun p -> p.id = id) |> Option.iter (Some >> showEditor))
+
+        pane.EditClicked.Add(fun id ->
+            catalog.providers
+            |> List.tryFind (fun p -> p.id = id)
+            |> Option.iter (Some >> showEditor))
+
         pane.MoreClicked.Add moreMenu
         pane.Render []
 
@@ -351,21 +493,36 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
 
     /// 一次性命令：打开某个已有服务的编辑器
     member _.ApplyOpenEditor(providerId: string) =
-        catalog.providers |> List.tryFind (fun p -> p.id = providerId) |> Option.iter (Some >> showEditor)
+        catalog.providers
+        |> List.tryFind (fun p -> p.id = providerId)
+        |> Option.iter (Some >> showEditor)
 
     /// 探活结果：回填打开中的编辑器草稿（不自动保存），否则只缓存并提示
     member _.ApplyProbe(providerId: string, ok: bool, models: string list, error: string option) =
-        let message = if ok then "" else snd (ProbeFailureKind.parse (error |> Option.defaultValue ProviderProbeText.unknownReason))
+        let message =
+            if ok then
+                ""
+            else
+                snd (ProbeFailureKind.parse (error |> Option.defaultValue ProviderProbeText.unknownReason))
+
         let editor = if probeSlot.Claim providerId then probeEditor else None
         let fb = ProviderProbeText.feedback editor.IsSome ok (List.length models) message
+
         match editor with
         | Some(setPending, apply, setStatus) ->
             setPending false
             fb.editorStatus |> Option.iter setStatus
-            if fb.fillModels then apply models
+
+            if fb.fillModels then
+                apply models
         | None -> ()
-        if fb.cacheModels then probeSlot.Remember(providerId, models)
-        toast fb.toast (match fb.tone with
-                        | ProbeTone.Info -> ToastTone.Info
-                        | ProbeTone.Warning -> ToastTone.Warning
-                        | ProbeTone.Failure -> ToastTone.Failure)
+
+        if fb.cacheModels then
+            probeSlot.Remember(providerId, models)
+
+        toast
+            fb.toast
+            (match fb.tone with
+             | ProbeTone.Info -> ToastTone.Info
+             | ProbeTone.Warning -> ToastTone.Warning
+             | ProbeTone.Failure -> ToastTone.Failure)

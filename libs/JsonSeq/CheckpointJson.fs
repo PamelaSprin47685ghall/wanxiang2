@@ -22,16 +22,26 @@ module CheckpointJson =
         o["throughId"] <- JsonValue.Create(cp.throughId.ToString CultureInfo.InvariantCulture)
         o["origin"] <- JsonValue.Create cp.origin
         let ends = JsonArray()
-        for e in cp.ends do ends.Add(JsonValue.Create e)
+
+        for e in cp.ends do
+            ends.Add(JsonValue.Create e)
+
         o["ends"] <- ends
         let st = JsonObject()
+
         for KeyValue(cmd, (hash, id)) in cp.stamps do
             let x = JsonObject()
             x["hash"] <- JsonValue.Create hash
             x["id"] <- JsonValue.Create(id.ToString CultureInfo.InvariantCulture)
             st[cmd] <- x
+
         o["stamps"] <- st
-        o["state"] <- (match cp.state with null -> null | s -> s.DeepClone())
+
+        o["state"] <-
+            (match cp.state with
+             | null -> null
+             | s -> s.DeepClone())
+
         o.ToJsonString()
 
     let read (text: string) : Result<Checkpoint<JsonNode>, string> =
@@ -39,22 +49,38 @@ module CheckpointJson =
             match JsonNode.Parse text with
             | :? JsonObject as o ->
                 let v = o["v"].GetValue<int>()
-                if v <> Version then Error(sprintf "unsupported checkpoint version %d" v)
+
+                if v <> Version then
+                    Error(sprintf "unsupported checkpoint version %d" v)
                 else
                     let ends = o["ends"].AsArray() |> Seq.map _.GetValue<int64>() |> Array.ofSeq
                     let origin = o["origin"].GetValue<int64>()
-                    if origin < 0L || ends |> Array.exists (fun e -> e > MaxExactOffset) then Error "offset out of range"
+
+                    if origin < 0L || ends |> Array.exists (fun e -> e > MaxExactOffset) then
+                        Error "offset out of range"
                     else
                         let stamps =
                             o["stamps"].AsObject()
                             |> Seq.map (fun kv ->
                                 let x = kv.Value.AsObject()
-                                kv.Key, (x["hash"].GetValue<string>(), UInt64.Parse(x["id"].GetValue<string>(), CultureInfo.InvariantCulture)))
+
+                                kv.Key,
+                                (x["hash"].GetValue<string>(),
+                                 UInt64.Parse(x["id"].GetValue<string>(), CultureInfo.InvariantCulture)))
                             |> Map.ofSeq
-                        Ok { state = (match o["state"] with null -> null | s -> s.DeepClone())
-                             throughId = UInt64.Parse(o["throughId"].GetValue<string>(), CultureInfo.InvariantCulture)
-                             stamps = stamps
-                             origin = origin
-                             ends = ends }
+
+                        Ok
+                            {
+                                state =
+                                    (match o["state"] with
+                                     | null -> null
+                                     | s -> s.DeepClone())
+                                throughId =
+                                    UInt64.Parse(o["throughId"].GetValue<string>(), CultureInfo.InvariantCulture)
+                                stamps = stamps
+                                origin = origin
+                                ends = ends
+                            }
             | _ -> Error "checkpoint is not a JSON object"
-        with e -> Error e.Message
+        with e ->
+            Error e.Message

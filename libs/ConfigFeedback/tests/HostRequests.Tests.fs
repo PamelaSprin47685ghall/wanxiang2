@@ -1,4 +1,5 @@
 module HostRequestsTests
+
 open System
 open System.IO
 open Xunit
@@ -18,7 +19,9 @@ let ``443 到点的探测按发出顺序收尾，已回应的不再收尾`` () =
     let p = PendingProbes()
     let t = DateTimeOffset.UtcNow
     let a, b, c = Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()
-    p.Track(a, "x", t); p.Track(b, "y", t); p.Track(c, "z", t)
+    p.Track(a, "x", t)
+    p.Track(b, "y", t)
+    p.Track(c, "z", t)
     p.Resolve b
     Assert.Equal<(Guid * string) list>([ a, "x"; c, "z" ], p.Expire(t.AddMinutes 1.0, TimeSpan.FromSeconds 15.0))
     Assert.Empty(p.Expire(t.AddMinutes 2.0, TimeSpan.FromSeconds 15.0))

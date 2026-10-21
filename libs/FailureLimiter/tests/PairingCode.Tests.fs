@@ -20,13 +20,21 @@ let ``full lifecycle`` () =
     Assert.Equal(Error WrongCode, p.TryConsume(now, wrong))
     Assert.False p.Session.Value.used
     let s2 = p.Start(now, life)
-    if s2.code <> s1.code then Assert.Equal(Error WrongCode, p.TryConsume(now, s1.code))
+
+    if s2.code <> s1.code then
+        Assert.Equal(Error WrongCode, p.TryConsume(now, s1.code))
+
     Assert.Equal(Ok(), p.TryConsume(now, s2.code))
     Assert.Equal(Error AlreadyUsed, p.TryConsume(now, s2.code))
     let s3 = p.Start(now, life)
     Assert.Equal(Error Expired, p.TryConsume(now + life + TimeSpan.FromSeconds 1.0, s3.code))
     Assert.Equal(None, p.Session)
-    Assert.Equal(Error WrongCode, (p.Start(now, life) |> ignore; p.TryConsume(now, null)))
+
+    Assert.Equal(
+        Error WrongCode,
+        (p.Start(now, life) |> ignore
+         p.TryConsume(now, null))
+    )
 
 // SPEC 2：邀请：仍有效时可查，用后或过期后不再是 ActiveInvite，但 HasInviteSession 仍为真以便回执；普通 Start 清掉邀请标记
 [<Fact>]
@@ -46,5 +54,11 @@ let ``invite is visible while valid and reported after use`` () =
 [<Fact>]
 let ``errors describe themselves with the existing wording`` () =
     Assert.Equal<string list>(
-        [ "no pairing session active"; "pairing code already used"; "pairing code expired"; "invalid pairing code" ],
-        [ NoSession; AlreadyUsed; Expired; WrongCode ] |> List.map _.Describe())
+        [
+            "no pairing session active"
+            "pairing code already used"
+            "pairing code expired"
+            "invalid pairing code"
+        ],
+        [ NoSession; AlreadyUsed; Expired; WrongCode ] |> List.map _.Describe()
+    )

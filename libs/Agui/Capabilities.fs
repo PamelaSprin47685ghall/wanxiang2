@@ -19,10 +19,12 @@ module Capabilities =
 
     /// 本端在标准面之外提供的扩展能力名（去掉命名空间前缀）。
     let extensions: string list =
-        [ "observe"        // 只读订阅：游标增量观察
-          "cursor"         // 全局提交序号游标
-          "catch-up"       // 断线补齐
-          "idempotent-send"// 幂等重发（commandId）
-          "attachments"    // 附件分块传输
-          "config-write"   // 配置热更新
-          "snapshot" ]     // 会话快照
+        [
+            "observe" // 只读订阅：游标增量观察
+            "cursor" // 全局提交序号游标
+            "catch-up" // 断线补齐
+            "idempotent-send" // 幂等重发（commandId）
+            "attachments" // 附件分块传输
+            "config-write" // 配置热更新
+            "snapshot"
+        ] // 会话快照

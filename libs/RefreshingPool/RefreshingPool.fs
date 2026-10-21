@@ -37,7 +37,8 @@ type RefreshingPool<'V>(stop: 'V -> unit) =
     member _.Prune(isLive: string -> bool) : unit =
         lock gate (fun () ->
             for key in List.ofSeq items.Keys do
-                if not (isLive key) then drop key)
+                if not (isLive key) then
+                    drop key)
 
     /// 停掉全部（不清空，与旧 ToolRegistry.Dispose 相同）。
     member _.StopAll() : unit =

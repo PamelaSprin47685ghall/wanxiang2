@@ -16,8 +16,10 @@ type AttachmentKind =
 
 /// 输入区里的一条附件（只取发送门控需要的两个互斥事实）
 type ComposerAttachment =
-    { stage: AttachmentStage
-      kind: AttachmentKind }
+    {
+        stage: AttachmentStage
+        kind: AttachmentKind
+    }
 
 /// 主机/连接可用性
 type HostAvailability =
@@ -51,12 +53,14 @@ type SendKeyPreference =
 
 /// 发送门控的全部输入（零裸布尔，全由事实 DU 构成）
 type ComposerSendInput =
-    { host: HostAvailability
-      generation: GenerationStatus
-      text: TextPresence
-      attachments: ComposerAttachment list
-      vision: VisionCapability
-      sendKey: SendKeyPreference }
+    {
+        host: HostAvailability
+        generation: GenerationStatus
+        text: TextPresence
+        attachments: ComposerAttachment list
+        vision: VisionCapability
+        sendKey: SendKeyPreference
+    }
 
 /// 阻挡发送/排队的原因
 type BlockReason =
@@ -93,74 +97,105 @@ type VisionNotice =
 
 /// 发送键、排队键与看图提示的决定（零裸布尔，由互斥行为 DU 组成）
 type ComposerSendView =
-    { gate: SendGate
-      primary: PrimaryAction
-      queue: QueueAction
-      vision: VisionNotice }
+    {
+        gate: SendGate
+        primary: PrimaryAction
+        queue: QueueAction
+        vision: VisionNotice
+    }
 
-    member this.VisionBlocked : bool =
+    member this.VisionBlocked: bool =
         match this.vision with
         | VisionNotice _ -> true
         | VisionClear -> false
 
-    member this.VisionMessage : string =
+    member this.VisionMessage: string =
         match this.vision with
         | VisionNotice msg -> msg
         | VisionClear -> ""
 
-    member this.SendEnabled : bool =
+    member this.SendEnabled: bool =
         match this.primary with
-        | SendReady _ | StopReady _ -> true
-        | SendBlocked _ | StopWaiting _ -> false
+        | SendReady _
+        | StopReady _ -> true
+        | SendBlocked _
+        | StopWaiting _ -> false
 
-    member this.SendLabel : string =
+    member this.SendLabel: string =
         match this.primary with
-        | SendReady _ | SendBlocked _ -> "发送"
-        | StopReady _ | StopWaiting _ -> "停止生成"
+        | SendReady _
+        | SendBlocked _ -> "发送"
+        | StopReady _
+        | StopWaiting _ -> "停止生成"
 
-    member this.SendTip : string =
+    member this.SendTip: string =
         match this.primary with
-        | SendReady tip | SendBlocked (_, tip) | StopReady tip | StopWaiting tip -> tip
+        | SendReady tip
+        | SendBlocked(_, tip)
+        | StopReady tip
+        | StopWaiting tip -> tip
 
-    member this.QueueVisible : bool =
+    member this.QueueVisible: bool =
         match this.queue with
         | QueueHidden -> false
-        | QueueReady _ | QueueBlocked _ -> true
+        | QueueReady _
+        | QueueBlocked _ -> true
 
-    member this.QueueEnabled : bool =
+    member this.QueueEnabled: bool =
         match this.queue with
         | QueueReady _ -> true
-        | QueueHidden | QueueBlocked _ -> false
+        | QueueHidden
+        | QueueBlocked _ -> false
 
-    member this.QueueTip : string option =
+    member this.QueueTip: string option =
         match this.queue with
         | QueueHidden -> None
-        | QueueReady tip | QueueBlocked (_, tip) -> Some tip
+        | QueueReady tip
+        | QueueBlocked(_, tip) -> Some tip
 
 module ComposerSendState =
 
     let private offlineText (reason: string) =
-        if not (String.IsNullOrWhiteSpace reason) then reason else "连接已断开"
+        if not (String.IsNullOrWhiteSpace reason) then
+            reason
+        else
+            "连接已断开"
 
     /// 判断阻止发送的原因（按旧分支优先级）
-    let blockReason (host: HostAvailability) (text: TextPresence) (attachments: ComposerAttachment list) (vision: VisionCapability) : BlockReason option =
-        let hasReadyAttachment = attachments |> List.exists (fun a -> a.stage = AttachmentStage.Ready)
-        let isUploading = attachments |> List.exists (fun a -> a.stage = AttachmentStage.Uploading)
-        let isFailed = attachments |> List.exists (fun a -> a.stage = AttachmentStage.Failed || a.stage = AttachmentStage.Restored)
+    let blockReason
+        (host: HostAvailability)
+        (text: TextPresence)
+        (attachments: ComposerAttachment list)
+        (vision: VisionCapability)
+        : BlockReason option =
+        let hasReadyAttachment =
+            attachments |> List.exists (fun a -> a.stage = AttachmentStage.Ready)
+
+        let isUploading =
+            attachments |> List.exists (fun a -> a.stage = AttachmentStage.Uploading)
+
+        let isFailed =
+            attachments
+            |> List.exists (fun a -> a.stage = AttachmentStage.Failed || a.stage = AttachmentStage.Restored)
+
         let hasImage = attachments |> List.exists (fun a -> a.kind = AttachmentKind.Image)
         let hasContent = (text = TextPresence.HasText) || hasReadyAttachment
 
         match host with
-        | HostDisabled reason -> Some (BlockReason.HostOffline (offlineText reason))
+        | HostDisabled reason -> Some(BlockReason.HostOffline(offlineText reason))
         | HostAvailable ->
-            if isUploading then Some BlockReason.AttachmentUploading
-            elif isFailed then Some BlockReason.AttachmentFailed
+            if isUploading then
+                Some BlockReason.AttachmentUploading
+            elif isFailed then
+                Some BlockReason.AttachmentFailed
             else
                 match vision with
-                | VisionForbidden msg when hasImage -> Some (BlockReason.ModelCannotSeeImage msg)
+                | VisionForbidden msg when hasImage -> Some(BlockReason.ModelCannotSeeImage msg)
                 | _ ->
-                    if not hasContent then Some BlockReason.EmptyContent
-                    else None
+                    if not hasContent then
+                        Some BlockReason.EmptyContent
+                    else
+                        None
 
     /// 门控判定：返回 Send / Queue / Stop / Blocked
     let gate (i: ComposerSendInput) : SendGate =
@@ -177,6 +212,7 @@ module ComposerSendState =
     let decide (i: ComposerSendInput) : ComposerSendView =
         let g = gate i
         let hasImage = i.attachments |> List.exists (fun a -> a.kind = AttachmentKind.Image)
+
         let visionNotice =
             match i.vision with
             | VisionForbidden msg when hasImage -> VisionNotice msg
@@ -204,13 +240,16 @@ module ComposerSendState =
                         | AttachmentFailed -> "有附件上传失败，移除或重新添加后发送"
                         | ModelCannotSeeImage msg -> msg
                         | EmptyContent -> "请输入消息或添加附件"
-                    SendBlocked (r, tip)
-                | None ->
-                    SendReady sendShortcutTip
-            { gate = g
-              primary = primary
-              queue = QueueHidden
-              vision = visionNotice }
+
+                    SendBlocked(r, tip)
+                | None -> SendReady sendShortcutTip
+
+            {
+                gate = g
+                primary = primary
+                queue = QueueHidden
+                vision = visionNotice
+            }
         | Generating stopCap ->
             let primary =
                 match stopCap with
@@ -219,32 +258,43 @@ module ComposerSendState =
 
             // 排队分支：已知旧行为，排队提示不提看图受阻
             let queue =
-                let hasReadyAttachment = i.attachments |> List.exists (fun a -> a.stage = AttachmentStage.Ready)
-                let isUploading = i.attachments |> List.exists (fun a -> a.stage = AttachmentStage.Uploading)
-                let isFailed = i.attachments |> List.exists (fun a -> a.stage = AttachmentStage.Failed || a.stage = AttachmentStage.Restored)
+                let hasReadyAttachment =
+                    i.attachments |> List.exists (fun a -> a.stage = AttachmentStage.Ready)
+
+                let isUploading =
+                    i.attachments |> List.exists (fun a -> a.stage = AttachmentStage.Uploading)
+
+                let isFailed =
+                    i.attachments
+                    |> List.exists (fun a -> a.stage = AttachmentStage.Failed || a.stage = AttachmentStage.Restored)
+
                 let hasContent = (i.text = TextPresence.HasText) || hasReadyAttachment
 
                 match i.host with
                 | HostDisabled reason ->
                     let t = offlineText reason
-                    QueueBlocked (HostOffline t, t)
+                    QueueBlocked(HostOffline t, t)
                 | HostAvailable ->
-                    if isUploading then QueueBlocked (AttachmentUploading, "附件上传中，请稍候…")
-                    elif isFailed then QueueBlocked (AttachmentFailed, "有附件上传失败，移除或重新添加后发送")
-                    elif not hasContent then QueueBlocked (EmptyContent, "请输入消息或添加附件")
+                    if isUploading then
+                        QueueBlocked(AttachmentUploading, "附件上传中，请稍候…")
+                    elif isFailed then
+                        QueueBlocked(AttachmentFailed, "有附件上传失败，移除或重新添加后发送")
+                    elif not hasContent then
+                        QueueBlocked(EmptyContent, "请输入消息或添加附件")
                     else
                         // 内容充足且无上传/失败：视看图受阻决定是否能排队
                         match visionNotice with
                         | VisionNotice _ ->
                             // 旧行为：排队提示不提看图受阻（仍显示快捷键），但 queueEnabled 为 false (canSend 为 false)
-                            QueueBlocked (ModelCannotSeeImage "", queueShortcutTip)
-                        | VisionClear ->
-                            QueueReady queueShortcutTip
+                            QueueBlocked(ModelCannotSeeImage "", queueShortcutTip)
+                        | VisionClear -> QueueReady queueShortcutTip
 
-            { gate = g
-              primary = primary
-              queue = queue
-              vision = visionNotice }
+            {
+                gate = g
+                primary = primary
+                queue = queue
+                vision = visionNotice
+            }
 
     /// 旧 Composer.Submit 的门控：从同一 blockReason / SendGate 派生
     let canSubmit (host: HostAvailability) (text: TextPresence) (attachments: ComposerAttachment list) : bool =
@@ -257,19 +307,24 @@ module ComposerSendState =
     let chipState (stage: AttachmentStage) (sizeText: string) : string =
         match stage with
         | Restored -> "需重选"
-        | Ready | Failed -> sizeText
+        | Ready
+        | Failed -> sizeText
         | Uploading -> "上传中"
 
     /// 附件 chip 状态字的提示（从 AttachmentStage 派生）
     let chipTip (stage: AttachmentStage) (sizeText: string) : string =
         let formatted =
             match stage with
-            | Ready | Failed -> sizeText
-            | Restored | Uploading -> "上传中"
+            | Ready
+            | Failed -> sizeText
+            | Restored
+            | Uploading -> "上传中"
+
         match stage with
         | Restored -> "附件需重新选择：重新打开后无法确认文件还在。可移除，或重新添加这个文件。"
         | Failed -> sprintf "上传失败：%s，可移除或重新添加" formatted
-        | Ready | Uploading -> sprintf "文件大小：%s" formatted
+        | Ready
+        | Uploading -> sprintf "文件大小：%s" formatted
 
     /// Enter 发送按键矩阵：not shift && (enterSends <> ctrl)
     let shouldSend (sendKey: SendKeyPreference) (shift: bool) (ctrlOrMeta: bool) : bool =

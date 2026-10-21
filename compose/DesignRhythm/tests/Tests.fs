@@ -18,13 +18,14 @@ let ``narrowest desktop window is already compact`` () =
 let ``inset and rhythm values stay on the spacing ramp`` () =
     for w in [ 0.0; 500.0; 800.0; 2000.0 ] do
         Assert.True(Spacing.isRamp (LayoutPolicy.horizontalInset w))
-    for l in 1 .. 6 do
+
+    for l in 1..6 do
         Assert.True(Spacing.isRamp (ReadingRhythm.headingBefore l))
         Assert.True(Spacing.isRamp (ReadingRhythm.headingAfter l))
 
 [<Fact>]
 let ``heading sizes shrink with level and floor at plus one`` () =
-    let sizes = [ for l in 1 .. 6 -> ReadingRhythm.headingFontSize 14.0 l ]
+    let sizes = [ for l in 1..6 -> ReadingRhythm.headingFontSize 14.0 l ]
     Assert.True(sizes |> List.pairwise |> List.forall (fun (a, b) -> a >= b))
     Assert.Equal(15.0, ReadingRhythm.headingFontSize 14.0 0)
 
@@ -36,17 +37,26 @@ let ``断点从小到大排开，最窄窗口落在 compact 档`` () =
     // 留白取的是同一档里的中间档，与 719 宽的窗口完全一致。
     Assert.Equal(
         LayoutPolicy.horizontalInset (LayoutPolicy.compactBreakpoint - 1.0),
-        LayoutPolicy.horizontalInset LayoutPolicy.desktopMinWidth)
+        LayoutPolicy.horizontalInset LayoutPolicy.desktopMinWidth
+    )
+
     Assert.Equal(Spacing.space4xl, LayoutPolicy.horizontalInset LayoutPolicy.desktopMinWidth)
 
 [<Fact>]
 let ``水平留白随窗口变宽单调不减，只在断点处跳档`` () =
-    let widths = [ 0.0; 320.0; 439.0; 440.0; 500.0; 719.0; 720.0; 800.0; 1023.0; 1024.0; 4000.0 ]
+    let widths =
+        [ 0.0; 320.0; 439.0; 440.0; 500.0; 719.0; 720.0; 800.0; 1023.0; 1024.0; 4000.0 ]
+
     let insets = widths |> List.map LayoutPolicy.horizontalInset
     // 不减：没有哪一段更宽的窗口留白反而更小。
     Assert.True(insets |> List.pairwise |> List.forall (fun (a, b) -> b >= a))
     // 只在断点处跳档：相邻断点之间留白不变。
-    for bp in [ LayoutPolicy.formSingleColumnBreakpoint; LayoutPolicy.compactBreakpoint; LayoutPolicy.wideLayoutBreakpoint ] do
+    for bp in
+        [
+            LayoutPolicy.formSingleColumnBreakpoint
+            LayoutPolicy.compactBreakpoint
+            LayoutPolicy.wideLayoutBreakpoint
+        ] do
         let before = LayoutPolicy.horizontalInset (bp - 0.01)
         let after = LayoutPolicy.horizontalInset bp
         Assert.True(after > before)
@@ -60,8 +70,15 @@ let ``四档留白取自间距刻度的固定档位`` () =
     Assert.Equal(Spacing.space6xl, LayoutPolicy.horizontalInset LayoutPolicy.compactBreakpoint)
     Assert.Equal(Spacing.space10xl, LayoutPolicy.horizontalInset LayoutPolicy.wideLayoutBreakpoint)
     // 档位本身也在刻度上，且四档严格递增。
-    let tiers = [ 0.0; LayoutPolicy.formSingleColumnBreakpoint; LayoutPolicy.compactBreakpoint; LayoutPolicy.wideLayoutBreakpoint ]
-                |> List.map LayoutPolicy.horizontalInset
+    let tiers =
+        [
+            0.0
+            LayoutPolicy.formSingleColumnBreakpoint
+            LayoutPolicy.compactBreakpoint
+            LayoutPolicy.wideLayoutBreakpoint
+        ]
+        |> List.map LayoutPolicy.horizontalInset
+
     Assert.True(tiers |> List.forall Spacing.isRamp)
     Assert.True(tiers |> List.pairwise |> List.forall (fun (a, b) -> b > a))
 
@@ -90,7 +107,7 @@ let ``正文行高高于次级与技术行高，且三者随字号同比缩放``
 [<Fact>]
 let ``标题字号在四级之前逐级收紧，之后不再下降`` () =
     let baseSize = 14.0
-    let sizes = [ for l in 1 .. 6 -> ReadingRhythm.headingFontSize baseSize l ]
+    let sizes = [ for l in 1..6 -> ReadingRhythm.headingFontSize baseSize l ]
     // 一到四级严格递减。
     Assert.True(sizes |> List.take 3 |> List.pairwise |> List.forall (fun (a, b) -> b < a))
     // 五、六级与更深的级别都停在最小的一档。
@@ -101,7 +118,7 @@ let ``标题字号在四级之前逐级收紧，之后不再下降`` () =
 
 [<Fact>]
 let ``标题前后间距随级别收紧并落在刻度上`` () =
-    let befores = [ for l in 1 .. 6 -> ReadingRhythm.headingBefore l ]
+    let befores = [ for l in 1..6 -> ReadingRhythm.headingBefore l ]
     Assert.True(befores |> List.pairwise |> List.forall (fun (a, b) -> b <= a))
     Assert.True(befores |> List.forall Spacing.isRamp)
     // 前间距：一级最松，往下逐级收紧。

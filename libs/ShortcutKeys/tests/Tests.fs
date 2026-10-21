@@ -5,7 +5,14 @@ open Wanxiang.UI
 
 [<Fact>]
 let ``ShortcutRouter resolveKey resolves basic key combinations correctly`` () =
-    let k key ctrl shift noMod = { key = key; ctrl = ctrl; shift = shift; noModifiers = noMod }
+    let k key ctrl shift noMod =
+        {
+            key = key
+            ctrl = ctrl
+            shift = shift
+            noModifiers = noMod
+        }
+
     Assert.Equal(ShortcutAction.Escape, ShortcutRouter.resolveKey (k "Escape" false false false))
     Assert.Equal(ShortcutAction.ToggleSidebar, ShortcutRouter.resolveKey (k "B" true false false))
     Assert.Equal(ShortcutAction.CloseWindow, ShortcutRouter.resolveKey (k "W" true false false))

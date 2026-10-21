@@ -28,5 +28,16 @@ let ``only directories open to group or others are listed`` () =
     Directory.CreateDirectory tight |> ignore
     Directory.CreateDirectory loose |> ignore
     File.SetUnixFileMode(tight, UnixFileMode.UserRead ||| UnixFileMode.UserWrite ||| UnixFileMode.UserExecute)
-    File.SetUnixFileMode(loose, UnixFileMode.UserRead ||| UnixFileMode.UserWrite ||| UnixFileMode.UserExecute ||| UnixFileMode.OtherRead)
-    Assert.Equal<string list>([ loose ], HostProbe.groupOrOtherAccessible [ tight; loose; Path.Combine(root, "missing") ])
+
+    File.SetUnixFileMode(
+        loose,
+        UnixFileMode.UserRead
+        ||| UnixFileMode.UserWrite
+        ||| UnixFileMode.UserExecute
+        ||| UnixFileMode.OtherRead
+    )
+
+    Assert.Equal<string list>(
+        [ loose ],
+        HostProbe.groupOrOtherAccessible [ tight; loose; Path.Combine(root, "missing") ]
+    )

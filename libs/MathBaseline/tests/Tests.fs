@@ -21,6 +21,7 @@ let ``box height spans above and below and the baseline sits at above`` () =
         Assert.Equal(w, width)
         Assert.Equal(a + b, height)
         Assert.Equal(a, baseline)
+
     Assert.Equal((0.0, 0.0, 0.0), MathBaseline.metrics None)
 
 [<Fact>]

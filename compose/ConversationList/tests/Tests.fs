@@ -21,32 +21,81 @@ let private msg (role: string) (text: string) : JsonNode =
     o["contents"] <- contents
     o
 
-let private testConfig () = { SessionConfig.empty with provider = "openai"; model = "test-model" }
+let private testConfig () =
+    { SessionConfig.empty with
+        provider = "openai"
+        model = "test-model"
+    }
 
 /// 顺序提交构造器：commit id 自增，保证投影严格连续。
 type private Builder() =
     let mutable next = 0UL
     let commits = ResizeArray<Events.Commit>()
+
     member _.Add(ev: EventData) : CommitId =
         next <- next + 1UL
         commits.Add(Events.Commit.create next now [ ev ])
         next
+
     member this.Conversation(title: string) : Guid =
         let id = Guid.NewGuid()
-        this.Add(ConversationCreated { conversationId = id; title = title; config = testConfig () }) |> ignore
+
+        this.Add(
+            ConversationCreated
+                {
+                    conversationId = id
+                    title = title
+                    config = testConfig ()
+                }
+        )
+        |> ignore
+
         id
+
     member this.User(conv: Guid, text: string) : CommitId =
-        this.Add(AgentMessageRecorded { conversationId = conv; payloadJson = msg "user" text })
+        this.Add(
+            AgentMessageRecorded
+                {
+                    conversationId = conv
+                    payloadJson = msg "user" text
+                }
+        )
+
     member this.Assistant(conv: Guid, text: string) : CommitId =
-        this.Add(AgentMessageRecorded { conversationId = conv; payloadJson = msg "assistant" text })
+        this.Add(
+            AgentMessageRecorded
+                {
+                    conversationId = conv
+                    payloadJson = msg "assistant" text
+                }
+        )
+
     member this.Fork(parent: Guid, after: CommitId option) : Guid =
         let id = Guid.NewGuid()
-        this.Add(ConversationForked { conversationId = id; parentConversationId = parent; forkAfterId = after }) |> ignore
+
+        this.Add(
+            ConversationForked
+                {
+                    conversationId = id
+                    parentConversationId = parent
+                    forkAfterId = after
+                }
+        )
+        |> ignore
+
         id
-    member this.Delete(conv: Guid) = this.Add(EventData.ConversationDeleted { conversationId = conv }) |> ignore
-    member _.Projection : Projection =
+
+    member this.Delete(conv: Guid) =
+        this.Add(EventData.ConversationDeleted { conversationId = conv }) |> ignore
+
+    member _.Projection: Projection =
         commits
-        |> Seq.fold (fun p c -> match Projection.applyCommit p c with Ok p -> p | Error e -> failwith (WanxiangError.message e)) Projection.empty
+        |> Seq.fold
+            (fun p c ->
+                match Projection.applyCommit p c with
+                | Ok p -> p
+                | Error e -> failwith (WanxiangError.message e))
+            Projection.empty
 
 let private forkFixture () =
     let b = Builder()
@@ -66,7 +115,12 @@ let private listRows (proj: Projection) =
     ServerModel.conversationListItems proj (fun _ -> "idle")
 
 let private byId (rows: JsonArray) (id: Guid) =
-    rows |> Seq.pick (fun n -> if n["conversationId"].GetValue<string>() = id.ToString("D") then Some(n.AsObject()) else None)
+    rows
+    |> Seq.pick (fun n ->
+        if n["conversationId"].GetValue<string>() = id.ToString("D") then
+            Some(n.AsObject())
+        else
+            None)
 
 [<Fact>]
 let ``list snapshot carries fork lineage derived from existing facts`` () =
@@ -92,7 +146,10 @@ let ``list snapshot carries fork lineage derived from existing facts`` () =
 [<Fact>]
 let ``breadcrumb names the parent and falls back to deleted-original text`` () =
     let b, r, f1, g, _, _ = forkFixture ()
-    let summaries (proj: Projection) = ConversationSummary.parseList (listRows proj)
+
+    let summaries (proj: Projection) =
+        ConversationSummary.parseList (listRows proj)
+
     let proj = b.Projection
     let lineage = ForkLineage.parse (listRows proj)
     let crumb = ForkLineage.breadcrumb (summaries proj) lineage f1 |> Option.get
@@ -155,7 +212,11 @@ let ``three versions of one message show one-of-three and switching lands on the
     b.Delete f2
     let proj2 = b.Projection
     let s2 = ConversationSummary.parseList (listRows proj2)
-    let onOriginal2 = ForkLineage.siblings s2 (ForkLineage.parse (listRows proj2)) r u4 (Some a3) |> Option.get
+
+    let onOriginal2 =
+        ForkLineage.siblings s2 (ForkLineage.parse (listRows proj2)) r u4 (Some a3)
+        |> Option.get
+
     Assert.Equal(2, onOriginal2.count)
 
 [<Fact>]
@@ -187,7 +248,11 @@ let ``when the original conversation is deleted the fork has no switch control``
     b.Delete r
     let proj = b.Projection
     let rows = listRows proj
-    Assert.True((ForkLineage.siblings (ConversationSummary.parseList rows) (ForkLineage.parse rows) f fu (Some a)).IsNone)
+
+    Assert.True(
+        (ForkLineage.siblings (ConversationSummary.parseList rows) (ForkLineage.parse rows) f fu (Some a)).IsNone
+    )
+
     ignore u
 
 [<Fact>]
@@ -205,12 +270,34 @@ let ``visible hides rows pending deletion until undo`` () =
 [<Fact>]
 let ``312 谱系从对话列表派生：分叉、原对话已删除、子分叉`` () =
     let root, fork, child = Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()
+
     let summary id title : ConversationSummary =
-        { id = id; title = title; preview = ""; running = false; pinned = false; archived = false
-          createdAt = DateTimeOffset.UtcNow; updatedAt = DateTimeOffset.UtcNow; messageCount = 1
-          isFork = false; providerId = ""; model = ""; lastCommitId = 1UL }
+        {
+            id = id
+            title = title
+            preview = ""
+            running = false
+            pinned = false
+            archived = false
+            createdAt = DateTimeOffset.UtcNow
+            updatedAt = DateTimeOffset.UtcNow
+            messageCount = 1
+            isFork = false
+            providerId = ""
+            model = ""
+            lastCommitId = 1UL
+        }
+
     let l parent : ForkLineage =
-        { parentId = parent; forkBaseMessageId = Some 2UL; forkFirstMessageId = Some 7UL; parentTitle = None; parentDeleted = false; forkOrdinal = Some 2 }
+        {
+            parentId = parent
+            forkBaseMessageId = Some 2UL
+            forkFirstMessageId = Some 7UL
+            parentTitle = None
+            parentDeleted = false
+            forkOrdinal = Some 2
+        }
+
     let lineage = Map [ fork, l root; child, l fork ]
     let summaries = [ summary root "根"; summary fork "分叉一"; summary child "分叉二" ]
     let lf = ConversationTransfer.lineageOf summaries lineage fork
@@ -225,9 +312,30 @@ let ``312 谱系从对话列表派生：分叉、原对话已删除、子分叉`
 
 [<Fact>]
 let ``313 导入上限取协议的 ImportLimits`` () =
-    let lineage : ExportLineage = { parentId = None; parentTitle = None; parentDeleted = false; forkOrdinal = None; forkBaseMessageId = None; forks = [] }
-    let raw n = JsonNode.Parse(sprintf """{"commitId":%d,"payload":{"role":"user","contents":[{"type":"text","text":"m"}]}}""" n).AsObject()
-    let text = ConversationTransfer.toJson (Guid.NewGuid()) "t" 1UL now lineage [ for n in 0..ImportLimits.maxMessages -> raw n ]
+    let lineage: ExportLineage =
+        {
+            parentId = None
+            parentTitle = None
+            parentDeleted = false
+            forkOrdinal = None
+            forkBaseMessageId = None
+            forks = []
+        }
+
+    let raw n =
+        JsonNode
+            .Parse(sprintf """{"commitId":%d,"payload":{"role":"user","contents":[{"type":"text","text":"m"}]}}""" n)
+            .AsObject()
+
+    let text =
+        ConversationTransfer.toJson
+            (Guid.NewGuid())
+            "t"
+            1UL
+            now
+            lineage
+            [ for n in 0 .. ImportLimits.maxMessages -> raw n ]
+
     match ConversationTransfer.parseImport (int64 text.Length) text with
     | Error e -> Assert.Contains(string ImportLimits.maxMessages, e)
     | Ok _ -> failwith "should exceed"

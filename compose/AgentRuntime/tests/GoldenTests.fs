@@ -8,5 +8,7 @@ open Xunit
 
 [<Fact>]
 let ``agent runtime behaves byte for byte like the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "runtime.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "runtime.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

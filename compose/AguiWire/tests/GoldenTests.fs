@@ -8,5 +8,7 @@ open Xunit
 
 [<Fact>]
 let ``AG-UI bytes and decode results equal the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "agui.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "agui.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

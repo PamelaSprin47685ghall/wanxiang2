@@ -28,11 +28,20 @@ type ExchangeJump<'K when 'K: equality>() =
 
     /// 用户卡里第一张底边越过视口顶端的；都没越过时退回首张，没有用户卡为 0
     static member ViewportIndex(cards: int list, pastTop: int -> bool) =
-        cards |> List.tryFind pastTop |> Option.orElse (List.tryHead cards) |> Option.defaultValue 0
+        cards
+        |> List.tryFind pastTop
+        |> Option.orElse (List.tryHead cards)
+        |> Option.defaultValue 0
 
     /// 挂载卡的用户卡下标
     static member Cards(mounted: 'K option[], isUser: 'K -> bool) =
-        mounted |> Array.indexed |> Array.choose (fun (i, k) -> match k with Some k when isUser k -> Some i | _ -> None) |> List.ofArray
+        mounted
+        |> Array.indexed
+        |> Array.choose (fun (i, k) ->
+            match k with
+            | Some k when isUser k -> Some i
+            | _ -> None)
+        |> List.ofArray
 
     member _.Anchor = anchor
     member _.PendingPrevious = pending
@@ -46,14 +55,30 @@ type ExchangeJump<'K when 'K: equality>() =
         hasPrev || (not (List.isEmpty cards) && (hasHidden || olderOnHost)), hasNext
 
     /// 跳转。direction < 0 向上；锚点一旦设上，后续跳转跟着锚点走
-    member _.Jump(direction: int, mounted: 'K option[], cards: int list, viewportIndex: int, hasHidden: bool, lastFirstCommit: uint64 option) =
-        if List.isEmpty cards then JumpStep.Stay
+    member _.Jump
+        (
+            direction: int,
+            mounted: 'K option[],
+            cards: int list,
+            viewportIndex: int,
+            hasHidden: bool,
+            lastFirstCommit: uint64 option
+        ) =
+        if List.isEmpty cards then
+            JumpStep.Stay
         else
             let at = current mounted viewportIndex
+
             let target =
-                if direction < 0 then cards |> List.filter (fun i -> i < at) |> List.tryLast
-                else cards |> List.tryFind (fun i -> i > at)
-            let pin () = if anchor.IsNone && at >= 0 then anchor <- mounted.[at]
+                if direction < 0 then
+                    cards |> List.filter (fun i -> i < at) |> List.tryLast
+                else
+                    cards |> List.tryFind (fun i -> i > at)
+
+            let pin () =
+                if anchor.IsNone && at >= 0 then
+                    anchor <- mounted.[at]
+
             match target with
             | None when direction < 0 && hasHidden ->
                 pin ()
@@ -67,6 +92,7 @@ type ExchangeJump<'K when 'K: equality>() =
                 match mounted.[index] with
                 | Some key -> anchor <- Some key
                 | None -> ()
+
                 JumpStep.ScrollTo(index, (index = List.max cards))
             | None -> JumpStep.Stay
 
@@ -75,15 +101,19 @@ type ExchangeJump<'K when 'K: equality>() =
         match anchor with
         | Some key when not (Array.contains (Some key) mounted) -> anchor <- None
         | _ -> ()
+
         if pending && lastFirstCommit <> pendingFirst then
             pending <- false
             true
-        else false
+        else
+            false
 
     /// 主机上是否还有更早一页；没有了就撤掉挂起
     member _.ApplyOlderAvailable(value: bool) =
         olderOnHost <- value
-        if not value then pending <- false
+
+        if not value then
+            pending <- false
 
     /// 更早一页取失败：撤掉挂起
     member _.OlderFailed() = pending <- false

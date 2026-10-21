@@ -25,8 +25,10 @@ type McpFunction(client: McpClient, serverId: string, info: McpToolInfo) =
     let schema =
         match info.inputSchema with
         | Some node ->
-            try JsonDocument.Parse(node.ToJsonString()).RootElement.Clone()
-            with _ -> permissiveSchema
+            try
+                JsonDocument.Parse(node.ToJsonString()).RootElement.Clone()
+            with _ ->
+                permissiveSchema
         | None -> permissiveSchema
 
     let functionName = ToolNames.mcpFunctionName serverId info.name
@@ -49,6 +51,7 @@ type McpFunction(client: McpClient, serverId: string, info: McpToolInfo) =
             task {
                 // 模型给的参数是键值对，MCP 需要一个 JSON 对象
                 let payload = JsonObject()
+
                 for KeyValue(key, value) in args do
                     payload[key] <-
                         match value with
@@ -56,25 +59,30 @@ type McpFunction(client: McpClient, serverId: string, info: McpToolInfo) =
                         | :? JsonNode as node -> node.DeepClone()
                         | :? JsonElement as element -> JsonNode.Parse(element.GetRawText())
                         | other ->
-                            try JsonSerializer.SerializeToNode(other, AIJsonUtilities.DefaultOptions)
-                            with _ -> JsonNode.op_Implicit(string other)
+                            try
+                                JsonSerializer.SerializeToNode(other, AIJsonUtilities.DefaultOptions)
+                            with _ ->
+                                JsonNode.op_Implicit (string other)
+
                 let! result = client.Call(info.name, payload.ToJsonString(), ct)
                 return box result
-            })
+            }
+        )
 
 /// 一个工具在界面上的样子。
-type ToolDescriptor = {
-    /// 稳定标识（对话配置里存的就是它）
-    id: string
-    /// 模型看到的函数名
-    functionName: string
-    label: string
-    description: string
-    /// "builtin" | "mcp"
-    source: string
-    /// MCP 工具所属 MCP 服务 id
-    serverId: string option
-}
+type ToolDescriptor =
+    {
+        /// 稳定标识（对话配置里存的就是它）
+        id: string
+        /// 模型看到的函数名
+        functionName: string
+        label: string
+        description: string
+        /// "builtin" | "mcp"
+        source: string
+        /// MCP 工具所属 MCP 服务 id
+        serverId: string option
+    }
 
 /// 工具注册表：内置工具 + MCP 工具（决策 95-100）。
 /// 对话配置只保存稳定标识（`builtin:...` / `mcp:<server-id>/<tool-name>`）。
@@ -84,7 +92,8 @@ type ToolRegistry(getConfig: unit -> AppConfig, onLog: string -> unit) =
     let mcpClients = RefreshingPool<McpClient>(fun c -> c.Stop())
 
     let fingerprint (cfg: McpServerConfig) : string =
-        sprintf "%s|%A|%A|%s|%A|%d"
+        sprintf
+            "%s|%A|%A|%s|%A|%d"
             (cfg.command |> Option.defaultValue "")
             cfg.args
             cfg.env
@@ -100,11 +109,13 @@ type ToolRegistry(getConfig: unit -> AppConfig, onLog: string -> unit) =
             | Some cfg when cfg.enabled -> Some(fingerprint cfg, (fun () -> McpClient(cfg, onLog)))
             // 配置已删除或停用：排空关闭旧客户端（决策 98）
             | _ -> None
+
         mcpClients.Acquire(id, wanted)
 
     /// 已缓存客户端里对应配置消失的那些：排空关闭，避免孤儿子进程。
     member _.PruneRemoved() : unit =
         let live = mcpServers ()
+
         mcpClients.Prune(fun id ->
             match live |> Map.tryFind id with
             | Some cfg -> cfg.enabled
@@ -113,16 +124,20 @@ type ToolRegistry(getConfig: unit -> AppConfig, onLog: string -> unit) =
     /// 全部可选工具（内置 + 已连上的 MCP 服务）。客户端据此渲染工具清单。
     member this.Descriptors() : ToolDescriptor list =
         let cfg = getConfig ()
+
         let builtins =
             BuiltinTools.descriptors cfg.tools
             |> List.filter (fun (id, _, _) -> cfg.tools.exposeDebug || not (BuiltinTools.isDebug id))
             |> List.map (fun (id, fn, desc) ->
-                { id = id
-                  functionName = fn
-                  label = id.Substring("builtin:".Length)
-                  description = desc
-                  source = "builtin"
-                  serverId = None })
+                {
+                    id = id
+                    functionName = fn
+                    label = id.Substring("builtin:".Length)
+                    description = desc
+                    source = "builtin"
+                    serverId = None
+                })
+
         let mcp =
             cfg.mcpServers
             |> Map.toList
@@ -135,17 +150,21 @@ type ToolRegistry(getConfig: unit -> AppConfig, onLog: string -> unit) =
                 | Some client ->
                     client.Tools()
                     |> List.map (fun info ->
-                        { id = ToolNames.mcpStableId server.id info.name
-                          functionName = ToolNames.mcpFunctionName server.id info.name
-                          label = info.name
-                          description = info.description
-                          source = "mcp"
-                          serverId = Some server.id }))
+                        {
+                            id = ToolNames.mcpStableId server.id info.name
+                            functionName = ToolNames.mcpFunctionName server.id info.name
+                            label = info.name
+                            description = info.description
+                            source = "mcp"
+                            serverId = Some server.id
+                        }))
+
         builtins @ mcp
 
     /// 目录快照用的 JSON 形态。
     member this.DescriptorsJson() : JsonArray =
         let arr = JsonArray()
+
         for d in this.Descriptors() do
             let o = JsonObject()
             o["id"] <- d.id
@@ -153,17 +172,24 @@ type ToolRegistry(getConfig: unit -> AppConfig, onLog: string -> unit) =
             o["label"] <- d.label
             o["description"] <- d.description
             o["source"] <- d.source
-            match d.serverId with Some s -> o["serverId"] <- s | None -> ()
+
+            match d.serverId with
+            | Some s -> o["serverId"] <- s
+            | None -> ()
+
             arr.Add o
+
         arr
 
     /// 构建对话启用的 AITool 列表。
     member this.BuildTools(config: SessionConfig) : AITool list =
         let appCfg = getConfig ()
         let requested = config.tools |> Set.ofList
+
         let builtins =
             BuiltinTools.all appCfg.tools
             |> List.filter (fun t -> requested.Contains(BuiltinTools.stableId t.Name))
+
         let mcpTools =
             requested
             |> Seq.choose ToolNames.parseMcpId
@@ -175,9 +201,10 @@ type ToolRegistry(getConfig: unit -> AppConfig, onLog: string -> unit) =
                     match client.TryTool toolName with
                     | Some info -> Some(McpFunction(client, serverId, info) :> AITool)
                     | None ->
-                        onLog(sprintf "[mcp:%s] 对话请求的工具 %s 不存在，已跳过" serverId toolName)
+                        onLog (sprintf "[mcp:%s] 对话请求的工具 %s 不存在，已跳过" serverId toolName)
                         None)
             |> List.ofSeq
+
         builtins @ mcpTools
 
     /// 一个工具的稳定标识（审批策略的键）。
@@ -190,10 +217,11 @@ type ToolRegistry(getConfig: unit -> AppConfig, onLog: string -> unit) =
     member this.MissingTools(config: SessionConfig) : string list =
         // 调试工具默认不进目录，但老对话已经选了它时仍然可用，不能算「配置漂移」
         let available =
-            (this.Descriptors() |> List.map (fun d -> d.id)) @ (BuiltinTools.descriptors (getConfig ()).tools |> List.map (fun (id, _, _) -> id))
+            (this.Descriptors() |> List.map (fun d -> d.id))
+            @ (BuiltinTools.descriptors (getConfig ()).tools |> List.map (fun (id, _, _) -> id))
             |> Set.ofList
+
         config.tools |> List.filter (fun t -> not (available.Contains t))
 
     /// 关闭全部 MCP 客户端（排空后关闭，决策 98）。
-    member _.Dispose() =
-        mcpClients.StopAll()
+    member _.Dispose() = mcpClients.StopAll()

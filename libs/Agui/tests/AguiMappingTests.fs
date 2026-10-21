@@ -11,8 +11,8 @@ module AguiMappingTests =
 
     [<Fact>]
     let ``a run started event is recognized`` () =
-        let json =
-            """{"type":"RUN_STARTED","threadId":"t1","runId":"r1"}"""
+        let json = """{"type":"RUN_STARTED","threadId":"t1","runId":"r1"}"""
+
         match TolerantReader.parse json with
         | Known ev -> Assert.Equal("RUN_STARTED", ev.Type)
         | other -> failwithf "expected Known, got %A" other
@@ -21,13 +21,16 @@ module AguiMappingTests =
     let ``an unknown event type is tolerated rather than thrown on`` () =
         // 对端升级、多发了一种我们还不认识的事件——规范要求忽略并继续。
         let json = """{"type":"SOME_FUTURE_EVENT","payload":{"x":1}}"""
+
         match TolerantReader.parse json with
         | Unrecognized name -> Assert.Equal("SOME_FUTURE_EVENT", name)
         | other -> failwithf "expected Unrecognized, got %A" other
 
     [<Fact>]
     let ``a custom event exposes its name and value`` () =
-        let json = """{"type":"CUSTOM","name":"wanxiang.dev/cursor","value":{"commitId":"7"}}"""
+        let json =
+            """{"type":"CUSTOM","name":"wanxiang.dev/cursor","value":{"commitId":"7"}}"""
+
         match TolerantReader.parse json with
         | Custom(name, value) ->
             Assert.Equal("wanxiang.dev/cursor", name)

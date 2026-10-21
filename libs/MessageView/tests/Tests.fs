@@ -8,30 +8,36 @@ open Wanxiang.UI
 
 [<Fact>]
 let ``AttachmentRef detects image mime types and formats file sizes`` () =
-    let imgAtt: AttachmentRef = {
-        sha256 = "dummy-sha"
-        fileName = "screenshot.PNG"
-        size = 1048576L
-        mediaType = "image/png"
-    }
+    let imgAtt: AttachmentRef =
+        {
+            sha256 = "dummy-sha"
+            fileName = "screenshot.PNG"
+            size = 1048576L
+            mediaType = "image/png"
+        }
+
     Assert.True(AttachmentRef.isImage imgAtt)
     Assert.Equal("1.0 MiB", AttachmentRef.formatSize imgAtt.size)
 
-    let textAtt: AttachmentRef = {
-        sha256 = "dummy-sha-2"
-        fileName = "notes.txt"
-        size = 512L
-        mediaType = "text/plain"
-    }
+    let textAtt: AttachmentRef =
+        {
+            sha256 = "dummy-sha-2"
+            fileName = "notes.txt"
+            size = 512L
+            mediaType = "text/plain"
+        }
+
     Assert.False(AttachmentRef.isImage textAtt)
     Assert.Equal("512 B", AttachmentRef.formatSize textAtt.size)
 
-    let kbAtt: AttachmentRef = {
-        sha256 = "dummy-sha-3"
-        fileName = "doc.pdf"
-        size = 2048L
-        mediaType = "application/pdf"
-    }
+    let kbAtt: AttachmentRef =
+        {
+            sha256 = "dummy-sha-3"
+            fileName = "doc.pdf"
+            size = 2048L
+            mediaType = "application/pdf"
+        }
+
     Assert.Equal("2.0 KiB", AttachmentRef.formatSize kbAtt.size)
 
 [<Fact>]
@@ -83,20 +89,26 @@ let ``MessageView ofJson parses user and assistant roles, reasoning, and tools``
 
 [<Fact>]
 let ``MessageView mergeToolResults correctly associates results and removes tool messages`` () =
-    let assistantView = {
-        MessageView.empty with
+    let assistantView =
+        { MessageView.empty with
             role = "assistant"
             text = "Checking directory..."
-            toolCalls = [
-                { callId = "call-dir"; name = "list_dir"; argumentsJson = "{}"; result = None }
-            ]
-    }
+            toolCalls =
+                [
+                    {
+                        callId = "call-dir"
+                        name = "list_dir"
+                        argumentsJson = "{}"
+                        result = None
+                    }
+                ]
+        }
 
-    let toolView = {
-        MessageView.empty with
+    let toolView =
+        { MessageView.empty with
             role = "tool"
             toolResults = [ ("call-dir", "file1.fs, file2.fs") ]
-    }
+        }
 
     let merged = MessageView.mergeToolResults [ assistantView; toolView ]
     Assert.Single(merged) |> ignore
@@ -113,8 +125,22 @@ let ``AttachmentRef formatSize formats correctly`` () =
 
 [<Fact>]
 let ``AttachmentRef isImage distinguishes correctly`` () =
-    let img = { sha256 = "abc"; size = 10L; mediaType = "image/jpeg"; fileName = "a.jpg" }
-    let doc = { sha256 = "def"; size = 20L; mediaType = "application/pdf"; fileName = "b.pdf" }
+    let img =
+        {
+            sha256 = "abc"
+            size = 10L
+            mediaType = "image/jpeg"
+            fileName = "a.jpg"
+        }
+
+    let doc =
+        {
+            sha256 = "def"
+            size = 20L
+            mediaType = "application/pdf"
+            fileName = "b.pdf"
+        }
+
     Assert.True(AttachmentRef.isImage img)
     Assert.False(AttachmentRef.isImage doc)
 
@@ -155,11 +181,22 @@ let ``mergeToolResults correlates callId into toolCalls`` () =
     let callMsg =
         { MessageView.empty with
             role = "assistant"
-            toolCalls = [ { callId = "c1"; name = "search"; argumentsJson = "{}"; result = None } ] }
+            toolCalls =
+                [
+                    {
+                        callId = "c1"
+                        name = "search"
+                        argumentsJson = "{}"
+                        result = None
+                    }
+                ]
+        }
+
     let resMsg =
         { MessageView.empty with
             role = "tool"
-            toolResults = [ ("c1", "search result payload") ] }
+            toolResults = [ ("c1", "search result payload") ]
+        }
 
     let merged = MessageView.mergeToolResults [ callMsg; resMsg ]
     Assert.Single(merged) |> ignore
@@ -184,13 +221,24 @@ let ``ToolCallStatus isTerminal returns true only for terminal states`` () =
 
 // 迁自旧 ConversationJourneyTests。
 module Journey =
-    let private msg role text = { MessageView.empty with role = role; text = text }
+    let private msg role text =
+        { MessageView.empty with
+            role = role
+            text = text
+        }
 
     [<Fact>]
     let ``latest reply text skips empty assistant tail and ignores earlier turns`` () =
         let messages =
-            [ msg "user" "q1"; msg "assistant" "a1"
-              msg "user" "q2"; msg "assistant" "a2"; msg "tool" ""; msg "assistant" "" ]
+            [
+                msg "user" "q1"
+                msg "assistant" "a1"
+                msg "user" "q2"
+                msg "assistant" "a2"
+                msg "tool" ""
+                msg "assistant" ""
+            ]
+
         Assert.Equal(Some "a2", ReplyTail.latestText messages)
         // 尾部是用户消息：没有可复制的「最新回复」，不回退去复制上一轮。
         Assert.Equal(None, ReplyTail.latestText (messages @ [ msg "user" "q3" ]))
@@ -201,12 +249,26 @@ module Journey =
         Assert.False(ReplyTail.hasLosableContent failedEmpty)
         Assert.False(ReplyTail.hasLosableContent [ msg "user" "q" ])
         Assert.True(ReplyTail.hasLosableContent [ msg "user" "q"; msg "assistant" "partial" ])
-        Assert.True(ReplyTail.hasLosableContent [ msg "user" "q"; { msg "assistant" "" with reasoning = "thinking" } ])
+
+        Assert.True(
+            ReplyTail.hasLosableContent
+                [
+                    msg "user" "q"
+                    { msg "assistant" "" with
+                        reasoning = "thinking"
+                    }
+                ]
+        )
 
 // 迁自旧 JourneyR9Tests；unansweredError 的 retryable 断言留在旧仓库（GenerationError 属 Wire）。
 module R9 =
     let private msg role text (at: DateTimeOffset option) : MessageView =
-        { MessageView.empty with role = role; text = text; commitId = Some 1UL; committedAt = at }
+        { MessageView.empty with
+            role = role
+            text = text
+            commitId = Some 1UL
+            committedAt = at
+        }
 
     [<Fact>]
     let ``263 末尾用户消息超过宽限期仍无回复判为未回复`` () =
@@ -229,15 +291,17 @@ module ReplyGateTests =
         let regenerate () = result <- "regenerate"
         let activeConversation () = view
         let messagesOf = id
+
         match activeConversation () with
         | Some view when not generating ->
             let messages = messagesOf view
+
             match List.tryLast messages with
-            | Some last when last.role = "user" || not (List.isEmpty (ReplyTail.chain messages)) ->
-                regenerate ()
+            | Some last when last.role = "user" || not (List.isEmpty (ReplyTail.chain messages)) -> regenerate ()
             | _ -> toast "这段对话还没有可以重新生成的回复" Warning
         | Some _ -> toast "正在生成；先按 Esc 停止，再重新生成" Info
         | None -> toast "没有打开的对话" Warning
+
         result
 
     let private oldCopy (view: MessageView list option) =
@@ -249,26 +313,32 @@ module ReplyGateTests =
         MessageView.ofJson (JsonNode.Parse(sprintf """{"role":"%s","contents":[{"text":"%s"}]}""" role text).AsObject())
 
     let private views =
-        [ None
-          Some []
-          Some [ msg "user" "q" ]
-          Some [ msg "user" "q"; msg "assistant" "a" ]
-          Some [ msg "user" "q"; msg "assistant" "" ]
-          Some [ msg "user" "q"; msg "tool" "t" ]
-          Some [ msg "system" "s" ] ]
+        [
+            None
+            Some []
+            Some [ msg "user" "q" ]
+            Some [ msg "user" "q"; msg "assistant" "a" ]
+            Some [ msg "user" "q"; msg "assistant" "" ]
+            Some [ msg "user" "q"; msg "tool" "t" ]
+            Some [ msg "system" "s" ]
+        ]
 
     [<Fact>]
     let ``regenerate and copy gating match old AppShell`` () =
         for v in views do
             for generating in [ false; true ] do
                 let gate = ReplyGate.regenerate v generating
+
                 let actual =
                     match ReplyGate.regenerateText gate with
                     | None -> "regenerate"
                     | Some t -> "toast " + t
+
                 Assert.Equal(old v generating, actual)
+
             let copy =
                 match v |> Option.bind ReplyTail.latestText with
                 | Some text -> "copy " + text
                 | None -> "toast " + ReplyGate.nothingToCopyText
+
             Assert.Equal(oldCopy v, copy)

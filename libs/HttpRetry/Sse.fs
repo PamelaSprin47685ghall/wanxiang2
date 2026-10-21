@@ -24,11 +24,14 @@ module Sse =
                     let data = StringBuilder()
                     let mutable name = ""
                     let mutable finished = false
+
                     while not finished && not ct.IsCancellationRequested do
                         let! line = reader.ReadLineAsync ct
+
                         match line with
                         | null ->
                             finished <- true
+
                             if data.Length > 0 then
                                 channel.Writer.TryWrite { name = name; data = data.ToString() } |> ignore
                         | "" ->
@@ -40,16 +43,20 @@ module Sse =
                         | text when text.StartsWith("event:", StringComparison.Ordinal) ->
                             name <- text.Substring(6).Trim()
                         | text when text.StartsWith("data:", StringComparison.Ordinal) ->
-                            if data.Length > 0 then data.Append '\n' |> ignore
+                            if data.Length > 0 then
+                                data.Append '\n' |> ignore
                             // W3C SSE 规范：仅剥离冒号后紧跟的一个空格；保留数据正文里的缩进
                             let payload =
                                 if text.Length > 5 && text[5] = ' ' then text.Substring 6
                                 elif text.Length > 5 then text.Substring 5
                                 else ""
+
                             data.Append payload |> ignore
                         | _ -> ()
+
                     channel.Writer.Complete()
-                with ex -> channel.Writer.Complete ex
+                with ex ->
+                    channel.Writer.Complete ex
             }
 
         ignore pump

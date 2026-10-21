@@ -1,21 +1,27 @@
 module ReconnectLoopTests
+
 open System
 open System.IO
 open Xunit
 open Wanxiang.Client
 
 
-let mk () = ReconnectLoop(1000, ReconnectLoopSamples.next)
+let mk () =
+    ReconnectLoop(1000, ReconnectLoopSamples.next)
 
 [<Fact>]
 let ``backoff grows across failed reconnects and only resets on success or manual`` () =
     let r = mk ()
+
     let delays =
-        [ for _ in 1..6 do
-            r.Connect() |> ignore
-            let t, d = (r.Schedule true).Value
-            Assert.True(r.Fire t)
-            yield d ]
+        [
+            for _ in 1..6 do
+                r.Connect() |> ignore
+                let t, d = (r.Schedule true).Value
+                Assert.True(r.Fire t)
+                yield d
+        ]
+
     Assert.Equal<int list>([ 1000; 2000; 4000; 8000; 16000; 30000 ], delays)
     r.ResetDelay()
     Assert.Equal(1000, r.DelayMs)

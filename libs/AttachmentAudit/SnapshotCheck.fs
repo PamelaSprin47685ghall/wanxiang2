@@ -14,6 +14,7 @@ module SnapshotCheck =
     let run (state: SnapshotState) : bool * string =
         match state with
         | SnapshotState.Absent -> true, "no snapshot (full replay on next start)"
-        | SnapshotState.Used(through, n) -> true, sprintf "valid through commit %d (%d commits replayed after it)" through n
+        | SnapshotState.Used(through, n) ->
+            true, sprintf "valid through commit %d (%d commits replayed after it)" through n
         | SnapshotState.Discarded reason -> true, sprintf "discarded: %s (falls back to full replay)" reason
         | SnapshotState.NotChecked m -> true, sprintf "not checked: %s" m

@@ -18,7 +18,8 @@ module GeminiRequest =
             match JsonNode.Parse(schema.GetRawText()) with
             | null -> None
             | node -> Some node
-        with _ -> None
+        with _ ->
+            None
 
     /// Gemini 的 functionCall **不带调用 id**，而编排层要靠 id 把结果配回请求。
     /// 因此把 id 造成 `name@序号` 这种自描述形式：回传 functionResponse 时
@@ -29,7 +30,8 @@ module GeminiRequest =
     let makeCallId (name: string) (index: int) = $"{name}{CallIdSeparator}{index}"
 
     let nameOfCallId (callId: string) =
-        if String.IsNullOrEmpty callId then ""
+        if String.IsNullOrEmpty callId then
+            ""
         else
             match callId.LastIndexOf CallIdSeparator with
             | -1 -> callId
@@ -40,16 +42,22 @@ module GeminiRequest =
     /// functionCall 带着名字，就用它；都找不到才退回解析 id（旧行为）。
     let private callNames (messages: ChatMessage list) =
         let names = Dictionary<string, string>(StringComparer.Ordinal)
+
         for message in messages do
             for content in message.Contents do
                 match content with
-                | :? FunctionCallContent as call when not (String.IsNullOrWhiteSpace call.CallId) && not (String.IsNullOrWhiteSpace call.Name) ->
+                | :? FunctionCallContent as call when
+                    not (String.IsNullOrWhiteSpace call.CallId)
+                    && not (String.IsNullOrWhiteSpace call.Name)
+                    ->
                     names[call.CallId] <- call.Name
                 | _ -> ()
+
         names
 
     let private nameFor (names: Dictionary<string, string>) (callId: string) =
-        if String.IsNullOrEmpty callId then ""
+        if String.IsNullOrEmpty callId then
+            ""
         else
             match names.TryGetValue callId with
             | true, name -> name
@@ -70,6 +78,7 @@ module GeminiRequest =
 
     let private functionCallPart (name: string) (arguments: IDictionary<string, obj>) =
         let args = JsonObject()
+
         if not (isNull arguments) then
             for KeyValue(key, value) in arguments do
                 args[key] <-
@@ -77,6 +86,7 @@ module GeminiRequest =
                     | null -> null
                     | :? JsonNode as node -> node.DeepClone()
                     | other -> JsonValue.Create(string other) :> JsonNode
+
         let call = JsonObject()
         call["name"] <- JsonValue.Create name
         call["args"] <- args
@@ -87,12 +97,15 @@ module GeminiRequest =
     let private functionResponsePart (names: Dictionary<string, string>) (callId: string) (result: obj) =
         // response 必须是对象；标量结果包一层，否则 Gemini 直接 400
         let payload = JsonObject()
+
         payload["result"] <-
             JsonValue.Create(
                 match result with
                 | null -> ""
                 | :? string as s -> s
-                | other -> string other)
+                | other -> string other
+            )
+
         let body = JsonObject()
         body["name"] <- JsonValue.Create(nameFor names callId)
         body["response"] <- payload
@@ -101,18 +114,23 @@ module GeminiRequest =
         o :> JsonNode
 
     let private partsOf (names: Dictionary<string, string>) (message: ChatMessage) : JsonNode list =
-        [ for content in message.Contents do
-            match content with
-            | :? TextContent as text when not (String.IsNullOrEmpty text.Text) -> textPart text.Text
-            // inlineData 通吃图片、PDF、音频、视频；能不能发已在
-            // AttachmentContent 按传输能力过滤过，这里不必再判类型
-            | :? DataContent as data -> inlineDataPart data.MediaType (Convert.ToBase64String(data.Data.ToArray()))
-            | :? FunctionCallContent as call -> functionCallPart call.Name call.Arguments
-            | :? FunctionResultContent as result -> functionResponsePart names result.CallId result.Result
-            | _ -> () ]
+        [
+            for content in message.Contents do
+                match content with
+                | :? TextContent as text when not (String.IsNullOrEmpty text.Text) -> textPart text.Text
+                // inlineData 通吃图片、PDF、音频、视频；能不能发已在
+                // AttachmentContent 按传输能力过滤过，这里不必再判类型
+                | :? DataContent as data -> inlineDataPart data.MediaType (Convert.ToBase64String(data.Data.ToArray()))
+                | :? FunctionCallContent as call -> functionCallPart call.Name call.Arguments
+                | :? FunctionResultContent as result -> functionResponsePart names result.CallId result.Result
+                | _ -> ()
+        ]
 
     let private roleOf (message: ChatMessage) =
-        if message.Role = ChatRole.Assistant then "model" else "user"
+        if message.Role = ChatRole.Assistant then
+            "model"
+        else
+            "user"
 
     /// 相邻同角色合并：Gemini 对交替没有硬要求，但连续同角色会让模型
     /// 把两轮当成一轮，工具结果紧跟用户消息时语义会串。
@@ -133,19 +151,25 @@ module GeminiRequest =
         | _ when isNull options.Tools || options.Tools.Count = 0 -> None
         | _ ->
             let declarations = JsonArray()
+
             for tool in options.Tools do
                 match tool with
                 | :? AIFunction as fn ->
                     let entry = JsonObject()
                     entry["name"] <- JsonValue.Create fn.Name
+
                     if not (String.IsNullOrWhiteSpace fn.Description) then
                         entry["description"] <- JsonValue.Create fn.Description
+
                     match schemaOf fn.JsonSchema with
                     | Some schema -> entry["parameters"] <- schema
                     | None -> ()
+
                     declarations.Add entry
                 | _ -> ()
-            if declarations.Count = 0 then None
+
+            if declarations.Count = 0 then
+                None
             else
                 let holder = JsonObject()
                 holder["functionDeclarations"] <- declarations
@@ -159,11 +183,17 @@ module GeminiRequest =
             | null -> []
             | _ when String.IsNullOrWhiteSpace options.Instructions -> []
             | _ -> [ options.Instructions ]
+
         let fromMessages =
-            [ for message in messages do
-                if message.Role = ChatRole.System then
-                    let text = message.Text
-                    if not (String.IsNullOrWhiteSpace text) then text ]
+            [
+                for message in messages do
+                    if message.Role = ChatRole.System then
+                        let text = message.Text
+
+                        if not (String.IsNullOrWhiteSpace text) then
+                            text
+            ]
+
         match fromOptions @ fromMessages with
         | [] -> None
         | parts -> Some(String.Join("\n\n", parts))
@@ -200,23 +230,34 @@ module GeminiRequest =
             |> mergeAdjacent
 
         let contents = JsonArray()
+
         for (role, parts) in conversation do
             let entry = JsonObject()
             entry["role"] <- JsonValue.Create role
             let array = JsonArray()
-            for part in parts do array.Add part
+
+            for part in parts do
+                array.Add part
+
             entry["parts"] <- array
             contents.Add entry
+
         body["contents"] <- contents
 
         if not (isNull options) then
             let config = JsonObject()
+
             if options.Temperature.HasValue then
                 config["temperature"] <- JsonValue.Create(float options.Temperature.Value)
-            if options.TopP.HasValue then config["topP"] <- JsonValue.Create(float options.TopP.Value)
+
+            if options.TopP.HasValue then
+                config["topP"] <- JsonValue.Create(float options.TopP.Value)
+
             if options.MaxOutputTokens.HasValue then
                 config["maxOutputTokens"] <- JsonValue.Create options.MaxOutputTokens.Value
-            if thinkingBudget > 0 then config["thinkingConfig"] <- thinkingConfig thinkingBudget
+
+            if thinkingBudget > 0 then
+                config["thinkingConfig"] <- thinkingConfig thinkingBudget
             // 会话 extraJson 合并进 generationConfig——Gemini 的生成参数
             // （thinkingConfig / responseMimeType / safetySettings 之外的项）都在这里。
             // 不合并等于把会话里配的模型专属参数静默丢掉。
@@ -226,7 +267,10 @@ module GeminiRequest =
                     | :? JsonNode as node -> config[key] <- node.DeepClone()
                     | null -> ()
                     | other -> config[key] <- JsonValue.Create(string other)
-            if config.Count > 0 then body["generationConfig"] <- config
+
+            if config.Count > 0 then
+                body["generationConfig"] <- config
+
             match toolsOf options with
             | Some tools -> body["tools"] <- tools
             | None -> ()

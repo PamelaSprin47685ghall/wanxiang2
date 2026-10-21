@@ -22,6 +22,7 @@ let ``the icon keeps the live brush and follows the live size`` () =
         Assert.Equal(20.0, icon.Height)
         // 同一画笔同一字形复用同一图像；官方实现保留画笔实例，改色即跟随
         Assert.Same(icon.Source, IconSet.drawing Glyph.Copy brush)
+
         let pens =
             match icon.Source with
             | :? DrawingImage as d ->
@@ -30,9 +31,17 @@ let ``the icon keeps the live brush and follows the live size`` () =
                     | :? DrawingGroup as g -> g.Children |> Seq.collect walk |> List.ofSeq
                     | :? GeometryDrawing as gd -> [ gd ]
                     | _ -> []
+
                 walk d.Drawing
             | _ -> []
+
         Assert.NotEmpty pens
         // 这一版 Lucide 以填充画笔出墨：断言用的就是我们传入的同一实例
-        Assert.True(pens |> List.exists (fun gd -> obj.ReferenceEquals(gd.Brush, brush) || (not (isNull gd.Pen) && obj.ReferenceEquals(gd.Pen.Brush, brush))))
+        Assert.True(
+            pens
+            |> List.exists (fun gd ->
+                obj.ReferenceEquals(gd.Brush, brush)
+                || (not (isNull gd.Pen) && obj.ReferenceEquals(gd.Pen.Brush, brush)))
+        )
+
         win.Close())

@@ -25,12 +25,14 @@ type JsonLinesLog(emit: string -> unit, now: unit -> DateTimeOffset, recentLimit
     member _.RegisterSecrets(values: string seq) =
         lock secretLock (fun () ->
             let existing = set secrets
+
             secrets <-
                 secrets
                 @ (values
                    |> Seq.filter (fun s -> not (String.IsNullOrWhiteSpace s) && s.Length >= 8)
                    |> Seq.filter (fun s -> not (existing.Contains s))
                    |> Seq.toList)
+
             sorted <- secrets |> List.sortByDescending (fun x -> x.Length))
 
     member _.ClearSecrets() =
@@ -42,20 +44,28 @@ type JsonLinesLog(emit: string -> unit, now: unit -> DateTimeOffset, recentLimit
     member _.Redact(text: string) : string =
         lock secretLock (fun () ->
             let mutable s = text
+
             for secret in sorted do
-                if s.Contains secret then s <- s.Replace(secret, "***")
+                if s.Contains secret then
+                    s <- s.Replace(secret, "***")
+
             s)
 
     member private _.Envelope(level: string, event: string, o: JsonObject) =
         o["level"] <- level
         o["event"] <- event
         o["utc"] <- now().UtcDateTime.ToString("o")
-        lock idLock (fun () -> match instanceId with Some id -> o["instanceId"] <- id | None -> ())
+
+        lock idLock (fun () ->
+            match instanceId with
+            | Some id -> o["instanceId"] <- id
+            | None -> ())
 
     /// 错误事件。字段值按类型写入；字符串和异常文本先脱敏，异常另写一个 <key>.stack 字段。
     member this.Error(event: string, fields: (string * obj) list) =
         let o = JsonObject()
         this.Envelope("error", event, o)
+
         for (k, v) in fields do
             match v with
             | :? string as s -> o[k] <- this.Redact s
@@ -70,10 +80,15 @@ type JsonLinesLog(emit: string -> unit, now: unit -> DateTimeOffset, recentLimit
                 o[sprintf "%s.stack" k] <- this.Redact(e.ToString())
             | null -> o[k] <- null
             | other -> o[k] <- this.Redact(string other)
+
         let line = o.ToJsonString options
+
         lock recentLock (fun () ->
             recent.Enqueue line
-            while recent.Count > recentLimit do recent.Dequeue() |> ignore)
+
+            while recent.Count > recentLimit do
+                recent.Dequeue() |> ignore)
+
         emit line
 
     member this.Info(message: string) =

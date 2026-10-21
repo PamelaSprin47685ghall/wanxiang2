@@ -13,7 +13,14 @@ open Wanxiang2.ProvidersPane
 open Wanxiang2.ProvidersPane.Tests.Probe
 
 let private row id label : ProviderRow =
-    { Id = id; Label = label; Meta = "https://api.openai.com/v1 · 2 个模型"; Enabled = true; Dot = ProviderDot.Configured; IsDefault = false }
+    {
+        Id = id
+        Label = label
+        Meta = "https://api.openai.com/v1 · 2 个模型"
+        Enabled = true
+        Dot = ProviderDot.Configured
+        IsDefault = false
+    }
 
 let private enter (box: TextBox) =
     box.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter))
@@ -23,17 +30,39 @@ let ``missing key reads as warning tag and disabled provider dims its text`` () 
     Headless.run (fun () ->
         let p = ProvidersPane()
         let _ = host p.View
+
         p.Render
-            [ { row "a" "缺钥" with Dot = ProviderDot.MissingKey; Meta = "x · 1 个模型 · 未设置密钥" }
-              { row "b" "停用" with Dot = ProviderDot.Disabled; Enabled = false }
-              { row "c" "默认" with IsDefault = true } ]
-        let tags = descendants p.View |> Seq.filter (fun c -> c.Classes.Contains "tag") |> List.ofSeq
+            [
+                { row "a" "缺钥" with
+                    Dot = ProviderDot.MissingKey
+                    Meta = "x · 1 个模型 · 未设置密钥"
+                }
+                { row "b" "停用" with
+                    Dot = ProviderDot.Disabled
+                    Enabled = false
+                }
+                { row "c" "默认" with IsDefault = true }
+            ]
+
+        let tags =
+            descendants p.View
+            |> Seq.filter (fun c -> c.Classes.Contains "tag")
+            |> List.ofSeq
+
         let warning = tags |> List.find (fun t -> textOf t = "缺少密钥")
         Assert.Contains("tag-warning", warning.Classes)
         let disabled = tags |> List.find (fun t -> textOf t = "已停用")
         Assert.DoesNotContain("tag-warning", disabled.Classes)
         Assert.True(tags |> List.exists (fun t -> textOf t = "默认"))
-        let dots = descendants p.View |> Seq.choose (fun c -> match c with :? Ellipse as e -> Some e | _ -> None) |> List.ofSeq
+
+        let dots =
+            descendants p.View
+            |> Seq.choose (fun c ->
+                match c with
+                | :? Ellipse as e -> Some e
+                | _ -> None)
+            |> List.ofSeq
+
         Assert.All(dots, fun d -> Assert.Equal(7.0, d.Width)))
 
 [<Fact>]
@@ -44,7 +73,12 @@ let ``empty provider list hands the add action to the empty state`` () =
         let adds = ResizeArray<unit>()
         p.AddClicked.Add adds.Add
         p.Render []
-        let visibleAdds = descendants p.View |> Seq.filter (fun c -> AutomationProperties.GetName c = "添加模型服务" && c.IsEffectivelyVisible) |> List.ofSeq
+
+        let visibleAdds =
+            descendants p.View
+            |> Seq.filter (fun c -> AutomationProperties.GetName c = "添加模型服务" && c.IsEffectivelyVisible)
+            |> List.ofSeq
+
         Assert.Single visibleAdds |> ignore
         click visibleAdds.Head
         p.Render [ row "a" "OpenAI" ]
@@ -59,7 +93,9 @@ let ``empty provider list hands the add action to the empty state`` () =
         Assert.Equal<string list>([ "a" ], List.ofSeq mores))
 
 [<Fact>]
-let ``SettingsProviders two-tier form defaults to quick access and preserves drafts when toggling advanced settings`` () =
+let ``SettingsProviders two-tier form defaults to quick access and preserves drafts when toggling advanced settings``
+    ()
+    =
     Headless.run (fun () ->
         let e = ProviderEditor(true, fun _ -> None)
         let _ = host e.View
@@ -81,7 +117,16 @@ let ``SettingsProviders two-tier form defaults to quick access and preserves dra
 let ``SettingsProviders ShowEditor validates required fields and default model existence`` () =
     Headless.run (fun () ->
         let lines = Collections.Generic.Dictionary<TextBox, TextBlock>()
-        let e = ProviderEditor(true, fun b -> let t = TextBlock(IsVisible = false) in lines[b] <- t; Some(t :> Control))
+
+        let e =
+            ProviderEditor(
+                true,
+                fun b ->
+                    let t = TextBlock(IsVisible = false) in
+                    lines[b] <- t
+                    Some(t :> Control)
+            )
+
         let _ = host e.View
         Assert.Equal(10, lines.Count)
         let saves = ResizeArray<unit>()
@@ -95,10 +140,18 @@ let ``SettingsProviders ShowEditor validates required fields and default model e
         e.ApplyPending true
         Assert.False (named e.View "正在保存…").Value.IsEnabled
         Assert.False (named e.View "取消").Value.IsEnabled
-        e.Summary.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control))
+
+        e.Summary.RaiseEvent(
+            KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control)
+        )
+
         Assert.Equal(2, saves.Count)
         e.ApplyPending false
-        e.Summary.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control))
+
+        e.Summary.RaiseEvent(
+            KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control)
+        )
+
         Assert.Equal(3, saves.Count)
         Assert.Equal('●', e.KeyBox.PasswordChar))
 
@@ -159,6 +212,10 @@ let ``预设选择器按 Down 或 Up 展开`` () =
         let anchors = ResizeArray<Control>()
         e.PresetClicked.Add anchors.Add
         let selector = (named e.View "预设").Value
+
         for k in [ Avalonia.Input.Key.Down; Avalonia.Input.Key.Up ] do
-            selector.RaiseEvent(Avalonia.Input.KeyEventArgs(RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = k))
+            selector.RaiseEvent(
+                Avalonia.Input.KeyEventArgs(RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = k)
+            )
+
         Assert.Equal(2, anchors.Count))

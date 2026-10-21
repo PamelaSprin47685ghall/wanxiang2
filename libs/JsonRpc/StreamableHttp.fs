@@ -25,9 +25,14 @@ type StreamableHttpSession(endpoint: string, extraHeaders: Map<string, string>, 
                 match JsonNode.Parse payload with
                 | :? JsonObject as o ->
                     let mutable idNode: JsonNode = null
-                    if o.TryGetPropertyValue("id", &idNode) then Some(o :> JsonNode) else None
+
+                    if o.TryGetPropertyValue("id", &idNode) then
+                        Some(o :> JsonNode)
+                    else
+                        None
                 | _ -> None
-            with _ -> None)
+            with _ ->
+                None)
 
     member _.SessionId = sessionId
 
@@ -37,31 +42,54 @@ type StreamableHttpSession(endpoint: string, extraHeaders: Map<string, string>, 
         task {
             use request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             request.Content <- new StringContent(envelope.ToJsonString(), Encoding.UTF8, "application/json")
-            request.Headers.TryAddWithoutValidation("Accept", "application/json, text/event-stream") |> ignore
+
+            request.Headers.TryAddWithoutValidation("Accept", "application/json, text/event-stream")
+            |> ignore
+
             match sessionId with
             | Some sid -> request.Headers.TryAddWithoutValidation("Mcp-Session-Id", sid) |> ignore
             | None -> ()
-            for KeyValue(k, v) in extraHeaders do request.Headers.TryAddWithoutValidation(k, v) |> ignore
-            use timeoutCts = new CancellationTokenSource(if timeoutMs > 0 then timeoutMs else -1)
+
+            for KeyValue(k, v) in extraHeaders do
+                request.Headers.TryAddWithoutValidation(k, v) |> ignore
+
+            use timeoutCts =
+                new CancellationTokenSource(if timeoutMs > 0 then timeoutMs else -1)
+
             use linked = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token)
             let! response = http.SendAsync(request, linked.Token)
             let mutable header: seq<string> = null
-            if response.Headers.TryGetValues("Mcp-Session-Id", &header) then sessionId <- header |> Seq.tryHead
+
+            if response.Headers.TryGetValues("Mcp-Session-Id", &header) then
+                sessionId <- header |> Seq.tryHead
+
             let! body = response.Content.ReadAsStringAsync linked.Token
+
             if not response.IsSuccessStatusCode then
-                return Error(sprintf "MCP HTTP %d：%s" (int response.StatusCode) (body.Substring(0, min 200 body.Length)))
+                return
+                    Error(sprintf "MCP HTTP %d：%s" (int response.StatusCode) (body.Substring(0, min 200 body.Length)))
             elif String.IsNullOrWhiteSpace body then
                 return Error "MCP 响应为空"
             else
-                let mediaType = match response.Content.Headers.ContentType with null -> "" | c -> c.MediaType
+                let mediaType =
+                    match response.Content.Headers.ContentType with
+                    | null -> ""
+                    | c -> c.MediaType
+
                 if mediaType.Contains "event-stream" then
                     match StreamableHttpSession.PickResponse body with
                     | Some node -> return Ok node
                     | None -> return Error "MCP SSE 响应中没有可用帧"
                 else
-                    try return Ok(JsonNode.Parse body)
-                    with ex -> return Error(sprintf "MCP 响应解析失败：%s" ex.Message)
+                    try
+                        return Ok(JsonNode.Parse body)
+                    with ex ->
+                        return Error(sprintf "MCP 响应解析失败：%s" ex.Message)
         }
 
     interface IDisposable with
-        member _.Dispose() = try http.Dispose() with _ -> ()
+        member _.Dispose() =
+            try
+                http.Dispose()
+            with _ ->
+                ()

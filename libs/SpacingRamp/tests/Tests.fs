@@ -7,8 +7,12 @@ open Wanxiang.UI
 
 let private moduleType name =
     Spacing.ramp |> ignore
+
     AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.pick (fun a -> match a.GetType("Wanxiang.UI." + name) with null -> None | t -> Some t)
+    |> Array.pick (fun a ->
+        match a.GetType("Wanxiang.UI." + name) with
+        | null -> None
+        | t -> Some t)
 
 [<Fact>]
 let ``ramp is strictly increasing and starts at zero`` () =
@@ -25,4 +29,5 @@ let ``off-ramp values are rejected`` () =
 let ``geometry covers ramp slots radii and strokes`` () =
     for v in Spacing.ramp @ Spacing.Slot.all @ Spacing.Radius.all @ Spacing.Stroke.all do
         Assert.Contains(v, Spacing.geometry)
+
     Assert.DoesNotContain(Spacing.Tracking.label, Spacing.geometry)

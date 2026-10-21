@@ -3,69 +3,81 @@ namespace Wanxiang.Core
 open System
 
 /// 消息记录：一条完整 Agent Framework 消息，用全局提交 id 作为消息标识。
-type MessageRecord = {
-    commitId: uint64
-    conversationId: Guid
-    payloadJson: System.Text.Json.Nodes.JsonNode
-    /// 该消息落盘时刻。界面要显示时间，而 commitId 只是序号推不出时间。
-    committedAtUtc: DateTimeOffset
-    /// tombstone：删除事件发生时的提交 id（None = 未删除）
-    deletedAtCommitId: uint64 option
-}
+type MessageRecord =
+    {
+        commitId: uint64
+        conversationId: Guid
+        payloadJson: System.Text.Json.Nodes.JsonNode
+        /// 该消息落盘时刻。界面要显示时间，而 commitId 只是序号推不出时间。
+        committedAtUtc: DateTimeOffset
+        /// tombstone：删除事件发生时的提交 id（None = 未删除）
+        deletedAtCommitId: uint64 option
+    }
 
 /// 会话投影。
-type Conversation<'C> = {
-    conversationId: Guid
-    title: string
-    createdAtUtc: DateTimeOffset
-    lastActivityAtUtc: DateTimeOffset
-    deleted: bool
-    /// 置顶：侧栏排在最前
-    pinned: bool
-    /// 归档：默认从侧栏隐藏
-    archived: bool
-    /// (parentConversationId, forkAfterId)；None = 根会话
-    parent: (Guid * uint64 option) option
-    /// 创建该 fork 的提交 id（快照边界，由提交外壳决定）
-    forkBaseCommitId: uint64 option
-    config: 'C
-    /// 本会话直接记录的消息（不含父分支继承），按 commitId 升序
-    messages: MessageRecord list
-    /// 该会话投影最后相关提交 id（写权限水位）
-    lastCommitId: uint64 option
-}
+type Conversation<'C> =
+    {
+        conversationId: Guid
+        title: string
+        createdAtUtc: DateTimeOffset
+        lastActivityAtUtc: DateTimeOffset
+        deleted: bool
+        /// 置顶：侧栏排在最前
+        pinned: bool
+        /// 归档：默认从侧栏隐藏
+        archived: bool
+        /// (parentConversationId, forkAfterId)；None = 根会话
+        parent: (Guid * uint64 option) option
+        /// 创建该 fork 的提交 id（快照边界，由提交外壳决定）
+        forkBaseCommitId: uint64 option
+        config: 'C
+        /// 本会话直接记录的消息（不含父分支继承），按 commitId 升序
+        messages: MessageRecord list
+        /// 该会话投影最后相关提交 id（写权限水位）
+        lastCommitId: uint64 option
+    }
 
 /// 内存投影：NDJSON 折叠后的唯一日常查询来源。
-type Projection<'C> = {
-    conversations: Map<Guid, Conversation<'C>>
-    latestCommitId: uint64
-}
+type Projection<'C> =
+    {
+        conversations: Map<Guid, Conversation<'C>>
+        latestCommitId: uint64
+    }
 
 module Conversations =
 
     let empty<'C> : Projection<'C> =
-        { conversations = Map.empty
-          latestCommitId = 0UL }
+        {
+            conversations = Map.empty
+            latestCommitId = 0UL
+        }
 
-    let tryConversation (proj: Projection<'C>) (id: Guid) : Conversation<'C> option =
-        proj.conversations.TryFind id
+    let tryConversation (proj: Projection<'C>) (id: Guid) : Conversation<'C> option = proj.conversations.TryFind id
 
     let private visibleInScope (untilCommitId: uint64) (m: MessageRecord) : bool =
         m.commitId <= untilCommitId
-        && (match m.deletedAtCommitId with None -> true | Some d -> d > untilCommitId)
+        && (match m.deletedAtCommitId with
+            | None -> true
+            | Some d -> d > untilCommitId)
 
     /// 递归展开会话在 untilCommitId 时刻的有效可见消息（fork 结构共享）。
     /// 父分支只考虑其 forkBaseCommitId 时刻的状态；父分支之后的删除/新增不影响子分支。
     /// 决策 74/75：子分支只继承父分支截至 forkAfterId 的消息（被编辑消息之前的历史），
     /// 被编辑的旧消息被 fork 提交中的新消息"替代"，不进入子分支。
-    let rec effectiveMessagesAtMap (conversations: Map<Guid, Conversation<'C>>) (convId: Guid) (untilCommitId: uint64) : MessageRecord list =
+    let rec effectiveMessagesAtMap
+        (conversations: Map<Guid, Conversation<'C>>)
+        (convId: Guid)
+        (untilCommitId: uint64)
+        : MessageRecord list =
         match conversations.TryFind convId with
         | None -> []
         | Some conv ->
             let own = conv.messages |> List.filter (visibleInScope untilCommitId)
+
             match conv.parent, conv.forkBaseCommitId with
-            | Some (parentId, forkAfter), Some baseId when baseId <= untilCommitId ->
+            | Some(parentId, forkAfter), Some baseId when baseId <= untilCommitId ->
                 let inherited = effectiveMessagesAtMap conversations parentId baseId
+
                 match forkAfter with
                 | Some afterId -> (inherited |> List.filter (fun m -> m.commitId <= afterId)) @ own
                 | None -> own
@@ -89,9 +101,21 @@ module Conversations =
 
     /// 应用一条提交（纯函数）。id 必须紧接 latestCommitId；失败时返回人能读懂的原因，
     /// 由调用方决定截尾、只读还是拒绝。
-    let apply (proj: Projection<'C>) (commitId: uint64) (committedAtUtc: DateTimeOffset) (events: EventData<'C> list) : Result<Projection<'C>, string> =
-        let commit = {| id = commitId; committedAtUtc = committedAtUtc; events = events |}
+    let apply
+        (proj: Projection<'C>)
+        (commitId: uint64)
+        (committedAtUtc: DateTimeOffset)
+        (events: EventData<'C> list)
+        : Result<Projection<'C>, string> =
+        let commit =
+            {|
+                id = commitId
+                committedAtUtc = committedAtUtc
+                events = events
+            |}
+
         let expectedId = proj.latestCommitId + 1UL
+
         if commit.id <> expectedId then
             Error(sprintf "commit id %d out of order; expected %d" commit.id expectedId)
         else
@@ -99,7 +123,8 @@ module Conversations =
             let mutable failed: string option = None
 
             let applyOne (ev: EventData<'C>) =
-                if failed.IsSome then ()
+                if failed.IsSome then
+                    ()
                 else
                     match ev with
                     | ConversationCreated d ->
@@ -107,18 +132,21 @@ module Conversations =
                             failed <- Some(sprintf "duplicate conversation %O" d.conversationId)
                         else
                             let conv =
-                                { conversationId = d.conversationId
-                                  title = d.title
-                                  createdAtUtc = commit.committedAtUtc
-                                  lastActivityAtUtc = commit.committedAtUtc
-                                  deleted = false
-                                  pinned = false
-                                  archived = false
-                                  parent = None
-                                  forkBaseCommitId = None
-                                  config = d.config
-                                  messages = []
-                                  lastCommitId = Some commit.id }
+                                {
+                                    conversationId = d.conversationId
+                                    title = d.title
+                                    createdAtUtc = commit.committedAtUtc
+                                    lastActivityAtUtc = commit.committedAtUtc
+                                    deleted = false
+                                    pinned = false
+                                    archived = false
+                                    parent = None
+                                    forkBaseCommitId = None
+                                    config = d.config
+                                    messages = []
+                                    lastCommitId = Some commit.id
+                                }
+
                             conversations <- conversations.Add(d.conversationId, conv)
                     | ConversationForked d ->
                         if conversations.ContainsKey d.conversationId then
@@ -126,7 +154,8 @@ module Conversations =
                         else
                             match conversations.TryFind d.parentConversationId with
                             | None -> failed <- Some(sprintf "fork parent %O not found" d.parentConversationId)
-                            | Some parent when parent.deleted -> failed <- Some(sprintf "fork parent %O deleted" d.parentConversationId)
+                            | Some parent when parent.deleted ->
+                                failed <- Some(sprintf "fork parent %O deleted" d.parentConversationId)
                             | Some parent ->
                                 // forkAfterId 必须是父会话（或父会话可见前缀中）一条已提交消息
                                 let prefixOk =
@@ -136,46 +165,79 @@ module Conversations =
                                         // 父会话在 forkBase（=commit.id）时刻的可见消息中必须存在 afterId
                                         let msgs = effectiveMessagesAtMap conversations d.parentConversationId commit.id
                                         msgs |> List.exists (fun m -> m.commitId = afterId)
+
                                 if not prefixOk then
                                     failed <- Some(sprintf "fork point %A not in parent prefix" d.forkAfterId)
                                 else
                                     let conv =
-                                        { conversationId = d.conversationId
-                                          // 中文界面用全角括注；分叉来源另有面包屑说明
-                                          // 同一父对话的多个分叉编号区分（第 207 节）：第一个仍是「（分叉）」，之后「（分叉 2）」…
-                                          title =
-                                              let siblings =
-                                                  conversations
-                                                  |> Seq.filter (fun kv ->
-                                                      match kv.Value.parent with
-                                                      | Some(p, _) -> p = d.parentConversationId
-                                                      | None -> false)
-                                                  |> Seq.length
-                                              if siblings = 0 then parent.title + "（分叉）"
-                                              else sprintf "%s（分叉 %d）" parent.title (siblings + 1)
-                                          createdAtUtc = commit.committedAtUtc
-                                          lastActivityAtUtc = commit.committedAtUtc
-                                          deleted = false
-                                          pinned = false
-                                          archived = false
-                                          parent = Some(d.parentConversationId, d.forkAfterId)
-                                          forkBaseCommitId = Some commit.id
-                                          config = parent.config
-                                          messages = []
-                                          lastCommitId = Some commit.id }
+                                        {
+                                            conversationId = d.conversationId
+                                            // 中文界面用全角括注；分叉来源另有面包屑说明
+                                            // 同一父对话的多个分叉编号区分（第 207 节）：第一个仍是「（分叉）」，之后「（分叉 2）」…
+                                            title =
+                                                let siblings =
+                                                    conversations
+                                                    |> Seq.filter (fun kv ->
+                                                        match kv.Value.parent with
+                                                        | Some(p, _) -> p = d.parentConversationId
+                                                        | None -> false)
+                                                    |> Seq.length
+
+                                                if siblings = 0 then
+                                                    parent.title + "（分叉）"
+                                                else
+                                                    sprintf "%s（分叉 %d）" parent.title (siblings + 1)
+                                            createdAtUtc = commit.committedAtUtc
+                                            lastActivityAtUtc = commit.committedAtUtc
+                                            deleted = false
+                                            pinned = false
+                                            archived = false
+                                            parent = Some(d.parentConversationId, d.forkAfterId)
+                                            forkBaseCommitId = Some commit.id
+                                            config = parent.config
+                                            messages = []
+                                            lastCommitId = Some commit.id
+                                        }
+
                                     conversations <- conversations.Add(d.conversationId, conv)
                     | ConversationRenamed d ->
                         match conversations.TryFind d.conversationId with
                         | None -> failed <- Some(sprintf "conversation %O not found" d.conversationId)
-                        | Some conv -> conversations <- conversations.Add(d.conversationId, { conv with title = d.title; lastActivityAtUtc = commit.committedAtUtc; lastCommitId = Some commit.id })
+                        | Some conv ->
+                            conversations <-
+                                conversations.Add(
+                                    d.conversationId,
+                                    { conv with
+                                        title = d.title
+                                        lastActivityAtUtc = commit.committedAtUtc
+                                        lastCommitId = Some commit.id
+                                    }
+                                )
                     | ConversationConfigUpdated d ->
                         match conversations.TryFind d.conversationId with
                         | None -> failed <- Some(sprintf "conversation %O not found" d.conversationId)
-                        | Some conv -> conversations <- conversations.Add(d.conversationId, { conv with config = d.config; lastActivityAtUtc = commit.committedAtUtc; lastCommitId = Some commit.id })
+                        | Some conv ->
+                            conversations <-
+                                conversations.Add(
+                                    d.conversationId,
+                                    { conv with
+                                        config = d.config
+                                        lastActivityAtUtc = commit.committedAtUtc
+                                        lastCommitId = Some commit.id
+                                    }
+                                )
                     | ConversationDeleted d ->
                         match conversations.TryFind d.conversationId with
                         | None -> failed <- Some(sprintf "conversation %O not found" d.conversationId)
-                        | Some conv -> conversations <- conversations.Add(d.conversationId, { conv with deleted = true; lastCommitId = Some commit.id })
+                        | Some conv ->
+                            conversations <-
+                                conversations.Add(
+                                    d.conversationId,
+                                    { conv with
+                                        deleted = true
+                                        lastCommitId = Some commit.id
+                                    }
+                                )
                     | ConversationFlagsChanged d ->
                         match conversations.TryFind d.conversationId with
                         | None -> failed <- Some(sprintf "conversation %O not found" d.conversationId)
@@ -183,34 +245,69 @@ module Conversations =
                             conversations <-
                                 conversations.Add(
                                     d.conversationId,
-                                    { conv with pinned = d.pinned; archived = d.archived; lastCommitId = Some commit.id })
+                                    { conv with
+                                        pinned = d.pinned
+                                        archived = d.archived
+                                        lastCommitId = Some commit.id
+                                    }
+                                )
                     | AgentMessageRecorded d ->
                         match conversations.TryFind d.conversationId with
                         | None -> failed <- Some(sprintf "conversation %O not found" d.conversationId)
                         | Some conv ->
                             let msg =
-                                { commitId = commit.id
-                                  conversationId = d.conversationId
-                                  payloadJson = d.payloadJson
-                                  committedAtUtc = commit.committedAtUtc
-                                  deletedAtCommitId = None }
-                            conversations <- conversations.Add(d.conversationId, { conv with messages = conv.messages @ [ msg ]; lastActivityAtUtc = commit.committedAtUtc; lastCommitId = Some commit.id })
+                                {
+                                    commitId = commit.id
+                                    conversationId = d.conversationId
+                                    payloadJson = d.payloadJson
+                                    committedAtUtc = commit.committedAtUtc
+                                    deletedAtCommitId = None
+                                }
+
+                            conversations <-
+                                conversations.Add(
+                                    d.conversationId,
+                                    { conv with
+                                        messages = conv.messages @ [ msg ]
+                                        lastActivityAtUtc = commit.committedAtUtc
+                                        lastCommitId = Some commit.id
+                                    }
+                                )
                     | MessageDeleted d ->
                         match conversations.TryFind d.conversationId with
                         | None -> failed <- Some(sprintf "conversation %O not found" d.conversationId)
                         | Some conv ->
                             let mutable found = false
+
                             let msgs =
                                 conv.messages
                                 |> List.map (fun m ->
                                     if m.commitId = d.messageCommitId && m.deletedAtCommitId.IsNone then
                                         found <- true
-                                        { m with deletedAtCommitId = Some commit.id }
-                                    else m)
+
+                                        { m with
+                                            deletedAtCommitId = Some commit.id
+                                        }
+                                    else
+                                        m)
+
                             if not found then
-                                failed <- Some(sprintf "message %d not found in conversation %O" d.messageCommitId d.conversationId)
+                                failed <-
+                                    Some(
+                                        sprintf
+                                            "message %d not found in conversation %O"
+                                            d.messageCommitId
+                                            d.conversationId
+                                    )
                             else
-                                conversations <- conversations.Add(d.conversationId, { conv with messages = msgs; lastCommitId = Some commit.id })
+                                conversations <-
+                                    conversations.Add(
+                                        d.conversationId,
+                                        { conv with
+                                            messages = msgs
+                                            lastCommitId = Some commit.id
+                                        }
+                                    )
 
             for ev in commit.events do
                 applyOne ev
@@ -218,8 +315,11 @@ module Conversations =
             match failed with
             | Some err -> Error err
             | None ->
-                Ok { conversations = conversations
-                     latestCommitId = commit.id }
+                Ok
+                    {
+                        conversations = conversations
+                        latestCommitId = commit.id
+                    }
 
     /// 从原始 payload 读 role。Core 不依赖 Agent Framework，
     /// 因此直接读透明保存的 JSON 字段而不反序列化成 ChatMessage。
@@ -227,7 +327,12 @@ module Conversations =
         match payload with
         | :? System.Text.Json.Nodes.JsonObject as o ->
             let mutable n: System.Text.Json.Nodes.JsonNode = null
-            if o.TryGetPropertyValue("role", &n) && not (isNull n) && n.GetValueKind() = System.Text.Json.JsonValueKind.String then
+
+            if
+                o.TryGetPropertyValue("role", &n)
+                && not (isNull n)
+                && n.GetValueKind() = System.Text.Json.JsonValueKind.String
+            then
                 n.GetValue<string>()
             else
                 ""
@@ -240,7 +345,8 @@ module Conversations =
         |> List.rev
         |> List.takeWhile (fun m ->
             match roleOfPayload m.payloadJson with
-            | "assistant" | "tool" -> true
+            | "assistant"
+            | "tool" -> true
             | _ -> false)
         |> List.rev
         |> List.map (fun m -> m.commitId)

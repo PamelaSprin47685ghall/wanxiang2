@@ -14,7 +14,9 @@ module CommandId =
     /// commandId = base64url( SHA-256( Prefix \0 invocationId \0 commandType \0 canonicalPayload ) )，无填充。
     /// 网络重试复用 invocationId，得到同一个 commandId；内容被改，commandId 跟着变。
     let compute (invocationId: Guid) (commandType: string) (canonicalPayload: string) : string =
-        let material = String.concat "\u0000" [ Prefix; invocationId.ToString("D"); commandType; canonicalPayload ]
+        let material =
+            String.concat "\u0000" [ Prefix; invocationId.ToString("D"); commandType; canonicalPayload ]
+
         let bytes = SHA256.HashData(Encoding.UTF8.GetBytes(material))
         Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
 

@@ -7,7 +7,9 @@ open Avalonia.Media
 open Xunit
 open Wanxiang2.StreamCaret
 open Wanxiang2.StreamCaret.Tests
-let private op (c: Control) = c.GetBaseValue(Visual.OpacityProperty).Value
+
+let private op (c: Control) =
+    c.GetBaseValue(Visual.OpacityProperty).Value
 
 [<Fact>]
 let ``挂上才按呼吸函数取不透明度并起表`` () =

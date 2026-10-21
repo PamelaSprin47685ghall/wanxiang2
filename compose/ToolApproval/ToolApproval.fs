@@ -19,13 +19,15 @@ type ApprovalOutcome =
     | ApprovalCancelled
 
 type internal PendingApproval =
-    { approvalId: Guid
-      conversationId: Guid
-      generationId: Guid
-      toolId: string
-      request: WireEvent
-      expiresAt: DateTimeOffset
-      policy: ToolPolicy }
+    {
+        approvalId: Guid
+        conversationId: Guid
+        generationId: Guid
+        toolId: string
+        request: WireEvent
+        expiresAt: DateTimeOffset
+        policy: ToolPolicy
+    }
 
 
 /// 工具审批代理（第 71 节，补充决策 93）。
@@ -44,7 +46,9 @@ type ToolApprovalBroker(getConfig: unit -> AppConfig, broadcast: Guid -> WireEve
         | ApprovalCancelled -> "cancelled", "生成已取消，审批作废。"
 
     /// 等待中的审批与最近结果：先到者胜（库 Approvals）。
-    let desk = ApprovalDesk<PendingApproval, ApprovalOutcome, string * string>(statusOf, 256)
+    let desk =
+        ApprovalDesk<PendingApproval, ApprovalOutcome, string * string>(statusOf, 256)
+
     /// 「首次询问」被批准过的 (对话, 工具)；只活在内存里。
     let grants = ConcurrentDictionary<struct (Guid * string), bool>()
 
@@ -67,47 +71,73 @@ type ToolApprovalBroker(getConfig: unit -> AppConfig, broadcast: Guid -> WireEve
         task {
             let deadline = DateTimeOffset.UtcNow.AddMilliseconds(float this.CapabilityGraceMs)
             let mutable ok = this.CapabilityProbe conversationId
+
             while not ok && DateTimeOffset.UtcNow < deadline && not ct.IsCancellationRequested do
-                try do! Task.Delay(100, ct) with _ -> ()
+                try
+                    do! Task.Delay(100, ct)
+                with _ ->
+                    ()
+
                 ok <- this.CapabilityProbe conversationId
+
             return ok
         }
 
     /// 尝试以第一个有效决定结束一个审批。返回是否由本次调用结束。
     member private _.Resolve(approvalId: Guid, outcome: ApprovalOutcome) : bool =
         let mutable resolved = None
+
         let won =
-            desk.Resolve(approvalId, outcome, fun p memo ->
-                (match outcome, p.policy with
-                 | Approved, AskFirst -> grants[struct (p.conversationId, p.toolId)] <- true
-                 | _ -> ())
-                resolved <- Some(p, memo))
+            desk.Resolve(
+                approvalId,
+                outcome,
+                fun p memo ->
+                    (match outcome, p.policy with
+                     | Approved, AskFirst -> grants[struct (p.conversationId, p.toolId)] <- true
+                     | _ -> ())
+
+                    resolved <- Some(p, memo)
+            )
+
         match resolved with
         | Some(p, (status, reason)) ->
-            broadcast p.conversationId
+            broadcast
+                p.conversationId
                 (ToolApprovalResolved
-                    {| approvalId = approvalId
-                       conversationId = p.conversationId
-                       status = status
-                       reason = reason
-                       alreadyHandled = false |})
+                    {|
+                        approvalId = approvalId
+                        conversationId = p.conversationId
+                        status = status
+                        reason = reason
+                        alreadyHandled = false
+                    |})
         | None -> ()
+
         won
 
     /// 客户端的决定。`reply` 把「已处理」单独回给晚到的决定者。
     member this.Decide(approvalId: Guid, approved: bool, reply: WireEvent -> unit) : unit =
-        let outcome = if approved then Approved else Denied(ToolSummary.userDeniedText, true)
+        let outcome =
+            if approved then
+                Approved
+            else
+                Denied(ToolSummary.userDeniedText, true)
+
         if not (this.Resolve(approvalId, outcome)) then
             let status, reason =
                 desk.Recent approvalId
                 |> Option.defaultValue ("expired", "这个审批已经失效（可能因为主机已重启）。")
+
             reply (
                 ToolApprovalResolved
-                    {| approvalId = approvalId
-                       conversationId = Guid.Empty
-                       status = status
-                       reason = reason
-                       alreadyHandled = true |})
+                    {|
+                        approvalId = approvalId
+                        conversationId = Guid.Empty
+                        status = status
+                        reason = reason
+                        alreadyHandled = true
+                    |}
+            )
 
     /// 取消一次生成时，作废它名下等待中的审批。
     member this.CancelGeneration(conversationId: Guid, generationId: Guid) : unit =
@@ -120,74 +150,95 @@ type ToolApprovalBroker(getConfig: unit -> AppConfig, broadcast: Guid -> WireEve
         for id, p in desk.Pending do
             if p.conversationId = conversationId then
                 this.Resolve(id, ApprovalCancelled) |> ignore
+
         for k in grants.Keys |> Seq.toArray do
             let struct (c, _) = k
-            if c = conversationId then grants.TryRemove k |> ignore
+
+            if c = conversationId then
+                grants.TryRemove k |> ignore
 
     /// 某对话里仍在等待的审批请求（重连或刚声明审批能力的客户端补收）。
     member _.PendingFor(conversationId: Guid) : WireEvent list =
-        [ for _, p in desk.Pending do
-              if p.conversationId = conversationId then
-                  match p.request with
-                  | ToolApprovalRequested r ->
-                      let left = int (max 0.0 (p.expiresAt - DateTimeOffset.UtcNow).TotalSeconds)
-                      yield ToolApprovalRequested {| r with expiresInSeconds = left |}
-                  | other -> yield other ]
+        [
+            for _, p in desk.Pending do
+                if p.conversationId = conversationId then
+                    match p.request with
+                    | ToolApprovalRequested r ->
+                        let left = int (max 0.0 (p.expiresAt - DateTimeOffset.UtcNow).TotalSeconds)
+                        yield ToolApprovalRequested {| r with expiresInSeconds = left |}
+                    | other -> yield other
+        ]
 
     member _.PendingCount = desk.Count
 
     /// 发起审批并等待结果。
     member this.Request
-        (conversationId: Guid, generationId: Guid, callId: string, toolName: string, toolId: string, args: JsonNode, ct: CancellationToken)
-        : Task<ApprovalOutcome> =
+        (
+            conversationId: Guid,
+            generationId: Guid,
+            callId: string,
+            toolName: string,
+            toolId: string,
+            args: JsonNode,
+            ct: CancellationToken
+        ) : Task<ApprovalOutcome> =
         task {
             let! capable = this.WaitForCapable(conversationId, ct)
+
             if not capable then
-                return
-                    Denied("这个工具需要先经用户批准，但此刻没有支持审批的客户端在线，所以调用被拒绝。请在支持审批的客户端里打开这个对话后重试。", false)
+                return Denied("这个工具需要先经用户批准，但此刻没有支持审批的客户端在线，所以调用被拒绝。请在支持审批的客户端里打开这个对话后重试。", false)
             else
                 let cfg = (getConfig ()).tools
                 let seconds = max 1 cfg.approvalTimeoutSeconds
                 let approvalId = Guid.NewGuid()
                 let policy = ToolsConfig.policyOf cfg toolId
+
                 let request =
                     ToolApprovalRequested
-                        {| approvalId = approvalId
-                           conversationId = conversationId
-                           generationId = generationId
-                           callId = callId
-                           toolName = toolName
-                           summary = ToolSummary.describe toolName args
-                           arguments = (if isNull args then null else args.DeepClone())
-                           policy = ToolPolicy.toToml policy
-                           expiresInSeconds = seconds |}
+                        {|
+                            approvalId = approvalId
+                            conversationId = conversationId
+                            generationId = generationId
+                            callId = callId
+                            toolName = toolName
+                            summary = ToolSummary.describe toolName args
+                            arguments = (if isNull args then null else args.DeepClone())
+                            policy = ToolPolicy.toToml policy
+                            expiresInSeconds = seconds
+                        |}
+
                 let p =
-                    { approvalId = approvalId
-                      conversationId = conversationId
-                      generationId = generationId
-                      toolId = toolId
-                      request = request
-                      expiresAt = DateTimeOffset.UtcNow.AddSeconds(float seconds)
-                      policy = policy }
+                    {
+                        approvalId = approvalId
+                        conversationId = conversationId
+                        generationId = generationId
+                        toolId = toolId
+                        request = request
+                        expiresAt = DateTimeOffset.UtcNow.AddSeconds(float seconds)
+                        policy = policy
+                    }
+
                 let outcome = desk.Open(approvalId, p)
                 broadcast conversationId request
                 // 人话时长：300 秒说成「5 分钟」
                 let timeoutReason =
                     let span =
-                        if seconds >= 60 && seconds % 60 = 0 then sprintf "%d 分钟" (seconds / 60)
-                        else sprintf "%d 秒" seconds
+                        if seconds >= 60 && seconds % 60 = 0 then
+                            sprintf "%d 分钟" (seconds / 60)
+                        else
+                            sprintf "%d 秒" seconds
+
                     sprintf "审批超时：%s内没有人处理，工具调用已自动拒绝。" span
+
                 use timeoutCts = CancellationTokenSource.CreateLinkedTokenSource ct
                 timeoutCts.CancelAfter(TimeSpan.FromSeconds(float seconds))
+
                 use _reg =
                     timeoutCts.Token.Register(fun () ->
-                        if ct.IsCancellationRequested then this.Resolve(approvalId, ApprovalCancelled) |> ignore
+                        if ct.IsCancellationRequested then
+                            this.Resolve(approvalId, ApprovalCancelled) |> ignore
                         else
-                            this.Resolve(
-                                approvalId,
-                                Denied(
-                                    timeoutReason,
-                                    false))
-                            |> ignore)
+                            this.Resolve(approvalId, Denied(timeoutReason, false)) |> ignore)
+
                 return! outcome
         }

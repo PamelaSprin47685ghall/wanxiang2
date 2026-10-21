@@ -21,23 +21,48 @@ open Wanxiang2.ConnectPane
 open Wanxiang2.DialogsDesk
 open Wanxiang2.DeskTests
 
-let private all (root: Visual) = root.GetVisualDescendants() |> Seq.choose (function :? Control as c -> Some c | _ -> None) |> List.ofSeq
+let private all (root: Visual) =
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? Control as c -> Some c
+        | _ -> None)
+    |> List.ofSeq
+
 let private visibleButton (root: Visual) name =
-    all root |> List.tryFind (fun c -> AutomationProperties.GetName c = name && c.IsEffectivelyVisible && c.Focusable)
+    all root
+    |> List.tryFind (fun c -> AutomationProperties.GetName c = name && c.IsEffectivelyVisible && c.Focusable)
+
 let private invoke (c: Control) =
     let peer = ControlAutomationPeer.CreatePeerForElement c
     (Assert.IsAssignableFrom<IInvokeProvider> peer).Invoke()
     Dispatcher.UIThread.RunJobs()
-let private boxes (root: Visual) = all root |> List.choose (function :? TextBox as b -> Some b | _ -> None)
 
-type private Rig = { overlay: OverlayDesk; desk: DialogsDesk; root: Grid; window: Window }
+let private boxes (root: Visual) =
+    all root
+    |> List.choose (function
+        | :? TextBox as b -> Some b
+        | _ -> None)
+
+type private Rig =
+    {
+        overlay: OverlayDesk
+        desk: DialogsDesk
+        root: Grid
+        window: Window
+    }
 
 let private setup () =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
     let root = Grid()
     let overlay = OverlayDesk(root, Desk.look ())
     let window = Desk.show root 1000.0 800.0
-    { overlay = overlay; desk = DialogsDesk(theme, overlay); root = root; window = window }
+
+    {
+        overlay = overlay
+        desk = DialogsDesk(theme, overlay)
+        root = root
+        window = window
+    }
 
 let private isOpen r = r.overlay.Layer.IsDialogOpen
 
@@ -46,7 +71,18 @@ let ``prompt dialog validates input and handles confirm and cancel`` () =
     Headless.run (fun () ->
         let r = setup ()
         let mutable confirmed = None
-        r.desk.Prompt("重命名", "名称", "旧名", "确定", fun v ok -> confirmed <- Some v; ok true) |> ignore
+
+        r.desk.Prompt(
+            "重命名",
+            "名称",
+            "旧名",
+            "确定",
+            fun v ok ->
+                confirmed <- Some v
+                ok true
+        )
+        |> ignore
+
         Dispatcher.UIThread.RunJobs()
         Assert.True(isOpen r)
         let box = boxes r.root |> List.find (fun b -> b.Text = "旧名")
@@ -80,7 +116,10 @@ let ``confirm and confirmWithFocus dialog trigger callbacks correctly`` () =
         Assert.False confirmed
         Assert.False(isOpen r)
         let mutable confirmedWithFocus = false
-        let pane2 = r.desk.ConfirmWithFocus("重置", "恢复默认。", "确认重置", (fun () -> confirmedWithFocus <- true), true)
+
+        let pane2 =
+            r.desk.ConfirmWithFocus("重置", "恢复默认。", "确认重置", (fun () -> confirmedWithFocus <- true), true)
+
         Dispatcher.UIThread.RunJobs()
         Assert.Same(pane2.ConfirmButton, pane2.InitialFocus)
         invoke (visibleButton r.root "确认重置").Value
@@ -106,7 +145,10 @@ let ``connect dialog validates pairing code and token connections`` () =
         let r = setup ()
         let mutable req: ConnectAsk option = None
         let mutable code: string option = None
-        let handle = r.desk.Connect("ws://127.0.0.1:8765/ws", (fun q -> req <- Some q), (fun c -> code <- Some c))
+
+        let handle =
+            r.desk.Connect("ws://127.0.0.1:8765/ws", (fun q -> req <- Some q), (fun c -> code <- Some c))
+
         Dispatcher.UIThread.RunJobs()
         Assert.True(isOpen r)
         invoke (visibleButton r.root "连接").Value
@@ -164,18 +206,59 @@ let ``sessionSettings dialog validates numeric bounds and updates config`` () =
     Headless.run (fun () ->
         let r = setup ()
         let mutable saved: SessionConfig option = None
+
         let catalog =
             { Catalog.empty with
                 providers =
-                  [ { id = "openai"; label = "OpenAI"; kind = "openai"; baseUrl = "https://api.openai.com"; hasApiKey = true
-                      models = [ "gpt-4o"; "gpt-4o-mini" ]; defaultModel = "gpt-4o"; timeoutSeconds = 60; maxRetries = 2
-                      enabled = true; visionOverrides = Map.empty; visionDetected = Map.empty } ]
-                tools = [ { id = "builtin:fs"; label = "文件系统"; description = "读写本地文件"; source = "builtin"; serverId = None } ] }
+                    [
+                        {
+                            id = "openai"
+                            label = "OpenAI"
+                            kind = "openai"
+                            baseUrl = "https://api.openai.com"
+                            hasApiKey = true
+                            models = [ "gpt-4o"; "gpt-4o-mini" ]
+                            defaultModel = "gpt-4o"
+                            timeoutSeconds = 60
+                            maxRetries = 2
+                            enabled = true
+                            visionOverrides = Map.empty
+                            visionDetected = Map.empty
+                        }
+                    ]
+                tools =
+                    [
+                        {
+                            id = "builtin:fs"
+                            label = "文件系统"
+                            description = "读写本地文件"
+                            source = "builtin"
+                            serverId = None
+                        }
+                    ]
+            }
+
         let current =
             { SessionConfig.empty with
-                provider = "openai"; model = "gpt-4o"; temperature = Some 0.7; topP = Some 0.9
-                maxTokens = Some 2048; thinkingBudget = Some 1000; tools = [ "builtin:fs" ]; instructions = Some "遵循用户指示" }
-        let pane = r.desk.SessionSettings(catalog, current, fun cfg ok -> saved <- Some cfg; ok true)
+                provider = "openai"
+                model = "gpt-4o"
+                temperature = Some 0.7
+                topP = Some 0.9
+                maxTokens = Some 2048
+                thinkingBudget = Some 1000
+                tools = [ "builtin:fs" ]
+                instructions = Some "遵循用户指示"
+            }
+
+        let pane =
+            r.desk.SessionSettings(
+                catalog,
+                current,
+                fun cfg ok ->
+                    saved <- Some cfg
+                    ok true
+            )
+
         Dispatcher.UIThread.RunJobs()
         Assert.True(isOpen r)
         Assert.Equal("0.7", pane.TemperatureBox.Text)
@@ -226,14 +309,45 @@ let ``session parameters reveal validation errors and leave save outside the scr
         let overlay = OverlayDesk(root, Desk.look ())
         let window = Desk.show root 375.0 520.0
         let desk = DialogsDesk(theme, overlay)
+
         let catalog =
             { Catalog.empty with
                 providers =
-                  [ { id = "openai"; label = "OpenAI"; kind = "openai"; baseUrl = "https://api.openai.com"; hasApiKey = true
-                      models = [ "gpt-4o" ]; defaultModel = "gpt-4o"; timeoutSeconds = 60; maxRetries = 2
-                      enabled = true; visionOverrides = Map.empty; visionDetected = Map.empty } ]
-                tools = [ for i in 1..6 -> { id = sprintf "builtin:t%d" i; label = "工具"; description = "说明"; source = "builtin"; serverId = None } ] }
-        let current = { SessionConfig.empty with provider = "openai"; model = "gpt-4o" }
+                    [
+                        {
+                            id = "openai"
+                            label = "OpenAI"
+                            kind = "openai"
+                            baseUrl = "https://api.openai.com"
+                            hasApiKey = true
+                            models = [ "gpt-4o" ]
+                            defaultModel = "gpt-4o"
+                            timeoutSeconds = 60
+                            maxRetries = 2
+                            enabled = true
+                            visionOverrides = Map.empty
+                            visionDetected = Map.empty
+                        }
+                    ]
+                tools =
+                    [
+                        for i in 1..6 ->
+                            {
+                                id = sprintf "builtin:t%d" i
+                                label = "工具"
+                                description = "说明"
+                                source = "builtin"
+                                serverId = None
+                            }
+                    ]
+            }
+
+        let current =
+            { SessionConfig.empty with
+                provider = "openai"
+                model = "gpt-4o"
+            }
+
         let pane = desk.SessionSettings(catalog, current, fun _ ok -> ok true)
         pane.TemperatureBox.Text <- "9"
         Dispatcher.UIThread.RunJobs()

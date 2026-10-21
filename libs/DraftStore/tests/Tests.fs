@@ -9,12 +9,34 @@ open Wanxiang.UI
 let ``a recycled page restores drafts from the browser backend`` () =
     let before = DraftStore()
     let conv = Guid.NewGuid()
+
     let snapshot =
-        { drafts =
-            [ { instanceId = "host-1"; conversationId = Some conv; text = "手机切后台前的草稿"
-                attachments = [ { fileName = "照片.jpg"; mediaType = "image/jpeg"; size = 99L; sha256 = String('c', 64) } ] } ]
-          unsent = [] }
-    let stored = match before.Save snapshot with DraftWrite.Write t -> t | other -> failwithf "应当写入：%A" other
+        {
+            drafts =
+                [
+                    {
+                        instanceId = "host-1"
+                        conversationId = Some conv
+                        text = "手机切后台前的草稿"
+                        attachments =
+                            [
+                                {
+                                    fileName = "照片.jpg"
+                                    mediaType = "image/jpeg"
+                                    size = 99L
+                                    sha256 = String('c', 64)
+                                }
+                            ]
+                    }
+                ]
+            unsent = []
+        }
+
+    let stored =
+        match before.Save snapshot with
+        | DraftWrite.Write t -> t
+        | other -> failwithf "应当写入：%A" other
+
     let after = DraftStore()
     let loaded = after.Loaded(Some stored)
     Assert.Equal("手机切后台前的草稿", (Assert.Single loaded.drafts).text)
@@ -26,10 +48,35 @@ let ``a recycled page restores drafts from the browser backend`` () =
 [<Fact>]
 let ``after the host clears storage the same snapshot is written again`` () =
     let store = DraftStore()
-    let snapshot = { drafts = [ { instanceId = "h"; conversationId = None; text = "x"; attachments = [] } ]; unsent = [] }
-    Assert.True(match store.Save snapshot with DraftWrite.Write _ -> true | _ -> false)
+
+    let snapshot =
+        {
+            drafts =
+                [
+                    {
+                        instanceId = "h"
+                        conversationId = None
+                        text = "x"
+                        attachments = []
+                    }
+                ]
+            unsent = []
+        }
+
+    Assert.True(
+        match store.Save snapshot with
+        | DraftWrite.Write _ -> true
+        | _ -> false
+    )
+
     store.Cleared()
-    Assert.True(match store.Save snapshot with DraftWrite.Write _ -> true | _ -> false)
+
+    Assert.True(
+        match store.Save snapshot with
+        | DraftWrite.Write _ -> true
+        | _ -> false
+    )
+
     Assert.Equal(DraftWrite.Delete, store.Save DraftSnapshot.empty)
     Assert.Equal(DraftWrite.Unchanged, store.Save DraftSnapshot.empty)
 
@@ -37,13 +84,24 @@ let ``after the host clears storage the same snapshot is written again`` () =
 [<Fact>]
 let ``conversations that vanish from the list count as deleted unless a send is in flight`` () =
     let kept, gone, sending = Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()
-    let deleted = DraftPolicy.deletedConversations (Set.ofList [ kept ]) (Set.ofList [ kept; gone; sending ]) (Set.ofList [ sending ])
+
+    let deleted =
+        DraftPolicy.deletedConversations
+            (Set.ofList [ kept ])
+            (Set.ofList [ kept; gone; sending ])
+            (Set.ofList [ sending ])
+
     Assert.Equal<Guid list>([ gone ], Set.toList deleted)
 
 
 [<Fact>]
 let ``restore notice: unsent wins, attachments ask for reselect, nothing restored is silent`` () =
-    let s = { drafts = [ RestoreRender.dr "h" None "" [ RestoreRender.att ] ]; unsent = [] }
+    let s =
+        {
+            drafts = [ RestoreRender.dr "h" None "" [ RestoreRender.att ] ]
+            unsent = []
+        }
+
     Assert.Equal(Some "已恢复上次未发送的草稿。附件需要重新选择。", DraftRestore.restoreNotice s "h" 0)
     Assert.Equal(Some "已恢复上次未发送的内容；未确认的消息可重试，不会重复保存。附件需要重新选择。", DraftRestore.restoreNotice s "h" 1)
     Assert.Equal(None, DraftRestore.restoreNotice s "other" 0)
@@ -52,7 +110,9 @@ let ``restore notice: unsent wins, attachments ask for reselect, nothing restore
 
 [<Fact>]
 let ``file draft backend round-trips, clears, and tolerates missing files`` () =
-    let dir = Path.Combine(Path.GetTempPath(), "wx2-draft-" + Guid.NewGuid().ToString "N")
+    let dir =
+        Path.Combine(Path.GetTempPath(), "wx2-draft-" + Guid.NewGuid().ToString "N")
+
     let path = Path.Combine(dir, "drafts.json")
     let backend = FileDraftBackend(path) :> IDraftBackend
     Assert.True((backend.Load().Result |> Option.isNone))

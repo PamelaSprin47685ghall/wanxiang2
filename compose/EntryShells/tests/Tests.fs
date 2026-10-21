@@ -30,41 +30,47 @@ module EffectSinkTests =
         let executionLog = ResizeArray<string>()
 
         let sink: EffectSink =
-            { Focus = fun target -> executionLog.Add $"Focus:{target}"
-              ScrollChat = fun cmd -> executionLog.Add $"Scroll:{cmd}"
-              SendWire = fun _ -> executionLog.Add "SendWire"
-              After = fun (ms, _) -> executionLog.Add $"After:{ms}"
-              Every = fun (h, ms) -> executionLog.Add $"Every:{h}:{ms}"
-              StopEvery = fun h -> executionLog.Add $"StopEvery:{h}"
-              ShowToast = fun (text, tone) -> executionLog.Add $"Toast:{text}:{tone}"
-              Clipboard = fun text -> executionLog.Add $"Clipboard:{text}"
-              OpenLink = fun url -> executionLog.Add $"OpenLink:{url}"
-              SaveDownload = fun (f, _) -> executionLog.Add $"SaveDownload:{f}"
-              ApplyTheme = fun theme -> executionLog.Add $"ApplyTheme:{theme}"
-              SetWindowBusy = fun b -> executionLog.Add $"Busy:{b}"
-              CloseWindow = fun () -> executionLog.Add "CloseWindow"
-              PrefsSave = fun _ -> executionLog.Add "PrefsSave"
-              PrefsLoad = fun () -> executionLog.Add "PrefsLoad"
-              DraftWrite = fun _ -> executionLog.Add "DraftWrite"
-              BrowserHook = fun h -> executionLog.Add $"BrowserHook:{h}" }
+            {
+                Focus = fun target -> executionLog.Add $"Focus:{target}"
+                ScrollChat = fun cmd -> executionLog.Add $"Scroll:{cmd}"
+                SendWire = fun _ -> executionLog.Add "SendWire"
+                After = fun (ms, _) -> executionLog.Add $"After:{ms}"
+                Every = fun (h, ms) -> executionLog.Add $"Every:{h}:{ms}"
+                StopEvery = fun h -> executionLog.Add $"StopEvery:{h}"
+                ShowToast = fun (text, tone) -> executionLog.Add $"Toast:{text}:{tone}"
+                Clipboard = fun text -> executionLog.Add $"Clipboard:{text}"
+                OpenLink = fun url -> executionLog.Add $"OpenLink:{url}"
+                SaveDownload = fun (f, _) -> executionLog.Add $"SaveDownload:{f}"
+                ApplyTheme = fun theme -> executionLog.Add $"ApplyTheme:{theme}"
+                SetWindowBusy = fun b -> executionLog.Add $"Busy:{b}"
+                CloseWindow = fun () -> executionLog.Add "CloseWindow"
+                PrefsSave = fun _ -> executionLog.Add "PrefsSave"
+                PrefsLoad = fun () -> executionLog.Add "PrefsLoad"
+                DraftWrite = fun _ -> executionLog.Add "DraftWrite"
+                BrowserHook = fun h -> executionLog.Add $"BrowserHook:{h}"
+            }
 
         let effects =
-            [ Effect.ScrollChat ScrollCommand.PreparePrepend
-              Effect.Focus FocusTarget.ComposerInput
-              Effect.ShowToast("Hello", Wanxiang2.WorkspaceState.ToastTone.Success)
-              Effect.Clipboard "CopiedText"
-              Effect.ScrollChat ScrollCommand.RestorePrepend
-              Effect.CloseWindow ]
+            [
+                Effect.ScrollChat ScrollCommand.PreparePrepend
+                Effect.Focus FocusTarget.ComposerInput
+                Effect.ShowToast("Hello", Wanxiang2.WorkspaceState.ToastTone.Success)
+                Effect.Clipboard "CopiedText"
+                Effect.ScrollChat ScrollCommand.RestorePrepend
+                Effect.CloseWindow
+            ]
 
         sink.RunSync effects
 
         let expected =
-            [ "Scroll:PreparePrepend"
-              "Focus:ComposerInput"
-              "Toast:Hello:Success"
-              "Clipboard:CopiedText"
-              "Scroll:RestorePrepend"
-              "CloseWindow" ]
+            [
+                "Scroll:PreparePrepend"
+                "Focus:ComposerInput"
+                "Toast:Hello:Success"
+                "Clipboard:CopiedText"
+                "Scroll:RestorePrepend"
+                "CloseWindow"
+            ]
 
         Assert.Equal<string list>(expected, List.ofSeq executionLog)
 
@@ -99,8 +105,17 @@ module EmbeddedFontTests =
             // 「中」「文」「万」「象」——界面上无处不在的字。
             for cp in [ 0x4E2D; 0x6587; 0x4E07; 0x8C61 ] do
                 Assert.True(
-                    FontManager.Current.TryMatchCharacter(cp, FontStyle.Normal, FontWeight.Normal, FontStretch.Normal, family, null, &typeface),
-                    sprintf "内嵌字体缺字 U+%04X" cp))
+                    FontManager.Current.TryMatchCharacter(
+                        cp,
+                        FontStyle.Normal,
+                        FontWeight.Normal,
+                        FontStretch.Normal,
+                        family,
+                        null,
+                        &typeface
+                    ),
+                    sprintf "内嵌字体缺字 U+%04X" cp
+                ))
 
     [<Fact>]
     let ``等宽字体把正文字体列为回落（否则中文变豆腐块）`` () =

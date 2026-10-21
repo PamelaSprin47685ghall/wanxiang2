@@ -29,7 +29,8 @@ module KatexHtml =
             match Int32.TryParse(name.Substring prefix.Length) with
             | true, n when n >= 1 && n <= sizeScale.Length -> Some(n - 1)
             | _ -> None
-        else None
+        else
+            None
 
     /// 一组 class 里蕴含的字号倍率。
     ///
@@ -40,6 +41,7 @@ module KatexHtml =
     let fontScaleOf (classes: string list) =
         let mutable from = None
         let mutable target = None
+
         for cls in classes do
             match sizeIndexOf cls "reset-size" with
             | Some i -> from <- Some i
@@ -47,6 +49,7 @@ module KatexHtml =
                 match sizeIndexOf cls "size" with
                 | Some i -> target <- Some i
                 | None -> ()
+
         match from, target with
         | Some f, Some t -> sizeScale[t] / sizeScale[f]
         | _ -> 1.0
@@ -59,7 +62,11 @@ module KatexHtml =
             | at ->
                 let key = decl.Substring(0, at).Trim().ToLowerInvariant()
                 let value = decl.Substring(at + 1).Trim()
-                if key.Length = 0 || value.Length = 0 then None else Some(key, value))
+
+                if key.Length = 0 || value.Length = 0 then
+                    None
+                else
+                    Some(key, value))
         |> Map.ofArray
 
     /// 取属性值。SVG 部分 KaTeX 用的是**单引号**（`d='M95,702…'`），
@@ -67,13 +74,16 @@ module KatexHtml =
     let private attribute (tag: string) (name: string) =
         let pick (quote: char) =
             let marker = $"{name}={quote}"
+
             match tag.IndexOf(marker, StringComparison.Ordinal) with
             | -1 -> None
             | at ->
                 let from = at + marker.Length
+
                 match tag.IndexOf(quote, from) with
                 | -1 -> None
                 | until -> Some(tag.Substring(from, until - from))
+
         match pick '"' with
         | Some value -> Some value
         | None -> pick '\''
@@ -84,10 +94,15 @@ module KatexHtml =
         | None -> None
         | Some raw ->
             let trimmed = raw.Trim()
+
             let number =
-                if trimmed.EndsWith "em" then trimmed.Substring(0, trimmed.Length - 2)
-                elif trimmed.EndsWith "px" then trimmed.Substring(0, trimmed.Length - 2)
-                else trimmed
+                if trimmed.EndsWith "em" then
+                    trimmed.Substring(0, trimmed.Length - 2)
+                elif trimmed.EndsWith "px" then
+                    trimmed.Substring(0, trimmed.Length - 2)
+                else
+                    trimmed
+
             match Double.TryParse(number, Globalization.CultureInfo.InvariantCulture) with
             | true, value -> Some value
             | _ -> None
@@ -99,12 +114,14 @@ module KatexHtml =
         let stack = Stack<string * string list * Map<string, string> * ResizeArray<KNode>>()
 
         let emit (node: KNode) =
-            if stack.Count = 0 then roots.Add node
+            if stack.Count = 0 then
+                roots.Add node
             else
                 let (_, _, _, siblings) = stack.Peek()
                 siblings.Add node
 
         let mutable i = 0
+
         while i < html.Length do
             if html[i] = '<' then
                 match html.IndexOf('>', i) with
@@ -113,22 +130,32 @@ module KatexHtml =
                     i <- html.Length
                 | close ->
                     let raw = html.Substring(i + 1, close - i - 1)
+
                     if raw.StartsWith "/" then
                         if stack.Count > 0 then
                             let (tag, classes, style, children) = stack.Pop()
                             emit (KElement(tag, classes, style, List.ofSeq children))
                     else
                         let selfClosing = raw.EndsWith "/"
-                        let body = if selfClosing then raw.Substring(0, raw.Length - 1) else raw
+
+                        let body =
+                            if selfClosing then
+                                raw.Substring(0, raw.Length - 1)
+                            else
+                                raw
+
                         let tag =
                             let cut = body.IndexOfAny [| ' '; '\t'; '\n' |]
                             (if cut < 0 then body else body.Substring(0, cut)).ToLowerInvariant()
+
                         let classes =
                             attribute body "class"
                             |> Option.map (fun v ->
                                 v.Split([| ' '; '\t' |], StringSplitOptions.RemoveEmptyEntries) |> List.ofArray)
                             |> Option.defaultValue []
-                        let style = attribute body "style" |> Option.map parseStyle |> Option.defaultValue Map.empty
+
+                        let style =
+                            attribute body "style" |> Option.map parseStyle |> Option.defaultValue Map.empty
                         // SVG 的尺寸走**属性**而不是 CSS；并进 style 里，
                         // 下游只需要认一套取值方式
                         let style =
@@ -144,27 +171,35 @@ module KatexHtml =
                             match attribute body "d" with
                             | Some d -> style.Add("-d", d)
                             | None -> style
+
                         let style =
                             match attribute body "viewBox" with
                             | Some v -> style.Add("-viewbox", v)
                             | None -> style
+
                         if selfClosing || tag = "path" || tag = "br" then
                             emit (KElement(tag, classes, style, []))
                         else
                             stack.Push(tag, classes, style, ResizeArray())
+
                     i <- close + 1
             else
                 let next = html.IndexOf('<', i)
                 let until = if next < 0 then html.Length else next
                 let text = html.Substring(i, until - i)
-                if text.Length > 0 then emit (KText(WebUtility.HtmlDecode text))
+
+                if text.Length > 0 then
+                    emit (KText(WebUtility.HtmlDecode text))
+
                 i <- until
 
         // 标签没闭合也要把已收集的内容交出去，绝不整段丢弃
         while stack.Count > 0 do
             let (tag, classes, style, children) = stack.Pop()
             let node = KElement(tag, classes, style, List.ofSeq children)
-            if stack.Count = 0 then roots.Add node
+
+            if stack.Count = 0 then
+                roots.Add node
             else
                 let (_, _, _, siblings) = stack.Peek()
                 siblings.Add node
@@ -179,8 +214,11 @@ module KatexHtml =
             match node with
             | KText _ -> None
             | KElement(_, classes, _, children) ->
-                if hasClass "katex-html" classes then Some node
-                else children |> List.tryPick search
+                if hasClass "katex-html" classes then
+                    Some node
+                else
+                    children |> List.tryPick search
+
         nodes |> List.tryPick search
 
     /// 是否展示式（`$$…$$`）。展示式要独占一行并居中。
@@ -188,6 +226,6 @@ module KatexHtml =
         let rec search (node: KNode) =
             match node with
             | KText _ -> false
-            | KElement(_, classes, _, children) ->
-                hasClass "katex-display" classes || children |> List.exists search
+            | KElement(_, classes, _, children) -> hasClass "katex-display" classes || children |> List.exists search
+
         nodes |> List.exists search

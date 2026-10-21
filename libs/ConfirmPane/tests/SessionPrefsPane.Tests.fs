@@ -12,9 +12,29 @@ open Wanxiang2.SessionPrefsPane
 open Wanxiang2.SessionPrefsPane.Tests.Probe
 
 let private init =
-    { Instructions = "简洁"; Temperature = "0.7"; TopP = ""; MaxTokens = ""; ThinkingBudget = ""
-      Tools = [ { Id = "time"; Label = "当前时间"; Source = "内置"; Enabled = true }; { Id = "srv_x"; Label = "X"; Source = "srv"; Enabled = false } ]
-      Customized = true }
+    {
+        Instructions = "简洁"
+        Temperature = "0.7"
+        TopP = ""
+        MaxTokens = ""
+        ThinkingBudget = ""
+        Tools =
+            [
+                {
+                    Id = "time"
+                    Label = "当前时间"
+                    Source = "内置"
+                    Enabled = true
+                }
+                {
+                    Id = "srv_x"
+                    Label = "X"
+                    Source = "srv"
+                    Enabled = false
+                }
+            ]
+        Customized = true
+    }
 
 let private make () =
     let p = SessionPrefsPane(Button(Content = "OpenAI · gpt-4o"), init, fun _ -> None)

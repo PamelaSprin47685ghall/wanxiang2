@@ -9,13 +9,15 @@ open Wanxiang.UI
 let ``AttachmentDraftController begin draft, complete and remove lifecycle`` () =
     let controller = AttachmentDraftController()
     let attId = Guid.NewGuid()
-    let upload: AttachmentUpload = {
-        attachmentId = attId
-        fileName = "file1.txt"
-        mediaType = "text/plain"
-        size = 100L
-        sha256 = "dummy-sha256"
-    }
+
+    let upload: AttachmentUpload =
+        {
+            attachmentId = attId
+            fileName = "file1.txt"
+            mediaType = "text/plain"
+            size = 100L
+            sha256 = "dummy-sha256"
+        }
 
     controller.Begin upload |> ignore
 
@@ -36,12 +38,15 @@ let ``AttachmentDraftController begin draft, complete and remove lifecycle`` () 
 let ``AttachmentDraftController upload and draft state transitions`` () =
     let controller = AttachmentDraftController()
     let attId = Guid.NewGuid()
+
     let upload: AttachmentUpload =
-        { attachmentId = attId
-          fileName = "test.png"
-          mediaType = "image/png"
-          size = 1024L
-          sha256 = "dummy-sha256" }
+        {
+            attachmentId = attId
+            fileName = "test.png"
+            mediaType = "image/png"
+            size = 1024L
+            sha256 = "dummy-sha256"
+        }
 
     // 1. Begin
     controller.Begin upload |> ignore
@@ -82,7 +87,17 @@ let ``drafts are keyed per host and conversation and moving keeps the owner key 
     Assert.Equal("", (drafts.Get("h1", Some conv)).text)
     // 断连时上传中的翻成失败残留，发送不被永远楔住
     let c = (drafts.Get("h1", None)).attachments
-    c.Begin { attachmentId = Guid.NewGuid(); fileName = "a"; mediaType = "text/plain"; size = 1L; sha256 = "s" } |> ignore
+
+    c.Begin
+        {
+            attachmentId = Guid.NewGuid()
+            fileName = "a"
+            mediaType = "text/plain"
+            size = 1L
+            sha256 = "s"
+        }
+    |> ignore
+
     Assert.Equal(1, c.MarkAllUploadingAsFailed().Length)
     Assert.True c.HasFailed
     Assert.True(c.TryConsumeReady().IsNone)

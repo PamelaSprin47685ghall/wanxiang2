@@ -16,32 +16,41 @@ type PromptHistory(capacity: int) =
 
     /// 上键：单行时光标在行首或输入为空、多行时光标在最开头才召回；召回中继续往更早翻。
     member _.Up(currentText: string, caret: int, hasSelection: bool) : string option =
-        if hasSelection || entries.Count = 0 then None
+        if hasSelection || entries.Count = 0 then
+            None
         else
             let text = if isNull currentText then "" else currentText
             let isMultiline = text.IndexOfAny([| '\n'; '\r' |]) >= 0
+
             let hasNewlineBeforeCaret =
                 let idx = Math.Clamp(caret, 0, text.Length)
                 text.Substring(0, idx).IndexOfAny([| '\n'; '\r' |]) >= 0
+
             let canRecall =
                 if isMultiline then not hasNewlineBeforeCaret && caret = 0
                 elif index <> -1 then true
                 else text.Length = 0 || caret = 0
-            if not canRecall then None
+
+            if not canRecall then
+                None
             else
                 if index = -1 then
                     draft <- text
                     index <- entries.Count - 1
                 elif index > 0 then
                     index <- index - 1
+
                 Some entries.[index]
 
     /// 下键：召回中且光标在末尾才处理；翻过最新一条就回到半截草稿。
     member _.Down(currentText: string, caret: int, hasSelection: bool) : string option =
-        if hasSelection || index = -1 then None
+        if hasSelection || index = -1 then
+            None
         else
             let text = if isNull currentText then "" else currentText
-            if caret < text.Length then None
+
+            if caret < text.Length then
+                None
             elif index < entries.Count - 1 then
                 index <- index + 1
                 Some entries.[index]
@@ -51,7 +60,8 @@ type PromptHistory(capacity: int) =
 
     /// Esc：召回中则退回半截草稿。
     member _.Escape() : string option =
-        if index = -1 then None
+        if index = -1 then
+            None
         else
             index <- -1
             Some draft
@@ -60,9 +70,13 @@ type PromptHistory(capacity: int) =
     member _.Record(text: string) =
         if not (String.IsNullOrWhiteSpace text) then
             let isDuplicate = entries.Count > 0 && entries.[entries.Count - 1] = text
+
             if not isDuplicate then
                 entries.Add text
-                if entries.Count > capacity then entries.RemoveAt 0
+
+                if entries.Count > capacity then
+                    entries.RemoveAt 0
+
         index <- -1
         draft <- ""
 

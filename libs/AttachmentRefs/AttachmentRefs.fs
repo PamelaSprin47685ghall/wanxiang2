@@ -10,28 +10,56 @@ module AttachmentRefs =
     /// 附件对象内部不再往下找。
     let ofPayload (payload: JsonNode) : (string * string * string * int64) list =
         let results = System.Collections.Generic.List<string * string * string * int64>()
+
         let rec walk (node: JsonNode) =
             match node with
             | null -> ()
             | :? JsonArray as a ->
-                for item in a do walk item
+                for item in a do
+                    walk item
             | :? JsonObject as o ->
                 let mutable t: JsonNode = null
-                if o.TryGetPropertyValue("type", &t) && t <> null && t.GetValueKind() = JsonValueKind.String && t.GetValue<string>() = "attachment" then
+
+                if
+                    o.TryGetPropertyValue("type", &t)
+                    && t <> null
+                    && t.GetValueKind() = JsonValueKind.String
+                    && t.GetValue<string>() = "attachment"
+                then
                     let getStr k =
                         let mutable n: JsonNode = null
-                        if o.TryGetPropertyValue(k, &n) && n <> null && n.GetValueKind() = JsonValueKind.String then n.GetValue<string>() else ""
+
+                        if
+                            o.TryGetPropertyValue(k, &n)
+                            && n <> null
+                            && n.GetValueKind() = JsonValueKind.String
+                        then
+                            n.GetValue<string>()
+                        else
+                            ""
+
                     let size =
                         let mutable n: JsonNode = null
-                        if o.TryGetPropertyValue("size", &n) && n <> null && n.GetValueKind() = JsonValueKind.Number then
+
+                        if
+                            o.TryGetPropertyValue("size", &n)
+                            && n <> null
+                            && n.GetValueKind() = JsonValueKind.Number
+                        then
                             match n with
                             | :? JsonValue as v ->
-                                match v.TryGetValue<int64>() with true, val64 -> val64 | _ -> 0L
+                                match v.TryGetValue<int64>() with
+                                | true, val64 -> val64
+                                | _ -> 0L
                             | _ -> 0L
-                        else 0L
+                        else
+                            0L
+
                     results.Add(getStr "sha256", getStr "mediaType", getStr "fileName", size)
                 else
-                    for kv in o do walk kv.Value
+                    for kv in o do
+                        walk kv.Value
             | _ -> ()
+
         walk payload
         List.ofSeq results

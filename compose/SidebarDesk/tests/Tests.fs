@@ -20,29 +20,62 @@ open Wanxiang2.SidebarDesk
 open Wanxiang2.DeskTests
 open Wanxiang2.WorkspaceState
 
-let private all (root: Visual) = root.GetVisualDescendants() |> Seq.choose (function :? Control as c -> Some c | _ -> None) |> List.ofSeq
-let private byName (root: Visual) name = all root |> List.tryFind (fun c -> AutomationProperties.GetName c = name)
+let private all (root: Visual) =
+    root.GetVisualDescendants()
+    |> Seq.choose (function
+        | :? Control as c -> Some c
+        | _ -> None)
+    |> List.ofSeq
+
+let private byName (root: Visual) name =
+    all root |> List.tryFind (fun c -> AutomationProperties.GetName c = name)
+
 let private pump () = Dispatcher.UIThread.RunJobs()
+
 let private invoke (c: Control) =
     match c with
-    | :? Button as b ->
-        b.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, b))
+    | :? Button as b -> b.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, b))
     | :? Border as border ->
         border.Focus() |> ignore
-        border.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.None, Source = border))
+
+        border.RaiseEvent(
+            KeyEventArgs(
+                RoutedEvent = InputElement.KeyDownEvent,
+                Key = Key.Enter,
+                KeyModifiers = KeyModifiers.None,
+                Source = border
+            )
+        )
     | _ ->
         let peer = ControlAutomationPeer.CreatePeerForElement c
         (Assert.IsAssignableFrom<IInvokeProvider> peer).Invoke()
+
     pump ()
+
 let private press (c: Control) (k: Key) (mods: KeyModifiers) =
     c.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = k, KeyModifiers = mods, Source = c))
     pump ()
+
 let private key c k = press c k KeyModifiers.None
 
 let private now = DateTimeOffset.Now
+
 let private conv (title: string) =
-    { id = Guid.NewGuid(); title = title; preview = "预览 " + title; running = false; pinned = false; archived = false
-      createdAt = now; updatedAt = now; messageCount = 2; isFork = false; providerId = "p"; model = "m"; lastCommitId = 0UL }
+    {
+        id = Guid.NewGuid()
+        title = title
+        preview = "预览 " + title
+        running = false
+        pinned = false
+        archived = false
+        createdAt = now
+        updatedAt = now
+        messageCount = 2
+        isFork = false
+        providerId = "p"
+        model = "m"
+        lastCommitId = 0UL
+    }
 
 type private Log() =
     member val Items = ResizeArray<string>()
@@ -54,8 +87,15 @@ type private ModelCell() =
     member _.Value = v
     member _.Set(m) = v <- m
 
-type private Rig = { desk: SidebarDesk; log: Log; overlay: OverlayDesk; window: Window; root: Grid
-                     model: ModelCell }
+type private Rig =
+    {
+        desk: SidebarDesk
+        log: Log
+        overlay: OverlayDesk
+        window: Window
+        root: Grid
+        model: ModelCell
+    }
 
 let private setupWith (allPinned: Guid list -> bool) =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
@@ -65,90 +105,168 @@ let private setupWith (allPinned: Guid list -> bool) =
     // 状态树：侧栏多选的唯一事实。多选动作走这里，再由投影回到侧栏。
     let model = ModelCell()
     let rig = ref Unchecked.defaultof<Rig>
+
     let dispatch (m: SidebarUserMsg) =
-        let m', _ = Workspace.update DateTimeOffset.UtcNow (Msg.User (UserMsg.Sidebar m)) model.Value
+        let m', _ =
+            Workspace.update DateTimeOffset.UtcNow (Msg.User(UserMsg.Sidebar m)) model.Value
+
         model.Set m'
         // 用例既调动作也调状态，两者要看到同一份投影。
         let vs = (Workspace.project m').Sidebar
-        let vs = { vs with Host = { vs.Host with Connected = true; StatusText = "已连接" } }
+
+        let vs =
+            { vs with
+                Host =
+                    { vs.Host with
+                        Connected = true
+                        StatusText = "已连接"
+                    }
+            }
+
         rig.Value.desk.Render vs
         pump ()
+
     let actions =
-        { newConversation = (fun () -> log.Add "new")
-          openConversation = (fun id -> log.Add(sprintf "open %O" id))
-          renameConversation = (fun s -> log.Add("rename " + s.title))
-          deleteConversation = (fun s -> log.Add("delete " + s.title))
-          setPinned = (fun s v -> log.Add(sprintf "pin %s %b" s.title v))
-          setArchived = (fun s v -> log.Add(sprintf "archive %s %b" s.title v))
-          selectionAllPinned = allPinned
-          setPinnedMany = (fun ids v -> for id in ids do log.Add(sprintf "pinMany %O %b" id v))
-          setArchivedMany = (fun ids v -> for id in ids do log.Add(sprintf "archiveMany %O %b" id v))
-          deleteMany = (fun ids -> log.Add(sprintf "deleteMany %d" ids.Length))
-          enterSelection = (fun id -> dispatch (SidebarUserMsg.EnterBatch id))
-          toggleSelected = (fun id -> dispatch (SidebarUserMsg.ToggleBatch id))
-          exitSelection = (fun () -> dispatch (SidebarUserMsg.ExitBatch))
-          toggleSelectAllVisible = (fun ids -> dispatch (SidebarUserMsg.ToggleBatchAllVisible ids))
-          duplicateAsFork = (fun s -> log.Add("fork " + s.title))
-          exportConversation = (fun s -> log.Add("export " + s.title))
-          openSettings = (fun () -> log.Add "settings")
-          reconnect = (fun () -> log.Add "reconnect")
-          toggleArchivedVisibility = (fun () -> log.Add "toggleArchived")
-          closeNavigation = (fun () -> log.Add "close") }
-    let desk = SidebarDesk(theme, overlay, actions, fun s -> Border(Width = s, Height = s) :> Control)
+        {
+            newConversation = (fun () -> log.Add "new")
+            openConversation = (fun id -> log.Add(sprintf "open %O" id))
+            renameConversation = (fun s -> log.Add("rename " + s.title))
+            deleteConversation = (fun s -> log.Add("delete " + s.title))
+            setPinned = (fun s v -> log.Add(sprintf "pin %s %b" s.title v))
+            setArchived = (fun s v -> log.Add(sprintf "archive %s %b" s.title v))
+            selectionAllPinned = allPinned
+            setPinnedMany =
+                (fun ids v ->
+                    for id in ids do
+                        log.Add(sprintf "pinMany %O %b" id v))
+            setArchivedMany =
+                (fun ids v ->
+                    for id in ids do
+                        log.Add(sprintf "archiveMany %O %b" id v))
+            deleteMany = (fun ids -> log.Add(sprintf "deleteMany %d" ids.Length))
+            enterSelection = (fun id -> dispatch (SidebarUserMsg.EnterBatch id))
+            toggleSelected = (fun id -> dispatch (SidebarUserMsg.ToggleBatch id))
+            exitSelection = (fun () -> dispatch (SidebarUserMsg.ExitBatch))
+            toggleSelectAllVisible = (fun ids -> dispatch (SidebarUserMsg.ToggleBatchAllVisible ids))
+            duplicateAsFork = (fun s -> log.Add("fork " + s.title))
+            exportConversation = (fun s -> log.Add("export " + s.title))
+            openSettings = (fun () -> log.Add "settings")
+            reconnect = (fun () -> log.Add "reconnect")
+            toggleArchivedVisibility = (fun () -> log.Add "toggleArchived")
+            closeNavigation = (fun () -> log.Add "close")
+        }
+
+    let desk =
+        SidebarDesk(theme, overlay, actions, fun s -> Border(Width = s, Height = s) :> Control)
+
     root.Children.Insert(0, desk.View)
     let window = Desk.show root 360.0 800.0
-    let emptySidebarVS () = (Workspace.project (Workspace.init ())).Sidebar
-    desk.Render({ emptySidebarVS () with Host = { (emptySidebarVS ()).Host with Connected = true; StatusText = "已连接" } })
-    let r = { desk = desk; overlay = overlay; log = log; window = window; root = root; model = model }
+
+    let emptySidebarVS () =
+        (Workspace.project (Workspace.init ())).Sidebar
+
+    desk.Render(
+        { emptySidebarVS () with
+            Host =
+                { (emptySidebarVS ()).Host with
+                    Connected = true
+                    StatusText = "已连接"
+                }
+        }
+    )
+
+    let r =
+        {
+            desk = desk
+            overlay = overlay
+            log = log
+            window = window
+            root = root
+            model = model
+        }
+
     rig := r
     r
 
 let private emptySidebarVS () =
-    let vs = (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Sidebar
-    { vs with Host = { vs.Host with Connected = true; StatusText = "已连接" } }
+    let vs =
+        (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Sidebar
+
+    { vs with
+        Host =
+            { vs.Host with
+                Connected = true
+                StatusText = "已连接"
+            }
+    }
 
 let private setup () = setupWith (fun _ -> false)
 
 /// SidebarRowVS 是侧栏唯一输入：测试直接构造投影行，不再走旁路参数。
 let private rowVS (s: ConversationSummary) : Wanxiang2.WorkspaceState.SidebarRowVS =
-    { Id = s.id
-      Title = s.title
-      Preview = s.preview
-      Pinned = s.pinned
-      Archived = s.archived
-      Running = s.running
-      MessageCount = s.messageCount
-      CreatedAt = s.createdAt
-      UpdatedAt = s.updatedAt
-      IsFork = s.isFork
-      ProviderId = s.providerId
-      Model = s.model
-      LastCommitId = s.lastCommitId
-      Busy = false }
+    {
+        Id = s.id
+        Title = s.title
+        Preview = s.preview
+        Pinned = s.pinned
+        Archived = s.archived
+        Running = s.running
+        MessageCount = s.messageCount
+        CreatedAt = s.createdAt
+        UpdatedAt = s.updatedAt
+        IsFork = s.isFork
+        ProviderId = s.providerId
+        Model = s.model
+        LastCommitId = s.lastCommitId
+        Busy = false
+    }
 
 /// 把会话放进**状态树**（`Summaries`），再由投影渲染侧栏。
 /// 行是唯一输入，测试不再直接构造 `SidebarRowVS`。
 let private load r (items: ConversationSummary list) =
     r.model.Set { r.model.Value with Summaries = items }
     let vs = (Workspace.project r.model.Value).Sidebar
-    let vs = { vs with Host = { vs.Host with Connected = true; StatusText = "已连接" } }
+
+    let vs =
+        { vs with
+            Host =
+                { vs.Host with
+                    Connected = true
+                    StatusText = "已连接"
+                }
+        }
+
     r.desk.Render vs
     pump ()
     r.window.UpdateLayout()
     pump ()
 
 let private row r (s: ConversationSummary) = (r.desk.Rows.RowHost s.id).Value
-let private focused r = TopLevel.GetTopLevel(r.desk.View).FocusManager.GetFocusedElement()
-let private runs (t: TextBlock) = t.Inlines |> Seq.choose (function :? Run as x -> Some x | _ -> None) |> List.ofSeq
+
+let private focused r =
+    TopLevel.GetTopLevel(r.desk.View).FocusManager.GetFocusedElement()
+
+let private runs (t: TextBlock) =
+    t.Inlines
+    |> Seq.choose (function
+        | :? Run as x -> Some x
+        | _ -> None)
+    |> List.ofSeq
+
 let private allText (root: Control) =
     all root
     |> List.map (function
-        | :? TextBlock as t when not (isNull t.Inlines) && t.Inlines.Count > 0 -> String.Join("", runs t |> List.map (fun x -> x.Text))
+        | :? TextBlock as t when not (isNull t.Inlines) && t.Inlines.Count > 0 ->
+            String.Join("", runs t |> List.map (fun x -> x.Text))
         | :? TextBlock as t -> t.Text
         | _ -> "")
     |> fun xs -> String.Join("\n", xs)
+
 let private highlighted (root: Control) =
-    all root |> List.collect (function :? TextBlock as t when not (isNull t.Inlines) -> runs t | _ -> [])
+    all root
+    |> List.collect (function
+        | :? TextBlock as t when not (isNull t.Inlines) -> runs t
+        | _ -> [])
     |> List.filter (fun x -> x.IsSet TextElement.ForegroundProperty)
 
 // ---- CraftsmanshipPolishTests ----
@@ -161,8 +279,15 @@ let ``Sidebar conversation row right click invokes context menu`` () =
         load r [ a ]
         press (row r a) Key.F10 KeyModifiers.Shift
         Assert.True(r.overlay.Layer.IsPopupOpen)
-        let names = all r.overlay.Layer.PopupCard |> List.choose (function :? TextBlock as t -> Some t.Text | _ -> None)
-        for n in [ "重命名"; "多选"; "置顶"; "归档"; "从此分叉"; "导出（Markdown / JSON）…"; "删除" ] do Assert.Contains(n, names))
+
+        let names =
+            all r.overlay.Layer.PopupCard
+            |> List.choose (function
+                | :? TextBlock as t -> Some t.Text
+                | _ -> None)
+
+        for n in [ "重命名"; "多选"; "置顶"; "归档"; "从此分叉"; "导出（Markdown / JSON）…"; "删除" ] do
+            Assert.Contains(n, names))
 
 [<Fact>]
 let ``Sidebar search clear button has accessible tooltip and automation properties`` () =
@@ -194,7 +319,13 @@ let ``Sidebar search navigation moves focus and handles escape`` () =
         pump ()
         key r.desk.Search.Box Key.Escape
         Assert.Equal("", r.desk.Search.Text)
-        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a; rowVS b ]; ActiveId = Some b.id }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = [ rowVS a; rowVS b ]
+                ActiveId = Some b.id
+            }
+
         key r.desk.Search.Box Key.Escape
         Assert.Same(row r b, focused r))
 
@@ -208,7 +339,12 @@ let ``entering selection mode turns row clicks into selection toggles`` () =
         load r [ a; b ]
         r.desk.EnterSelection a.id
         invoke (row r b)
-        Assert.Equal<Guid list>(r.desk.Rows.VisibleIds |> List.filter (fun id -> id = a.id || id = b.id), r.desk.SelectedIds())
+
+        Assert.Equal<Guid list>(
+            r.desk.Rows.VisibleIds |> List.filter (fun id -> id = a.id || id = b.id),
+            r.desk.SelectedIds()
+        )
+
         Assert.DoesNotContain(r.log.Items, fun s -> s.StartsWith "open"))
 
 [<Fact>]
@@ -241,7 +377,14 @@ let ``batch pin and archive issue one command per selected conversation`` () =
         r.desk.ToggleSelected b.id
         invoke r.desk.Batch.PinButton
         invoke r.desk.Batch.ArchiveButton
-        Assert.Equal(2, r.log.Items |> Seq.filter (fun s -> s.StartsWith "pinMany" && s.EndsWith "true") |> Seq.length)
+
+        Assert.Equal(
+            2,
+            r.log.Items
+            |> Seq.filter (fun s -> s.StartsWith "pinMany" && s.EndsWith "true")
+            |> Seq.length
+        )
+
         Assert.Equal(2, r.log.Items |> Seq.filter (fun s -> s.StartsWith "archiveMany") |> Seq.length))
 
 [<Fact>]
@@ -293,7 +436,11 @@ let ``row context menu offers the selection entry`` () =
         let a = conv "甲"
         load r [ a ]
         invoke (r.desk.Rows.MoreButton a.id).Value
-        let entry = all r.overlay.Layer.PopupCard |> List.find (fun c -> AutomationProperties.GetName c = "多选")
+
+        let entry =
+            all r.overlay.Layer.PopupCard
+            |> List.find (fun c -> AutomationProperties.GetName c = "多选")
+
         invoke entry
         Assert.True r.desk.IsSelectionMode
         Assert.Equal<Guid list>([ a.id ], r.desk.SelectedIds()))
@@ -319,7 +466,13 @@ let ``setting the active conversation scrolls it into view`` () =
         let items = [ for i in 1..80 -> conv (sprintf "对话 %d" i) ]
         load r items
         let last = r.desk.Rows.VisibleIds |> List.last
-        r.desk.Render { emptySidebarVS () with Rows = items |> List.map rowVS; ActiveId = Some last }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = items |> List.map rowVS
+                ActiveId = Some last
+            }
+
         pump ()
         r.window.UpdateLayout()
         pump ()
@@ -418,10 +571,30 @@ let ``sidebar shows hit snippets under message content and clicking opens the hi
         pump ()
         r.desk.BeginMessageSearch()
         Assert.Equal<string list>([ "苹果" ], List.ofSeq queries)
+
         let hit =
-            { conversationId = a.id; title = "甲"; archived = false; messageId = 3UL; role = "user"
-              snippet = "我爱吃苹果"; matchStart = 3; matchLength = 2 }
-        r.desk.ApplySearchResults({ queryId = Guid.NewGuid(); query = "苹果"; hits = [ hit ]; hasMore = false; truncated = false }, 0)
+            {
+                conversationId = a.id
+                title = "甲"
+                archived = false
+                messageId = 3UL
+                role = "user"
+                snippet = "我爱吃苹果"
+                matchStart = 3
+                matchLength = 2
+            }
+
+        r.desk.ApplySearchResults(
+            {
+                queryId = Guid.NewGuid()
+                query = "苹果"
+                hits = [ hit ]
+                hasMore = false
+                truncated = false
+            },
+            0
+        )
+
         pump ()
         r.window.UpdateLayout()
         Assert.Equal<SearchHit list>([ hit ], r.desk.MessageHits)
@@ -452,8 +625,19 @@ let ``changing active sidebar row does not rebuild the conversation list`` () =
         load r [ a; b ]
         let source = r.desk.Rows.List.ItemsSource
         let hostA = row r a
-        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a; rowVS b ]; ActiveId = Some a.id }
-        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a; rowVS b ]; ActiveId = Some b.id }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = [ rowVS a; rowVS b ]
+                ActiveId = Some a.id
+            }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = [ rowVS a; rowVS b ]
+                ActiveId = Some b.id
+            }
+
         Assert.Same(source, r.desk.Rows.List.ItemsSource)
         Assert.Same(hostA, row r a)
         Assert.Equal("当前对话", AutomationProperties.GetItemStatus(row r b)))
@@ -462,15 +646,52 @@ let ``changing active sidebar row does not rebuild the conversation list`` () =
 let ``sidebar empty state separates list loading from confirmed empty and embeds primary actions`` () =
     Headless.run (fun () ->
         let r = setup ()
-        r.desk.Render({ emptySidebarVS () with Host = { (emptySidebarVS ()).Host with Connected = false; StatusText = "未连接" } })
+
+        r.desk.Render(
+            { emptySidebarVS () with
+                Host =
+                    { (emptySidebarVS ()).Host with
+                        Connected = false
+                        StatusText = "未连接"
+                    }
+            }
+        )
+
         Assert.True r.desk.EmptyCard.IsVisible
         Assert.False r.desk.EmptyCard.ActionButton.IsVisible
-        r.desk.Render({ emptySidebarVS () with Compact = true; Host = { (emptySidebarVS ()).Host with Connected = false; StatusText = "未连接" } })
+
+        r.desk.Render(
+            { emptySidebarVS () with
+                Compact = true
+                Host =
+                    { (emptySidebarVS ()).Host with
+                        Connected = false
+                        StatusText = "未连接"
+                    }
+            }
+        )
+
         Assert.True r.desk.EmptyCard.ActionButton.IsVisible
         invoke r.desk.EmptyCard.ActionButton
         Assert.Contains("reconnect", r.log.Items)
-        r.desk.Render({ emptySidebarVS () with Compact = false; Host = { (emptySidebarVS ()).Host with Connected = true; StatusText = "已连接" } })
-        r.desk.Render({ emptySidebarVS () with Empty = Wanxiang2.WorkspaceState.SidebarEmptyKind.Loading })
+
+        r.desk.Render(
+            { emptySidebarVS () with
+                Compact = false
+                Host =
+                    { (emptySidebarVS ()).Host with
+                        Connected = true
+                        StatusText = "已连接"
+                    }
+            }
+        )
+
+        r.desk.Render(
+            { emptySidebarVS () with
+                Empty = Wanxiang2.WorkspaceState.SidebarEmptyKind.Loading
+            }
+        )
+
         Assert.True r.desk.EmptyCard.Skeleton.IsVisible
         Assert.DoesNotContain("还没有对话", Desk.texts r.desk.View)
         load r []
@@ -487,7 +708,12 @@ let ``title and preview both highlight while searching`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a ] }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = [ rowVS a ]
+            }
+
         pump ()
         let lit = highlighted (row r a) |> List.map (fun x -> x.Text)
         Assert.True(lit.Length >= 2, sprintf "%A" lit))
@@ -500,7 +726,12 @@ let ``clearing the query removes every highlight`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a ] }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = [ rowVS a ]
+            }
+
         pump ()
         r.desk.ResetSearch false
         pump ()
@@ -516,9 +747,19 @@ let ``recycled rows keep their highlight after a snapshot refresh`` () =
         load r [ a ]
         r.desk.Search.Text <- "苹果"
         pump ()
-        r.desk.Render { emptySidebarVS () with Rows = [ rowVS a ] }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = [ rowVS a ]
+            }
+
         pump ()
-        r.desk.Render { emptySidebarVS () with Rows = [ rowVS { a with messageCount = 9 } ] }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = [ rowVS { a with messageCount = 9 } ]
+            }
+
         pump ()
         r.window.UpdateLayout()
         Assert.NotEmpty(highlighted (row r a)))
@@ -528,14 +769,35 @@ let ``recycled rows keep their highlight after a snapshot refresh`` () =
 let ``两万行带分叉与同名对话的重建在一秒内完成`` () =
     Headless.run (fun () ->
         let r = setup ()
-        let items = [ for i in 0 .. 19999 -> conv (sprintf "对话 %d" (i % 5000)) ]
+        let items = [ for i in 0..19999 -> conv (sprintf "对话 %d" (i % 5000)) ]
+
         let lineage =
-            items |> List.chunkBySize 2 |> List.choose (function
-                | [ p; c ] -> Some(c.id, { parentId = p.id; forkBaseMessageId = None; forkFirstMessageId = None; parentTitle = None; parentDeleted = false; forkOrdinal = Some 1 })
-                | _ -> None) |> Map.ofList
+            items
+            |> List.chunkBySize 2
+            |> List.choose (function
+                | [ p; c ] ->
+                    Some(
+                        c.id,
+                        {
+                            parentId = p.id
+                            forkBaseMessageId = None
+                            forkFirstMessageId = None
+                            parentTitle = None
+                            parentDeleted = false
+                            forkOrdinal = Some 1
+                        }
+                    )
+                | _ -> None)
+            |> Map.ofList
+
         let sw = Diagnostics.Stopwatch.StartNew()
         // 谱系随 SidebarVS 一起进（单一入口，不再有旁路插槽）
-        r.desk.Render { emptySidebarVS () with Rows = items |> List.map rowVS; Lineage = lineage }
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = items |> List.map rowVS
+                Lineage = lineage
+            }
+
         pump ()
         r.window.UpdateLayout()
         pump ()
@@ -549,10 +811,20 @@ let ``紧凑态经投影驱动品牌行返回键，不靠旁路写控件`` () =
     Headless.run (fun () ->
         let r = setup ()
         Assert.False r.desk.Brand.BackButton.IsVisible
-        r.desk.Render { emptySidebarVS () with Compact = true }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Compact = true
+            }
+
         pump ()
         Assert.True r.desk.Brand.BackButton.IsVisible
-        r.desk.Render { emptySidebarVS () with Compact = false }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Compact = false
+            }
+
         pump ()
         Assert.False r.desk.Brand.BackButton.IsVisible)
 
@@ -560,7 +832,15 @@ let ``紧凑态经投影驱动品牌行返回键，不靠旁路写控件`` () =
 let ``页脚主机状态经投影渲染，服务器地址命令改投影后重渲染`` () =
     Headless.run (fun () ->
         let r = setup ()
-        r.desk.Render { emptySidebarVS () with Host = { (emptySidebarVS ()).Host with ServerUrl = "https://example.com:8443/x" } }
+
+        r.desk.Render
+            { emptySidebarVS () with
+                Host =
+                    { (emptySidebarVS ()).Host with
+                        ServerUrl = "https://example.com:8443/x"
+                    }
+            }
+
         pump ()
         Assert.Contains("example.com:8443", String.Join("\n", Desk.texts r.desk.Host.View))
         r.desk.ApplyServerUrl "http://localhost:9000"
@@ -587,6 +867,13 @@ let ``预设插槽接上后，模型重投影不夺走可见性`` () =
         pump ()
         Assert.True r.desk.Brand.PresetButton.IsVisible
         // 模型投影里没有预设（空目录），但宿主接了下拉插槽：按钮仍该在
-        r.desk.Render { emptySidebarVS () with Brand = { (emptySidebarVS ()).Brand with PresetsVisible = false } }
+        r.desk.Render
+            { emptySidebarVS () with
+                Brand =
+                    { (emptySidebarVS ()).Brand with
+                        PresetsVisible = false
+                    }
+            }
+
         pump ()
         Assert.True r.desk.Brand.PresetButton.IsVisible)

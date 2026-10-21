@@ -15,6 +15,7 @@ let ``pairing hint differs between this machine and a remote host`` () =
     Assert.NotEqual<string>(local, remote)
     Assert.Contains("这台机器", local)
     Assert.Contains("远端", remote)
+
     for hint in [ local; remote ] do
         Assert.Contains("设备", hint)
 

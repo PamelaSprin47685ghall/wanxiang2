@@ -8,29 +8,32 @@ open Wanxiang.Core
 /// 首页由服务端选定 atCommitId；后续按同一水位、稳定消息 ID 反向分页。
 /// generation.delta 的载荷。用具名记录而不是匿名记录：匿名记录不能跨程序集写类型标注（FS0001），
 /// 组合者（如 AguiWire）没法把它当参数传。字段和线上字节不变。
-type GenerationDeltaData = {
-    conversationId: Guid
-    generationId: Guid
-    payload: JsonNode
-}
+type GenerationDeltaData =
+    {
+        conversationId: Guid
+        generationId: Guid
+        payload: JsonNode
+    }
 
-type ConversationExportQuery = {
-    exportId: Guid
-    conversationId: Guid
-    atCommitId: CommitId option
-    beforeCommitId: CommitId
-}
+type ConversationExportQuery =
+    {
+        exportId: Guid
+        conversationId: Guid
+        atCommitId: CommitId option
+        beforeCommitId: CommitId
+    }
 
-type ConversationExportPageData = {
-    exportId: Guid
-    conversationId: Guid
-    atCommitId: CommitId
-    beforeCommitId: CommitId
-    title: string
-    items: JsonArray
-    totalMessages: int
-    hasMore: bool
-}
+type ConversationExportPageData =
+    {
+        exportId: Guid
+        conversationId: Guid
+        atCommitId: CommitId
+        beforeCommitId: CommitId
+        title: string
+        items: JsonArray
+        totalMessages: int
+        hasMore: bool
+    }
 
 module ConversationExportLimits =
     let pageMessages = 100
@@ -40,32 +43,34 @@ module ConversationExportLimits =
 
 /// 全文搜索查询（W4，决策 201）。queryId 是客户端生成的业务标识，只关联这次查询与它的结果页，
 /// 不是通用传输 requestId；查询在服务端内存投影上完成，不建索引、不写日志。
-type SearchQueryData = {
-    queryId: Guid
-    query: string
-    /// 是否包含归档对话（缺省 false）
-    includeArchived: bool
-    /// 分页：跳过前 offset 条命中（缺省 0）
-    offset: int
-    /// 本页条数（缺省 SearchLimits.defaultPageSize，服务端钳到 maxPageSize）
-    limit: int
-}
+type SearchQueryData =
+    {
+        queryId: Guid
+        query: string
+        /// 是否包含归档对话（缺省 false）
+        includeArchived: bool
+        /// 分页：跳过前 offset 条命中（缺省 0）
+        offset: int
+        /// 本页条数（缺省 SearchLimits.defaultPageSize，服务端钳到 maxPageSize）
+        limit: int
+    }
 
 /// 搜索结果页。items 的每一项是 JsonObject：
 /// conversationId、title、archived、messageId（= 消息 commitId）、commitId（同值，提交序号）、
 /// role、snippet、matchStart、matchLength（相对 snippet 的 UTF-16 下标）。
-type SearchResultsData = {
-    queryId: Guid
-    query: string
-    offset: int
-    items: JsonArray
-    /// 本次查询之后还有更多可翻的命中（仍在预算内）
-    hasMore: bool
-    /// 预算耗尽而截断：命中数达上限，或扫描消息数达上限。截断时结果不完整，必须告知用户。
-    truncated: bool
-    /// 结果对应的投影水位
-    atCommitId: CommitId
-}
+type SearchResultsData =
+    {
+        queryId: Guid
+        query: string
+        offset: int
+        items: JsonArray
+        /// 本次查询之后还有更多可翻的命中（仍在预算内）
+        hasMore: bool
+        /// 预算耗尽而截断：命中数达上限，或扫描消息数达上限。截断时结果不完整，必须告知用户。
+        truncated: bool
+        /// 结果对应的投影水位
+        atCommitId: CommitId
+    }
 
 /// 搜索的资源预算（权威数值；docs/contracts/resource-budgets.md 同步）。
 module SearchLimits =
@@ -88,28 +93,83 @@ type WireEvent =
     // ---- 握手与认证 ----
     // ADR-001 方案 B：Hello/UpgradeRequired 无生产发送路径（版本协商 in-band）。
     // 保留变体仅为兼容 reader——旧客户端/旧服务端仍可能发送；接收方忽略，不改变状态。
-    | Hello of {| protocol: string; version: int; instanceId: string option |}
-    | UpgradeRequired of {| serverVersion: int; clientVersion: int |}
+    | Hello of
+        {|
+            protocol: string
+            version: int
+            instanceId: string option
+        |}
+    | UpgradeRequired of
+        {|
+            serverVersion: int
+            clientVersion: int
+        |}
     | AuthPresent of {| token: string |}
     | AuthAccepted of {| instanceId: string |}
     | AuthRejected of {| reason: string |}
     | PairingRequested of {| clientName: string option |}
     | PairingStarted of {| expiresInSeconds: int |}
-    | PairingAttempted of {| code: string; clientName: string option |}
+    | PairingAttempted of
+        {|
+            code: string
+            clientName: string option
+        |}
     | PairingSucceeded of {| token: string |}
-    | PairingFailed of {| reason: string; frozen: bool; freezeMinutes: int |}
+    | PairingFailed of
+        {|
+            reason: string
+            frozen: bool
+            freezeMinutes: int
+        |}
     // ---- 观察 ----
     | ObserveConversationList
     | UnobserveConversationList
-    | ConversationListSnapshot of {| items: JsonArray; lastCommitId: CommitId |}
+    | ConversationListSnapshot of
+        {|
+            items: JsonArray
+            lastCommitId: CommitId
+        |}
     | ObserveConversation of {| conversationId: Guid |}
     | UnobserveConversation of {| conversationId: Guid |}
-    | ConversationSnapshot of {| conversationId: Guid; title: string; lastCommitId: CommitId; runtimeState: string; generationId: Guid option; messages: JsonArray; snapshotEarliestCommitId: CommitId; snapshotHasMore: bool; config: SessionConfig |}
-    | ConversationUpdated of {| conversationId: Guid; commitId: CommitId; change: JsonObject |}
-    | MessageCommitted of {| conversationId: Guid; commitId: CommitId; committedAt: DateTimeOffset; payload: JsonNode |}
+    | ConversationSnapshot of
+        {|
+            conversationId: Guid
+            title: string
+            lastCommitId: CommitId
+            runtimeState: string
+            generationId: Guid option
+            messages: JsonArray
+            snapshotEarliestCommitId: CommitId
+            snapshotHasMore: bool
+            config: SessionConfig
+        |}
+    | ConversationUpdated of
+        {|
+            conversationId: Guid
+            commitId: CommitId
+            change: JsonObject
+        |}
+    | MessageCommitted of
+        {|
+            conversationId: Guid
+            commitId: CommitId
+            committedAt: DateTimeOffset
+            payload: JsonNode
+        |}
     // ---- 历史分页（Q127：按 commitID 反向分页，稳定 ID 作页边界）----
-    | HistoryRequest of {| conversationId: Guid; beforeCommitId: CommitId; limit: int |}
-    | HistoryPage of {| conversationId: Guid; beforeCommitId: CommitId; items: JsonArray; hasMore: bool |}
+    | HistoryRequest of
+        {|
+            conversationId: Guid
+            beforeCommitId: CommitId
+            limit: int
+        |}
+    | HistoryPage of
+        {|
+            conversationId: Guid
+            beforeCommitId: CommitId
+            items: JsonArray
+            hasMore: bool
+        |}
     // ---- 完整导出；exportId 只关联这次导出，不是通用传输 requestId ----
     | ConversationExportRead of ConversationExportQuery
     | ConversationExportPage of ConversationExportPageData
@@ -121,82 +181,237 @@ type WireEvent =
     // ---- 命令（C→S）与确认 ----
     | Command of ClientCommand
     | CommandAccepted of {| invocationId: Guid |}
-    | CommandCommitted of {| invocationId: Guid; commandId: string; commitId: CommitId |}
-    | CommandRejected of {| invocationId: Guid; code: string; message: string; requiredCommitId: CommitId option |}
+    | CommandCommitted of
+        {|
+            invocationId: Guid
+            commandId: string
+            commitId: CommitId
+        |}
+    | CommandRejected of
+        {|
+            invocationId: Guid
+            code: string
+            message: string
+            requiredCommitId: CommitId option
+        |}
     | CursorAdvanced of {| id: CommitId |}
-    | AuthorityCatchUp of {| fromCursor: CommitId; toCommitId: CommitId; items: JsonArray |}
+    | AuthorityCatchUp of
+        {|
+            fromCursor: CommitId
+            toCommitId: CommitId
+            items: JsonArray
+        |}
     // ---- 生成 ----
     | GenerationDelta of GenerationDeltaData
-    | GenerationStarted of {| conversationId: Guid; generationId: Guid; providerId: string; model: string |}
-    | GenerationFinished of {| conversationId: Guid; generationId: Guid; status: string; error: GenerationError option; usage: GenerationUsage option |}
-    | GenerationCancel of {| conversationId: Guid; generationId: Guid |}
+    | GenerationStarted of
+        {|
+            conversationId: Guid
+            generationId: Guid
+            providerId: string
+            model: string
+        |}
+    | GenerationFinished of
+        {|
+            conversationId: Guid
+            generationId: Guid
+            status: string
+            error: GenerationError option
+            usage: GenerationUsage option
+        |}
+    | GenerationCancel of
+        {|
+            conversationId: Guid
+            generationId: Guid
+        |}
     // ---- 附件 ----
-    | AttachmentBegin of {| attachmentId: Guid; totalBytes: int64; sha256: string; mediaType: string; fileName: string |}
-    | AttachmentChunk of {| attachmentId: Guid; index: int; dataBase64: string |}
+    | AttachmentBegin of
+        {|
+            attachmentId: Guid
+            totalBytes: int64
+            sha256: string
+            mediaType: string
+            fileName: string
+        |}
+    | AttachmentChunk of
+        {|
+            attachmentId: Guid
+            index: int
+            dataBase64: string
+        |}
     | AttachmentComplete of {| attachmentId: Guid; sha256: string |}
-    | AttachmentCommitted of {| attachmentId: Guid; sha256: string; size: int64 |}
+    | AttachmentCommitted of
+        {|
+            attachmentId: Guid
+            sha256: string
+            size: int64
+        |}
     | AttachmentAborted of {| attachmentId: Guid; reason: string |}
     | AttachmentDownloadRequest of {| sha256: string |}
-    | AttachmentDownloadBegin of {| sha256: string; size: int64; mediaType: string; fileName: string |}
-    | AttachmentDownloadChunk of {| sha256: string; index: int; dataBase64: string |}
+    | AttachmentDownloadBegin of
+        {|
+            sha256: string
+            size: int64
+            mediaType: string
+            fileName: string
+        |}
+    | AttachmentDownloadChunk of
+        {|
+            sha256: string
+            index: int
+            dataBase64: string
+        |}
     | AttachmentDownloadComplete of {| sha256: string |}
     // ---- 目录：可用 provider / 模型 / 工具（客户端选择器的数据源）----
     | CatalogRequest
-    | CatalogSnapshot of {| providers: JsonArray; tools: JsonArray; generation: JsonObject |}
-    | ProviderProbeRequest of {| requestId: Guid; providerId: string |}
-    | ProviderProbeResult of {| requestId: Guid; providerId: string; ok: bool; models: JsonArray; error: string option |}
+    | CatalogSnapshot of
+        {|
+            providers: JsonArray
+            tools: JsonArray
+            generation: JsonObject
+        |}
+    | ProviderProbeRequest of
+        {|
+            requestId: Guid
+            providerId: string
+        |}
+    | ProviderProbeResult of
+        {|
+            requestId: Guid
+            providerId: string
+            ok: bool
+            models: JsonArray
+            error: string option
+        |}
     // ---- 配置写入（TOML 是权威；这些请求由服务端原子重写配置文件）----
-    | ConfigUpsertProvider of {| requestId: Guid; provider: JsonObject |}
-    | ConfigDeleteProvider of {| requestId: Guid; providerId: string |}
-    | ConfigUpsertMcp of {| requestId: Guid; server: JsonObject |}
+    | ConfigUpsertProvider of
+        {|
+            requestId: Guid
+            provider: JsonObject
+        |}
+    | ConfigDeleteProvider of
+        {|
+            requestId: Guid
+            providerId: string
+        |}
+    | ConfigUpsertMcp of
+        {|
+            requestId: Guid
+            server: JsonObject
+        |}
     | ConfigDeleteMcp of {| requestId: Guid; serverId: string |}
-    | ConfigUpdateGeneration of {| requestId: Guid; generation: JsonObject |}
+    | ConfigUpdateGeneration of
+        {|
+            requestId: Guid
+            generation: JsonObject
+        |}
     // ---- 对话预设（决策 432，仅追加；旧端忽略这两个 wanxiang.dev/* 事件）----
     /// 新建或覆盖一个预设；`preset.id` 缺省时由主机生成。回执走 config.applied。
-    | ConfigUpsertPreset of {| requestId: Guid; preset: JsonObject |}
+    | ConfigUpsertPreset of
+        {|
+            requestId: Guid
+            preset: JsonObject
+        |}
     | ConfigDeletePreset of {| requestId: Guid; presetId: string |}
-    | ConfigApplied of {| requestId: Guid; ok: bool; errors: string list |}
+    | ConfigApplied of
+        {|
+            requestId: Guid
+            ok: bool
+            errors: string list
+        |}
     | ConfigUpdateTools of {| requestId: Guid; tools: JsonObject |}
     // ---- 工具审批（加法事件，第 71 节；只存内存，永不入日志）----
     | ToolApprovalCapability of {| supported: bool |}
-    | ToolApprovalRequested of {| approvalId: Guid; conversationId: Guid; generationId: Guid; callId: string; toolName: string; summary: string; arguments: JsonNode; policy: string; expiresInSeconds: int |}
+    | ToolApprovalRequested of
+        {|
+            approvalId: Guid
+            conversationId: Guid
+            generationId: Guid
+            callId: string
+            toolName: string
+            summary: string
+            arguments: JsonNode
+            policy: string
+            expiresInSeconds: int
+        |}
     | ToolApprovalDecision of {| approvalId: Guid; approved: bool |}
-    | ToolApprovalResolved of {| approvalId: Guid; conversationId: Guid; status: string; reason: string; alreadyHandled: bool |}
+    | ToolApprovalResolved of
+        {|
+            approvalId: Guid
+            conversationId: Guid
+            status: string
+            reason: string
+            alreadyHandled: bool
+        |}
     // ---- 配置与系统 ----
     | ConfigChanged of {| reason: string |}
     | ServerError of {| message: string |}
     // ---- 主机状态（W5，决策 82/83；只读、只存内存、不入日志）----
     /// 主机拒绝了一份外部/自身写入的配置并继续使用上一份有效配置。summary 与 errors 已脱敏、已截断。
-    | HostConfigRejected of {| summary: string; errors: string list |}
+    | HostConfigRejected of
+        {|
+            summary: string
+            errors: string list
+        |}
     /// 「检查主机」请求（纯读）。
     | DoctorRequest of {| requestId: Guid |}
     /// doctor 只读诊断结果；checks 每项 {name, ok, detail}。
-    | DoctorReport of {| requestId: Guid; ok: bool; checks: JsonArray |}
+    | DoctorReport of
+        {|
+            requestId: Guid
+            ok: bool
+            checks: JsonArray
+        |}
     | Ping
     | Pong
     // ---- 设备与配对邀请（W2，仅追加；旧端忽略这些 wanxiang.dev/* 事件）----
     /// 已认证的桌面本机客户端 → 主机：请求一个配对邀请码。
     | PairingInvite
     /// 主机 → 发起者：邀请码与到期时间。码只在内存，不入日志。
-    | PairingInviteIssued of {| code: string; expiresAtUtc: DateTimeOffset; expiresInSeconds: int |}
+    | PairingInviteIssued of
+        {|
+            code: string
+            expiresAtUtc: DateTimeOffset
+            expiresInSeconds: int
+        |}
     /// 主机 → 发起者：邀请被拒绝。reason：`not-desktop` | `frozen`。
     | PairingInviteRejected of {| reason: string |}
     | DevicesRequest
     /// 设备列表快照。`canInvite` 表示当前连接是否有权发配对邀请。
     | DevicesSnapshot of {| items: JsonArray; canInvite: bool |}
-    | DeviceRename of {| requestId: Guid; deviceId: string; name: string |}
+    | DeviceRename of
+        {|
+            requestId: Guid
+            deviceId: string
+            name: string
+        |}
     | DeviceRevoke of {| requestId: Guid; deviceId: string |}
     // ---- 模型服务限流信号（决策 241，仅追加；旧端忽略这个 wanxiang.dev/* 事件）----
     /// 主机 → 观察该对话的客户端：某次生成失败时模型服务给出的限流 / 额度头。
     /// 总是先于对应的 generation.finished 下发；客户端据此给错误卡加倒计时。
-    | ProviderRateLimitNotice of {| conversationId: Guid; generationId: Guid; providerId: string; limit: ProviderRateLimit |}
+    | ProviderRateLimitNotice of
+        {|
+            conversationId: Guid
+            generationId: Guid
+            providerId: string
+            limit: ProviderRateLimit
+        |}
     // ---- 半截回复（决策 250，仅追加；旧端忽略这个 wanxiang.dev/* 事件）----
     /// 主机 → 观察该对话的客户端：中途失败留下的半截助手回复与失败原因。主机落盘保存，
     /// 失败时与（重新）观察对话时下发，刷新页面或换设备后仍可「继续生成」；下次生成开始即作废。
-    | GenerationPartial of {| conversationId: Guid; generationId: Guid; message: JsonNode; error: GenerationError option |}
+    | GenerationPartial of
+        {|
+            conversationId: Guid
+            generationId: Guid
+            message: JsonNode
+            error: GenerationError option
+        |}
     /// 决策 440：认证成功后主机声明自身版本与可用功能。旧客户端按 55.8 R1 忽略；
     /// 收不到这条的客户端把主机视为「能力未知」（旧主机），靠请求超时兜底。
-    | HostCapabilities of {| hostVersion: string; features: string list |}
+    | HostCapabilities of
+        {|
+            hostVersion: string
+            features: string list
+        |}
 
 module WireEvent =
 
@@ -289,29 +504,48 @@ module WireEvent =
 module HostFeatures =
     [<Literal>]
     let Presets = "presets"
+
     [<Literal>]
     let ContinueResponse = "continue-response"
+
     [<Literal>]
     let ConversationImport = "conversation-import"
+
     [<Literal>]
     let ConversationExport = "conversation-export"
+
     [<Literal>]
     let ConversationFlags = "conversation-flags"
+
     [<Literal>]
     let HistoryPaging = "history-paging"
+
     [<Literal>]
     let Search = "search"
+
     [<Literal>]
     let Devices = "devices"
+
     [<Literal>]
     let Doctor = "doctor"
+
     [<Literal>]
     let ToolsConfig = "tools-config"
 
     /// 本版主机支持的全部功能。
     let all: string list =
-        [ Presets; ContinueResponse; ConversationImport; ConversationExport; ConversationFlags
-          HistoryPaging; Search; Devices; Doctor; ToolsConfig ]
+        [
+            Presets
+            ContinueResponse
+            ConversationImport
+            ConversationExport
+            ConversationFlags
+            HistoryPaging
+            Search
+            Devices
+            Doctor
+            ToolsConfig
+        ]
 
     /// 功能对用户的叫法，用于「主机版本较旧，不支持……」提示。
     let label (feature: string) =

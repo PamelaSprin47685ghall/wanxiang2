@@ -18,9 +18,15 @@ module ModelCapabilities =
 
     /// 决策 340：探测到的能力连同时间戳落盘（`<dataDir>/model-capabilities.json`），主机重启后仍在；
     /// 每次「获取模型列表」成功时整组替换该模型服务的条目（刷新，旧模型不残留）。
-    let private detected = ConcurrentDictionary<string, bool * DateTimeOffset>(StringComparer.Ordinal)
-    let private key (p: ProviderConfig) (model: string) = p.id + "\n" + p.baseUrl.TrimEnd('/') + "\n" + model
-    let private prefix (p: ProviderConfig) = p.id + "\n" + p.baseUrl.TrimEnd('/') + "\n"
+    let private detected =
+        ConcurrentDictionary<string, bool * DateTimeOffset>(StringComparer.Ordinal)
+
+    let private key (p: ProviderConfig) (model: string) =
+        p.id + "\n" + p.baseUrl.TrimEnd('/') + "\n" + model
+
+    let private prefix (p: ProviderConfig) =
+        p.id + "\n" + p.baseUrl.TrimEnd('/') + "\n"
+
     let mutable private storePath: string option = None
     let private gate = obj ()
 
@@ -33,20 +39,24 @@ module ModelCapabilities =
                     let root = JsonObject()
                     root["version"] <- 1
                     let items = JsonObject()
+
                     for KeyValue(k, (v, at)) in detected do
                         let o = JsonObject()
                         o["vision"] <- v
                         o["at"] <- at.ToString("o")
                         items[k] <- o
+
                     root["entries"] <- items
                     let tmp = path + ".tmp"
                     IO.File.WriteAllText(tmp, root.ToJsonString())
                     IO.File.Move(tmp, path, true)
-                with ex -> eprintfn "[wanxiang] 保存模型能力缓存失败：%s" ex.Message)
+                with ex ->
+                    eprintfn "[wanxiang] 保存模型能力缓存失败：%s" ex.Message)
 
     /// 指定落盘位置并读回上次的缓存；文件损坏时忽略（只是缓存，下次获取模型列表会重建）。
     let configure (path: string) =
         storePath <- Some path
+
         try
             if IO.File.Exists path then
                 match JsonNode.Parse(IO.File.ReadAllText path) with
@@ -57,28 +67,44 @@ module ModelCapabilities =
                             match n with
                             | :? JsonObject as o when not (isNull o["vision"]) ->
                                 let v = o["vision"].GetValueKind() = JsonValueKind.True
+
                                 let at =
                                     match o["at"] with
                                     | null -> DateTimeOffset.MinValue
-                                    | a -> match DateTimeOffset.TryParse(a.ToString()) with | true, t -> t | _ -> DateTimeOffset.MinValue
+                                    | a ->
+                                        match DateTimeOffset.TryParse(a.ToString()) with
+                                        | true, t -> t
+                                        | _ -> DateTimeOffset.MinValue
+
                                 detected[k] <- (v, at)
                             | _ -> ()
                     | _ -> ()
                 | _ -> ()
-        with ex -> eprintfn "[wanxiang] 读取模型能力缓存失败，已忽略：%s" ex.Message
+        with ex ->
+            eprintfn "[wanxiang] 读取模型能力缓存失败，已忽略：%s" ex.Message
 
     let record (p: ProviderConfig) (pairs: (string * bool) list) =
         let now = DateTimeOffset.UtcNow
-        for (m, v) in pairs do detected[key p m] <- (v, now)
-        if not (List.isEmpty pairs) then save ()
+
+        for (m, v) in pairs do
+            detected[key p m] <- (v, now)
+
+        if not (List.isEmpty pairs) then
+            save ()
 
     /// 获取模型列表成功后整组替换该模型服务的能力条目。
     let replaceFor (p: ProviderConfig) (pairs: (string * bool) list) =
         let pre = prefix p
+
         for k in detected.Keys |> Seq.toList do
-            if k.StartsWith(pre, StringComparison.Ordinal) then detected.TryRemove k |> ignore
+            if k.StartsWith(pre, StringComparison.Ordinal) then
+                detected.TryRemove k |> ignore
+
         let now = DateTimeOffset.UtcNow
-        for (m, v) in pairs do detected[key p m] <- (v, now)
+
+        for (m, v) in pairs do
+            detected[key p m] <- (v, now)
+
         save ()
 
     /// 某条能力的探测时间（测试与诊断用）。
@@ -113,7 +139,11 @@ module ModelCapabilities =
 
     let ollamaRoot (p: ProviderConfig) =
         let t = p.baseUrl.TrimEnd '/'
-        if t.EndsWith("/v1", StringComparison.OrdinalIgnoreCase) then t.Substring(0, t.Length - 3) else t
+
+        if t.EndsWith("/v1", StringComparison.OrdinalIgnoreCase) then
+            t.Substring(0, t.Length - 3)
+        else
+            t
 
     /// 清空（测试用）。
     let clear () =
@@ -133,57 +163,108 @@ module ProviderCatalog =
         o["label"] <- ProviderConfig.displayName p
         o["kind"] <- p.kind
         o["baseUrl"] <- p.baseUrl
-        o["hasApiKey"] <- (match p.apiKey with Some k -> not (String.IsNullOrWhiteSpace k) | None -> false)
+
+        o["hasApiKey"] <-
+            (match p.apiKey with
+             | Some k -> not (String.IsNullOrWhiteSpace k)
+             | None -> false)
+
         o["models"] <- JsonArray([| for m in p.models -> JsonNode.op_Implicit m |])
         o["defaultModel"] <- p.defaultModel
         o["timeoutSeconds"] <- p.timeoutSeconds
         o["maxRetries"] <- p.maxRetries
         o["enabled"] <- p.enabled
+
         if not (Map.isEmpty p.headers) then
             let h = JsonObject()
-            for KeyValue(k, v) in p.headers do h[k] <- v
+
+            for KeyValue(k, v) in p.headers do
+                h[k] <- v
+
             o["headers"] <- h
         // 决策 330/331：看图能力的两层来源，客户端按「用户指定 > 服务信息 > 名字推断」合成。
         // 都是可选键，旧客户端忽略。
         if not (Map.isEmpty p.visionOverrides) then
             let v = JsonObject()
-            for KeyValue(m, b) in p.visionOverrides do v[m] <- b
+
+            for KeyValue(m, b) in p.visionOverrides do
+                v[m] <- b
+
             o["visionOverrides"] <- v
+
         let detectedVision = JsonObject()
+
         for m in p.models do
             match ModelCapabilities.tryGet p m with
             | Some b -> detectedVision[m] <- b
             | None -> ()
-        if detectedVision.Count > 0 then o["visionDetected"] <- detectedVision
+
+        if detectedVision.Count > 0 then
+            o["visionDetected"] <- detectedVision
+
         o
 
     let private generationToJson (g: GenerationDefaults) : JsonObject =
         let o = JsonObject()
-        match g.temperature with Some t -> o["temperature"] <- t | None -> ()
-        match g.topP with Some t -> o["topP"] <- t | None -> ()
-        match g.maxTokens with Some m -> o["maxTokens"] <- m | None -> ()
-        match g.instructions with Some s -> o["instructions"] <- s | None -> ()
+
+        match g.temperature with
+        | Some t -> o["temperature"] <- t
+        | None -> ()
+
+        match g.topP with
+        | Some t -> o["topP"] <- t
+        | None -> ()
+
+        match g.maxTokens with
+        | Some m -> o["maxTokens"] <- m
+        | None -> ()
+
+        match g.instructions with
+        | Some s -> o["instructions"] <- s
+        | None -> ()
+
         o["maxContextMessages"] <- g.maxContextMessages
         o["autoTitle"] <- g.autoTitle
         o["maxToolRounds"] <- g.maxToolRounds
         // 全局默认模型（可选键；缺省不下发，旧客户端无感）。
-        match g.defaultProvider with Some p -> o["defaultProvider"] <- p | None -> ()
-        match g.defaultModel with Some m -> o["defaultModel"] <- m | None -> ()
+        match g.defaultProvider with
+        | Some p -> o["defaultProvider"] <- p
+        | None -> ()
+
+        match g.defaultModel with
+        | Some m -> o["defaultModel"] <- m
+        | None -> ()
+
         o
 
     let private mcpToJson (m: McpServerConfig) : JsonObject =
         let o = JsonObject()
         o["id"] <- m.id
         o["label"] <- McpServerConfig.displayName m
-        match m.command with Some c -> o["command"] <- c | None -> ()
+
+        match m.command with
+        | Some c -> o["command"] <- c
+        | None -> ()
+
         if not (List.isEmpty m.args) then
             o["args"] <- JsonArray([| for a in m.args -> JsonNode.op_Implicit a |])
+
         if not (Map.isEmpty m.env) then
             let e = JsonObject()
-            for KeyValue(k, v) in m.env do e[k] <- v
+
+            for KeyValue(k, v) in m.env do
+                e[k] <- v
+
             o["env"] <- e
-        match m.url with Some u -> o["url"] <- u | None -> ()
-        match m.maxConcurrency with Some c -> o["maxConcurrency"] <- c | None -> ()
+
+        match m.url with
+        | Some u -> o["url"] <- u
+        | None -> ()
+
+        match m.maxConcurrency with
+        | Some c -> o["maxConcurrency"] <- c
+        | None -> ()
+
         o["callTimeoutSeconds"] <- m.callTimeoutSeconds
         o["enabled"] <- m.enabled
         o
@@ -191,13 +272,19 @@ module ProviderCatalog =
     /// providers 数组（含未启用者，设置界面需要看到全部）。
     let providers (cfg: AppConfig) : JsonArray =
         JsonArray(
-            [| for p in cfg.providers |> Map.toList |> List.map snd |> List.sortBy (fun p -> p.id) ->
-                   providerToJson p :> JsonNode |])
+            [|
+                for p in cfg.providers |> Map.toList |> List.map snd |> List.sortBy (fun p -> p.id) ->
+                    providerToJson p :> JsonNode
+            |]
+        )
 
     let mcpServers (cfg: AppConfig) : JsonArray =
         JsonArray(
-            [| for m in cfg.mcpServers |> Map.toList |> List.map snd |> List.sortBy (fun m -> m.id) ->
-                   mcpToJson m :> JsonNode |])
+            [|
+                for m in cfg.mcpServers |> Map.toList |> List.map snd |> List.sortBy (fun m -> m.id) ->
+                    mcpToJson m :> JsonNode
+            |]
+        )
 
     /// 目录快照的 generation 段：生成默认值 + MCP 服务清单
     /// （客户端设置界面与对话设置共用同一份数据）。
@@ -209,26 +296,48 @@ module ProviderCatalog =
         t["callTimeoutSeconds"] <- cfg.tools.callTimeoutSeconds
         t["policyDefault"] <- ToolPolicy.toToml cfg.tools.policyDefault
         let pol = JsonObject()
-        for KeyValue(id, p) in cfg.tools.policy do pol[id] <- ToolPolicy.toToml p
+
+        for KeyValue(id, p) in cfg.tools.policy do
+            pol[id] <- ToolPolicy.toToml p
+
         t["policy"] <- pol
         t["approvalTimeoutSeconds"] <- cfg.tools.approvalTimeoutSeconds
         t["exposeDebug"] <- cfg.tools.exposeDebug
         o["tools"] <- t
         // 决策 432：预设随目录快照下发（按名称排序），客户端无需单独请求。
         let presets = JsonArray()
+
         for p in cfg.presets |> Map.toList |> List.map snd |> List.sortBy (fun p -> p.name) do
             let po = JsonObject()
             po["id"] <- p.id
             po["name"] <- p.name
             po["provider"] <- p.provider
             po["model"] <- p.model
-            match p.instructions with Some i -> po["instructions"] <- i | None -> ()
+
+            match p.instructions with
+            | Some i -> po["instructions"] <- i
+            | None -> ()
+
             po["tools"] <- JsonArray([| for x in p.tools -> JsonNode.op_Implicit x |])
-            match p.temperature with Some x -> po["temperature"] <- x | None -> ()
-            match p.topP with Some x -> po["topP"] <- x | None -> ()
-            match p.maxTokens with Some x -> po["maxTokens"] <- x | None -> ()
-            match p.thinkingBudget with Some x -> po["thinkingBudget"] <- x | None -> ()
+
+            match p.temperature with
+            | Some x -> po["temperature"] <- x
+            | None -> ()
+
+            match p.topP with
+            | Some x -> po["topP"] <- x
+            | None -> ()
+
+            match p.maxTokens with
+            | Some x -> po["maxTokens"] <- x
+            | None -> ()
+
+            match p.thinkingBudget with
+            | Some x -> po["thinkingBudget"] <- x
+            | None -> ()
+
             presets.Add po
+
         o["presets"] <- presets
         o
 
@@ -239,27 +348,42 @@ module ProviderCatalog =
     let private probeRequest (p: ProviderConfig) =
         let trimmed = p.baseUrl.TrimEnd '/'
         let key = p.apiKey |> Option.filter (String.IsNullOrWhiteSpace >> not)
+
         match p.kind with
         | "anthropic" ->
             let url =
-                if trimmed.EndsWith("/v1", StringComparison.OrdinalIgnoreCase) then trimmed + "/models"
-                else trimmed + "/v1/models"
+                if trimmed.EndsWith("/v1", StringComparison.OrdinalIgnoreCase) then
+                    trimmed + "/models"
+                else
+                    trimmed + "/v1/models"
+
             url,
-            [ match key with
-              | Some k -> "x-api-key", k
-              | None -> ()
-              "anthropic-version", "2023-06-01" ]
+            [
+                match key with
+                | Some k -> "x-api-key", k
+                | None -> ()
+                "anthropic-version", "2023-06-01"
+            ]
         | "gemini" ->
-            let root = if trimmed.Contains "/v1" then trimmed else trimmed + "/v1beta"
+            let root =
+                if trimmed.Contains "/v1" then
+                    trimmed
+                else
+                    trimmed + "/v1beta"
+
             root + "/models",
-            [ match key with
-              | Some k -> "x-goog-api-key", k
-              | None -> () ]
+            [
+                match key with
+                | Some k -> "x-goog-api-key", k
+                | None -> ()
+            ]
         | _ ->
             trimmed + "/models",
-            [ match key with
-              | Some k -> "Authorization", "Bearer " + k
-              | None -> () ]
+            [
+                match key with
+                | Some k -> "Authorization", "Bearer " + k
+                | None -> ()
+            ]
 
     /// 探活失败的类型化原因。界面按它决定文案与下一步，不靠文案关键词判断。
     type ProbeFailure =
@@ -285,7 +409,17 @@ module ProviderCatalog =
     module ProbeFailure =
 
         let all =
-            [ InvalidKey; EndpointNotFound; RateLimited; ServerError; Unreachable; TimedOut; BadResponse; Rejected; Cancelled ]
+            [
+                InvalidKey
+                EndpointNotFound
+                RateLimited
+                ServerError
+                Unreachable
+                TimedOut
+                BadResponse
+                Rejected
+                Cancelled
+            ]
 
         /// 稳定错误码：随 `provider.probe-result.error` 的 `[code] ` 前缀下发
         /// （协议字段仍是自由文本，旧客户端只会多看到一个方括号前缀）。
@@ -311,6 +445,7 @@ module ProviderCatalog =
         let decode (text: string) : ProbeFailure option * string =
             if not (isNull text) && text.StartsWith("[", StringComparison.Ordinal) then
                 let close = text.IndexOf ']'
+
                 if close > 1 then
                     ofCode (text.Substring(1, close - 1)), text.Substring(close + 1).TrimStart()
                 else
@@ -321,53 +456,57 @@ module ProviderCatalog =
     /// 失败类型 → (发生了什么 · 为什么，下一步)。固定三段：发生了什么 / 为什么 / 下一步。
     let private describeFailure (p: ProviderConfig) (f: ProbeFailure) (detail: string) : string =
         let nativeKind = p.kind = "anthropic" || p.kind = "gemini"
+
         match f with
-        | InvalidKey ->
-            sprintf "%s 拒绝了这把密钥（%s）。密钥可能填错、已过期或没有权限。请重新复制完整密钥后再试。" (ProviderConfig.displayName p) detail
+        | InvalidKey -> sprintf "%s 拒绝了这把密钥（%s）。密钥可能填错、已过期或没有权限。请重新复制完整密钥后再试。" (ProviderConfig.displayName p) detail
         | EndpointNotFound ->
             if nativeKind then
                 sprintf "找不到模型清单端点（%s）。原生接口的地址只需填到域名；如果你用的是中转或网关，请改用兼容端点。" detail
             else
                 sprintf "找不到模型清单端点（%s）。兼容接口的地址通常以 /v1 结尾，请检查路径；原生 Claude 或 Gemini 请改用原生接口。" detail
-        | RateLimited ->
-            sprintf "%s 暂时限制了请求（%s）。可能是额度用尽或请求太频繁，请稍后再试或检查账户额度。" (ProviderConfig.displayName p) detail
-        | ServerError ->
-            sprintf "%s 返回了内部错误（%s）。这通常是对方服务的临时故障，请稍后再试。" (ProviderConfig.displayName p) detail
-        | Unreachable ->
-            sprintf "连不上 %s（%s）。可能是网络不通、地址写错或本机服务没有启动，请检查地址与网络。" p.baseUrl detail
-        | TimedOut ->
-            sprintf "等待 %s 超时（%s）。网络较慢或对方没有响应，请稍后再试，或检查地址是否正确。" p.baseUrl detail
-        | BadResponse ->
-            sprintf "%s 有响应，但返回的不是模型清单（%s）。地址可能指到了网页而不是接口，请确认端点路径。" p.baseUrl detail
-        | Rejected ->
-            sprintf "%s 拒绝了请求（%s）。请检查地址与密钥是否匹配这个接口。" (ProviderConfig.displayName p) detail
+        | RateLimited -> sprintf "%s 暂时限制了请求（%s）。可能是额度用尽或请求太频繁，请稍后再试或检查账户额度。" (ProviderConfig.displayName p) detail
+        | ServerError -> sprintf "%s 返回了内部错误（%s）。这通常是对方服务的临时故障，请稍后再试。" (ProviderConfig.displayName p) detail
+        | Unreachable -> sprintf "连不上 %s（%s）。可能是网络不通、地址写错或本机服务没有启动，请检查地址与网络。" p.baseUrl detail
+        | TimedOut -> sprintf "等待 %s 超时（%s）。网络较慢或对方没有响应，请稍后再试，或检查地址是否正确。" p.baseUrl detail
+        | BadResponse -> sprintf "%s 有响应，但返回的不是模型清单（%s）。地址可能指到了网页而不是接口，请确认端点路径。" p.baseUrl detail
+        | Rejected -> sprintf "%s 拒绝了请求（%s）。请检查地址与密钥是否匹配这个接口。" (ProviderConfig.displayName p) detail
         | Cancelled -> "探测已取消。"
 
     /// 向 provider 的模型清单端点探活，失败带类型。
     /// 只在用户点击后触发；密钥只进请求头，错误文案里不出现密钥（决策 41）。
-    let probeModelsTyped (p: ProviderConfig) (ct: CancellationToken) : Task<Result<string list, ProbeFailure * string>> =
+    let probeModelsTyped
+        (p: ProviderConfig)
+        (ct: CancellationToken)
+        : Task<Result<string list, ProbeFailure * string>> =
         task {
             try
                 let url, authHeaders = probeRequest p
                 use request = new HttpRequestMessage(HttpMethod.Get, url)
+
                 for (name, value) in authHeaders do
                     request.Headers.TryAddWithoutValidation(name, value) |> ignore
+
                 for KeyValue(name, value) in p.headers do
                     request.Headers.TryAddWithoutValidation(name, value) |> ignore
+
                 use client = new HttpClient()
                 client.Timeout <- TimeSpan.FromSeconds(float (min p.timeoutSeconds 30))
                 let! response = client.SendAsync(request, ct)
                 let! body = response.Content.ReadAsStringAsync ct
+
                 if not response.IsSuccessStatusCode then
                     let status = int response.StatusCode
                     let detail = sprintf "HTTP %d" status
+
                     let failure =
                         match status with
-                        | 401 | 403 -> InvalidKey
+                        | 401
+                        | 403 -> InvalidKey
                         | 404 -> EndpointNotFound
                         | 429 -> RateLimited
                         | s when s >= 500 -> ServerError
                         | _ -> Rejected
+
                     return Error(failure, describeFailure p failure detail)
                 else
                     match modelIdsFromProbe body with
@@ -375,21 +514,28 @@ module ProviderCatalog =
                         let fromList = ModelCapabilities.ofModelsBody body
                         let fromShow = Collections.Generic.List<string * bool>()
                         let root = ModelCapabilities.ollamaRoot p
+
                         let! isOllama =
                             task {
-                                if ModelCapabilities.isOllamaKind p then return true
-                                elif p.kind <> "openai" then return false
+                                if ModelCapabilities.isOllamaKind p then
+                                    return true
+                                elif p.kind <> "openai" then
+                                    return false
                                 else
                                     try
                                         use cts = CancellationTokenSource.CreateLinkedTokenSource ct
                                         cts.CancelAfter(TimeSpan.FromSeconds 3.0)
                                         let! r = client.GetAsync(root + "/api/version", cts.Token)
-                                        if not r.IsSuccessStatusCode then return false
+
+                                        if not r.IsSuccessStatusCode then
+                                            return false
                                         else
                                             let! b = r.Content.ReadAsStringAsync cts.Token
                                             return ModelCapabilities.ofOllamaVersion b
-                                    with _ -> return false
+                                    with _ ->
+                                        return false
                             }
+
                         if isOllama then
                             // 逐个问 Ollama 的 /api/show；失败或旧版本没有 capabilities 就跳过，不影响探测结果。
                             for m in ids |> List.truncate 50 do
@@ -397,28 +543,36 @@ module ProviderCatalog =
                                     use show = new HttpRequestMessage(HttpMethod.Post, root + "/api/show")
                                     let payload = JsonObject()
                                     payload["model"] <- m
-                                    show.Content <- new StringContent(payload.ToJsonString(), Text.Encoding.UTF8, "application/json")
+
+                                    show.Content <-
+                                        new StringContent(
+                                            payload.ToJsonString(),
+                                            Text.Encoding.UTF8,
+                                            "application/json"
+                                        )
+
                                     use cts = CancellationTokenSource.CreateLinkedTokenSource ct
                                     cts.CancelAfter(TimeSpan.FromSeconds 5.0)
                                     let! r = client.SendAsync(show, cts.Token)
+
                                     if r.IsSuccessStatusCode then
                                         let! b = r.Content.ReadAsStringAsync cts.Token
+
                                         match ModelCapabilities.ofOllamaShow b with
                                         | Some v -> fromShow.Add((m, v))
                                         | None -> ()
-                                with _ -> ()
+                                with _ ->
+                                    ()
+
                         ModelCapabilities.replaceFor p (fromList @ List.ofSeq fromShow)
                         return Ok ids
                     | Error reason -> return Error(BadResponse, describeFailure p BadResponse reason)
             with
             | :? OperationCanceledException when ct.IsCancellationRequested ->
                 return Error(Cancelled, describeFailure p Cancelled "")
-            | :? OperationCanceledException ->
-                return Error(TimedOut, describeFailure p TimedOut "请求超时")
-            | :? HttpRequestException as ex ->
-                return Error(Unreachable, describeFailure p Unreachable ex.Message)
-            | ex ->
-                return Error(Unreachable, describeFailure p Unreachable ex.Message)
+            | :? OperationCanceledException -> return Error(TimedOut, describeFailure p TimedOut "请求超时")
+            | :? HttpRequestException as ex -> return Error(Unreachable, describeFailure p Unreachable ex.Message)
+            | ex -> return Error(Unreachable, describeFailure p Unreachable ex.Message)
         }
 
     /// 向 provider 的模型清单端点探活（线上形态）。
@@ -426,6 +580,7 @@ module ProviderCatalog =
     let probeModels (p: ProviderConfig) (ct: CancellationToken) : Task<Result<string list, string>> =
         task {
             let! result = probeModelsTyped p ct
+
             match result with
             | Ok ids -> return Ok ids
             | Error(failure, message) -> return Error(ProbeFailure.encode failure message)

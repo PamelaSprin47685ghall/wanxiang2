@@ -6,9 +6,13 @@ open System.Runtime.InteropServices
 open Xunit
 open JsonSeq
 
-let appended = function Appended e -> e | o -> failwithf "%A" o
+let appended =
+    function
+    | Appended e -> e
+    | o -> failwithf "%A" o
 
-let tempFile () = Path.Combine(Path.GetTempPath(), "jsonseq-" + Guid.NewGuid().ToString("N"), "log.jsonseq")
+let tempFile () =
+    Path.Combine(Path.GetTempPath(), "jsonseq-" + Guid.NewGuid().ToString("N"), "log.jsonseq")
 
 /// 只在测试里用：临时收紧本进程的 RLIMIT_FSIZE（内核的文件大小上限），并忽略 SIGXFSZ。
 /// 信号被忽略时，内核把超过上限的写报成 EFBIG（.NET 转成 ArgumentOutOfRangeException），
@@ -16,7 +20,11 @@ let tempFile () = Path.Combine(Path.GetTempPath(), "jsonseq-" + Guid.NewGuid().T
 /// 用完恢复原上限与原信号处置。仅 Linux。
 module private FsizeLimit =
     [<Struct; StructLayout(LayoutKind.Sequential)>]
-    type RLimit = { mutable Cur: uint64; mutable Max: uint64 }
+    type RLimit =
+        {
+            mutable Cur: uint64
+            mutable Max: uint64
+        }
 
     [<DllImport("libc", SetLastError = true)>]
     extern int getrlimit(int resource, RLimit& rlim)
@@ -36,13 +44,26 @@ module private FsizeLimit =
     /// 以文件大小上限 limit 字节运行 act，之后恢复原上限与原信号处置。
     let at (limit: int64) (act: unit -> unit) =
         let mutable old = { Cur = 0UL; Max = 0UL }
-        if getrlimit (RlimitFsize, &old) <> 0 then failwith "getrlimit failed"
-        let previous = signal (Sigxfsz, IntPtr 1)   // SIG_IGN
-        if previous = IntPtr(-1) then failwith "signal failed"
+
+        if getrlimit (RlimitFsize, &old) <> 0 then
+            failwith "getrlimit failed"
+
+        let previous = signal (Sigxfsz, IntPtr 1) // SIG_IGN
+
+        if previous = IntPtr(-1) then
+            failwith "signal failed"
+
         try
             try
-                let mutable tightened = { Cur = min (uint64 limit) old.Max; Max = old.Max }
-                if setrlimit (RlimitFsize, &tightened) <> 0 then failwith "setrlimit failed"
+                let mutable tightened =
+                    {
+                        Cur = min (uint64 limit) old.Max
+                        Max = old.Max
+                    }
+
+                if setrlimit (RlimitFsize, &tightened) <> 0 then
+                    failwith "setrlimit failed"
+
                 act ()
             finally
                 setrlimit (RlimitFsize, &old) |> ignore
@@ -64,6 +85,7 @@ let ``encode then split round-trips text and offsets`` () =
 let ``truncation at every byte yields complete prefix plus at most one incomplete tail`` () =
     let texts = [ for i in 0..4 -> sprintf """{"i":%d,"s":"%s"}""" i (String('x', i)) ]
     let bytes = texts |> List.map Frame.encode |> Array.concat
+
     for cut in 0 .. bytes.Length do
         let rs = Frame.split 0L (ReadOnlySpan(bytes, 0, cut))
         let complete = rs |> List.takeWhile (fun r -> r.fault.IsNone)
@@ -73,17 +95,20 @@ let ``truncation at every byte yields complete prefix plus at most one incomplet
 // SPEC 3：防呆
 [<Fact>]
 let ``encode rejects RS inside payload`` () =
-    Assert.Throws<ArgumentException>(fun () -> Frame.encode "a\u001eb" |> ignore) |> ignore
+    Assert.Throws<ArgumentException>(fun () -> Frame.encode "a\u001eb" |> ignore)
+    |> ignore
 
 // SPEC 4：文件追加、重开、截断
 [<Fact>]
 let ``file append survives reopen and truncate rolls back`` () =
     let p = tempFile ()
+
     let mid =
         use f = new JsonSeqFile(p)
         let m = appended (f.Append """{"n":1}""")
         appended (f.Append """{"n":2}""") |> ignore
         m
+
     use f = new JsonSeqFile(p)
     Assert.Equal(2, f.ReadFrom(0L).Length)
     Assert.Equal<string list>([ """{"n":2}""" ], f.ReadFrom mid |> List.map _.payload)
@@ -93,7 +118,14 @@ let ``file append survives reopen and truncate rolls back`` () =
 // SPEC 5：非法 UTF-8 报告为 InvalidUtf8，不替换
 [<Fact>]
 let ``invalid utf8 is reported not replaced`` () =
-    let bytes = Array.concat [ Frame.encode "{}"; [| Frame.RS; 0xC3uy; 0x28uy; Frame.LF |]; Frame.encode "{}" ]
+    let bytes =
+        Array.concat
+            [
+                Frame.encode "{}"
+                [| Frame.RS; 0xC3uy; 0x28uy; Frame.LF |]
+                Frame.encode "{}"
+            ]
+
     let rs = Frame.split 0L (ReadOnlySpan bytes)
     Assert.Equal<string option list>([ None; Some Frame.InvalidUtf8; None ], rs |> List.map _.fault)
 
@@ -122,14 +154,20 @@ let ``failure before writing is NotWritten`` () =
     let f = new JsonSeqFile(tempFile ())
     appended (f.Append "{}") |> ignore
     (f :> IDisposable).Dispose()
-    match f.Append "{}" with NotWritten _ -> () | o -> failwithf "%A" o
+
+    match f.Append "{}" with
+    | NotWritten _ -> ()
+    | o -> failwithf "%A" o
 
 [<Fact>]
 let ``write failure without rollback evidence is Unknown`` () =
     // /dev/full：真实的写失败（ENOSPC），且截断同样失败。仅 Linux。
     if OperatingSystem.IsLinux() then
         use f = new JsonSeqFile("/dev/full")
-        match f.Append "{}" with Unknown _ -> () | o -> failwithf "%A" o
+
+        match f.Append "{}" with
+        | Unknown _ -> ()
+        | o -> failwithf "%A" o
 
 [<Fact>]
 let ``write failure with rollback evidence is NotWritten`` () =
@@ -144,6 +182,7 @@ let ``write failure with rollback evidence is NotWritten`` () =
             match f.Append("[" + String('x', 64 * 1024) + "]") with
             | NotWritten _ -> ()
             | o -> failwithf "%A" o)
+
         Assert.Equal<byte[]>(before, File.ReadAllBytes p)
         Assert.Equal(int64 before.Length, f.Length)
         Assert.Equal<string list>([ "[1]" ], f.ReadFrom 0L |> List.map _.payload)
@@ -151,10 +190,19 @@ let ``write failure with rollback evidence is NotWritten`` () =
 // SPEC 10：没有正文的 RS 不被忽略：末尾是 TornTail，中间是 EmptyRecord；偏移连续覆盖全部字节
 [<Fact>]
 let ``bare RS is a faulted record, never skipped`` () =
-    let bytes = Array.concat [ Frame.encode "{}"; [| Frame.RS |]; Frame.encode "{}"; [| Frame.RS |] ]
+    let bytes =
+        Array.concat [ Frame.encode "{}"; [| Frame.RS |]; Frame.encode "{}"; [| Frame.RS |] ]
+
     let rs = Frame.split 0L (ReadOnlySpan bytes)
-    Assert.Equal<string option list>([ None; Some Frame.EmptyRecord; None; Some Frame.TornTail ], rs |> List.map _.fault)
-    for a, b in List.pairwise rs do Assert.Equal(a.endOffset, b.startOffset)
+
+    Assert.Equal<string option list>(
+        [ None; Some Frame.EmptyRecord; None; Some Frame.TornTail ],
+        rs |> List.map _.fault
+    )
+
+    for a, b in List.pairwise rs do
+        Assert.Equal(a.endOffset, b.startOffset)
+
     Assert.Equal(int64 bytes.Length, (List.last rs).endOffset)
 
 // SPEC 11：状态有主人
@@ -177,7 +225,9 @@ let ``instances are isolated; errors and illegal arguments leave state legal`` (
     a.Truncate a1
     Assert.Equal<string list>([ """{"a":1}""" ], first |> List.map _.payload)
     // 非法消息不改状态
-    Assert.Throws<ArgumentException>(fun () -> a.Read(0L, a.Length + 1L) |> ignore) |> ignore
+    Assert.Throws<ArgumentException>(fun () -> a.Read(0L, a.Length + 1L) |> ignore)
+    |> ignore
+
     Assert.Throws<ArgumentException>(fun () -> a.Read(-1L, 0L) |> ignore) |> ignore
     Assert.Throws<ArgumentException>(fun () -> a.Truncate -1L) |> ignore
     Assert.Throws<ArgumentException>(fun () -> a.Truncate(a.Length + 1L)) |> ignore

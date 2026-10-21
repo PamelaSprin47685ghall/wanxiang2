@@ -15,4 +15,5 @@ module FocusOrigin =
             match e.NavigationMethod with
             | NavigationMethod.Pointer -> control.Classes.Remove ProgrammaticClass |> ignore
             | _ -> control.Classes.Add ProgrammaticClass |> ignore)
+
         control.LostFocus.Add(fun _ -> control.Classes.Remove ProgrammaticClass |> ignore)

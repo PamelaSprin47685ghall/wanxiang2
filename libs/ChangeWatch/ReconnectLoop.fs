@@ -42,7 +42,8 @@ type ReconnectLoop(baseDelayMs: int, next: int -> int) =
         if pending = Some t then
             pending <- None
             true
-        else false
+        else
+            false
 
     /// 网络恢复或回到前台：有挂起的就立刻执行并把退避归零（返回 true 后调用方 Connect）；没有就什么也不做
     member _.ResumeNow() =

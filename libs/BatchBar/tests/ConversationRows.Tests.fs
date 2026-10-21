@@ -16,15 +16,34 @@ let private ids = Array.init 4 (fun _ -> Guid.NewGuid())
 
 let private row i (running: bool) (pinned: bool) =
     let t = sprintf "对话 %d" i
+
     RowItem.Conversation
-        { Id = ids[i]; Title = t; TitleSpans = [ { Text = t; IsMatch = false } ]; Preview = "预览"
-          PreviewSpans = [ { Text = "预览"; IsMatch = false } ]; AccessibleName = t; Tooltip = t
-          Running = running; Pinned = pinned; Archived = false }
+        {
+            Id = ids[i]
+            Title = t
+            TitleSpans = [ { Text = t; IsMatch = false } ]
+            Preview = "预览"
+            PreviewSpans = [ { Text = "预览"; IsMatch = false } ]
+            AccessibleName = t
+            Tooltip = t
+            Running = running
+            Pinned = pinned
+            Archived = false
+        }
 
 let private make () =
     let r = ConversationRows()
     let w = host r.View
-    r.Render [ RowItem.Header "今天"; row 0 true false; row 1 false true; row 2 false false; RowItem.ArchivedToggle(false, 3) ]
+
+    r.Render
+        [
+            RowItem.Header "今天"
+            row 0 true false
+            row 1 false true
+            row 2 false false
+            RowItem.ArchivedToggle(false, 3)
+        ]
+
     Dispatcher.UIThread.RunJobs()
     w.UpdateLayout()
     r, w
@@ -95,11 +114,22 @@ let ``active or selected rows highlight and update screen reader item status`` (
     Headless.run (fun () ->
         let r = ConversationRows()
         let w = host r.View
+
         let archived =
             RowItem.Conversation
-                { Id = ids[3]; Title = "对话 3"; TitleSpans = [ { Text = "对话 3"; IsMatch = false } ]; Preview = "预览"
-                  PreviewSpans = [ { Text = "预览"; IsMatch = false } ]; AccessibleName = "对话 3"; Tooltip = "对话 3"
-                  Running = false; Pinned = false; Archived = true }
+                {
+                    Id = ids[3]
+                    Title = "对话 3"
+                    TitleSpans = [ { Text = "对话 3"; IsMatch = false } ]
+                    Preview = "预览"
+                    PreviewSpans = [ { Text = "预览"; IsMatch = false } ]
+                    AccessibleName = "对话 3"
+                    Tooltip = "对话 3"
+                    Running = false
+                    Pinned = false
+                    Archived = true
+                }
+
         r.Render [ row 0 true false; row 1 false true; row 2 false false; archived ]
         Dispatcher.UIThread.RunJobs()
         w.UpdateLayout()
@@ -173,8 +203,7 @@ let ``archived toggle is an expander button that keeps focus across the rebuild`
         let t = r.ArchivedToggle.Value
         Assert.Equal("已归档对话（3），点击展开", AutomationProperties.GetName t)
         Assert.Equal("已折叠", AutomationProperties.GetItemStatus t)
-        r.ArchivedToggleClicked.Add(fun () ->
-            r.Render [ row 0 false false; RowItem.ArchivedToggle(true, 3) ])
+        r.ArchivedToggleClicked.Add(fun () -> r.Render [ row 0 false false; RowItem.ArchivedToggle(true, 3) ])
         t.Focus() |> ignore
         click t
         w.UpdateLayout()
@@ -188,11 +217,23 @@ let ``hit rows and status actions raise their keys`` () =
     Headless.run (fun () ->
         let r = ConversationRows()
         let _ = host r.View
+
         r.Render
-            [ row 0 false false
-              RowItem.Header "消息内容"
-              RowItem.Hit { Key = "h1"; Title = "标题"; Before = "前"; Matched = "中"; After = "后"; AccessibleName = "消息命中：标题，前中后" }
-              RowItem.Status("还有更多结果", Some("显示更多", "more")) ]
+            [
+                row 0 false false
+                RowItem.Header "消息内容"
+                RowItem.Hit
+                    {
+                        Key = "h1"
+                        Title = "标题"
+                        Before = "前"
+                        Matched = "中"
+                        After = "后"
+                        AccessibleName = "消息命中：标题，前中后"
+                    }
+                RowItem.Status("还有更多结果", Some("显示更多", "more"))
+            ]
+
         Dispatcher.UIThread.RunJobs()
         let hits = ResizeArray()
         let acts = ResizeArray()

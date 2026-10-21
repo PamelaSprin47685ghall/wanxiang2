@@ -31,6 +31,7 @@ type ListEmptyCard() =
         panel.HorizontalAlignment <- HorizontalAlignment.Center
         panel.IsVisible <- false
         panel.Margin <- Thickness(0.0, 8.0, 0.0, 0.0)
+
         for fraction in [ 0.85; 0.60; 0.72 ] do
             let bar = Border(HorizontalAlignment = HorizontalAlignment.Stretch)
             bar.Classes.Add "surface"
@@ -39,10 +40,15 @@ type ListEmptyCard() =
             bar.Opacity <- 0.6
             let row = Grid(HorizontalAlignment = HorizontalAlignment.Stretch)
             row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(fraction, GridUnitType.Star)))
-            row.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength(max 0.01 (1.0 - fraction), GridUnitType.Star)))
+
+            row.ColumnDefinitions.Add(
+                ColumnDefinition(Width = GridLength(max 0.01 (1.0 - fraction), GridUnitType.Star))
+            )
+
             Grid.SetColumn(bar, 0)
             row.Children.Add bar
             panel.Children.Add row
+
         AutomationProperties.SetName(panel, "正在加载对话")
         panel
 
@@ -69,6 +75,7 @@ type ListEmptyCard() =
     let build style (title: string) (note: string) =
         detach skeleton
         detach button
+
         match style with
         | EmptyCardStyle.Note ->
             let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
@@ -80,12 +87,15 @@ type ListEmptyCard() =
             stack :> Control
         | EmptyCardStyle.Brand ->
             let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
+
             if not (String.IsNullOrWhiteSpace title) then
                 let titleBlock = TextBlock(Text = title, FontWeight = FontWeight.Bold)
                 stack.Children.Add(centered titleBlock)
+
             if not (String.IsNullOrWhiteSpace note) then
                 let noteBlock = TextBlock(Text = note)
                 stack.Children.Add(centered noteBlock)
+
             stack.Children.Add skeleton
             stack.Children.Add button
             stack :> Control
@@ -97,8 +107,7 @@ type ListEmptyCard() =
             stack.Children.Add(centered noteBlock)
             stack :> Control
 
-    do
-        host.Margin <- Thickness(24.0, 48.0, 24.0, 48.0)
+    do host.Margin <- Thickness(24.0, 48.0, 24.0, 48.0)
 
     member _.View = host :> Control
     member _.ActionButton = button :> Control
@@ -111,6 +120,7 @@ type ListEmptyCard() =
         if current <> Some style then
             current <- Some style
             host.Child <- build style title note
+
         skeleton.IsVisible <- skeletonVisible
         button.IsVisible <- actionVisible
         host.IsVisible <- true
@@ -121,19 +131,19 @@ type ListEmptyCard() =
         if button.IsEffectivelyVisible && button.IsEnabled then
             button.Focus Avalonia.Input.NavigationMethod.Directional |> ignore
             true
-        else false
+        else
+            false
 
     /// 单入口渲染
     member this.Render(kind: SidebarEmptyKind option) =
         match kind with
         | None -> this.Hide()
-        | Some (SidebarEmptyKind.NotConnected actionVis) ->
+        | Some(SidebarEmptyKind.NotConnected actionVis) ->
             this.Show(EmptyCardStyle.Note, "", "连接主机后，对话记录会显示在这里。", false, actionVis)
-        | Some SidebarEmptyKind.Loading ->
-            this.Show(EmptyCardStyle.Brand, "正在加载对话…", "", true, false)
+        | Some SidebarEmptyKind.Loading -> this.Show(EmptyCardStyle.Brand, "正在加载对话…", "", true, false)
         | Some SidebarEmptyKind.NoConversations ->
             this.Show(EmptyCardStyle.Plain, "还没有对话", "发送第一条消息后，对话会显示在这里。", false, false)
-        | Some (SidebarEmptyKind.NoSearchResults _) ->
-            this.Hide()
+        | Some(SidebarEmptyKind.NoSearchResults _) -> this.Hide()
 
-    [<CLIEvent>] member _.ActionClicked = action.Publish
+    [<CLIEvent>]
+    member _.ActionClicked = action.Publish

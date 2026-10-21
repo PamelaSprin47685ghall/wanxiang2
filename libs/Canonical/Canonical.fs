@@ -9,7 +9,8 @@ open Jcs.Net
 [<RequireQualifiedAccess>]
 module Jcs =
     /// 规范化为 UTF-8 字节。
-    let utf8 (json: string) : byte[] = JsonCanonicalizer.CanonicalizeToUtf8 json
+    let utf8 (json: string) : byte[] =
+        JsonCanonicalizer.CanonicalizeToUtf8 json
 
     /// 规范化为字符串。
     let text (json: string) : string = JsonCanonicalizer.Canonicalize json

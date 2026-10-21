@@ -12,7 +12,12 @@ open Wanxiang2.WorkspaceState
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 破坏性操作确认的内容（迁自旧 Views/Dialogs.fs 的 confirmWithFocus / confirm）。
@@ -27,12 +32,18 @@ type ConfirmPane(?title: string, ?body: string, ?confirmLabel: string, ?dangerFi
     do titleBlock.Classes.Add "dialog-title"
 
     let messageBlock = TextBlock(TextWrapping = TextWrapping.Wrap)
+
     do
         messageBlock.Classes.Add "dialog-message"
-        messageBlock.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontBody") |> ignore
-        messageBlock.Bind(TextBlock.LineHeightProperty, Dyn.res "Metric.UiBodyLineHeight") |> ignore
+
+        messageBlock.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontBody")
+        |> ignore
+
+        messageBlock.Bind(TextBlock.LineHeightProperty, Dyn.res "Metric.UiBodyLineHeight")
+        |> ignore
 
     let cancelButton = Button(Content = "取消")
+
     do
         cancelButton.Classes.Add "ghost"
         cancelButton.Classes.Add "button-ghost"
@@ -41,22 +52,27 @@ type ConfirmPane(?title: string, ?body: string, ?confirmLabel: string, ?dangerFi
         cancelButton.Click.Add(fun _ -> cancelled.Trigger())
 
     let confirmButton = Button()
+
     do
         AutomationProperties.SetName(confirmButton, defaultArg confirmLabel "确认")
         confirmButton.Classes.Add "danger"
         confirmButton.Classes.Add "button-danger"
         confirmButton.Click.Add(fun _ -> confirmed.Trigger())
 
-    let footerRow = StackPanel(Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8.0)
+    let footerRow =
+        StackPanel(Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8.0)
+
     do
         cancelButton.KeyDown.Add(fun e ->
             if e.Key = Avalonia.Input.Key.Right && confirmButton.IsEnabled then
                 e.Handled <- true
                 confirmButton.Focus Avalonia.Input.NavigationMethod.Directional |> ignore)
+
         confirmButton.KeyDown.Add(fun e ->
             if e.Key = Avalonia.Input.Key.Left && cancelButton.IsEnabled then
                 e.Handled <- true
                 cancelButton.Focus Avalonia.Input.NavigationMethod.Directional |> ignore)
+
         footerRow.Children.Add cancelButton
         footerRow.Children.Add confirmButton
 
@@ -90,9 +106,15 @@ type ConfirmPane(?title: string, ?body: string, ?confirmLabel: string, ?dangerFi
     member _.View = view :> Control
     member _.CancelButton = cancelButton :> Control
     member _.ConfirmButton = confirmButton :> Control
-    member _.InitialFocus = (if dangerFirstVal then confirmButton else cancelButton) :> Control
-    [<CLIEvent>] member _.Confirmed = confirmed.Publish
-    [<CLIEvent>] member _.Cancelled = cancelled.Publish
+
+    member _.InitialFocus =
+        (if dangerFirstVal then confirmButton else cancelButton) :> Control
+
+    [<CLIEvent>]
+    member _.Confirmed = confirmed.Publish
+
+    [<CLIEvent>]
+    member _.Cancelled = cancelled.Publish
 
     member this.Render(vs: DialogVS) =
         match vs.Confirm with

@@ -20,22 +20,34 @@ open Wanxiang2.WorkspaceState
 /// 状态只在内存里：断线清空，主机重连后重发。
 type ApprovalDesk(wrenchIcon: (unit -> Control) option, overlay: OverlayDesk, send: WireEvent -> unit) =
     let awaiting = Event<Set<string>>()
+
     let texts =
-        { PolicyNote = ApprovalCardText.policyNote
-          SentText = ApprovalCardText.sentText
-          DisplayArguments = ApprovalCardText.displayArguments
-          ArgsToggleText = ApprovalCardText.argsToggleText }
+        {
+            PolicyNote = ApprovalCardText.policyNote
+            SentText = ApprovalCardText.sentText
+            DisplayArguments = ApprovalCardText.displayArguments
+            ArgsToggleText = ApprovalCardText.argsToggleText
+        }
+
     let panel = ApprovalPanel(texts, wrenchIcon)
     let mutable active: Guid option = None
     let sync () = awaiting.Trigger panel.AwaitingCallIds
 
     do
         panel.Decide.Add(fun (approvalId, approved) ->
-            send (ToolApprovalDecision {| approvalId = approvalId; approved = approved |}))
+            send (
+                ToolApprovalDecision
+                    {|
+                        approvalId = approvalId
+                        approved = approved
+                    |}
+            ))
 
     /// 从主题直接建（宿主常用的入口）
     new(theme: ThemeManager, overlay: OverlayDesk, send: WireEvent -> unit) =
-        let wrench = Some(fun () -> IconSet.image Glyph.Wrench (theme.Brush PaletteKey.Warning) (theme.Metric Metric.IconGlyph))
+        let wrench =
+            Some(fun () -> IconSet.image Glyph.Wrench (theme.Brush PaletteKey.Warning) (theme.Metric Metric.IconGlyph))
+
         ApprovalDesk(wrench, overlay, send)
 
     /// 放进输入框正上方附属位的面板
@@ -47,6 +59,7 @@ type ApprovalDesk(wrenchIcon: (unit -> Control) option, overlay: OverlayDesk, se
     /// 单入口幂等渲染：由单一状态树直接驱动
     member _.Render(vs: ApprovalVS, currentConversation: Guid option) =
         active <- currentConversation
+
         let items: ApprovalAsk list =
             vs.Items
             |> List.map (fun i ->
@@ -59,6 +72,7 @@ type ApprovalDesk(wrenchIcon: (unit -> Control) option, overlay: OverlayDesk, se
                     ArgumentsJson = i.ArgumentsJson
                     Policy = i.Policy
                 })
+
         panel.Render(items, currentConversation)
         sync ()
 
@@ -72,21 +86,32 @@ type ApprovalDesk(wrenchIcon: (unit -> Control) option, overlay: OverlayDesk, se
         match ev with
         | ToolApprovalRequested d ->
             panel.Upsert
-                { ApprovalId = d.approvalId
-                  ConversationId = d.conversationId
-                  ToolName = d.toolName
-                  CallId = d.callId
-                  Summary = d.summary
-                  ArgumentsJson = (if isNull d.arguments then "" else d.arguments.ToJsonString())
-                  Policy = d.policy }
+                {
+                    ApprovalId = d.approvalId
+                    ConversationId = d.conversationId
+                    ToolName = d.toolName
+                    CallId = d.callId
+                    Summary = d.summary
+                    ArgumentsJson =
+                        (if isNull d.arguments then
+                             ""
+                         else
+                             d.arguments.ToJsonString())
+                    Policy = d.policy
+                }
+
             if active <> Some d.conversationId then
                 overlay.Toast(ApprovalCardText.otherConversationWaitingText, Wanxiang2.ToastStrip.ToastTone.Info)
+
             sync ()
             true
         | ToolApprovalResolved d ->
             panel.Remove d.approvalId
             sync ()
-            if d.alreadyHandled then overlay.Toast(ApprovalCardText.alreadyHandledText d.status, Wanxiang2.ToastStrip.ToastTone.Info)
+
+            if d.alreadyHandled then
+                overlay.Toast(ApprovalCardText.alreadyHandledText d.status, Wanxiang2.ToastStrip.ToastTone.Info)
+
             true
         | _ -> false
 
@@ -96,4 +121,5 @@ type ApprovalDesk(wrenchIcon: (unit -> Control) option, overlay: OverlayDesk, se
         sync ()
 
     /// 待批准的 callId 集合变了
-    [<CLIEvent>] member _.AwaitingChanged = awaiting.Publish
+    [<CLIEvent>]
+    member _.AwaitingChanged = awaiting.Publish

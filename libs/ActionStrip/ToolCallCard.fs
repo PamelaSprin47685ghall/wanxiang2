@@ -35,53 +35,88 @@ type ToolGlyph =
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 展开后的一节（参数或结果）
 type ToolSection =
-    { Label: string
-      Raw: string
-      Pretty: string
-      IsError: bool }
+    {
+        Label: string
+        Raw: string
+        Pretty: string
+        IsError: bool
+    }
 
 module ToolCallCard =
     let sections (pretty: string -> string) (argumentsJson: string) (result: string option) (tone: ToolTone) =
-        [ if not (String.IsNullOrWhiteSpace argumentsJson) then
-              { Label = "调用参数"; Raw = argumentsJson; Pretty = pretty argumentsJson; IsError = false }
-          match result with
-          | Some r when not (String.IsNullOrWhiteSpace r) ->
-              let failed = tone = ToolTone.Failed
-              { Label = (if failed then "执行结果 (异常)" else "执行结果"); Raw = r; Pretty = pretty r; IsError = failed }
-          | _ ->
-              if tone = ToolTone.Unknown then
-                  let t = "未收到工具执行结果（生成已结束）"
-                  { Label = "执行结果"; Raw = t; Pretty = pretty t; IsError = false } ]
+        [
+            if not (String.IsNullOrWhiteSpace argumentsJson) then
+                {
+                    Label = "调用参数"
+                    Raw = argumentsJson
+                    Pretty = pretty argumentsJson
+                    IsError = false
+                }
+            match result with
+            | Some r when not (String.IsNullOrWhiteSpace r) ->
+                let failed = tone = ToolTone.Failed
+
+                {
+                    Label = (if failed then "执行结果 (异常)" else "执行结果")
+                    Raw = r
+                    Pretty = pretty r
+                    IsError = failed
+                }
+            | _ ->
+                if tone = ToolTone.Unknown then
+                    let t = "未收到工具执行结果（生成已结束）"
+
+                    {
+                        Label = "执行结果"
+                        Raw = t
+                        Pretty = pretty t
+                        IsError = false
+                    }
+        ]
 
     let rawPayload (argumentsJson: string) (result: string option) (tone: ToolTone) =
-        [ if not (String.IsNullOrWhiteSpace argumentsJson) then sprintf "// 参数 (Arguments)\n%s" argumentsJson
-          match result with
-          | Some r when not (String.IsNullOrWhiteSpace r) -> sprintf "// 结果 (Result)\n%s" r
-          | _ -> if tone = ToolTone.Unknown then "// 结果 (Result)\n未收到工具执行结果（生成已结束）" ]
+        [
+            if not (String.IsNullOrWhiteSpace argumentsJson) then
+                sprintf "// 参数 (Arguments)\n%s" argumentsJson
+            match result with
+            | Some r when not (String.IsNullOrWhiteSpace r) -> sprintf "// 结果 (Result)\n%s" r
+            | _ ->
+                if tone = ToolTone.Unknown then
+                    "// 结果 (Result)\n未收到工具执行结果（生成已结束）"
+        ]
         |> String.concat "\n\n"
 
 /// 一张工具卡的显示数据（由使用方从工具调用折算，文案都已算好）
 type ToolCardData =
-    { CallName: string
-      DisplayName: string
-      Tone: ToolTone
-      Badge: string
-      ArgCount: int
-      Preview: string
-      HumanSummary: string
-      Error: string option
-      Sections: ToolSection list
-      RawPayload: string }
+    {
+        CallName: string
+        DisplayName: string
+        Tone: ToolTone
+        Badge: string
+        ArgCount: int
+        Preview: string
+        HumanSummary: string
+        Error: string option
+        Sections: ToolSection list
+        RawPayload: string
+    }
 
 /// 使用方提供的件：复制按钮（tip、读屏名、取文本）与限高视口（内容、起始可见 → 根与开合函数）
 type ToolCardParts =
-    { Copy: string -> string -> (unit -> string) -> Control
-      Reveal: Control -> bool -> Control * (bool -> unit) }
+    {
+        Copy: string -> string -> (unit -> string) -> Control
+        Reveal: Control -> bool -> Control * (bool -> unit)
+    }
 
 /// 工具调用卡（旧 MessageCard.toolCallCard）：头部是唯一展开入口，显示图标、名称、状态药丸、
 /// 人话摘要、参数摘要、失败横幅；展开后在限高视口里列出参数与结果，各带复制。
@@ -93,13 +128,27 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         | ToolTone.Unknown -> "Palette.Warning"
         | ToolTone.Success -> "Palette.Success"
         | ToolTone.Failed -> "Palette.Danger"
-    let toneBgKey = if data.Tone = ToolTone.Failed then "Palette.DangerSoft" else "Palette.SurfaceSoft"
+
+    let toneBgKey =
+        if data.Tone = ToolTone.Failed then
+            "Palette.DangerSoft"
+        else
+            "Palette.SurfaceSoft"
+
     let hasError = data.Error.IsSome
     let mutable open' = false
 
     let hstack (spacing: float) (children: Control list) =
-        let p = StackPanel(Orientation = Orientation.Horizontal, Spacing = spacing, VerticalAlignment = VerticalAlignment.Center)
-        for c in children do p.Children.Add c
+        let p =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = spacing,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
+        for c in children do
+            p.Children.Add c
+
         p
 
     let createGlyph (glyph: ToolGlyph) (resKey: string) =
@@ -112,6 +161,7 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
             | ToolGlyph.Chevron -> "M 4 2 L 9 7 L 4 12"
             | ToolGlyph.Spinner
             | ToolGlyph.SpinnerCompact -> "M 7 1 A 6 6 0 0 1 13 7"
+
         let p =
             Path(
                 Data = Geometry.Parse pathData,
@@ -121,10 +171,14 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
                 Width = 14.0,
                 Height = 14.0,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center)
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         p.Bind(Path.StrokeProperty, Dyn.res resKey) |> ignore
+
         if glyph = ToolGlyph.Spinner || glyph = ToolGlyph.SpinnerCompact then
             p.Classes.Add "anim-spin"
+
         p :> Control
 
     let icon =
@@ -152,14 +206,14 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
             Text = data.DisplayName,
             FontWeight = FontWeight.Medium,
             FontSize = 13.0,
-            VerticalAlignment = VerticalAlignment.Center)
+            VerticalAlignment = VerticalAlignment.Center
+        )
+
     do name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
 
     let badge =
-        TextBlock(
-            Text = data.Badge,
-            FontSize = 11.0,
-            VerticalAlignment = VerticalAlignment.Center)
+        TextBlock(Text = data.Badge, FontSize = 11.0, VerticalAlignment = VerticalAlignment.Center)
+
     do badge.Bind(TextBlock.ForegroundProperty, Dyn.res toneResKey) |> ignore
 
     let pill =
@@ -168,7 +222,9 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
             Padding = Thickness(8.0, 2.0),
             BorderThickness = Thickness 1.0,
             CornerRadius = CornerRadius 999.0,
-            VerticalAlignment = VerticalAlignment.Center)
+            VerticalAlignment = VerticalAlignment.Center
+        )
+
     do
         pill.Bind(Border.BackgroundProperty, Dyn.res toneBgKey) |> ignore
         pill.Bind(Border.BorderBrushProperty, Dyn.res "Palette.BorderSoft") |> ignore
@@ -179,9 +235,13 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
             FontSize = 11.0,
             Margin = Thickness(0.0, 4.0, 0.0, 0.0),
             TextTrimming = TextTrimming.CharacterEllipsis,
-            IsVisible = not (String.IsNullOrWhiteSpace data.Preview))
+            IsVisible = not (String.IsNullOrWhiteSpace data.Preview)
+        )
+
     do
-        summary.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+        summary.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
+
         summary.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono") |> ignore
 
     let human =
@@ -189,21 +249,27 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
             Text = data.HumanSummary,
             FontSize = 12.0,
             Margin = Thickness(0.0, 4.0, 0.0, 0.0),
-            TextWrapping = TextWrapping.Wrap)
+            TextWrapping = TextWrapping.Wrap
+        )
+
     do
         human.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
         AutomationProperties.SetAutomationId(human, "tool-human-summary")
 
     let banner =
         let glyph = createGlyph ToolGlyph.Alert "Palette.Danger"
+
         let text =
             TextBlock(
                 Text = defaultArg data.Error "执行失败",
                 FontSize = 11.0,
                 TextWrapping = TextWrapping.Wrap,
-                VerticalAlignment = VerticalAlignment.Center)
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         text.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
         text.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono") |> ignore
+
         let b =
             Border(
                 BorderThickness = Thickness 1.0,
@@ -211,47 +277,64 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
                 Padding = Thickness(8.0, 4.0),
                 Margin = Thickness(0.0, 4.0, 0.0, 0.0),
                 IsVisible = hasError,
-                Child = hstack 4.0 [ glyph; text ])
+                Child = hstack 4.0 [ glyph; text ]
+            )
+
         b.Bind(Border.BackgroundProperty, Dyn.res "Palette.DangerSoft") |> ignore
         b.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
         b
 
     let section (s: ToolSection) : Control =
         let header = DockPanel(LastChildFill = false)
+
         let title =
             TextBlock(
                 Text = s.Label,
                 FontWeight = FontWeight.Medium,
                 FontSize = 11.0,
-                VerticalAlignment = VerticalAlignment.Center)
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         if s.IsError then
             title.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
         else
             title.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
-        let copy = parts.Copy (sprintf "复制%s" s.Label) (sprintf "复制工具%s" s.Label) (fun () -> s.Raw)
+
+        let copy =
+            parts.Copy (sprintf "复制%s" s.Label) (sprintf "复制工具%s" s.Label) (fun () -> s.Raw)
+
         DockPanel.SetDock(title, Dock.Left)
         DockPanel.SetDock(copy, Dock.Right)
         header.Children.Add title
         header.Children.Add copy
+
         let content =
             SelectableTextBlock(
                 ContextFlyout = null,
                 Text = s.Pretty,
                 FontSize = 12.0,
                 LineHeight = 12.0 * 1.52,
-                TextWrapping = TextWrapping.Wrap)
+                TextWrapping = TextWrapping.Wrap
+            )
+
         if s.IsError then
             content.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Danger") |> ignore
         else
             content.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.CodeText") |> ignore
+
         content.Bind(TextBlock.FontFamilyProperty, Dyn.res "FontFamily.Mono") |> ignore
-        content.Bind(SelectableTextBlock.SelectionBrushProperty, Dyn.res "Palette.AccentSoft") |> ignore
+
+        content.Bind(SelectableTextBlock.SelectionBrushProperty, Dyn.res "Palette.AccentSoft")
+        |> ignore
+
         let box =
             Border(
                 BorderThickness = Thickness 1.0,
                 CornerRadius = CornerRadius 4.0,
                 Padding = Thickness(12.0, 8.0),
-                Child = content)
+                Child = content
+            )
+
         box.Bind(Border.BackgroundProperty, Dyn.res "Palette.CodeBg") |> ignore
         box.Bind(Border.BorderBrushProperty, Dyn.res "Palette.CodeBorder") |> ignore
         let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
@@ -262,23 +345,43 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
     let detailPanel = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
     let detail, setDetail = parts.Reveal detailPanel false
     let rotate = RotateTransform(Angle = 0.0)
-    let rotation = DoubleTransition(Property = RotateTransform.AngleProperty, Duration = TimeSpan.FromMilliseconds 160.0, Easing = CubicEaseOut())
-    let chevronHost = Border(VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Width = 14.0, Height = 14.0)
-    let copyAll = parts.Copy "复制工具参数与结果" (sprintf "复制工具 %s 参数与结果" data.CallName) (fun () -> data.RawPayload)
+
+    let rotation =
+        DoubleTransition(
+            Property = RotateTransform.AngleProperty,
+            Duration = TimeSpan.FromMilliseconds 160.0,
+            Easing = CubicEaseOut()
+        )
+
+    let chevronHost =
+        Border(
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Width = 14.0,
+            Height = 14.0
+        )
+
+    let copyAll =
+        parts.Copy "复制工具参数与结果" (sprintf "复制工具 %s 参数与结果" data.CallName) (fun () -> data.RawPayload)
+
     let headerContent = StackPanel(Orientation = Orientation.Vertical, Spacing = 0.0)
+
     let header =
         Button(
             Margin = Thickness 0.0,
             Padding = Thickness 0.0,
             Cursor = new Cursor(StandardCursorType.Hand),
             Focusable = true,
-            Content = headerContent)
+            Content = headerContent
+        )
+
     let card =
         Border(
             BorderThickness = Thickness 1.0,
             CornerRadius = CornerRadius 8.0,
             Padding = Thickness(12.0, 12.0),
-            Margin = Thickness(0.0, 0.0, 0.0, 12.0))
+            Margin = Thickness(0.0, 0.0, 0.0, 12.0)
+        )
 
     let syncNames () =
         let verb = if open' then "收起" else "展开"
@@ -297,11 +400,21 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
 
     do
         statusGlyph.Margin <- Thickness(0.0, 0.0, 4.0, 0.0)
-        let pillRow = StackPanel(Orientation = Orientation.Horizontal, Spacing = 0.0, VerticalAlignment = VerticalAlignment.Center)
+
+        let pillRow =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 0.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         pillRow.Children.Add statusGlyph
         pillRow.Children.Add badge
         pill.Child <- pillRow
-        for s in data.Sections do detailPanel.Children.Add(section s)
+
+        for s in data.Sections do
+            detailPanel.Children.Add(section s)
+
         detail.Margin <- Thickness(0.0, 8.0, 0.0, 0.0)
 
         let transitions = Transitions()
@@ -323,7 +436,9 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         headerContent.Children.Add dock
         headerContent.Children.Add human
         headerContent.Children.Add summary
-        if hasError then headerContent.Children.Add banner
+
+        if hasError then
+            headerContent.Children.Add banner
 
         header.Classes.Add "ghost"
         header.Classes.Add "hover-bordered"
@@ -334,7 +449,10 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         stack.Children.Add detail
         card.Child <- stack
         card.Classes.Add "grouping-card"
-        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer") |> ignore
+
+        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer")
+        |> ignore
+
         card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
         AutomationProperties.SetName(card, sprintf "工具调用 %s" data.CallName)
         syncNames ()
@@ -357,19 +475,23 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
             | "success" -> ToolTone.Success
             | "failed" -> ToolTone.Failed
             | _ -> ToolTone.Unknown
+
         let prettyJson raw = raw
         let sections = ToolCallCard.sections prettyJson vs.ArgumentsJson vs.Result tone
         let rawPayload = ToolCallCard.rawPayload vs.ArgumentsJson vs.Result tone
-        let data =
-            { CallName = vs.CallName
-              DisplayName = vs.DisplayName
-              Tone = tone
-              Badge = vs.Badge
-              ArgCount = vs.ArgCount
-              Preview = vs.Preview
-              HumanSummary = vs.HumanSummary
-              Error = vs.Error
-              Sections = sections
-              RawPayload = rawPayload }
-        ToolCallCard(data, parts).Host
 
+        let data =
+            {
+                CallName = vs.CallName
+                DisplayName = vs.DisplayName
+                Tone = tone
+                Badge = vs.Badge
+                ArgCount = vs.ArgCount
+                Preview = vs.Preview
+                HumanSummary = vs.HumanSummary
+                Error = vs.Error
+                Sections = sections
+                RawPayload = rawPayload
+            }
+
+        ToolCallCard(data, parts).Host

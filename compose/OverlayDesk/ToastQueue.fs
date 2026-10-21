@@ -13,17 +13,21 @@ type ToastQueue(capacity: int) =
     member _.Showing = List.ofSeq entries
 
     /// 撤下一条（点击、Esc、到时）：同文条目一并移除。
-    member _.Remove(message: string) = entries.RemoveAll(fun t -> t = message) |> ignore
+    member _.Remove(message: string) =
+        entries.RemoveAll(fun t -> t = message) |> ignore
 
     /// 新提示入队；返回因去重或超限而要撤下的提示。
     member this.Admit(message: string) : string list =
         let dismissed = ResizeArray<string>()
+
         if entries.Contains message then
             dismissed.Add message
             this.Remove message
+
         while entries.Count >= capacity do
             let oldest = entries[0]
             dismissed.Add oldest
             this.Remove oldest
+
         entries.Add message
         List.ofSeq dismissed

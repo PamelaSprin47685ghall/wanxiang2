@@ -6,12 +6,23 @@ open System
 type Stamp = { commandId: string; hash: string }
 
 /// 一次原子提交。events 的顺序即应用顺序。
-type Commit<'E> = { id: uint64; at: DateTimeOffset; stamp: Stamp option; events: 'E list }
+type Commit<'E> =
+    {
+        id: uint64
+        at: DateTimeOffset
+        stamp: Stamp option
+        events: 'E list
+    }
 
 module Commit =
     /// 换事件的表示（例如领域事件 <-> JSON），外壳不变。
     let map (f: 'A -> 'B) (c: Commit<'A>) : Commit<'B> =
-        { id = c.id; at = c.at; stamp = c.stamp; events = List.map f c.events }
+        {
+            id = c.id
+            at = c.at
+            stamp = c.stamp
+            events = List.map f c.events
+        }
 
 /// 提交在只追加介质上占据的区间 [start, end)。相邻提交首尾相接。
 type Span = { start: int64; ``end``: int64 }
@@ -44,7 +55,8 @@ type RecordProblem<'Err> =
     member p.Describe() : string =
         match p with
         | IdGap(e, g) -> sprintf "commit id gap: expected %d, got %d" e g
-        | SpanGap(e, g) -> sprintf "commit span [%d, %d) does not start at %d (gap or overlap in the medium)" g.start g.``end`` e
+        | SpanGap(e, g) ->
+            sprintf "commit span [%d, %d) does not start at %d (gap or overlap in the medium)" g.start g.``end`` e
         | RepeatedStamp id -> sprintf "commandId %s appears twice" id
         | FoldRejected err -> sprintf "fold rejected the commit: %A" err
         | Unsettled id -> sprintf "proposal %d is not settled; record or abandon it first" id
@@ -54,15 +66,23 @@ type RecordProblem<'Err> =
 /// 账本的完整可保存状态。ends[i] 是 id = i + 1 的末尾偏移；起点由前一条末尾（或 origin）导出，
 /// 每条提交 8 字节。
 type Checkpoint<'S> =
-    { state: 'S
-      throughId: uint64
-      /// commandId -> (hash, commitId)
-      stamps: Map<string, string * uint64>
-      /// 第一条提交的起点
-      origin: int64
-      ends: int64[] }
+    {
+        state: 'S
+        throughId: uint64
+        /// commandId -> (hash, commitId)
+        stamps: Map<string, string * uint64>
+        /// 第一条提交的起点
+        origin: int64
+        ends: int64[]
+    }
 
 module Checkpoint =
     /// 换领域状态的表示（例如 'S <-> JSON），其余不变。
     let map (f: 'A -> 'B) (cp: Checkpoint<'A>) : Checkpoint<'B> =
-        { state = f cp.state; throughId = cp.throughId; stamps = cp.stamps; origin = cp.origin; ends = cp.ends }
+        {
+            state = f cp.state
+            throughId = cp.throughId
+            stamps = cp.stamps
+            origin = cp.origin
+            ends = cp.ends
+        }

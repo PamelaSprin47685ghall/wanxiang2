@@ -13,7 +13,8 @@ module MathBaseline =
     /// 绘制时基线到控件顶缘的距离：展示式用自身基线；行内式对到所在文本块的真实首行基线
     ///（hostBaseline 相对文本块顶缘，boundsY 是控件在文本块里的纵向偏移），问不到时退回自身基线。
     let drawBaseline (displayMode: bool) (ownBaseline: float) (hostBaseline: float option) (boundsY: float) : float =
-        if displayMode then ownBaseline
+        if displayMode then
+            ownBaseline
         else
             match hostBaseline with
             | Some host -> host - boundsY

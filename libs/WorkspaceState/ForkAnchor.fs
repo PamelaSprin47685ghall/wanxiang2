@@ -12,6 +12,7 @@ module ForkAnchor =
             match target with
             | Some t -> commitIds |> List.filter (fun id -> id < t)
             | None -> commitIds
+
         candidates |> List.sortDescending |> List.tryHead
 
     /// 被编辑后的用户消息：{"role":"user","contents":[{"text":...}]}，字节与旧代码一致。

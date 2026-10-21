@@ -23,48 +23,82 @@ type DeviceServer(port: int) =
     let desktopToken = ClientToken.ClientToken.generate ()
     let phoneToken = ClientToken.ClientToken.generate ()
     let mutable server: Wanxiang.Server.ServerApp option = None
+
     do
         let instanceId = Guid.CreateVersion7()
+
         let record name (token: string) : ClientAuthRecord =
-            { tokenHash = ClientToken.ClientToken.hash token
-              name = name
-              createdAtUtc = DateTimeOffset.UtcNow
-              lastSeenUtc = None
-              revoked = false }
+            {
+                tokenHash = ClientToken.ClientToken.hash token
+                name = name
+                createdAtUtc = DateTimeOffset.UtcNow
+                lastSeenUtc = None
+                revoked = false
+            }
+
         let cfg =
             { AppConfig.defaults instanceId with
                 listen = sprintf "127.0.0.1:%d" port
-                generation = { (AppConfig.defaults instanceId).generation with autoTitle = false }
-                authClients = [ record DesktopClient.DesktopClient.Name desktopToken; record "phone" phoneToken ] }
+                generation =
+                    { (AppConfig.defaults instanceId).generation with
+                        autoTitle = false
+                    }
+                authClients =
+                    [
+                        record DesktopClient.DesktopClient.Name desktopToken
+                        record "phone" phoneToken
+                    ]
+            }
+
         File.WriteAllText(configPath, TomlCodec.serialize cfg)
         let app = new Wanxiang.Server.ServerApp(dir, configPath, false, None, ignore)
         app.Start(false)
         server <- Some app
+
     member _.Port = port
     member _.Dir = dir
     member _.ConfigText = File.ReadAllText configPath
     member _.DesktopToken = desktopToken
     member _.PhoneToken = phoneToken
-    member _.Config = (match TomlCodec.tryParse (File.ReadAllText configPath) with Ok c -> c | Error e -> failwithf "bad toml: %A" e)
+
+    member _.Config =
+        (match TomlCodec.tryParse (File.ReadAllText configPath) with
+         | Ok c -> c
+         | Error e -> failwithf "bad toml: %A" e)
+
     /// 事件日志目录下所有文件的字节快照（邀请不得改变日志）。
     member _.LogBytes =
         let eventsDir = DataPaths.eventsDir dir
+
         if Directory.Exists eventsDir then
-            Directory.GetFiles(eventsDir) |> Array.filter (fun f -> Path.GetFileName f <> ".lock") |> Array.sort |> Array.map (fun f -> f, File.ReadAllBytes f |> Convert.ToBase64String) |> Array.toList
-        else []
+            Directory.GetFiles(eventsDir)
+            |> Array.filter (fun f -> Path.GetFileName f <> ".lock")
+            |> Array.sort
+            |> Array.map (fun f -> f, File.ReadAllBytes f |> Convert.ToBase64String)
+            |> Array.toList
+        else
+            []
+
     member _.Dispose() =
         match server with
         | Some s -> (s :> IDisposable).Dispose()
         | None -> ()
+
         cleanup dir
 
 let private get<'T> (o: JsonObject) (k: string) : 'T = o[k].GetValue<'T>()
-let private timeout () = new CancellationTokenSource(TimeSpan.FromSeconds 30.0)
+
+let private timeout () =
+    new CancellationTokenSource(TimeSpan.FromSeconds 30.0)
+
 let private typeOf (o: JsonObject) = o["type"].GetValue<string>()
 let private payload (o: JsonObject) = o["payload"].AsObject()
+
 let private sendEv (ws: ClientWebSocket) (ct: CancellationToken) (ev: WireEvent) =
     E2e.send ws (JsonNode.Parse(WireCodec.encode ev).AsObject()) ct
-let private waitType ws ct (name: string) = E2e.waitFor ws ct (fun o -> typeOf o = name)
+
+let private waitType ws ct (name: string) =
+    E2e.waitFor ws ct (fun o -> typeOf o = name)
 
 /// 未认证连接（尚未发 auth.present）。
 let private anonymous (port: int) (ct: CancellationToken) =
@@ -76,12 +110,16 @@ let private anonymous (port: int) (ct: CancellationToken) =
 let private waitClosed (ws: ClientWebSocket) (ct: CancellationToken) : bool =
     let buffer = Array.zeroCreate<byte> 4096
     let mutable closed = false
+
     try
         while not closed do
             let r = ws.ReceiveAsync(ArraySegment<byte>(buffer), ct).GetAwaiter().GetResult()
-            if r.MessageType = WebSocketMessageType.Close then closed <- true
-    with
-    | :? WebSocketException -> closed <- true
+
+            if r.MessageType = WebSocketMessageType.Close then
+                closed <- true
+    with :? WebSocketException ->
+        closed <- true
+
     closed
 
 let private invite (ws: ClientWebSocket) ct =
@@ -96,6 +134,7 @@ let ``config write failure during pairing sends no token`` () =
     // 决策 56 / PairingDesk LEMMA 2：先持久化令牌哈希，成功后才 Paired 并下发令牌。
     // 真实故障：配置所在目录只读，原子写的临时文件建不出来。
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -104,21 +143,36 @@ let ``config write failure during pairing sends no token`` () =
         let code = invite desktop ct
         let before = s.ConfigText
         File.SetUnixFileMode(s.Dir, UnixFileMode.UserRead ||| UnixFileMode.UserExecute)
+
         try
             use fresh = anonymous (s.Port) ct
-            sendEv fresh ct (PairingAttempted {| code = code; clientName = Some "tablet" |})
-            let reply = E2e.waitFor fresh ct (fun o -> typeOf o = "pairing.failed" || typeOf o = "pairing.succeeded")
+
+            sendEv
+                fresh
+                ct
+                (PairingAttempted
+                    {|
+                        code = code
+                        clientName = Some "tablet"
+                    |})
+
+            let reply =
+                E2e.waitFor fresh ct (fun o -> typeOf o = "pairing.failed" || typeOf o = "pairing.succeeded")
+
             Assert.Equal("pairing.failed", typeOf reply)
             Assert.Contains("config", (get<string> (payload reply) "reason"))
         finally
             File.SetUnixFileMode(s.Dir, UnixFileMode.UserRead ||| UnixFileMode.UserWrite ||| UnixFileMode.UserExecute)
+
         Assert.Equal(before, s.ConfigText)
         Assert.DoesNotContain("tablet", s.ConfigText)
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``desktop invite code pairs another connection and yields a working permanent token`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -128,7 +182,16 @@ let ``desktop invite code pairs another connection and yields a working permanen
         Assert.Matches("^[0-9]{6}$", code)
         // 新设备：直接提交邀请码，不必先 pairing.requested
         use fresh = anonymous (s.Port) ct
-        sendEv fresh ct (PairingAttempted {| code = code; clientName = Some "my-tablet" |})
+
+        sendEv
+            fresh
+            ct
+            (PairingAttempted
+                {|
+                    code = code
+                    clientName = Some "my-tablet"
+                |})
+
         let ok = waitType fresh ct "pairing.succeeded"
         let token = (get<string> (payload ok) "token")
         Assert.StartsWith(ClientToken.ClientToken.Prefix, token)
@@ -143,11 +206,13 @@ let ``desktop invite code pairs another connection and yields a working permanen
         sendEv replay ct (PairingAttempted {| code = code; clientName = None |})
         let failed = waitType replay ct "pairing.failed"
         Assert.False(String.IsNullOrEmpty((get<string> (payload failed) "reason")))
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``pairing request reuses a live invite instead of replacing the code`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -160,15 +225,26 @@ let ``pairing request reuses a live invite instead of replacing the code`` () =
         let started = waitType pwa ct "pairing.started"
         let seconds = (get<int> (payload started) "expiresInSeconds")
         Assert.InRange(seconds, 1, 300)
-        sendEv pwa ct (PairingAttempted {| code = code; clientName = Some "pwa" |})
+
+        sendEv
+            pwa
+            ct
+            (PairingAttempted
+                {|
+                    code = code
+                    clientName = Some "pwa"
+                |})
+
         waitType pwa ct "pairing.succeeded" |> ignore
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 // ---------- 验收 2：过期、冻结、日志不变 ----------
 
 [<Fact>]
 let ``wrong codes freeze the address after five failures even with a live invite`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -178,20 +254,24 @@ let ``wrong codes freeze the address after five failures even with a live invite
         let wrong = if code = "000000" then "111111" else "000000"
         use pwa = anonymous (s.Port) ct
         let mutable frozen = false
+
         for _ in 1..5 do
             sendEv pwa ct (PairingAttempted {| code = wrong; clientName = None |})
             let f = waitType pwa ct "pairing.failed"
             frozen <- (get<bool> (payload f) "frozen")
+
         Assert.True frozen
         // 冻结后连正确的码也被拒绝
         sendEv pwa ct (PairingAttempted {| code = code; clientName = None |})
         let f = waitType pwa ct "pairing.failed"
         Assert.True((get<bool> (payload f) "frozen"))
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``issuing an invite does not touch the event log`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -203,16 +283,19 @@ let ``issuing an invite does not touch the event log`` () =
         sendEv fresh ct (PairingAttempted {| code = code; clientName = Some "x" |})
         waitType fresh ct "pairing.succeeded" |> ignore
         Assert.Equal<(string * string) list>(before, s.LogBytes)
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 // ---------- 验收 3：未认证 / 非桌面 ----------
 
 [<Fact>]
 let ``unauthenticated invite is rejected closes the connection and counts toward the rate limit`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
+
         for _ in 1..5 do
             use ws = anonymous (s.Port) ct
             sendEv ws ct PairingInvite
@@ -224,11 +307,13 @@ let ``unauthenticated invite is rejected closes the connection and counts toward
         sendEv ws ct (PairingRequested {| clientName = None |})
         let f = waitType ws ct "pairing.failed"
         Assert.True((get<bool> (payload f) "frozen"))
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``authenticated non desktop device cannot invite and stays connected`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -245,11 +330,13 @@ let ``authenticated non desktop device cannot invite and stays connected`` () =
         // 无邀请且未请求配对：主机不处理（不回事件），改为请求后再试以确认没有有效码
         sendEv fresh ct (PairingRequested {| clientName = None |})
         waitType fresh ct "pairing.started" |> ignore
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``paired device cannot claim the reserved desktop name or gain invite rights`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -257,23 +344,38 @@ let ``paired device cannot claim the reserved desktop name or gain invite rights
         waitType desktop ct "auth.accepted" |> ignore
         let code = invite desktop ct
         use fresh = anonymous (s.Port) ct
-        sendEv fresh ct (PairingAttempted {| code = code; clientName = Some " Wanxiang-Desktop " |})
+
+        sendEv
+            fresh
+            ct
+            (PairingAttempted
+                {|
+                    code = code
+                    clientName = Some " Wanxiang-Desktop "
+                |})
+
         let ok = waitType fresh ct "pairing.succeeded"
         let token = (get<string> (payload ok) "token")
-        let added = s.Config.authClients |> List.find (fun c -> c.tokenHash = ClientToken.ClientToken.hash token)
+
+        let added =
+            s.Config.authClients
+            |> List.find (fun c -> c.tokenHash = ClientToken.ClientToken.hash token)
+
         Assert.False(DesktopClient.DesktopClient.isReservedName added.name)
         use again = E2e.conn (s.Port) token ct
         waitType again ct "auth.accepted" |> ignore
         sendEv again ct PairingInvite
         let r = waitType again ct "pairing.invite-rejected"
         Assert.Equal("not-desktop", (get<string> (payload r) "reason"))
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 // ---------- 验收 4：旧客户端不受影响 ----------
 
 [<Fact>]
 let ``legacy pairing flow and unknown events still work for clients unaware of invites`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -288,46 +390,87 @@ let ``legacy pairing flow and unknown events still work for clients unaware of i
         sendEv legacy ct (PairingRequested {| clientName = Some "old" |})
         let started = waitType legacy ct "pairing.started"
         Assert.Equal(300, (get<int> (payload started) "expiresInSeconds"))
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``new events round trip through the codec and the agui carrier`` () =
     let expires = DateTimeOffset(2026, 10, 12, 4, 0, 0, TimeSpan.Zero)
+
     let roundTrip (ev: WireEvent) =
         match WireAgui.tryDecode (WireAgui.encode ev) with
         | Ok(Some decoded) -> decoded
         | other -> failwithf "decode failed: %A" other
+
     match roundTrip PairingInvite with
     | PairingInvite -> ()
     | other -> failwithf "%A" other
-    match roundTrip (PairingInviteIssued {| code = "012345"; expiresAtUtc = expires; expiresInSeconds = 300 |}) with
+
+    match
+        roundTrip (
+            PairingInviteIssued
+                {|
+                    code = "012345"
+                    expiresAtUtc = expires
+                    expiresInSeconds = 300
+                |}
+        )
+    with
     | PairingInviteIssued d ->
         Assert.Equal("012345", d.code)
         Assert.Equal(expires, d.expiresAtUtc)
         Assert.Equal(300, d.expiresInSeconds)
     | other -> failwithf "%A" other
+
     match roundTrip (PairingInviteRejected {| reason = "not-desktop" |}) with
     | PairingInviteRejected d -> Assert.Equal("not-desktop", d.reason)
     | other -> failwithf "%A" other
+
     let items = JsonArray()
     items.Add(JsonObject(dict [ "id", JsonNode.Parse "\"abc\"" ]))
+
     match roundTrip (DevicesSnapshot {| items = items; canInvite = true |}) with
     | DevicesSnapshot d ->
         Assert.True d.canInvite
         Assert.Equal(1, d.items.Count)
     | other -> failwithf "%A" other
+
     let rid = Guid.NewGuid()
-    match roundTrip (DeviceRename {| requestId = rid; deviceId = "abc"; name = "平板" |}) with
+
+    match
+        roundTrip (
+            DeviceRename
+                {|
+                    requestId = rid
+                    deviceId = "abc"
+                    name = "平板"
+                |}
+        )
+    with
     | DeviceRename d -> Assert.Equal((rid, "abc", "平板"), (d.requestId, d.deviceId, d.name))
     | other -> failwithf "%A" other
+
     match roundTrip (DeviceRevoke {| requestId = rid; deviceId = "abc" |}) with
     | DeviceRevoke d -> Assert.Equal((rid, "abc"), (d.requestId, d.deviceId))
     | other -> failwithf "%A" other
+
     match roundTrip DevicesRequest with
     | DevicesRequest -> ()
     | other -> failwithf "%A" other
+
     Assert.Equal("pairing.invite", WireEvent.typeName PairingInvite)
-    Assert.Equal("pairing.invite-issued", WireEvent.typeName (PairingInviteIssued {| code = ""; expiresAtUtc = expires; expiresInSeconds = 0 |}))
+
+    Assert.Equal(
+        "pairing.invite-issued",
+        WireEvent.typeName (
+            PairingInviteIssued
+                {|
+                    code = ""
+                    expiresAtUtc = expires
+                    expiresInSeconds = 0
+                |}
+        )
+    )
 
 // ---------- 验收 5：设备列表、重命名、吊销 ----------
 
@@ -337,11 +480,14 @@ let private devices (ws: ClientWebSocket) ct =
     payload snap
 
 let private findDevice (snapshot: JsonObject) (name: string) =
-    snapshot["items"].AsArray() |> Seq.map (fun n -> n.AsObject()) |> Seq.find (fun o -> o["name"].GetValue<string>() = name)
+    snapshot["items"].AsArray()
+    |> Seq.map (fun n -> n.AsObject())
+    |> Seq.find (fun o -> o["name"].GetValue<string>() = name)
 
 [<Fact>]
 let ``device list shows names online state and only desktop may invite`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -363,11 +509,13 @@ let ``device list shows names online state and only desktop may invite`` () =
         Assert.DoesNotContain(ClientToken.ClientToken.hash (s.PhoneToken), after.ToJsonString())
         let phoneView = devices phone ct
         Assert.False(phoneView["canInvite"].GetValue<bool>())
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``rename persists to toml and rejects empty reserved and desktop targets`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -375,13 +523,27 @@ let ``rename persists to toml and rejects empty reserved and desktop targets`` (
         waitType desktop ct "auth.accepted" |> ignore
         let snap = devices desktop ct
         let phoneId = (get<string> (findDevice snap "phone") "id")
-        let desktopId = (get<string> (findDevice snap DesktopClient.DesktopClient.Name) "id")
+
+        let desktopId =
+            (get<string> (findDevice snap DesktopClient.DesktopClient.Name) "id")
+
         let rename id name =
             let rid = Guid.NewGuid()
-            sendEv desktop ct (DeviceRename {| requestId = rid; deviceId = id; name = name |})
+
+            sendEv
+                desktop
+                ct
+                (DeviceRename
+                    {|
+                        requestId = rid
+                        deviceId = id
+                        name = name
+                    |})
+
             let applied = waitType desktop ct "config.applied"
             Assert.Equal(rid.ToString("D"), (get<string> (payload applied) "requestId"))
             (get<bool> (payload applied) "ok")
+
         Assert.True(rename phoneId "  书房平板 ")
         Assert.Contains(s.Config.authClients, fun c -> c.name = "书房平板")
         Assert.False(rename phoneId "   ")
@@ -390,11 +552,13 @@ let ``rename persists to toml and rejects empty reserved and desktop targets`` (
         Assert.False(rename desktopId "other")
         Assert.False(rename "0000000000000000" "ghost")
         Assert.Contains(s.Config.authClients, fun c -> c.name = DesktopClient.DesktopClient.Name)
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``revoking a device disconnects it immediately and marks revoked in toml and list`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -405,7 +569,16 @@ let ``revoking a device disconnects it immediately and marks revoked in toml and
         let snap = devices desktop ct
         let phoneId = (get<string> (findDevice snap "phone") "id")
         let rid = Guid.NewGuid()
-        sendEv desktop ct (DeviceRevoke {| requestId = rid; deviceId = phoneId |})
+
+        sendEv
+            desktop
+            ct
+            (DeviceRevoke
+                {|
+                    requestId = rid
+                    deviceId = phoneId
+                |})
+
         let applied = waitType desktop ct "config.applied"
         Assert.True((get<bool> (payload applied) "ok"))
         let list = waitType desktop ct "devices.snapshot"
@@ -419,11 +592,13 @@ let ``revoking a device disconnects it immediately and marks revoked in toml and
         use again = E2e.conn (s.Port) (s.PhoneToken) ct
         let rejected = waitType again ct "auth.rejected"
         Assert.False(String.IsNullOrEmpty((get<string> (payload rejected) "reason")))
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``revoke refuses the current device the desktop device and already revoked devices`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -433,34 +608,50 @@ let ``revoke refuses the current device the desktop device and already revoked d
         waitType phone ct "auth.accepted" |> ignore
         let snap = devices phone ct
         let phoneId = (get<string> (findDevice snap "phone") "id")
-        let desktopId = (get<string> (findDevice snap DesktopClient.DesktopClient.Name) "id")
+
+        let desktopId =
+            (get<string> (findDevice snap DesktopClient.DesktopClient.Name) "id")
+
         let revoke (ws: ClientWebSocket) id =
-            sendEv ws ct (DeviceRevoke {| requestId = Guid.NewGuid(); deviceId = id |})
+            sendEv
+                ws
+                ct
+                (DeviceRevoke
+                    {|
+                        requestId = Guid.NewGuid()
+                        deviceId = id
+                    |})
+
             let applied = waitType ws ct "config.applied"
             (get<bool> (payload applied) "ok")
-        Assert.False(revoke phone phoneId)      // 当前设备
-        Assert.False(revoke phone desktopId)    // 桌面设备
+
+        Assert.False(revoke phone phoneId) // 当前设备
+        Assert.False(revoke phone desktopId) // 桌面设备
         Assert.True(revoke desktop phoneId)
-        Assert.False(revoke desktop phoneId)    // 已吊销
+        Assert.False(revoke desktop phoneId) // 已吊销
         Assert.DoesNotContain(s.Config.authClients, fun c -> c.name = DesktopClient.DesktopClient.Name && c.revoked)
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``unauthenticated device requests close the connection`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
         use ws = anonymous (s.Port) ct
         sendEv ws ct DevicesRequest
         Assert.True(waitClosed ws ct)
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 // ---------- 验收 7：本机桌面全自动，不出现配对码流程 ----------
 
 [<Fact>]
 let ``desktop token connects directly without any pairing event`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -470,12 +661,15 @@ let ``desktop token connects directly without any pairing event`` () =
         seen.Add(typeOf ev)
         // 认证后做一次往返，收齐认证阶段的全部事件
         sendEv desktop ct Ping
+
         while typeOf ev <> "protocol.pong" do
             ev <- E2e.recvEvent desktop ct
             seen.Add(typeOf ev)
+
         Assert.Contains("auth.accepted", seen)
         Assert.DoesNotContain(seen, fun t -> t.StartsWith "pairing.")
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 // ---------- 55.8 R1：未知 wanxiang.dev/* 事件被忽略，不断连 ----------
 
@@ -491,6 +685,7 @@ let private unknownCustom (name: string) =
 [<Fact>]
 let ``authenticated host ignores unknown wanxiang.dev custom events and keeps the connection`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -500,7 +695,8 @@ let ``authenticated host ignores unknown wanxiang.dev custom events and keeps th
         // 往返：连接仍活着，且后续已知请求照常应答
         let snap = devices desktop ct
         Assert.True(snap.ContainsKey "items")
-    finally s.Dispose()
+    finally
+        s.Dispose()
 
 [<Fact>]
 let ``unknown custom event type is not decoded as an error on either side`` () =
@@ -512,9 +708,11 @@ let ``unknown custom event type is not decoded as an error on either side`` () =
     bad["type"] <- "CUSTOM"
     bad["name"] <- "wanxiang.dev/device.rename"
     bad["value"] <- JsonObject()
+
     match WireAgui.tryDecode (bad.ToJsonString()) with
     | Error _ -> ()
     | other -> failwithf "expected Error, got %A" other
+
     Assert.True(WireCodec.isUnknownType WireCodec.notACommandError (WireCodec.unknownEventTypePrefix + "x"))
     Assert.False(WireCodec.isUnknownType "device.rename: missing requestId" "x")
 
@@ -523,6 +721,7 @@ let ``unknown custom event type is not decoded as an error on either side`` () =
 [<Fact>]
 let ``auth produces zero config writes`` () =
     let s = new DeviceServer(pickPort ())
+
     try
         use cts = timeout ()
         let ct = cts.Token
@@ -533,6 +732,7 @@ let ``auth produces zero config writes`` () =
         for token in [ s.DesktopToken; s.PhoneToken; s.DesktopToken ] do
             use ws = E2e.conn (s.Port) token ct
             waitType ws ct "auth.accepted" |> ignore
+
         Assert.Equal<byte[]>(contentBefore, File.ReadAllBytes configPath)
         Assert.Equal(mtimeBefore, File.GetLastWriteTimeUtc configPath)
         Assert.Empty(Directory.GetFiles(s.Dir, "*.tmp", SearchOption.AllDirectories))
@@ -540,4 +740,5 @@ let ``auth produces zero config writes`` () =
         Assert.True(File.Exists sightingsPath)
         let root = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText sightingsPath)
         Assert.Equal(2, root["lastSeen"].AsObject().Count)
-    finally s.Dispose()
+    finally
+        s.Dispose()

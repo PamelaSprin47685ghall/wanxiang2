@@ -20,8 +20,18 @@ let ``oversize or huge images need shrinking`` () =
 
 [<Fact>]
 let ``oversize photo note names before and after`` () =
-    let r = { bytes = Array.zeroCreate 1536; fileName = "photo.jpg"; mediaType = "image/jpeg"; originalBytes = 9L * 1024L * 1024L
-              originalWidth = 3000; originalHeight = 2400; width = 3000; height = 2400 }
+    let r =
+        {
+            bytes = Array.zeroCreate 1536
+            fileName = "photo.jpg"
+            mediaType = "image/jpeg"
+            originalBytes = 9L * 1024L * 1024L
+            originalWidth = 3000
+            originalHeight = 2400
+            width = 3000
+            height = 2400
+        }
+
     let note = ImageShrink.note r
     Assert.Contains("原图", note)
     Assert.Contains("→ 发送", note)

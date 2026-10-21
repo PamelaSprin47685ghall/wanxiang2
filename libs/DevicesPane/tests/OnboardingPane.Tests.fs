@@ -12,9 +12,30 @@ open Wanxiang2.OnboardingPane
 open Wanxiang2.OnboardingPane.Tests.Probe
 
 let private idle =
-    { Chips = [ { Key = "openai"; Label = "OpenAI"; Selected = true }; { Key = "anthropic"; Label = "Claude"; Selected = false } ]
-      MoreLabel = "更多"; Hint = ""; KeyVisible = true; CustomUrlVisible = false; Busy = false
-      StatusText = ""; StatusIsError = false; SwitchLabel = None; Discovered = None }
+    {
+        Chips =
+            [
+                {
+                    Key = "openai"
+                    Label = "OpenAI"
+                    Selected = true
+                }
+                {
+                    Key = "anthropic"
+                    Label = "Claude"
+                    Selected = false
+                }
+            ]
+        MoreLabel = "更多"
+        Hint = ""
+        KeyVisible = true
+        CustomUrlVisible = false
+        Busy = false
+        StatusText = ""
+        StatusIsError = false
+        SwitchLabel = None
+        Discovered = None
+    }
 
 let private pane () =
     let p = OnboardingPane()
@@ -31,7 +52,12 @@ let ``密钥为空时不发起任何请求并就地说明`` () =
         click (named p.View "连接").Value
         Assert.Equal(1, connects.Count)
         // 组合者判出缺密钥：只出状态行，把焦点送进密钥框
-        p.Render { idle with StatusText = "请先粘贴 API Key。"; StatusIsError = true }
+        p.Render
+            { idle with
+                StatusText = "请先粘贴 API Key。"
+                StatusIsError = true
+            }
+
         p.FocusInitial true
         let status = (named p.View "连接状态").Value :?> TextBlock
         Assert.True status.IsVisible
@@ -66,7 +92,14 @@ let ``路径错时改用兼容端点后重试，载荷换成兼容传输`` () =
         let switches = ResizeArray<unit>()
         p.SwitchClicked.Add switches.Add
         Assert.False (named p.View "改用兼容端点").Value.IsVisible
-        p.Render { idle with SwitchLabel = Some "改用 OpenAI 兼容端点"; StatusText = "地址不对"; StatusIsError = true }
+
+        p.Render
+            { idle with
+                SwitchLabel = Some "改用 OpenAI 兼容端点"
+                StatusText = "地址不对"
+                StatusIsError = true
+            }
+
         let b = (named p.View "改用 OpenAI 兼容端点").Value
         Assert.True b.IsVisible
         click b
@@ -78,11 +111,29 @@ let ``发现本机 Ollama 时给出一键使用，点击后用发现的模型保
         let p = pane ()
         let uses = ResizeArray<unit>()
         p.UseLocalClicked.Add uses.Add
-        p.Render { idle with Discovered = Some "本机 Ollama 正在运行，已装 2 个模型。" }
+
+        p.Render
+            { idle with
+                Discovered = Some "本机 Ollama 正在运行，已装 2 个模型。"
+            }
+
         Assert.Contains("已装 2 个模型", textOf p.View)
         click (named p.View "一键使用本机 Ollama").Value
         Assert.Equal(1, uses.Count)
-        p.Render { idle with KeyVisible = false; Chips = [ { Key = "ollama"; Label = "Ollama"; Selected = true } ] }
+
+        p.Render
+            { idle with
+                KeyVisible = false
+                Chips =
+                    [
+                        {
+                            Key = "ollama"
+                            Label = "Ollama"
+                            Selected = true
+                        }
+                    ]
+            }
+
         Assert.False (p.KeyBox.Parent :?> Control).IsVisible)
 
 [<Fact>]

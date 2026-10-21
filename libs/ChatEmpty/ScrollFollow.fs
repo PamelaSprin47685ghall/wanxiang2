@@ -10,11 +10,13 @@ type RenderFollow =
 
 /// 「回到最新」按钮的呈现
 type ScrollButtonView =
-    { visible: bool
-      /// 按钮文字、提示、读屏名
-      text: string
-      /// 宽按钮带文字（有未读且不是窄屏）
-      showLabel: bool }
+    {
+        visible: bool
+        /// 按钮文字、提示、读屏名
+        text: string
+        /// 宽按钮带文字（有未读且不是窄屏）
+        showLabel: bool
+    }
 
 /// 旧 Views/ChatView.fs 的贴底跟随记账：atBottom、returningToLatest、unreadSinceScrolledUp、
 /// previousRenderedMessageCount、wasStreaming、revealPinned。滚动动画、计时器、偏移与尺寸仍归 ChatView
@@ -38,24 +40,40 @@ type ScrollFollow() =
         let wasAtBottom = atBottom
         let justEnded = wasStreaming && not streaming
         wasStreaming <- streaming
+
         let follow =
-            if wasAtBottom then RenderFollow.ScrollToEnd
+            if wasAtBottom then
+                RenderFollow.ScrollToEnd
             else
                 let delta = if streaming then 0 else newCount - previousCount
+
                 if not prependInFlight then
-                    if delta > 0 && previousCount > 0 then unread <- unread + delta
-                    elif unread = 0 && delta > 0 then unread <- max 1 delta
-                if justEnded && not prependInFlight then unread <- max 1 (unread + 1)
+                    if delta > 0 && previousCount > 0 then
+                        unread <- unread + delta
+                    elif unread = 0 && delta > 0 then
+                        unread <- max 1 delta
+
+                if justEnded && not prependInFlight then
+                    unread <- max 1 (unread + 1)
+
                 RenderFollow.Keep
+
         previousCount <- newCount
         follow
 
     /// 滚动事件。userUp：向上且不是动画自己写的偏移。返回 true 表示要停掉平滑滚动
     member _.Scrolled(userUp: bool, nowAtBottom: bool) =
-        if userUp then returning <- false
-        if nowAtBottom then returning <- false
+        if userUp then
+            returning <- false
+
+        if nowAtBottom then
+            returning <- false
+
         atBottom <- nowAtBottom || returning
-        if nowAtBottom then unread <- 0
+
+        if nowAtBottom then
+            unread <- 0
+
         userUp
 
     /// 滚轮（任一方向）：解除钉住与回到最新的意图；调用方停掉平滑滚动
@@ -102,8 +120,21 @@ type ScrollFollow() =
     member _.Button(overflows: bool, compact: bool) =
         if atBottom then
             unread <- 0
-            { visible = false; text = "回到最新"; showLabel = false }
+
+            {
+                visible = false
+                text = "回到最新"
+                showLabel = false
+            }
         elif unread > 0 then
-            { visible = overflows; text = sprintf "%d 条新消息" unread; showLabel = not compact }
+            {
+                visible = overflows
+                text = sprintf "%d 条新消息" unread
+                showLabel = not compact
+            }
         else
-            { visible = overflows; text = "回到最新"; showLabel = false }
+            {
+                visible = overflows
+                text = "回到最新"
+                showLabel = false
+            }

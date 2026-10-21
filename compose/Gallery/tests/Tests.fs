@@ -27,7 +27,10 @@ module Tests =
         let entry = Gallery.find name |> Option.get
         let ctx = Gallery.createContext ()
         let control = Gallery.build ctx entry
-        let win = Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
+        let win =
+            Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
         win.Show()
         win.UpdateLayout()
         control.InvalidateVisual()
@@ -40,14 +43,15 @@ module Tests =
         |> Seq.collect (fun (c: Avalonia.Visual) ->
             match c with
             | :? TextBlock as t ->
-                let own =
-                    if isNull t.Text then Seq.empty else Seq.singleton t.Text
+                let own = if isNull t.Text then Seq.empty else Seq.singleton t.Text
+
                 let fromInlines =
                     t.Inlines
                     |> Seq.choose (fun i ->
                         match i with
                         | :? Run as r -> Some r.Text
                         | _ -> None)
+
                 Seq.append own fromInlines
             | _ -> Seq.empty)
         |> List.ofSeq
@@ -99,6 +103,7 @@ module Tests =
         Assert.Equal(Wanxiang2.WorkspaceState.SidebarEmptyKind.NotConnected false, empty.Sidebar.Empty)
 
         let user = project "MessageCardView.user"
+
         match user.Chat.Phase with
         | ChatPhase.Messages rows ->
             Assert.Single(rows) |> ignore
@@ -108,6 +113,7 @@ module Tests =
         let streaming = project "MessageCardView.streaming"
         // 流式态：ChatVS.Streaming 为真（生成在进行）
         Assert.True(streaming.Chat.Streaming)
+
         match streaming.Chat.Phase with
         | ChatPhase.Messages rows ->
             // 真的 delta 到达后，投影里多出一行流式消息（`Streaming = true`），
@@ -124,6 +130,7 @@ module Tests =
     [<Fact>]
     let ``对话列：助手消息带思维链，工具调用卡带参数`` () =
         let assistant = project "MessageCardView.assistant"
+
         match assistant.Chat.Phase with
         | ChatPhase.Messages rows ->
             let row = rows |> List.head
@@ -132,6 +139,7 @@ module Tests =
         | other -> failwith (sprintf "期望有消息，实际是 %A" other)
 
         let toolcall = project "MessageCardView.toolcall"
+
         match toolcall.Chat.Phase with
         | ChatPhase.Messages rows ->
             let row = rows |> List.head
@@ -146,13 +154,19 @@ module Tests =
         Headless.run (fun () ->
             // 错误卡的入口是卡片组的 ErrorCard（状态树里已有单一归属 ChatVS.Error，见 AGENTS.md《已知缺口与各自的归属》3）。
             let ctx = Gallery.createContext ()
+
             let error: Wanxiang.Core.GenerationError =
-                { kind = Wanxiang.Core.GenerationErrorKind.ProviderTimeout
-                  message = "连接主机超时了。"
-                  detail = Some "upstream timeout after 120s"
-                  retryable = true
-                  retryAfterSeconds = None }
-            let card = ctx.Cards.ErrorCard(error, (fun () -> ()), FakePorts.cardActions (), Some(fun () -> ()))
+                {
+                    kind = Wanxiang.Core.GenerationErrorKind.ProviderTimeout
+                    message = "连接主机超时了。"
+                    detail = Some "upstream timeout after 120s"
+                    retryable = true
+                    retryAfterSeconds = None
+                }
+
+            let card =
+                ctx.Cards.ErrorCard(error, (fun () -> ()), FakePorts.cardActions (), Some(fun () -> ()))
+
             let win = Window(Width = 720.0, Height = 300.0, Content = card)
             win.Show()
             win.UpdateLayout()
@@ -199,12 +213,15 @@ module Tests =
         // 断的是**界面**：切分区之后，那个分区的面板标题真的出现在控件树里。
         // （原来那条断的是「我发的 OpenSection 消息在模型里的键对不对」——那是接线，不是界面。）
         let cases =
-            [ "SettingsScreen.providers", "模型服务"
-              "SettingsScreen.tools", "工具"
-              "SettingsScreen.generation", "对话默认值"
-              "SettingsScreen.devices", "设备"
-              "SettingsScreen.appearance", "外观与交互"
-              "SettingsScreen.about", "关于与系统诊断" ]
+            [
+                "SettingsScreen.providers", "模型服务"
+                "SettingsScreen.tools", "工具"
+                "SettingsScreen.generation", "对话默认值"
+                "SettingsScreen.devices", "设备"
+                "SettingsScreen.appearance", "外观与交互"
+                "SettingsScreen.about", "关于与系统诊断"
+            ]
+
         for name, heading in cases do
             Headless.run (fun () ->
                 let control, _ = render name

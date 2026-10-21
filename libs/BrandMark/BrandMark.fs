@@ -20,7 +20,9 @@ module BrandMark =
                 try
                     use stream = AssetLoader.Open uri
                     Some(new Bitmap(stream))
-                with _ -> None)
+                with _ ->
+                    None)
+
         match fromAsset () with
         | Some b -> Some b
         | None ->
@@ -29,25 +31,32 @@ module BrandMark =
                 |> List.map IO.Path.GetFullPath
                 |> List.tryFind IO.File.Exists
                 |> Option.map (fun path -> new Bitmap(path))
-            with _ -> None
+            with _ ->
+                None
 
     /// 圆角方形品牌标；没有图时退化成「万」字。
     /// 有图时不垫底色（资产自带透明底）；Stretch 用 Uniform，非方形图只露底不裁剪。
     let tile (image: IImage option) (size: float) : Control =
-        let tile = Border(Width = size, Height = size, ClipToBounds = true, CornerRadius = CornerRadius(size * 0.22))
+        let tile =
+            Border(Width = size, Height = size, ClipToBounds = true, CornerRadius = CornerRadius(size * 0.22))
+
         match image with
         | Some img ->
             tile.Background <- Brushes.Transparent
             tile.Child <- Image(Source = img, Stretch = Stretch.Uniform)
         | None ->
             tile.Classes.Add "surface"
+
             let glyph =
                 TextBlock(
                     Text = "万",
                     FontWeight = FontWeight.Medium,
                     FontSize = size * 0.42,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center)
+                    VerticalAlignment = VerticalAlignment.Center
+                )
+
             glyph.Classes.Add "brand-glyph"
             tile.Child <- glyph
+
         tile :> Control

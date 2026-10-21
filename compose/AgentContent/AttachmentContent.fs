@@ -27,4 +27,5 @@ module AttachmentContent =
         for r in refs do
             for content in resolve support loadBlob r do
                 msg.Contents.Add content
+
         msg

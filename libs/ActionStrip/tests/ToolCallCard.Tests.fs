@@ -8,17 +8,32 @@ open Avalonia.Media
 open Xunit
 open Wanxiang2.ToolCallCard
 open Wanxiang2.ToolCallCard.Tests
+
 let private copies = ResizeArray<string * string>()
 let private revealed = ResizeArray<bool>()
+
 let private parts =
-    { Copy = fun tip name _ -> copies.Add(tip, name); Border(Tag = tip) :> Control
-      Reveal = fun c v -> (Border(Child = c, IsVisible = v) :> Control), (fun b -> revealed.Add b) }
+    {
+        Copy =
+            fun tip name _ ->
+                copies.Add(tip, name)
+                Border(Tag = tip) :> Control
+        Reveal = fun c v -> (Border(Child = c, IsVisible = v) :> Control), (fun b -> revealed.Add b)
+    }
 
 let private data tone err =
-    { CallName = "builtin_echo"; DisplayName = "回显（调试）"; Tone = tone; Badge = "等待批准"
-      ArgCount = 1; Preview = "text: hi"; HumanSummary = "回显 hi"; Error = err
-      Sections = ToolCallCard.sections id "{\"text\":\"hi\"}" None tone
-      RawPayload = ToolCallCard.rawPayload "{\"text\":\"hi\"}" None tone }
+    {
+        CallName = "builtin_echo"
+        DisplayName = "回显（调试）"
+        Tone = tone
+        Badge = "等待批准"
+        ArgCount = 1
+        Preview = "text: hi"
+        HumanSummary = "回显 hi"
+        Error = err
+        Sections = ToolCallCard.sections id "{\"text\":\"hi\"}" None tone
+        RawPayload = ToolCallCard.rawPayload "{\"text\":\"hi\"}" None tone
+    }
 
 [<Fact>]
 let ``等审批用警示色和信息图标，不出对勾`` () =
@@ -45,12 +60,20 @@ let ``头部开合详情，摘要让位，读屏名跟着变`` () =
         Assert.Equal<bool list>([ true ], List.ofSeq revealed)
         Assert.Equal("收起工具调用 builtin_echo", AutomationProperties.GetName c.Header)
         Assert.Equal("工具调用 builtin_echo", AutomationProperties.GetName c.Host)
-        Assert.Equal("tool-human-summary", AutomationProperties.GetAutomationId((c.Header.Content :?> StackPanel).Children[1])))
+
+        Assert.Equal(
+            "tool-human-summary",
+            AutomationProperties.GetAutomationId((c.Header.Content :?> StackPanel).Children[1])
+        ))
 
 [<Fact>]
 let ``失败出横幅，结果一节标异常`` () =
     Headless.run (fun () ->
-        let d = { data ToolTone.Failed (Some "boom") with Sections = ToolCallCard.sections id "{}" (Some "err") ToolTone.Failed }
+        let d =
+            { data ToolTone.Failed (Some "boom") with
+                Sections = ToolCallCard.sections id "{}" (Some "err") ToolTone.Failed
+            }
+
         let c = ToolCallCard(d, parts)
         Assert.True c.Banner.IsVisible
         Assert.Equal(2, c.Details.Children.Count)
@@ -63,7 +86,11 @@ let ``状态未知时补一节说明没收到结果`` () =
     Assert.Equal(1, s.Length)
     Assert.Equal("未收到工具执行结果（生成已结束）", s.Head.Raw)
     Assert.Equal("// 结果 (Result)\n未收到工具执行结果（生成已结束）", ToolCallCard.rawPayload "" None ToolTone.Unknown)
-    Assert.Equal("// 参数 (Arguments)\n{}\n\n// 结果 (Result)\nok", ToolCallCard.rawPayload "{}" (Some "ok") ToolTone.Success)
+
+    Assert.Equal(
+        "// 参数 (Arguments)\n{}\n\n// 结果 (Result)\nok",
+        ToolCallCard.rawPayload "{}" (Some "ok") ToolTone.Success
+    )
 
 [<Fact>]
 let ``复制按钮文案照旧`` () =

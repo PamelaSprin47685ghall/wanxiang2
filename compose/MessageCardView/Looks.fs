@@ -17,26 +17,35 @@ open Wanxiang2.ReadingLook
 /// 主题管的尺寸与间距（Space.Md/Sm/Xl、RadiusLg、FontCaption、LogoAvatar、减弱动效、
 /// 复制淡出时长）都由 Card 经主题资源键声明式绑定或动作时刻现读，改值即时生效。
 type CardAppearance =
-    { Markdown: MarkdownMetrics
-      Copy: CopyButtonAppearance
-      /// 组合者自己用的笔刷、度量、图标与表面反馈
-      Brush: PaletteKey -> IBrush
-      Icon: Glyph -> IBrush -> Control
-      /// 图标按钮的样式类（旧 Ui.iconButton）
-      DressIcon: Control -> unit }
+    {
+        Markdown: MarkdownMetrics
+        Copy: CopyButtonAppearance
+        /// 组合者自己用的笔刷、度量、图标与表面反馈
+        Brush: PaletteKey -> IBrush
+        Icon: Glyph -> IBrush -> Control
+        /// 图标按钮的样式类（旧 Ui.iconButton）
+        DressIcon: Control -> unit
+    }
 
 module CardLooks =
 
     /// 用主题管理者与样式填全部外观
     let ofTheme (manager: ThemeManager) (styles: ThemeStyles) : CardAppearance =
         let brush (k: PaletteKey) = manager.Brush k :> IBrush
-        let icon g b = IconSet.image g b (manager.Metric Metric.IconGlyph)
+
+        let icon g b =
+            IconSet.image g b (manager.Metric Metric.IconGlyph)
+
         let surface variant (b: Control) = styles.Surface(b, variant)
+
         let iconButton (b: Control) =
             surface StyleClass.hoverPlain b
             b.Classes.Add StyleClass.iconButton
-        { Markdown = ReadingLook.markdown manager styles
-          Copy = ReadingLook.copy manager
-          Brush = brush
-          Icon = icon
-          DressIcon = iconButton }
+
+        {
+            Markdown = ReadingLook.markdown manager styles
+            Copy = ReadingLook.copy manager
+            Brush = brush
+            Icon = icon
+            DressIcon = iconButton
+        }

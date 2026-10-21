@@ -8,7 +8,17 @@ open Wanxiang.Server
 
 [<Fact>]
 let ``file tools appear only when sandbox roots are configured`` () =
-    let ids cfg = BuiltinTools.descriptors cfg |> List.map (fun (id, _, _) -> id)
+    let ids cfg =
+        BuiltinTools.descriptors cfg |> List.map (fun (id, _, _) -> id)
+
     Assert.Equal<string list>([ "builtin:echo"; "builtin:time" ], ids ToolsConfig.defaults)
-    Assert.Equal<string list>([ "builtin:echo"; "builtin:time"; "builtin:file.read"; "builtin:file.list" ], ids { ToolsConfig.defaults with fileReadRoots = [ "/tmp" ] })
+
+    Assert.Equal<string list>(
+        [ "builtin:echo"; "builtin:time"; "builtin:file.read"; "builtin:file.list" ],
+        ids
+            { ToolsConfig.defaults with
+                fileReadRoots = [ "/tmp" ]
+            }
+    )
+
     Assert.True(BuiltinTools.isDebug "builtin:echo")

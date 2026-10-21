@@ -9,7 +9,11 @@ module RichJintAdapter =
 
     let create () : JintRichBackend * IRichBackend =
         let rich = JintRichBackend()
+
         rich,
         { new IRichBackend with
-            member _.HighlightHtml(code, canonicalLanguage) = rich.HighlightHtml(code, canonicalLanguage)
-            member _.MathHtml(tex, displayMode) = rich.MathHtml(tex, displayMode) }
+            member _.HighlightHtml(code, canonicalLanguage) =
+                rich.HighlightHtml(code, canonicalLanguage)
+
+            member _.MathHtml(tex, displayMode) = rich.MathHtml(tex, displayMode)
+        }

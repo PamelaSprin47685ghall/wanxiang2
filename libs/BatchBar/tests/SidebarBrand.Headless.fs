@@ -27,11 +27,18 @@ module Headless =
 type Cell<'T>(initial: 'T) =
     let mutable value = initial
     let subs = Collections.Generic.List<IObserver<'T>>()
+
     member _.Set v =
         value <- v
-        for s in List.ofSeq subs do s.OnNext v
+
+        for s in List.ofSeq subs do
+            s.OnNext v
+
     interface IObservable<'T> with
         member _.Subscribe o =
             subs.Add o
             o.OnNext value
-            { new IDisposable with member _.Dispose() = subs.Remove o |> ignore }
+
+            { new IDisposable with
+                member _.Dispose() = subs.Remove o |> ignore
+            }

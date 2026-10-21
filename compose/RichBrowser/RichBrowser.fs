@@ -33,22 +33,27 @@ type BrowserRichBackend() =
         try
             ensureHljs ()
             ensureKatex ()
-        with _ -> ()
+        with _ ->
+            ()
 
     /// 浏览器侧失败返回空串；这里与旧实现一样把空串当 None。
     member _.HighlightHtml(code: string, canonicalLanguage: string) : string option =
         try
             ensureHljs ()
             ensureLanguage canonicalLanguage
+
             match BrowserRich.Highlight(code, canonicalLanguage) with
             | "" -> None
             | html -> Some html
-        with _ -> None
+        with _ ->
+            None
 
     member _.MathHtml(tex: string, displayMode: bool) : string option =
         try
             ensureKatex ()
+
             match BrowserRich.Math(tex, displayMode) with
             | "" -> None
             | html -> Some html
-        with _ -> None
+        with _ ->
+            None

@@ -9,7 +9,14 @@ open Wanxiang.App
 let private withDir f =
     let d = Path.Combine(Path.GetTempPath(), "wx-dp-" + Guid.NewGuid().ToString("N"))
     Directory.CreateDirectory d |> ignore
-    try f d finally (try Directory.Delete(d, true) with _ -> ())
+
+    try
+        f d
+    finally
+        (try
+            Directory.Delete(d, true)
+         with _ ->
+             ())
 
 let private current (configPath: string) =
     match TomlCodec.tryParse (File.ReadAllText configPath) with
@@ -59,12 +66,20 @@ let ``令牌被吊销时发新令牌`` () =
         let cfgPath = Path.Combine(d, "config.toml")
         DesktopPairing.ensure cfgPath |> ignore
         let old = (DesktopPairing.clientTomlOf cfgPath).TryReadToken() |> Option.get
+
         match ConfigStore.Open(cfgPath, ignore, ignore) with
         | Ok cs ->
             let cfg = cs.Current
-            cs.Rewrite { cfg with authClients = cfg.authClients |> List.map (fun c -> { c with revoked = true }) } |> ignore
+
+            cs.Rewrite
+                { cfg with
+                    authClients = cfg.authClients |> List.map (fun c -> { c with revoked = true })
+                }
+            |> ignore
+
             (cs :> IDisposable).Dispose()
         | Error e -> failwith e
+
         Assert.Equal(Ok(), DesktopPairing.ensure cfgPath)
         let fresh = (DesktopPairing.clientTomlOf cfgPath).TryReadToken() |> Option.get
         Assert.NotEqual<string>(old, fresh))
@@ -74,7 +89,9 @@ let ``配置无效时返回错误且不写 client.toml`` () =
     withDir (fun d ->
         let cfgPath = Path.Combine(d, "config.toml")
         File.WriteAllText(cfgPath, "this is = = not toml [")
+
         match DesktopPairing.ensure cfgPath with
         | Error _ -> ()
         | Ok() -> failwith "expected error"
+
         Assert.False(File.Exists(Path.Combine(d, "client.toml"))))

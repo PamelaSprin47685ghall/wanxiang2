@@ -7,5 +7,7 @@ open Xunit
 
 [<Fact>]
 let ``message serde and attachment content behave byte for byte like the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "agentcontent.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "agentcontent.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

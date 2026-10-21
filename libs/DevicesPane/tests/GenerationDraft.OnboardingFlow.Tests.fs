@@ -1,4 +1,5 @@
 module GenerationDraftOnboardingFlowTests
+
 open Xunit
 open Wanxiang.UI
 
@@ -27,7 +28,15 @@ let ``mock 服务上：选预设、填密钥、点连接后模型列表自动填
 let ``密钥为空时不发起任何请求并就地说明`` () =
     let f = OnboardingFlow()
     Assert.Equal(OnboardingInput.MissingKey, f.Check(false, "https://x/v1", true, "  "))
-    Assert.Equal({ text = "还没有填写密钥。请先粘贴 API Key，再点「连接」。"; isError = true }, f.Status)
+
+    Assert.Equal(
+        {
+            text = "还没有填写密钥。请先粘贴 API Key，再点「连接」。"
+            isError = true
+        },
+        f.Status
+    )
+
     Assert.Equal(OnboardingInput.MissingUrl, f.Check(true, "", true, "k"))
     Assert.Equal(OnboardingStep.Idle, f.Step)
 

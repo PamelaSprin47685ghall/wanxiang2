@@ -24,7 +24,9 @@ module ImageFit =
     /// 等比缩到最长边不超过 limit；本来就不超过时原样返回。
     let fit (width: int, height: int) (limit: int) : int * int =
         let longest = max width height
-        if longest <= limit then width, height
+
+        if longest <= limit then
+            width, height
         else
             let scale = float limit / float longest
             max 1 (int (Math.Round(float width * scale))), max 1 (int (Math.Round(float height * scale)))
@@ -38,9 +40,12 @@ module ImageFit =
 
     /// 每一轮依次尝试的编码：(格式, 扩展名, 媒体类型)。JPEG 没有透明通道，宿主编码前铺白底。
     let candidates (keepAlpha: bool) : (ImageEncoding * string * string) list =
-        [ if keepAlpha then yield ImageEncoding.Png, ".png", "image/png"
-          for q in [ 85; 75; 65 ] do
-              yield ImageEncoding.Jpeg q, ".jpg", "image/jpeg" ]
+        [
+            if keepAlpha then
+                yield ImageEncoding.Png, ".png", "image/png"
+            for q in [ 85; 75; 65 ] do
+                yield ImageEncoding.Jpeg q, ".jpg", "image/jpeg"
+        ]
 
     /// PNG 编码的质量参数（Skia 对无损格式忽略它，旧代码传 100）。
     let quality (encoding: ImageEncoding) =

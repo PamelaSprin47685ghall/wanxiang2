@@ -17,9 +17,12 @@ module JsonPick =
         property node key
         |> Option.bind (fun value ->
             try
-                if value.GetValueKind() = System.Text.Json.JsonValueKind.String then Some(value.GetValue<string>())
-                else None
-            with _ -> None)
+                if value.GetValueKind() = System.Text.Json.JsonValueKind.String then
+                    Some(value.GetValue<string>())
+                else
+                    None
+            with _ ->
+                None)
 
     let tryInt (node: JsonNode) (key: string) : int option =
         property node key
@@ -28,17 +31,27 @@ module JsonPick =
                 match value.GetValueKind() with
                 | System.Text.Json.JsonValueKind.Number ->
                     let mutable i = 0
-                    if value.AsValue().TryGetValue<int>(&i) then Some i
+
+                    if value.AsValue().TryGetValue<int>(&i) then
+                        Some i
                     else
                         let mutable l = 0L
-                        if value.AsValue().TryGetValue<int64>(&l) then Some(int l)
-                        else None
+
+                        if value.AsValue().TryGetValue<int64>(&l) then
+                            Some(int l)
+                        else
+                            None
                 | _ -> None
-            with _ -> None)
+            with _ ->
+                None)
 
     let tryBool (node: JsonNode) (key: string) : bool option =
         property node key
-        |> Option.bind (fun value -> try Some(value.GetValue<bool>()) with _ -> None)
+        |> Option.bind (fun value ->
+            try
+                Some(value.GetValue<bool>())
+            with _ ->
+                None)
 
     let tryObject (node: JsonNode) (key: string) : JsonNode option =
         match property node key with
@@ -56,4 +69,5 @@ module JsonPick =
             match JsonNode.Parse(schema.GetRawText()) with
             | null -> None
             | node -> Some node
-        with _ -> None
+        with _ ->
+            None

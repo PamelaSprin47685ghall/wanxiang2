@@ -18,18 +18,23 @@ open Wanxiang.Tests.Helpers
 
 module McpTests =
 
-    let private jsonOptions = System.Text.Json.JsonSerializerOptions(Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping)
+    let private jsonOptions =
+        System.Text.Json.JsonSerializerOptions(
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        )
 
     let private defaultMcpConfig id =
-        { id = id
-          label = id
-          enabled = true
-          command = None
-          args = []
-          env = Map.empty
-          url = None
-          maxConcurrency = None
-          callTimeoutSeconds = 5 }
+        {
+            id = id
+            label = id
+            enabled = true
+            command = None
+            args = []
+            env = Map.empty
+            url = None
+            maxConcurrency = None
+            callTimeoutSeconds = 5
+        }
 
     // =========================================================================
     // 1. McpJson 纯函数契约测试
@@ -43,11 +48,14 @@ module McpTests =
     let ``McpFunction 无 inputSchema 或畸形 inputSchema 时回退到 PermissiveSchema 容错`` () =
         let dummyCfg = defaultMcpConfig "dummy-mcp"
         let client = new McpClient(dummyCfg, ignore)
-        let toolInfoNoSchema = {
-            name = "query_status"
-            description = "Status tool without schema"
-            inputSchema = None
-        }
+
+        let toolInfoNoSchema =
+            {
+                name = "query_status"
+                description = "Status tool without schema"
+                inputSchema = None
+            }
+
         let mcpFunc = new McpFunction(client, "dummy-mcp", toolInfoNoSchema)
         Assert.Equal("mcp_dummy-mcp_query_status", mcpFunc.Name)
         Assert.NotNull mcpFunc.JsonSchema
@@ -67,11 +75,13 @@ module McpTests =
         props["filePath"] <- p1
         customSchema["properties"] <- props
 
-        let toolInfoWithSchema = {
-            name = "read_file"
-            description = "Reads a file"
-            inputSchema = Some (customSchema :> JsonNode)
-        }
+        let toolInfoWithSchema =
+            {
+                name = "read_file"
+                description = "Reads a file"
+                inputSchema = Some(customSchema :> JsonNode)
+            }
+
         let mcpFunc = new McpFunction(client, "dummy-mcp", toolInfoWithSchema)
         Assert.Equal("mcp_dummy-mcp_read_file", mcpFunc.Name)
         Assert.Equal("Reads a file", mcpFunc.Description)
@@ -96,28 +106,45 @@ module McpTests =
         do
             listener.Prefixes.Add prefix
             listener.Start()
-            Task.Run(Func<Task>(fun () ->
-                task {
-                    while not cts.IsCancellationRequested do
-                        try
-                            let! ctx = listener.GetContextAsync()
-                            let code, contentType, headers, body = handler ctx.Request
-                            ctx.Response.StatusCode <- code
-                            ctx.Response.ContentType <- contentType
-                            for k, v in headers do
-                                ctx.Response.Headers.Add(k, v)
-                            let bytes = Encoding.UTF8.GetBytes body
-                            ctx.Response.ContentLength64 <- int64 bytes.Length
-                            do! ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length)
-                            ctx.Response.Close()
-                        with _ -> ()
-                } :> Task)) |> ignore
+
+            Task.Run(
+                Func<Task>(fun () ->
+                    task {
+                        while not cts.IsCancellationRequested do
+                            try
+                                let! ctx = listener.GetContextAsync()
+                                let code, contentType, headers, body = handler ctx.Request
+                                ctx.Response.StatusCode <- code
+                                ctx.Response.ContentType <- contentType
+
+                                for k, v in headers do
+                                    ctx.Response.Headers.Add(k, v)
+
+                                let bytes = Encoding.UTF8.GetBytes body
+                                ctx.Response.ContentLength64 <- int64 bytes.Length
+                                do! ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length)
+                                ctx.Response.Close()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
+            )
+            |> ignore
 
         member _.Url = prefix
+
         member this.Dispose() =
             cts.Cancel()
-            try listener.Stop() with _ -> ()
-            try listener.Close() with _ -> ()
+
+            try
+                listener.Stop()
+            with _ ->
+                ()
+
+            try
+                listener.Close()
+            with _ ->
+                ()
 
         interface IDisposable with
             member this.Dispose() = this.Dispose()
@@ -138,25 +165,40 @@ module McpTests =
                     use reader = new StreamReader(req.InputStream, Encoding.UTF8)
                     let body = reader.ReadToEnd()
                     let json = JsonNode.Parse body
-                    let id = if json.AsObject().ContainsKey "id" then json["id"].GetValue<int>() else 0
+
+                    let id =
+                        if json.AsObject().ContainsKey "id" then
+                            json["id"].GetValue<int>()
+                        else
+                            0
+
                     match json["method"].GetValue<string>() with
                     | "initialize" ->
                         (200, "application/json", [], sprintf "{\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{}}" id)
-                    | "notifications/initialized" ->
-                        (200, "application/json", [], "")
+                    | "notifications/initialized" -> (200, "application/json", [], "")
                     | "tools/call" ->
-                        (200, "application/json", [], sprintf "{\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":\"invoked_success\"}" id)
-                    | _ ->
-                        (200, "application/json", [], sprintf "{\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{}}" id))
+                        (200,
+                         "application/json",
+                         [],
+                         sprintf "{\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":\"invoked_success\"}" id)
+                    | _ -> (200, "application/json", [], sprintf "{\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{}}" id))
 
-            let cfg = { defaultMcpConfig "fn-srv" with url = Some server.Url }
+            let cfg =
+                { defaultMcpConfig "fn-srv" with
+                    url = Some server.Url
+                }
+
             let client = McpClient(cfg, ignore)
 
-            let schemaNode = JsonNode.Parse("""{"type":"object","properties":{"q":{"type":"string"}}}""")
+            let schemaNode =
+                JsonNode.Parse("""{"type":"object","properties":{"q":{"type":"string"}}}""")
+
             let info =
-                { name = "search"
-                  description = "web search tool"
-                  inputSchema = Some schemaNode }
+                {
+                    name = "search"
+                    description = "web search tool"
+                    inputSchema = Some schemaNode
+                }
 
             let fn = McpFunction(client, "fn-srv", info)
             Assert.Equal("mcp_fn-srv_search", fn.Name)
@@ -164,7 +206,13 @@ module McpTests =
             Assert.NotNull fn.JsonSchema
 
             // 默认无描述时的 fallback
-            let infoNoDesc = { name = "search2"; description = ""; inputSchema = None }
+            let infoNoDesc =
+                {
+                    name = "search2"
+                    description = ""
+                    inputSchema = None
+                }
+
             let fnNoDesc = McpFunction(client, "fn-srv", infoNoDesc)
             Assert.Equal("fn-srv 提供的工具 search2。", fnNoDesc.Description)
 

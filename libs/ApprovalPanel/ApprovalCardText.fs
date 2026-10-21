@@ -9,7 +9,8 @@ module ApprovalCardText =
     /// 参数给人看：主机下发的 JSON 可能把中文转义成 \uXXXX（视觉走查 11 号截图），
     /// 这里解析后用宽松编码重写，中文原样显示；解析失败就原样返回。
     let displayArguments (json: string) : string =
-        if String.IsNullOrWhiteSpace json then json
+        if String.IsNullOrWhiteSpace json then
+            json
         else
             try
                 match JsonNode.Parse json with
@@ -17,9 +18,12 @@ module ApprovalCardText =
                 | node ->
                     let options =
                         System.Text.Json.JsonSerializerOptions(
-                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping)
+                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                        )
+
                     node.ToJsonString options
-            with _ -> json
+            with _ ->
+                json
 
     let argsToggleText (expanded: bool) = if expanded then "收起参数" else "查看参数"
 
@@ -30,7 +34,8 @@ module ApprovalCardText =
         | _ -> "每次调用这个工具都会询问。"
 
     /// 状态文案：用户点了按钮、等主机确认期间。
-    let sentText (approved: bool) = if approved then "已批准，正在继续…" else "已拒绝，正在通知模型…"
+    let sentText (approved: bool) =
+        if approved then "已批准，正在继续…" else "已拒绝，正在通知模型…"
 
     /// 「已处理」说明（晚到的决定，或服务重启后失效的审批）。
     let alreadyHandledText (status: string) : string =

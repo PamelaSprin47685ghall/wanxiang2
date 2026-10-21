@@ -7,5 +7,7 @@ open Xunit
 
 [<Fact>]
 let ``builtin tools and registry behave byte for byte like the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "tools.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "tools.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

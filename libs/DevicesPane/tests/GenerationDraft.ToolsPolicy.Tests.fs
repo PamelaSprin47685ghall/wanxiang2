@@ -1,4 +1,5 @@
 module GenerationDraftToolsPolicyTests
+
 open System
 open System.IO
 open Xunit
@@ -13,5 +14,10 @@ let ``unknown policy reads as automatic`` () =
 
 [<Fact>]
 let ``payload nests under tools with default first`` () =
-    let j = (ToolsPolicy.payload [ "/a" ] "first" (Map.ofList [ "shell", "always" ]) true).ToJsonString()
-    Assert.Equal("""{"tools":{"fileReadRoots":["/a"],"policy":{"default":"first","shell":"always"},"exposeDebug":true}}""", j)
+    let j =
+        (ToolsPolicy.payload [ "/a" ] "first" (Map.ofList [ "shell", "always" ]) true).ToJsonString()
+
+    Assert.Equal(
+        """{"tools":{"fileReadRoots":["/a"],"policy":{"default":"first","shell":"always"},"exposeDebug":true}}""",
+        j
+    )

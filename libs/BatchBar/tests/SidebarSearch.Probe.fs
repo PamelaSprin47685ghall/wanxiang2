@@ -26,7 +26,8 @@ module Probe =
         }
 
     let byId (root: Control) (id: string) =
-        descendants root |> Seq.tryFind (fun c -> AutomationProperties.GetAutomationId c = id)
+        descendants root
+        |> Seq.tryFind (fun c -> AutomationProperties.GetAutomationId c = id)
 
     let named (root: Control) (name: string) =
         descendants root |> Seq.tryFind (fun c -> AutomationProperties.GetName c = name)
@@ -37,6 +38,7 @@ module Probe =
             | :? TextBlock as t -> [ t.Text ]
             | :? TextBox as t -> [ t.Text ]
             | _ -> []
+
         let inner =
             descendants root
             |> Seq.choose (fun c ->
@@ -45,6 +47,7 @@ module Probe =
                 | :? TextBox as t -> Some t.Text
                 | _ -> None)
             |> List.ofSeq
+
         String.Join("\n", own @ inner |> List.filter (fun s -> not (isNull s)))
 
     /// 经读屏 Invoke 点击（与读屏用户同一路径），再跑完排队的工作
@@ -62,4 +65,6 @@ module Probe =
 /// 测试用外观：公共字段全是 Cell，测试可改值验证活性
 module Looks =
     let brush (c: Color) = SolidColorBrush(c) :> IBrush
-    let glyph (name: string) (b: IBrush) : Control = TextBlock(Text = "[" + name + "]", Foreground = b) :> Control
+
+    let glyph (name: string) (b: IBrush) : Control =
+        TextBlock(Text = "[" + name + "]", Foreground = b) :> Control

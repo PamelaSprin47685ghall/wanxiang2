@@ -32,8 +32,7 @@ module EmptyContextFinish =
 
     let decide (hasBatch: bool) : string * GenerationError option =
         if hasBatch then
-            "failed",
-            Some(GenerationError.create UnknownFailure "已收到消息，但无法组装出有效的模型上下文，本次生成已中止，请重试。")
+            "failed", Some(GenerationError.create UnknownFailure "已收到消息，但无法组装出有效的模型上下文，本次生成已中止，请重试。")
         else
             "completed", None
 
@@ -41,39 +40,44 @@ module EmptyContextFinish =
 module ToolRoundLimit =
 
     let error (maxRounds: int) : GenerationError =
-        { GenerationError.create ToolFailed (sprintf "模型连续调用工具超过 %d 轮，已停止本次生成；如需继续，可在对话设置中提高 maxToolRounds 后重试。" maxRounds) with
-            retryable = true }
+        { GenerationError.create
+              ToolFailed
+              (sprintf "模型连续调用工具超过 %d 轮，已停止本次生成；如需继续，可在对话设置中提高 maxToolRounds 后重试。" maxRounds) with
+            retryable = true
+        }
 
 /// 对话运行时的生成状态。
-type GenerationRuntime = {
-    generationId: Guid
-    startedAtUtc: DateTimeOffset
-    cts: CancellationTokenSource
-    mutable runtime: AgentRuntime
-    mutable agentSession: AgentSession
-    mutable agentConfig: SessionConfig
-    /// 配置引用的 Provider 已不存在时记录 provider id（Q154：下一次调用失败结束）
-    mutable invalidConfig: string option
-    mutable cancelled: bool
-    mutable lastProviderMessages: ChatMessage list
-    /// 已执行的工具轮次；超过 maxToolRounds 即中止，防止模型无限调工具
-    mutable toolRounds: int
-    /// 累计用量：工具循环里每一轮 Provider 调用的 token 都要计入，
-    /// 否则用户只看到最后一轮的开销。
-    usage: UsageTally
-    /// 最近一轮报告了用量时，自生成开始到那一刻的耗时（与旧实现相同：durationMs 取最后一轮）
-    mutable lastUsageMs: int64 option
-    /// 本轮 Provider 调用最近一次流出的累积消息（决策 250：中途失败时据此保存半截回复）
-    mutable lastDelta: JsonNode option
-}
+type GenerationRuntime =
+    {
+        generationId: Guid
+        startedAtUtc: DateTimeOffset
+        cts: CancellationTokenSource
+        mutable runtime: AgentRuntime
+        mutable agentSession: AgentSession
+        mutable agentConfig: SessionConfig
+        /// 配置引用的 Provider 已不存在时记录 provider id（Q154：下一次调用失败结束）
+        mutable invalidConfig: string option
+        mutable cancelled: bool
+        mutable lastProviderMessages: ChatMessage list
+        /// 已执行的工具轮次；超过 maxToolRounds 即中止，防止模型无限调工具
+        mutable toolRounds: int
+        /// 累计用量：工具循环里每一轮 Provider 调用的 token 都要计入，
+        /// 否则用户只看到最后一轮的开销。
+        usage: UsageTally
+        /// 最近一轮报告了用量时，自生成开始到那一刻的耗时（与旧实现相同：durationMs 取最后一轮）
+        mutable lastUsageMs: int64 option
+        /// 本轮 Provider 调用最近一次流出的累积消息（决策 250：中途失败时据此保存半截回复）
+        mutable lastDelta: JsonNode option
+    }
 
 /// 对话运行时（内存态，可随进程退出丢弃；排队消息允许丢失，决策 22）。
-type ConversationRuntime = {
-    conversationId: Guid
-    mutable generation: GenerationRuntime option
-    mutable pendingQueue: (ClientCommand * JsonNode) list
-    mutable pendingInvocationIds: Set<Guid>
-}
+type ConversationRuntime =
+    {
+        conversationId: Guid
+        mutable generation: GenerationRuntime option
+        mutable pendingQueue: (ClientCommand * JsonNode) list
+        mutable pendingInvocationIds: Set<Guid>
+    }
 
 /// 工具执行结果：完整结果（成功或失败，需记账）或已取消（无完整结果，不记账）。
 type private ToolOutcome =
@@ -86,50 +90,88 @@ type private ToolOutcome =
 /// - 一个 generationId 覆盖整段 Provider/Tool 循环；
 /// - 工具并行执行，全部完成后统一返回 Provider（保持原顺序）；
 /// - 取消为合作式取消；迟到的 Provider 输出不记账，实际完成的 Tool Result 仍记账。
-type ChatOrchestrator(
-    coordinator: EventStore,
-    getProjection: unit -> Projection,
-    broadcastToConversation: Guid -> WireEvent -> unit,
-    toolRegistry: ToolRegistry,
-    getConfig: unit -> AppConfig,
-    /// 按 sha256 读附件内容；附件要真正送进模型就靠它
-    loadBlob: string -> byte[] option,
-    logInfo: string -> unit) =
+type ChatOrchestrator
+    (
+        coordinator: EventStore,
+        getProjection: unit -> Projection,
+        broadcastToConversation: Guid -> WireEvent -> unit,
+        toolRegistry: ToolRegistry,
+        getConfig: unit -> AppConfig,
+        /// 按 sha256 读附件内容；附件要真正送进模型就靠它
+        loadBlob: string -> byte[] option,
+        logInfo: string -> unit
+    ) =
 
     let runtimes = ConcurrentDictionary<Guid, ConversationRuntime>()
     /// 工具审批（第 71 节）：只存内存，不写日志。
     let approvals = ToolApprovalBroker(getConfig, broadcastToConversation)
     let mutable disposed = false
     let mutable partials = PartialReplyStore(None)
+
     /// 已尝试过自动标题的对话：一个对话只试一次，失败不反复烧 token
-    let titledConversations = System.Collections.Concurrent.ConcurrentDictionary<Guid, bool>()
+    let titledConversations =
+        System.Collections.Concurrent.ConcurrentDictionary<Guid, bool>()
 
     let getRuntime (convId: Guid) : ConversationRuntime =
-        runtimes.GetOrAdd(convId, fun id -> { conversationId = id; generation = None; pendingQueue = []; pendingInvocationIds = Set.empty })
+        runtimes.GetOrAdd(
+            convId,
+            fun id ->
+                {
+                    conversationId = id
+                    generation = None
+                    pendingQueue = []
+                    pendingInvocationIds = Set.empty
+                }
+        )
 
     /// 线上用量：token 来自逐轮累加，durationMs 取最后一次报告用量时的耗时。
     let usageOf (g: GenerationRuntime) : GenerationUsage =
-        { promptTokens = g.usage.PromptTokens
-          completionTokens = g.usage.CompletionTokens
-          cachedTokens = g.usage.CachedTokens
-          totalTokens = g.usage.TotalTokens
-          durationMs = g.lastUsageMs }
+        {
+            promptTokens = g.usage.PromptTokens
+            completionTokens = g.usage.CompletionTokens
+            cachedTokens = g.usage.CachedTokens
+            totalTokens = g.usage.TotalTokens
+            durationMs = g.lastUsageMs
+        }
 
-    let finishedEvent (convId: Guid) (generationId: Guid) (status: string) (error: GenerationError option) (startedAt: DateTimeOffset) (usage: GenerationUsage option) =
+    let finishedEvent
+        (convId: Guid)
+        (generationId: Guid)
+        (status: string)
+        (error: GenerationError option)
+        (startedAt: DateTimeOffset)
+        (usage: GenerationUsage option)
+        =
         let elapsed = int64 (DateTimeOffset.UtcNow - startedAt).TotalMilliseconds
+
         let withDuration =
             usage
-            |> Option.map (fun u -> if u.durationMs.IsNone then { u with durationMs = Some elapsed } else u)
-            |> Option.defaultValue { GenerationUsage.empty with durationMs = Some elapsed }
+            |> Option.map (fun u ->
+                if u.durationMs.IsNone then
+                    { u with durationMs = Some elapsed }
+                else
+                    u)
+            |> Option.defaultValue
+                { GenerationUsage.empty with
+                    durationMs = Some elapsed
+                }
+
         GenerationFinished
-            {| conversationId = convId
-               generationId = generationId
-               status = status
-               error = error
-               usage = Some withDuration |}
+            {|
+                conversationId = convId
+                generationId = generationId
+                status = status
+                error = error
+                usage = Some withDuration
+            |}
 
     let configInvalidError (providerId: string) =
-        let label = if String.IsNullOrWhiteSpace providerId then "（未设置）" else providerId
+        let label =
+            if String.IsNullOrWhiteSpace providerId then
+                "（未设置）"
+            else
+                providerId
+
         GenerationError.create ConfigInvalid (sprintf "对话使用的模型服务「%s」不在当前配置中。" label)
 
     let tryGetProjectionConversation (convId: Guid) : Conversation option =
@@ -148,15 +190,11 @@ type ChatOrchestrator(
 
     /// 有效思维链预算：对话显式设置优先，否则跟随 [generation] 默认。
     let thinkingBudgetOf (config: SessionConfig) : int =
-        config.thinkingBudget |> Option.defaultValue (getConfig ()).generation.thinkingBudget
+        config.thinkingBudget
+        |> Option.defaultValue (getConfig ()).generation.thinkingBudget
 
     let loadContextMessages (convId: Guid) : ChatMessage list =
-        GenerationContext.build
-            (getProjection ())
-            (getConfig ()).generation
-            (mediaSupportOf convId)
-            loadBlob
-            convId
+        GenerationContext.build (getProjection ()) (getConfig ()).generation (mediaSupportOf convId) loadBlob convId
 
     /// 决策 250：半截回复存放处（ServerApp 换成落盘到数据目录的实例）。
     member _.Partials
@@ -169,6 +207,7 @@ type ChatOrchestrator(
     /// 对话当前运行状态（供 snapshot 的 runtimeState 字段）。
     member _.WithRuntimeSnapshot(convId: Guid, consume: string -> Guid option -> 'T) : 'T =
         let rt = getRuntime convId
+
         lock rt (fun () ->
             match rt.generation with
             | Some g when not g.cancelled -> consume "generating" (Some g.generationId)
@@ -177,20 +216,23 @@ type ChatOrchestrator(
     member this.RuntimeSnapshotOf(convId: Guid) : string * Guid option =
         this.WithRuntimeSnapshot(convId, fun state id -> state, id)
 
-    member this.RuntimeStateOf(convId: Guid) : string =
-        this.RuntimeSnapshotOf convId |> fst
+    member this.RuntimeStateOf(convId: Guid) : string = this.RuntimeSnapshotOf convId |> fst
 
     /// 内存运行时数量（R5 诊断：runtimes 随对话创建增长，删除对话是唯一移除点；
     /// 长期运行后该值应约等于活跃对话数，而非历史对话总数）。
-    member _.RuntimeCount : int = runtimes.Count
+    member _.RuntimeCount: int = runtimes.Count
 
     /// 状态转换与通知同锁；快照不能排在 finished 后面却还声称正在生成。
     /// 正常结束时还需在同一临界区检查队列，避免最后一条排队消息被遗留。
     member private _.FinishGeneration(convId: Guid, generationId: Guid, ev: WireEvent, requireEmptyQueue: bool) =
         let rt = getRuntime convId
+
         lock rt (fun () ->
             match rt.generation with
-            | Some g when g.generationId = generationId && (not requireEmptyQueue || List.isEmpty rt.pendingQueue) ->
+            | Some g when
+                g.generationId = generationId
+                && (not requireEmptyQueue || List.isEmpty rt.pendingQueue)
+                ->
                 rt.generation <- None
                 broadcastToConversation convId ev
                 true
@@ -205,13 +247,24 @@ type ChatOrchestrator(
         let canonicalPayload = payloadJson.ToJsonString()
         let commandId = CommandId.compute invocationId "agent.message" canonicalPayload
         let canonicalHash = CommandId.sha256Hex canonicalPayload
-        SubmitOutcome.ofSubmitResult
-            (coordinator.Submit
-                { events = [ AgentMessageRecorded { conversationId = convId; payloadJson = payloadJson } ]
-                  commandId = Some commandId
-                  commandType = Some "agent.message"
-                  commandHash = Some canonicalHash
-                  nowUtc = None })
+
+        SubmitOutcome.ofSubmitResult (
+            coordinator.Submit
+                {
+                    events =
+                        [
+                            AgentMessageRecorded
+                                {
+                                    conversationId = convId
+                                    payloadJson = payloadJson
+                                }
+                        ]
+                    commandId = Some commandId
+                    commandType = Some "agent.message"
+                    commandHash = Some canonicalHash
+                    nowUtc = None
+                }
+        )
 
     /// 记账提交结果处理：失败必须可见（决策 10/17：只有 committed 才算成功），
     /// 记 stderr 并向观察该对话的客户端广播 ServerError。
@@ -219,20 +272,39 @@ type ChatOrchestrator(
         match submitResult with
         | Ok _ -> ()
         | Error e ->
-            logInfo(sprintf "message accounting failed for conversation %O: %s" convId (WanxiangError.message e))
-            broadcastToConversation convId (ServerError {| message = sprintf "消息记账失败: %s" (WanxiangError.message e) |})
+            logInfo (sprintf "message accounting failed for conversation %O: %s" convId (WanxiangError.message e))
+
+            broadcastToConversation
+                convId
+                (ServerError
+                    {|
+                        message = sprintf "消息记账失败: %s" (WanxiangError.message e)
+                    |})
 
     /// 提交一条排队消息（插入点；带命令标识，幂等安全）。
     member private this.SubmitQueuedMessage(convId: Guid, cmd: ClientCommand, payloadJson: JsonNode) : SubmitResult =
         let canonicalPayload = CommandEngine.canonicalPayload cmd
-        let commandId = CommandId.compute (ClientCommand.invocationId cmd) (ClientCommand.commandType cmd) canonicalPayload
+
+        let commandId =
+            CommandId.compute (ClientCommand.invocationId cmd) (ClientCommand.commandType cmd) canonicalPayload
+
         let canonicalHash = CommandId.sha256Hex canonicalPayload
+
         coordinator.Submit
-            { events = [ AgentMessageRecorded { conversationId = convId; payloadJson = payloadJson } ]
-              commandId = Some commandId
-              commandType = Some(ClientCommand.commandType cmd)
-              commandHash = Some canonicalHash
-              nowUtc = None }
+            {
+                events =
+                    [
+                        AgentMessageRecorded
+                            {
+                                conversationId = convId
+                                payloadJson = payloadJson
+                            }
+                    ]
+                commandId = Some commandId
+                commandType = Some(ClientCommand.commandType cmd)
+                commandHash = Some canonicalHash
+                nowUtc = None
+            }
 
     /// 处理发送消息命令：入队；对话空闲时启动生成。
     member this.HandleSendUserMessage(cmd: ClientCommand) : unit =
@@ -240,14 +312,17 @@ type ChatOrchestrator(
             match cmd with
             | SendUserMessage d -> d
             | _ -> failwith "unreachable"
+
         let rt = getRuntime data.conversationId
         let invId = ClientCommand.invocationId cmd
+
         lock rt (fun () ->
             if rt.pendingInvocationIds.Contains invId then
                 () // 已在队列（重试去重）
             else
                 rt.pendingQueue <- rt.pendingQueue @ [ cmd, data.messageJson ]
                 rt.pendingInvocationIds <- rt.pendingInvocationIds.Add invId)
+
         this.MaybeStartGeneration data.conversationId
 
     /// 排队消息是否已全部提交（供客户端状态展示）。
@@ -258,33 +333,51 @@ type ChatOrchestrator(
     /// 插入点：排空队列并逐条提交（决策 22-24）。返回批次的命令标识列表。
     member private this.DrainQueue(convId: Guid) : (Guid * CommitId) list =
         let rt = getRuntime convId
+
         let batch =
             lock rt (fun () ->
                 let q = rt.pendingQueue
                 rt.pendingQueue <- []
                 rt.pendingInvocationIds <- Set.empty
                 q)
-        [ for (cmd, msgJson) in batch do
-              let result = this.SubmitQueuedMessage(convId, cmd, msgJson)
-              let invId = ClientCommand.invocationId cmd
-              let commandId = CommandId.compute invId (ClientCommand.commandType cmd) (CommandEngine.canonicalPayload cmd)
-              let accounted = SubmitOutcome.ofSubmitResult result
-              // 与 SubmitMessage 同一记账口径：失败变成可见的 ServerError，不静默
-              this.RecordSubmitOutcome(convId, accounted)
-              match accounted with
-              | Ok c ->
-                  broadcastToConversation convId (CommandCommitted {| invocationId = invId; commandId = commandId; commitId = c.id |})
-                  yield invId, c.id
-              | Error _ -> () ]
+
+        [
+            for (cmd, msgJson) in batch do
+                let result = this.SubmitQueuedMessage(convId, cmd, msgJson)
+                let invId = ClientCommand.invocationId cmd
+
+                let commandId =
+                    CommandId.compute invId (ClientCommand.commandType cmd) (CommandEngine.canonicalPayload cmd)
+
+                let accounted = SubmitOutcome.ofSubmitResult result
+                // 与 SubmitMessage 同一记账口径：失败变成可见的 ServerError，不静默
+                this.RecordSubmitOutcome(convId, accounted)
+
+                match accounted with
+                | Ok c ->
+                    broadcastToConversation
+                        convId
+                        (CommandCommitted
+                            {|
+                                invocationId = invId
+                                commandId = commandId
+                                commitId = c.id
+                            |})
+
+                    yield invId, c.id
+                | Error _ -> ()
+        ]
 
     /// 启动生成（若对话空闲且队列非空）。
     member this.MaybeStartGeneration(convId: Guid) : unit =
         let rt = getRuntime convId
+
         let shouldStart =
             lock rt (fun () ->
                 match rt.generation with
                 | Some g when not g.cancelled -> false
                 | _ -> not (List.isEmpty rt.pendingQueue))
+
         if shouldStart then
             this.StartGeneration convId
 
@@ -292,12 +385,15 @@ type ChatOrchestrator(
     /// 与普通生成走完全相同的路径，因此工具、配置、记账语义一致。
     member this.StartRegeneration(convId: Guid) : unit =
         let rt = getRuntime convId
+
         let idle =
             lock rt (fun () ->
                 match rt.generation with
                 | Some g when not g.cancelled -> false
                 | _ -> true)
-        if idle then this.StartGeneration convId
+
+        if idle then
+            this.StartGeneration convId
 
     member private this.StartGeneration(convId: Guid) : unit =
         let rt = getRuntime convId
@@ -312,56 +408,80 @@ type ChatOrchestrator(
                     // 构建 agent（按对话当前配置）
                     let proj = getProjection ()
                     let conv = Projection.tryConversation proj convId
+
                     let config =
                         match conv with
                         | Some c when not c.deleted -> c.config
                         | _ -> SessionConfig.empty
+
                     let provider =
                         match AppConfig.tryProvider config.provider (getConfig ()) with
                         | Some p when p.enabled -> Some p
                         | _ -> None
+
                     match provider with
                     | None ->
                         // 配置缺失：排队消息仍按插入点语义提交（决策 22/23），随后失败结束
                         this.DrainQueue(convId) |> ignore
                         let startedAt = DateTimeOffset.UtcNow
+
                         let errEv =
-                            finishedEvent convId generationId "failed" (Some(configInvalidError config.provider)) startedAt None
+                            finishedEvent
+                                convId
+                                generationId
+                                "failed"
+                                (Some(configInvalidError config.provider))
+                                startedAt
+                                None
+
                         broadcastToConversation convId errEv
                         false
                     | Some p ->
                         let tools = toolRegistry.BuildTools config
+
                         let historyProvider =
                             WanxiangHistoryProvider(
                                 (fun _ -> []), // 历史由编排层显式构造（决策 20：应用托管消息历史）
                                 (fun cid msgs -> this.OnAgentResponse(cid, msgs)),
-                                (fun cid ex -> this.OnAgentFailure(cid, ex)))
-                        let agentRuntime = AgentRuntime(p, config, tools, historyProvider, thinkingBudgetOf config)
+                                (fun cid ex -> this.OnAgentFailure(cid, ex))
+                            )
+
+                        let agentRuntime =
+                            AgentRuntime(p, config, tools, historyProvider, thinkingBudgetOf config)
+
                         let session = agentRuntime.CreateSession convId
                         let startedAt = DateTimeOffset.UtcNow
+
                         rt.generation <-
                             Some
-                                { generationId = generationId
-                                  startedAtUtc = startedAt
-                                  cts = cts
-                                  runtime = agentRuntime
-                                  agentSession = session
-                                  agentConfig = config
-                                  invalidConfig = None
-                                  cancelled = false
-                                  lastProviderMessages = []
-                                  toolRounds = 0
-                                  usage = UsageTally()
-                                  lastUsageMs = None
-                                  lastDelta = None }
+                                {
+                                    generationId = generationId
+                                    startedAtUtc = startedAt
+                                    cts = cts
+                                    runtime = agentRuntime
+                                    agentSession = session
+                                    agentConfig = config
+                                    invalidConfig = None
+                                    cancelled = false
+                                    lastProviderMessages = []
+                                    toolRounds = 0
+                                    usage = UsageTally()
+                                    lastUsageMs = None
+                                    lastDelta = None
+                                }
+
                         partials.Clear convId
+
                         broadcastToConversation
                             convId
                             (GenerationStarted
-                                {| conversationId = convId
-                                   generationId = generationId
-                                   providerId = p.id
-                                   model = agentRuntime.Model |})
+                                {|
+                                    conversationId = convId
+                                    generationId = generationId
+                                    providerId = p.id
+                                    model = agentRuntime.Model
+                                |})
+
                         let task = this.RunGenerationLoop(convId, generationId)
                         // 防止 task 未观察异常；异常必须留下诊断证据（O-005 关联 ID：
                         // conversationId/generationId——RunStreaming 抛非业务异常时
@@ -370,15 +490,21 @@ type ChatOrchestrator(
                             (fun (t: Task) ->
                                 if not (isNull t.Exception) then
                                     let baseEx = t.Exception.GetBaseException()
+
                                     Wanxiang.Server.Stderr.write
                                         "generation-loop-failed"
-                                        [ "conversationId", convId
-                                          "generationId", generationId
-                                          "message", baseEx.Message
-                                          "exception", baseEx ]),
-                            TaskContinuationOptions.OnlyOnFaulted)
+                                        [
+                                            "conversationId", convId
+                                            "generationId", generationId
+                                            "message", baseEx.Message
+                                            "exception", baseEx
+                                        ]),
+                            TaskContinuationOptions.OnlyOnFaulted
+                        )
                         |> ignore
+
                         true)
+
         if not acquired then
             ()
 
@@ -391,6 +517,7 @@ type ChatOrchestrator(
             match AppConfig.tryProvider newConfig.provider (getConfig ()) with
             | Some p when p.enabled -> Some p
             | _ -> None
+
         match provider with
         | None ->
             // Provider 缺失：标记无效配置；下一轮 RunGenerationLoop 检测到后广播失败并结束（Q154）
@@ -400,17 +527,22 @@ type ChatOrchestrator(
             g.invalidConfig <- Some newConfig.provider
         | Some p ->
             let tools = toolRegistry.BuildTools newConfig
+
             let historyProvider =
                 WanxiangHistoryProvider(
                     (fun _ -> []),
                     (fun cid msgs -> this.OnAgentResponse(cid, msgs)),
-                    (fun cid ex -> this.OnAgentFailure(cid, ex)))
-            let agentRuntime = AgentRuntime(p, newConfig, tools, historyProvider, thinkingBudgetOf newConfig)
+                    (fun cid ex -> this.OnAgentFailure(cid, ex))
+                )
+
+            let agentRuntime =
+                AgentRuntime(p, newConfig, tools, historyProvider, thinkingBudgetOf newConfig)
             // 对话 ID（conversationId）保留在 StateBag；新 session 绑定同一 conversationId
             let conversationId =
                 match WanxiangHistoryProvider.ConversationIdOf g.agentSession with
                 | Some cid -> cid
                 | None -> Guid.Empty
+
             let session = agentRuntime.CreateSession conversationId
             g.runtime <- agentRuntime
             g.agentSession <- session
@@ -424,19 +556,23 @@ type ChatOrchestrator(
         task {
             let rt = getRuntime convId
             let mutable running = true
+
             while running do
                 let gen =
                     lock rt (fun () ->
                         match rt.generation with
                         | Some g when g.generationId = generationId -> Some g
                         | _ -> None)
+
                 match gen with
                 | None -> running <- false
                 | Some g ->
                     // 1. 取消检查（决策 88：取消只停止当前运行；内存中排队但尚未插入的用户消息
                     //    继续保留，等待下一个插入点——绝不先提交再取消，否则消息落盘却无回复）
                     if g.cts.IsCancellationRequested then
-                        let ev = finishedEvent convId generationId "cancelled" None g.startedAtUtc (Some(usageOf g))
+                        let ev =
+                            finishedEvent convId generationId "cancelled" None g.startedAtUtc (Some(usageOf g))
+
                         this.FinishGeneration(convId, generationId, ev, false) |> ignore
                         running <- false
                     else
@@ -444,14 +580,28 @@ type ChatOrchestrator(
                         let batch = this.DrainQueue convId
                         // 3. 构造上下文（历史 + 已提交新消息 + 附件解析）
                         let context = loadContextMessages convId
+
                         if List.isEmpty context then
                             // 上下文为空说明没有任何可回答的输入（对话已删空、或本批提交全部失败）。
                             // 继续调 Provider 只会凭空生成一段无来由的回复。
                             if not (List.isEmpty batch) then
-                                logInfo(sprintf "generation %O aborted: empty context after draining %d message(s)" generationId (List.length batch))
+                                logInfo (
+                                    sprintf
+                                        "generation %O aborted: empty context after draining %d message(s)"
+                                        generationId
+                                        (List.length batch)
+                                )
                             // 本批有已提交消息却拼不出上下文：失败（可重试），绝不 completed 蒙混
                             let status, err = EmptyContextFinish.decide (not (List.isEmpty batch))
-                            this.FinishGeneration(convId, generationId, finishedEvent convId generationId status err g.startedAtUtc None, false) |> ignore
+
+                            this.FinishGeneration(
+                                convId,
+                                generationId,
+                                finishedEvent convId generationId status err g.startedAtUtc None,
+                                false
+                            )
+                            |> ignore
+
                             running <- false
                         else
                             // 4. Provider 调用（配置变更只影响下一次调用，决策 87：
@@ -460,11 +610,25 @@ type ChatOrchestrator(
                                 match tryGetProjectionConversation convId with
                                 | Some c -> Some c.config
                                 | None -> None
+
                             if g.invalidConfig.IsSome then
                                 // Q153/Q154：配置引用的 Provider 已不存在 → 不发起新调用，失败结束（不篡改对话配置）
-                                logInfo(sprintf "generation %O failed: provider %s not configured" generationId g.invalidConfig.Value)
+                                logInfo (
+                                    sprintf
+                                        "generation %O failed: provider %s not configured"
+                                        generationId
+                                        g.invalidConfig.Value
+                                )
+
                                 let ev =
-                                    finishedEvent convId generationId "failed" (Some(configInvalidError g.invalidConfig.Value)) g.startedAtUtc None
+                                    finishedEvent
+                                        convId
+                                        generationId
+                                        "failed"
+                                        (Some(configInvalidError g.invalidConfig.Value))
+                                        g.startedAtUtc
+                                        None
+
                                 this.FinishGeneration(convId, generationId, ev, false) |> ignore
                                 running <- false
                             elif latestConfig.IsSome && latestConfig.Value <> g.agentConfig then
@@ -474,32 +638,49 @@ type ChatOrchestrator(
                                 // 继续循环（下一次迭代用新配置发起调用）
                             else
                                 lock rt (fun () -> g.lastDelta <- None)
+
                                 let onDelta (deltaMsg: ChatMessage) =
                                     let payload = MessageSerde.toJsonNode deltaMsg
+
                                     let deltaEv =
                                         GenerationDelta
-                                            {  conversationId = convId
-                                               generationId = generationId
-                                               payload = payload }
+                                            {
+                                                conversationId = convId
+                                                generationId = generationId
+                                                payload = payload
+                                            }
+
                                     lock rt (fun () ->
-                                        if not g.cancelled && (rt.generation |> Option.map _.generationId) = Some generationId then
+                                        if
+                                            not g.cancelled
+                                            && (rt.generation |> Option.map _.generationId) = Some generationId
+                                        then
                                             g.lastDelta <- Some payload
                                             broadcastToConversation convId deltaEv)
                                 // 多条消息合并为一次请求（按消息列表传入）
-                                let! result =
-                                    g.runtime.RunStreaming(g.agentSession, context, onDelta, g.cts.Token)
+                                let! result = g.runtime.RunStreaming(g.agentSession, context, onDelta, g.cts.Token)
+
                                 match result with
                                 | AgentCallResult.Cancelled ->
-                                    let ev = finishedEvent convId generationId "cancelled" None g.startedAtUtc (Some(usageOf g))
+                                    let ev =
+                                        finishedEvent
+                                            convId
+                                            generationId
+                                            "cancelled"
+                                            None
+                                            g.startedAtUtc
+                                            (Some(usageOf g))
+
                                     this.FinishGeneration(convId, generationId, ev, false) |> ignore
                                     running <- false
                                 | Failed err ->
-                                    logInfo(
+                                    logInfo (
                                         sprintf
                                             "generation %O failed [%s]: %s"
                                             generationId
                                             (GenerationErrorKind.code err.kind)
-                                            (err.detail |> Option.defaultValue err.message))
+                                            (err.detail |> Option.defaultValue err.message)
+                                    )
                                     // 决策 241：限流 / 额度头先于 finished 单独下发（追加的 wanxiang.dev/* 事件，旧端忽略）；
                                     // 同时把建议等待秒数补进错误本身，旧客户端也能看到「建议等待约 N 秒」。
                                     let err =
@@ -508,45 +689,75 @@ type ChatOrchestrator(
                                             broadcastToConversation
                                                 convId
                                                 (ProviderRateLimitNotice
-                                                    {| conversationId = convId
-                                                       generationId = generationId
-                                                       providerId = g.runtime.ProviderId
-                                                       limit = limit |})
+                                                    {|
+                                                        conversationId = convId
+                                                        generationId = generationId
+                                                        providerId = g.runtime.ProviderId
+                                                        limit = limit
+                                                    |})
+
                                             match err.retryAfterSeconds, ProviderRateLimit.waitSeconds limit with
-                                            | None, Some wait when err.retryable -> { err with retryAfterSeconds = Some wait }
+                                            | None, Some wait when err.retryable ->
+                                                { err with
+                                                    retryAfterSeconds = Some wait
+                                                }
                                             | _ -> err
                                         | None -> err
+
                                     let partialEv =
                                         lock rt (fun () -> g.lastDelta)
                                         |> Option.filter ChatOrchestrator.PartialText
                                         |> Option.map (fun msg ->
                                             GenerationPartial
-                                                {| conversationId = convId
-                                                   generationId = generationId
-                                                   message = msg.DeepClone()
-                                                   error = Some err |})
-                                    let ev = finishedEvent convId generationId "failed" (Some err) g.startedAtUtc (Some(usageOf g))
+                                                {|
+                                                    conversationId = convId
+                                                    generationId = generationId
+                                                    message = msg.DeepClone()
+                                                    error = Some err
+                                                |})
+
+                                    let ev =
+                                        finishedEvent
+                                            convId
+                                            generationId
+                                            "failed"
+                                            (Some err)
+                                            g.startedAtUtc
+                                            (Some(usageOf g))
+
                                     if this.FinishGeneration(convId, generationId, ev, false) then
                                         // 决策 250：落盘后再下发；新生成一开始就作废（StartGeneration 里 Clear）。
-                                        partialEv |> Option.iter (fun pe ->
+                                        partialEv
+                                        |> Option.iter (fun pe ->
                                             partials.Save pe
                                             broadcastToConversation convId pe)
+
                                     running <- false
                                 | Completed usage ->
-                                    usage |> Option.iter (fun u ->
+                                    usage
+                                    |> Option.iter (fun u ->
                                         g.usage.Add u
-                                        g.lastUsageMs <- Some(int64 (DateTimeOffset.UtcNow - g.startedAtUtc).TotalMilliseconds))
+
+                                        g.lastUsageMs <-
+                                            Some(int64 (DateTimeOffset.UtcNow - g.startedAtUtc).TotalMilliseconds))
                                     // 响应消息已由 HistoryProvider 回调提交；检查工具调用
                                     // （OnAgentResponse 在 rt 锁内写 lastProviderMessages，读取必须同锁）
                                     let responses = lock rt (fun () -> g.lastProviderMessages)
-                                    let calls =
-                                        responses
-                                        |> List.collect MessageSerde.toolCalls
+                                    let calls = responses |> List.collect MessageSerde.toolCalls
                                     let maxRounds = (getConfig ()).generation.maxToolRounds
+
                                     if List.isEmpty calls then
                                         // 决策 22/24：idle 是可插入点——若流式期间有新消息入队，则继续循环排空，
                                         // 不立即结束 generation（避免排队消息需等下次显式动作才处理）
-                                        let ev = finishedEvent convId generationId "completed" None g.startedAtUtc (Some(usageOf g))
+                                        let ev =
+                                            finishedEvent
+                                                convId
+                                                generationId
+                                                "completed"
+                                                None
+                                                g.startedAtUtc
+                                                (Some(usageOf g))
+
                                         if not (this.FinishGeneration(convId, generationId, ev, true)) then
                                             lock rt (fun () -> g.lastProviderMessages <- [])
                                             // 继续 while 循环（下一轮 DrainQueue 排空 + 再次调 Provider）
@@ -556,9 +767,24 @@ type ChatOrchestrator(
                                             do! this.MaybeGenerateTitle(convId, g)
                                     elif g.toolRounds >= maxRounds then
                                         // 工具循环不设上限时，一个反复调工具的模型能把 token 烧到没有上限。
-                                        logInfo(sprintf "generation %O stopped: tool round limit %d reached" generationId maxRounds)
+                                        logInfo (
+                                            sprintf
+                                                "generation %O stopped: tool round limit %d reached"
+                                                generationId
+                                                maxRounds
+                                        )
+
                                         let err = ToolRoundLimit.error maxRounds
-                                        let ev = finishedEvent convId generationId "failed" (Some err) g.startedAtUtc (Some(usageOf g))
+
+                                        let ev =
+                                            finishedEvent
+                                                convId
+                                                generationId
+                                                "failed"
+                                                (Some err)
+                                                g.startedAtUtc
+                                                (Some(usageOf g))
+
                                         this.FinishGeneration(convId, generationId, ev, false) |> ignore
                                         running <- false
                                     else
@@ -574,131 +800,233 @@ type ChatOrchestrator(
     /// 失败不影响对话：只记日志。
     member private this.MaybeGenerateTitle(convId: Guid, g: GenerationRuntime) : Task =
         task {
-            if not (getConfig ()).generation.autoTitle then ()
-            elif not (titledConversations.TryAdd(convId, true)) then ()
+            if not (getConfig ()).generation.autoTitle then
+                ()
+            elif not (titledConversations.TryAdd(convId, true)) then
+                ()
             else
                 match tryGetProjectionConversation convId with
                 | Some conv when TitleGenerator.isPlaceholder conv.title ->
                     let context = loadContextMessages convId
+
                     try
                         use timeout = new CancellationTokenSource(TimeSpan.FromSeconds 20.0)
                         let! suggestion = TitleGenerator.suggest g.runtime context timeout.Token
+
                         let title =
                             match suggestion with
                             | Some t -> t
                             | None -> TitleGenerator.fallback (GenerationContext.lastUserText context)
+
                         if not (String.IsNullOrWhiteSpace title) && title <> conv.title then
                             this.SubmitRename(convId, title)
                     with ex ->
-                        logInfo(sprintf "auto title failed for %O: %s" convId ex.Message)
+                        logInfo (sprintf "auto title failed for %O: %s" convId ex.Message)
                 | _ -> ()
         }
 
     /// 主机发起的重命名：与客户端命令同一提交形态（带 commandId，幂等安全）。
     member private _.SubmitRename(convId: Guid, title: string) : unit =
         let invocationId = Guid.CreateVersion7()
-        let cmd = RenameConversation {| invocationId = invocationId; conversationId = convId; title = title |}
+
+        let cmd =
+            RenameConversation
+                {|
+                    invocationId = invocationId
+                    conversationId = convId
+                    title = title
+                |}
+
         let canonicalPayload = CommandEngine.canonicalPayload cmd
-        let commandId = CommandId.compute invocationId (ClientCommand.commandType cmd) canonicalPayload
-        match coordinator.Submit
-            { events = [ ConversationRenamed { conversationId = convId; title = title } ]
-              commandId = Some commandId
-              commandType = Some(ClientCommand.commandType cmd)
-              commandHash = Some(CommandId.sha256Hex canonicalPayload)
-              nowUtc = None } with
+
+        let commandId =
+            CommandId.compute invocationId (ClientCommand.commandType cmd) canonicalPayload
+
+        match
+            coordinator.Submit
+                {
+                    events =
+                        [
+                            ConversationRenamed
+                                {
+                                    conversationId = convId
+                                    title = title
+                                }
+                        ]
+                    commandId = Some commandId
+                    commandType = Some(ClientCommand.commandType cmd)
+                    commandHash = Some(CommandId.sha256Hex canonicalPayload)
+                    nowUtc = None
+                }
+        with
         | Committed c ->
             broadcastToConversation
                 convId
                 (ConversationUpdated
-                    {| conversationId = convId
-                       commitId = c.id
-                       change = (let o = JsonObject() in o["title"] <- title
-                                 o) |})
+                    {|
+                        conversationId = convId
+                        commitId = c.id
+                        change =
+                            (let o = JsonObject() in
+                             o["title"] <- title
+                             o)
+                    |})
         | _ -> ()
 
     /// 并行执行一批工具调用。返回按原顺序的 (call, outcome) 列表。
     /// 决策 89：Tool 成功取消且没有完整结果时，不补写任何消息（NDJSON 无伪造结果）；
     /// 决策 92：每个完整 Tool Result 一完成就分别记账并实时推送给客户端（不等待整批）。
-    member private this.ExecuteTools(convId: Guid, generationId: Guid, calls: FunctionCallContent list, g: GenerationRuntime) : Task<(FunctionCallContent * ToolOutcome) list> =
+    member private this.ExecuteTools
+        (convId: Guid, generationId: Guid, calls: FunctionCallContent list, g: GenerationRuntime)
+        : Task<(FunctionCallContent * ToolOutcome) list> =
         task {
             // 同一批调用使用同一工具快照
             let allTools = toolRegistry.BuildTools g.agentConfig
+
             let findTool (call: FunctionCallContent) : AITool option =
                 let normalize (name: string) =
-                    if String.IsNullOrWhiteSpace name then ""
+                    if String.IsNullOrWhiteSpace name then
+                        ""
                     elif name.StartsWith("builtin:", StringComparison.Ordinal) then
                         "builtin_" + name.Substring("builtin:".Length).Replace(".", "_")
                     elif name.StartsWith("mcp:", StringComparison.Ordinal) then
                         "mcp_" + name.Substring("mcp:".Length).Replace("/", "_").Replace("-", "_")
-                    else name
+                    else
+                        name
+
                 let target = normalize call.Name
-                allTools |> List.tryFind (fun t ->
-                    t.Name = call.Name || t.Name = target || normalize t.Name = target)
+
+                allTools
+                |> List.tryFind (fun t -> t.Name = call.Name || t.Name = target || normalize t.Name = target)
+
             let runOne (call: FunctionCallContent) : Task<(FunctionCallContent * ToolOutcome)> =
                 task {
                     match findTool call with
                     | None ->
                         // 人话：这段同时进模型上下文和工具卡错误行（视觉走查：卡片上露出英文 `tool echo not found`）
                         let text = sprintf """{"error":"找不到工具 %s：它可能已停用，或不在本对话启用的工具里。"}""" call.Name
-                        this.RecordSubmitOutcome(convId, this.SubmitMessage(convId, MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)))
+
+                        this.RecordSubmitOutcome(
+                            convId,
+                            this.SubmitMessage(
+                                convId,
+                                MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)
+                            )
+                        )
+
                         return call, ToolResult text
                     | Some tool ->
-                      let toolId = toolRegistry.StableIdOf tool
-                      let! gate =
-                        task {
-                            if approvals.NeedsApproval(convId, toolId) then
-                                let argsNode =
-                                    let o = JsonObject()
-                                    if not (isNull call.Arguments) then
-                                        for KeyValue(k, v) in call.Arguments do
-                                            o[k] <-
-                                                match v with
-                                                | null -> null
-                                                | :? JsonNode as n -> n.DeepClone()
-                                                | :? JsonElement as e -> JsonNode.Parse(e.GetRawText())
-                                                | other -> JsonSerializer.SerializeToNode other
-                                    o :> JsonNode
-                                return! approvals.Request(convId, generationId, call.CallId, tool.Name, toolId, argsNode, g.cts.Token)
-                            else
-                                return Approved
-                        }
-                      match gate with
-                      | ApprovalCancelled -> return call, ToolCancelled
-                      | Denied(reason, _) ->
-                        // 拒绝也是一条完整 Tool Result：模型能读到原因并继续（第 71 节）
-                        let text =
-                            JsonSerializer.Serialize(
-                                {| error = reason |},
-                                JsonSerializerOptions(Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping))
-                        this.RecordSubmitOutcome(convId, this.SubmitMessage(convId, MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)))
-                        return call, ToolResult text
-                      | Approved ->
-                        try
-                            match tool with
-                            | :? AIFunction as f ->
-                                let args = if isNull call.Arguments then AIFunctionArguments() else AIFunctionArguments(call.Arguments)
-                                let! result = f.InvokeAsync(args, g.cts.Token)
-                                let text =
-                                    match result with
-                                    | null -> """{"result":null}"""
-                                    | :? string as s -> s
-                                    | other -> JsonSerializer.Serialize(other)
-                                // 完成即记账（决策 92）：不等待整批
-                                this.RecordSubmitOutcome(convId, this.SubmitMessage(convId, MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)))
-                                return call, ToolResult text
-                            | _ ->
-                                let text = """{"error":"tool is not an AIFunction"}"""
-                                this.RecordSubmitOutcome(convId, this.SubmitMessage(convId, MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)))
-                                return call, ToolResult text
-                        with
-                        | :? OperationCanceledException ->
-                            // 决策 89：Tool 成功取消且没有完整结果 → 不补写任何消息
-                            return call, ToolCancelled
-                        | e ->
-                            let text = sprintf """{"error":"%s"}""" (e.Message.Replace("\"", "'"))
-                            this.RecordSubmitOutcome(convId, this.SubmitMessage(convId, MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)))
+                        let toolId = toolRegistry.StableIdOf tool
+
+                        let! gate =
+                            task {
+                                if approvals.NeedsApproval(convId, toolId) then
+                                    let argsNode =
+                                        let o = JsonObject()
+
+                                        if not (isNull call.Arguments) then
+                                            for KeyValue(k, v) in call.Arguments do
+                                                o[k] <-
+                                                    match v with
+                                                    | null -> null
+                                                    | :? JsonNode as n -> n.DeepClone()
+                                                    | :? JsonElement as e -> JsonNode.Parse(e.GetRawText())
+                                                    | other -> JsonSerializer.SerializeToNode other
+
+                                        o :> JsonNode
+
+                                    return!
+                                        approvals.Request(
+                                            convId,
+                                            generationId,
+                                            call.CallId,
+                                            tool.Name,
+                                            toolId,
+                                            argsNode,
+                                            g.cts.Token
+                                        )
+                                else
+                                    return Approved
+                            }
+
+                        match gate with
+                        | ApprovalCancelled -> return call, ToolCancelled
+                        | Denied(reason, _) ->
+                            // 拒绝也是一条完整 Tool Result：模型能读到原因并继续（第 71 节）
+                            let text =
+                                JsonSerializer.Serialize(
+                                    {| error = reason |},
+                                    JsonSerializerOptions(
+                                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                                    )
+                                )
+
+                            this.RecordSubmitOutcome(
+                                convId,
+                                this.SubmitMessage(
+                                    convId,
+                                    MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)
+                                )
+                            )
+
                             return call, ToolResult text
+                        | Approved ->
+                            try
+                                match tool with
+                                | :? AIFunction as f ->
+                                    let args =
+                                        if isNull call.Arguments then
+                                            AIFunctionArguments()
+                                        else
+                                            AIFunctionArguments(call.Arguments)
+
+                                    let! result = f.InvokeAsync(args, g.cts.Token)
+
+                                    let text =
+                                        match result with
+                                        | null -> """{"result":null}"""
+                                        | :? string as s -> s
+                                        | other -> JsonSerializer.Serialize(other)
+                                    // 完成即记账（决策 92）：不等待整批
+                                    this.RecordSubmitOutcome(
+                                        convId,
+                                        this.SubmitMessage(
+                                            convId,
+                                            MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)
+                                        )
+                                    )
+
+                                    return call, ToolResult text
+                                | _ ->
+                                    let text = """{"error":"tool is not an AIFunction"}"""
+
+                                    this.RecordSubmitOutcome(
+                                        convId,
+                                        this.SubmitMessage(
+                                            convId,
+                                            MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)
+                                        )
+                                    )
+
+                                    return call, ToolResult text
+                            with
+                            | :? OperationCanceledException ->
+                                // 决策 89：Tool 成功取消且没有完整结果 → 不补写任何消息
+                                return call, ToolCancelled
+                            | e ->
+                                let text = sprintf """{"error":"%s"}""" (e.Message.Replace("\"", "'"))
+
+                                this.RecordSubmitOutcome(
+                                    convId,
+                                    this.SubmitMessage(
+                                        convId,
+                                        MessageSerde.toJsonNode (MessageSerde.toolResultMessage call text)
+                                    )
+                                )
+
+                                return call, ToolResult text
                 }
+
             let! results = Task.WhenAll [ for c in calls -> runOne c ]
             return List.ofArray results
         }
@@ -706,6 +1034,7 @@ type ChatOrchestrator(
     /// HistoryProvider 回调：Agent 响应消息 → 记账（完整消息单独提交）。
     member private this.OnAgentResponse(convId: Guid, msgs: ChatMessage list) =
         let rt = getRuntime convId
+
         let shouldCommit =
             lock rt (fun () ->
                 match rt.generation with
@@ -714,19 +1043,21 @@ type ChatOrchestrator(
                     g.lastProviderMessages <- g.lastProviderMessages @ msgs
                     true
                 | _ -> false)
+
         if shouldCommit then
             for m in msgs do
                 this.RecordSubmitOutcome(convId, this.SubmitMessage(convId, MessageSerde.toJsonNode m))
 
     member private this.OnAgentFailure(convId: Guid, ex: exn) =
-        logInfo(sprintf "agent failure for %O: %s" convId ex.Message)
+        logInfo (sprintf "agent failure for %O: %s" convId ex.Message)
 
     /// 工具审批代理：连接层用它收发审批事件、声明能力探测。
-    member _.Approvals : ToolApprovalBroker = approvals
+    member _.Approvals: ToolApprovalBroker = approvals
 
     /// 取消生成（决策 88/89：合作式取消；不记账；已提交消息保留）。
     member this.CancelGeneration(convId: Guid, generationId: Guid) : Result<unit, WanxiangError> =
         let rt = getRuntime convId
+
         lock rt (fun () ->
             match rt.generation with
             | Some g when g.generationId = generationId ->
@@ -743,6 +1074,7 @@ type ChatOrchestrator(
     member this.OnConversationDeleted(convId: Guid) : unit =
         approvals.ClearConversation convId
         partials.Clear convId
+
         match runtimes.TryRemove convId with
         | true, rt ->
             lock rt (fun () ->
@@ -751,6 +1083,7 @@ type ChatOrchestrator(
                     g.cancelled <- true
                     g.cts.Cancel()
                 | None -> ())
+
             titledConversations.TryRemove(convId, ref false) |> ignore
         | false, _ -> ()
 
@@ -758,6 +1091,7 @@ type ChatOrchestrator(
     member _.Dispose() =
         if not disposed then
             disposed <- true
+
             for kv in runtimes do
                 lock kv.Value (fun () ->
                     match kv.Value.generation with

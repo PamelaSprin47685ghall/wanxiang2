@@ -15,7 +15,8 @@ let private layout tex display =
     | Ok box -> box
     | Error e -> failwithf "%s：%s" tex e
 
-let private tryLayout tex display = typesetter.TryRender(14.5, html tex display)
+let private tryLayout tex display =
+    typesetter.TryRender(14.5, html tex display)
 
 // ---------------------------------------------------------------------------
 // 基线与整体盒子
@@ -30,23 +31,31 @@ let ``行内公式的主体字形落在盒基线上`` () =
 [<Fact>]
 let ``所有字形的墨迹都落在盒宽之内`` () =
     for (tex, display) in
-        [ "x^2", false
-          "E = mc^2", false
-          "\\frac{a}{b}", false
-          "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}", true
-          "\\sqrt{x^2+y^2}", false
-          "\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}", true
-          "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}", true
-          "\\int_0^\\infty e^{-x}\\,dx", true ] do
+        [
+            "x^2", false
+            "E = mc^2", false
+            "\\frac{a}{b}", false
+            "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}", true
+            "\\sqrt{x^2+y^2}", false
+            "\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}", true
+            "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}", true
+            "\\int_0^\\infty e^{-x}\\,dx", true
+        ] do
         let box = layout tex display
+
         for g in glyphsOf box do
             Assert.True(g.x >= -1e-6, sprintf "%s：字形 %s 的左边缘 %f 越过了盒左端" tex g.text g.x)
-            Assert.True(g.x + g.width <= box.width + 1e-6, sprintf "%s：字形 %s 的右边缘 %f 越过了盒宽 %f" tex g.text (g.x + g.width) box.width)
+
+            Assert.True(
+                g.x + g.width <= box.width + 1e-6,
+                sprintf "%s：字形 %s 的右边缘 %f 越过了盒宽 %f" tex g.text (g.x + g.width) box.width
+            )
 
 [<Fact>]
 let ``同一行的字形自左向右排列`` () =
     for (tex, display) in [ "E = mc^2", false; "a+b+c", false; "\\text{中文} + 1", false ] do
         let xs = glyphsOf (layout tex display) |> List.map (fun g -> g.x)
+
         for i in 1 .. xs.Length - 1 do
             Assert.True(xs.[i] >= xs.[i - 1] - 1e-6, sprintf "%s：第 %d 个字形往左退了" tex i)
 
@@ -96,6 +105,7 @@ let ``展示式求和的上下限分居算符上下`` () =
     Assert.NotEmpty(upper)
     Assert.NotEmpty(lower)
     let sigmaCenter = sigma.x + sigma.width / 2.0
+
     for group in [ upper; lower ] do
         let left = group |> List.map (fun g -> g.x) |> List.min
         let right = group |> List.map (fun g -> g.x + g.width) |> List.max
@@ -125,7 +135,12 @@ let ``大型算符用 Size 系列字体`` () =
 
 [<Fact>]
 let ``分数的分子高于分数线且分母低于分数线`` () =
-    for (tex, display) in [ "\\frac{a}{b}", false; "\\frac{1}{2}", false; "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}", true ] do
+    for (tex, display) in
+        [
+            "\\frac{a}{b}", false
+            "\\frac{1}{2}", false
+            "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}", true
+        ] do
         let box = layout tex display
         let (_, ruleY, _, ruleH) = rulesOf box |> List.head
         let ruleBottom = ruleY + ruleH
@@ -134,11 +149,20 @@ let ``分数的分子高于分数线且分母低于分数线`` () =
         let denominator = gs |> List.filter (fun g -> g.baseline > ruleBottom)
         Assert.NotEmpty(numerator)
         Assert.NotEmpty(denominator)
-        Assert.True(gs |> List.forall (fun g -> g.baseline < ruleY || g.baseline > ruleBottom), sprintf "%s：有字形压在分数线上" tex)
+
+        Assert.True(
+            gs |> List.forall (fun g -> g.baseline < ruleY || g.baseline > ruleBottom),
+            sprintf "%s：有字形压在分数线上" tex
+        )
 
 [<Fact>]
 let ``分数线横跨分子分母`` () =
-    for (tex, display) in [ "\\frac{a}{b}", false; "\\frac{1}{2}", false; "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}", true ] do
+    for (tex, display) in
+        [
+            "\\frac{a}{b}", false
+            "\\frac{1}{2}", false
+            "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}", true
+        ] do
         let box = layout tex display
         let (ruleX, _, ruleW, _) = rulesOf box |> List.head
         let gs = glyphsOf box
@@ -149,13 +173,23 @@ let ``分数线横跨分子分母`` () =
 
 [<Fact>]
 let ``分子分母与分数线共享同一条中轴`` () =
-    for (tex, display) in [ "\\frac{a}{b}", false; "\\frac{1}{2}", false; "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}", true ] do
+    for (tex, display) in
+        [
+            "\\frac{a}{b}", false
+            "\\frac{1}{2}", false
+            "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}", true
+        ] do
         let box = layout tex display
         let (ruleX, ruleY, ruleW, ruleH) = rulesOf box |> List.head
         let ruleBottom = ruleY + ruleH
         let center = ruleX + ruleW / 2.0
         let gs = glyphsOf box
-        for row in [ gs |> List.filter (fun g -> g.baseline < ruleY); gs |> List.filter (fun g -> g.baseline > ruleBottom) ] do
+
+        for row in
+            [
+                gs |> List.filter (fun g -> g.baseline < ruleY)
+                gs |> List.filter (fun g -> g.baseline > ruleBottom)
+            ] do
             let rowLeft = row |> List.map (fun g -> g.x) |> List.min
             let rowRight = row |> List.map (fun g -> g.x + g.width) |> List.max
             Assert.True(abs ((rowLeft + rowRight) / 2.0 - center) < 1e-6, sprintf "%s：分子分母没有与分数线同轴" tex)
@@ -165,6 +199,7 @@ let ``分数里的字形字号小于同一符号单排时的字号`` () =
     let plain = layout "a" false
     let plainSize = (glyphWith plain "a" 0).size
     let box = layout "\\frac{a}{b}" false
+
     for g in glyphsOf box do
         Assert.True(g.size < plainSize, sprintf "分数里的 %s 字号 %f 没有小于单排的 %f" g.text g.size plainSize)
 
@@ -175,6 +210,7 @@ let ``分数里的字形字号小于同一符号单排时的字号`` () =
 [<Fact>]
 let ``根式生成 SVG 路径且裁剪宽度等于盒宽`` () =
     let box = layout "\\sqrt{x^2+y^2}" false
+
     match pathsOf box with
     | [] -> failwith "根号没有生成 SVG 图元"
     | (_, scale, _, _, clipX, clipY, clipW, clipH) :: _ ->
@@ -188,6 +224,7 @@ let ``根式生成 SVG 路径且裁剪宽度等于盒宽`` () =
 let ``被开方内容位于根号符号右侧且落在裁剪区内`` () =
     let box = layout "\\sqrt{x^2+y^2}" false
     let (_, _, _, _, clipX, _, clipW, _) = pathsOf box |> List.head
+
     for g in glyphsOf box do
         Assert.True(g.x > clipX + 1e-6, sprintf "被开方的 %s 压在根号符号上" g.text)
         Assert.True(g.x + g.width <= clipX + clipW + 1e-6, sprintf "被开方的 %s 超出了根号的裁剪区" g.text)
@@ -246,21 +283,30 @@ let ``数字与运算符用直立的 KaTeX_Main`` () =
     let box = layout "E = mc^2" false
     let upright = glyphsOf box |> List.filter (fun g -> g.text = "=" || g.text = "2")
     Assert.NotEmpty(upright)
-    for g in upright do Assert.Equal("KaTeX_Main", g.family)
+
+    for g in upright do
+        Assert.Equal("KaTeX_Main", g.family)
 
 [<Fact>]
 let ``变量用斜体的数学字体`` () =
     let box = layout "E = mc^2" false
-    let italics = glyphsOf box |> List.filter (fun g -> List.contains g.text [ "E"; "m"; "c" ])
+
+    let italics =
+        glyphsOf box |> List.filter (fun g -> List.contains g.text [ "E"; "m"; "c" ])
+
     Assert.NotEmpty(italics)
-    for g in italics do Assert.Equal("KaTeX_MathItalic", g.family)
+
+    for g in italics do
+        Assert.Equal("KaTeX_MathItalic", g.family)
 
 [<Fact>]
 let ``减号与正负号落在有这些字形的字体上`` () =
     let box = layout "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}" true
     let signs = glyphsOf box |> List.filter (fun g -> g.text = "−" || g.text = "±")
     Assert.Equal(3, signs.Length)
-    for g in signs do Assert.Equal("KaTeX_Main", g.family)
+
+    for g in signs do
+        Assert.Equal("KaTeX_Main", g.family)
 
 [<Fact>]
 let ``CJK 文本回落到正文字体`` () =
@@ -279,14 +325,25 @@ let ``展示式的基线上方留白不少于行内式`` () =
     for tex in [ "x^2"; "E = mc^2"; "\\sqrt{x}" ] do
         let inlineBox = layout tex false
         let display = layout tex true
-        Assert.True(display.above >= inlineBox.above - 1e-6, sprintf "%s：展示式的上方留白 %f 小于行内式 %f" tex display.above inlineBox.above)
-        Assert.True(display.above + display.below >= inlineBox.above + inlineBox.below - 1e-6, sprintf "%s：展示式比行内式矮" tex)
+
+        Assert.True(
+            display.above >= inlineBox.above - 1e-6,
+            sprintf "%s：展示式的上方留白 %f 小于行内式 %f" tex display.above inlineBox.above
+        )
+
+        Assert.True(
+            display.above + display.below >= inlineBox.above + inlineBox.below - 1e-6,
+            sprintf "%s：展示式比行内式矮" tex
+        )
 
 [<Fact>]
 let ``展示式与行内式的主体字形落在同一条基线上`` () =
     for tex in [ "x^2"; "E = mc^2" ] do
-        for g in mainGlyphs (layout tex false) do Assert.True(abs g.baseline < 1e-6, sprintf "%s：行内主体 %s 不在基线上" tex g.text)
-        for g in mainGlyphs (layout tex true) do Assert.True(abs g.baseline < 1e-6, sprintf "%s：展示主体 %s 不在基线上" tex g.text)
+        for g in mainGlyphs (layout tex false) do
+            Assert.True(abs g.baseline < 1e-6, sprintf "%s：行内主体 %s 不在基线上" tex g.text)
+
+        for g in mainGlyphs (layout tex true) do
+            Assert.True(abs g.baseline < 1e-6, sprintf "%s：展示主体 %s 不在基线上" tex g.text)
 
 [<Fact>]
 let ``展示式与行内式的字形内容一致`` () =
@@ -319,15 +376,19 @@ let ``未定义的宏按原文排出来`` () =
 
 [<Fact>]
 let ``长公式的宽度随项数单调增加`` () =
-    let widthOf n = layout (String.concat "+" [ for i in 1 .. n -> sprintf "a%d" i ]) false |> fun b -> b.width
+    let widthOf n =
+        layout (String.concat "+" [ for i in 1..n -> sprintf "a%d" i ]) false
+        |> fun b -> b.width
+
     let narrow = widthOf 3
     let wide = widthOf 12
     Assert.True(wide > narrow, sprintf "项数变多后宽度没有变大：%f vs %f" wide narrow)
 
 [<Fact>]
 let ``长公式的字形都落在盒宽之内`` () =
-    let tex = String.concat "+" [ for i in 1 .. 24 -> sprintf "a%d" i ]
+    let tex = String.concat "+" [ for i in 1..24 -> sprintf "a%d" i ]
     let box = layout tex false
+
     for g in glyphsOf box do
         Assert.True(g.x + g.width <= box.width + 1e-6, sprintf "字形 %s 超出了盒宽 %f" g.text box.width)
 
@@ -340,47 +401,76 @@ let ``html without a katex-html subtree is an error with a reason`` () =
 /// 每个字符宽 10、基线 8、高 10 的假量尺，记下被量过的字族
 type FixedMeter() =
     member val Families = ResizeArray<string>()
+
     interface IGlyphMeter with
         member this.Measure(text, family, _) =
             this.Families.Add family
-            { width = 10.0 * float text.Length; baseline = 8.0; height = 10.0 }
+
+            {
+                width = 10.0 * float text.Length
+                baseline = 8.0
+                height = 10.0
+            }
 
 [<Fact>]
 let ``meter failure becomes an error naming the exception`` () =
-    let broken = { new IGlyphMeter with member _.Measure(_, _, _) = invalidOp "no font" }
+    let broken =
+        { new IGlyphMeter with
+            member _.Measure(_, _, _) = invalidOp "no font"
+        }
+
     let markup = html "E = mc^2" false
+
     match MathTypesetter(broken).TryRender(14.5, markup) with
     | Error e -> Assert.Contains("InvalidOperationException: no font", e)
     | Ok _ -> failwith "should fail"
+
     Assert.True((MathTypesetter(broken).Render(14.5, markup)).IsNone)
 
 [<Fact>]
 let ``zero width-space only text produces no glyph and no measurement`` () =
     let meter = FixedMeter()
-    let markup = """<span class="katex"><span class="katex-html"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">&#8203;x</span></span></span>"""
+
+    let markup =
+        """<span class="katex"><span class="katex-html"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">&#8203;x</span></span></span>"""
+
     match MathTypesetter(meter).TryRender(10.0, markup) with
     | Ok box ->
         Assert.Equal(10.0, box.width)
-        Assert.Equal<string list>([ "x" ], box.items |> List.choose (function MathItem.Glyph(t, _, _, _, _) -> Some t | _ -> None))
+
+        Assert.Equal<string list>(
+            [ "x" ],
+            box.items
+            |> List.choose (function
+                | MathItem.Glyph(t, _, _, _, _) -> Some t
+                | _ -> None)
+        )
+
         Assert.Equal(1, meter.Families.Count)
     | Error e -> failwith e
 
 [<Fact>]
 let ``cjk fallback asks the meter for the body font`` () =
     let meter = FixedMeter()
-    let markup = """<span class="katex"><span class="katex-html"><span class="mord text"><span class="mord cjk_fallback">中</span></span></span></span>"""
+
+    let markup =
+        """<span class="katex"><span class="katex-html"><span class="mord text"><span class="mord cjk_fallback">中</span></span></span></span>"""
+
     match MathTypesetter(meter).TryRender(10.0, markup) with
     | Ok _ -> Assert.Equal<string list>([ "" ], List.ofSeq meter.Families)
     | Error e -> failwith e
 
 [<Fact>]
 let ``margins widen the box and shift the content`` () =
-    let markup = """<span class="katex"><span class="katex-html"><span class="mord" style="margin-left:1em;margin-right:0.5em;">x</span></span></span>"""
+    let markup =
+        """<span class="katex"><span class="katex-html"><span class="mord" style="margin-left:1em;margin-right:0.5em;">x</span></span></span>"""
+
     match MathTypesetter(Meter()).TryRender(10.0, markup) with
     | Ok box ->
         let size = 10.0 * MathTypesetter.KatexFontFactor
         let glyphWidth = advanceOf "x" "KaTeX_Main" size
         Assert.Equal(size * 1.5 + glyphWidth, box.width, 9)
+
         match box.items with
         | [ MathItem.Glyph(_, _, _, x, y) ] ->
             Assert.Equal(size, x, 9)
@@ -398,7 +488,14 @@ let ``katexFontFactor constant value is verified`` () =
 
 [<Fact>]
 let ``MathBox structure can hold items and baselines`` () =
-    let box = { width = 100.0; above = 20.0; below = 10.0; items = [] }
+    let box =
+        {
+            width = 100.0
+            above = 20.0
+            below = 10.0
+            items = []
+        }
+
     Assert.Equal(100.0, box.width)
     Assert.Equal(20.0, box.above)
     Assert.Equal(10.0, box.below)

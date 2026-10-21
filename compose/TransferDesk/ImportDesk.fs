@@ -16,7 +16,14 @@ open Wanxiang2.ImportSheet
 /// 导入对话（决策 313）的接线：说明 → 选文件并预览 → 确认导入。
 /// 选文件窗口在点击回调里直接打开（浏览器要求用户手势）；预览通过前什么都不发；
 /// 确认后交给 `submit`，只认最新一次提交的回执（ImportAttempt），等待有上限，超时给说明。
-type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: OverlayDesk, topLevel: unit -> TopLevel, submit: ImportPreview -> (bool -> unit) -> unit) =
+type ImportDesk
+    (
+        look: ImportSheetAppearance,
+        timing: TransferTiming,
+        overlay: OverlayDesk,
+        topLevel: unit -> TopLevel,
+        submit: ImportPreview -> (bool -> unit) -> unit
+    ) =
     let ui = Dispatcher.UIThread
     let sheet = ImportSheet(look, ConversationTransfer.privacyNote)
     let attempts = ImportAttempt()
@@ -29,18 +36,22 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
 
     let sync () =
         let chrome = ImportView.chrome preview.IsSome attempts.Busy
+
         let gate =
             match chrome.gate with
             | Wanxiang.UI.ImportGate.Hidden -> ImportGate.Hidden
             | Wanxiang.UI.ImportGate.Disabled -> ImportGate.Disabled
             | Wanxiang.UI.ImportGate.Enabled -> ImportGate.Enabled
+
         sheet.Render
-            { StatusText = currentStatus
-              Tone = currentTone
-              Details = currentDetails
-              ImportGate = gate
-              PickEnabled = chrome.pickEnabled
-              PickText = chrome.pickText }
+            {
+                StatusText = currentStatus
+                Tone = currentTone
+                Details = currentDetails
+                ImportGate = gate
+                PickEnabled = chrome.pickEnabled
+                PickText = chrome.pickText
+            }
 
     let setStatus text t =
         currentStatus <- text
@@ -52,21 +63,26 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
             match ConversationTransfer.parseImportWithin ImportLimits.maxMessages byteCount text with
             | Ok p ->
                 preview <- Some p
+
                 currentDetails <-
                     Some
-                        [ yield sprintf "文件：%s" fileName
-                          match p.exportedAt with
-                          | Some at -> yield sprintf "导出时间：%s" (at.ToLocalTime().ToString("yyyy-MM-dd HH:mm"))
-                          | None -> ()
-                          yield sprintf "导入后的标题：%s" (ConversationTransfer.importedTitle p.title)
-                          match p.lineageNote with
-                          | Some note -> yield note
-                          | None -> ()
-                          if p.hasAttachments then yield "文件里提到的附件只有名称，文件本体不在导出里，导入后无法打开。"
-                          match ImportView.skippedNote p.skipped with
-                          | Some note -> yield note
-                          | None -> ()
-                          yield "模型使用这台主机的对话默认值，导入后可以在对话顶部更换。" ]
+                        [
+                            yield sprintf "文件：%s" fileName
+                            match p.exportedAt with
+                            | Some at -> yield sprintf "导出时间：%s" (at.ToLocalTime().ToString("yyyy-MM-dd HH:mm"))
+                            | None -> ()
+                            yield sprintf "导入后的标题：%s" (ConversationTransfer.importedTitle p.title)
+                            match p.lineageNote with
+                            | Some note -> yield note
+                            | None -> ()
+                            if p.hasAttachments then
+                                yield "文件里提到的附件只有名称，文件本体不在导出里，导入后无法打开。"
+                            match ImportView.skippedNote p.skipped with
+                            | Some note -> yield note
+                            | None -> ()
+                            yield "模型使用这台主机的对话默认值，导入后可以在对话顶部更换。"
+                        ]
+
                 setStatus (ImportView.previewStatus p.title p.messages.Length) ImportTone.Text
                 sheet.FocusImport()
             | Error message ->
@@ -84,10 +100,14 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
                         FilePickerOpenOptions(
                             Title = "导入对话",
                             AllowMultiple = false,
-                            FileTypeFilter = [ FilePickerFileType("万象对话 JSON", Patterns = [| "*.json" |]) ]))
+                            FileTypeFilter = [ FilePickerFileType("万象对话 JSON", Patterns = [| "*.json" |]) ]
+                        )
+                    )
+
                 async {
                     try
                         let! picked = picking |> Async.AwaitTask
+
                         if picked.Count > 0 then
                             let file = picked[0]
                             use! stream = file.OpenReadAsync() |> Async.AwaitTask
@@ -96,16 +116,32 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
                             let limit = ConversationTransfer.maxImportBytes + 1L
                             let chunk = Array.zeroCreate<byte> 65536
                             let mutable reading = true
+
                             while reading && buffer.Length < limit do
                                 let! n = stream.ReadAsync(chunk, 0, chunk.Length) |> Async.AwaitTask
-                                if n = 0 then reading <- false else buffer.Write(chunk, 0, n)
+
+                                if n = 0 then
+                                    reading <- false
+                                else
+                                    buffer.Write(chunk, 0, n)
+
                             let bytes = buffer.ToArray()
-                            let text = if int64 bytes.Length > ConversationTransfer.maxImportBytes then "" else Encoding.UTF8.GetString bytes
+
+                            let text =
+                                if int64 bytes.Length > ConversationTransfer.maxImportBytes then
+                                    ""
+                                else
+                                    Encoding.UTF8.GetString bytes
+
                             ui.Post(fun () -> loadText file.Name (int64 bytes.Length) text)
                     with ex ->
-                        ui.Post(fun () -> if active then setStatus (ImportView.readFailed ex.Message) ImportTone.Danger)
-                } |> Async.Start
-            with ex -> setStatus (ImportView.pickerFailed ex.Message) ImportTone.Danger
+                        ui.Post(fun () ->
+                            if active then
+                                setStatus (ImportView.readFailed ex.Message) ImportTone.Danger)
+                }
+                |> Async.Start
+            with ex ->
+                setStatus (ImportView.pickerFailed ex.Message) ImportTone.Danger
 
     let confirm () =
         match preview with
@@ -114,12 +150,17 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
             | None -> ()
             | Some attempt ->
                 setStatus ImportView.importing currentTone
+
                 let finish ok (message: string) =
                     if attempts.Finish attempt then
-                        if ok then overlay.CloseDialog()
-                        elif active then setStatus (message) ImportTone.Danger
+                        if ok then
+                            overlay.CloseDialog()
+                        elif active then
+                            setStatus (message) ImportTone.Danger
                 // 旧主机不认识 conversation.import 时不会回应：等待有上限。
-                timing.After (timing.ImportResponseTimeout()) (fun () -> finish false ImportView.timedOut) |> ignore
+                timing.After (timing.ImportResponseTimeout()) (fun () -> finish false ImportView.timedOut)
+                |> ignore
+
                 submit p (fun ok -> finish ok ImportView.rejected)
         | None -> ()
 
@@ -128,7 +169,13 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
         sheet.PickClicked.Add(fun () -> pick ())
         sheet.ImportClicked.Add(fun () -> confirm ())
 
-    new(theme: ThemeManager, overlay: OverlayDesk, topLevel: unit -> TopLevel, submit: ImportPreview -> (bool -> unit) -> unit) =
+    new
+        (
+            theme: ThemeManager,
+            overlay: OverlayDesk,
+            topLevel: unit -> TopLevel,
+            submit: ImportPreview -> (bool -> unit) -> unit
+        ) =
         ImportDesk(TransferLook.importOf theme, TransferTiming.ofTheme theme, overlay, topLevel, submit)
 
     member _.IsOpen = active
@@ -146,7 +193,16 @@ type ImportDesk(look: ImportSheetAppearance, timing: TransferTiming, overlay: Ov
         currentDetails <- None
         attempts.Reset()
         setStatus (ImportView.noFile) ImportTone.Muted
-        overlay.ShowDialog(sheet.View, timing.DialogWidth(), onClosed = (fun () -> active <- false; preview <- None))
+
+        overlay.ShowDialog(
+            sheet.View,
+            timing.DialogWidth(),
+            onClosed =
+                (fun () ->
+                    active <- false
+                    preview <- None)
+        )
+
         sheet.FocusPick()
 
     /// 读到文件内容后的唯一入口（选文件窗口与测试都走这里）

@@ -46,10 +46,26 @@ module Spacing =
     let space12xl = 56.0
 
     /// ramp 全档（收敛校验用：任何间距、槽位、内边距必须 ∈ 本集合）。
-    let ramp : float list =
-        [ spaceNone; spaceXXs; spaceXs; spaceSm; spaceMd; spaceLg; spaceXl
-          space2xl; space3xl; space4xl; space5xl; space6xl; space7xl; space8xl
-          space10xl; space11xl; space12xl ]
+    let ramp: float list =
+        [
+            spaceNone
+            spaceXXs
+            spaceXs
+            spaceSm
+            spaceMd
+            spaceLg
+            spaceXl
+            space2xl
+            space3xl
+            space4xl
+            space5xl
+            space6xl
+            space7xl
+            space8xl
+            space10xl
+            space11xl
+            space12xl
+        ]
 
     /// 槽位宽度档。槽位是**布局列宽**不是间距，但对不齐的根因正是它们各自
     /// 发明的 18 / 19 / 54 / 56 / 110，故与 ramp 同源收进阶梯。
@@ -66,7 +82,7 @@ module Spacing =
         let wide2 = 112.0
 
         /// 槽位档全表（收敛校验用）。
-        let all : float list = [ icon; wide; wide2 ]
+        let all: float list = [ icon; wide; wide2 ]
 
     /// 圆角（Fluent 2 corner radius）。控件默认 8，卡片 12，浮层 16。
     module Radius =
@@ -81,7 +97,7 @@ module Spacing =
         let xl = 16.0
         let pill = 999.0
 
-        let all : float list = [ xs; sm; md; lg; xl; pill ]
+        let all: float list = [ xs; sm; md; lg; xl; pill ]
 
     /// 描边宽度：全应用只有四档。
     module Stroke =
@@ -93,7 +109,7 @@ module Spacing =
         /// 3px：Markdown 引用块左缘（印刷重量，有意更宽一档）
         let quote = 3.0
 
-        let all : float list = [ thin; thick; quote ]
+        let all: float list = [ thin; thick; quote ]
 
     /// 字距档：层级靠字号与颜色，字距只做微调。
     module Tracking =
@@ -107,7 +123,7 @@ module Spacing =
         /// 页面级测量标签（最宽）
         let display = 0.8
 
-        let all : float list = [ label; emphasis; section; display ]
+        let all: float list = [ label; emphasis; section; display ]
 
     /// 图标尺寸档：字形与命中区分离，落地经 Ui.setSquareTarget 只调命中区。
     module Glyph =
@@ -119,7 +135,7 @@ module Spacing =
         /// 空态锚点、功能入口、侧栏品牌区
         let lg = 20.0
 
-        let all : float list = [ sm; md; lg ]
+        let all: float list = [ sm; md; lg ]
 
     /// 命中区下限（与字形分离）。依据见 `wanxiang-ui` skill §1.3。
     module Hit =
@@ -131,7 +147,7 @@ module Spacing =
         /// compact / 触控动作（Fluent 2 移动触控下限）
         let touch = 44.0
 
-        let all : float list = [ inlineTarget; regular; touch ]
+        let all: float list = [ inlineTarget; regular; touch ]
 
     /// 是否落在官方 ramp 上。收敛测试对所有间距 / 槽位断言本函数为真。
     let isRamp (value: float) = List.contains value ramp
@@ -145,5 +161,4 @@ module Spacing =
     let isHit (value: float) = List.contains value Hit.all
 
     /// 间距 / 槽位 / 圆角 / 描边的并集（几何扫描用）。
-    let geometry : float list =
-        ramp @ Slot.all @ Radius.all @ Stroke.all
+    let geometry: float list = ramp @ Slot.all @ Radius.all @ Stroke.all

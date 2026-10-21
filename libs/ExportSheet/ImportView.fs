@@ -7,7 +7,12 @@ type ImportGate =
     | Enabled
 
 /// 导入对话框按键的呈现
-type ImportChrome = { gate: ImportGate; pickEnabled: bool; pickText: string }
+type ImportChrome =
+    {
+        gate: ImportGate
+        pickEnabled: bool
+        pickText: string
+    }
 
 /// 旧 Views/ImportDialog.fs 的按键门控、提交尝试与文案。预览解析、文件读取仍归 ImportDialog
 module ImportView =
@@ -17,9 +22,12 @@ module ImportView =
             if not hasPreview then ImportGate.Hidden
             elif busy then ImportGate.Disabled
             else ImportGate.Enabled
-        { gate = gate
-          pickEnabled = not busy
-          pickText = (if hasPreview then "换一个文件…" else "选择 JSON 文件…") }
+
+        {
+            gate = gate
+            pickEnabled = not busy
+            pickText = (if hasPreview then "换一个文件…" else "选择 JSON 文件…")
+        }
 
     let noFile = "还没有选择文件。"
     let importing = "正在导入…"
@@ -28,7 +36,12 @@ module ImportView =
     let readFailed (message: string) = "读取文件失败：" + message
     let pickerFailed (message: string) = "无法打开文件选择窗口：" + message
     let previewStatus (title: string) (count: int) = sprintf "「%s」· %d 条消息" title count
-    let skippedNote (skipped: int) = if skipped > 0 then Some(sprintf "有 %d 条无法识别的记录会被跳过。" skipped) else None
+
+    let skippedNote (skipped: int) =
+        if skipped > 0 then
+            Some(sprintf "有 %d 条无法识别的记录会被跳过。" skipped)
+        else
+            None
 
 /// 一次导入提交只认最新的那次回执（旧 busy + currentAttempt）
 type ImportAttempt() =
@@ -39,7 +52,8 @@ type ImportAttempt() =
 
     /// 开始一次提交；已在忙返回 None
     member _.Begin() =
-        if busy then None
+        if busy then
+            None
         else
             busy <- true
             current <- current + 1
@@ -50,7 +64,8 @@ type ImportAttempt() =
         if busy && current = attempt then
             busy <- false
             true
-        else false
+        else
+            false
 
     /// 重新打开对话框
     member _.Reset() = busy <- false

@@ -8,9 +8,11 @@ open Avalonia.VisualTree
 
 /// 导航状态里布局要的三项（组合者从 NavigationState 的快照取）。
 type ShellState =
-    { Compact: bool
-      DrawerOpen: bool
-      SidebarCollapsed: bool }
+    {
+        Compact: bool
+        DrawerOpen: bool
+        SidebarCollapsed: bool
+    }
 
 /// 同一个输入控件贯穿起步和对话（迁自旧 Views/MainLayout.fs 的 ConversationWorkspace）。
 /// 起步且够高时输入区居中（末行取星号），否则贴底；每次重算都发 `StartModeChanged`，组合者转给对话视图。
@@ -38,7 +40,10 @@ type WorkspaceStack(chat: Control, composer: Control, startMinHeight: float) as 
         grid.Children.Add chat
         grid.Children.Add composer
         this.Children.Add grid
-        this.PropertyChanged.Add(fun e -> if e.Property = Visual.BoundsProperty then apply ())
+
+        this.PropertyChanged.Add(fun e ->
+            if e.Property = Visual.BoundsProperty then
+                apply ())
 
     new(chat: Control, composer: Control) = WorkspaceStack(chat, composer, 560.0)
 
@@ -50,11 +55,21 @@ type WorkspaceStack(chat: Control, composer: Control, startMinHeight: float) as 
     member _.IsStarting = starting
 
     /// 是否居中（每次重算都发）
-    [<CLIEvent>] member _.StartModeChanged = startMode.Publish
+    [<CLIEvent>]
+    member _.StartModeChanged = startMode.Publish
 
 /// 主工作区的空间投影（迁自旧 MainLayoutController）：导航状态 → 三列宽度、各块所在列、抽屉 ZIndex 与遮罩。
 /// 列宽写操作只出自这里。紧凑模式每次 Apply 都发 `CompactApplied`，组合者转给输入区、侧栏、对话视图。
-type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColumn: Control, sidebarMaxWidth: float, splitterWidth: float, sidebarWidth: unit -> float) =
+type ShellColumns
+    (
+        shellGrid: Grid,
+        sidebar: Control,
+        splitter: Control,
+        chatColumn: Control,
+        sidebarMaxWidth: float,
+        splitterWidth: float,
+        sidebarWidth: unit -> float
+    ) =
     let compactApplied = Event<bool>()
     let scrimPressed = Event<unit>()
     let focusHome = Event<unit>()
@@ -69,6 +84,7 @@ type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColu
     let apply (state: ShellState) =
         compactApplied.Trigger state.Compact
         let cols = shellGrid.ColumnDefinitions
+
         if state.Compact then
             cols[0].MinWidth <- 0.0
             cols[0].Width <- GridLength.Star
@@ -84,8 +100,19 @@ type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColu
             scrim.Opacity <- if state.DrawerOpen then 1.0 else 0.0
         else
             cols[0].MinWidth <- if state.SidebarCollapsed then 0.0 else minWidth
-            cols[0].Width <- if state.SidebarCollapsed then GridLength 0.0 else GridLength(sidebarWidth ())
-            cols[1].Width <- if state.SidebarCollapsed then GridLength 0.0 else GridLength splitterW
+
+            cols[0].Width <-
+                if state.SidebarCollapsed then
+                    GridLength 0.0
+                else
+                    GridLength(sidebarWidth ())
+
+            cols[1].Width <-
+                if state.SidebarCollapsed then
+                    GridLength 0.0
+                else
+                    GridLength splitterW
+
             cols[2].Width <- GridLength.Star
             Grid.SetColumn(sidebar, 0)
             Grid.SetColumn(splitter, 1)
@@ -101,21 +128,32 @@ type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColu
                         match manager.GetFocusedElement() with
                         | :? Control as focused -> (sidebar :> Visual).IsVisualAncestorOf focused
                         | _ -> false
+
             sidebar.IsVisible <- not state.SidebarCollapsed
             splitter.IsVisible <- not state.SidebarCollapsed
             sidebar.ZIndex <- 0
-            if state.SidebarCollapsed && focusWasInSidebar then focusHome.Trigger()
+
+            if state.SidebarCollapsed && focusWasInSidebar then
+                focusHome.Trigger()
+
             scrim.IsVisible <- false
             scrim.Opacity <- 0.0
 
     do
         scrim.Classes.Add "scrim"
-        let fade = Avalonia.Animation.DoubleTransition(Property = Visual.OpacityProperty, Duration = TimeSpan.FromMilliseconds 150.0)
+
+        let fade =
+            Avalonia.Animation.DoubleTransition(
+                Property = Visual.OpacityProperty,
+                Duration = TimeSpan.FromMilliseconds 150.0
+            )
+
         let ts = Avalonia.Animation.Transitions()
         ts.Add fade
         scrim.Transitions <- ts
         Grid.SetColumn(scrim, 0)
         shellGrid.Children.Add scrim
+
         scrim.PointerPressed.Add(fun e ->
             e.Handled <- true
             scrimPressed.Trigger())
@@ -134,9 +172,13 @@ type ShellColumns(shellGrid: Grid, sidebar: Control, splitter: Control, chatColu
         width
 
     /// 每次 Apply 都发，参数为是否紧凑
-    [<CLIEvent>] member _.CompactApplied = compactApplied.Publish
-    /// 点了抽屉遮罩（组合者收起 compact 抽屉）
-    [<CLIEvent>] member _.ScrimPressed = scrimPressed.Publish
-    /// 折叠时焦点原在侧栏：组合者把焦点交给输入区
-    [<CLIEvent>] member _.FocusHomeRequested = focusHome.Publish
+    [<CLIEvent>]
+    member _.CompactApplied = compactApplied.Publish
 
+    /// 点了抽屉遮罩（组合者收起 compact 抽屉）
+    [<CLIEvent>]
+    member _.ScrimPressed = scrimPressed.Publish
+
+    /// 折叠时焦点原在侧栏：组合者把焦点交给输入区
+    [<CLIEvent>]
+    member _.FocusHomeRequested = focusHome.Publish

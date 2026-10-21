@@ -16,24 +16,32 @@ module Doctor =
     let private writeConfig (dir: string) : string =
         let path = Path.Combine(dir, "config.toml")
         let cfg = AppConfig.defaults (Guid.NewGuid())
+
         let withKey =
             { cfg with
                 providers =
                     Map.ofList
-                        [ "openai",
-                          { id = "openai"
-                            kind = "openai"
-                            label = "OpenAI"
-                            baseUrl = "https://api.openai.com/v1"
-                            apiKey = Some "sk-secret-key-123456789"
-                            models = [ "gpt-4o" ]
-                            defaultModel = "gpt-4o"
-                            timeoutSeconds = 120
-                            maxRetries = 0
-                            promptCaching = false
-                            enabled = true
-                            headers = Map.empty
-                            extraJson = None; visionOverrides = Map.empty } ] }
+                        [
+                            "openai",
+                            {
+                                id = "openai"
+                                kind = "openai"
+                                label = "OpenAI"
+                                baseUrl = "https://api.openai.com/v1"
+                                apiKey = Some "sk-secret-key-123456789"
+                                models = [ "gpt-4o" ]
+                                defaultModel = "gpt-4o"
+                                timeoutSeconds = 120
+                                maxRetries = 0
+                                promptCaching = false
+                                enabled = true
+                                headers = Map.empty
+                                extraJson = None
+                                visionOverrides = Map.empty
+                            }
+                        ]
+            }
+
         File.WriteAllText(path, Wanxiang.Config.TomlCodec.serialize withKey)
         path
 
@@ -43,11 +51,28 @@ module Doctor =
     [<Fact>]
     let ``健康数据目录：全部检查通过`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath = writeConfig dir
             let d = Wanxiang.Server.Doctor.run (configPath, dir)
-            for name in [ "config"; "format-version"; "data-lock"; "data-permissions"; "disk-free-space"; "snapshot"; "recovery-bundle"; "log-replay"; "missing-attachments"; "orphan-attachments"; "provider-config"; "mcp-config"; "listen-port" ] do
+
+            for name in
+                [
+                    "config"
+                    "format-version"
+                    "data-lock"
+                    "data-permissions"
+                    "disk-free-space"
+                    "snapshot"
+                    "recovery-bundle"
+                    "log-replay"
+                    "missing-attachments"
+                    "orphan-attachments"
+                    "provider-config"
+                    "mcp-config"
+                    "listen-port"
+                ] do
                 let c = check d name
                 Assert.True(c.ok, sprintf "%s: %s" name c.detail)
         finally
@@ -56,6 +81,7 @@ module Doctor =
     [<Fact>]
     let ``format-version 检查报告当前权威版本`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath = writeConfig dir
@@ -69,28 +95,37 @@ module Doctor =
     [<Fact>]
     let ``provider-config 检查发现启用但无 apiKey`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let path = Path.Combine(dir, "config.toml")
             let cfg = AppConfig.defaults (Guid.NewGuid())
+
             let bad =
                 { cfg with
                     providers =
                         Map.ofList
-                            [ "openai",
-                              { id = "openai"
-                                kind = "openai"
-                                label = "OpenAI"
-                                baseUrl = "https://api.openai.com/v1"
-                                apiKey = None
-                                models = [ "gpt-4o" ]
-                                defaultModel = "gpt-4o"
-                                timeoutSeconds = 120
-                                maxRetries = 0
-                                promptCaching = false
-                                enabled = true
-                                headers = Map.empty
-                                extraJson = None; visionOverrides = Map.empty } ] }
+                            [
+                                "openai",
+                                {
+                                    id = "openai"
+                                    kind = "openai"
+                                    label = "OpenAI"
+                                    baseUrl = "https://api.openai.com/v1"
+                                    apiKey = None
+                                    models = [ "gpt-4o" ]
+                                    defaultModel = "gpt-4o"
+                                    timeoutSeconds = 120
+                                    maxRetries = 0
+                                    promptCaching = false
+                                    enabled = true
+                                    headers = Map.empty
+                                    extraJson = None
+                                    visionOverrides = Map.empty
+                                }
+                            ]
+                }
+
             File.WriteAllText(path, Wanxiang.Config.TomlCodec.serialize bad)
             let d = Wanxiang.Server.Doctor.run (path, dir)
             let c = check d "provider-config"
@@ -102,24 +137,32 @@ module Doctor =
     [<Fact>]
     let ``mcp-config 检查发现启用的 command 文件不存在`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let path = Path.Combine(dir, "config.toml")
             let cfg = AppConfig.defaults (Guid.NewGuid())
+
             let bad =
                 { cfg with
                     mcpServers =
                         Map.ofList
-                            [ "fs",
-                              { id = "fs"
-                                label = "FS"
-                                command = Some "/nonexistent/mcp-server"
-                                args = []
-                                env = Map.empty
-                                url = None
-                                maxConcurrency = Some 4
-                                callTimeoutSeconds = 20
-                                enabled = true } ] }
+                            [
+                                "fs",
+                                {
+                                    id = "fs"
+                                    label = "FS"
+                                    command = Some "/nonexistent/mcp-server"
+                                    args = []
+                                    env = Map.empty
+                                    url = None
+                                    maxConcurrency = Some 4
+                                    callTimeoutSeconds = 20
+                                    enabled = true
+                                }
+                            ]
+                }
+
             File.WriteAllText(path, Wanxiang.Config.TomlCodec.serialize bad)
             let d = Wanxiang.Server.Doctor.run (path, dir)
             let c = check d "mcp-config"
@@ -131,13 +174,19 @@ module Doctor =
     [<Fact>]
     let ``orphan-attachments 检查发现未被引用的 blob`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath = writeConfig dir
             // 制造一个孤儿 blob（无任何消息引用）
             let orphanDir = Path.Combine(DataPaths.attachmentsDir dir, "ab", "cd")
             Directory.CreateDirectory orphanDir |> ignore
-            File.WriteAllText(Path.Combine(orphanDir, "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"), "orphan-content")
+
+            File.WriteAllText(
+                Path.Combine(orphanDir, "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"),
+                "orphan-content"
+            )
+
             let d = Wanxiang.Server.Doctor.run (configPath, dir)
             let c = check d "orphan-attachments"
             Assert.False(c.ok)
@@ -148,6 +197,7 @@ module Doctor =
     [<Fact>]
     let ``recovery-bundle 检查识别证据包存在`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath = writeConfig dir
@@ -170,12 +220,26 @@ module Doctor =
     [<Fact>]
     let ``损坏日志：log-replay FAIL 且附件检查跳过`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath = writeConfig dir
             let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
             let convId = newConversationId ()
-            let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
+
+            let c1 =
+                Events.Commit.create
+                    1UL
+                    (DateTimeOffset(day))
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "A"
+                                config = testConfig ()
+                            }
+                    ]
+
             let p = DataPaths.logFile dir
             Directory.CreateDirectory(Path.GetDirectoryName p) |> ignore
             File.WriteAllBytes(p, Wanxiang.Store.Assembly.frame (c1))
@@ -190,12 +254,26 @@ module Doctor =
     [<Fact>]
     let ``doctor 检查绝不修改任何文件`` () =
         let dir = tempDir ()
+
         try
             DataPaths.ensureDataDirs dir
             let configPath = writeConfig dir
             let day = DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc)
             let convId = newConversationId ()
-            let c1 = Events.Commit.create 1UL (DateTimeOffset(day)) [ ConversationCreated { conversationId = convId; title = "A"; config = testConfig () } ]
+
+            let c1 =
+                Events.Commit.create
+                    1UL
+                    (DateTimeOffset(day))
+                    [
+                        ConversationCreated
+                            {
+                                conversationId = convId
+                                title = "A"
+                                config = testConfig ()
+                            }
+                    ]
+
             let p = DataPaths.logFile dir
             Directory.CreateDirectory(Path.GetDirectoryName p) |> ignore
             File.WriteAllBytes(p, Wanxiang.Store.Assembly.frame (c1))
@@ -205,6 +283,7 @@ module Doctor =
                 Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
                 |> Array.filter (fun f -> not (Path.GetFileName(f).StartsWith ".lock"))
                 |> Array.map (fun f -> f, File.ReadAllBytes f)
+
             let before = snapshotFiles ()
             Wanxiang.Server.Doctor.run (configPath, dir) |> ignore
             let after = snapshotFiles ()

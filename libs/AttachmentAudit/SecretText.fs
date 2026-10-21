@@ -10,8 +10,11 @@ module SecretText =
     /// 按给定顺序把每个出现的凭据值替换为 `***`；空白值跳过。
     let replaceKnown (secrets: string seq) (text: string) : string =
         let mutable s = text
+
         for secret in secrets do
-            if not (String.IsNullOrWhiteSpace secret) && s.Contains secret then s <- s.Replace(secret, "***")
+            if not (String.IsNullOrWhiteSpace secret) && s.Contains secret then
+                s <- s.Replace(secret, "***")
+
         s
 
     /// 行首（去缩进后）以任一前缀开头且含 `=` 的行，`=` 之后整体换成 ` "***"`。
@@ -19,9 +22,14 @@ module SecretText =
         text.Split('\n')
         |> Array.map (fun line ->
             let t = line.TrimStart()
+
             if prefixes |> List.exists (fun p -> t.StartsWith p) then
                 let idx = line.IndexOf '='
-                if idx >= 0 then line.Substring(0, idx + 1) + " \"***\""
-                else line
-            else line)
+
+                if idx >= 0 then
+                    line.Substring(0, idx + 1) + " \"***\""
+                else
+                    line
+            else
+                line)
         |> String.concat "\n"

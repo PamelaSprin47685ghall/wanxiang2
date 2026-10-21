@@ -25,45 +25,126 @@ let private rig (collapsed: bool) =
     styles.Install Application.Current.Styles
     let root = Grid()
     let overlay = OverlayDesk(root, Desk.look ())
-    let logo (s: float) = Border(Width = s, Height = s) :> Control
+
+    let logo (s: float) =
+        Border(Width = s, Height = s) :> Control
+
     let host =
-        { Tint = CodeTint { HighlightHtml = (fun _ -> None); Background = (fun f -> f ()); After = (fun _ f -> f ()); Synchronous = true }
-          MathHtml = (fun _ -> None)
-          Wrap = Wanxiang2.MarkdownView.CodeWrapMemory false
-          Clock = CaretClock()
-          Touch = CardTouch()
-          Now = fun () -> DateTimeOffset.UnixEpoch }
+        {
+            Tint =
+                CodeTint
+                    {
+                        HighlightHtml = (fun _ -> None)
+                        Background = (fun f -> f ())
+                        After = (fun _ f -> f ())
+                        Synchronous = true
+                    }
+            MathHtml = (fun _ -> None)
+            Wrap = Wanxiang2.MarkdownView.CodeWrapMemory false
+            Clock = CaretClock()
+            Touch = CardTouch()
+            Now = fun () -> DateTimeOffset.UnixEpoch
+        }
+
     let composer =
         ComposerDesk(
-            { Submit = (fun _ -> true); TextChanged = (fun _ -> ()); CaretChanged = (fun _ -> ()); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
-              OpenModelPicker = ignore; DropFiles = ignore; PasteFromClipboard = (fun () -> false); OpenSessionSettings = ignore })
+            {
+                Submit = (fun _ -> true)
+                TextChanged = (fun _ -> ())
+                CaretChanged = (fun _ -> ())
+                StopGeneration = ignore
+                PickAttachment = ignore
+                RemoveAttachment = ignore
+                OpenModelPicker = ignore
+                DropFiles = ignore
+                PasteFromClipboard = (fun () -> false)
+                OpenSessionSettings = ignore
+            }
+        )
+
     let ws: Workspace option ref = ref None
+
     let chat =
         ChatScreen(
             ChatScreenMetrics.ofTheme theme styles,
             MessageCards(CardLooks.ofTheme theme styles, host),
-            composer, ApprovalDesk(theme, overlay, ignore), overlay, logo,
-            { Card =
-                { CopyText = ignore; Regenerate = ignore; EditAndFork = ignore; DeleteMessage = ignore
-                  DownloadAttachment = ignore; OpenLink = ignore; CopyLink = None; Recover = None }
-              RenameTitle = ignore; ToggleSidebar = (fun () -> ws.Value |> Option.iter (fun w -> w.ToggleSidebar() |> ignore))
-              OpenSessionSettings = ignore; ForkFromHere = ignore; ExportConversation = ignore; StopGeneration = ignore
-              RequestOlderHistory = ignore; FocusHome = ignore; OpenParent = ignore; SiblingSelected = ignore
-              After = fun _ _ -> { new IDisposable with member _.Dispose() = () } })
+            composer,
+            ApprovalDesk(theme, overlay, ignore),
+            overlay,
+            logo,
+            {
+                Card =
+                    {
+                        CopyText = ignore
+                        Regenerate = ignore
+                        EditAndFork = ignore
+                        DeleteMessage = ignore
+                        DownloadAttachment = ignore
+                        OpenLink = ignore
+                        CopyLink = None
+                        Recover = None
+                    }
+                RenameTitle = ignore
+                ToggleSidebar = (fun () -> ws.Value |> Option.iter (fun w -> w.ToggleSidebar() |> ignore))
+                OpenSessionSettings = ignore
+                ForkFromHere = ignore
+                ExportConversation = ignore
+                StopGeneration = ignore
+                RequestOlderHistory = ignore
+                FocusHome = ignore
+                OpenParent = ignore
+                SiblingSelected = ignore
+                After =
+                    fun _ _ ->
+                        { new IDisposable with
+                            member _.Dispose() = ()
+                        }
+            }
+        )
+
     let sidebar =
         SidebarDesk(
-            theme, overlay,
-            { newConversation = ignore; openConversation = ignore; renameConversation = ignore; deleteConversation = ignore
-              setPinned = (fun _ _ -> ()); setArchived = (fun _ _ -> ()); selectionAllPinned = (fun _ -> false)
-              setPinnedMany = (fun _ _ -> ()); setArchivedMany = (fun _ _ -> ()); deleteMany = ignore
-              duplicateAsFork = ignore; exportConversation = ignore; openSettings = ignore; reconnect = ignore
-              toggleArchivedVisibility = ignore; closeNavigation = ignore
-              enterSelection = ignore; toggleSelected = ignore; exitSelection = ignore
-              toggleSelectAllVisible = ignore },
-            logo)
+            theme,
+            overlay,
+            {
+                newConversation = ignore
+                openConversation = ignore
+                renameConversation = ignore
+                deleteConversation = ignore
+                setPinned = (fun _ _ -> ())
+                setArchived = (fun _ _ -> ())
+                selectionAllPinned = (fun _ -> false)
+                setPinnedMany = (fun _ _ -> ())
+                setArchivedMany = (fun _ _ -> ())
+                deleteMany = ignore
+                duplicateAsFork = ignore
+                exportConversation = ignore
+                openSettings = ignore
+                reconnect = ignore
+                toggleArchivedVisibility = ignore
+                closeNavigation = ignore
+                enterSelection = ignore
+                toggleSelected = ignore
+                exitSelection = ignore
+                toggleSelectAllVisible = ignore
+            },
+            logo
+        )
+
     let workspace =
-        Workspace(theme, root, sidebar, chat, composer,
-                  { PrefersTouch = (fun () -> true); SidebarWidth = (fun () -> 280.0); InitialSidebarCollapsed = collapsed })
+        Workspace(
+            theme,
+            root,
+            sidebar,
+            chat,
+            composer,
+            {
+                PrefersTouch = (fun () -> true)
+                SidebarWidth = (fun () -> 280.0)
+                InitialSidebarCollapsed = collapsed
+            }
+        )
+
     ws.Value <- Some workspace
     let w = Desk.show root 1200.0 800.0
     workspace, chat, sidebar, w
@@ -93,10 +174,14 @@ let ``宽窗是桌面布局；浏览器喂窄视口后进紧凑模式，顶栏�
 let ``顶栏侧栏按钮经宿主切换：桌面折叠侧栏，紧凑模式开合抽屉`` () =
     Headless.run (fun () ->
         let ws, chat, _, w = rig false
+
         let press () =
             ((Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement chat.Header.SidebarButton :> obj)
-             :?> Avalonia.Automation.Provider.IInvokeProvider).Invoke()
+            :?> Avalonia.Automation.Provider.IInvokeProvider)
+                .Invoke()
+
             Dispatcher.UIThread.RunJobs()
+
         press ()
         Assert.True ws.State.sidebarCollapsed
         Assert.False ws.Splitter.IsVisible
@@ -111,21 +196,27 @@ let ``顶栏侧栏按钮经宿主切换：桌面折叠侧栏，紧凑模式开�
 let ``Workspace.Render(ShellVS) 单入口幂等应用布局与抽屉状态`` () =
     Headless.run (fun () ->
         let ws, _, _, w = rig false
-        let shellVS: Wanxiang2.WorkspaceState.ShellVS = {
-            Compact = false
-            SidebarOpen = true
-            SidebarWidth = 280.0
-            StartingPageVisible = true
-        }
+
+        let shellVS: Wanxiang2.WorkspaceState.ShellVS =
+            {
+                Compact = false
+                SidebarOpen = true
+                SidebarWidth = 280.0
+                StartingPageVisible = true
+            }
+
         ws.Render shellVS
         Dispatcher.UIThread.RunJobs()
         Assert.False ws.State.sidebarCollapsed
-        let compactVS: Wanxiang2.WorkspaceState.ShellVS = {
-            Compact = true
-            SidebarOpen = true
-            SidebarWidth = 280.0
-            StartingPageVisible = false
-        }
+
+        let compactVS: Wanxiang2.WorkspaceState.ShellVS =
+            {
+                Compact = true
+                SidebarOpen = true
+                SidebarWidth = 280.0
+                StartingPageVisible = false
+            }
+
         ws.ObserveViewport 480.0
         ws.Render compactVS
         Dispatcher.UIThread.RunJobs()

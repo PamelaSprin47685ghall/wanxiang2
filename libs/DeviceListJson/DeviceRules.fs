@@ -14,8 +14,15 @@ type DeviceChange =
 module DeviceRules =
 
     /// 检查一次改动是否允许；Error 带给用户看的原文（与旧实现一致）。
-    let check (isReservedName: string -> bool) (targetName: string) (targetIsCurrent: bool) (targetRevoked: bool) (change: DeviceChange) : Result<unit, string> =
+    let check
+        (isReservedName: string -> bool)
+        (targetName: string)
+        (targetIsCurrent: bool)
+        (targetRevoked: bool)
+        (change: DeviceChange)
+        : Result<unit, string> =
         let isDesktop = isReservedName targetName
+
         match change with
         | DeviceChange.Rename name when String.IsNullOrWhiteSpace name -> Error "设备名称不能为空"
         | DeviceChange.Rename name when name.Trim().Length > 64 -> Error "设备名称最多 64 个字符"

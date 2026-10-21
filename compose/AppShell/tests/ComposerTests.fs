@@ -97,22 +97,27 @@ let ``旅程 1：首次配对到就绪`` () =
 
         // 主机要求配对
         rig.Shell.Dispatch(WireRecv(PairingStarted {| expiresInSeconds = 300 |}))
+
         match rig.Shell.Model.Conn with
         | ConnPhase.Pairing _ -> ()
         | other -> Assert.Fail(sprintf "未进入配对状态: %A" other)
 
         // 配对成功
         rig.Shell.Dispatch(WireRecv(PairingSucceeded {| token = "tok-1" |}))
-        Assert.Contains(rig.Fake.RecordedEffects, fun e ->
-            match e with
-            | Effect.SendWire(WireEvent.AuthPresent d) -> d.token = "tok-1"
-            | _ -> false)
+
+        Assert.Contains(
+            rig.Fake.RecordedEffects,
+            fun e ->
+                match e with
+                | Effect.SendWire(WireEvent.AuthPresent d) -> d.token = "tok-1"
+                | _ -> false
+        )
 
         // 认证接受
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
+
         match rig.Shell.Model.Conn with
-        | ConnPhase.Authed(inst, CatalogPhase.LoadingCatalog) ->
-            Assert.Equal("inst-test", inst)
+        | ConnPhase.Authed(inst, CatalogPhase.LoadingCatalog) -> Assert.Equal("inst-test", inst)
         | other -> Assert.Fail(sprintf "认证后状态不对: %A" other))
 
 [<Fact>]
@@ -120,8 +125,18 @@ let ``旅程 2：引导流程配置模型`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
-        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray(); tools = JsonArray(); generation = JsonObject() |}))
-        
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray()
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
+
         let vs = Workspace.project rig.Shell.Model
         // 空目录时无需停止按钮（负向）。
         match vs.Composer.Send.State with
@@ -151,12 +166,27 @@ let ``旅程 3：发送含附件消息`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
-        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
-        
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray([| JsonObject() :> JsonNode |])
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
+
         // 附加文件：挂上后**还没就绪**（主机还没确认落盘），
         // 所以此刻发送会被门控挡住——草稿与附件都留着。
         let attachmentId = Guid.NewGuid()
-        rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Attach(attachmentId, "pic.png", "image/png", 1024L, "sha256")))) |> ignore
+
+        rig.Shell.Dispatch(
+            User(Composer(ComposerUserMsg.Attach(attachmentId, "pic.png", "image/png", 1024L, "sha256")))
+        )
+        |> ignore
+
         rig.Shell.Dispatch(User(Composer(ComposerUserMsg.TextChanged "你好")))
 
         let vs = Workspace.project rig.Shell.Model
@@ -171,7 +201,17 @@ let ``旅程 3：发送含附件消息`` () =
         Assert.Empty rig.Fake.Commands
 
         // 主机确认落盘（`attachment.committed`）→ 附件就绪
-        rig.Shell.Dispatch(WireRecv(WireEvent.AttachmentCommitted {| attachmentId = attachmentId; sha256 = "sha256"; size = 1024L |}))
+        rig.Shell.Dispatch(
+            WireRecv(
+                WireEvent.AttachmentCommitted
+                    {|
+                        attachmentId = attachmentId
+                        sha256 = "sha256"
+                        size = 1024L
+                    |}
+            )
+        )
+
         let vsReady = Workspace.project rig.Shell.Model
         Assert.True((vsReady.Composer.Tray |> List.head).Ready)
 
@@ -187,6 +227,7 @@ let ``旅程 3：发送含附件消息`` () =
             |> List.tryPick (function
                 | WireEvent.Command(ClientCommand.SendUserMessage d) -> Some d.messageJson
                 | _ -> None)
+
         Assert.True(sent.IsSome)
         let contents = sent.Value.["contents"].AsArray()
         Assert.Equal(2, contents.Count)
@@ -201,58 +242,96 @@ let ``旅程 4：流式增量与工具审批响应`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
-        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray([| JsonObject() :> JsonNode |])
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
+
         let convId = Guid.NewGuid()
         let genId = Guid.NewGuid()
-        rig.Shell.Dispatch(WireRecv(ConversationSnapshot {|
-            conversationId = convId
-            title = "对话"
-            lastCommitId = 0UL
-            runtimeState = "idle"
-            generationId = None
-            messages = JsonArray()
-            snapshotEarliestCommitId = 0UL
-            snapshotHasMore = false
-            config = SessionConfig.empty
-        |}))
-        rig.Shell.Dispatch(WireRecv(GenerationStarted {|
-            conversationId = convId
-            generationId = genId
-            providerId = "p1"
-            model = "m1"
-        |}))
-        
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                ConversationSnapshot
+                    {|
+                        conversationId = convId
+                        title = "对话"
+                        lastCommitId = 0UL
+                        runtimeState = "idle"
+                        generationId = None
+                        messages = JsonArray()
+                        snapshotEarliestCommitId = 0UL
+                        snapshotHasMore = false
+                        config = SessionConfig.empty
+                    |}
+            )
+        )
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                GenerationStarted
+                    {|
+                        conversationId = convId
+                        generationId = genId
+                        providerId = "p1"
+                        model = "m1"
+                    |}
+            )
+        )
+
         // 正在生成：不可为 Idle 且 Send.State 必须是 GeneratingStop
         let vsGen = Workspace.project rig.Shell.Model
+
         match vsGen.Composer.Send.State with
         | SendButtonState.GeneratingStop -> ()
         | _ -> Assert.Fail "生成中应当展示停止按钮"
 
         // 工具审批到达
         let approvalId = Guid.NewGuid()
-        rig.Shell.Dispatch(WireRecv(ToolApprovalRequested {|
-            approvalId = approvalId
-            conversationId = convId
-            generationId = genId
-            callId = "call-1"
-            toolName = "read_file"
-            summary = "读取系统文件"
-            arguments = JsonObject() :> JsonNode
-            policy = "manual"
-            expiresInSeconds = 60
-        |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                ToolApprovalRequested
+                    {|
+                        approvalId = approvalId
+                        conversationId = convId
+                        generationId = genId
+                        callId = "call-1"
+                        toolName = "read_file"
+                        summary = "读取系统文件"
+                        arguments = JsonObject() :> JsonNode
+                        policy = "manual"
+                        expiresInSeconds = 60
+                    |}
+            )
+        )
+
         let vsApproval = Workspace.project rig.Shell.Model
         Assert.Contains(vsApproval.Approval.Items, fun a -> a.ApprovalId = approvalId)
 
         // 响应审批
         rig.Shell.Dispatch(User(Chat(ChatUserMsg.ApprovalRespond(approvalId, true))))
-        rig.Shell.Dispatch(WireRecv(ToolApprovalResolved {|
-            approvalId = approvalId
-            conversationId = convId
-            status = "approved"
-            reason = ""
-            alreadyHandled = false
-        |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                ToolApprovalResolved
+                    {|
+                        approvalId = approvalId
+                        conversationId = convId
+                        status = "approved"
+                        reason = ""
+                        alreadyHandled = false
+                    |}
+            )
+        )
+
         let vsResolved = Workspace.project rig.Shell.Model
         Assert.DoesNotContain(vsResolved.Approval.Items, fun a -> a.ApprovalId = approvalId))
 
@@ -261,45 +340,86 @@ let ``旅程 5：中途停止与失败重试`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
-        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray([| JsonObject() :> JsonNode |])
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
+
         let convId = Guid.NewGuid()
         let genId = Guid.NewGuid()
-        rig.Shell.Dispatch(WireRecv(ConversationSnapshot {|
-            conversationId = convId
-            title = "对话"
-            lastCommitId = 0UL
-            runtimeState = "idle"
-            generationId = None
-            messages = JsonArray()
-            snapshotEarliestCommitId = 0UL
-            snapshotHasMore = false
-            config = SessionConfig.empty
-        |}))
-        rig.Shell.Dispatch(WireRecv(GenerationStarted {|
-            conversationId = convId
-            generationId = genId
-            providerId = "p1"
-            model = "m1"
-        |}))
-        
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                ConversationSnapshot
+                    {|
+                        conversationId = convId
+                        title = "对话"
+                        lastCommitId = 0UL
+                        runtimeState = "idle"
+                        generationId = None
+                        messages = JsonArray()
+                        snapshotEarliestCommitId = 0UL
+                        snapshotHasMore = false
+                        config = SessionConfig.empty
+                    |}
+            )
+        )
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                GenerationStarted
+                    {|
+                        conversationId = convId
+                        generationId = genId
+                        providerId = "p1"
+                        model = "m1"
+                    |}
+            )
+        )
+
         // 停止生成
         rig.Shell.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
-        Assert.Contains(rig.Fake.RecordedEffects, fun e ->
-            match e with
-            | Effect.SendWire(WireEvent.GenerationCancel d) -> d.conversationId = convId
-            | _ -> false)
-            
+
+        Assert.Contains(
+            rig.Fake.RecordedEffects,
+            fun e ->
+                match e with
+                | Effect.SendWire(WireEvent.GenerationCancel d) -> d.conversationId = convId
+                | _ -> false
+        )
+
         // 主机完成上报带错误
-        let err: GenerationError = { kind = GenerationErrorKind.ProviderTimeout; message = "超时"; retryable = true; detail = None; retryAfterSeconds = None }
-        rig.Shell.Dispatch(WireRecv(GenerationFinished {|
-            conversationId = convId
-            generationId = genId
-            status = "failed"
-            error = Some err
-            usage = None
-        |}))
-        
+        let err: GenerationError =
+            {
+                kind = GenerationErrorKind.ProviderTimeout
+                message = "超时"
+                retryable = true
+                detail = None
+                retryAfterSeconds = None
+            }
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                GenerationFinished
+                    {|
+                        conversationId = convId
+                        generationId = genId
+                        status = "failed"
+                        error = Some err
+                        usage = None
+                    |}
+            )
+        )
+
         let vsFinished = Workspace.project rig.Shell.Model
+
         match vsFinished.Composer.Send.State with
         | SendButtonState.GeneratingStop -> Assert.Fail "停止后不应再有停止按钮"
         | _ -> ()
@@ -310,7 +430,7 @@ let ``旅程 5：中途停止与失败重试`` () =
         match rig.Shell.Model.Conn with
         | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(_, run))) ->
             match run with
-            | RunState.Idle (Some err) ->
+            | RunState.Idle(Some err) ->
                 Assert.Equal(GenerationErrorKind.ProviderTimeout, err.kind)
                 Assert.Equal("超时", err.message)
                 Assert.True(err.retryable)
@@ -324,6 +444,7 @@ let ``旅程 5：中途停止与失败重试`` () =
                 match e with
                 | Effect.SendWire(WireEvent.GenerationCancel d) -> Some d
                 | _ -> None)
+
         let cancels = List.ofSeq cancels
         Assert.Equal(1, cancels.Length)
         Assert.Equal(convId, cancels.Head.conversationId)
@@ -343,23 +464,20 @@ let ``旅程 6：切换对话、搜索与批量删除恢复`` () =
         item2["conversationId"] <- string c2
         item2["title"] <- "对话2"
         let arr = JsonArray([| item1 :> JsonNode; item2 :> JsonNode |])
-        rig.Shell.Dispatch(WireRecv(ConversationListSnapshot {|
-            lastCommitId = 0UL
-            items = arr
-        |}))
-        
+        rig.Shell.Dispatch(WireRecv(ConversationListSnapshot {| lastCommitId = 0UL; items = arr |}))
+
         // 选中 c1
         rig.Shell.Dispatch(User(Sidebar(SidebarUserMsg.SelectConv c1)))
-        
+
         // 搜索激活与输入
         rig.Shell.Dispatch(User(Sidebar(SidebarUserMsg.SearchTextChanged "查询")))
         let vsSearch = Workspace.project rig.Shell.Model
         Assert.Equal("查询", vsSearch.Sidebar.Search.Text)
-        
+
         // 批量删除
         rig.Shell.Dispatch(User(Sidebar(SidebarUserMsg.BatchDelete [ c1; c2 ])))
         Assert.True(rig.Shell.Model.Toasts.Length > 0)
-        
+
         // 撤销删除
         let toastUndoAction = rig.Shell.Model.Toasts |> List.head |> fun t -> t.UndoAction
         // 批量删除的提示条**必须**带撤销动作，否则用户删了救不回来。
@@ -368,7 +486,10 @@ let ``旅程 6：切换对话、搜索与批量删除恢复`` () =
         | Some actionId ->
             // 撤销前：有一个待删批次，批次里是那两段对话。
             Assert.Equal(1, rig.Shell.Model.Feedback.PendingDeletions.Count)
-            let batch = rig.Shell.Model.Feedback.PendingDeletions |> Map.toList |> List.head |> snd
+
+            let batch =
+                rig.Shell.Model.Feedback.PendingDeletions |> Map.toList |> List.head |> snd
+
             Assert.Equal<Set<Guid>>(set [ c1; c2 ], set batch.Ids)
             rig.Shell.Dispatch(User(Overlay(OverlayUserMsg.ToastUndo actionId)))
             // 撤销后：待删批次清空（对话没被真删）。
@@ -382,7 +503,18 @@ let ``搜索命中：定位目标进模型，对话快照到达后统一 Effect 
     Headless.run (fun () ->
         let rig = Rig.create ()
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
-        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray([| JsonObject() :> JsonNode |])
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
+
         let convId = Guid.NewGuid()
         // 搜索命中：打开那段对话并登记定位目标
         rig.Shell.Dispatch(User(Sidebar(SidebarUserMsg.SearchHitSelect(convId, Some "7"))))
@@ -391,23 +523,33 @@ let ``搜索命中：定位目标进模型，对话快照到达后统一 Effect 
         let msg = JsonObject()
         msg["commitId"] <- 7UL
         msg["role"] <- "assistant"
-        rig.Shell.Dispatch(WireRecv(ConversationSnapshot {|
-            conversationId = convId
-            title = "对话"
-            lastCommitId = 7UL
-            runtimeState = "idle"
-            generationId = None
-            messages = JsonArray([| msg :> JsonNode |])
-            snapshotEarliestCommitId = 0UL
-            snapshotHasMore = false
-            config = SessionConfig.empty
-        |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                ConversationSnapshot
+                    {|
+                        conversationId = convId
+                        title = "对话"
+                        lastCommitId = 7UL
+                        runtimeState = "idle"
+                        generationId = None
+                        messages = JsonArray([| msg :> JsonNode |])
+                        snapshotEarliestCommitId = 0UL
+                        snapshotHasMore = false
+                        config = SessionConfig.empty
+                    |}
+            )
+        )
         // 滚动 Effect 经 UI 调度器落地（宿主统一 Effect 的执行点）
-        Pump.settle()
-        Assert.Contains(rig.Fake.RecordedEffects, fun e ->
-            match e with
-            | Effect.ScrollChat(ScrollCommand.ToExchange "7") -> true
-            | _ -> false)
+        Pump.settle ()
+
+        Assert.Contains(
+            rig.Fake.RecordedEffects,
+            fun e ->
+                match e with
+                | Effect.ScrollChat(ScrollCommand.ToExchange "7") -> true
+                | _ -> false
+        )
         // 目标消费后清空：不再重复滚
         Assert.Equal(None, (Workspace.project rig.Shell.Model).Chat.RevealTarget))
 
@@ -417,10 +559,19 @@ let ``引导分支：目录里没有可用模型服务时，引导卡按模型�
         let rig = Rig.create ()
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
         // 目录里只有一个没启用的服务：正是首次运行、引导卡出场的时候
-        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray([| JsonObject() :> JsonNode |])
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
         // 卡片回报的事实进模型
         rig.Shell.Dispatch(User(Onboarding(OnboardingUserMsg.SelectPreset "ollama")))
-        rig.Shell.Dispatch(User(Onboarding(OnboardingUserMsg.Discovered (Some [ "qwen3" ]))))
+        rig.Shell.Dispatch(User(Onboarding(OnboardingUserMsg.Discovered(Some [ "qwen3" ]))))
         rig.Shell.Dispatch(User(Onboarding(OnboardingUserMsg.SwitchOffered true)))
         // 宿主按单一入口把模型事实投影回引导卡
         Assert.Equal("ollama", rig.Views.Onboarding.SelectedPreset.key)
@@ -436,11 +587,13 @@ let ``点检查主机发出 doctor 请求，报告回来后填进健康状态`` 
         authenticate rig
         // 设置页点「检查主机」：对象转成 Running 并宣告要检查，宿主据此发请求。
         rig.Views.Settings.Health.BeginCheck()
+
         let request =
             rig.Fake.Events
             |> List.tryPick (function
                 | DoctorRequest d -> Some d.requestId
                 | _ -> None)
+
         Assert.True(request.IsSome)
         // 报告未到之前是「正在检查」
         match rig.Views.Settings.Health.Doctor with
@@ -451,7 +604,16 @@ let ``点检查主机发出 doctor 请求，报告回来后填进健康状态`` 
         checks["name"] <- "config"
         checks["ok"] <- true
         checks["detail"] <- "ok"
-        rig.Fake.Deliver(DoctorReport {| requestId = request.Value; ok = true; checks = JsonArray([| checks :> JsonNode |]) |})
+
+        rig.Fake.Deliver(
+            DoctorReport
+                {|
+                    requestId = request.Value
+                    ok = true
+                    checks = JsonArray([| checks :> JsonNode |])
+                |}
+        )
+
         match rig.Views.Settings.Health.Doctor with
         | Report(true, [ c ], _) ->
             Assert.Equal("config", c.name)
@@ -465,7 +627,16 @@ let ``迟到的 doctor 报告被丢掉，不覆盖当前状态`` () =
         authenticate rig
         rig.Views.Settings.Health.BeginCheck()
         let requestId = Guid.NewGuid()
-        rig.Fake.Deliver(DoctorReport {| requestId = requestId; ok = true; checks = JsonArray() |})
+
+        rig.Fake.Deliver(
+            DoctorReport
+                {|
+                    requestId = requestId
+                    ok = true
+                    checks = JsonArray()
+                |}
+        )
+
         match rig.Views.Settings.Health.Doctor with
         | Running -> ()
         | other -> Assert.Fail(sprintf "迟到的报告不该改状态: %A" other))
@@ -475,12 +646,21 @@ let ``主机拒绝配置时健康状态记下配置有误，config.changed 后�
     Headless.run (fun () ->
         let rig = Rig.create ()
         authenticate rig
-        rig.Fake.Deliver(HostConfigRejected {| summary = "配置有误"; errors = [ "第 3 行" ] |})
+
+        rig.Fake.Deliver(
+            HostConfigRejected
+                {|
+                    summary = "配置有误"
+                    errors = [ "第 3 行" ]
+                |}
+        )
+
         match rig.Views.Settings.Health.ConfigIssue with
         | Some(summary, errors) ->
             Assert.Equal("配置有误", summary)
             Assert.Equal<string list>([ "第 3 行" ], errors)
         | None -> Assert.Fail("应记下配置有误")
+
         rig.Fake.Deliver(ConfigChanged {| reason = "reloaded" |})
         Assert.Equal(None, rig.Views.Settings.Health.ConfigIssue))
 
@@ -495,32 +675,64 @@ let ``附件：AttachFiles 用同一个 id 走状态树与线协议，就绪后�
     Headless.run (fun () ->
         let rig = Rig.create ()
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
-        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray([| JsonObject() :> JsonNode |])
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
 
         let bytes = "hello-attachment" |> System.Text.Encoding.UTF8.GetBytes
-        rig.Shell.AttachFiles("inst-test", 7) [ ("pic.png", bytes) ]
+        rig.Shell.AttachFiles ("inst-test", 7) [ ("pic.png", bytes) ]
 
         // 线协议：begin → chunk… → complete，且三处用的是同一个 id
         let evs = rig.Fake.Events
-        let begins = evs |> List.filter (function WireEvent.AttachmentBegin _ -> true | _ -> false)
-        let chunks = evs |> List.filter (function WireEvent.AttachmentChunk _ -> true | _ -> false)
-        let completes = evs |> List.filter (function WireEvent.AttachmentComplete _ -> true | _ -> false)
+
+        let begins =
+            evs
+            |> List.filter (function
+                | WireEvent.AttachmentBegin _ -> true
+                | _ -> false)
+
+        let chunks =
+            evs
+            |> List.filter (function
+                | WireEvent.AttachmentChunk _ -> true
+                | _ -> false)
+
+        let completes =
+            evs
+            |> List.filter (function
+                | WireEvent.AttachmentComplete _ -> true
+                | _ -> false)
+
         Assert.Single(begins) |> ignore
         Assert.NotEmpty(chunks)
         Assert.Single(completes) |> ignore
+
         let beginId =
             match List.head begins with
             | WireEvent.AttachmentBegin d -> d.attachmentId
             | _ -> Guid.Empty
+
         let completeId =
             match List.head completes with
             | WireEvent.AttachmentComplete d -> d.attachmentId
             | _ -> Guid.Empty
+
         Assert.Equal(beginId, completeId)
         // 分块序号从 0 连续递增
         let indices =
             chunks
-            |> List.map (function WireEvent.AttachmentChunk d -> d.index | _ -> -1)
+            |> List.map (function
+                | WireEvent.AttachmentChunk d -> d.index
+                | _ -> -1)
+
         Assert.Equal<int list>([ 0 ], indices)
 
         // 状态树：托盘里恰好一条附件；**还没就绪**——主机还没确认落盘。
@@ -534,17 +746,29 @@ let ``附件：AttachFiles 用同一个 id 走状态树与线协议，就绪后�
         Assert.Equal(beginId, tray.Id)
 
         // 主机确认落盘 → 就绪
-        rig.Shell.Dispatch(WireRecv(WireEvent.AttachmentCommitted {| attachmentId = beginId; sha256 = Wanxiang.UI.UploadFacts.sha256Hex bytes; size = int64 bytes.Length |}))
+        rig.Shell.Dispatch(
+            WireRecv(
+                WireEvent.AttachmentCommitted
+                    {|
+                        attachmentId = beginId
+                        sha256 = Wanxiang.UI.UploadFacts.sha256Hex bytes
+                        size = int64 bytes.Length
+                    |}
+            )
+        )
+
         Assert.True(((Workspace.project rig.Shell.Model).Composer.Tray |> List.head).Ready)
 
         // 发送：payload 里带的是这条附件
         rig.Shell.Dispatch(User(Composer(ComposerUserMsg.TextChanged "看图"))) |> ignore
         rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Send))) |> ignore
+
         let sent =
             rig.Fake.Events
             |> List.tryPick (function
                 | WireEvent.Command(ClientCommand.SendUserMessage d) -> Some d.messageJson
                 | _ -> None)
+
         Assert.True(sent.IsSome)
         let contents = sent.Value.["contents"].AsArray()
         Assert.Equal(2, contents.Count)
@@ -573,6 +797,7 @@ let ``AutoConnect 在没有 toml 时回落读浏览器凭据并连上`` () =
         Assert.Equal<string list>([ "ws://127.0.0.1:9/ws" ], rig.Fake.Connects)
         // 认证用的是浏览器那条凭据的 token
         Assert.Equal(1, (rig.Fake.AuthEvents |> List.length))
+
         match List.head rig.Fake.AuthEvents with
         | _, WireEvent.AuthPresent d -> Assert.Equal("browser-token", d.token)
         | _ -> Assert.True(false, "应当用浏览器凭据的 token 发 AuthPresent"))
@@ -587,7 +812,7 @@ let ``AutoConnect 与 reconnect 撞在一起时只连一次`` () =
         rig.Shell.AutoConnect()
         rig.Shell.SidebarActions().reconnect()
         Pump.until (fun () -> not (List.isEmpty rig.Fake.Connects))
-        Pump.settle()
+        Pump.settle ()
         Assert.Equal(1, (rig.Fake.Connects |> List.length)))
 
 /// 草稿落盘的真实链路（2026-10-21 W7-CLEANBREAK 修）。
@@ -607,12 +832,15 @@ let ``打字进状态树并产出草稿落盘；内容与输入框一致`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()
         // 直接驱动输入框的 TextChanged（与真实按键同一条路）
-        let actions = rig.Shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false))
+        let actions =
+            rig.Shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false))
+
         actions.TextChanged "草稿内容"
         // 打字**立刻**进状态树
         Assert.Equal("草稿内容", (Workspace.project rig.Shell.Model).Composer.Text)
         // 闸决定落盘，并产出 `DraftWrite`（内容与输入框一致）
         Assert.NotEmpty rig.Fake.DraftWrites
+
         match List.head rig.Fake.DraftWrites with
         | DraftWrite.Write t -> Assert.Equal("草稿内容", t)
         | other -> Assert.True(false, "应当写出草稿，实际 " + string other))
@@ -623,7 +851,10 @@ let ``打字进状态树并产出草稿落盘；内容与输入框一致`` () =
 let ``光标位置也进状态树`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()
-        let actions = rig.Shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false))
+
+        let actions =
+            rig.Shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false))
+
         actions.TextChanged "abcdef"
         actions.CaretChanged 3
         let vs = Workspace.project rig.Shell.Model

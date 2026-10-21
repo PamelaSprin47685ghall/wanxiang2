@@ -11,7 +11,14 @@ type Inbox<'item>() =
     let mutable sink: ('item -> unit) option = None
 
     member _.Post(item: 'item) =
-        let target = lock gate (fun () -> match sink with Some s -> Some s | None -> queue.Enqueue item; None)
+        let target =
+            lock gate (fun () ->
+                match sink with
+                | Some s -> Some s
+                | None ->
+                    queue.Enqueue item
+                    None)
+
         target |> Option.iter (fun s -> s item)
 
     /// 订阅；此前排队的条目在返回前交付（锁外）。
@@ -22,7 +29,9 @@ type Inbox<'item>() =
                 let items = queue.ToArray()
                 queue.Clear()
                 items)
-        for item in pending do handler item
+
+        for item in pending do
+            handler item
 
     /// 排队中、尚未交付的条数。
     member _.Pending = lock gate (fun () -> queue.Count)
@@ -32,4 +41,6 @@ module LinkInbox =
     let accepts (url: string) = not (String.IsNullOrWhiteSpace url)
 
     /// 空白链接直接丢弃，其余投进收件箱。
-    let post (inbox: Inbox<string>) (url: string) = if accepts url then inbox.Post url
+    let post (inbox: Inbox<string>) (url: string) =
+        if accepts url then
+            inbox.Post url

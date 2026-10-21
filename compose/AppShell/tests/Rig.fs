@@ -113,191 +113,250 @@ type FakePorts(prefs0: UiPrefs) =
         and set value = dark <- value
 
     /// 入口壳的协议事件回调（Build 里订阅进去的那个）。
-    member _.Deliver(ev: WireEvent) = hostHandler |> Option.iter (fun handler -> handler ev)
+    member _.Deliver(ev: WireEvent) =
+        hostHandler |> Option.iter (fun handler -> handler ev)
 
     /// 入口壳的连接关闭回调。
-    member _.Close(detail: string option) = closedHandler |> Option.iter (fun handler -> handler detail)
+    member _.Close(detail: string option) =
+        closedHandler |> Option.iter (fun handler -> handler detail)
 
-    member this.Sink : Wanxiang.UI.EffectSink =
-        { Focus = fun f -> recordedEffects.Add(Effect.Focus f)
-          ScrollChat = fun s -> recordedEffects.Add(Effect.ScrollChat s)
-          SendWire = fun w -> recordedEffects.Add(Effect.SendWire w); events.Add w
-          After = fun (ms, msg) ->
-              match msg with
-              | :? Msg as m -> recordedEffects.Add(Effect.After(ms, m))
-              | _ -> ()
-          Every = fun (h, ms) -> recordedEffects.Add(Effect.Every(h, ms))
-          StopEvery = fun h -> recordedEffects.Add(Effect.StopEvery h)
-          ShowToast = fun (t, tone) -> recordedEffects.Add(Effect.ShowToast(t, tone)); toasts.Add(t, ShellToastTone.Info)
-          Clipboard = fun c -> recordedEffects.Add(Effect.Clipboard c); copies.Add c
-          OpenLink = fun u -> recordedEffects.Add(Effect.OpenLink u); links.Add u
-          SaveDownload = fun (n, b) -> recordedEffects.Add(Effect.SaveDownload(n, b)); downloads.Add(n, b)
-          ApplyTheme = fun t -> recordedEffects.Add(Effect.ApplyTheme t)
-          SetWindowBusy = fun b -> recordedEffects.Add(Effect.SetWindowBusy b)
-          CloseWindow = fun () -> recordedEffects.Add(Effect.CloseWindow)
-          PrefsSave = fun p -> recordedEffects.Add(Effect.PrefsSave p); savedPrefs.Add p
-          PrefsLoad = fun () -> recordedEffects.Add(Effect.PrefsLoad)
-          DraftWrite = fun dw -> recordedEffects.Add(Effect.DraftWrite dw); draftWrites.Add dw
-          BrowserHook = fun h -> recordedEffects.Add(Effect.BrowserHook h) }
+    member this.Sink: Wanxiang.UI.EffectSink =
+        {
+            Focus = fun f -> recordedEffects.Add(Effect.Focus f)
+            ScrollChat = fun s -> recordedEffects.Add(Effect.ScrollChat s)
+            SendWire =
+                fun w ->
+                    recordedEffects.Add(Effect.SendWire w)
+                    events.Add w
+            After =
+                fun (ms, msg) ->
+                    match msg with
+                    | :? Msg as m -> recordedEffects.Add(Effect.After(ms, m))
+                    | _ -> ()
+            Every = fun (h, ms) -> recordedEffects.Add(Effect.Every(h, ms))
+            StopEvery = fun h -> recordedEffects.Add(Effect.StopEvery h)
+            ShowToast =
+                fun (t, tone) ->
+                    recordedEffects.Add(Effect.ShowToast(t, tone))
+                    toasts.Add(t, ShellToastTone.Info)
+            Clipboard =
+                fun c ->
+                    recordedEffects.Add(Effect.Clipboard c)
+                    copies.Add c
+            OpenLink =
+                fun u ->
+                    recordedEffects.Add(Effect.OpenLink u)
+                    links.Add u
+            SaveDownload =
+                fun (n, b) ->
+                    recordedEffects.Add(Effect.SaveDownload(n, b))
+                    downloads.Add(n, b)
+            ApplyTheme = fun t -> recordedEffects.Add(Effect.ApplyTheme t)
+            SetWindowBusy = fun b -> recordedEffects.Add(Effect.SetWindowBusy b)
+            CloseWindow = fun () -> recordedEffects.Add(Effect.CloseWindow)
+            PrefsSave =
+                fun p ->
+                    recordedEffects.Add(Effect.PrefsSave p)
+                    savedPrefs.Add p
+            PrefsLoad = fun () -> recordedEffects.Add(Effect.PrefsLoad)
+            DraftWrite =
+                fun dw ->
+                    recordedEffects.Add(Effect.DraftWrite dw)
+                    draftWrites.Add dw
+            BrowserHook = fun h -> recordedEffects.Add(Effect.BrowserHook h)
+        }
 
     member this.Ports(buildViews: unit -> ShellViews) : ShellPorts =
-        { Connect =
-            fun url ->
-                connects.Add url
-                async { return generation }
-          SendAuth = fun epoch ev -> authEvents.Add(epoch, ev)
-          Send = fun ev -> events.Add ev
-          SendCommand =
-            fun cmd ->
-                commands.Add cmd
-                Task.FromResult sendsSucceed
-          SendAtGeneration =
-            fun ev ->
-                events.Add ev
-                Task.FromResult true
-          // 真把延时回调排上：草稿落盘的 800 ms 闸走的就是这个端口
-          // （`compose/AppShell` 的 `afterOnce`）。只记录不调度的话，
-          // 闸永远不会到期，测不出「打字停下来才落盘」。
-          After = fun ms action ->
-              let mutable handle: IDisposable = null
-              let timer =
-                  DispatcherTimer(
-                      ms,
-                      DispatcherPriority.Background,
-                      EventHandler(fun _ _ ->
-                          let h = handle
-                          if not (isNull h) then h.Dispose()
-                          action ()))
-              timer.Start()
-              // `DispatcherTimer` 本身不是 IDisposable，用一个壳把 `Stop` 暴露成 `Dispose`。
-              let wrapper =
-                  { new IDisposable with
-                      member _.Dispose() = timer.Stop() }
-              handle <- wrapper
-              handle
-          Every = fun _ _ -> { new IDisposable with member _.Dispose() = () }
-          Post =
-            fun action ->
-                Dispatcher.UIThread.Post(fun () ->
-                    posts.Value <- posts.Value + 1
-                    action ())
-          Toast = fun text tone -> toasts.Add(text, tone)
-          ToastUndo = fun text _ -> undos.Add text
-          CopyToClipboard = fun text -> copies.Add text
-          OpenLink = fun url -> links.Add url
-          SaveDownload = fun name bytes -> downloads.Add(name, bytes)
-          ApplyDraftWrite = fun write -> draftWrites.Add write
-          LoadLocalDraft = fun () -> async { return !localDraft }
-          PrefsLoad = fun () -> prefs0
-          PrefsSave = fun next -> savedPrefs.Add next
-          TryLoadClientToml = fun () -> None
-          TryLoadBrowserConnection = fun () -> async { return browserConnection }
-          SaveBrowserConnection = fun _ _ _ _ -> ()
-          BrowserViewportWidth = fun () -> 0.0
-          BrowserResumeEpoch = fun () -> 0
-          BrowserPageUrl = fun () -> ""
-          BrowserConversationSucceeded = fun () -> browserSucceeded.Value <- browserSucceeded.Value + 1
-          BrowserAddHidden = fun _ -> ()
-          SystemPrefersDark = fun () -> dark
-          DefaultServerUrl = fun () -> "ws://127.0.0.1:1/ws"
-          ApplyTheme = fun value -> themes.Add value
-          SetReducedMotion = fun value -> motions.Add value
-          SetCodeWrap = fun value -> wraps.Add value
-          CaptureFocus =
-            fun () ->
+        {
+            Connect =
+                fun url ->
+                    connects.Add url
+                    async { return generation }
+            SendAuth = fun epoch ev -> authEvents.Add(epoch, ev)
+            Send = fun ev -> events.Add ev
+            SendCommand =
+                fun cmd ->
+                    commands.Add cmd
+                    Task.FromResult sendsSucceed
+            SendAtGeneration =
+                fun ev ->
+                    events.Add ev
+                    Task.FromResult true
+            // 真把延时回调排上：草稿落盘的 800 ms 闸走的就是这个端口
+            // （`compose/AppShell` 的 `afterOnce`）。只记录不调度的话，
+            // 闸永远不会到期，测不出「打字停下来才落盘」。
+            After =
+                fun ms action ->
+                    let mutable handle: IDisposable = null
+
+                    let timer =
+                        DispatcherTimer(
+                            ms,
+                            DispatcherPriority.Background,
+                            EventHandler(fun _ _ ->
+                                let h = handle
+
+                                if not (isNull h) then
+                                    h.Dispose()
+
+                                action ())
+                        )
+
+                    timer.Start()
+                    // `DispatcherTimer` 本身不是 IDisposable，用一个壳把 `Stop` 暴露成 `Dispose`。
+                    let wrapper =
+                        { new IDisposable with
+                            member _.Dispose() = timer.Stop()
+                        }
+
+                    handle <- wrapper
+                    handle
+            Every =
+                fun _ _ ->
+                    { new IDisposable with
+                        member _.Dispose() = ()
+                    }
+            Post =
+                fun action ->
+                    Dispatcher.UIThread.Post(fun () ->
+                        posts.Value <- posts.Value + 1
+                        action ())
+            Toast = fun text tone -> toasts.Add(text, tone)
+            ToastUndo = fun text _ -> undos.Add text
+            CopyToClipboard = fun text -> copies.Add text
+            OpenLink = fun url -> links.Add url
+            SaveDownload = fun name bytes -> downloads.Add(name, bytes)
+            ApplyDraftWrite = fun write -> draftWrites.Add write
+            LoadLocalDraft = fun () -> async { return !localDraft }
+            PrefsLoad = fun () -> prefs0
+            PrefsSave = fun next -> savedPrefs.Add next
+            TryLoadClientToml = fun () -> None
+            TryLoadBrowserConnection = fun () -> async { return browserConnection }
+            SaveBrowserConnection = fun _ _ _ _ -> ()
+            BrowserViewportWidth = fun () -> 0.0
+            BrowserResumeEpoch = fun () -> 0
+            BrowserPageUrl = fun () -> ""
+            BrowserConversationSucceeded = fun () -> browserSucceeded.Value <- browserSucceeded.Value + 1
+            BrowserAddHidden = fun _ -> ()
+            SystemPrefersDark = fun () -> dark
+            DefaultServerUrl = fun () -> "ws://127.0.0.1:1/ws"
+            ApplyTheme = fun value -> themes.Add value
+            SetReducedMotion = fun value -> motions.Add value
+            SetCodeWrap = fun value -> wraps.Add value
+            CaptureFocus =
                 fun () ->
-                    restoreCalls.Value <- restoreCalls.Value + 1
-                    true
-          IsEditingText = fun () -> editing
-          ConnectionGeneration = fun () -> generation
-          IsConnected = fun () -> connected
-          SubscribeHostEvents =
-            fun handler ->
-                hostHandler <- Some handler
-                { new IDisposable with member _.Dispose() = hostHandler <- None }
-          SubscribeClosed =
-            fun handler ->
-                closedHandler <- Some handler
-                { new IDisposable with member _.Dispose() = closedHandler <- None }
-          CloseWindow = fun () -> false
-          ClientName = fun () -> "测试客户端"
-          MakeThumbnail = fun id bytes -> thumbnails.Add(id, bytes)
-          EffectSink = this.Sink
-          BuildViews = buildViews }
+                    fun () ->
+                        restoreCalls.Value <- restoreCalls.Value + 1
+                        true
+            IsEditingText = fun () -> editing
+            ConnectionGeneration = fun () -> generation
+            IsConnected = fun () -> connected
+            SubscribeHostEvents =
+                fun handler ->
+                    hostHandler <- Some handler
+
+                    { new IDisposable with
+                        member _.Dispose() = hostHandler <- None
+                    }
+            SubscribeClosed =
+                fun handler ->
+                    closedHandler <- Some handler
+
+                    { new IDisposable with
+                        member _.Dispose() = closedHandler <- None
+                    }
+            CloseWindow = fun () -> false
+            ClientName = fun () -> "测试客户端"
+            MakeThumbnail = fun id bytes -> thumbnails.Add(id, bytes)
+            EffectSink = this.Sink
+            BuildViews = buildViews
+        }
 
 /// 浮层外观（与 OverlayDesk 自己的测试同值；这里只求能建树）。
 module Look =
     let overlay () : OverlayDeskMetrics =
-        { Layer =
-            { Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
-              Surface = Brushes.White
-              Edge = Brushes.Gray
-              DialogShadow = BoxShadows()
-              PopupShadow = BoxShadows()
-              PopupGap = 4.0
-              PopupMinWidth = 180.0
-              ScrimFade = TimeSpan.Zero
-              ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut() }
-          Toasts =
-            { Surface = Brushes.White
-              Edge = Brushes.Gray
-              Text = Brushes.Black
-              Accent = (fun _ -> Brushes.Gray)
-              AccentOpacity = 0.6
-              Padding = Thickness(16.0, 12.0)
-              Shadow = BoxShadows()
-              LineHeight = 18.0
-              ColumnSpacing = 12.0
-              Spacing = 8.0
-              Margin = Thickness(24.0, 0.0, 24.0, 32.0)
-              MaxWidth = 480.0
-              BodyMaxHeight = 160.0
-              // 减弱动效：主题给 0
-              Fade = TimeSpan.Zero
-              FadeEasing = Avalonia.Animation.Easings.CubicEaseOut() }
-          Menu =
-            { Text = Brushes.Black
-              Muted = Brushes.Gray
-              Faint = Brushes.LightGray
-              Danger = Brushes.Red
-              Accent = Brushes.Blue
-              Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b))
-              Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
-              IconSlotWidth = 16.0
-              ItemMinHeight = 32.0
-              MaxHeight = 200.0 }
-          MenuMinWidth = 200.0
-          GroupedMenuMinWidth = 240.0
-          DwellFailureMs = 9000.0
-          DwellWarningMs = 6500.0
-          DwellDefaultMs = 4000.0
-          DismissTick = TimeSpan.FromMilliseconds 100.0 }
+        {
+            Layer =
+                {
+                    Scrim = SolidColorBrush(Color.FromArgb(80uy, 0uy, 0uy, 0uy))
+                    Surface = Brushes.White
+                    Edge = Brushes.Gray
+                    DialogShadow = BoxShadows()
+                    PopupShadow = BoxShadows()
+                    PopupGap = 4.0
+                    PopupMinWidth = 180.0
+                    ScrimFade = TimeSpan.Zero
+                    ScrimEasing = Avalonia.Animation.Easings.CubicEaseOut()
+                }
+            Toasts =
+                {
+                    Surface = Brushes.White
+                    Edge = Brushes.Gray
+                    Text = Brushes.Black
+                    Accent = (fun _ -> Brushes.Gray)
+                    AccentOpacity = 0.6
+                    Padding = Thickness(16.0, 12.0)
+                    Shadow = BoxShadows()
+                    LineHeight = 18.0
+                    ColumnSpacing = 12.0
+                    Spacing = 8.0
+                    Margin = Thickness(24.0, 0.0, 24.0, 32.0)
+                    MaxWidth = 480.0
+                    BodyMaxHeight = 160.0
+                    // 减弱动效：主题给 0
+                    Fade = TimeSpan.Zero
+                    FadeEasing = Avalonia.Animation.Easings.CubicEaseOut()
+                }
+            Menu =
+                {
+                    Text = Brushes.Black
+                    Muted = Brushes.Gray
+                    Faint = Brushes.LightGray
+                    Danger = Brushes.Red
+                    Accent = Brushes.Blue
+                    Check = (fun b -> Border(Width = 12.0, Height = 12.0, Background = b))
+                    Chevron = (fun b -> Border(Width = 10.0, Height = 10.0, Background = b))
+                    IconSlotWidth = 16.0
+                    ItemMinHeight = 32.0
+                    MaxHeight = 200.0
+                }
+            MenuMinWidth = 200.0
+            GroupedMenuMinWidth = 240.0
+            DwellFailureMs = 9000.0
+            DwellWarningMs = 6500.0
+            DwellDefaultMs = 4000.0
+            DismissTick = TimeSpan.FromMilliseconds 100.0
+        }
 
 /// 测试台：一个组合者 + 真实视图树 + 假端口。
 type Rig =
-    { Shell: ShellComposer
-      Views: ShellViews
-      Fake: FakePorts
-      Theme: ThemeManager
-      Summary: ConversationSummary
-      ImportDesks: ResizeArray<Wanxiang2.TransferDesk.ImportDesk>
-      ExportDesks: ResizeArray<Wanxiang2.TransferDesk.ExportDesk> }
+    {
+        Shell: ShellComposer
+        Views: ShellViews
+        Fake: FakePorts
+        Theme: ThemeManager
+        Summary: ConversationSummary
+        ImportDesks: ResizeArray<Wanxiang2.TransferDesk.ImportDesk>
+        ExportDesks: ResizeArray<Wanxiang2.TransferDesk.ExportDesk>
+    }
 
 module Rig =
     let private summaryOf (id: Guid) : ConversationSummary =
-        { id = id
-          title = "一段对话"
-          preview = ""
-          running = false
-          pinned = false
-          archived = false
-          createdAt = DateTimeOffset.UnixEpoch
-          updatedAt = DateTimeOffset.UnixEpoch
-          messageCount = 0
-          isFork = false
-          providerId = "p1"
-          model = "m1"
-          lastCommitId = 0UL }
+        {
+            id = id
+            title = "一段对话"
+            preview = ""
+            running = false
+            pinned = false
+            archived = false
+            createdAt = DateTimeOffset.UnixEpoch
+            updatedAt = DateTimeOffset.UnixEpoch
+            messageCount = 0
+            isFork = false
+            providerId = "p1"
+            model = "m1"
+            lastCommitId = 0UL
+        }
 
     /// 建一套完整测试台：BuildViews 交给组合者，Build() 由测试自己调（要断言的时点不同）。
     let createWith (prefs0: UiPrefs) : Rig =
@@ -313,25 +372,35 @@ module Rig =
         let buildViews () : ShellViews =
             let root = Grid()
             let overlay = OverlayDesk(root, Look.overlay ())
-            let brandLogo (size: float) = Border(Width = size, Height = size) :> Control
+
+            let brandLogo (size: float) =
+                Border(Width = size, Height = size) :> Control
+
             let composer =
-                ComposerDesk(
-                    shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false)))
+                ComposerDesk(shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false)))
+
             let approval = ApprovalDesk(theme, overlay, ignore)
+
             let cards =
                 MessageCards(
                     CardLooks.ofTheme theme styles,
-                    { Tint =
-                        CodeTint
-                            { HighlightHtml = (fun _ -> None)
-                              Background = (fun work -> work ())
-                              After = (fun _ work -> work ())
-                              Synchronous = true }
-                      MathHtml = (fun _ -> None)
-                      Wrap = Wanxiang2.MarkdownView.CodeWrapMemory false
-                      Clock = CaretClock()
-                      Touch = CardTouch()
-                      Now = fun () -> DateTimeOffset.UnixEpoch })
+                    {
+                        Tint =
+                            CodeTint
+                                {
+                                    HighlightHtml = (fun _ -> None)
+                                    Background = (fun work -> work ())
+                                    After = (fun _ work -> work ())
+                                    Synchronous = true
+                                }
+                        MathHtml = (fun _ -> None)
+                        Wrap = Wanxiang2.MarkdownView.CodeWrapMemory false
+                        Clock = CaretClock()
+                        Touch = CardTouch()
+                        Now = fun () -> DateTimeOffset.UnixEpoch
+                    }
+                )
+
             let chat =
                 ChatScreen(
                     ChatScreenMetrics.ofTheme theme styles,
@@ -340,74 +409,83 @@ module Rig =
                     approval,
                     overlay,
                     brandLogo,
-                    shell.ChatActions())
+                    shell.ChatActions()
+                )
+
             let sidebar = SidebarDesk(theme, overlay, shell.SidebarActions(), brandLogo)
             let settings = SettingsScreen(theme, overlay, shell.SettingsHooks(), prefs0)
             let onboarding = OnboardingDesk(theme, overlay, shell.OnboardingHooks())
+
             let workspace =
-                Workspace(
-                    theme,
-                    root,
-                    sidebar,
-                    chat,
-                    composer,
-                    shell.WorkspaceHooks(fun () -> false))
+                Workspace(theme, root, sidebar, chat, composer, shell.WorkspaceHooks(fun () -> false))
+
             let palette = PaletteDesk(theme, overlay, (fun () -> false))
             let modelSwitch = ModelSwitchDesk(theme, overlay)
             let dialogs = DialogsDesk(theme, overlay)
-            { Sidebar = sidebar
-              Chat = chat
-              Composer = composer
-              Settings = settings
-              Onboarding = onboarding
-              Workspace = workspace
-              Approval = approval
-              Palette = palette
-              ModelSwitch = modelSwitch
-              Overlay = overlay
-              Dialogs = dialogs
-              NewExportDesk =
-                fun sendQuery lineage conversationId title ->
-                    let desk =
-                        new Wanxiang2.TransferDesk.ExportDesk(
-                            theme,
-                            overlay,
-                            conversationId,
-                            title,
-                            sendQuery,
-                            (fun () -> null :> TopLevel),
-                            lineage)
-                    exportDesks.Add desk
-                    desk
-              NewImportDesk =
-                fun submit ->
-                    let desk = new Wanxiang2.TransferDesk.ImportDesk(theme, overlay, (fun () -> null :> TopLevel), submit)
-                    importDesks.Add desk
-                    desk
-              SettingsHostVisible = fun visible -> settings.View.IsVisible <- visible
-              WorkspaceHostVisible = fun visible -> workspace.Host.IsVisible <- visible
-              SettingsFocusInitial = fun () -> settings.FocusInitial()
-              SettingsShowSection =
-                fun section ->
-                    section
-                    |> Option.iter (fun key ->
-                        Wanxiang2.SettingsScreen.SettingsPart.ofKey key
-                        |> Option.iter settings.ShowSection) }
+
+            {
+                Sidebar = sidebar
+                Chat = chat
+                Composer = composer
+                Settings = settings
+                Onboarding = onboarding
+                Workspace = workspace
+                Approval = approval
+                Palette = palette
+                ModelSwitch = modelSwitch
+                Overlay = overlay
+                Dialogs = dialogs
+                NewExportDesk =
+                    fun sendQuery lineage conversationId title ->
+                        let desk =
+                            new Wanxiang2.TransferDesk.ExportDesk(
+                                theme,
+                                overlay,
+                                conversationId,
+                                title,
+                                sendQuery,
+                                (fun () -> null :> TopLevel),
+                                lineage
+                            )
+
+                        exportDesks.Add desk
+                        desk
+                NewImportDesk =
+                    fun submit ->
+                        let desk =
+                            new Wanxiang2.TransferDesk.ImportDesk(theme, overlay, (fun () -> null :> TopLevel), submit)
+
+                        importDesks.Add desk
+                        desk
+                SettingsHostVisible = fun visible -> settings.View.IsVisible <- visible
+                WorkspaceHostVisible = fun visible -> workspace.Host.IsVisible <- visible
+                SettingsFocusInitial = fun () -> settings.FocusInitial()
+                SettingsShowSection =
+                    fun section ->
+                        section
+                        |> Option.iter (fun key ->
+                            Wanxiang2.SettingsScreen.SettingsPart.ofKey key
+                            |> Option.iter settings.ShowSection)
+            }
 
         let ports =
             fake.Ports(fun () ->
                 let views = buildViews ()
                 built <- Some views
                 views)
+
         shell <- ShellComposer(ports)
         shell.Build() |> ignore
-        { Shell = shell
-          Views = built.Value
-          Fake = fake
-          Theme = theme
-          Summary = summaryOf (Guid "11111111-1111-1111-1111-111111111111")
-          ImportDesks = importDesks
-          ExportDesks = exportDesks }
+
+        {
+            Shell = shell
+            Views = built.Value
+            Fake = fake
+            Theme = theme
+            Summary = summaryOf (Guid "11111111-1111-1111-1111-111111111111")
+            ImportDesks = importDesks
+            ExportDesks = exportDesks
+        }
 
     let create () : Rig = createWith UiPrefsFile.defaults
 
@@ -415,9 +493,11 @@ module Rig =
 module Pump =
     let until (predicate: unit -> bool) =
         let deadline = DateTime.UtcNow + TimeSpan.FromSeconds 5.0
+
         while not (predicate ()) && DateTime.UtcNow < deadline do
             Dispatcher.UIThread.RunJobs()
             Thread.Sleep 5
+
         Dispatcher.UIThread.RunJobs()
 
     /// 事件循环跑几拍（只等时机，不等结果）。
@@ -425,4 +505,5 @@ module Pump =
         for _ in 1..3 do
             Dispatcher.UIThread.RunJobs()
             Thread.Sleep 5
+
         Dispatcher.UIThread.RunJobs()

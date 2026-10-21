@@ -1,11 +1,19 @@
 module ToolOverviewTests
+
 open System
 open System.IO
 open Xunit
 open Wanxiang.UI
 
 
-let c r a s f u = { running = r; awaiting = a; success = s; failed = f; unknown = u }
+let c r a s f u =
+    {
+        running = r
+        awaiting = a
+        success = s
+        failed = f
+        unknown = u
+    }
 
 [<Fact>]
 let ``single call names its state; several list counts in fixed order`` () =

@@ -15,12 +15,16 @@ open Wanxiang.UI
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 公式控件的外观。Ink 是主题管理者的活画笔实例（原地改色不重排），普通记录没有活值字段。
-type MathFigureMetrics =
-    { Ink: IBrush }
+type MathFigureMetrics = { Ink: IBrush }
 
 /// 画一条公式（旧 Rich/MathVisual.fs）。KaTeX HTML 由调用方给（宿主的 RichBackend 产出），本控件只排版与绘制。
 /// lineHeight 是所在段落的行高（0 = 未设置）。
@@ -56,8 +60,10 @@ type MathFigure(html: string option, displayMode: bool, fontSize: float, look: M
                 match app.TryFindResource(box "FontFamily.Body") with
                 | true, (:? FontFamily as f) -> f
                 | _ -> FontFamily.Default
+
         relayout ()
         this.Bind(TextElement.FontFamilyProperty, Dyn.res "FontFamily.Body") |> ignore
+
         this.PropertyChanged.Add(fun e ->
             if e.Property = TextElement.FontFamilyProperty then
                 applyFont (e.NewValue :?> FontFamily))
@@ -80,6 +86,7 @@ type MathFigure(html: string option, displayMode: bool, fontSize: float, look: M
                 | null -> None
                 | layout -> layout.TextLines |> Seq.tryHead |> Option.map (fun line -> line.Baseline)
             | other -> climb (other.GetVisualParent())
+
         climb (this.GetVisualParent())
 
     /// 公式基线到控件顶缘的距离。行内时以父级文本块的真实基线为准。
@@ -95,6 +102,7 @@ type MathFigure(html: string option, displayMode: bool, fontSize: float, look: M
         match picture with
         | Some laid ->
             use _ = context.PushTransform(Matrix.CreateTranslation(0.0, this.Baseline))
+
             for mark in laid.Marks do
                 match mark with
                 | MathMark.Glyph(_, shaped, _, topLeft) -> context.DrawText(shaped, topLeft)
@@ -116,10 +124,12 @@ module MathFigures =
     /// 行内公式。字号跟随所在段落。
     let tryInline (look: MathFigureMetrics) (html: string option) (fontSize: float) (tex: string) : Control option =
         let figure = new MathFigure(html, false, fontSize, look)
+
         if figure.HasLayout then
             describe figure tex
             Some(figure :> Control)
-        else None
+        else
+            None
 
     /// 行内公式的内联容器。对齐必须显式指定：默认值随主题模板变化，基线对齐是可见的正确性问题。
     let inlineContainer (control: Control) =
@@ -130,11 +140,15 @@ module MathFigures =
     /// 展示式公式：独占一行、水平居中，上下留白取自 Look。
     let tryBlock (look: MathFigureMetrics) (html: string option) (fontSize: float) (tex: string) : Control option =
         let figure = new MathFigure(html, true, fontSize, look)
-        if not figure.HasLayout then None
+
+        if not figure.HasLayout then
+            None
         else
             describe figure tex
             figure.HorizontalAlignment <- Layout.HorizontalAlignment.Center
-            let host = Border(Child = figure, HorizontalAlignment = Layout.HorizontalAlignment.Stretch)
+
+            let host =
+                Border(Child = figure, HorizontalAlignment = Layout.HorizontalAlignment.Stretch)
             // 展示式上下留白：主题资源键直达 Padding，随主题即时生效
             host.Bind(Border.PaddingProperty, Dyn.res "Padding.MathBlock") |> ignore
             Some(host :> Control)

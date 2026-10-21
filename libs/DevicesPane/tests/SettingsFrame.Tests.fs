@@ -13,10 +13,24 @@ open Xunit
 open Wanxiang2.SettingsFrame
 open Wanxiang2.SettingsFrame.Tests.Probe
 
-let private item key label = { Key = key; Label = label; Glyph = key }
+let private item key label =
+    {
+        Key = key
+        Label = label
+        Glyph = key
+    }
+
 let private groups =
-    [ "主机", [ item "providers" "模型服务"; item "tools" "工具"; item "generation" "对话默认值"; item "devices" "设备" ]
-      "这台客户端", [ item "appearance" "外观与操作"; item "about" "关于" ] ]
+    [
+        "主机",
+        [
+            item "providers" "模型服务"
+            item "tools" "工具"
+            item "generation" "对话默认值"
+            item "devices" "设备"
+        ]
+        "这台客户端", [ item "appearance" "外观与操作"; item "about" "关于" ]
+    ]
 
 /// 组合者替身：请求即选中
 let private frame () =
@@ -65,13 +79,24 @@ let ``settings nav arrows wrap and home end jump while keeping focus on the nav`
         Assert.Equal("providers", f.Current)
         key first Key.Down
         Assert.Equal("tools", f.Current)
-        Assert.Equal(AutomationControlType.TabItem, (ControlAutomationPeer.CreatePeerForElement first).GetAutomationControlType()))
+
+        Assert.Equal(
+            AutomationControlType.TabItem,
+            (ControlAutomationPeer.CreatePeerForElement first).GetAutomationControlType()
+        ))
 
 [<Fact>]
 let ``settings window title dominates section headings`` () =
     Headless.run (fun () ->
         let f, _ = frame ()
-        let title = descendants f |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "设置" -> Some t | _ -> None)
+
+        let title =
+            descendants f
+            |> Seq.pick (fun c ->
+                match c with
+                | :? TextBlock as t when t.Text = "设置" -> Some t
+                | _ -> None)
+
         Assert.Equal(28.0, title.FontSize)
         Assert.True(title.FontSize > 17.0)
         let closes = ResizeArray<unit>()
@@ -84,7 +109,14 @@ let ``narrow window turns the nav into a top strip and hides group labels`` () =
     Headless.run (fun () ->
         let f, w = frame ()
         Assert.False f.IsCompact
-        let label = descendants f |> Seq.pick (fun c -> match c with :? TextBlock as t when t.Text = "这台客户端" -> Some t | _ -> None)
+
+        let label =
+            descendants f
+            |> Seq.pick (fun c ->
+                match c with
+                | :? TextBlock as t when t.Text = "这台客户端" -> Some t
+                | _ -> None)
+
         Assert.True label.IsVisible
         w.Width <- 600.0
         Dispatcher.UIThread.RunJobs()

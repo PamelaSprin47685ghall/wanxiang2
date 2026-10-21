@@ -8,9 +8,20 @@ open Wanxiang.UI
 
 [<Fact>]
 let ``headers only without a query and with several providers`` () =
-    Assert.True(ModelPickerList.groups fst "" ModelPickerListSamples.two |> List.forall (fst >> Option.isSome))
-    Assert.True(ModelPickerList.groups fst "q" ModelPickerListSamples.two |> List.forall (fst >> Option.isNone))
-    Assert.True(ModelPickerList.groups fst "" ModelPickerListSamples.one |> List.forall (fst >> Option.isNone))
+    Assert.True(
+        ModelPickerList.groups fst "" ModelPickerListSamples.two
+        |> List.forall (fst >> Option.isSome)
+    )
+
+    Assert.True(
+        ModelPickerList.groups fst "q" ModelPickerListSamples.two
+        |> List.forall (fst >> Option.isNone)
+    )
+
+    Assert.True(
+        ModelPickerList.groups fst "" ModelPickerListSamples.one
+        |> List.forall (fst >> Option.isNone)
+    )
 
 [<Fact>]
 let ``up from the top returns to search; down stops at the end`` () =

@@ -17,14 +17,21 @@ type DirLock private (stream: FileStream, path: string) =
     static member TryAcquire(dir: string) : Result<DirLock, string> =
         Directory.CreateDirectory dir |> ignore
         let path = Path.Combine(dir, ".lock")
+
         let opened =
-            try Ok(new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
-            with :? IOException as e -> Error e
+            try
+                Ok(new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+            with :? IOException as e ->
+                Error e
+
         match opened with
         | Error e ->
             let holder =
-                try " (held by pid " + File.ReadAllText(path + ".pid").Trim() + ")"
-                with _ -> ""
+                try
+                    " (held by pid " + File.ReadAllText(path + ".pid").Trim() + ")"
+                with _ ->
+                    ""
+
             Error(sprintf "directory %s is locked%s: %s" dir holder e.Message)
         | Ok s ->
             // 已持锁；写 pid 失败不是「被占用」，要释放句柄并如实报告

@@ -13,6 +13,7 @@ type BoundedCache<'K, 'V when 'K: equality>(limit: int) =
     let insert key value =
         map[key] <- value
         order.Enqueue key
+
         while order.Count > limit do
             map.Remove(order.Dequeue()) |> ignore
 
@@ -25,11 +26,12 @@ type BoundedCache<'K, 'V when 'K: equality>(limit: int) =
     member _.Set(key: 'K, value: 'V) = lock gate (fun () -> insert key value)
 
     member _.GetOrAdd(key: 'K, compute: 'K -> 'V) : 'V =
-        match lock gate (fun () ->
-                  match map.TryGetValue key with
-                  | true, hit -> Some hit
-                  | _ -> None)
-            with
+        match
+            lock gate (fun () ->
+                match map.TryGetValue key with
+                | true, hit -> Some hit
+                | _ -> None)
+        with
         | Some hit -> hit
         | None ->
             // compute 在锁外执行：着色可能要几百毫秒，占着锁会挡住 UI 线程的读

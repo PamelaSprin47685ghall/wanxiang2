@@ -1,4 +1,5 @@
 module BlockDiffTests
+
 open System
 open System.IO
 open Xunit
@@ -9,7 +10,10 @@ open Wanxiang.UI
 let ``only blocks after the first changed one are rendered again`` () =
     let d = BlockDiff<string, string>()
     Assert.True(d.Accept "a")
-    for b in (d.Diff [ "p1"; "p2" ]).Render do d.Mounted(b, [ b + "-ctl" ])
+
+    for b in (d.Diff [ "p1"; "p2" ]).Render do
+        d.Mounted(b, [ b + "-ctl" ])
+
     Assert.True(d.Accept "b")
     let plan = d.Diff [ "p1"; "p2x"; "p3" ]
     Assert.Equal(1, plan.KeepControls)

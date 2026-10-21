@@ -8,5 +8,7 @@ open Xunit
 
 [<Fact>]
 let ``doctor reports and recovery bundle equal the old implementation`` () =
-    let expected = File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "doctor.txt")).TrimEnd()
+    let expected =
+        File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "doctor.txt")).TrimEnd()
+
     Assert.Equal(expected, Scenario.all().TrimEnd())

@@ -18,7 +18,10 @@ module ServerErrorRoute =
     let toastText (message: string) = sprintf "主机报告了错误：%s" message
 
     let classify (hasActiveConversation: bool) (message: string) : ServerErrorRoute =
-        if message.StartsWith("attachment ", StringComparison.Ordinal) && message.Contains "not found" then
+        if
+            message.StartsWith("attachment ", StringComparison.Ordinal)
+            && message.Contains "not found"
+        then
             // 以 "attachment " 开头，按空格切至少两段
             ServerErrorRoute.MissingAttachment((message.Split(' ')[1]).ToLowerInvariant())
         elif message.StartsWith("消息记账失败", StringComparison.Ordinal) && hasActiveConversation then

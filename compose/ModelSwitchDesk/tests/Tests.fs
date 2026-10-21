@@ -17,14 +17,35 @@ open Wanxiang2.ModelSwitchDesk
 open Wanxiang2.DeskTests
 
 let private options =
-    [ { providerId = "oa"; providerLabel = "OpenAI"; model = "gpt-4o"; isCurrent = true; isDefault = false }
-      { providerId = "oa"; providerLabel = "OpenAI"; model = "o3"; isCurrent = false; isDefault = false }
-      { providerId = "ds"; providerLabel = "DeepSeek"; model = "deepseek-chat"; isCurrent = false; isDefault = true } ]
+    [
+        {
+            providerId = "oa"
+            providerLabel = "OpenAI"
+            model = "gpt-4o"
+            isCurrent = true
+            isDefault = false
+        }
+        {
+            providerId = "oa"
+            providerLabel = "OpenAI"
+            model = "o3"
+            isCurrent = false
+            isDefault = false
+        }
+        {
+            providerId = "ds"
+            providerLabel = "DeepSeek"
+            model = "deepseek-chat"
+            isCurrent = false
+            isDefault = true
+        }
+    ]
 
 let private rowNames (root: Visual) =
     root.GetVisualDescendants()
     |> Seq.choose (function
-        | :? Border as b when b.Focusable -> Some(AutomationProperties.GetName b + "，" + AutomationProperties.GetHelpText b)
+        | :? Border as b when b.Focusable ->
+            Some(AutomationProperties.GetName b + "，" + AutomationProperties.GetHelpText b)
         | _ -> None)
     |> List.ofSeq
 
@@ -37,7 +58,11 @@ let private setup () =
     let window = Desk.show root 800.0 600.0
     overlay, ModelSwitchDesk(theme, overlay), anchor, root, window
 
-let private searchOf (root: Visual) = root.GetVisualDescendants() |> Seq.pick (function :? TextBox as t -> Some t | _ -> None)
+let private searchOf (root: Visual) =
+    root.GetVisualDescendants()
+    |> Seq.pick (function
+        | :? TextBox as t -> Some t
+        | _ -> None)
 
 // 迁自 ModelChipUiTests：浮层内容经本组合者打开在 OverlayDesk 上。
 [<Fact>]
@@ -100,7 +125,13 @@ let ``模型切换器写明键盘路径且空结果会播报`` () =
         Assert.Equal(ModelPickerList.searchHelp, AutomationProperties.GetHelpText search)
         search.Text <- "zzzz"
         Dispatcher.UIThread.RunJobs()
-        let empty = root.GetVisualDescendants() |> Seq.pick (function :? TextBlock as t when t.Text = ModelPickerList.emptyText -> Some t | _ -> None)
+
+        let empty =
+            root.GetVisualDescendants()
+            |> Seq.pick (function
+                | :? TextBlock as t when t.Text = ModelPickerList.emptyText -> Some t
+                | _ -> None)
+
         Assert.True empty.IsVisible
         Assert.Equal(AutomationLiveSetting.Polite, AutomationProperties.GetLiveSetting empty)
         window.Close())

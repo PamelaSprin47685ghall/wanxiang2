@@ -20,19 +20,22 @@ module OnboardingRules =
             | :? JsonObject as root ->
                 match root["data"] with
                 | :? JsonArray as items ->
-                    [ for item in items do
-                          match item with
-                          | :? JsonObject as o ->
-                              match o["id"] with
-                              | null -> ()
-                              | v when v.GetValueKind() = JsonValueKind.String -> v.GetValue<string>()
-                              | _ -> ()
-                          | _ -> () ]
+                    [
+                        for item in items do
+                            match item with
+                            | :? JsonObject as o ->
+                                match o["id"] with
+                                | null -> ()
+                                | v when v.GetValueKind() = JsonValueKind.String -> v.GetValue<string>()
+                                | _ -> ()
+                            | _ -> ()
+                    ]
                     |> List.filter (String.IsNullOrWhiteSpace >> not)
                     |> List.distinct
                 | _ -> []
             | _ -> []
-        with _ -> []
+        with _ ->
+            []
 
     /// 探测本机 Ollama（只在 loopback 上发一次 GET，短超时；失败一律视为没有）。
     /// 这是用户已确认允许的本机端口探测：不带任何凭据，不写任何文件。
@@ -41,14 +44,17 @@ module OnboardingRules =
             try
                 use client = new HttpClient(Timeout = TimeSpan.FromMilliseconds 1500.0)
                 use! response = client.GetAsync url
+
                 if response.IsSuccessStatusCode then
                     let! body = response.Content.ReadAsStringAsync()
+
                     match parseModelIds body with
                     | [] -> return None
                     | ids -> return Some ids
                 else
                     return None
-            with _ -> return None
+            with _ ->
+                return None
         }
 
     /// 只有主机在本机（loopback）时，「本机 Ollama」才是主机会用到的那个 Ollama。

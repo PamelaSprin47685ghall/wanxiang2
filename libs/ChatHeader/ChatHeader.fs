@@ -15,7 +15,12 @@ open Wanxiang2.WorkspaceState
 module private Dyn =
     let res (key: string) =
         let ext = DynamicResourceExtension key
-        let sp = { new IServiceProvider with member _.GetService _ = null }
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
         ext.ProvideValue sp
 
 /// 聊天顶栏（原生 Button / TextBox / Grid / StackPanel 实现）：
@@ -31,7 +36,9 @@ type ChatHeader() =
 
     // 原生 Button 替换 Spot/Tap，挂 icon-button 与 ghost 类
     let sidebarButton =
-        let b = Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), Width = 30.0, Height = 30.0)
+        let b =
+            Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), Width = 30.0, Height = 30.0)
+
         b.Classes.Add "icon-button"
         b.Classes.Add "ghost"
         b.VerticalAlignment <- VerticalAlignment.Center
@@ -45,7 +52,9 @@ type ChatHeader() =
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 Width = 14.0,
-                Height = 14.0)
+                Height = 14.0
+            )
+
         icon.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
         b.Content <- icon
         ToolTip.SetTip(b, "切换侧边栏（Ctrl / ⌘ + B）")
@@ -54,11 +63,20 @@ type ChatHeader() =
         b
 
     let moreButton =
-        let b = Button(Focusable = true, Cursor = new Cursor(StandardCursorType.Hand), IsVisible = false, Width = 30.0, Height = 30.0)
+        let b =
+            Button(
+                Focusable = true,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                IsVisible = false,
+                Width = 30.0,
+                Height = 30.0
+            )
+
         b.Classes.Add "icon-button"
         b.Classes.Add "ghost"
         b.VerticalAlignment <- VerticalAlignment.Center
         b.HorizontalAlignment <- HorizontalAlignment.Center
+
         let icon =
             Path(
                 Data = Geometry.Parse "M 4 8 A 1 1 0 1 1 4 8.01 M 8 8 A 1 1 0 1 1 8 8.01 M 12 8 A 1 1 0 1 1 12 8.01",
@@ -68,7 +86,9 @@ type ChatHeader() =
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 Width = 14.0,
-                Height = 14.0)
+                Height = 14.0
+            )
+
         icon.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
         b.Content <- icon
         ToolTip.SetTip(b, "对话操作")
@@ -82,11 +102,19 @@ type ChatHeader() =
             FontWeight = FontWeight.Medium,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
-            HorizontalAlignment = HorizontalAlignment.Stretch)
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        )
+
     do titleText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
 
     let titleAction =
-        let b = Button(Focusable = false, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Stretch)
+        let b =
+            Button(
+                Focusable = false,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            )
+
         b.Classes.Add "ghost"
         b.Classes.Add "button-ghost"
         b.Content <- titleText
@@ -101,7 +129,8 @@ type ChatHeader() =
             Margin = Thickness 0.0,
             VerticalAlignment = VerticalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Stretch)
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        )
 
     let editShell =
         Border(
@@ -110,20 +139,30 @@ type ChatHeader() =
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             IsVisible = false,
-            Child = editBox)
+            Child = editBox
+        )
+
     do
         editShell.Bind(Border.BackgroundProperty, Dyn.res "Palette.Surface") |> ignore
         editShell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Border") |> ignore
 
-    let titleHost = Grid(MinWidth = 0.0, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Center)
+    let titleHost =
+        Grid(
+            MinWidth = 0.0,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Center
+        )
 
     let caption = TextBlock(Text = "生成中", VerticalAlignment = VerticalAlignment.Center)
     do caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Accent") |> ignore
 
-    let dot = Border(Width = 6.0, Height = 6.0, CornerRadius = CornerRadius 3.0, VerticalAlignment = VerticalAlignment.Center)
+    let dot =
+        Border(Width = 6.0, Height = 6.0, CornerRadius = CornerRadius 3.0, VerticalAlignment = VerticalAlignment.Center)
+
     do dot.Bind(Border.BackgroundProperty, Dyn.res "Palette.Accent") |> ignore
 
-    let chipRow = StackPanel(Orientation = Orientation.Horizontal, Spacing = 6.0, VerticalAlignment = VerticalAlignment.Center)
+    let chipRow =
+        StackPanel(Orientation = Orientation.Horizontal, Spacing = 6.0, VerticalAlignment = VerticalAlignment.Center)
 
     let generatingChip =
         Border(
@@ -132,12 +171,19 @@ type ChatHeader() =
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = 0.0,
             IsHitTestVisible = false,
-            Child = chipRow)
-    do generatingChip.Bind(Border.BackgroundProperty, Dyn.res "Palette.AccentFaint") |> ignore
+            Child = chipRow
+        )
+
+    do
+        generatingChip.Bind(Border.BackgroundProperty, Dyn.res "Palette.AccentFaint")
+        |> ignore
 
     let crumbText =
         TextBlock(TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center)
-    do crumbText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+
+    do
+        crumbText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
 
     let crumbAction =
         let b = Button(Focusable = false, HorizontalAlignment = HorizontalAlignment.Left)
@@ -147,9 +193,15 @@ type ChatHeader() =
 
     let crumbBar = Border(IsVisible = false, Child = crumbAction)
 
-    let leftGroup = Grid(VerticalAlignment = VerticalAlignment.Center, ColumnSpacing = 8.0)
-    let rightGroup = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0, VerticalAlignment = VerticalAlignment.Center)
-    let dock = DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
+    let leftGroup =
+        Grid(VerticalAlignment = VerticalAlignment.Center, ColumnSpacing = 8.0)
+
+    let rightGroup =
+        StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0, VerticalAlignment = VerticalAlignment.Center)
+
+    let dock =
+        DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
+
     let top = StackPanel()
     let bar = Border(IsVisible = false, Child = top)
     do bar.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
@@ -183,6 +235,7 @@ type ChatHeader() =
             let next = if isNull editBox.Text then "" else editBox.Text.Trim()
             titleAction.IsVisible <- true
             editShell.IsVisible <- false
+
             if not (String.IsNullOrWhiteSpace next) && next <> currentTitle then
                 currentTitle <- next
                 titleText.Text <- next
@@ -191,6 +244,7 @@ type ChatHeader() =
             else
                 editBox.Text <- currentTitle
                 titleText.Text <- currentTitle
+
             chrome currentTitle
 
     let cancel () =
@@ -215,9 +269,11 @@ type ChatHeader() =
     let applyCompact (compact: bool) =
         isCompact <- compact
         let size = if compact then 44.0 else 30.0
+
         for b in [ sidebarButton; moreButton ] do
             b.Width <- size
             b.Height <- size
+
         syncChip ()
 
     do
@@ -229,7 +285,10 @@ type ChatHeader() =
         titleHost.Children.Add titleAction
         titleHost.Children.Add editShell
 
-        titleAction.Click.Add(fun _ -> if isEditable then beginEdit ())
+        titleAction.Click.Add(fun _ ->
+            if isEditable then
+                beginEdit ())
+
         titleAction.KeyDown.Add(fun e ->
             if (e.Key = Key.F2 || e.Key = Key.Enter) && isEditable then
                 e.Handled <- true
@@ -244,9 +303,12 @@ type ChatHeader() =
                 cancel ())
 
         editBox.LostFocus.Add(fun _ ->
-            if isEditing then commit ())
+            if isEditing then
+                commit ())
 
-        crumbAction.Click.Add(fun _ -> if crumbClickable then crumbPressed.Trigger())
+        crumbAction.Click.Add(fun _ ->
+            if crumbClickable then
+                crumbPressed.Trigger())
 
         leftGroup.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
         leftGroup.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
@@ -271,9 +333,18 @@ type ChatHeader() =
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 Width = 12.0,
-                Height = 12.0)
+                Height = 12.0
+            )
+
         crumbIcon.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
-        let crumbRow = StackPanel(Orientation = Orientation.Horizontal, Spacing = 6.0, VerticalAlignment = VerticalAlignment.Center)
+
+        let crumbRow =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 6.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
         crumbRow.Children.Add crumbIcon
         crumbRow.Children.Add crumbText
         crumbAction.Content <- crumbRow
@@ -318,16 +389,25 @@ type ChatHeader() =
         | TitleMode.Viewing(text, canEdit) ->
             isEditable <- canEdit
             currentTitle <- text
+
             if not isEditing then
                 titleText.Text <- text
                 editBox.Text <- text
                 titleAction.IsVisible <- true
                 editShell.IsVisible <- false
+
             titleAction.Focusable <- canEdit
-            titleAction.Cursor <- if canEdit then new Cursor(StandardCursorType.Hand) else null
+
+            titleAction.Cursor <-
+                if canEdit then
+                    new Cursor(StandardCursorType.Hand)
+                else
+                    null
+
             chrome text
         | TitleMode.Editing draft ->
             isEditable <- true
+
             if not isEditing then
                 isEditing <- true
                 editBox.Text <- draft
@@ -341,8 +421,8 @@ type ChatHeader() =
         | Some status ->
             isGenerating <- true
             caption.Text <- if String.IsNullOrWhiteSpace status then "生成中" else status
-        | None ->
-            isGenerating <- false
+        | None -> isGenerating <- false
+
         syncChip ()
 
         // 面包屑
@@ -351,13 +431,20 @@ type ChatHeader() =
             crumbClickable <- c.Clickable
             crumbText.Text <- c.ParentTitle
             crumbAction.Focusable <- c.Clickable
-            crumbAction.Cursor <- if c.Clickable then new Cursor(StandardCursorType.Hand) else null
+
+            crumbAction.Cursor <-
+                if c.Clickable then
+                    new Cursor(StandardCursorType.Hand)
+                else
+                    null
+
             ToolTip.SetTip(crumbAction, c.ParentTitle)
             AutomationProperties.SetName(crumbAction, c.ParentTitle)
             crumbBar.IsVisible <- not (String.IsNullOrEmpty c.ParentTitle)
         | None ->
             crumbClickable <- false
             crumbBar.IsVisible <- false
+
     member _.BeginRename() = beginEdit ()
     member _.CommitRename(_refocus: bool) = commit ()
     member _.CancelRename() = cancel ()

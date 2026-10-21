@@ -14,11 +14,13 @@ type ActionSpot() as this =
 
     override this.OnKeyDown(e: KeyEventArgs) =
         base.OnKeyDown(e)
+
         if not e.Handled && this.IsEnabled && e.Key = Key.Space then
             e.Handled <- true
             this.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, this))
 
     /// 点击走原生 Click 事件
     member this.OnInvoke(f: unit -> unit) =
-        this.Click.Add(fun _ -> if this.IsEnabled then f ())
-
+        this.Click.Add(fun _ ->
+            if this.IsEnabled then
+                f ())

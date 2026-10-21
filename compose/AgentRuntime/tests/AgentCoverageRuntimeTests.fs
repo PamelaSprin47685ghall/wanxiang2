@@ -29,41 +29,42 @@ module AgentCoverageRuntimeTests =
 
     type FakeHttpMessageHandler(handler: HttpRequestMessage -> HttpResponseMessage) =
         inherit HttpMessageHandler()
-        override _.SendAsync(request, cancellationToken) =
-            Task.FromResult(handler request)
+        override _.SendAsync(request, cancellationToken) = Task.FromResult(handler request)
 
     type AsyncFakeHttpMessageHandler(handler: HttpRequestMessage -> CancellationToken -> Task<HttpResponseMessage>) =
         inherit HttpMessageHandler()
-        override _.SendAsync(request, cancellationToken) =
-            handler request cancellationToken
+        override _.SendAsync(request, cancellationToken) = handler request cancellationToken
 
-    let dummyProvider kind : ProviderConfig = {
-        id = "test-provider"
-        kind = kind
-        label = "Test Provider"
-        baseUrl = "https://api.example.com/v1"
-        apiKey = Some "test-key"
-        defaultModel = "default-model"
-        models = [ "model-a"; "model-b" ]
-        timeoutSeconds = 30
-        maxRetries = 2
-        enabled = true
-        promptCaching = false
-        headers = Map.empty
-        extraJson = None; visionOverrides = Map.empty
-    }
+    let dummyProvider kind : ProviderConfig =
+        {
+            id = "test-provider"
+            kind = kind
+            label = "Test Provider"
+            baseUrl = "https://api.example.com/v1"
+            apiKey = Some "test-key"
+            defaultModel = "default-model"
+            models = [ "model-a"; "model-b" ]
+            timeoutSeconds = 30
+            maxRetries = 2
+            enabled = true
+            promptCaching = false
+            headers = Map.empty
+            extraJson = None
+            visionOverrides = Map.empty
+        }
 
-    let dummySession : SessionConfig = {
-        provider = "test-provider"
-        model = "model-a"
-        instructions = Some "System prompt instructions"
-        tools = []
-        temperature = Some 0.7
-        topP = Some 0.9
-        maxTokens = Some 1024
-        thinkingBudget = Some 0
-        extraJson = None
-    }
+    let dummySession: SessionConfig =
+        {
+            provider = "test-provider"
+            model = "model-a"
+            instructions = Some "System prompt instructions"
+            tools = []
+            temperature = Some 0.7
+            topP = Some 0.9
+            maxTokens = Some 1024
+            thinkingBudget = Some 0
+            extraJson = None
+        }
 
     // =========================================================================
     // 1. ProviderFailure 错误分类与 Retry-After 解析测试
@@ -120,7 +121,9 @@ module AgentCoverageRuntimeTests =
         Assert.True(f408.retryable)
 
         // 429 Rate Limited with RetryAfterSeconds in Data
-        let hre429 = HttpRequestException("Rate limited", null, HttpStatusCode.TooManyRequests)
+        let hre429 =
+            HttpRequestException("Rate limited", null, HttpStatusCode.TooManyRequests)
+
         hre429.Data.["RetryAfterSeconds"] <- 60
         let f429 = ProviderFailure.classify pLabel model hre429
         Assert.Equal(ProviderRateLimited, f429.kind)
@@ -128,7 +131,9 @@ module AgentCoverageRuntimeTests =
         Assert.Equal(Some 60, f429.retryAfterSeconds)
 
         // 500 Internal Server Error
-        let hre500 = HttpRequestException("Internal server error", null, HttpStatusCode.InternalServerError)
+        let hre500 =
+            HttpRequestException("Internal server error", null, HttpStatusCode.InternalServerError)
+
         let f500 = ProviderFailure.classify pLabel model hre500
         Assert.Equal(ProviderUnavailable, f500.kind)
         Assert.True(f500.retryable)
@@ -201,7 +206,10 @@ module AgentCoverageRuntimeTests =
     let ``WanxiangHistoryProvider ConversationIdOf extracts valid GUID and handles invalid`` () =
         let provider = dummyProvider "anthropic"
         let sessionConfig = dummySession
-        let historyProvider = WanxiangHistoryProvider((fun _ -> []), (fun _ _ -> ()), (fun _ _ -> ()))
+
+        let historyProvider =
+            WanxiangHistoryProvider((fun _ -> []), (fun _ _ -> ()), (fun _ _ -> ()))
+
         let runtime = AgentRuntime(provider, sessionConfig, [], historyProvider, 0)
         let cid = Guid.NewGuid()
         let session = runtime.CreateSession(cid)
@@ -223,6 +231,7 @@ module AgentCoverageRuntimeTests =
                     HttpRequestException("api error")
                 else
                     HttpRequestException("api error", null, enum<HttpStatusCode> status)
+
             let failure = ProviderFailure.classify "test" "model-a" ex
             Assert.Equal(expectedKind, failure.kind)
             Assert.Equal(expectedRetryable, failure.retryable)
@@ -241,25 +250,33 @@ module AgentCoverageRuntimeTests =
 
     [<Fact>]
     let ``ProviderFailure classify recognizes body signals in ClientResultException`` () =
-        let ex1 = HttpRequestException("error: context_length_exceeded error detail", null, HttpStatusCode.BadRequest)
+        let ex1 =
+            HttpRequestException("error: context_length_exceeded error detail", null, HttpStatusCode.BadRequest)
+
         let f1 = ProviderFailure.classify "test" "model-a" ex1
         Assert.Equal(GenerationErrorKind.ContextTooLong, f1.kind)
         Assert.False(f1.retryable)
 
-        let ex2 = HttpRequestException("error: content_filter violation", null, HttpStatusCode.BadRequest)
+        let ex2 =
+            HttpRequestException("error: content_filter violation", null, HttpStatusCode.BadRequest)
+
         let f2 = ProviderFailure.classify "test" "model-a" ex2
         Assert.Equal(GenerationErrorKind.ContentFiltered, f2.kind)
         Assert.False(f2.retryable)
 
     [<Fact>]
     let ``ProviderFailure classify classifies timeouts and cancellations`` () =
-        let f1 = ProviderFailure.classify "anthropic" "model-a" (TimeoutException("time out"))
+        let f1 =
+            ProviderFailure.classify "anthropic" "model-a" (TimeoutException("time out"))
+
         Assert.Equal(GenerationErrorKind.ProviderTimeout, f1.kind)
         Assert.True(f1.retryable)
         Assert.True(f1.detail.IsSome)
         Assert.Contains("time out", f1.detail.Value)
 
-        let f2 = ProviderFailure.classify "anthropic" "model-a" (TaskCanceledException("cancelled"))
+        let f2 =
+            ProviderFailure.classify "anthropic" "model-a" (TaskCanceledException("cancelled"))
+
         Assert.Equal(GenerationErrorKind.ProviderTimeout, f2.kind)
         Assert.True(f2.retryable)
 
@@ -270,19 +287,25 @@ module AgentCoverageRuntimeTests =
         Assert.Equal(GenerationErrorKind.ProviderUnavailable, f0.kind)
         Assert.True(f0.retryable)
 
-        let ex429 = HttpRequestException("rate limit", null, System.Net.HttpStatusCode.TooManyRequests)
+        let ex429 =
+            HttpRequestException("rate limit", null, System.Net.HttpStatusCode.TooManyRequests)
+
         ex429.Data.["RetryAfterSeconds"] <- 45
         let f429 = ProviderFailure.classify "test" "model-a" ex429
         Assert.Equal(GenerationErrorKind.ProviderRateLimited, f429.kind)
         Assert.True(f429.retryable)
         Assert.Equal(Some 45, f429.retryAfterSeconds)
 
-        let ex500 = HttpRequestException("internal", null, System.Net.HttpStatusCode.InternalServerError)
+        let ex500 =
+            HttpRequestException("internal", null, System.Net.HttpStatusCode.InternalServerError)
+
         let f500 = ProviderFailure.classify "test" "model-a" ex500
         Assert.Equal(GenerationErrorKind.ProviderUnavailable, f500.kind)
         Assert.True(f500.retryable)
 
-        let ex401 = HttpRequestException("unauth", null, System.Net.HttpStatusCode.Unauthorized)
+        let ex401 =
+            HttpRequestException("unauth", null, System.Net.HttpStatusCode.Unauthorized)
+
         let f401 = ProviderFailure.classify "test" "model-a" ex401
         Assert.Equal(GenerationErrorKind.ProviderAuthFailed, f401.kind)
         Assert.False(f401.retryable)
@@ -350,6 +373,7 @@ module AgentCoverageRuntimeTests =
             cts.Cancel()
             let msgs = [ ChatMessage(ChatRole.User, "prompt") ]
             let! result = runtime.CompleteOnce(msgs, 100, cts.Token)
+
             match result with
             | Error err ->
                 Assert.Equal(GenerationErrorKind.ProviderTimeout, err.kind)
@@ -366,7 +390,10 @@ module AgentCoverageRuntimeTests =
             let agentSession = runtime.CreateSession(Guid.NewGuid())
             use cts = new CancellationTokenSource()
             cts.Cancel()
-            let! res = runtime.RunStreaming(agentSession, [ ChatMessage(ChatRole.User, "hi") ], (fun _ -> ()), cts.Token)
+
+            let! res =
+                runtime.RunStreaming(agentSession, [ ChatMessage(ChatRole.User, "hi") ], (fun _ -> ()), cts.Token)
+
             match res with
             | AgentCallResult.Cancelled -> ()
             | _ -> Assert.Fail("Expected Cancelled")
@@ -382,8 +409,8 @@ module AgentCoverageRuntimeTests =
             use cts = new CancellationTokenSource()
             cts.Cancel()
             let! res = runtime.Run(agentSession, ChatMessage(ChatRole.User, "hi"), cts.Token)
+
             match res with
             | AgentCallResult.Cancelled -> ()
             | _ -> Assert.Fail("Expected Cancelled")
         }
-

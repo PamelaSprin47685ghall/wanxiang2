@@ -19,7 +19,8 @@ module SidebarText =
 
     /// 与 ConversationSummary.matches 同一套分词规则，返回参与匹配的非空词表。
     let terms (query: string) : string list =
-        if String.IsNullOrWhiteSpace query then []
+        if String.IsNullOrWhiteSpace query then
+            []
         else
             query.Trim().Split([| ' '; '\t' |], StringSplitOptions.RemoveEmptyEntries)
             |> Array.distinct
@@ -33,24 +34,34 @@ module SidebarText =
     /// - 大小写不敏感比较，但保留原文片段（不是查询词本身），长文本不被改写。
     let segments (query: string) (text: string) : Segment list =
         let words = terms query
+
         if List.isEmpty words || String.IsNullOrEmpty text then
             let safeText = if isNull text then "" else text
             [ { text = safeText; isMatch = false } ]
         else
             // 每个词单独扫一遍，收集命中的 [start, end) 区间。
             let raw =
-                [ for word in words do
-                    if String.IsNullOrEmpty word then ()
-                    else
-                        let mutable start = 0
-                        let mutable keep = true
-                        while keep do
-                            let index = text.IndexOf(word, start, StringComparison.OrdinalIgnoreCase)
-                            if index < 0 then keep <- false
-                            else
-                                yield (index, index + word.Length)
-                                start <- index + word.Length
-                                if start >= text.Length then keep <- false ]
+                [
+                    for word in words do
+                        if String.IsNullOrEmpty word then
+                            ()
+                        else
+                            let mutable start = 0
+                            let mutable keep = true
+
+                            while keep do
+                                let index = text.IndexOf(word, start, StringComparison.OrdinalIgnoreCase)
+
+                                if index < 0 then
+                                    keep <- false
+                                else
+                                    yield (index, index + word.Length)
+                                    start <- index + word.Length
+
+                                    if start >= text.Length then
+                                        keep <- false
+                ]
+
             if List.isEmpty raw then
                 [ { text = text; isMatch = false } ]
             else
@@ -60,18 +71,40 @@ module SidebarText =
                 let merged =
                     raw
                     |> List.sortBy fst
-                    |> List.fold (fun acc (s, e) ->
-                        match acc with
-                        | (ps, pe) :: rest when s <= pe -> (ps, max pe e) :: rest
-                        | _ -> (s, e) :: acc) []
+                    |> List.fold
+                        (fun acc (s, e) ->
+                            match acc with
+                            | (ps, pe) :: rest when s <= pe -> (ps, max pe e) :: rest
+                            | _ -> (s, e) :: acc)
+                        []
                     |> List.rev
                 // 从合并后的区间还原完整文本，空隙补非命中段。
                 let spans =
-                    [ let mutable cursor = 0
-                      for (s, e) in merged do
-                          if s > cursor then yield { text = text.Substring(cursor, s - cursor); isMatch = false }
-                          yield { text = text.Substring(s, e - s); isMatch = true }
-                          cursor <- e
-                      if cursor < text.Length then
-                          yield { text = text.Substring(cursor); isMatch = false } ]
+                    [
+                        let mutable cursor = 0
+
+                        for (s, e) in merged do
+                            if s > cursor then
+                                yield
+                                    {
+                                        text = text.Substring(cursor, s - cursor)
+                                        isMatch = false
+                                    }
+
+                            yield
+                                {
+                                    text = text.Substring(s, e - s)
+                                    isMatch = true
+                                }
+
+                            cursor <- e
+
+                        if cursor < text.Length then
+                            yield
+                                {
+                                    text = text.Substring(cursor)
+                                    isMatch = false
+                                }
+                    ]
+
                 spans

@@ -21,38 +21,63 @@ type PaletteDesk(dialogWidth: float, overlay: OverlayDesk, prefersTouch: unit ->
     let run = Event<PaletteItem * string>()
 
     let fullTextItem (q: string) =
-        { id = CommandPalette.fullTextId
-          kind = PaletteAction
-          title = CommandPalette.fullTextTitle q
-          subtitle = "交给侧栏搜索，查找消息正文"
-          keywords = []
-          shortcut = Some "Ctrl / ⌘ + Shift + F" }
+        {
+            id = CommandPalette.fullTextId
+            kind = PaletteAction
+            title = CommandPalette.fullTextTitle q
+            subtitle = "交给侧栏搜索，查找消息正文"
+            keywords = []
+            shortcut = Some "Ctrl / ⌘ + Shift + F"
+        }
 
     new(_theme: ThemeManager, overlay: OverlayDesk, prefersTouch: unit -> bool) =
         PaletteDesk(560.0, overlay, prefersTouch)
 
     /// 只建内容（不进对话层）；`execute` 收到所选条目与当时的输入。返回 (内容, 搜索框)。
-    member _.Build(items: unit -> PaletteItem list, recent: unit -> string list, execute: PaletteItem -> string -> unit) : Control * TextBox =
+    member _.Build
+        (items: unit -> PaletteItem list, recent: unit -> string list, execute: PaletteItem -> string -> unit)
+        : Control * TextBox =
         let shown = Collections.Generic.Dictionary<string, PaletteItem>()
+
         let query (q: string) =
             let recentIds = recent ()
             let ranked = CommandPalette.rank q recentIds (items ())
-            let all = if String.IsNullOrWhiteSpace q then ranked else ranked @ [ fullTextItem q ]
+
+            let all =
+                if String.IsNullOrWhiteSpace q then
+                    ranked
+                else
+                    ranked @ [ fullTextItem q ]
+
             let recentSet = Set.ofList recentIds
             shown.Clear()
-            for i in all do shown[i.id] <- i
-            { Rows =
-                all
-                |> List.map (fun i ->
-                    { Id = i.id
-                      Title = i.title
-                      Subtitle = i.subtitle
-                      KindLabel = CommandPalette.kindLabel i.kind
-                      Shortcut = i.shortcut
-                      Recent = recentSet.Contains i.id })
-              MatchCount = ranked.Length
-              HasRecent = not recentSet.IsEmpty }
-        let slots = { Query = query; CompactKeys = CommandPalette.compactKeys; PrefersTouch = prefersTouch }
+
+            for i in all do
+                shown[i.id] <- i
+
+            {
+                Rows =
+                    all
+                    |> List.map (fun i ->
+                        {
+                            Id = i.id
+                            Title = i.title
+                            Subtitle = i.subtitle
+                            KindLabel = CommandPalette.kindLabel i.kind
+                            Shortcut = i.shortcut
+                            Recent = recentSet.Contains i.id
+                        })
+                MatchCount = ranked.Length
+                HasRecent = not recentSet.IsEmpty
+            }
+
+        let slots =
+            {
+                Query = query
+                CompactKeys = CommandPalette.compactKeys
+                PrefersTouch = prefersTouch
+            }
+
         PalettePanel.build slots (fun row q ->
             match shown.TryGetValue row.Id with
             | true, item -> execute item q
@@ -61,12 +86,20 @@ type PaletteDesk(dialogWidth: float, overlay: OverlayDesk, prefersTouch: unit ->
     /// Ctrl/⌘+K：已有对话框时不开；有浮层先关浮层。
     member this.Show(items: unit -> PaletteItem list, recent: unit -> string list) =
         if not overlay.Layer.IsDialogOpen then
-            if overlay.Layer.IsPopupOpen then overlay.ClosePopup()
+            if overlay.Layer.IsPopupOpen then
+                overlay.ClosePopup()
+
             let content, search =
-                this.Build(items, recent, fun item q ->
-                    overlay.CloseDialog()
-                    run.Trigger(item, q))
+                this.Build(
+                    items,
+                    recent,
+                    fun item q ->
+                        overlay.CloseDialog()
+                        run.Trigger(item, q)
+                )
+
             overlay.Layer.ShowDialog(content, dialogWidth, initialFocus = search, scrollWholeContent = false)
 
     /// 面板关闭后执行所选条目（条目, 当时的输入）；宿主据 ShellPalette.commandOf 分派
-    [<CLIEvent>] member _.Run = run.Publish
+    [<CLIEvent>]
+    member _.Run = run.Publish

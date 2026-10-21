@@ -15,18 +15,23 @@ open Wanxiang.Server
 
 module McpTests =
 
-    let private jsonOptions = System.Text.Json.JsonSerializerOptions(Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping)
+    let private jsonOptions =
+        System.Text.Json.JsonSerializerOptions(
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        )
 
     let private defaultMcpConfig id =
-        { id = id
-          label = id
-          enabled = true
-          command = None
-          args = []
-          env = Map.empty
-          url = None
-          maxConcurrency = None
-          callTimeoutSeconds = 5 }
+        {
+            id = id
+            label = id
+            enabled = true
+            command = None
+            args = []
+            env = Map.empty
+            url = None
+            maxConcurrency = None
+            callTimeoutSeconds = 5
+        }
 
     // =========================================================================
     // 1. McpJson 纯函数契约测试
@@ -58,7 +63,10 @@ module McpTests =
             let cfg = defaultMcpConfig "test-no-cmd"
             let logs = ConcurrentQueue<string>()
             let transport = McpStdioTransport(cfg, logs.Enqueue) :> IMcpTransport
-            let! res = transport.Request("test/method", JsonObject(), 1000, CancellationToken.None)
+
+            let! res =
+                transport.Request("test/method", JsonObject(), 1000, CancellationToken.None)
+
             let resStr = res.ToJsonString(jsonOptions)
             Assert.Contains("未配置 command", resStr)
             Assert.Equal(0, transport.Pending)
@@ -69,10 +77,15 @@ module McpTests =
         task {
             let cfg =
                 { defaultMcpConfig "test-bad-cmd" with
-                    command = Some "non_existent_command_wanxiang_xyz_123" }
+                    command = Some "non_existent_command_wanxiang_xyz_123"
+                }
+
             let logs = ConcurrentQueue<string>()
             let transport = McpStdioTransport(cfg, logs.Enqueue) :> IMcpTransport
-            let! res = transport.Request("test/method", JsonObject(), 1000, CancellationToken.None)
+
+            let! res =
+                transport.Request("test/method", JsonObject(), 1000, CancellationToken.None)
+
             let resStr = res.ToJsonString(jsonOptions)
             Assert.Contains("启动失败", resStr)
         }
@@ -82,16 +95,22 @@ module McpTests =
         task {
             // 使用 sh 进程模拟：读取 initialize 后输出 JSON-RPC error
             let script =
-                "read line\n" +
-                "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32600,\"message\":\"rejected\"}}'\n" +
-                "sleep 1\n"
+                "read line\n"
+                + "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32600,\"message\":\"rejected\"}}'\n"
+                + "sleep 1\n"
+
             let cfg =
                 { defaultMcpConfig "test-rejected-init" with
                     command = Some "/bin/sh"
-                    args = [ "-c"; script ] }
+                    args = [ "-c"; script ]
+                }
+
             let logs = ConcurrentQueue<string>()
             let transport = McpStdioTransport(cfg, logs.Enqueue) :> IMcpTransport
-            let! res = transport.Request("test/method", JsonObject(), 3000, CancellationToken.None)
+
+            let! res =
+                transport.Request("test/method", JsonObject(), 3000, CancellationToken.None)
+
             let resStr = res.ToJsonString(jsonOptions)
             Assert.Contains("initialize 被拒绝", resStr)
             transport.Stop()
@@ -100,17 +119,20 @@ module McpTests =
     [<Fact>]
     let ``McpStdioTransport 握手返回非标准 JSON 对象时报错`` () =
         task {
-            let script =
-                "read line\n" +
-                "echo '{\"jsonrpc\":\"2.0\",\"id\":1}'\n" +
-                "sleep 1\n"
+            let script = "read line\n" + "echo '{\"jsonrpc\":\"2.0\",\"id\":1}'\n" + "sleep 1\n"
+
             let cfg =
                 { defaultMcpConfig "test-malformed-init" with
                     command = Some "/bin/sh"
-                    args = [ "-c"; script ] }
+                    args = [ "-c"; script ]
+                }
+
             let logs = ConcurrentQueue<string>()
             let transport = McpStdioTransport(cfg, logs.Enqueue) :> IMcpTransport
-            let! res = transport.Request("test/method", JsonObject(), 3000, CancellationToken.None)
+
+            let! res =
+                transport.Request("test/method", JsonObject(), 3000, CancellationToken.None)
+
             let resStr = res.ToJsonString(jsonOptions)
             Assert.Contains("initialize 响应异常", resStr)
             transport.Stop()
@@ -124,18 +146,21 @@ module McpTests =
             // 2. read notifications/initialized
             // 3. read actual request -> 返回 result: {"echo": true}，并写 stderr 供日志观察
             let script =
-                "read init\n" +
-                "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}'\n" +
-                "read notif\n" +
-                "read req\n" +
-                "echo \"custom_var=$TEST_CUSTOM_ENV\" >&2\n" +
-                "echo '{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"status\":\"ok\"}}'\n" +
-                "while true; do sleep 1; done\n"
+                "read init\n"
+                + "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}'\n"
+                + "read notif\n"
+                + "read req\n"
+                + "echo \"custom_var=$TEST_CUSTOM_ENV\" >&2\n"
+                + "echo '{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"status\":\"ok\"}}'\n"
+                + "while true; do sleep 1; done\n"
+
             let cfg =
                 { defaultMcpConfig "test-ok" with
                     command = Some "/bin/sh"
                     args = [ "-c"; script ]
-                    env = Map.ofList [ "TEST_CUSTOM_ENV", "wanxiang_secret_val" ] }
+                    env = Map.ofList [ "TEST_CUSTOM_ENV", "wanxiang_secret_val" ]
+                }
+
             let logs = ConcurrentQueue<string>()
             let transport = McpStdioTransport(cfg, logs.Enqueue) :> IMcpTransport
 
@@ -155,7 +180,9 @@ module McpTests =
             Assert.Equal(0, transport.Pending)
 
             // Stop 后再次请求应提示已停止
-            let! resAfterStop = transport.Request("custom/echo", JsonObject(), 1000, CancellationToken.None)
+            let! resAfterStop =
+                transport.Request("custom/echo", JsonObject(), 1000, CancellationToken.None)
+
             Assert.Contains("已停止", resAfterStop.ToJsonString(jsonOptions))
         }
 
@@ -164,20 +191,31 @@ module McpTests =
         task {
             // 握手成功后子进程立即退出，未回应业务请求
             let script =
-                "read init\n" +
-                "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}'\n" +
-                "read notif\n" +
-                "exit 0\n"
+                "read init\n"
+                + "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}'\n"
+                + "read notif\n"
+                + "exit 0\n"
+
             let cfg =
                 { defaultMcpConfig "test-crash" with
                     command = Some "/bin/sh"
-                    args = [ "-c"; script ] }
+                    args = [ "-c"; script ]
+                }
+
             let transport = McpStdioTransport(cfg, ignore) :> IMcpTransport
             // 上限只兜底：正常路径是子进程退出事件立刻中断在途请求（毫秒级）。
             // 给足余量，免得机器忙时（如并发跑全套测试）先撞上超时，把这条用例变成看负载的骰子。
-            let! res = transport.Request("call/hang", JsonObject(), 30000, CancellationToken.None)
+            let! res =
+                transport.Request("call/hang", JsonObject(), 30000, CancellationToken.None)
+
             let resStr = res.ToJsonString(jsonOptions)
-            Assert.True(resStr.Contains("MCP 进程已退出") || resStr.Contains("写入 MCP 失败") || resStr.Contains("已停止"))
+
+            Assert.True(
+                resStr.Contains("MCP 进程已退出")
+                || resStr.Contains("写入 MCP 失败")
+                || resStr.Contains("已停止")
+            )
+
             transport.Stop()
         }
 
@@ -185,18 +223,23 @@ module McpTests =
     let ``McpStdioTransport 调用支持超时与主动取消`` () =
         task {
             let script =
-                "read init\n" +
-                "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}'\n" +
-                "read notif\n" +
-                "while true; do sleep 1; done\n"
+                "read init\n"
+                + "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}'\n"
+                + "read notif\n"
+                + "while true; do sleep 1; done\n"
+
             let cfg =
                 { defaultMcpConfig "test-timeout" with
                     command = Some "/bin/sh"
-                    args = [ "-c"; script ] }
+                    args = [ "-c"; script ]
+                }
+
             let transport = McpStdioTransport(cfg, ignore) :> IMcpTransport
 
             // 1. 超时验证
-            let! timeoutRes = transport.Request("call/slow", JsonObject(), 200, CancellationToken.None)
+            let! timeoutRes =
+                transport.Request("call/slow", JsonObject(), 200, CancellationToken.None)
+
             Assert.Contains("超时", timeoutRes.ToJsonString(jsonOptions))
 
             // 2. 取消验证
@@ -221,28 +264,45 @@ module McpTests =
         do
             listener.Prefixes.Add prefix
             listener.Start()
-            Task.Run(Func<Task>(fun () ->
-                task {
-                    while not cts.IsCancellationRequested do
-                        try
-                            let! ctx = listener.GetContextAsync()
-                            let code, contentType, headers, body = handler ctx.Request
-                            ctx.Response.StatusCode <- code
-                            ctx.Response.ContentType <- contentType
-                            for k, v in headers do
-                                ctx.Response.Headers.Add(k, v)
-                            let bytes = Encoding.UTF8.GetBytes body
-                            ctx.Response.ContentLength64 <- int64 bytes.Length
-                            do! ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length)
-                            ctx.Response.Close()
-                        with _ -> ()
-                } :> Task)) |> ignore
+
+            Task.Run(
+                Func<Task>(fun () ->
+                    task {
+                        while not cts.IsCancellationRequested do
+                            try
+                                let! ctx = listener.GetContextAsync()
+                                let code, contentType, headers, body = handler ctx.Request
+                                ctx.Response.StatusCode <- code
+                                ctx.Response.ContentType <- contentType
+
+                                for k, v in headers do
+                                    ctx.Response.Headers.Add(k, v)
+
+                                let bytes = Encoding.UTF8.GetBytes body
+                                ctx.Response.ContentLength64 <- int64 bytes.Length
+                                do! ctx.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length)
+                                ctx.Response.Close()
+                            with _ ->
+                                ()
+                    }
+                    :> Task)
+            )
+            |> ignore
 
         member _.Url = prefix
+
         member this.Dispose() =
             cts.Cancel()
-            try listener.Stop() with _ -> ()
-            try listener.Close() with _ -> ()
+
+            try
+                listener.Stop()
+            with _ ->
+                ()
+
+            try
+                listener.Close()
+            with _ ->
+                ()
 
         interface IDisposable with
             member this.Dispose() = this.Dispose()
@@ -251,33 +311,43 @@ module McpTests =
     let ``McpHttpTransport 握手成功并在 JSON-RPC 下正常收发与支持 SessionId`` () =
         task {
             let receivedHeaders = ConcurrentDictionary<string, string>()
+
             use server =
                 new MockHttpServer(fun req ->
                     use reader = new StreamReader(req.InputStream, Encoding.UTF8)
                     let body = reader.ReadToEnd()
                     let json = JsonNode.Parse body
                     let method = json["method"].GetValue<string>()
-                    let id = if json.AsObject().ContainsKey "id" then json["id"].GetValue<int>() else 0
+
+                    let id =
+                        if json.AsObject().ContainsKey "id" then
+                            json["id"].GetValue<int>()
+                        else
+                            0
 
                     if req.Headers.["X-Custom-Env"] <> null then
                         receivedHeaders["X-Custom-Env"] <- req.Headers.["X-Custom-Env"]
 
                     match method with
                     | "initialize" ->
-                        (200, "application/json", [ ("Mcp-Session-Id", "sess-wanxiang-123") ],
+                        (200,
+                         "application/json",
+                         [ ("Mcp-Session-Id", "sess-wanxiang-123") ],
                          sprintf "{\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{\"protocolVersion\":\"2025-06-18\"}}" id)
-                    | "notifications/initialized" ->
-                        (200, "application/json", [], "")
+                    | "notifications/initialized" -> (200, "application/json", [], "")
                     | "test/echo" ->
-                        (200, "application/json", [],
+                        (200,
+                         "application/json",
+                         [],
                          sprintf "{\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{\"echo\":\"ok\"}}" id)
-                    | _ ->
-                        (404, "application/json", [], "{\"error\":\"not found\"}"))
+                    | _ -> (404, "application/json", [], "{\"error\":\"not found\"}"))
 
             let cfg =
                 { defaultMcpConfig "http-test" with
                     url = Some server.Url
-                    env = Map.ofList [ "X-Custom-Env", "custom-header-value" ] }
+                    env = Map.ofList [ "X-Custom-Env", "custom-header-value" ]
+                }
+
             let logs = ConcurrentQueue<string>()
             let transport = McpHttpTransport(cfg, server.Url, logs.Enqueue) :> IMcpTransport
 
@@ -302,27 +372,40 @@ module McpTests =
                     let body = reader.ReadToEnd()
                     let json = JsonNode.Parse body
                     let method = json["method"].GetValue<string>()
-                    let id = if json.AsObject().ContainsKey "id" then json["id"].GetValue<int>() else 0
+
+                    let id =
+                        if json.AsObject().ContainsKey "id" then
+                            json["id"].GetValue<int>()
+                        else
+                            0
+
                     match method with
                     | "initialize" ->
-                        (200, "text/event-stream", [],
+                        (200,
+                         "text/event-stream",
+                         [],
                          sprintf "data: {\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{}}\n\n" id)
-                    | "notifications/initialized" ->
-                        (200, "text/event-stream", [], "")
+                    | "notifications/initialized" -> (200, "text/event-stream", [], "")
                     | "stream/query" ->
                         let sseBody =
-                            "event: message\n" +
-                            "data: {\"progress\":10}\n\n" +
-                            "event: message\n" +
-                            sprintf "data: {\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{\"streamDone\":true}}\n\n" id
-                        (200, "text/event-stream", [], sseBody)
-                    | _ ->
-                        (400, "text/plain", [], "bad request"))
+                            "event: message\n"
+                            + "data: {\"progress\":10}\n\n"
+                            + "event: message\n"
+                            + sprintf "data: {\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{\"streamDone\":true}}\n\n" id
 
-            let cfg = { defaultMcpConfig "http-sse" with url = Some server.Url }
+                        (200, "text/event-stream", [], sseBody)
+                    | _ -> (400, "text/plain", [], "bad request"))
+
+            let cfg =
+                { defaultMcpConfig "http-sse" with
+                    url = Some server.Url
+                }
+
             let transport = McpHttpTransport(cfg, server.Url, ignore) :> IMcpTransport
 
-            let! res = transport.Request("stream/query", JsonObject(), 5000, CancellationToken.None)
+            let! res =
+                transport.Request("stream/query", JsonObject(), 5000, CancellationToken.None)
+
             let resObj = Assert.IsAssignableFrom<JsonObject>(res)
             let resResult = resObj.["result"]
             Assert.True(resResult.["streamDone"].GetValue<bool>())
@@ -335,16 +418,34 @@ module McpTests =
             // 1. 初始化被拒绝
             use serverInitErr =
                 new MockHttpServer(fun _ ->
-                    (200, "application/json", [], "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-1,\"message\":\"init fail\"}}"))
-            let cfgInitErr = { defaultMcpConfig "http-init-err" with url = Some serverInitErr.Url }
-            let transportInitErr = McpHttpTransport(cfgInitErr, serverInitErr.Url, ignore) :> IMcpTransport
-            let! resInitErr = transportInitErr.Request("any", JsonObject(), 2000, CancellationToken.None)
+                    (200,
+                     "application/json",
+                     [],
+                     "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-1,\"message\":\"init fail\"}}"))
+
+            let cfgInitErr =
+                { defaultMcpConfig "http-init-err" with
+                    url = Some serverInitErr.Url
+                }
+
+            let transportInitErr =
+                McpHttpTransport(cfgInitErr, serverInitErr.Url, ignore) :> IMcpTransport
+
+            let! resInitErr =
+                transportInitErr.Request("any", JsonObject(), 2000, CancellationToken.None)
+
             Assert.Contains("initialize 被拒绝", resInitErr.ToJsonString(jsonOptions))
             transportInitErr.Stop()
 
             // 2. HTTP 500 状态码
-            use server500 = new MockHttpServer(fun _ -> (500, "text/plain", [], "Internal Server Error"))
-            let cfg500 = { defaultMcpConfig "http-500" with url = Some server500.Url }
+            use server500 =
+                new MockHttpServer(fun _ -> (500, "text/plain", [], "Internal Server Error"))
+
+            let cfg500 =
+                { defaultMcpConfig "http-500" with
+                    url = Some server500.Url
+                }
+
             let transport500 = McpHttpTransport(cfg500, server500.Url, ignore) :> IMcpTransport
             let! res500 = transport500.Request("any", JsonObject(), 2000, CancellationToken.None)
             Assert.Contains("MCP HTTP 500", res500.ToJsonString())
@@ -352,9 +453,18 @@ module McpTests =
 
             // 3. 空响应
             use serverEmpty = new MockHttpServer(fun _ -> (200, "application/json", [], ""))
-            let cfgEmpty = { defaultMcpConfig "http-empty" with url = Some serverEmpty.Url }
-            let transportEmpty = McpHttpTransport(cfgEmpty, serverEmpty.Url, ignore) :> IMcpTransport
-            let! resEmpty = transportEmpty.Request("any", JsonObject(), 2000, CancellationToken.None)
+
+            let cfgEmpty =
+                { defaultMcpConfig "http-empty" with
+                    url = Some serverEmpty.Url
+                }
+
+            let transportEmpty =
+                McpHttpTransport(cfgEmpty, serverEmpty.Url, ignore) :> IMcpTransport
+
+            let! resEmpty =
+                transportEmpty.Request("any", JsonObject(), 2000, CancellationToken.None)
+
             let resEmptyStr = resEmpty.ToJsonString(jsonOptions)
             Assert.True(resEmptyStr.Contains("MCP 响应为空") || resEmptyStr.Contains("initialize"))
             transportEmpty.Stop()
@@ -362,9 +472,18 @@ module McpTests =
             // 4. SSE 流中无可用帧
             use serverNoSseFrame =
                 new MockHttpServer(fun _ -> (200, "text/event-stream", [], "event: ping\ndata: {}\n\n"))
-            let cfgNoSse = { defaultMcpConfig "http-nosse" with url = Some serverNoSseFrame.Url }
-            let transportNoSse = McpHttpTransport(cfgNoSse, serverNoSseFrame.Url, ignore) :> IMcpTransport
-            let! resNoSse = transportNoSse.Request("any", JsonObject(), 2000, CancellationToken.None)
+
+            let cfgNoSse =
+                { defaultMcpConfig "http-nosse" with
+                    url = Some serverNoSseFrame.Url
+                }
+
+            let transportNoSse =
+                McpHttpTransport(cfgNoSse, serverNoSseFrame.Url, ignore) :> IMcpTransport
+
+            let! resNoSse =
+                transportNoSse.Request("any", JsonObject(), 2000, CancellationToken.None)
+
             let resNoSseStr = resNoSse.ToJsonString(jsonOptions)
             Assert.True(resNoSseStr.Contains("MCP SSE 响应中没有可用帧") || resNoSseStr.Contains("initialize"))
             transportNoSse.Stop()
@@ -383,34 +502,48 @@ module McpTests =
                     let body = reader.ReadToEnd()
                     let json = JsonNode.Parse body
                     let method = json["method"].GetValue<string>()
-                    let id = if json.AsObject().ContainsKey "id" then json["id"].GetValue<int>() else 0
+
+                    let id =
+                        if json.AsObject().ContainsKey "id" then
+                            json["id"].GetValue<int>()
+                        else
+                            0
+
                     match method with
                     | "initialize" ->
                         (200, "application/json", [], sprintf "{\"jsonrpc\":\"2.0\",\"id\":%d,\"result\":{}}" id)
-                    | "notifications/initialized" ->
-                        (200, "application/json", [], "")
+                    | "notifications/initialized" -> (200, "application/json", [], "")
                     | "tools/list" ->
                         let toolsJson =
-                            sprintf """{"jsonrpc":"2.0","id":%d,"result":{"tools":[{"name":"calculator","description":"math calc","inputSchema":{"type":"object","properties":{"expr":{"type":"string"}}}}]}}""" id
+                            sprintf
+                                """{"jsonrpc":"2.0","id":%d,"result":{"tools":[{"name":"calculator","description":"math calc","inputSchema":{"type":"object","properties":{"expr":{"type":"string"}}}}]}}"""
+                                id
+
                         (200, "application/json", [], toolsJson)
                     | "tools/call" ->
                         let p = json["params"].AsObject()
                         let name = p["name"].GetValue<string>()
                         let args = p["arguments"].AsObject()
+
                         if name = "calculator" && args.ContainsKey "expr" then
-                            sprintf """{"jsonrpc":"2.0","id":%d,"result":{"content":[{"type":"text","text":"42"}]}}""" id
+                            sprintf
+                                """{"jsonrpc":"2.0","id":%d,"result":{"content":[{"type":"text","text":"42"}]}}"""
+                                id
                             |> fun b -> (200, "application/json", [], b)
                         else
-                            sprintf """{"jsonrpc":"2.0","id":%d,"error":{"code":-32602,"message":"invalid params"}}""" id
+                            sprintf
+                                """{"jsonrpc":"2.0","id":%d,"error":{"code":-32602,"message":"invalid params"}}"""
+                                id
                             |> fun b -> (200, "application/json", [], b)
-                    | _ ->
-                        (400, "application/json", [], "{}"))
+                    | _ -> (400, "application/json", [], "{}"))
 
             let cfg =
                 { defaultMcpConfig "client-test" with
                     url = Some server.Url
                     callTimeoutSeconds = 3
-                    maxConcurrency = Some 2 }
+                    maxConcurrency = Some 2
+                }
+
             let logs = ConcurrentQueue<string>()
             let client = McpClient(cfg, logs.Enqueue)
             Assert.Equal("client-test", client.Id)
@@ -432,7 +565,9 @@ module McpTests =
             Assert.Contains("42", callOk)
 
             // 4. Call 无效 JSON 参数
-            let! callBadJson = client.Call("calculator", "not valid json {", CancellationToken.None)
+            let! callBadJson =
+                client.Call("calculator", "not valid json {", CancellationToken.None)
+
             Assert.Contains("invalid arguments: not valid JSON", callBadJson)
 
             // 5. Call 空参数
@@ -443,8 +578,9 @@ module McpTests =
             client.Stop()
 
             // 7. 停止后调用报错
-            let! callStopped = client.Call("calculator", """{"expr":"1"}""", CancellationToken.None)
+            let! callStopped =
+                client.Call("calculator", """{"expr":"1"}""", CancellationToken.None)
+
             Assert.Contains("已停止", callStopped)
         }
     // =========================================================================
-

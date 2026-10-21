@@ -24,7 +24,16 @@ open Wanxiang.Store
 /// 数据锁（决策 105/Q110）：运行期全程持有到 Stop，确保同一数据目录只有一个 S 进程。
 /// startupOutcome：调用方（Program）在持锁状态下完成的一次性 replay/fix 结果，避免二次 replay；
 /// 锁仍由本构造器独立获取并持有。
-type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string option, logInfo: string -> unit, ?startupStore: EventStore, ?hostVersion: string) =
+type ServerApp
+    (
+        dataDir: string,
+        configPath: string,
+        fix: bool,
+        pwaDir: string option,
+        logInfo: string -> unit,
+        ?startupStore: EventStore,
+        ?hostVersion: string
+    ) =
 
     /// 主机版本：宿主注入；缺省取入口程序集版本（旧实现取 Wanxiang.Server 程序集版本，产品构建时两者相同）。
     let hostVersion =
@@ -33,7 +42,10 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
         | None ->
             match System.Reflection.Assembly.GetEntryAssembly() with
             | null -> ""
-            | asm -> match asm.GetName().Version with null -> "" | v -> v.ToString()
+            | asm ->
+                match asm.GetName().Version with
+                | null -> ""
+                | v -> v.ToString()
 
 
     do
@@ -58,21 +70,29 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
         | None ->
             // 数据目录唯一的独占锁就是存储的锁（ledger/.lock，决策 105）：抢不到即启动失败。
             // 附件、证据包只由持有存储的进程写，所以这把锁同样覆盖它们。
-            try new EventStore(dataDir)
-            with :? InvalidOperationException as e -> failwith e.Message
+            try
+                new EventStore(dataDir)
+            with :? InvalidOperationException as e ->
+                failwith e.Message
 
     let inspectResult = Inspect.ofStore store
 
     let replayOutcome =
         match inspectResult with
         | Healthy outcome -> outcome
-        | RepairRequired (outcome, _) ->
+        | RepairRequired(outcome, _) ->
             // 只读降级模式：以最长有效前缀启动，禁止写入（STOP-1）。
             outcome
-        | OutcomeUnknown (outcome, _, _) -> outcome
-        | HostOwned _ -> store.Shutdown(); failwith "event log held by another host"
-        | UnsupportedFormat msg -> store.Shutdown(); failwith msg
-        | Unreadable msg -> store.Shutdown(); failwith msg
+        | OutcomeUnknown(outcome, _, _) -> outcome
+        | HostOwned _ ->
+            store.Shutdown()
+            failwith "event log held by another host"
+        | UnsupportedFormat msg ->
+            store.Shutdown()
+            failwith msg
+        | Unreadable msg ->
+            store.Shutdown()
+            failwith msg
 
     /// 只读降级标记：日志损坏但以有效前缀启动时，拒绝一切永久写入（S-001）。
     // 旧实现里 fix 与 replayOutcome 已无读者（修复只由 doctor --fix 显式执行）；保留构造面与求值次序不变。
@@ -81,20 +101,23 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
     /// 客户端仍可 observe/读取历史；写命令返回明确错误。
     let readOnlyDegraded =
         match inspectResult with
-        | RepairRequired _ | OutcomeUnknown _ -> true
+        | RepairRequired _
+        | OutcomeUnknown _ -> true
         | _ -> false
 
     do
         // 只读降级模式必须留下明确诊断（R6：不允许无证据继续运行）。
         match inspectResult with
-        | RepairRequired (outcome, plan) ->
+        | RepairRequired(outcome, plan) ->
             Stderr.write
                 "read-only-degraded"
-                [ "file", plan.damage.file
-                  "offset", plan.damage.byteOffset
-                  "reason", plan.damage.reason
-                  "validThroughCommitId", outcome.lastCommitId
-                  "action", "run `wanxiang doctor --fix` to repair (creates recovery bundle first)" ]
+                [
+                    "file", plan.damage.file
+                    "offset", plan.damage.byteOffset
+                    "reason", plan.damage.reason
+                    "validThroughCommitId", outcome.lastCommitId
+                    "action", "run `wanxiang doctor --fix` to repair (creates recovery bundle first)"
+                ]
         | _ -> ()
 
     let rejectWrite (err: string) : CommandExecutionResult =
@@ -109,8 +132,17 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
     let mutable stopping = false
 
     let hostStatus = HostStatus()
+
     /// 配对柜台（wanxiang2 PairingDesk）：码、失败限流、令牌签发的顺序都在它里面。
-    let desk = PairingDesk.PairingDesk({ window = TimeSpan.FromMinutes 1.0; maxFailures = 5; freeze = TimeSpan.FromMinutes 5.0 }, TimeSpan.FromMinutes 5.0)
+    let desk =
+        PairingDesk.PairingDesk(
+            {
+                window = TimeSpan.FromMinutes 1.0
+                maxFailures = 5
+                freeze = TimeSpan.FromMinutes 5.0
+            },
+            TimeSpan.FromMinutes 5.0
+        )
 
     let currentConfig () =
         match configStore with
@@ -125,9 +157,11 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
     /// 按 TOML 重建配对限流器（Q188：每远端地址每分钟失败次数/冻结分钟可通过 TOML 调整；启动即生效）
     let rebuildFailureTracker (cfg: AppConfig) =
         desk.Reconfigure
-            { window = TimeSpan.FromMinutes(float cfg.pairingFailureWindowMinutes)
-              maxFailures = cfg.pairingMaxFailures
-              freeze = TimeSpan.FromMinutes(float cfg.pairingFreezeMinutes) }
+            {
+                window = TimeSpan.FromMinutes(float cfg.pairingFailureWindowMinutes)
+                maxFailures = cfg.pairingMaxFailures
+                freeze = TimeSpan.FromMinutes(float cfg.pairingFreezeMinutes)
+            }
 
     let onConfigReloaded (cfg: AppConfig) =
         // W5：配置重新加载成功，之前的「配置有误」状态随之消失（客户端由下面的 config.changed 清除）。
@@ -136,7 +170,8 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
         Stderr.registerSecrets (
             cfg.providers
             |> Seq.choose (fun kv -> kv.Value.apiKey)
-            |> Seq.filter (fun k -> not (String.IsNullOrWhiteSpace k)))
+            |> Seq.filter (fun k -> not (String.IsNullOrWhiteSpace k))
+        )
         // 决策 58：吊销令牌后立即断开对应连接
         try
             match registry with
@@ -144,11 +179,14 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                 for conn in reg.All() do
                     match conn.TokenHash with
                     | Some hash ->
-                        let stillValid = cfg.authClients |> List.exists (fun c -> c.tokenHash = hash && not c.revoked)
+                        let stillValid =
+                            cfg.authClients |> List.exists (fun c -> c.tokenHash = hash && not c.revoked)
+
                         if not stillValid && conn.IsAuthenticated then
                             conn.ForceClose()
                     | None -> ()
             | None -> ()
+
             rebuildFailureTracker cfg
         with e ->
             // O-001：吊销令牌/重建限流器失败是 DEGRADED——记录证据，不阻断配置生效。
@@ -170,6 +208,7 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
         // W5：同时让客户端看见。主机继续使用上一份有效配置；原因已脱敏、截断，不含密钥（决策 82）。
         try
             let ev = hostStatus.Reject(Stderr.redact, [ errs ])
+
             match registry with
             | Some reg -> reg.BroadcastToAll ev
             | None -> ()
@@ -182,6 +221,7 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
             match coordinator with
             | Some c -> c
             | None -> failwith "coordinator not ready"
+
         try
             // 默认对话配置注入：客户端创建/修改对话时若未提供有效 provider+model
             // （SessionConfig.empty 或已被删除的 provider），用第一个可用 provider 的默认模型填充。
@@ -189,11 +229,14 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
             let cmd =
                 let fill (cfg: SessionConfig) : SessionConfig =
                     let appCfg = currentConfig ()
+
                     let providerOk =
                         match AppConfig.tryProvider cfg.provider appCfg with
                         | Some p -> p.enabled && ProviderConfig.hasModel cfg.model p
                         | None -> false
-                    if providerOk && SessionConfig.isValid cfg then cfg
+
+                    if providerOk && SessionConfig.isValid cfg then
+                        cfg
                     else
                         match AppConfig.defaultProvider appCfg with
                         | None -> cfg // 无可用 provider：保持原样，由 plan 的 isValid 拒绝并给出明确错误
@@ -201,8 +244,16 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                             // provider 存在但模型越界时只纠正模型，保留用户其余选择
                             match AppConfig.tryProvider cfg.provider appCfg with
                             | Some existing when existing.enabled ->
-                                { cfg with provider = existing.id; model = ProviderConfig.resolveModel cfg.model existing }
-                            | _ -> { cfg with provider = p.id; model = ProviderConfig.resolveModel cfg.model p }
+                                { cfg with
+                                    provider = existing.id
+                                    model = ProviderConfig.resolveModel cfg.model existing
+                                }
+                            | _ ->
+                                { cfg with
+                                    provider = p.id
+                                    model = ProviderConfig.resolveModel cfg.model p
+                                }
+
                 match cmd with
                 | CreateConversation d -> CreateConversation {| d with config = fill d.config |}
                 | ImportConversation d -> ImportConversation {| d with config = fill d.config |}
@@ -211,6 +262,7 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                 | UpdateConversationConfig d -> UpdateConversationConfig {| d with config = fill d.config |}
                 // ForkConversation：配置由父对话投影继承（决策 81），无需填充
                 | other -> other
+
             match CommandEngine.planStamped coord.Stamps coord.Projection clientCursor cmd with
             | Rejected e ->
                 // Q145：commandId 冲突（同 commandId 不同载荷）视为严重错误，写 stderr
@@ -219,10 +271,13 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                     // O-005：关联 ID 统一命名（§18）——invocationId/conversationId 必须可追溯
                     Stderr.write
                         "command-id-conflict"
-                        [ "commandType", ClientCommand.commandType cmd
-                          "invocationId", ClientCommand.invocationId cmd
-                          "conversationId", ClientCommand.conversationId cmd ]
+                        [
+                            "commandType", ClientCommand.commandType cmd
+                            "invocationId", ClientCommand.invocationId cmd
+                            "conversationId", ClientCommand.conversationId cmd
+                        ]
                 | _ -> ()
+
                 CommandExecutionResult.CommandFailed e
             | PlanResult.IdempotentReplay cid -> CommandExecutionResult.CommandIdempotent cid
             | Planned plan ->
@@ -236,14 +291,18 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                         match orchestrator with
                         | Some o -> o.HandleSendUserMessage cmd
                         | None -> ()
+
                         CommandExecutionResult.CommandQueued
                 | _ ->
                     let submit =
-                        { events = plan.events
-                          commandId = Some plan.commandId
-                          commandType = Some plan.commandType
-                          commandHash = Some plan.canonicalHash
-                          nowUtc = None }
+                        {
+                            events = plan.events
+                            commandId = Some plan.commandId
+                            commandType = Some plan.commandType
+                            commandHash = Some plan.canonicalHash
+                            nowUtc = None
+                        }
+
                     match coord.Submit submit with
                     | SubmitResult.Committed c ->
                         // 「重新生成」= 作废末尾模型消息 + 立刻重跑一次生成。
@@ -272,32 +331,40 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                             | Some o -> o.OnConversationDeleted d.conversationId
                             | None -> ()
                         | _ -> ()
+
                         CommandExecutionResult.CommandCommitted c.id
                     | SubmitResult.IdempotentReplay c -> CommandExecutionResult.CommandIdempotent c.id
                     | SubmitResult.CommandIdRejected e ->
                         // Q145：同 commandId 不同 payload 的冲突（或幂等记录异常）走专用 stderr 事件
                         Stderr.write
                             "command-id-conflict"
-                            [ "commandType", ClientCommand.commandType cmd
-                              "invocationId", ClientCommand.invocationId cmd
-                              "conversationId", ClientCommand.conversationId cmd
-                              "message", WanxiangError.message e ]
+                            [
+                                "commandType", ClientCommand.commandType cmd
+                                "invocationId", ClientCommand.invocationId cmd
+                                "conversationId", ClientCommand.conversationId cmd
+                                "message", WanxiangError.message e
+                            ]
+
                         CommandExecutionResult.CommandFailed e
                     | SubmitResult.CommitFailed e -> CommandExecutionResult.CommandFailed e
         with e ->
             // O-005：未知执行异常必须带关联 ID（§18），否则无法从日志定位到具体命令
             Stderr.write
                 "execute-command-error"
-                [ "commandType", ClientCommand.commandType cmd
-                  "invocationId", ClientCommand.invocationId cmd
-                  "conversationId", ClientCommand.conversationId cmd
-                  "message", e.ToString() ]
+                [
+                    "commandType", ClientCommand.commandType cmd
+                    "invocationId", ClientCommand.invocationId cmd
+                    "conversationId", ClientCommand.conversationId cmd
+                    "message", e.ToString()
+                ]
+
             CommandExecutionResult.CommandFailed(Poisoned e.Message)
 
     let executeCommand (clientCursor: CommitId) (cmd: ClientCommand) : CommandExecutionResult =
         // 只读降级模式：拒绝一切永久写入（S-001 / STOP-1）。读取与观察不受影响。
         if readOnlyDegraded then
-            rejectWrite "server is in read-only degraded mode (event log damaged); run `wanxiang doctor --fix` to repair"
+            rejectWrite
+                "server is in read-only degraded mode (event log damaged); run `wanxiang doctor --fix` to repair"
         else
             executePlanned clientCursor cmd
 
@@ -309,10 +376,17 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
 
     /// 启动主机（server 开关）。
     member this.Start(servePwa: bool) : unit =
-        hostStatus.DoctorRunner <- Some(fun () -> Doctor.runLive (configPath, dataDir, fun () ->
-            match coordinator with
-            | Some c -> Inspect.ofStore c
-            | None -> Unreadable "store not open"))
+        hostStatus.DoctorRunner <-
+            Some(fun () ->
+                Doctor.runLive (
+                    configPath,
+                    dataDir,
+                    fun () ->
+                        match coordinator with
+                        | Some c -> Inspect.ofStore c
+                        | None -> Unreadable "store not open"
+                ))
+
         match ConfigStore.Open(configPath, onConfigReloaded, onConfigRejected) with
         | Error e -> failwith e
         | Ok cs ->
@@ -321,68 +395,105 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
             Stderr.registerSecrets (
                 cs.Current.providers
                 |> Seq.choose (fun kv -> kv.Value.apiKey)
-                |> Seq.filter (fun k -> not (String.IsNullOrWhiteSpace k)))
+                |> Seq.filter (fun k -> not (String.IsNullOrWhiteSpace k))
+            )
             // Q188：配对限流参数以 TOML 为权威——启动时即按 TOML 重建，而非等首次热重载
             rebuildFailureTracker cs.Current
             // lastSeen 迁出用户配置：旧配置里的时间只补种一次（DeviceSightings 只补缺、取较新者）
-            match sightings.Seed(cs.Current.authClients |> List.choose (fun c -> c.lastSeenUtc |> Option.map (fun t -> c.tokenHash, t))) with
-            | Ok () -> ()
+            match
+                sightings.Seed(
+                    cs.Current.authClients
+                    |> List.choose (fun c -> c.lastSeenUtc |> Option.map (fun t -> c.tokenHash, t))
+                )
+            with
+            | Ok() -> ()
             | Error e -> Stderr.write "last-seen-seed-failed" [ "message", e ]
+
         let broadcastCommit (commit: Events.Commit) =
             try
                 match registry with
                 | Some reg -> reg.BroadcastCommit commit
                 | None -> ()
-            with _ -> ()
+            with _ ->
+                ()
             // 决策 73：首版不做附件 GC——删对话不断触发任何 blob 清扫，孤儿留待未来压缩处理。
+
         store.WireOnCommitted broadcastCommit
         coordinator <- Some store
         registry <- Some(ConnectionRegistry())
+
         let broadcastToConversation (convId: Guid) (ev: WireEvent) =
             match registry with
             | Some reg -> reg.BroadcastTransient(convId, ev)
             | None -> ()
-        let attachmentStore = AttachmentStore(dataDir, (currentConfig ()).maxAttachmentBytes, (currentConfig ()).chunkSizeBytes)
+
+        let attachmentStore =
+            AttachmentStore(dataDir, (currentConfig ()).maxAttachmentBytes, (currentConfig ()).chunkSizeBytes)
         // 附件必须能被送进模型：编排层按 sha256 直接读 blob（决策 71-72 的内容寻址存储）
         let loadBlob (sha256: string) : byte[] option =
             try
                 match attachmentStore.OpenRead sha256 with
-                | Some (stream, size) ->
+                | Some(stream, size) ->
                     use s = stream
                     use ms = new MemoryStream(int (min size (int64 Int32.MaxValue)))
                     s.CopyTo ms
                     Some(ms.ToArray())
                 | None -> None
-            with _ -> None
+            with _ ->
+                None
+
         orchestrator <-
-            Some(ChatOrchestrator(coordinator.Value, currentProjection, broadcastToConversation, toolRegistry, currentConfig, loadBlob, logInfo))
+            Some(
+                ChatOrchestrator(
+                    coordinator.Value,
+                    currentProjection,
+                    broadcastToConversation,
+                    toolRegistry,
+                    currentConfig,
+                    loadBlob,
+                    logInfo
+                )
+            )
         // 审批只发给「声明了审批能力、且正在观察该对话」的客户端；没有这样的客户端时直接拒绝（决策 71）
         // 决策 250：半截回复落盘到数据目录，主机重启后仍可「继续生成」
         orchestrator.Value.Partials <- PartialReplyStore(Some(System.IO.Path.Combine(dataDir, "partials")))
         // 决策 340：模型服务报告的看图能力落盘，重启后仍在
         ModelCapabilities.configure (System.IO.Path.Combine(dataDir, "model-capabilities.json"))
+
         orchestrator.Value.Approvals.CapabilityProbe <-
             fun convId ->
                 match registry with
-                | Some reg -> reg.All() |> List.exists (fun c -> c.IsAuthenticated && c.ApprovalCapable && c.Observes convId)
+                | Some reg ->
+                    reg.All()
+                    |> List.exists (fun c -> c.IsAuthenticated && c.ApprovalCapable && c.Observes convId)
                 | None -> false
+
         let builder = WebApplication.CreateBuilder()
+
         if servePwa then
             builder.Services.AddResponseCompression(fun options ->
                 options.EnableForHttps <- true
                 options.Providers.Add<BrotliCompressionProvider>())
             |> ignore
+
         let tlsEnabled =
             let cfg = currentConfig ()
-            not (String.IsNullOrWhiteSpace cfg.tlsCertPath) && not (String.IsNullOrWhiteSpace cfg.tlsKeyPath)
+
+            not (String.IsNullOrWhiteSpace cfg.tlsCertPath)
+            && not (String.IsNullOrWhiteSpace cfg.tlsKeyPath)
+
         builder.WebHost.UseUrls(sprintf "%s://%s" (if tlsEnabled then "https" else "http") (currentConfig ()).listen)
         |> ignore
+
         if tlsEnabled then
             // 证书在启动时一次性读入。配置校验已确认两个文件都存在，
             // 这里若还失败（口令、权限、格式），必须让启动失败而不是静默退回明文——
             // 「以为开了 TLS 其实没开」比起不了服务危险得多。
             let cfg = currentConfig ()
-            let certificate = X509Certificate2.CreateFromPemFile(cfg.tlsCertPath, cfg.tlsKeyPath)
+
+            let certificate =
+                X509Certificate2.CreateFromPemFile(cfg.tlsCertPath, cfg.tlsKeyPath)
+
             builder.WebHost.ConfigureKestrel(fun options ->
                 options.ConfigureHttpsDefaults(fun https -> https.ServerCertificate <- certificate))
             |> ignore
@@ -395,24 +506,36 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
         |> ignore
 
         let app = builder.Build()
-        if servePwa then app.UseResponseCompression() |> ignore
+
+        if servePwa then
+            app.UseResponseCompression() |> ignore
+
         app.UseWebSockets() |> ignore
+
         let allowedHosts =
             match Environment.GetEnvironmentVariable "WANXIANG_ALLOWED_HOSTS" with
             | null -> []
-            | v -> v.Split(',', StringSplitOptions.RemoveEmptyEntries ||| StringSplitOptions.TrimEntries) |> List.ofArray
+            | v ->
+                v.Split(',', StringSplitOptions.RemoveEmptyEntries ||| StringSplitOptions.TrimEntries)
+                |> List.ofArray
 
         app.Map(
             Constants.WsPath,
             Func<HttpContext, Task>(fun (ctx: HttpContext) ->
                 task {
                     let origin = string ctx.Request.Headers.Origin
-                    if ctx.WebSockets.IsWebSocketRequest && (not (WsHandshake.WsHandshake.isAllowedOrigin origin (string ctx.Request.Host))
-                             || (origin <> "" && not (WsHandshake.WsHandshake.isAllowedHost (string ctx.Request.Host) allowedHosts))) then
+
+                    if
+                        ctx.WebSockets.IsWebSocketRequest
+                        && (not (WsHandshake.WsHandshake.isAllowedOrigin origin (string ctx.Request.Host))
+                            || (origin <> ""
+                                && not (WsHandshake.WsHandshake.isAllowedHost (string ctx.Request.Host) allowedHosts)))
+                    then
                         // 决策 281：跨源网页不得打开主机 WebSocket（含 DNS 重绑定）
                         ctx.Response.StatusCode <- 403
                     elif ctx.WebSockets.IsWebSocketRequest then
                         let! ws = ctx.WebSockets.AcceptWebSocketAsync()
+
                         let remote =
                             match ctx.Connection.RemoteIpAddress with
                             | null -> "?"
@@ -422,6 +545,7 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                             match registry with
                             | Some reg -> reg.AddPlaceholder()
                             | None -> 0
+
                         let conn =
                             WsConnection(
                                 id,
@@ -447,19 +571,25 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                                 (fun () ->
                                     match registry with
                                     | Some reg ->
-                                        [ for c in reg.All() do
-                                              if c.IsAuthenticated then
-                                                  match c.TokenHash with
-                                                  | Some h -> yield h
-                                                  | None -> () ]
+                                        [
+                                            for c in reg.All() do
+                                                if c.IsAuthenticated then
+                                                    match c.TokenHash with
+                                                    | Some h -> yield h
+                                                    | None -> ()
+                                        ]
                                     | None -> []),
                                 sightings,
-                                logInfo)
+                                logInfo
+                            )
+
                         conn.HostStatus <- Some hostStatus
                         conn.HostVersion <- hostVersion
+
                         match registry with
                         | Some reg -> reg.Set(id, conn)
                         | None -> ()
+
                         try
                             do! conn.Run(ctx.RequestAborted)
                         finally
@@ -468,7 +598,8 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                             | None -> ()
                     else
                         ctx.Response.StatusCode <- 404
-                }))
+                })
+        )
         |> ignore
 
         if servePwa then
@@ -479,7 +610,13 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                 contentTypeProvider.Mappings[".symbols"] <- "application/octet-stream"
                 contentTypeProvider.Mappings[".dat"] <- "application/octet-stream"
                 contentTypeProvider.Mappings[".pdb"] <- "application/octet-stream"
-                app.UseStaticFiles(StaticFileOptions(FileProvider = new PhysicalFileProvider(Path.GetFullPath dir), ContentTypeProvider = contentTypeProvider))
+
+                app.UseStaticFiles(
+                    StaticFileOptions(
+                        FileProvider = new PhysicalFileProvider(Path.GetFullPath dir),
+                        ContentTypeProvider = contentTypeProvider
+                    )
+                )
                 |> ignore
                 // 根路径与未知路径回退到 index.html
                 app.MapGet(
@@ -488,26 +625,31 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                         task {
                             ctx.Response.ContentType <- "text/html"
                             let path = Path.Combine(Path.GetFullPath dir, "index.html")
+
                             if File.Exists path then
                                 let! bytes = File.ReadAllBytesAsync path
                                 do! ctx.Response.Body.WriteAsync(bytes)
                             else
                                 ctx.Response.StatusCode <- 404
-                        }))
+                        })
+                )
                 |> ignore
-            | _ ->
-                logInfo "pwa enabled but pwa dir missing; serving 404 on /"
+            | _ -> logInfo "pwa enabled but pwa dir missing; serving 404 on /"
 
         host <- Some app
         app.Start()
+
         logInfo (
             sprintf
                 "wanxiang server listening on %s://%s (ws=%s pwa=%b)"
                 (if tlsEnabled then "https" else "http")
                 (currentConfig ()).listen
                 Constants.WsPath
-                servePwa)
-        if not tlsEnabled then this.WarnIfExposedWithoutTls((currentConfig ()).listen)
+                servePwa
+        )
+
+        if not tlsEnabled then
+            this.WarnIfExposedWithoutTls((currentConfig ()).listen)
 
     /// 监听非回环地址、又没配证书时告警：令牌会明文过网。
     ///
@@ -517,13 +659,15 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
         if not (ListenAddress.isLoopback listen) then
             Stderr.write
                 "insecure-listen"
-                [ "listen", box listen
-                  "message",
-                  box (
-                      "监听地址不是回环地址，且未配置 TLS：访问令牌会以明文经过网络。"
-                      + "请设置 network.tlsCertPath 与 network.tlsKeyPath，"
-                      + "或置于提供 HTTPS/WSS 的反向代理之后，或改回 127.0.0.1。"
-                  ) ]
+                [
+                    "listen", box listen
+                    "message",
+                    box (
+                        "监听地址不是回环地址，且未配置 TLS：访问令牌会以明文经过网络。"
+                        + "请设置 network.tlsCertPath 与 network.tlsKeyPath，"
+                        + "或置于提供 HTTPS/WSS 的反向代理之后，或改回 127.0.0.1。"
+                    )
+                ]
 
     /// 优雅关闭：停止接收新工作、取消生成、排空单写者并 flush（决策 101）。
     /// Q102：不设置内部固定超时——先关闭全部 WebSocket 连接让 Kestrel 排空完成；
@@ -531,26 +675,36 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
     member this.Stop() : unit =
         if not stopping then
             stopping <- true
+
             try
                 // 先强制关闭全部连接（吊销/断线路径），否则 Kestrel 排空会等待永不结束的 WebSocket
                 match registry with
-                | Some reg -> for conn in reg.All() do conn.ForceClose()
+                | Some reg ->
+                    for conn in reg.All() do
+                        conn.ForceClose()
                 | None -> ()
-            with _ -> ()
+            with _ ->
+                ()
+
             try
                 match host with
                 | Some h ->
                     // 稳定性（r17）：排空给 10 秒上限，卡住的连接不能让「退出」无限挂起
                     use cts = new CancellationTokenSource(TimeSpan.FromSeconds 10.0)
+
                     if not (h.StopAsync(cts.Token).Wait(TimeSpan.FromSeconds 12.0)) then
                         logInfo "主机停止超时（12 秒），强制继续关闭"
                 | None -> ()
-            with _ -> ()
+            with _ ->
+                ()
+
             try
                 match orchestrator with
                 | Some o -> o.Dispose()
                 | None -> ()
-            with _ -> ()
+            with _ ->
+                ()
+
             try
                 match coordinator with
                 | Some c ->
@@ -562,19 +716,27 @@ type ServerApp(dataDir: string, configPath: string, fix: bool, pwaDir: string op
                             match c.SaveSnapshot() with
                             | Ok() -> logInfo "snapshot written"
                             | Error e -> Stderr.write "snapshot-write-failed" [ "message", e ]
+
                             c.Shutdown()
                         with e ->
                             Stderr.write "snapshot-write-failed" [ "message", e.Message ]
                     else
                         c.Shutdown()
                 | None -> store.Shutdown()
-            with _ -> ()
+            with _ ->
+                ()
+
             try
                 match configStore with
                 | Some cs -> cs.Dispose()
                 | None -> ()
-            with _ -> ()
-            try toolRegistry.Dispose() with _ -> ()
+            with _ ->
+                ()
+
+            try
+                toolRegistry.Dispose()
+            with _ ->
+                ()
 
     interface IDisposable with
         member this.Dispose() = this.Stop()

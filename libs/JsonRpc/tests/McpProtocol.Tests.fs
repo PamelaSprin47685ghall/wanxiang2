@@ -6,11 +6,19 @@ open Wanxiang.Server
 
 [<Fact>]
 let ``initialize carries the single protocol version and client info`` () =
-    Assert.Equal("""{"protocolVersion":"2025-06-18","capabilities":{"roots":{}},"clientInfo":{"name":"wanxiang","version":"1.0"}}""", (McpProtocol.initializeParams ()).ToJsonString())
+    Assert.Equal(
+        """{"protocolVersion":"2025-06-18","capabilities":{"roots":{}},"clientInfo":{"name":"wanxiang","version":"1.0"}}""",
+        (McpProtocol.initializeParams ()).ToJsonString()
+    )
 
 [<Fact>]
 let ``tools without a name are dropped; non-object schema counts as none`` () =
-    let tools = McpProtocol.parseTools (JsonNode.Parse """{"tools":[{"name":"a","inputSchema":"x"},{"description":"d"},{"name":"b","description":"乙","inputSchema":{"type":"object"}},3]}""")
+    let tools =
+        McpProtocol.parseTools (
+            JsonNode.Parse
+                """{"tools":[{"name":"a","inputSchema":"x"},{"description":"d"},{"name":"b","description":"乙","inputSchema":{"type":"object"}},3]}"""
+        )
+
     Assert.Equal<string list>([ "a"; "b" ], tools |> List.map _.name)
     Assert.True(tools.Head.inputSchema.IsNone)
     Assert.Equal("乙", tools[1].description)

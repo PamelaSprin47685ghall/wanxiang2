@@ -37,18 +37,53 @@ module HljsHtml =
     /// 所以要先还原成点号路径，再按「先精确、后退到首段」查表。
     let kindOfScope (scope: string) : CodeTokenKind option =
         match scope with
-        | "keyword" | "literal" | "template-tag" -> Some CodeKeyword
-        | "type" | "built_in" | "class" | "tag" | "name" | "selector-tag"
-        | "title.class" | "title.class.inherited" -> Some CodeType
-        | "string" | "regexp" | "char" | "char.escape" | "formula" | "meta.string" -> Some CodeString
-        | "comment" | "quote" | "doctag" -> Some CodeComment
+        | "keyword"
+        | "literal"
+        | "template-tag" -> Some CodeKeyword
+        | "type"
+        | "built_in"
+        | "class"
+        | "tag"
+        | "name"
+        | "selector-tag"
+        | "title.class"
+        | "title.class.inherited" -> Some CodeType
+        | "string"
+        | "regexp"
+        | "char"
+        | "char.escape"
+        | "formula"
+        | "meta.string" -> Some CodeString
+        | "comment"
+        | "quote"
+        | "doctag" -> Some CodeComment
         | "number" -> Some CodeNumber
-        | "title" | "title.function" | "title.function.invoke" | "section" -> Some CodeFunction
-        | "meta" | "meta.prompt" | "meta.keyword" | "link" | "code" -> Some CodeMeta
-        | "variable" | "variable.language" | "variable.constant" | "attr" | "attribute"
-        | "property" | "symbol" | "params" | "subst" | "template-variable" | "bullet"
-        | "selector-id" | "selector-class" | "selector-attr" | "selector-pseudo" -> Some CodeVariable
-        | "operator" | "punctuation" -> Some CodeOperator
+        | "title"
+        | "title.function"
+        | "title.function.invoke"
+        | "section" -> Some CodeFunction
+        | "meta"
+        | "meta.prompt"
+        | "meta.keyword"
+        | "link"
+        | "code" -> Some CodeMeta
+        | "variable"
+        | "variable.language"
+        | "variable.constant"
+        | "attr"
+        | "attribute"
+        | "property"
+        | "symbol"
+        | "params"
+        | "subst"
+        | "template-variable"
+        | "bullet"
+        | "selector-id"
+        | "selector-class"
+        | "selector-attr"
+        | "selector-pseudo" -> Some CodeVariable
+        | "operator"
+        | "punctuation" -> Some CodeOperator
         | "addition" -> Some CodeAddition
         | "deletion" -> Some CodeDeletion
         | _ -> None
@@ -64,6 +99,7 @@ module HljsHtml =
 
     let private kindOfClassAttribute (classes: string) =
         let scope = scopeOfClassAttribute classes
+
         match kindOfScope scope with
         | Some kind -> Some kind
         // `title.function.invoke` 这类未登记的深层子 scope 退到首段（`title`）
@@ -78,17 +114,29 @@ module HljsHtml =
         let tokens = ResizeArray<CodeToken>()
         let buffer = StringBuilder()
         let stack = ResizeArray<CodeTokenKind>()
-        let currentKind () = if stack.Count = 0 then CodePlain else stack[stack.Count - 1]
+
+        let currentKind () =
+            if stack.Count = 0 then
+                CodePlain
+            else
+                stack[stack.Count - 1]
 
         let flush () =
             if buffer.Length > 0 then
-                tokens.Add { text = WebUtility.HtmlDecode(buffer.ToString()); kind = currentKind () }
+                tokens.Add
+                    {
+                        text = WebUtility.HtmlDecode(buffer.ToString())
+                        kind = currentKind ()
+                    }
+
                 buffer.Clear() |> ignore
 
         let mutable i = 0
+
         while i < html.Length do
             if html[i] = '<' then
                 let close = html.IndexOf('>', i)
+
                 if close < 0 then
                     // 标签没闭合：剩下的当文本，绝不丢内容
                     buffer.Append(html.Substring i) |> ignore
@@ -96,35 +144,47 @@ module HljsHtml =
                 else
                     let tag = html.Substring(i + 1, close - i - 1)
                     flush ()
+
                     if tag.StartsWith "/" then
-                        if stack.Count > 0 then stack.RemoveAt(stack.Count - 1)
+                        if stack.Count > 0 then
+                            stack.RemoveAt(stack.Count - 1)
                     else
                         let kind =
                             let marker = "class=\""
+
                             match tag.IndexOf marker with
                             | -1 -> None
                             | at ->
                                 let from = at + marker.Length
+
                                 match tag.IndexOf('"', from) with
                                 | -1 -> None
                                 | until -> kindOfClassAttribute (tag.Substring(from, until - from))
                         // 未识别的 scope 继承外层，而不是打回纯文本
                         stack.Add(defaultArg kind (currentKind ()))
+
                     i <- close + 1
             else
                 let next = html.IndexOf('<', i)
                 let until = if next < 0 then html.Length else next
                 buffer.Append(html, i, until - i) |> ignore
                 i <- until
+
         flush ()
 
         // 合并同类相邻片段：每个 Run 都是一次文本整形，能省则省
         let merged = ResizeArray<CodeToken>()
+
         for token in tokens do
             if token.text.Length > 0 then
                 if merged.Count > 0 && merged[merged.Count - 1].kind = token.kind then
                     let last = merged[merged.Count - 1]
-                    merged[merged.Count - 1] <- { last with text = last.text + token.text }
+
+                    merged[merged.Count - 1] <-
+                        { last with
+                            text = last.text + token.text
+                        }
                 else
                     merged.Add token
+
         List.ofSeq merged

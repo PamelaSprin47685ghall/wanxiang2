@@ -33,24 +33,37 @@ let private catalogProviders =
 /// 认证 + 目录都走真实线协议事件。
 let private connect (rig: Rig) =
     rig.Fake.Deliver(AuthAccepted {| instanceId = "inst-1" |})
-    rig.Fake.Deliver(CatalogSnapshot {| providers = catalogProviders
-                                         tools = JsonArray()
-                                         generation = JsonObject() |})
+
+    let tools = JsonArray()
+    let generation = JsonObject()
+
+    rig.Fake.Deliver(
+        CatalogSnapshot
+            {|
+                providers = catalogProviders
+                tools = tools
+                generation = generation
+            |}
+    )
+
     Pump.settle ()
 
 /// 点真按键（无头环境下没有输入设备，走无障碍调用）。
 let private click (button: Button) =
-    let peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement button
+    let peer =
+        Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement button
+
     ((peer :> obj) :?> Avalonia.Automation.Provider.IInvokeProvider).Invoke()
     Dispatcher.UIThread.RunJobs()
 
 /// 托盘 chip 上的文本（真实控件树里的 TextBlock）。
 /// 托盘挂的是普通控件树，视觉树未必已布局，所以按子控件显式遍历。
-let private rec texts (c: Control) : string list =
+let rec private texts (c: Control) : string list =
     let own =
         match c with
         | :? TextBlock as tb -> [ tb.Text ]
         | _ -> []
+
     let children =
         match c with
         | :? Panel as p -> p.Children |> Seq.cast<Control> |> Seq.toList
@@ -60,6 +73,7 @@ let private rec texts (c: Control) : string list =
             | :? Control as child -> [ child ]
             | _ -> []
         | _ -> []
+
     own @ (children |> List.collect texts)
 
 let private trayText (rig: Rig) : string =
@@ -92,9 +106,27 @@ let ``旅程 3：附件在旅程内上线——主机确认前发不出去，确
 
         Assert.Equal(1, rig.Views.Composer.Tray.Count)
         let hasEvent (f: WireEvent -> bool) = rig.Fake.Events |> List.exists f
-        Assert.True(hasEvent (function WireEvent.AttachmentBegin _ -> true | _ -> false), "attachment.begin 应已发出")
-        Assert.True(hasEvent (function WireEvent.AttachmentChunk _ -> true | _ -> false), "attachment.chunk 应已发出")
-        Assert.True(hasEvent (function WireEvent.AttachmentComplete _ -> true | _ -> false), "attachment.complete 应已发出")
+
+        Assert.True(
+            hasEvent (function
+                | WireEvent.AttachmentBegin _ -> true
+                | _ -> false),
+            "attachment.begin 应已发出"
+        )
+
+        Assert.True(
+            hasEvent (function
+                | WireEvent.AttachmentChunk _ -> true
+                | _ -> false),
+            "attachment.chunk 应已发出"
+        )
+
+        Assert.True(
+            hasEvent (function
+                | WireEvent.AttachmentComplete _ -> true
+                | _ -> false),
+            "attachment.complete 应已发出"
+        )
 
         // 3. 主机还没确认：附件在上传中，真实发送按键必须是禁的，提示说清在等什么。
         let draft = rig.Shell.Model.Composer.Attachments |> List.head
@@ -111,9 +143,13 @@ let ``旅程 3：附件在旅程内上线——主机确认前发不出去，确
         // 4. 主机 ACK 走真实线协议事件入口。
         rig.Fake.Deliver(
             WireEvent.AttachmentCommitted
-                {| attachmentId = draft.Id
-                   sha256 = UploadFacts.sha256Hex bytes
-                   size = int64 bytes.Length |})
+                {|
+                    attachmentId = draft.Id
+                    sha256 = UploadFacts.sha256Hex bytes
+                    size = int64 bytes.Length
+                |}
+        )
+
         Pump.settle ()
 
         Assert.True(rig.Shell.Model.Composer.Attachments |> List.head |> fun a -> a.Ready)
@@ -129,10 +165,16 @@ let ``旅程 3：附件在旅程内上线——主机确认前发不出去，确
         let sent = sentMessages rig
         Assert.Equal(1, sent.Length)
         let contents = sent.[0].messageJson["contents"].AsArray()
-        Assert.Equal("你好", contents.[0]["text"].GetValue<string>())
+        let textNode = contents.[0]["text"]
+        Assert.Equal("你好", textNode.GetValue<string>())
         let att = contents.[1]
-        Assert.Equal("attachment", att["type"].GetValue<string>())
-        Assert.Equal("pic.png", att["fileName"].GetValue<string>())
-        Assert.Equal("image/png", att["mediaType"].GetValue<string>())
-        Assert.Equal(3L, att["size"].GetValue<int64>())
-        Assert.Equal(UploadFacts.sha256Hex bytes, att["sha256"].GetValue<string>()))
+        let attType = att["type"]
+        let attName = att["fileName"]
+        let attMedia = att["mediaType"]
+        let attSize = att["size"]
+        let attSha = att["sha256"]
+        Assert.Equal("attachment", attType.GetValue<string>())
+        Assert.Equal("pic.png", attName.GetValue<string>())
+        Assert.Equal("image/png", attMedia.GetValue<string>())
+        Assert.Equal(3L, attSize.GetValue<int64>())
+        Assert.Equal(UploadFacts.sha256Hex bytes, attSha.GetValue<string>()))

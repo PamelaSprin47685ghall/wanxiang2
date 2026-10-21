@@ -20,7 +20,7 @@
 | 手段 | 文件 | 断言了什么 | 覆盖边界（诚实的说法） |
 | --- | --- | --- | --- |
 | 逐控件 headless 行为测试 | `libs/*/tests/*.Headless.fs`（如 `libs/ActionStrip/tests/ActionStrip.Headless.fs`）、`compose/*/tests/Headless.fs` | 用 `HeadlessUnitTestSession`（不是 `Avalonia.Headless.XUnit`，见根 AGENTS.md「控件库交付约定」）在 UI 线程上构造控件，断言控件树形状、可见性、`AutomationProperties` 名称、点击后的状态转移 | **只断言控件树与行为，不看像素。** 没有任何一处比较渲染结果；颜色、字号、间距、内边距错位、遮挡、裁切、文字溢出全部不可见。`AutomationProperties.GetName` 的断言是逐点手写的，不是「每个可交互控件都有名字」的系统性遍历（见 §2.5）。 |
-| 组合者 headless 旅程测试 | `compose/AppShell/tests/ComposerTests.fs`（21 个 `[<Fact>]`）+ `compose/AppShell/tests/Tests.fs`（3 个） | 假 `ShellPorts`（`compose/AppShell/tests/Rig.fs`）记录 `Effect`，断言 MVU 状态机投影 | 断言的是**模型与 Effect 序列**，不是控件树。SPEC 7 要求的「原生交互证明」（焦点流转、无障碍角色）在这一层根本没有发生；旅程 2 已改为强断言（见 §4.5），但旅程 1/5/6 仍只验状态投影与 Effect 序列（见 §4.5）。 |
+| 组合者 headless 旅程测试 | `compose/AppShell/tests/ComposerTests.fs`（21 个 `[<Fact>]`）+ `compose/AppShell/tests/Tests.fs`（3 个）+ `compose/AppShell/tests/JourneyAttachmentTests.fs`（1 个，**真实控件树**） | 假 `ShellPorts`（`compose/AppShell/tests/Rig.fs`）记录 `Effect`，断言 MVU 状态机投影；`JourneyAttachmentTests.fs` 额外驱动真实控件（「添加附件」按键、发送按键、托盘 chip）并断言控件的可用性/提示/状态字 | 前两处断言的是**模型与 Effect 序列**，不是控件树。SPEC 7 要求的「原生交互证明」（焦点流转、无障碍角色）在这一层仍没有系统性发生；旅程 2 已改为强断言（见 §4.5），旅程 3 已有**真实控件树**用例（见 §4.5），但旅程 1/5/6 仍只验状态投影与 Effect 序列（见 §4.5）。 |
 | 主题 a11y 机械回归 | `compose/Theme/tests/A11yRegression.fs` | 纯数值对比度计算（`ThemePalette` 的色值算 WCAG 比值）+ PWA 壳的**交付物**检查（`index.html` / `app.css` / `manifest.webmanifest` 的真实属性） | **不构造任何 Avalonia 控件**，不读真实无障碍树：对比度是按调色板数值算的，控件若没绑定该资源，对比度全绿而界面仍是错的。**产品文案规则（术语表、取消类提示须写明 Esc、中文省略号）已从本文件迁到 `tools/lint-copy.sh`**（见 §4.5），因为文案规则没有运行时可观察，不该伪装成 xunit 用例。 |
 | 桌面启动冒烟 | `tools/smoke_desktop.sh` | 进程退出码 0、stderr 有 `startup.firstFrame` 与 `startup.listReady` 打点、无未处理异常/异常栈行、数据目录有 `ledger/log.jsonseq`/`.lock`/`.lock.pid`、`attachments/` 存在、锁已释放、临时目录被清理 | 证明「窗口真的画出来了并且应用能干净退出」。**firstFrame 是打点，不是画面**：一个全黑、错位、只有骨架的窗口同样会打出 firstFrame。它还依赖 `DISPLAY`（默认 `:0`），本机无 X 时只能靠 CI 的 ubuntu runner。 |
 | 发布产物 PWA 冒烟 | `tools/smoke_published.sh` + `tools/smoke_published_pwa.js` | headless Chrome（`puppeteer-core`，根 `package.json` 的 devDependency）打开发布产物：画布出现、DPR=2（像素= CSS×2）、画布非纯色（64×64 采样**至少 3 种颜色**）、CDP `Input.insertText` 走文本上屏桥、认证态下草稿 800 ms 自动落 IndexedDB、重开页面草稿恢复、无页面异常 | 「画布非纯色」= **画布不是一块纯色**。一个只有背景色加一条错误提示的界面照样通过。交互只覆盖「把字塞进输入框」，不覆盖发送、审批、删除、搜索、主题切换。 |
@@ -268,7 +268,7 @@
 
 ### 4.4 结构性观察（不是单行空断言，但同样削弱证据）
 
-- **`compose/AppShell/tests/ComposerTests.fs` 整体只断言模型与 Effect**，SPEC 7 要求的「原生交互证明（Headless 窗口中验证焦点流转、无障碍角色）」在这一层**没有发生**。旅程 1–6 中唯一触及原生控件的是缩略图端口断言（`Assert.Equal(1, thumbnails.Length)`，A1 所在测试，现 `:41`）与 `rig.Views.Onboarding.*` 三个属性断言。
+- **`compose/AppShell/tests/ComposerTests.fs` 整体只断言模型与 Effect**，SPEC 7 要求的「原生交互证明（Headless 窗口中验证焦点流转、无障碍角色）」在这一层**没有发生**。旅程 1–6 中唯一触及原生控件的是缩略图端口断言（`Assert.Equal(1, thumbnails.Length)`，A1 所在测试，现 `:41`）与 `rig.Views.Onboarding.*` 三个属性断言。**旅程 3 已另行补上真实控件树用例**（`compose/AppShell/tests/JourneyAttachmentTests.fs`，2026-10-22 新增，见 §4.5）：它驱动真实「添加附件」按键与真实发送按键，ACK 经真实线协议事件入口注入，并断言发送键的可用性、提示文案与托盘 chip 状态字。
 - **`docs/ux/r28-pwa-parity.md` 表中明确标注「CI 未断言」的行为**（剪贴板、文件选择/保存、右键菜单、拖放、限流倒计时/搜索防抖）今天仍无断言——这些是**已被记录但从未自动化**的缺口。
 - **`compose/EntryShells/AGENTS.md` SPEC 2 自陈**：「`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（**真实界面验收要人看，仓库内未自动化**）」——这是全仓对「界面缺陷为何靠人肉发现」最明确的一句自白。
 - **`compose/Theme/tests/A11yRegression.fs` 的 7 条对比度用例**走 `check()` 帮助函数，**函数体内确实有 `Assert.True(bad.IsEmpty, …)`**，**不是空断言**；但它们只算调色板数值，**不构造控件、不看实际渲染出的颜色**（控件若没绑定该资源，对比度全绿而界面仍是错的）。
@@ -285,6 +285,7 @@
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 5 | 断言发送键回到 `Idle`、`RunState.Idle (Some err)` 带 kind/message/retryable、`GenerationCancel` 发给**那一个**对话与代号 | 停止后仍不可发 / 错误被丢掉 / 取消发错对话 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 6 | 断言提示条**必须**带撤销动作、撤销前有一个待删批次且含那两段对话、撤销后批次清空 | 撤销入口消失 / 批次漏记 / 撤销后仍残留 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 3 | 断言发送被主机的 `attachment.committed` 确认门控（未就绪时发不出去、草稿与附件都留着），并断言真正发出的 `SendUserMessage` 载荷：`contents` 有 2 条、文本「你好」、附件带 `fileName` / `sha256` / `size`（`:165-238`） | 附件没随消息发出 / 附件元数据不全 / 未就绪时也能发 |
+| `compose/AppShell/tests/JourneyAttachmentTests.fs` | 旅程 3（**真实控件树**，2026-10-22 新增） | 走真实「添加附件」按键与真实发送按键；认证/目录/ACK 全经真实线协议事件入口（`FakePorts.Deliver` → 宿主事件订阅 → `ShellComposer.HandleEvent` → 状态树）。断言：上传完成（`attachment.complete`）后附件**仍未就绪**——发送键 `IsEnabled = false`、提示为「附件上传中，请稍候…」、托盘 chip 状态字为「上传中」；走真实控件的提交入口也**发不出**任何 `SendUserMessage`；主机 `attachment.committed` 之后附件才 `Ready`、发送键启用、chip 状态字变为文件大小；点真实发送键后出线的 `SendUserMessage` 真的带上附件（`type` / `fileName` / `mediaType` / `size` / `sha256`） | 附件没等主机确认就能发 / 确认后仍发不出去 / 发送键的可用性或提示与真实状态不一致 / 发出的消息不带附件或元数据不全 |
 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs` | 连接被抢占 | 断言真的抛 `OperationCanceledException("superseded")`（旧写法吞掉异常且从不断言标志位） | 不抛 superseded / 抛别的异常 |
 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs` | 旧实现摘录 | 逐个写出 `Accepted` / `Unknown` / 坏 base64 三条分支，不再 `| _ -> ()` 一锅端 | 新旧摘录行为不一致 |
 | `compose/ServerApp/tests/ServerAppTests.fs` | 截尾事件文件 | 断言进入**只读降级模式**并留下 `read-only-degraded` 诊断、且**没有**偷偷改用户的日志（S-001 契约） | 降级诊断缺失 / 启动擅自截断日志 |
@@ -421,7 +422,7 @@ CI 里这三道秒级门禁在同一个 `hygiene` 作业里跑；`./x all` 的�
 
 ## 6. 汇总
 
-- **现有界面验证**：**1906** 条 `[<Fact>]`（`compose/*/tests` 956 + `libs/*/tests` 950；按 `[<Theory>]` 的 `[<InlineData>]` 行展开计，则为 1034 + 979 = **2013** 条用例），其中界面相关的绝大多数是**控件树结构与状态机**断言；**像素**断言只有公式一处（`compose/MathFigure/tests/Probe.fs`），且那里的整块像素哈希**已从金样移除**（跨平台光栅化不稳定，现只做同进程内前后对比与布局量锁定，见 §1.2）；交互断言在 PWA 侧只有「文本能进输入框」一处。
+- **现有界面验证**：**1907** 条 `[<Fact>]`（`compose/*/tests` 957 + `libs/*/tests` 950；按 `[<Theory>]` 的 `[<InlineData>]` 行展开计，则为 980 + 1034 = **2014** 条用例），其中界面相关的绝大多数是**控件树结构与状态机**断言；**像素**断言只有公式一处（`compose/MathFigure/tests/Probe.fs`），且那里的整块像素哈希**已从金样移除**（跨平台光栅化不稳定，现只做同进程内前后对比与布局量锁定，见 §1.2）；交互断言在 PWA 侧只有「文本能进输入框」一处。（`compose` 的 957 含 2026-10-22 新增的旅程 3 真实控件树用例 `compose/AppShell/tests/JourneyAttachmentTests.fs`；此前记为 956。）
 - **本轮加上的三样**：
   1. **断言卫生门禁**（`./x hygiene`）——把「恒真断言 / 恒真谓词 / 空转的事实」变成红灯；已用植入**原始**缺陷验证会红。
   2. **界面文案门禁**（`./x lint`）——产品文案规则（术语表、取消类提示须写明 Esc、中文省略号、PWA 壳术语）从测试套件迁出，覆盖范围补到 `libs` + `compose` + `app`。

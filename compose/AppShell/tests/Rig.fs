@@ -106,6 +106,7 @@ type FakePorts(prefs0: UiPrefs) =
     member _.EditingText
         with get () = editing
         and set value = editing <- value
+
     /// 替换「添加附件」按键的宿主行为（点真按键 → 走真上传路径）。
     member _.OnPickAttachment
         with get () = pickAttachment
@@ -386,7 +387,9 @@ module Rig =
 
             let composer =
                 ComposerDesk(
-                shell.ComposerActions((fun () -> fake.OnPickAttachment()), (fun _ -> ()), (fun () -> false)))
+                    shell.ComposerActions((fun () -> fake.OnPickAttachment()), (fun _ -> ()), (fun () -> false))
+                )
+
             let approval = ApprovalDesk(theme, overlay, ignore)
 
             let cards =

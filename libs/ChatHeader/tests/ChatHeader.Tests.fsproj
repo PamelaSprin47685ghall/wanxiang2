@@ -3,6 +3,8 @@
   <ItemGroup>
     <Compile Include="Headless.fs" />
     <Compile Include="Tests.fs" />
+    <Compile Include="BreadcrumbAction.BreadcrumbAction.Tests.fs" />
+    <Compile Include="BreadcrumbAction.RevealFlash.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

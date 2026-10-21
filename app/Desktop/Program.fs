@@ -840,6 +840,10 @@ module Program =
                           OpenLink = openLink
                           SaveDownload = saveDownload
                           ApplyDraftWrite = applyDraftWrite
+                          LoadLocalDraft =
+                            fun () ->
+                                // 端口要求 Async；IDraftBackend 返回 Task，用 AwaitTask 转换。
+                                draftBackend.Load() |> Async.AwaitTask
                           PrefsLoad = Wanxiang.UI.UiPrefsFile.load
                           PrefsSave = Wanxiang.UI.UiPrefsFile.save
                           TryLoadClientToml = Wanxiang.UI.CredentialStore.tryLoadClientToml

@@ -35,7 +35,7 @@ let private rig (collapsed: bool) =
           Now = fun () -> DateTimeOffset.UnixEpoch }
     let composer =
         ComposerDesk(
-            { Submit = (fun _ -> true); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
+            { Submit = (fun _ -> true); TextChanged = (fun _ -> ()); CaretChanged = (fun _ -> ()); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
               OpenModelPicker = ignore; DropFiles = ignore; PasteFromClipboard = (fun () -> false); OpenSessionSettings = ignore })
     let ws: Workspace option ref = ref None
     let chat =
@@ -57,7 +57,9 @@ let private rig (collapsed: bool) =
               setPinned = (fun _ _ -> ()); setArchived = (fun _ _ -> ()); selectionAllPinned = (fun _ -> false)
               setPinnedMany = (fun _ _ -> ()); setArchivedMany = (fun _ _ -> ()); deleteMany = ignore
               duplicateAsFork = ignore; exportConversation = ignore; openSettings = ignore; reconnect = ignore
-              toggleArchivedVisibility = ignore; closeNavigation = ignore },
+              toggleArchivedVisibility = ignore; closeNavigation = ignore
+              enterSelection = ignore; toggleSelected = ignore; exitSelection = ignore
+              toggleSelectAllVisible = ignore },
             logo)
     let workspace =
         Workspace(theme, root, sidebar, chat, composer,

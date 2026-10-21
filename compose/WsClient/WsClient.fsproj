@@ -8,5 +8,6 @@
     <PackageReference Include="Wanxiang2.CommitTimeline" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AguiWire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

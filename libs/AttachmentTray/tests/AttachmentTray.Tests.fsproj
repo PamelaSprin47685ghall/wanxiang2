@@ -8,6 +8,9 @@
     <Compile Include="ComposerBox.Tests.fs" />
     <Compile Include="ModelChip.Headless.fs" />
     <Compile Include="ModelChip.Tests.fs" />
+    <Compile Include="ComposerSendState.Samples.fs" />
+    <Compile Include="ComposerSendState.Render.fs" />
+    <Compile Include="ComposerSendState.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />

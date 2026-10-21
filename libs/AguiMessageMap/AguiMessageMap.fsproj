@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <Compile Include="AguiMessageMap.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Agents.AI" />
-    <PackageReference Include="AGUI.Abstractions" />
-  </ItemGroup>
-</Project>

@@ -6,6 +6,11 @@
     <Compile Include="ExportSheet.Tests.fs" />
     <Compile Include="ImportSheet.Headless.fs" />
     <Compile Include="ImportSheet.Tests.fs" />
+    <Compile Include="ExportFileName.ExportFileName.Tests.fs" />
+    <Compile Include="ExportFileName.ExportView.Tests.fs" />
+    <Compile Include="ExportFileName.ImportView.Tests.fs" />
+    <Compile Include="ExportFileName.ProgressThrottle.Tests.fs" />
+    <Compile Include="ExportFileName.TranscriptMarkdown.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />

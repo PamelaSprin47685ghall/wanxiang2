@@ -42,8 +42,13 @@ let ``capped notice once per begin, bad base64 ignored, like old AppShell`` () =
                 | DownloadChunkResult.Capped when not downloadCappedNotified ->
                     downloadCappedNotified <- true
                     toast "附件过大，下载已中止。" Warning
-                | _ -> ()
-            with _ -> ()
+                | DownloadChunkResult.Capped -> ()
+                // 旧实现摘录：坏 base64 被忽略（不 toast），其余结果也不 toast。
+                // 旧写法 `| _ -> ()` 把这些全吞了；现在逐个写出来：只有 Capped 会提示。
+                | DownloadChunkResult.Accepted -> ()
+                | DownloadChunkResult.Unknown _ -> ()
+            // 坏 base64：Convert.FromBase64String 抛 → 旧实现忽略这一段（不 toast）。
+            with :? FormatException -> ()
         toasted
     let buffers = DownloadBuffers(8L)
     let newStep ev =

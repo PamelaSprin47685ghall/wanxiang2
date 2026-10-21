@@ -109,6 +109,10 @@ type ImportSheet(look: ImportSheetAppearance, privacyNote: string) =
         details.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontSmall") |> ignore
         privacy.Name <- "import-privacy-note"
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite)
+        // 导入对话框由 overlay.ShowDialog 承载，Esc 会关掉它（ImportDesk 的取消即关弹层）。
+        // 取消键的提示必须写明 Esc 可用（a11y 回归「取消按钮的提示文案都写明 Esc」）。
+        AutomationProperties.SetHelpText(closeButton, "取消并关闭导入对话框 (Esc)")
+        ToolTip.SetTip(closeButton, "取消并关闭导入对话框 (Esc)")
         AutomationProperties.SetName(pickButton, "选择要导入的 JSON 文件")
         AutomationProperties.SetName(importButton, "导入为新对话")
         AutomationProperties.SetHelpText(importButton, "在这台主机上新建一个对话并写入文件里的消息")

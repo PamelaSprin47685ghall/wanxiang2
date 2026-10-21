@@ -14,7 +14,7 @@
 3. **浏览器侧是外部契约：JS 函数名与 `wwwroot/main.js` 不变。** [BrowserCredentials LEMMA: 1; BrowserPage LEMMA: 1]
 
 # SPEC
-1. [LEMMA: 1] 解析部分：`libs/ClientConnections/tests` 的金标准用例（`tests/golden/expected.txt` 由旧程序集读真实临时 `WANXIANG_HOME` 下的 client.toml 生成）通过；`./x test ClientConnections` 可重跑。
+1. [LEMMA: 1] 解析部分：`libs/ClientConnections/tests` 的用例通过——`Q191 浏览器连接记录：缺 url 或 token 的跳过，坏 JSON 当作没有`、`浏览器默认地址与页面同源：https 用 wss，http 用 ws`；`./x test ClientConnections` 可重跑。
 2. [LEMMA: 3] JS 绑定名比对：`libs/BrowserInterop/tests` 与 `libs/BrowserInterop/tests` 通过；`./x test BrowserCredentials`、`./x test BrowserPage` 可重跑。
 3. 本组合者无独立测试工程：`./x compose` 跳过它（`x` 的 `compose()` 注释点名）。旧仓库没有 CredentialStore 的单元测试可迁；浏览器分支的 JSImport 在浏览器之外不能实例化、更不能调（BrowserCredentials SPEC 1），桌面文件分支要真实文件系统。
 
@@ -22,4 +22,4 @@
 无。旧仓库没有 CredentialStore 的单元测试（`libs/ClientConnections/AGENTS.md` 同结论）。新增的解析用例在 `libs/ClientConnections/tests/Tests.fs`：`Q191 浏览器连接记录：缺 url 或 token 的跳过，坏 JSON 当作没有`、`浏览器默认地址与页面同源：https 用 wss，http 用 ws`。
 
 # 拆分与复核
-- 旧文件按「纯解析 / 平台 IO」拆：`parseClientToml` / `parseConnections` / `serverUrlOfPage` / `desktopServerUrl` 归 `libs/ClientConnections`（金样 + 浏览器解析用例），`configHome`、桌面文件与 IndexedDB 调用、`clientName` 的平台判断留本壳。逐字对照：`git -C /tmp/wx-old show bfdda85^:src/Wanxiang.UI/CredentialStore.fs | diff - compose/CredentialStore/CredentialStore.fs`（旧仓库退役检出在 `/tmp/wx-old`），输出只有未用的 `open` 行、说明注释与末尾 `Constants.WsPath` → `"/ws"` 一处。
+- 旧文件按「纯解析 / 平台 IO」拆：`parseClientToml` / `parseConnections` / `serverUrlOfPage` / `desktopServerUrl` 归 `libs/ClientConnections`（解析与浏览器地址用例），`configHome`、桌面文件与 IndexedDB 调用、`clientName` 的平台判断留本壳。逐字对照：`git -C /tmp/wx-old show bfdda85^:src/Wanxiang.UI/CredentialStore.fs | diff - compose/CredentialStore/CredentialStore.fs`（旧仓库退役检出在 `/tmp/wx-old`），输出只有未用的 `open` 行、说明注释与末尾 `Constants.WsPath` → `"/ws"` 一处。

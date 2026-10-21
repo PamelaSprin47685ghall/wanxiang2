@@ -2,7 +2,16 @@
 
 SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、HostSwitcher 这些控件，加上 SearchSession、SearchRequery、RowFocus、SidebarSelection、SidebarEmpty、ConversationSummary、ForkLineage（ConversationList）、SearchSegments、SearchHit 这些协作库，一起构成旧 `Views/Sidebar.fs`。根规则见项目根目录 AGENTS.md。
 
-- 宿主入口是 `SidebarDesk(theme, overlay, actions: SidebarDeskActions, brandLogo)`，`View` 放进主布局。`SidebarDeskActions` 的字段与旧 `SidebarActions` 一一对应。
+**多选只有一个事实来源**：多选模式与选中集合在 `libs/WorkspaceState`（`Chrome.BatchMode` / `Chrome.SelectedRowIds`），
+经 `SidebarVS.BatchMode` / `SidebarVS.SelectedRowIds` 投影进来。本组合者**不再自己记一份选择集合**，
+只发意图（`SidebarDeskActions` 的四个多选端口）、并按**可见行**（搜索框与归档开关都在侧栏，可见性是侧栏的事实）
+派生批量条要显示什么。
+
+- 宿主入口是 `SidebarDesk(theme, overlay, actions: SidebarDeskActions, brandLogo)`，`View` 放进主布局。
+  `SidebarDeskActions` 的字段与旧 `SidebarActions` 一一对应，多选另加四个端口：
+  `enterSelection : Guid -> unit`、`toggleSelected : Guid -> unit`、`exitSelection : unit -> unit`、
+  `toggleSelectAllVisible : Guid list -> unit`——宿主把它们派发成 `SidebarUserMsg.EnterBatch` / `ToggleBatch` /
+  `ExitBatch` / `ToggleBatchAllVisible`。
 - 成员名：`ResetSearch`、`SearchHandler`、`OpenSearchHit`、`BeginMessageSearch`、`ApplySearchResults`、`ApplySearchFailure`、`SearchQueryText`、`MessageHits`、`ConfigureImport`（空实现）、`PaletteButton`、`PresetMenuButton`、`ConnectionText`、`FocusSearch`、`GetVisibleOrder`、`NeighborAfterDelete`、`FocusAfterDelete`、`EnterSelection`、`ToggleSelected`、`ExitSelection`、`ToggleSelectAllVisible`、`SelectedIds`、`IsSelectionMode`。另外暴露 `Rows`、`Search`、`Batch`、`Host`、`Brand`、`EmptyCard`，供宿主和测试读取状态。
 - 渲染入口已收拢为 `Render(vs: SidebarVS)`，实现单入口幂等投影；品牌行与页脚都经各自的 `Render`（`brand.Render(vs.Brand)` / `hostBar.Render(vs.Host)`），组合者不再旁路写这两个控件。
 - 例外插槽/命令（命名避开 Set*，非每帧投影）：`SlotPresets`（预设下拉插槽：改 `lastVS.Brand.PresetsVisible` 后重渲染品牌行）、`SlotPalette`（命令面板入口插槽）、`ApplySearchText`（命令面板全文搜索命令）、`ApplyServerUrl`（服务器 URL 命令：改投影值后重渲染页脚）。
@@ -10,7 +19,9 @@ SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、Hos
 - 在这里完成的协作：
   - 每次重建时按 ConversationSummary 分组筛选，组装行模型（搜索高亮分段、预览去重、分叉前缀、同名区分、谱系提示），追加消息命中区和状态行。
   - 重建后的焦点还原走 RowFocus。
-  - 多选时更新批量条，并让品牌行和页脚让位。
+  - 多选时更新批量条，并让品牌行和页脚让位。批量条的计数、「全选/取消全选」与「置顶/取消置顶」
+    按**可见行**算（`rows.VisibleIds` ∩ 投影给的选中集合）；`AllPinned` 走宿主回调
+    `actions.selectionAllPinned usable`（置顶事实归模型，宿主从 `model.Summaries` 读）。
   - 行菜单按 id 取最新快照，多选时不打开。
   - Esc 按顺序处理：行在多选中时退出多选；否则先清空搜索词，再退出多选，最后聚焦当前对话。
   - 搜索框的 Down 和 Enter 出口与旧实现相同。
@@ -20,7 +31,11 @@ SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、Hos
 - 主题条目：新增 `Space.TrackingDisplay`、`DerivedBrush.HoverSelected`、`Metric.SidebarSkeletonBarHeight`。
 
 ## P3 架构演进标记
-- `RowFocus`、`SearchSession`、`SidebarSelection`：目前在 SidebarDesk 内部维持实例以支撑行焦点还原、多选判定与消息搜索命中分页。P3 阶段将随单状态树收拢，其时序状态直接交由 `WorkspaceState` 的 `WorkspaceModel.Chrome` / `Effect.Focus` 接管，彻底废除组合者内部可变状态机。
+- `RowFocus`、`SearchSession`：目前在 SidebarDesk 内部维持实例以支撑行焦点还原与消息搜索命中分页。
+  P3 阶段将随单状态树收拢，其时序状态直接交由 `WorkspaceState` 的 `WorkspaceModel.Chrome` / `Effect.Focus` 接管。
+- ~~`SidebarSelection`~~：**多选判定已收口**——多选模式与选中集合归 `WorkspaceState`（`Chrome.BatchMode` /
+  `Chrome.SelectedRowIds`），`libs/BatchBar/SidebarSelection.fs` 只剩「按可见行过滤已选项」这个派生读法，
+  不再持有任何状态。
 
 ## 证据与旧测试
 

@@ -119,6 +119,7 @@ let ``1000 条消息下 ItemsControl 使用 VirtualizingStackPanel 仅渲染视�
             Streaming = false
             ScrollHint = None
             RevealTarget = None
+            Error = None
         }
         pane.Render(vs)
         Dispatcher.UIThread.RunJobs()
@@ -135,11 +136,11 @@ let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
     Headless.run (fun () ->
         let pane, w = rig ()
         // 空态
-        pane.Render { Phase = ChatPhase.Empty IdleEmptyKind.NotConnected; Streaming = false; ScrollHint = None; RevealTarget = None }
+        pane.Render { Phase = ChatPhase.Empty IdleEmptyKind.NotConnected; Streaming = false; ScrollHint = None; RevealTarget = None; Error = None }
         Assert.True pane.IsEmptyShown
         Assert.False pane.Scroller.Viewer.IsVisible
         // 骨架
-        pane.Render { Phase = ChatPhase.Skeleton; Streaming = false; ScrollHint = None; RevealTarget = None }
+        pane.Render { Phase = ChatPhase.Skeleton; Streaming = false; ScrollHint = None; RevealTarget = None; Error = None }
         Assert.False pane.IsEmptyShown
         Assert.True pane.Skeleton.IsShown
         // 消息
@@ -159,7 +160,7 @@ let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
             AwaitingApproval = Set.empty
             Index = Some 1
         } ]
-        pane.Render { Phase = ChatPhase.Messages msgs; Streaming = false; ScrollHint = None; RevealTarget = None }
+        pane.Render { Phase = ChatPhase.Messages msgs; Streaming = false; ScrollHint = None; RevealTarget = None; Error = None }
         Assert.False pane.IsEmptyShown
         Assert.False pane.Skeleton.IsShown
         Assert.True pane.Scroller.Viewer.IsVisible

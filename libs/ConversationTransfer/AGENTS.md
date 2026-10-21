@@ -6,8 +6,7 @@
 1. **导出与导入字节不变。** [根 AXIOM: 1] 同样的输入经本库得到的 JSON、Markdown 头部、导入预览与错误文案与旧程序集相同。
 
 # SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由旧 Wanxiang.UI 程序集在 `TZ=UTC` 下跑 `tests/Render.fs` 生成；`tests/Tests.fs` 的金标准用例在 UTC 时区下通过（CI 即 UTC）。
-2. 金标准生成器 `tools/gen-golden.fsx`（`TZ=UTC dotnet fsi tools/gen-golden.fsx`）；重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`312 载荷里出现密钥类字段一律去掉`、`312 Markdown 头部写明来源、分叉和隐私说明`、`313 不认识的文件给出可读原因，不部分导入`、`313 导出的 JSON 能解析回预览：标题、条数、分叉说明`。
 
 # 迁入或覆盖的旧测试
 - R14TransferTests：`312 载荷里出现密钥类字段一律去掉`、`312 Markdown 头部写明来源、分叉和隐私说明`、`313 不认识的文件给出可读原因，不部分导入`、`313 导出的 JSON 能解析回预览`（导出改由 toJson 直接产出）

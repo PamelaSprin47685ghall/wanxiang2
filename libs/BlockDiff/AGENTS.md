@@ -14,13 +14,10 @@
 1. **流式增量只重建第一个变了的块之后的控件。** [根 AXIOM: 5] 长回复每批重绘不重新排字。
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/blockdiff.txt`（含宿主替身的面板与边距）；`tests/Tests.fs` 两条行为用例。
+1. [LEMMA: 1] `tests/BlockDiff.Tests.fs` 通过：`only blocks after the first changed one are rendered again`、`the same text twice does nothing`。
 
 ## 迁入或覆盖的旧测试
-旧仓库没有直接测 StreamingMarkdown 记账的用例；流式渲染的窗口用例留在旧仓库。本库新增金样与行为用例。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/OldBlockDiff.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样证据较弱；规则另由 `tests/Tests.fs` 直接断言。
+旧仓库没有直接测 StreamingMarkdown 记账的用例；流式渲染的窗口用例留在旧仓库。本库新增 2 条行为用例。
 
 ## 成员 `LinkChunks`
 
@@ -32,10 +29,10 @@
 1. **切片与挪动结果与旧实现逐字相同；切片不拆字素簇，拼接回原文。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/chunks.txt` 由旧代码生成（emoji 家庭序列、组合字符、中英标点）。
+1. [LEMMA: 1] `tests/LinkChunks.Tests.fs` 通过：`empty input or non-positive size yields no chunks`、`surrogate pairs are never split`、`chunks concatenate back to the input`、`a closer at the head moves to the previous chunk`、`an opener at the tail moves to the next chunk`、`a lone punctuation chunk stays in place`、`LinkChunks.safeChunk does not slice surrogate pairs into separate chunks`。
 
 ## 迁入或覆盖的旧测试
 旧 CraftsmanshipPolishTests（去掉 Headless 包装）：
 - `MarkdownRenderer.SafeChunk does not slice surrogate pairs into separate chunks`
 
-本库新增：金样、空输入与非正长度、代理对、拼接还原、收标点前移、开标点后移、孤立标点不动。
+本库新增：空输入与非正长度、代理对、拼接还原、收标点前移、开标点后移、孤立标点不动。

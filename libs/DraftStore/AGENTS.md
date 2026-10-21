@@ -11,8 +11,7 @@
 2. **保存决定与旧 DraftStore 对后端的动作一致。** [根 AXIOM: 1] 同一串快照，旧版对后端的写/删/不动与本库返回的 DraftWrite 一一对应。
 
 # SPEC
-1. [LEMMA: 1, 2] `tests/golden/expected.txt` 由旧 DraftCodec、DraftStore(MemoryDraftBackend)、DraftPolicy 跑 `tests/Render.fs` 生成；金标准用例通过。
-2. 金标准生成器 `tools/gen-golden.fsx`（跑旧仓库构建出的程序集）；重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1, 2] `tests/Tests.fs` 通过：`a recycled page restores drafts from the browser backend`、`after the host clears storage the same snapshot is written again`、`conversations that vanish from the list count as deleted unless a send is in flight`、`restore notice: unsent wins, attachments ask for reselect, nothing restored is silent`、`file draft backend round-trips, clears, and tolerates missing files`、`memory draft backend keeps per-instance state`。
 
 # 迁入或覆盖的旧测试
 - ComposerReliabilityTests：`a recycled page restores drafts from the browser backend`（后端换成宿主保存的文本）、`conversations that vanish from the list count as deleted unless a send is in flight`
@@ -20,5 +19,4 @@
 
 ## DraftRestore（迁自旧 AppShell）
 - 来源：旧 AppShell.RestoreLocalDrafts / UpdateDraftSummary / PruneDeletedConversationDrafts / ClearLocalDrafts 中不碰界面的判断。
-- 金标准：tests/golden/restore.txt，由 tools/gen-restore-golden.fsx 跑 tools/OldDraftRestore.fs（旧代码原样摘录；私有成员无法从旧程序集调用）生成。
-- 覆盖的旧测试：旧仓库没有直接测这些私有成员的测试；这里的金标准与行为测试是新增覆盖。
+- 覆盖的旧测试：旧仓库没有直接测这些私有成员的测试；这里的行为测试是新增覆盖，见 SPEC 1 的用例名。

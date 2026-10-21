@@ -25,5 +25,6 @@
     <PackageReference Include="Wanxiang2.PlainText" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ContextTrim" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ContinuableReply" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Conversations" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

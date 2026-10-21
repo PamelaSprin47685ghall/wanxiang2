@@ -18,4 +18,4 @@
 - 新增 `PaletteRecent.decode` / `encode` / `fileName`（旧 PaletteRecent 的落盘格式；文件读写归宿主）：用例 `palette recent file bytes match old load and save` 的期望值由旧程序集实际读写得到。
 - 新增壳层面板 `ShellPalette.items`（输入 `ShellPaletteInput`：是否有当前对话、预设、主机能力、主题说法、设置分区、对话列表、是否显示归档）、`commandOf`（条目 id → `PaletteCommand`）、`closesDrawer`，迁自旧 AppShell.PaletteItems / RunPaletteItem。与旧分派的两处差别由宿主补齐：`set:<未知分区>` 旧代码只打开设置页，新代码给 `OpenSettings key`，宿主找不到分区时同样只打开设置页；`preset:<id>` 旧代码先查预设，不存在则 toast「这个预设已经不存在。」且不收抽屉，宿主执行 `ApplyPreset` 时先查。
 
-壳层面板的旧壳金样复刻已退役（`tests/golden/expected.txt`、`tools/OldShellPalette.fs`、`tools/gen-golden.fsx` 全删，`tests/Render.fs` 一并删）。改为直接断言真实行为：`tests/Tests.fs` 给定一份壳层输入事实（有当前对话、两个预设、主机支持预设与导入、六个设置分区、三条对话），断言产出的条目清单与顺序（动作 → 设置分区 → 设置项 → 对话）、每条动作的标题 / 说明 / 检索词 / 快捷键、对话条目的标题与标记副标题、归档对话默认隐藏而打开后才有，以及选中每类条目后派发的 `PaletteCommand` 与哪些命令收起窄屏抽屉。
+壳层面板的旧壳金样复刻已退役（金样文件、旧代码副本与金样生成器连同渲染脚本一并删除）。改为直接断言真实行为：`tests/Tests.fs` 给定一份壳层输入事实（有当前对话、两个预设、主机支持预设与导入、六个设置分区、三条对话），断言产出的条目清单与顺序（动作 → 设置分区 → 设置项 → 对话）、每条动作的标题 / 说明 / 检索词 / 快捷键、对话条目的标题与标记副标题、归档对话默认隐藏而打开后才有，以及选中每类条目后派发的 `PaletteCommand` 与哪些命令收起窄屏抽屉。

@@ -10,6 +10,8 @@
     <Compile Include="ExchangeNav.Tests.fs" />
     <Compile Include="SkeletonList.Headless.fs" />
     <Compile Include="SkeletonList.Tests.fs" />
+    <Compile Include="BreathPhase.ChatEmptyText.Tests.fs" />
+    <Compile Include="BreathPhase.ScrollFollow.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />

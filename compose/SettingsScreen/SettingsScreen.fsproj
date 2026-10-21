@@ -26,7 +26,6 @@
     <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.GenerationDraft" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BoundedWait" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DevicesModel" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />

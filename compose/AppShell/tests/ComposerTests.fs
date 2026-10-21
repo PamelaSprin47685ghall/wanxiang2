@@ -35,11 +35,18 @@ let ``附件上传按开始-分块-完成发事件，图片另走缩略图端口
         Assert.Equal(("inst-1", 7), owner)
         let bytes = [| for i in 1..3 -> byte i |]
         rig.Shell.AttachFiles owner [ "a.png", bytes ]
-        Assert.Contains(rig.Fake.RecordedEffects, fun eff ->
-            match eff with
-            | Effect.Focus _ -> true
-            | _ -> false || true)
-        Assert.Single rig.Fake.Thumbnails |> ignore)
+        // 图片走缩略图端口：恰好一次，字节与上传的同一份。
+        // （旧断言写成 `| _ -> false || true`，谓词恒真——什么也没验。）
+        let thumbnails = rig.Fake.Thumbnails
+        Assert.Equal(1, thumbnails.Length)
+        let (_, thumbBytes) = thumbnails.[0]
+        Assert.Equal<byte[]>(bytes, thumbBytes)
+        // 非图片不走缩略图端口（同一个入口、两种分支）。
+        let rig2 = Rig.create ()
+        authenticate rig2
+        let owner2 = rig2.Shell.UploadOwner()
+        rig2.Shell.AttachFiles owner2 [ "b.txt", bytes ]
+        Assert.Empty rig2.Fake.Thumbnails)
 
 [<Fact>]
 let ``空文件与超大文件被校验挡下，不发上传事件`` () =
@@ -64,9 +71,18 @@ let ``断开连接：清空状态并转入断开`` () =
         let rig = Rig.create ()
         authenticate rig
         rig.Fake.Close(Some "网络断了")
+        // 不变式 3（libs/WorkspaceState）：ConnectionDown 之后在途计数归零，
+        // 防 Pending Wedge（断线后命令永远停在 pending，界面一直转圈）。
+        Assert.Equal(0, rig.Shell.Model.Feedback.PendingCommands.Count)
+        Assert.Equal(0, rig.Shell.Model.Feedback.PendingDeletions.Count)
+        Assert.Equal(0, rig.Shell.Model.Feedback.PendingConfigs.Count)
+        // 连接态落到「重新连接中」（ConnPhase.Connecting 1），不是「已认证」。
+        // （旧断言两个分支都是 Assert.True(true)：无论落到哪个状态都通过。）
         match rig.Shell.Model.Conn with
-        | ConnPhase.Connecting _ -> Assert.True(true)
-        | _ -> Assert.True(true))
+        | ConnPhase.Connecting attempt -> Assert.Equal(1, attempt)
+        | other -> Assert.Fail(sprintf "断开后应是重新连接中，实际 %A" other)
+        // 断开要告诉用户。
+        Assert.Contains(rig.Fake.Toasts, fun (text, _) -> text = "已断开连接"))
 
 // ---- SPEC 7 闭环旅程（≥6 条）----
 
@@ -107,10 +123,28 @@ let ``旅程 2：引导流程配置模型`` () =
         rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray(); tools = JsonArray(); generation = JsonObject() |}))
         
         let vs = Workspace.project rig.Shell.Model
-        // 空目录时无需停止按钮
+        // 空目录时无需停止按钮（负向）。
         match vs.Composer.Send.State with
         | SendButtonState.GeneratingStop -> Assert.Fail "空目录不该有停止按钮"
-        | _ -> ())
+        | _ -> ()
+        // 正向：目录装载完，且目录里**没有可用模型服务** → 连接态是「已认证 + 目录就绪」，
+        // 工作区是 IdleEmpty（还没开任何对话）。这是旅程 2 走完引导后应有的落点。
+        // （旧断言只有上面那一条负向：目录状态、引导事实全都没验。）
+        match rig.Shell.Model.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(catalog, WorkspacePhase.IdleEmpty)) ->
+            // 空目录：一个模型服务都没有。
+            Assert.Empty(catalog.providers)
+        | other -> Assert.Fail(sprintf "空目录应是已认证+目录就绪+空闲，实际 %A" other)
+        // 引导事实还是空的（用户还没选预设）：引导卡按这个事实投影。
+        Assert.Equal(None, rig.Shell.Model.Onboarding.SelectedPresetKey)
+        Assert.Equal(None, rig.Shell.Model.Onboarding.DiscoveredModels)
+        // 没有可用模型服务 → 输入区禁用，并说清为什么（不可用原因进界面）。
+        Assert.False(vs.Composer.Enabled)
+        Assert.Equal(Some "还没有可用的模型服务", vs.Composer.DisabledReason)
+        // 目录为空 → 聊天区是「还没有对话」的空态（工作区是 IdleEmpty）。
+        match vs.Chat.Phase with
+        | ChatPhase.Empty IdleEmptyKind.NoConversation -> ()
+        | other -> Assert.Fail(sprintf "空目录应是 NoConversation 空态，实际 %A" other))
 
 [<Fact>]
 let ``旅程 3：发送含附件消息`` () =
@@ -119,17 +153,48 @@ let ``旅程 3：发送含附件消息`` () =
         rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
         rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
         
-        // 附加文件
-        rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Attach("pic.png", "image/png", 1024L, "sha256")))) |> ignore
+        // 附加文件：挂上后**还没就绪**（主机还没确认落盘），
+        // 所以此刻发送会被门控挡住——草稿与附件都留着。
+        let attachmentId = Guid.NewGuid()
+        rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Attach(attachmentId, "pic.png", "image/png", 1024L, "sha256")))) |> ignore
         rig.Shell.Dispatch(User(Composer(ComposerUserMsg.TextChanged "你好")))
-        
+
         let vs = Workspace.project rig.Shell.Model
         Assert.Equal("你好", vs.Composer.Text)
-        
+        Assert.Single(vs.Composer.Tray) |> ignore
+
+        // 未就绪时发送：被挡住，消息没发出去，草稿与附件都留着
+        rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Send)))
+        let vsBlocked = Workspace.project rig.Shell.Model
+        Assert.Equal("你好", vsBlocked.Composer.Text)
+        Assert.Single(vsBlocked.Composer.Tray) |> ignore
+        Assert.Empty rig.Fake.Commands
+
+        // 主机确认落盘（`attachment.committed`）→ 附件就绪
+        rig.Shell.Dispatch(WireRecv(WireEvent.AttachmentCommitted {| attachmentId = attachmentId; sha256 = "sha256"; size = 1024L |}))
+        let vsReady = Workspace.project rig.Shell.Model
+        Assert.True((vsReady.Composer.Tray |> List.head).Ready)
+
         // 发送消息
         rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Send)))
         let vsAfter = Workspace.project rig.Shell.Model
-        Assert.Equal("", vsAfter.Composer.Text))
+        Assert.Equal("", vsAfter.Composer.Text)
+        Assert.Empty vsAfter.Composer.Tray
+
+        // **断言真正发出去的 payload**：文本 + 那条附件（不是只断「输入框清空了」）
+        let sent =
+            rig.Fake.Events
+            |> List.tryPick (function
+                | WireEvent.Command(ClientCommand.SendUserMessage d) -> Some d.messageJson
+                | _ -> None)
+        Assert.True(sent.IsSome)
+        let contents = sent.Value.["contents"].AsArray()
+        Assert.Equal(2, contents.Count)
+        Assert.Equal("你好", contents[0].["text"].GetValue<string>())
+        Assert.Equal("attachment", contents[1].["type"].GetValue<string>())
+        Assert.Equal("pic.png", contents[1].["fileName"].GetValue<string>())
+        Assert.Equal("sha256", contents[1].["sha256"].GetValue<string>())
+        Assert.Equal(1024L, contents[1].["size"].GetValue<int64>()))
 
 [<Fact>]
 let ``旅程 4：流式增量与工具审批响应`` () =
@@ -237,7 +302,32 @@ let ``旅程 5：中途停止与失败重试`` () =
         let vsFinished = Workspace.project rig.Shell.Model
         match vsFinished.Composer.Send.State with
         | SendButtonState.GeneratingStop -> Assert.Fail "停止后不应再有停止按钮"
-        | _ -> ())
+        | _ -> ()
+        // 正向：生成结束后可以再发（Idle，而不是别的忙态）。
+        Assert.Equal(SendButtonState.Idle, vsFinished.Composer.Send.State)
+        // RunState 带上了这次失败的 GenerationError（重试依据，不是丢掉）。
+        // （旧断言只有上面那一条负向：错误内容、错误类型都没验。）
+        match rig.Shell.Model.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(_, run))) ->
+            match run with
+            | RunState.Idle (Some err) ->
+                Assert.Equal(GenerationErrorKind.ProviderTimeout, err.kind)
+                Assert.Equal("超时", err.message)
+                Assert.True(err.retryable)
+            | RunState.Idle None -> Assert.Fail "生成失败后 RunState 应带 lastError"
+            | RunState.Generating _ -> Assert.Fail "生成已结束，不应仍在 Generating"
+        | other -> Assert.Fail(sprintf "生成结束后连接态不对: %A" other)
+        // 取消事件发给了**那一段**对话（不是别的对话）。
+        let cancels =
+            rig.Fake.RecordedEffects
+            |> List.choose (fun e ->
+                match e with
+                | Effect.SendWire(WireEvent.GenerationCancel d) -> Some d
+                | _ -> None)
+        let cancels = List.ofSeq cancels
+        Assert.Equal(1, cancels.Length)
+        Assert.Equal(convId, cancels.Head.conversationId)
+        Assert.Equal(genId, cancels.Head.generationId))
 
 [<Fact>]
 let ``旅程 6：切换对话、搜索与批量删除恢复`` () =
@@ -272,11 +362,18 @@ let ``旅程 6：切换对话、搜索与批量删除恢复`` () =
         
         // 撤销删除
         let toastUndoAction = rig.Shell.Model.Toasts |> List.head |> fun t -> t.UndoAction
+        // 批量删除的提示条**必须**带撤销动作，否则用户删了救不回来。
+        // （旧写法 `| None -> ()`：撤销入口消失时测试静默通过。）
         match toastUndoAction with
         | Some actionId ->
+            // 撤销前：有一个待删批次，批次里是那两段对话。
+            Assert.Equal(1, rig.Shell.Model.Feedback.PendingDeletions.Count)
+            let batch = rig.Shell.Model.Feedback.PendingDeletions |> Map.toList |> List.head |> snd
+            Assert.Equal<Set<Guid>>(set [ c1; c2 ], set batch.Ids)
             rig.Shell.Dispatch(User(Overlay(OverlayUserMsg.ToastUndo actionId)))
+            // 撤销后：待删批次清空（对话没被真删）。
             Assert.Empty rig.Shell.Model.Feedback.PendingDeletions
-        | None -> ())
+        | None -> Assert.Fail "批量删除的提示条必须带撤销动作")
 
 // ---- W7-B3 接线补全：定位目标与引导卡投影 ----
 
@@ -386,3 +483,149 @@ let ``主机拒绝配置时健康状态记下配置有误，config.changed 后�
         | None -> Assert.Fail("应记下配置有误")
         rig.Fake.Deliver(ConfigChanged {| reason = "reloaded" |})
         Assert.Equal(None, rig.Views.Settings.Health.ConfigIssue))
+
+/// 附件的真实生产路径（2026-10-21 W7-CLEANBREAK 修）：选文件 → 上传 → 就绪 → 发送。
+///
+/// 这条用例钉的是**接线**：`AttachFiles` 必须
+///   1. 用**同一个** attachment id 派发状态树消息与线协议消息（进度才对得上）；
+///   2. 真的发 `attachment.begin` → `attachment.chunk` → `attachment.complete`；
+///   3. 附件就绪后，发送出去的 payload 里带的是那条附件（sha256 / fileName / size）。
+[<Fact>]
+let ``附件：AttachFiles 用同一个 id 走状态树与线协议，就绪后随消息发出`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
+        rig.Shell.Dispatch(WireRecv(CatalogSnapshot {| providers = JsonArray([| JsonObject() :> JsonNode |]); tools = JsonArray(); generation = JsonObject() |}))
+
+        let bytes = "hello-attachment" |> System.Text.Encoding.UTF8.GetBytes
+        rig.Shell.AttachFiles("inst-test", 7) [ ("pic.png", bytes) ]
+
+        // 线协议：begin → chunk… → complete，且三处用的是同一个 id
+        let evs = rig.Fake.Events
+        let begins = evs |> List.filter (function WireEvent.AttachmentBegin _ -> true | _ -> false)
+        let chunks = evs |> List.filter (function WireEvent.AttachmentChunk _ -> true | _ -> false)
+        let completes = evs |> List.filter (function WireEvent.AttachmentComplete _ -> true | _ -> false)
+        Assert.Single(begins) |> ignore
+        Assert.NotEmpty(chunks)
+        Assert.Single(completes) |> ignore
+        let beginId =
+            match List.head begins with
+            | WireEvent.AttachmentBegin d -> d.attachmentId
+            | _ -> Guid.Empty
+        let completeId =
+            match List.head completes with
+            | WireEvent.AttachmentComplete d -> d.attachmentId
+            | _ -> Guid.Empty
+        Assert.Equal(beginId, completeId)
+        // 分块序号从 0 连续递增
+        let indices =
+            chunks
+            |> List.map (function WireEvent.AttachmentChunk d -> d.index | _ -> -1)
+        Assert.Equal<int list>([ 0 ], indices)
+
+        // 状态树：托盘里恰好一条附件；**还没就绪**——主机还没确认落盘。
+        // 就绪信号是主机的 `attachment.committed`，不是「我发完了 complete」。
+        let vs = Workspace.project rig.Shell.Model
+        Assert.Single(vs.Composer.Tray) |> ignore
+        let tray = vs.Composer.Tray |> List.head
+        Assert.Equal("pic.png", tray.FileName)
+        Assert.False tray.Ready
+        // 状态树里那条附件的 id 就是线协议用的那个 id
+        Assert.Equal(beginId, tray.Id)
+
+        // 主机确认落盘 → 就绪
+        rig.Shell.Dispatch(WireRecv(WireEvent.AttachmentCommitted {| attachmentId = beginId; sha256 = Wanxiang.UI.UploadFacts.sha256Hex bytes; size = int64 bytes.Length |}))
+        Assert.True(((Workspace.project rig.Shell.Model).Composer.Tray |> List.head).Ready)
+
+        // 发送：payload 里带的是这条附件
+        rig.Shell.Dispatch(User(Composer(ComposerUserMsg.TextChanged "看图"))) |> ignore
+        rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Send))) |> ignore
+        let sent =
+            rig.Fake.Events
+            |> List.tryPick (function
+                | WireEvent.Command(ClientCommand.SendUserMessage d) -> Some d.messageJson
+                | _ -> None)
+        Assert.True(sent.IsSome)
+        let contents = sent.Value.["contents"].AsArray()
+        Assert.Equal(2, contents.Count)
+        Assert.Equal("看图", contents[0].["text"].GetValue<string>())
+        Assert.Equal("attachment", contents[1].["type"].GetValue<string>())
+        Assert.Equal("pic.png", contents[1].["fileName"].GetValue<string>())
+        // sha256 与上传时算出来的一致
+        Assert.Equal(Wanxiang.UI.UploadFacts.sha256Hex bytes, contents[1].["sha256"].GetValue<string>())
+        // 发送后托盘清空
+        Assert.Empty((Workspace.project rig.Shell.Model).Composer.Tray))
+
+/// PWA 的自动连接回落（2026-10-21 W7-CLEANBREAK 修）。
+///
+/// 浏览器里没有 toml，凭据在 IndexedDB。此前 `ShellPorts.TryLoadBrowserConnection`
+/// **只有声明、没有调用点**——`AutoConnect` 在浏览器里必然走 `| None -> ()`，
+/// 于是 PWA 从不自动连上主机，composer 一直停在「未连接」态：
+/// 打不进字、不写草稿（已发布 PWA 冒烟的三条失败都是这一个根因）。
+[<Fact>]
+let ``AutoConnect 在没有 toml 时回落读浏览器凭据并连上`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Fake.BrowserConnection <- Some("ws://127.0.0.1:9/ws", "browser-token", "inst-browser")
+        rig.Shell.AutoConnect()
+        // 等后台续体落地（`Async.Start` + `ports.Post` 回 UI 线程，测试自己驱动消息循环）
+        Pump.until (fun () -> not (List.isEmpty rig.Fake.Connects))
+        Assert.Equal<string list>([ "ws://127.0.0.1:9/ws" ], rig.Fake.Connects)
+        // 认证用的是浏览器那条凭据的 token
+        Assert.Equal(1, (rig.Fake.AuthEvents |> List.length))
+        match List.head rig.Fake.AuthEvents with
+        | _, WireEvent.AuthPresent d -> Assert.Equal("browser-token", d.token)
+        | _ -> Assert.True(false, "应当用浏览器凭据的 token 发 AuthPresent"))
+
+/// 连上之后浏览器凭据不该被重复使用：`AutoConnect` 与 `reconnect` 撞在一起时，
+/// 一次只连一个（否则两次 `Connect` 抢同一个 epoch，后一个把前一个 socket 顶掉）。
+[<Fact>]
+let ``AutoConnect 与 reconnect 撞在一起时只连一次`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Fake.BrowserConnection <- Some("ws://127.0.0.1:9/ws", "browser-token", "inst-browser")
+        rig.Shell.AutoConnect()
+        rig.Shell.SidebarActions().reconnect()
+        Pump.until (fun () -> not (List.isEmpty rig.Fake.Connects))
+        Pump.settle()
+        Assert.Equal(1, (rig.Fake.Connects |> List.length)))
+
+/// 草稿落盘的真实链路（2026-10-21 W7-CLEANBREAK 修）。
+///
+/// 此前**打字从不进状态树**：`compose/ComposerDesk/ComposerDesk.fs` 的
+/// `box.Input.TextChanged` 只重算门控，`ComposerDeskActions` 里也没有「文本变了」这个出口；
+/// 唯一一处 `ComposerUserMsg.TextChanged` 是在 `Submit` 里派发的（发送那一刻）。
+/// 于是状态树里的 `Composer.Text` 恒为空，草稿永远存不进本机，重开也回不来。
+///
+/// 现在：打字 → `TextChanged` → 状态树 → **800 ms 闸**（宿主侧）→ `DraftWrite` → 落盘。
+///
+/// 闸的**决策**（什么时候落、落哪一份文本）由组合者自己的 `DraftSaveGate` 负责，
+/// 它是纯函数 + 注入时钟，所以能被确定性地测（见 `DraftSaveGateTests.fs`）。
+/// 这里断的是**接线**：打字确实进了状态树、也确实产出了 `DraftWrite`。
+[<Fact>]
+let ``打字进状态树并产出草稿落盘；内容与输入框一致`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        // 直接驱动输入框的 TextChanged（与真实按键同一条路）
+        let actions = rig.Shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false))
+        actions.TextChanged "草稿内容"
+        // 打字**立刻**进状态树
+        Assert.Equal("草稿内容", (Workspace.project rig.Shell.Model).Composer.Text)
+        // 闸决定落盘，并产出 `DraftWrite`（内容与输入框一致）
+        Assert.NotEmpty rig.Fake.DraftWrites
+        match List.head rig.Fake.DraftWrites with
+        | DraftWrite.Write t -> Assert.Equal("草稿内容", t)
+        | other -> Assert.True(false, "应当写出草稿，实际 " + string other))
+
+/// 打字时**光标位置**也进状态树：文本相同时输入区不再回写，
+/// 光标只能靠这条回调保持同步（否则打字打到一半光标被拉回末尾）。
+[<Fact>]
+let ``光标位置也进状态树`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        let actions = rig.Shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false))
+        actions.TextChanged "abcdef"
+        actions.CaretChanged 3
+        let vs = Workspace.project rig.Shell.Model
+        Assert.Equal("abcdef", vs.Composer.Text)
+        Assert.Equal(Some 3, vs.Composer.Caret))

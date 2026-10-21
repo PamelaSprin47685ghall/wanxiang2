@@ -6,19 +6,18 @@
 
 ## 成员 `LocalHostGate`
 
-## StartupTrace
+## LocalHostGate
 
-启动感知性能打点（决策 290）的纯部分：`StartupTrace.modeOf`（环境变量值 → 是否打点、是否采样后退出）、`StartupTrace.line`（stderr 行格式）、`StartupMilestones.Mark`（每个里程碑只记一次），迁自旧 `Model/StartupTrace.fs`。执行侧（2026-10-17 增补，迁自旧 `Model/StartupTrace.fs`）：读 `WANXIANG_STARTUP_TRACE`、进程启动时间、stderr 输出、`mark` 去重与 `requestExit` 回调都在本库的 `StartupTrace` 模块内（同名模块自然合并）；入口只安装 `requestExit`（桌面 = `Environment.Exit 0`）。`LocalHostGate` 仍是同目录独立 fsproj。只依赖 BCL；命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
+决策 291 的同进程主机就绪门：桌面入口把「事件日志重放 + 主机启动」放到后台，窗口先画出来；客户端第一次连接前等这个门完成，不先报「连接失败」再退避重连。`LocalHostGate.ready` 是一个 `Task` 句柄，默认 `Task.CompletedTask`（PWA、纯客户端、测试都不等）。迁自旧 `Model/StartupTrace.fs` 的启动门部分（2026-10-19 包合并时并入本包）。启动感知性能打点（`StartupTrace`）不在本库，已随同批包合并迁到 `libs/ChangeWatch`。只依赖 BCL；命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
 
 ## LEMMA
-1. **行为与旧代码一致。** [根 AXIOM: 1] 模式、去重结果与输出行格式与旧程序集相同。
+1. **门默认是开的。** [根 AXIOM: 3] 不设 `ready` 的调用方（纯客户端、PWA、测试）不会被这个门挡住。
 
 ## SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由旧程序集在 `WANXIANG_STARTUP_TRACE=exit` 下跑 `tests/Render.fs` 生成（毫秒数换成 N）；`tests/Tests.fs` 的金标准用例通过。
-2. 金标准生成器 `tools/gen-golden.fsx`；重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] 桌面入口（`app/Desktop/Program.fs`）在后台起主机后把任务赋给 `LocalHostGate.ready`，客户端首次连接前 `await` 它；本包没有独立用例，行为由桌面冒烟（`tools/smoke_desktop.sh`）覆盖。
 
 ## 迁入或覆盖的旧测试
-- 旧仓库没有 StartupTrace 的单元测试（只有 tools/perf_desktop.sh 采样）；本库由金标准覆盖，另有新用例 `290 未设置环境变量时不打点；值为 exit 时打点并退出`。
+- 旧仓库没有这个门的单元测试（旧仓库宿主是同步起主机的）；本包无对应用例。
 
 ## 成员 `PwaAssets`
 

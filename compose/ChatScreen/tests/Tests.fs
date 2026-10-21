@@ -46,7 +46,8 @@ let private rig () =
     let cards = MessageCards(CardLooks.ofTheme theme styles, host)
     let composer =
         ComposerDesk(
-            { Submit = (fun _ -> true); StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
+            { Submit = (fun _ -> true); TextChanged = (fun _ -> ()); CaretChanged = (fun _ -> ())
+              StopGeneration = ignore; PickAttachment = ignore; RemoveAttachment = ignore
               OpenModelPicker = ignore; DropFiles = ignore; PasteFromClipboard = (fun () -> false); OpenSessionSettings = ignore })
     let approvals = ApprovalDesk(theme, overlay, ignore)
     let cardActions =

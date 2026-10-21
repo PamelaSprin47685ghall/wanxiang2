@@ -14,13 +14,10 @@
 1. **同一对颜色，结果与旧实现逐分量相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/colorblend.txt` 由照抄的旧计算在 20 对颜色上生成。
+1. [LEMMA: 1] `tests/ColorBlend.Tests.fs` 通过：`opaque overlay replaces color but keeps base alpha`、`transparent overlay leaves the base`、`result keeps base alpha and each channel lies between base and overlay`、`more overlay alpha moves the channel monotonically toward the overlay`。
 
 ## 迁入或覆盖的旧测试
-旧仓库没有直接测它的用例。本库新增：金样、不透明覆盖保留底色 alpha、全透明不变。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧仓库没有直接测它的用例。本包新增：不透明覆盖保留底色 alpha、全透明不变、结果各通道落在底色与覆盖色之间、覆盖 alpha 越大越单调靠近覆盖色。
 
 ## 真实行为测试
 金样来自照抄的旧分支，证据较弱；`tests/Tests.fs` 末节另按上面写明的规则直接断言新实现（不经金样），规则改了要同时改这里。
@@ -36,10 +33,8 @@
 2. **后来的切换接管前一段。** 不靠「帧有没有跑」，按时间定出起点。
 
 ## SPEC
-1. [LEMMA: 1, 2] 金样 `tests/golden/themetween.txt`；`tests/Tests.fs` 三条行为用例。
+1. [LEMMA: 1, 2] `tests/ThemeTween.Tests.fs` 通过：`brushes tween to the target and land exactly at 200 ms`、`the latest switch takes over from the logical current color`、`reduced motion and replaying the same theme snap`。
 
 ## 迁入或覆盖的旧测试
 旧 `UiStabilityTests.theme color transition tweens brushes and the latest switch takes over` 要真实画笔与 dispatcher，留在旧仓库；其中插值、接管与到位规则由本库覆盖。
 
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/OldThemeTween.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样证据较弱；规则另由 `tests/Tests.fs` 直接断言。

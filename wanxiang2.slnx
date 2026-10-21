@@ -11,10 +11,6 @@
     <Project Path="libs/Agui/Agui.fsproj" />
     <Project Path="libs/Agui/tests/Agui.Tests.fsproj" />
   </Folder>
-  <Folder Name="/AguiMessageMap/">
-    <Project Path="libs/AguiMessageMap/AguiMessageMap.fsproj" />
-    <Project Path="libs/AguiMessageMap/tests/AguiMessageMap.Tests.fsproj" />
-  </Folder>
   <Folder Name="/Anthropic/">
     <Project Path="libs/Anthropic/Anthropic.fsproj" />
     <Project Path="libs/Anthropic/tests/Anthropic.Tests.fsproj" />
@@ -22,10 +18,6 @@
   <Folder Name="/AppConfig/">
     <Project Path="libs/AppConfig/AppConfig.fsproj" />
     <Project Path="libs/AppConfig/tests/AppConfig.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/ApprovalCardText/">
-    <Project Path="libs/ApprovalCardText/ApprovalCardText.fsproj" />
-    <Project Path="libs/ApprovalCardText/tests/ApprovalCardText.Tests.fsproj" />
   </Folder>
   <Folder Name="/ApprovalPanel/">
     <Project Path="libs/ApprovalPanel/ApprovalPanel.fsproj" />
@@ -74,14 +66,6 @@
   <Folder Name="/BrandMark/">
     <Project Path="libs/BrandMark/BrandMark.fsproj" />
     <Project Path="libs/BrandMark/tests/BrandMark.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/BreadcrumbAction/">
-    <Project Path="libs/BreadcrumbAction/BreadcrumbAction.fsproj" />
-    <Project Path="libs/BreadcrumbAction/tests/BreadcrumbAction.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/BreathPhase/">
-    <Project Path="libs/BreathPhase/BreathPhase.fsproj" />
-    <Project Path="libs/BreathPhase/tests/BreathPhase.Tests.fsproj" />
   </Folder>
   <Folder Name="/BrowserInterop/">
     <Project Path="libs/BrowserInterop/BrowserInterop.csproj" />
@@ -142,10 +126,6 @@
   <Folder Name="/ComposerDrafts/">
     <Project Path="libs/ComposerDrafts/ComposerDrafts.fsproj" />
     <Project Path="libs/ComposerDrafts/tests/ComposerDrafts.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/ComposerSendState/">
-    <Project Path="libs/ComposerSendState/ComposerSendState.fsproj" />
-    <Project Path="libs/ComposerSendState/tests/ComposerSendState.Tests.fsproj" />
   </Folder>
   <Folder Name="/ConfigFeedback/">
     <Project Path="libs/ConfigFeedback/ConfigFeedback.fsproj" />
@@ -211,10 +191,6 @@
     <Project Path="libs/ExchangeJump/ExchangeJump.fsproj" />
     <Project Path="libs/ExchangeJump/tests/ExchangeJump.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ExportFileName/">
-    <Project Path="libs/ExportFileName/ExportFileName.fsproj" />
-    <Project Path="libs/ExportFileName/tests/ExportFileName.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ExportSheet/">
     <Project Path="libs/ExportSheet/ExportSheet.fsproj" />
     <Project Path="libs/ExportSheet/tests/ExportSheet.Tests.fsproj" />
@@ -238,10 +214,6 @@
   <Folder Name="/FuzzyMatch/">
     <Project Path="libs/FuzzyMatch/FuzzyMatch.fsproj" />
     <Project Path="libs/FuzzyMatch/tests/FuzzyMatch.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/GenerationDraft/">
-    <Project Path="libs/GenerationDraft/GenerationDraft.fsproj" />
-    <Project Path="libs/GenerationDraft/tests/GenerationDraft.Tests.fsproj" />
   </Folder>
   <Folder Name="/HljsCatalog/">
     <Project Path="libs/HljsCatalog/HljsCatalog.fsproj" />
@@ -343,10 +315,6 @@
     <Project Path="libs/ModelListing/ModelListing.fsproj" />
     <Project Path="libs/ModelListing/tests/ModelListing.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ModelPickerList/">
-    <Project Path="libs/ModelPickerList/ModelPickerList.fsproj" />
-    <Project Path="libs/ModelPickerList/tests/ModelPickerList.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ModelSwitchPanel/">
     <Project Path="libs/ModelSwitchPanel/ModelSwitchPanel.fsproj" />
     <Project Path="libs/ModelSwitchPanel/tests/ModelSwitchPanel.Tests.fsproj" />
@@ -402,10 +370,6 @@
   <Folder Name="/RichBackend/">
     <Project Path="libs/RichBackend/RichBackend.fsproj" />
     <Project Path="libs/RichBackend/tests/RichBackend.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/RowFocus/">
-    <Project Path="libs/RowFocus/RowFocus.fsproj" />
-    <Project Path="libs/RowFocus/tests/RowFocus.Tests.fsproj" />
   </Folder>
   <Folder Name="/SandboxFiles/">
     <Project Path="libs/SandboxFiles/SandboxFiles.fsproj" />
@@ -584,6 +548,10 @@
   </Folder>
   <Folder Name="/ExternalLinks/">
     <Project Path="compose/ExternalLinks/ExternalLinks.fsproj" />
+  </Folder>
+  <Folder Name="/Gallery/">
+    <Project Path="compose/Gallery/Gallery.fsproj" />
+    <Project Path="compose/Gallery/tests/Gallery.Tests.fsproj" />
   </Folder>
   <Folder Name="/HostLog/">
     <Project Path="compose/HostLog/HostLog.fsproj" />

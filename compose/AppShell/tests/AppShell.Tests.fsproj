@@ -5,6 +5,7 @@
     <Compile Include="Rig.fs" />
     <Compile Include="Tests.fs" />
     <Compile Include="ComposerTests.fs" />
+    <Compile Include="DraftSaveGateTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

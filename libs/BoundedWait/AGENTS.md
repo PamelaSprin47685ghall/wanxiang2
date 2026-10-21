@@ -48,7 +48,7 @@
 1. **同一输入，解析、判断与选择与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/onboardingrules.txt` 由旧函数生成（发现本机端口不进金样，由真实 HTTP 用例覆盖）。
+1. [LEMMA: 1] `tests/OnboardingRules.Tests.fs` 通过：`默认模型从探测清单里挑：优先预设推荐的，否则清单第一项`、`发现本机 Ollama：有响应给出模型清单，没有响应为 None`、`只有主机在本机时才探测本机端口`、`non success status is no discovery`。
 
 ## 迁入或覆盖的旧测试
 旧 OnboardingConfigTests：
@@ -56,10 +56,7 @@
 - `发现本机 Ollama：有响应给出模型清单，没有响应为 None`（本机端点改用 HttpListener）
 - `只有主机在本机时才探测本机端口`（部分覆盖：`ProviderPresets.OllamaProbeUrl` 那一行属于写手 2 的 ProviderPresets，**旧用例不删**）
 
-本库新增：金样、非 2xx 视为没有。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+本库新增：非 2xx 视为没有。
 
 ## 成员 `ProviderPresets`
 

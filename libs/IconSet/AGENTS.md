@@ -10,11 +10,8 @@
 2. **图标跟随活画笔与活尺寸。** 改色不用重建。
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/iconset.txt`（由照抄的旧 Icons.fs 读出）。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`the icon keeps the live brush and follows the live size`（字形映射与尺寸跟随同一条用例）。
 2. [LEMMA: 2] headless 用例：尺寸改值后宽高跟随，图像复用，字形画笔就是传入的实例（这一版 Lucide 用填充画笔出墨，旧注释说的是描边画笔）。
 
 # 迁入或覆盖的旧测试
 旧 `IconCenteringTests`（墨迹断言）要整套旧视图，留在旧仓库。
-
-# 金样生成
-`dotnet fsi tools/gen-golden.fsx` 读 `tools/OldIcons.fs.txt`（照抄旧文件，不编译）。

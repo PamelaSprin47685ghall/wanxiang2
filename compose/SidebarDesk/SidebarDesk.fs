@@ -36,6 +36,14 @@ type SidebarDeskActions =
       setPinnedMany: Guid list -> bool -> unit
       setArchivedMany: Guid list -> bool -> unit
       deleteMany: Guid list -> unit
+      /// 进入多选并选中第一项（多选的事实在状态树，这里只是把意图交给宿主）
+      enterSelection: Guid -> unit
+      /// 切换一行的选中态
+      toggleSelected: Guid -> unit
+      /// 退出多选
+      exitSelection: unit -> unit
+      /// 全选可见行（已全选则退出多选）
+      toggleSelectAllVisible: Guid list -> unit
       duplicateAsFork: ConversationSummary -> unit
       exportConversation: ConversationSummary -> unit
       openSettings: unit -> unit
@@ -44,7 +52,7 @@ type SidebarDeskActions =
       closeNavigation: unit -> unit }
 
 /// 旧 Views/Sidebar.fs 的协作：分组与筛选（ConversationSummary）、消息正文搜索（SearchSession + SearchRequery）、
-/// 行焦点（RowFocus）、多选（SidebarSelection）、空态（SidebarEmpty）、行菜单，摆进
+/// 行焦点（RowFocus）、多选（投影里的选中集合，见 SidebarSelection）、空态（SidebarEmpty）、行菜单，摆进
 /// SidebarBrand / SidebarSearch / ConversationRows / ListEmptyCard / BatchBar / HostSwitcher。
 type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDeskActions, brandLogo: float -> Control) =
     let brand = SidebarBrand()
@@ -59,7 +67,6 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
 
     let messageSearch = SearchSession<SearchHit>()
     let rowFocus = RowFocus()
-    let selection = SidebarSelection()
     let summaryById = Dictionary<Guid, ConversationSummary>()
     let mutable lastVS: SidebarVS =
         let initVS = (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Sidebar
@@ -80,6 +87,10 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
     let currentShowArchived () = lastVS.ShowArchived
     let currentLineage () = lastVS.Lineage
     let currentRows () = lastVS.Rows
+    /// 多选的事实**只来自投影**（`SidebarVS.SelectedRowIds`）；侧栏不再自己记一份选择集合。
+    let selectedSet () = lastVS.SelectedRowIds
+    let inSelectionMode () = lastVS.BatchMode
+    let isSelected (id: Guid) = inSelectionMode () && selectedSet () |> Set.contains id
     let isListLoading () = match lastVS.Empty with SidebarEmptyKind.Loading -> true | _ -> false
 
     let live (id: Guid) (fallback: ConversationSummary) =
@@ -153,7 +164,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
           Before = before; Matched = matched; After = after
           AccessibleName = sprintf "消息命中：%s，%s" h.title h.snippet }
 
-    let marks () = rows.ApplyMarks(currentActiveId(), selection.IsSelected, selection.Active)
+    let marks () = rows.ApplyMarks(currentActiveId(), isSelected, inSelectionMode ())
 
     let rec rebuild () =
         // 焦点在某行上就记住，重建后仍可见则还回去；在搜索框里打字时不抢焦点
@@ -224,24 +235,32 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             else None
         empty.Render emptyKind
 
-    let selectedIds () = selection.SelectedIds rows.VisibleIds
+    /// 可见的已选项，按可见行次序（批量动作只作用于当前可见的选中项）。
+    /// 选中集合来自投影（唯一事实），这里只按可见行过滤。
+    let selectedIds () = SidebarSelection.SelectedIds rows.VisibleIds (selectedSet ())
 
     let refreshChrome () =
-        let c = selection.Chrome(rows.VisibleIds, actions.selectionAllPinned)
+        // 批量条的渲染参数：计数与「全选 / 取消全选」按**可见行**算（可见行是侧栏的：
+        // 搜索框与归档开关在这里）；「是否多选中」与选中集合来自投影。
+        let visible = rows.VisibleIds
+        let usable = selectedIds ()
+        let allVisibleSelected =
+            not (List.isEmpty visible) && visible |> List.forall (fun id -> selectedSet () |> Set.contains id)
+        let allPinned = actions.selectionAllPinned usable
         let batchVS =
-            if c.barsVisible then
+            if inSelectionMode () then
                 Some {
-                    SelectedCount = selectedIds().Length
-                    AllSelected = c.selectAllText = "取消全选"
-                    Busy = not c.batchEnabled
-                    AllPinned = c.pinText = "取消置顶"
+                    SelectedCount = usable.Length
+                    AllSelected = allVisibleSelected
+                    Busy = List.isEmpty usable
+                    AllPinned = allPinned
                 }
             else None
         batch.Render batchVS
         marks ()
         let brandView = brand.View
-        brandView.IsVisible <- not selection.Active
-        hostBar.View.IsVisible <- not selection.Active
+        brandView.IsVisible <- not (inSelectionMode ())
+        hostBar.View.IsVisible <- not (inSelectionMode ())
 
     let focusSearch (selectAll: bool) = search.Focus selectAll
 
@@ -252,19 +271,19 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         if focus then focusSearch true
 
     let exitSelection () =
-        selection.Exit()
+        actions.exitSelection ()
         refreshChrome ()
 
     let toggleSelected id =
-        selection.Toggle id
+        actions.toggleSelected id
         refreshChrome ()
 
     let enterSelection id =
-        selection.Enter id
+        actions.enterSelection id
         refreshChrome ()
 
     let toggleAll () =
-        selection.ToggleAllVisible rows.VisibleIds
+        actions.toggleSelectAllVisible rows.VisibleIds
         refreshChrome ()
 
     let deleteSelected () =
@@ -301,7 +320,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
 
     let openMenu (id: Guid) (anchor: Control) (alignRight: bool) =
         // 多选下不开单条菜单；条目按 id 取最新快照
-        if not selection.Active then
+        if not (inSelectionMode ()) then
             match summaryById.TryGetValue id with
             | true, s ->
                 overlay.ShowMenu(
@@ -388,24 +407,24 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             | Key.Escape ->
                 e.Handled <- true
                 if not (String.IsNullOrEmpty search.Text) then resetSearch true
-                elif selection.Active then exitSelection ()
+                elif inSelectionMode () then exitSelection ()
                 else focusActive ()
             | _ -> ())
-        rows.RowActivated.Add(fun id -> if selection.Active then toggleSelected id else actions.openConversation id)
+        rows.RowActivated.Add(fun id -> if inSelectionMode () then toggleSelected id else actions.openConversation id)
         rows.RowFocused.Add(fun id -> rowFocus.Focused id)
         rows.MenuRequested.Add(fun (id, anchor, right) -> openMenu id anchor right)
         rows.RenameKey.Add(fun id -> withLive id actions.renameConversation)
         rows.DeleteKey.Add(fun id ->
             // 多选下 Delete 走批量删除
-            if selection.Active then deleteSelected () else withLive id actions.deleteConversation)
+            if inSelectionMode () then deleteSelected () else withLive id actions.deleteConversation)
         rows.PinKey.Add(fun id -> withLive id (fun s -> actions.setPinned s (not s.pinned)))
         rows.SelectAllKey.Add(fun () -> toggleAll ())
         rows.LeaveTop.Add(fun () -> focusSearch false)
         rows.Escape.Add(fun e ->
             // 行在多选中：Esc 只退多选；其余先清搜索词，再退多选
-            if e.Kind = "row" && selection.Active then e.Handled <- true; exitSelection ()
+            if e.Kind = "row" && inSelectionMode () then e.Handled <- true; exitSelection ()
             elif not (String.IsNullOrEmpty search.Text) then e.Handled <- true; resetSearch true
-            elif selection.Active then e.Handled <- true; exitSelection ())
+            elif inSelectionMode () then e.Handled <- true; exitSelection ())
         rows.HitClicked.Add(fun key ->
             match findHitByKey key with
             | Some h -> openSearchHit h
@@ -518,7 +537,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             rebuild ()
         if activeChanged then
             nextActive |> Option.iter rows.ScrollTo
-        if selection.Active then refreshChrome ()
+        if inSelectionMode () then refreshChrome ()
 
     member _.FocusSearch(?selectAll: bool) = focusSearch (defaultArg selectAll true)
 
@@ -542,4 +561,4 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
     member _.ExitSelection() = exitSelection ()
     member _.ToggleSelectAllVisible() = toggleAll ()
     member _.SelectedIds() : Guid list = selectedIds ()
-    member _.IsSelectionMode = selection.Active
+    member _.IsSelectionMode = inSelectionMode ()

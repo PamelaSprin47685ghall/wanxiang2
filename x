@@ -2,11 +2,13 @@
 # wanxiang2 构建入口。
 #   ./x test  <lib>   单独构建并测试 libs/<lib>（只凭本库与声明的外部包）
 #   ./x check         依赖检查：库不引用本库以外的源码；组合者只经交付包使用库
+#   ./x hygiene       断言卫生：恒真断言 / 恒真谓词 / 空转的事实一律红灯（秒级，只需源码）
+#   ./x lint          界面文案：禁用同义词 / 取消类提示须写明 Esc / 中文省略号（秒级，只需源码）
 #   ./x pack          把每个库和组合者打成包，放进 artifacts/feed
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
 #   ./x consume       在仓库外的临时项目里只从 artifacts/feed 取包，构建并真实运行
 #   ./x app           从 artifacts/feed 构建 app/ 下的入口（Pwa 需 wasm-tools workload）
-#   ./x all           check + 逐库 test + pack + compose + consume（测试并发：XJOBS；默认按内存与核数取，见 test_jobs）
+#   ./x all           check + hygiene + lint + 逐库 test + pack + compose + consume（测试并发：XJOBS；默认按内存与核数取，见 test_jobs）
 #   ./x sln           由 libs/ 重新生成 wanxiang2.slnx
 #   ./x new-widget <Name>  由 tools/widget-template 生成控件库 libs/<Name>（目录已存在则拒绝）
 set -euo pipefail
@@ -364,6 +366,12 @@ gen_sln() {
 case "${1:-}" in
   test)    need_lib "${2:-}"; dotnet test --project "libs/$2/tests/$2.Tests.fsproj" ;;
   check)   check ;;
+  # 断言卫生：把「恒真断言 / 恒真谓词 / 空转的事实」变成红灯（tools/assert-hygiene.sh）。
+  # 不需要构建产物，秒级；CI 里单独一个 job（只 checkout）。
+  hygiene) bash tools/assert-hygiene.sh ;;
+  # 界面文案：产品文案规则没有运行时可观察，所以走独立的 lint 脚本而不是 xunit 用例
+  # （tools/lint-copy.sh）。扫描 libs + compose + app 的生产 .fs。
+  lint) bash tools/lint-copy.sh ;;
   pack)    pack ;;
   compose) compose ;;
   consume) consume ;;
@@ -378,6 +386,8 @@ case "${1:-}" in
     gen_sln > wanxiang2.slnx; echo "created libs/$2" ;;
   all)
     check
+    bash tools/assert-hygiene.sh
+    bash tools/lint-copy.sh
     run_tests_parallel "逐库测试" "$(libs | sed 's#^\(.*\)$#libs/\1/tests/\1.Tests.fsproj#')" "$(test_jobs)"
     pack; compose; consume ;;
   # 用法块 = 开头连续的注释行；行数变化自动同步（末行是第一条非注释行，去掉）

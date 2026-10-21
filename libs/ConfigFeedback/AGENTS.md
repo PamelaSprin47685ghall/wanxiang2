@@ -18,7 +18,7 @@
 
 ## 迁入或覆盖的旧测试
 - R27HostCapabilitiesTests：`config tracker expires silent requests and resolves only once`
-- 新增 `ConfigApplied.notice` 与 `ConfigAppliedNotice`，迁自旧 AppShell HandleEvent 的 ConfigApplied 分支；`tests/golden/expected.txt` 由 `tools/OldConfigApplied.fs`（原样摘录）经 `tools/gen-golden.fsx` 生成。新增用例 `首次运行卡片登记空文案：成功时不叠 toast 但仍拉目录`。
+- 新增 `ConfigApplied.notice` 与 `ConfigAppliedNotice`，迁自旧 AppShell HandleEvent 的 ConfigApplied 分支。新增用例 `首次运行卡片登记空文案：成功时不叠 toast 但仍拉目录`（在 `tests/ConfigFeedback.Tests.fs`）。
 - 迁自旧 AppShell.HandleEvent 的自足部分（见 tests 里与旧代码原样摘录的差分用例）。
 
 ## 成员 `DownloadBuffers`
@@ -50,8 +50,7 @@
 1. **状态转移与旧代码一致。** [根 AXIOM: 1]
 
 ## SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由 `tools/OldHostRequests.fs`（旧字段与读写原样摘录）跑 `tests/Render.fs` 生成；金标准用例通过。
-2. `tools/gen-golden.fsx` 重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/HostRequests.Tests.fs` 通过：`W4 只认最近一次查询，迟到的旧结果丢掉`、`443 到点的探测按发出顺序收尾，已回应的不再收尾`。
 
 ## 迁入或覆盖的旧测试
 - 旧仓库这几处只在整壳 UI 测试里间接经过；新增 `W4 只认最近一次查询，迟到的旧结果丢掉`、`443 到点的探测按发出顺序收尾，已回应的不再收尾`。
@@ -66,8 +65,7 @@
 1. **上传的字节与旧代码一致。** [根 AXIOM: 1] 同一个文件分出的块、校验和与旧程序发出的相同。
 
 ## SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由 `tools/OldUploadFacts.fs`（旧代码原样摘录，send 换成收集）跑 `tests/Render.fs` 生成；金标准用例通过。
-2. `tools/gen-golden.fsx` 重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/UploadFacts.Tests.fs` 通过：`分块拼回去就是原文件，序号从 0 连续`、`读完文件时已断开或换了主机，就不上传`。
 
 ## 迁入或覆盖的旧测试
 - 旧整壳 UI 测试经过上传路径但依赖 Avalonia 与连接；新增 `分块拼回去就是原文件，序号从 0 连续`、`读完文件时已断开或换了主机，就不上传`。

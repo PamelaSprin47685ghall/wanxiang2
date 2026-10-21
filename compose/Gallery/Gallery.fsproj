@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 组合者：组件画廊（docs/frontend-dev-process.md §3 的 G2）。
+       把每个控件库的状态矩阵显式列出来，每种状态渲染成一个可视条目。
+       只经交付包使用库与组合者，不引用任何源码目录。
+       状态一律由 Workspace.init() + Workspace.update 的消息驱动，再经 Workspace.project 投影，
+       不手搓视图状态记录（见 AGENTS.md《状态来源》）。
+       本工程同时是 CLI（list / render 两个子命令），所以是 Exe；./x pack 仍按普通组合者打包。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Wanxiang2.Gallery</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Scenes.fs" />
+    <Compile Include="FakePorts.fs" />
+    <Compile Include="Gallery.fs" />
+    <Compile Include="Window.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SidebarDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SettingsScreen" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DialogsDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ApprovalDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShellDesk" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatEmpty" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+  </ItemGroup>
+</Project>

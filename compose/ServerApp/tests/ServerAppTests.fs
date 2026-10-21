@@ -151,7 +151,19 @@ module ServerAppTests =
             let app = new ServerApp(dir, configPath, true, None, ignore)
             app.Start(false)
 
-            // 能够正常启停，表明截尾容错与启动回放正常完成
+            // 截尾事件文件的**真实契约**（S-001 / STOP-1）：正常启动**不再**自动截尾，
+            // 而是以最长有效前缀进入「只读降级模式」——拒绝一切永久写入，
+            // 并留下 read-only-degraded 诊断。旧写法只有「能启停」（不抛异常），没验结果。
+            let degraded =
+                Wanxiang.Server.Stderr.recentErrorLines ()
+                |> List.filter (fun l -> l.Contains("read-only-degraded"))
+            Assert.True(
+                degraded.Length > 0,
+                "截尾事件文件应进入只读降级模式并留下 read-only-degraded 诊断")
+            // 半截字节仍在原处（启动没有偷偷改用户的日志）。
+            let text = Encoding.UTF8.GetString(File.ReadAllBytes(eventPath))
+            Assert.Contains("partial-json-not-closed", text)
+
             app.Stop()
             (app :> IDisposable).Dispose()
         finally
@@ -171,7 +183,18 @@ module ServerAppTests =
             let app = new ServerApp(dir, configPath, false, None, ignore)
             app.Start(false)
 
-            // 验证能够正常安全停止并释放端口与锁
+            // 「暴露到非回环且无 TLS」必须**被报告出来**，不是默默启动。
+            // 告警走 stderr 的结构化通道（Stderr.write "insecure-listen"），
+            // 所以从最近错误行里读（不捕获 Console.Error——xunit 并行下会拿到别人的行）。
+            // 旧写法只有「能启停」，WarnIfExposedWithoutTls 从未被断言。
+            let insecureLines =
+                Wanxiang.Server.Stderr.recentErrorLines ()
+                |> List.filter (fun l -> l.Contains("insecure-listen"))
+            Assert.True(
+                insecureLines.Length > 0,
+                "监听 0.0.0.0 且无 TLS 时应写出 insecure-listen 告警")
+
+            // 能正常安全停止并释放端口与锁。
             app.Stop()
             (app :> IDisposable).Dispose()
         finally
@@ -201,6 +224,17 @@ module ServerAppTests =
             // Dispose 接口实现必须幂等且不抛出异常
             (app :> IDisposable).Dispose()
             (app :> IDisposable).Dispose()
+
+            // 幂等不是「不抛异常」就完了：目录锁必须真的放开，
+            // 同一个 dataDir 能再开一个 ServerApp。
+            // 旧写法只验「不抛」——锁没释放也照样绿。
+            let port2 = Random.Shared.Next(55001, 65000)
+            let configPath2 = writeConfigFile dir port2 "127.0.0.1"
+            let app2 =
+                try new ServerApp(dir, configPath2, false, None, ignore)
+                with ex -> failwithf "Stop/Dispose 之后目录锁应释放，却抛: %s" ex.Message
+            Assert.NotNull(app2)
+            (app2 :> IDisposable).Dispose()
         finally
             try Directory.Delete(dir, true) with _ -> ()
 
@@ -209,9 +243,21 @@ module ServerAppTests =
         let dir = createTestDir ()
         try
             let nonExistentConfig = Path.Combine(dir, "does-not-exist.toml")
-            let app = new ServerApp(dir, nonExistentConfig, false, None, ignore)
-            // 配置不存在时生产实现记录错误并安全回退到默认配置，不裸抛未捕获异常
+            let mutable loggedMessages = []
+            let logInfo msg = loggedMessages <- msg :: loggedMessages
+            let app = new ServerApp(dir, nonExistentConfig, false, None, logInfo)
+            // 配置不存在时生产实现**创建一份默认配置**并安全回退，不裸抛未捕获异常
             app.Start(false)
+
+            // 回退这件事必须**看得见**：默认配置文件被写出来了，且内容是默认监听地址。
+            // 旧写法只有「能启停」，没验回退到哪、报没报。
+            Assert.True(File.Exists nonExistentConfig, "配置缺失时应写出默认配置文件")
+            let written = File.ReadAllText nonExistentConfig
+            Assert.Contains("127.0.0.1:8765", written)
+            Assert.True(
+                loggedMessages |> List.exists (fun m -> m.Contains("wanxiang server listening on")),
+                "回退默认配置后应正常监听")
+
             app.Stop()
             (app :> IDisposable).Dispose()
         finally

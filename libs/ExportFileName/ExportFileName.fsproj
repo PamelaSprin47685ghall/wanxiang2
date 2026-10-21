@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <Compile Include="ExportFileName.fs" />
-    <Compile Include="ExportView.fs" />
-    <Compile Include="ImportView.fs" />
-    <Compile Include="ProgressThrottle.fs" />
-    <Compile Include="TranscriptMarkdown.fs" />
-  </ItemGroup>
-</Project>

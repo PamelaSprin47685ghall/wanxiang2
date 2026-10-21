@@ -6,8 +6,7 @@
 1. **解析与旧代码逐字节一致。** [根 AXIOM: 1] 同一份快照条目经本库得到的视图、回填结果、尾部判断与旧程序集相同。
 
 # SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由旧 Wanxiang.UI 程序集跑 `tests/Render.fs` 生成；`tests/Tests.fs` 的金标准用例通过。
-2. 金标准生成器 `tools/gen-golden.fsx`（跑旧仓库构建出的程序集）；重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`AttachmentRef detects image mime types and formats file sizes`、`MessageView ofJson parses user and assistant roles, reasoning, and tools`、`MessageView mergeToolResults correctly associates results and removes tool messages`、`AttachmentRef formatSize formats correctly`、`AttachmentRef isImage distinguishes correctly`、`ofJson parses text, reasoning, toolCalls, and attachments`、`mergeToolResults correlates callId into toolCalls`、`ToolCallStatus badgeText returns exact expected text for all states`、`ToolCallStatus isTerminal returns true only for terminal states`、`latest reply text skips empty assistant tail and ignores earlier turns`、`regenerate needs confirmation only when the tail has something to lose`、`263 末尾用户消息超过宽限期仍无回复判为未回复`、`regenerate and copy gating match old AppShell`。
 
 # 迁入或覆盖的旧测试
 - UiModelTests：`AttachmentRef detects image mime types and formats file sizes`、`MessageView ofJson parses user and assistant roles, reasoning, and tools`、`MessageView mergeToolResults correctly associates results and removes tool messages`

@@ -18,7 +18,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
 const check = (name, ok, detail) => { if (!ok) failed++; console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 (async () => {
-    const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+    const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage', '--enable-unsafe-swiftshader'] });
     try {
         const page = await browser.newPage();
         const errors = [];
@@ -51,14 +51,35 @@ const check = (name, ok, detail) => { if (!ok) failed++; console.log(`${ok ? 'PA
             return set.size;
         });
         check('画布有实际内容（非纯色）', distinct >= 3, `distinct colors=${distinct}`);
-        // 文本上屏桥：点输入框后直接 insertText。
+        // 文本上屏桥：先把输入框**点聚焦**，再 insertText。
+        //
+        // 之前写死了点击坐标 (738, 720)——那是输入区**下方**的工具栏，
+        // 点不到输入框，Avalonia 的输入桥（.avalonia-input-element，display:none 的隐藏元素）
+        // 不会变成可见/聚焦，文本自然落不进去。
+        // 现在改成**扫描**：沿输入区那一带找能让输入桥聚焦的点，再在那个点上打字。
         const cdp = await page.target().createCDPSession();
-        await page.mouse.click(738, 720); await sleep(800);
-        await cdp.send('Input.insertText', { text: '万象' }); await sleep(600);
-        await cdp.send('Input.insertText', { text: 'ok' }); await sleep(800);
-        const v = await page.evaluate(() => document.querySelector('.avalonia-input-element').value);
+        // 输入桥是否已聚焦——**所有 DOM 访问都在 page.evaluate 里**（Node 侧没有 document）。
+        const bridgeFocused = () => page.evaluate(`(() => {
+            const e = document.querySelector('.avalonia-input-element');
+            return !!e && document.activeElement === e && getComputedStyle(e).display !== 'none';
+        })()`);
+        // 输入区在主内容区中下部（左侧栏右边、工具栏上面）。
+        // 之前写死了 (738, 720)——那是输入区**下方**的工具栏，点不到输入框。
+        const focusComposer = async () => {
+            if (await bridgeFocused()) return true;
+            for (const y of [400, 380, 420, 360, 440, 340, 460, 320]) {
+                for (const x of [732, 600, 860, 450, 1000]) {
+                    await page.mouse.click(x, y);
+                    await sleep(120);
+                    if (await bridgeFocused()) return true;
+                }
+            }
+            return await bridgeFocused();
+        };
+        const gotFocus = await focusComposer();
+        // 未认证时输入区是禁用的，聚焦不上是**正确行为**——所以这里不断言。
+        // 真正的文本上屏断言在下面认证态那一段（那时 composer 可用）。
         await page.screenshot({ path: `${OUT}/smoke-insert.png` });
-        check('文本上屏桥：insertText 各落一次', v === '万象ok', `value=${JSON.stringify(v)}`);
 
         // ---- 第二段（可选）：预置凭据 → 认证态 → 草稿往返（IndexedDB 落盘 + 重开恢复）----
         // 发布产物冒烟里由 tools/smoke_published.sh 把 WX_SMOKE_TOKEN/INSTANCE 传进来（配置里已登记同一哈希）。
@@ -113,22 +134,73 @@ const check = (name, ok, detail) => { if (!ok) failed++; console.log(`${ok ? 'PA
             const back = await canvasUp();
             await sleep(6000); // 连上、认证、列表
             const visitsAfter = await visits();
-            await page.mouse.click(738, 720); await sleep(800);
+            // 认证态：输入区可用，文本能真的打进去。
+            const focusedNow = await focusComposer();
+            check('认证态：输入框能被点聚焦', focusedNow);
+            await cdp.send('Input.insertText', { text: '万象' }); await sleep(700);
+            await cdp.send('Input.insertText', { text: 'ok' }); await sleep(700);
             await cdp.send('Input.insertText', { text: '草稿往返' });
-            const typed = await until(() => inputIs('草稿往返'), 5000);
+            await sleep(800);
+            // 断言**产品落点**：草稿快照（IndexedDB，经 DraftWrite effect 写入）里真的有这段文本。
+            // 不再读隐藏 input 的 .value——那个值被 avalonia.js 补丁 preventDefault 掉了，恒为空。
+            const draftRaw = await page.evaluate(`(() => new Promise((resolve) => {
+                const req = indexedDB.open('wanxiang-drafts', 1);
+                req.onsuccess = () => {
+                    try {
+                        const g = req.result.transaction('drafts', 'readonly').objectStore('drafts').get('snapshot');
+                        g.onsuccess = () => resolve(typeof g.result === 'string' ? g.result : '');
+                        g.onerror = () => resolve('');
+                    } catch (e) { resolve(''); }
+                };
+                req.onerror = () => resolve('');
+            }))()`);
             const savedToDb = await until(() => draftText('草稿往返'), 20000);
+            // 文本上屏桥：两次 insertText 各落一次（决策 391）。
+            // 断的是**草稿快照**（产品落点）里的文本。必须是**精确相等**，
+            // 不能用子串包含——子串判据会漏掉「一次 insertText 被派发两次」：
+            //   '万象ok万象ok草稿往返' 里**含有** '万象ok草稿往返'，子串判据放行，
+            //   而正确的草稿是 '万象ok草稿往返'。
+            // 精确相等同时挡住「多插了一遍」与「少插了一段」两类问题。
+            const EXPECTED = '万象ok草稿往返';
+            const typedOnce = draftRaw === EXPECTED;
+            check('文本上屏桥：insertText 各落一次', typedOnce,
+                `draft=${JSON.stringify(draftRaw.slice(0, 160))} expected=${JSON.stringify(EXPECTED)}`);
             await page.screenshot({ path: `${OUT}/smoke-draft.png` });
+
+            // ---- 恢复（restore）要证明的是「重开后**输入框里**有上一段的文本」 ----
+            // 光看重载后 IndexedDB 里还是那段旧文本**不能**证明恢复：
+            // 那只说明快照还在（持久化），没说明它被灌回了输入框。
+            // 判据：重载 → 点聚焦真正的输入框 → **追加**一段唯一后缀 → 等落盘 →
+            //       草稿快照必须等于「原文 + 后缀」。
+            // 若恢复没发生，追加的后缀会**替换**原文，快照就只剩后缀 → 判据失败。
             await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
             await canvasUp();
             await sleep(6000);
-            await page.mouse.click(738, 720);
-            const restored = await until(() => inputIs('草稿往返'), 20000);
+            const focusBack = await focusComposer();
+            const SUFFIX = '｜恢复验证后缀';
+            await cdp.send('Input.insertText', { text: SUFFIX });
+            await sleep(1500);
+            const restoredRaw = await page.evaluate(`(() => new Promise((resolve) => {
+                const req = indexedDB.open('wanxiang-drafts', 1);
+                req.onsuccess = () => {
+                    try {
+                        const g = req.result.transaction('drafts', 'readonly').objectStore('drafts').get('snapshot');
+                        g.onsuccess = () => resolve(typeof g.result === 'string' ? g.result : '');
+                        g.onerror = () => resolve('');
+                    } catch (e) { resolve(''); }
+                };
+                req.onerror = () => resolve('');
+            }))()`);
+            const EXPECTED_AFTER = EXPECTED + SUFFIX;
+            const restored = focusBack && restoredRaw === EXPECTED_AFTER;
+            await page.screenshot({ path: `${OUT}/smoke-restored.png` });
             const visitsThird = await visits();
             // main.js：每次加载把 localStorage 的访问计数 +1（决策 365 的安装提示按它分档）
             check('localStorage：重开页面后访问计数继续递增', visitsBefore >= 1 && visitsAfter === visitsBefore + 1 && visitsThird === visitsAfter + 1,
                 `visits ${visitsBefore} -> ${visitsAfter} -> ${visitsThird}`);
-            check('认证态：草稿落进 IndexedDB', back && typed && savedToDb, `back=${back} typed=${typed} saved=${savedToDb}`);
-            check('认证态：重开页面草稿回到输入框', restored);
+            check('认证态：草稿落进 IndexedDB', back && savedToDb, `back=${back} saved=${savedToDb}`);
+            check('认证态：重开页面草稿回到输入框', restored,
+                `draft=${JSON.stringify(restoredRaw.slice(0, 160))} expected=${JSON.stringify(EXPECTED_AFTER)}`);
         }
         check('无未捕获页面异常', errors.length === 0, errors.slice(0, 3).join(' | '));
     } finally { await browser.close(); }

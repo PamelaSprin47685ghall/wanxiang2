@@ -4,6 +4,8 @@
     <Compile Include="ChatScroller.fs" />
     <Compile Include="ExchangeNav.fs" />
     <Compile Include="SkeletonList.fs" />
+    <Compile Include="ChatEmptyText.fs" />
+    <Compile Include="ScrollFollow.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

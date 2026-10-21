@@ -15,9 +15,9 @@ ShellDesk + SidebarDesk + ChatScreen + ComposerDesk + OverlayDesk = 旧 `AppShel
 ## 与旧实现的差异
 - 认证成功后的步骤序列、浏览器视口轮询与恢复检测仍在宿主。
 
-## 整树金样
+## 整树金样（已退役）
 
-- `tests/golden/workspace.txt`：旧 AppShell.Build 布局段（旧 Sidebar / ChatView / Composer、审批面板进输入区附属位、ShellDesk）用 `tools/workspacegold/run.sh <旧仓>` 生成，7 个状态：宽屏 1280、折叠侧栏、起步页居中、审批卡、窄屏 600、抽屉打开、窄屏审批卡。
-- 侧栏根与对话屏根只比一行布局（`Dump.cut`，不比派生类型），子树各有自己的金样；输入区连同审批位整棵比。两边都装共享 ThemeStyles、减弱动效、内嵌字体，输入区按 AppShell 空闲面 `SetEnabled(true, "")`。
-- 已知且不在本组合者修的差异：SidebarDesk.View 根是普通 Border，旧 Sidebar 是 Border 派生类型（写手二的库，已报）；新 ComposerDesk 构造后立刻落禁用外观，旧 Composer 要等第一次 SetEnabled（宿主总会调，金样两边都先调）。
-- 有意偏离（2026-10-18）：输入壳的静止/禁用边界描边从旧树的 `Hairline`（浅 `#ECE9DE`）改为 `ControlStroke`（浅 `#8D8A7E`，≥3:1，见 `docs/ux/a11y-audit.md` §2），金样里 7 行壳描边已按新值改；与 `compose/ComposerDesk` 同一处改动。旧仓库已退役，`tools/workspacegold/run.sh` 无法再跑，若将来重生成，要把这 7 行按新值改回。
+旧 AppShell.Build 布局段（旧 Sidebar / ChatView / Composer、审批面板进输入区附属位、ShellDesk）的整树金样复刻随纯界面复刻退役一并删除：7 个状态（宽屏 1280、折叠侧栏、起步页居中、审批卡、窄屏 600、抽屉打开、窄屏审批卡）的对照文件与生成器都不在仓库里了。现在这一段的事实由无头行为用例承担（见上面「证据与旧测试」）。
+
+- 已知且不在本组合者修的差异：SidebarDesk.View 根是普通 Border，旧 Sidebar 是 Border 派生类型（写手二的库，已报）；新 ComposerDesk 构造后立刻落禁用外观，旧 Composer 要等第一次 SetEnabled（宿主总会调）。
+- 有意偏离（2026-10-18）：输入壳的静止/禁用边界描边从旧树的 `Hairline`（浅 `#ECE9DE`）改为 `ControlStroke`（浅 `#8D8A7E`，≥3:1，见 `docs/ux/a11y-audit.md` §2）；与 `compose/ComposerDesk` 同一处改动。旧仓库已退役，这份对照无法再重新生成。

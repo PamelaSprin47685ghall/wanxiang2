@@ -92,6 +92,14 @@ and SidebarUserMsg =
     | TogglePin of convId: Guid
     | DeleteConversation of convId: Guid
     | BatchDelete of convIds: Guid list
+    /// 进入多选：把第一项选上（已在多选中则只并入这一项）
+    | EnterBatch of convId: Guid
+    /// 切换一行的选中态；清空最后一项时退出多选
+    | ToggleBatch of convId: Guid
+    /// 退出多选（清空选择）
+    | ExitBatch
+    /// 全选可见行；已全选则退出多选
+    | ToggleBatchAllVisible of visibleIds: Guid list
     | SearchTextChanged of query: string
     | SearchActivate
     | SearchClear
@@ -116,7 +124,10 @@ and ComposerUserMsg =
     | CaretChanged of caret: int option
     | Send
     | StopGeneration
-    | Attach of fileName: string * mediaType: string * size: int64 * sha256: string
+    /// 挂一个附件。`attachmentId` 由**发起方**给（客户端在开始上传时生成）——
+    /// 它同时是这次上传的身份：状态树用它对上 `UploadProgress` / `UploadFinished` / `UploadFailed`，
+    /// 线协议也用它（`attachment.begin` / `chunk` / `complete`）。两侧必须是同一个 id。
+    | Attach of attachmentId: Guid * fileName: string * mediaType: string * size: int64 * sha256: string
     | RemoveAttachment of attachmentId: Guid
     | ModelPick of providerId: string * model: string
     | EnterSendsToggled of bool

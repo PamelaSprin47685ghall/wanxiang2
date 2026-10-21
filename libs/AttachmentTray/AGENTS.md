@@ -46,3 +46,28 @@
 - `member Render(model: string option, compact: bool): unit`：单入口投影。
 - `member ApplyLabel(text: string): unit`：写芯片文本与配色（空 / 「未选择模型」用 muted）。
 - `member OnOpen(f: Control -> unit): unit`：点击打开模型切换器回调。
+
+## 成员 `ComposerSendState`
+
+### ComposerSendState（库）
+
+输入与输出全面收敛为互斥 DU 代数（消灭碎布尔）：
+- 输入侧：`HostAvailability`（HostAvailable / HostDisabled）、`GenerationStatus`（Idle / Generating of StopCapability）、`TextPresence`（HasText / EmptyText）、`VisionCapability`（VisionAllowed / VisionForbidden）、`SendKeyPreference`（EnterSends / CtrlEnterSends）、`ComposerAttachment`（AttachmentStage: Uploading / Ready / Failed / Restored 与 AttachmentKind: Image / OtherFile）；
+- 决定侧：`SendGate`（Send / Queue / Stop / Blocked of BlockReason）、`PrimaryAction`（SendReady / SendBlocked / StopReady / StopWaiting）、`QueueAction`（QueueHidden / QueueReady / QueueBlocked）、`VisionNotice`（VisionClear / VisionNotice）；
+- 派生：`canSubmit` / `chipState` / `chipTip` / `shouldSend`（Enter 8 键位组合矩阵）均从同一 DU 结构派生。
+不引用任何其他库。根规则见项目根目录 AGENTS.md。
+
+### LEMMA
+1. **非法组合在类型系统不可表示；决定与既有门控逻辑一致。** [根 AXIOM: 5]
+
+### SPEC
+1. [LEMMA: 1] 上传中、失败残留、看图受阻都挡住发送；只有就绪附件也能发；生成中发送键变成停止键，排队键出现。
+2. 已知旧行为，原样保留：`canSubmit` 把失败残留算作未就绪；排队提示不提看图受阻。
+3. Enter 发送按键矩阵：`not shift && (enterSends <> ctrl)` 的全部 8 种排列经 `shouldSend` 行为测试锁定。
+
+### 迁入或覆盖的旧测试
+旧 Composer 与附件相关的用例都要起窗口，留在旧仓库。本包新增 7 条规则用例。
+
+### 合并说明
+
+2026-10-21（W7-CLEANBREAK）并入本包：源文件 `ComposerSendState.fs` 落盘为本包源文件（编译序在 `ModelChip.fs` 之后）；测试按 MERGE.md《测试工程的合并约定》改名 `tests/ComposerSendState.<原文件名>.fs`，顶层模块改名 `ComposerSendState<模块名>`；原 `Wanxiang2.ComposerSendState` 包不再交付，消费方 `compose/ComposerDesk` 改引 `Wanxiang2.AttachmentTray`。命名空间与类型名不变，消费方源码零改。

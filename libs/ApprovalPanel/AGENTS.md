@@ -1,5 +1,7 @@
 # ApprovalPanel
 
+合并包：ApprovalPanel、ApprovalCardText。2026-10-21（W7-CLEANBREAK）并入 ApprovalCardText：生产消费者集合相同（`compose/ApprovalDesk`），且合并后的依赖并集（`Avalonia`）已被该消费者直接声明——按 MERGE.md《追加判据（2026-10-21 W7-CLEANBREAK）：依赖闭包判据》合并是纯减法，消费者不多拿任何 API。
+
 工具审批卡与卡宿主（迁自旧 `Views/ToolApprovalCard.fs`：`ToolApprovalCard.build` → `ApprovalCard.build`，`ToolApprovalPanel` → `ApprovalPanel`）。根规则见项目根目录 AGENTS.md。
 
 - 批准 / 拒绝只发一次，随后两键不可用并在 polite 状态行显示「已发送」文案；参数默认收起，「查看参数」展开全文；没有参数（空或 `{}`）不显示该键。
@@ -22,3 +24,23 @@
 
 - 记录类型改名 `ApprovalAsk`，字段大写开头。
 - 不可用态不再手写 Opacity / IsHitTestVisible，交给主题 `:disabled`。
+
+## 成员 `ApprovalCardText`
+
+### ApprovalCardText（库）
+
+旧 `Views/ToolApprovalCard.fs` 里不碰控件的部分：参数 JSON 的展示（中文不转义）、按钮与状态文案、策略说明。模块改名为 `ApprovalCardText`，避免与留在 UI 的 `ToolApprovalCard` 模块同名而互相遮蔽。`touchTarget`、`buttonRowMaxWidth` 与 `build` 留在 UI。不引用任何其他库。根规则见项目根目录 AGENTS.md。
+
+### LEMMA
+1. **全部文案与参数展示与旧实现逐字相同。** [根 AXIOM: 5]
+
+### SPEC
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`escaped chinese in arguments is shown as is`、`unparsable or blank arguments come back unchanged`、`unknown policy and status fall back to the generic text`、`other conversation waiting text is the old toast`。
+
+### 迁入或覆盖的旧测试
+旧 W3ToolApprovalUiTests 的用例要点击按钮，依赖 Avalonia，留在旧仓库。本库新增：中文转义还原、无法解析或空白参数原样返回、未知策略与状态回落、他人对话等待文案。
+- 迁自旧 AppShell.HandleEvent 的自足部分（见 tests 里与旧代码原样摘录的差分用例）。
+
+### 合并说明
+
+2026-10-21（W7-CLEANBREAK）并入本包：源文件 `ApprovalCardText.fs` 落盘为本包源文件（编译序在 `ApprovalPanel.fs` 之后）；测试按 MERGE.md《测试工程的合并约定》改名 `tests/ApprovalCardText.Tests.fs`，顶层模块改名 `ApprovalCardTextTests`；原 `Wanxiang2.ApprovalCardText` 包不再交付，消费方 `compose/ApprovalDesk` 改引 `Wanxiang2.ApprovalPanel`。命名空间与类型名不变，消费方源码零改。

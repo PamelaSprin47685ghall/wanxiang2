@@ -1,0 +1,2302 @@
+[
+ {
+  "name": "ActionStrip",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 10,
+  "loc": 1344,
+  "members": [
+   "ActionStrip.fs",
+   "AttachmentChip.fs",
+   "ErrorPanel.fs",
+   "FoldHeader.fs",
+   "RevealPane.fs",
+   "StreamCaret.fs",
+   "ThinkingBlock.fs",
+   "ToolCallCard.fs",
+   "UsageFoot.fs",
+   "UserBubble.fs"
+  ],
+  "consumers": [
+   "compose/MessageCardView/MessageCardView.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "AgentHistory",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 43,
+  "members": [
+   "AgentHistory.fs"
+  ],
+  "consumers": [
+   "compose/AgentRuntime/AgentRuntime.fsproj",
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj"
+  ],
+  "external": [
+   "Microsoft.Agents.AI"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "Agui",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 62,
+  "members": [
+   "Capabilities.fs",
+   "TolerantReader.fs"
+  ],
+  "consumers": [
+   "compose/AguiWire/AguiWire.fsproj",
+   "compose/Doctor/Doctor.fsproj"
+  ],
+  "external": [
+   "AGUI.Abstractions"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "Anthropic",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 4,
+  "loc": 617,
+  "members": [
+   "AnthropicRequest.fs",
+   "AnthropicStream.fs",
+   "GeminiRequest.fs",
+   "GeminiStream.fs"
+  ],
+  "consumers": [
+   "compose/ProviderTransports/ProviderTransports.fsproj"
+  ],
+  "external": [
+   "Microsoft.Extensions.AI.Abstractions"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "AppConfig",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 1105,
+  "members": [
+   "ConfigModel.fs",
+   "TomlCodec.fs"
+  ],
+  "consumers": [
+   "compose/AgentRuntime/AgentRuntime.fsproj",
+   "compose/BuiltinTools/BuiltinTools.fsproj",
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj",
+   "compose/ConfigMutation/ConfigMutation.fsproj",
+   "compose/ConfigStore/ConfigStore.fsproj",
+   "compose/DesktopPairing/DesktopPairing.fsproj",
+   "compose/Doctor/Doctor.fsproj",
+   "compose/LaunchPlan/LaunchPlan.fsproj",
+   "compose/McpClient/McpClient.fsproj",
+   "compose/ProviderCatalog/ProviderCatalog.fsproj",
+   "compose/ProviderTransports/ProviderTransports.fsproj",
+   "compose/ToolApproval/ToolApproval.fsproj",
+   "compose/ToolRegistry/ToolRegistry.fsproj"
+  ],
+  "external": [
+   "Tomlyn"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "ApprovalPanel",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 180,
+  "members": [
+   "ApprovalCardText.fs",
+   "ApprovalPanel.fs"
+  ],
+  "consumers": [
+   "compose/ApprovalDesk/ApprovalDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "Approvals",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 42,
+  "members": [
+   "Approvals.fs"
+  ],
+  "consumers": [
+   "compose/ToolApproval/ToolApproval.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "AtomicTextFile",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 84,
+  "members": [
+   "AtomicTextFile.fs"
+  ],
+  "consumers": [
+   "compose/ConfigStore/ConfigStore.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "AttachmentAudit",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 6,
+  "loc": 93,
+  "members": [
+   "AttachmentAudit.fs",
+   "HostProbe.fs",
+   "McpCheck.fs",
+   "ProviderCheck.fs",
+   "SecretText.fs",
+   "SnapshotCheck.fs"
+  ],
+  "consumers": [
+   "compose/Doctor/Doctor.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "AttachmentBlobs",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 149,
+  "members": [
+   "AttachmentBlobs.fs",
+   "MediaSniff.fs"
+  ],
+  "consumers": [
+   "compose/Attachments/Attachments.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "AttachmentRefs",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 31,
+  "members": [
+   "AttachmentRefs.fs"
+  ],
+  "consumers": [
+   "compose/Doctor/Doctor.fsproj",
+   "compose/ServerModel/ServerModel.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "AttachmentTray",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 4,
+  "loc": 891,
+  "members": [
+   "AttachmentTray.fs",
+   "ComposerBox.fs",
+   "ComposerSendState.fs",
+   "ModelChip.fs"
+  ],
+  "consumers": [
+   "compose/ComposerDesk/ComposerDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "BatchBar",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 11,
+  "loc": 1259,
+  "members": [
+   "BatchBar.fs",
+   "ConversationRows.fs",
+   "HostSwitcher.fs",
+   "ListEmptyCard.fs",
+   "RowFocus.fs",
+   "SearchHit.fs",
+   "SearchSegments.fs",
+   "SearchSession.fs",
+   "SidebarBrand.fs",
+   "SidebarSearch.fs",
+   "SidebarSelection.fs"
+  ],
+  "consumers": [
+   "compose/SidebarDesk/SidebarDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "BlockDiff",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 63,
+  "members": [
+   "BlockDiff.fs",
+   "LinkChunks.fs"
+  ],
+  "consumers": [
+   "compose/MarkdownView/MarkdownView.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "BoundedCache",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 3,
+  "loc": 150,
+  "members": [
+   "BoundedCache.fs",
+   "HighlightQueue.fs",
+   "HljsHtml.fs"
+  ],
+  "consumers": [
+   "compose/CodeTint/CodeTint.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "BoundedWait",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 4,
+  "loc": 346,
+  "members": [
+   "BoundedWait.fs",
+   "HostHealth.fs",
+   "OnboardingRules.fs",
+   "ProviderPresets.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "BrandMark",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 151,
+  "members": [
+   "BrandMark.fs",
+   "ShellLayout.fs"
+  ],
+  "consumers": [
+   "compose/ShellDesk/ShellDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "BrowserInterop",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 6,
+  "loc": 72,
+  "members": [
+   "BrowserCredentials.cs",
+   "BrowserDrafts.cs",
+   "BrowserImage.cs",
+   "BrowserLocalStore.cs",
+   "BrowserPage.cs",
+   "BrowserRich.cs"
+  ],
+  "consumers": [
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/CredentialStore/CredentialStore.fsproj",
+   "compose/RichBrowser/RichBrowser.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "Canonical",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 10,
+  "members": [
+   "Canonical.fs"
+  ],
+  "consumers": [
+   "compose/ChatDomain/ChatDomain.fsproj"
+  ],
+  "external": [
+   "Jcs.Net"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "CardBits",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 9,
+  "loc": 403,
+  "members": [
+   "CountdownTicker.fs",
+   "DurationText.fs",
+   "GenerationErrorTitle.fs",
+   "MessageMenu.fs",
+   "MessageTimestamp.fs",
+   "ToolArgsPreview.fs",
+   "ToolCallState.fs",
+   "ToolErrorSummary.fs",
+   "ToolOverview.fs"
+  ],
+  "consumers": [
+   "compose/MessageCardView/MessageCardView.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ChangeWatch",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 4,
+  "loc": 95,
+  "members": [
+   "ChangeWatch.fs",
+   "DeferredReveal.fs",
+   "ReconnectLoop.fs",
+   "StartupTrace.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/AppShell/AppShell.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ChatEmpty",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 6,
+  "loc": 615,
+  "members": [
+   "ChatEmpty.fs",
+   "ChatEmptyText.fs",
+   "ChatScroller.fs",
+   "ExchangeNav.fs",
+   "ScrollFollow.fs",
+   "SkeletonList.fs"
+  ],
+  "consumers": [
+   "compose/ChatPane/ChatPane.fsproj",
+   "compose/Gallery/Gallery.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "ChatHeader",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 3,
+  "loc": 341,
+  "members": [
+   "BreadcrumbAction.fs",
+   "ChatHeader.fs",
+   "RevealFlash.fs"
+  ],
+  "consumers": [
+   "compose/ChatScreen/ChatScreen.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "CliArgs",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 82,
+  "members": [
+   "CliArgs.fs",
+   "RunModes.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "compose/LaunchPlan/LaunchPlan.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ClientConnections",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 51,
+  "members": [
+   "ClientConnections.fs"
+  ],
+  "consumers": [
+   "compose/CredentialStore/CredentialStore.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ClientToken",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 40,
+  "members": [
+   "ClientToken.fs",
+   "DesktopClient.fs"
+  ],
+  "consumers": [
+   "compose/DesktopPairing/DesktopPairing.fsproj",
+   "compose/PairingDesk/PairingDesk.fsproj",
+   "compose/WsConnection/WsConnection.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ClientTomlFile",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 33,
+  "members": [
+   "ClientTomlFile.fs"
+  ],
+  "consumers": [
+   "compose/DesktopPairing/DesktopPairing.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ColorBlend",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 65,
+  "members": [
+   "ColorBlend.fs",
+   "ThemeTween.fs"
+  ],
+  "consumers": [
+   "compose/Theme/Theme.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "CommandFeedback",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 63,
+  "members": [
+   "CommandFeedback.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/Outbox/Outbox.fsproj",
+   "compose/ProtocolDispatch/ProtocolDispatch.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "CommandId",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 13,
+  "members": [
+   "CommandId.fs"
+  ],
+  "consumers": [
+   "compose/ChatDomain/ChatDomain.fsproj",
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "CommitTimeline",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 143,
+  "members": [
+   "CommitTimeline.fs",
+   "TextSocket.fs"
+  ],
+  "consumers": [
+   "compose/WsClient/WsClient.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ComposerDrafts",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 121,
+  "members": [
+   "ComposerDrafts.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ComposerDesk/ComposerDesk.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/Outbox/Outbox.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ConfigFeedback",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 4,
+  "loc": 189,
+  "members": [
+   "ConfigFeedback.fs",
+   "DownloadBuffers.fs",
+   "HostRequests.fs",
+   "UploadFacts.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ProtocolDispatch/ProtocolDispatch.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ConfirmPane",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 6,
+  "loc": 934,
+  "members": [
+   "ConfirmPane.fs",
+   "ConnectPane.fs",
+   "PromptPane.fs",
+   "SessionPrefsPane.fs",
+   "ShortcutHelpPane.fs",
+   "TextEditPane.fs"
+  ],
+  "consumers": [
+   "compose/DialogsDesk/DialogsDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "ConnectionIssue",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 44,
+  "members": [
+   "ConnectionIssue.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ConnectIssueText/ConnectIssueText.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ContextTrim",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 56,
+  "members": [
+   "ContextTrim.fs",
+   "UsageTally.fs"
+  ],
+  "consumers": [
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj"
+  ],
+  "external": [
+   "Microsoft.Extensions.AI.Abstractions"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "ContinuableReply",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 45,
+  "members": [
+   "ContinuableReply.fs",
+   "TitleText.fs"
+  ],
+  "consumers": [
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ConversationSummary",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 162,
+  "members": [
+   "ConversationSummary.fs"
+  ],
+  "consumers": [
+   "compose/CommandPalette/CommandPalette.fsproj",
+   "compose/ConversationList/ConversationList.fsproj",
+   "compose/ConversationRuns/ConversationRuns.fsproj",
+   "compose/Gallery/Gallery.fsproj",
+   "compose/SidebarDesk/SidebarDesk.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ConversationTransfer",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 207,
+  "members": [
+   "ConversationTransfer.fs"
+  ],
+  "consumers": [
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ConversationList/ConversationList.fsproj",
+   "compose/TransferDesk/TransferDesk.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "Conversations",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 4,
+  "loc": 597,
+  "members": [
+   "Conversations.fs",
+   "EventJson.fs",
+   "Events.fs",
+   "ProjectionJson.fs"
+  ],
+  "consumers": [
+   "compose/ChatDomain/ChatDomain.fsproj",
+   "compose/Search/Search.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "CopyButton",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 75,
+  "members": [
+   "CopyButton.fs"
+  ],
+  "consumers": [
+   "compose/MarkdownView/MarkdownView.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ReadingLook/ReadingLook.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "DeviceListJson",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 3,
+  "loc": 114,
+  "members": [
+   "DeviceListJson.fs",
+   "DeviceRules.fs",
+   "DeviceSightings.fs"
+  ],
+  "consumers": [
+   "compose/WsConnection/WsConnection.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "DevicesModel",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 120,
+  "members": [
+   "DevicesModel.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [
+   "QRCoder"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "DevicesPane",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 18,
+  "loc": 2485,
+  "members": [
+   "DevicesPane.fs",
+   "GeneralPane.fs",
+   "GenerationDraft.fs",
+   "GenerationForm.fs",
+   "LocalDraftControls.fs",
+   "McpForm.fs",
+   "OnboardingFlow.fs",
+   "OnboardingPane.fs",
+   "ProbeFailureKind.fs",
+   "ProbeSlot.fs",
+   "ProviderForm.fs",
+   "ProviderProbeText.fs",
+   "ProvidersPane.fs",
+   "SectionMemory.fs",
+   "SettingsFrame.fs",
+   "ToolsPane.fs",
+   "ToolsPolicy.fs",
+   "Ui.fs"
+  ],
+  "consumers": [
+   "compose/SettingsScreen/SettingsScreen.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "DirLock",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 27,
+  "members": [
+   "DirLock.fs"
+  ],
+  "consumers": [
+   "compose/Doctor/Doctor.fsproj",
+   "compose/LedgerStore/LedgerStore.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "DraftStore",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 234,
+  "members": [
+   "DraftBackend.fs",
+   "DraftStore.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/AppShell/AppShell.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/Outbox/Outbox.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ErrorRecovery",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 13,
+  "members": [
+   "ErrorRecovery.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ConversationRuns/ConversationRuns.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ExchangeJump",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 67,
+  "members": [
+   "ExchangeJump.fs"
+  ],
+  "consumers": [
+   "compose/ChatPane/ChatPane.fsproj",
+   "compose/ChatScreen/ChatScreen.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ExportSheet",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 7,
+  "loc": 569,
+  "members": [
+   "ExportFileName.fs",
+   "ExportSheet.fs",
+   "ExportView.fs",
+   "ImportSheet.fs",
+   "ImportView.fs",
+   "ProgressThrottle.fs",
+   "TranscriptMarkdown.fs"
+  ],
+  "consumers": [
+   "compose/TransferDesk/TransferDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "FailureLimiter",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 104,
+  "members": [
+   "FailureLimiter.fs",
+   "PairingCode.fs"
+  ],
+  "consumers": [
+   "compose/PairingDesk/PairingDesk.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "FieldCheck",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 108,
+  "members": [
+   "FieldCheck.fs"
+  ],
+  "consumers": [
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "FocusOrigin",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 299,
+  "members": [
+   "FocusOrigin.fs",
+   "OverlayLayer.fs"
+  ],
+  "consumers": [
+   "compose/OverlayDesk/OverlayDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "ForkLineage",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 68,
+  "members": [
+   "ForkLineage.fs"
+  ],
+  "consumers": [
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/ConversationList/ConversationList.fsproj",
+   "compose/SidebarDesk/SidebarDesk.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "FuzzyMatch",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 74,
+  "members": [
+   "FuzzyMatch.fs",
+   "PinyinInitials.fs"
+  ],
+  "consumers": [
+   "compose/CommandPalette/CommandPalette.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "HljsCatalog",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 45,
+  "members": [
+   "HljsCatalog.fs",
+   "RichScripts.fs"
+  ],
+  "consumers": [
+   "compose/RichAssets/RichAssets.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "HostCatalog",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 300,
+  "members": [
+   "HostCatalog.fs",
+   "ModelVision.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/Catalog/Catalog.fsproj",
+   "compose/ComposerDesk/ComposerDesk.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "HttpFailureFacts",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 71,
+  "members": [
+   "HttpFailureFacts.fs"
+  ],
+  "consumers": [
+   "compose/ProviderFailure/ProviderFailure.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "HttpRetry",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 3,
+  "loc": 155,
+  "members": [
+   "HttpRetry.fs",
+   "JsonPick.fs",
+   "Sse.fs"
+  ],
+  "consumers": [
+   "compose/ProviderTransports/ProviderTransports.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "IconSet",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 176,
+  "members": [
+   "IconSet.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/ApprovalDesk/ApprovalDesk.fsproj",
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/Gallery/Gallery.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ModelSwitchDesk/ModelSwitchDesk.fsproj",
+   "compose/ReadingLook/ReadingLook.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/SidebarDesk/SidebarDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia",
+   "IconPacks.Avalonia.Lucide"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "ImageFit",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 41,
+  "members": [
+   "ImageFit.fs"
+  ],
+  "consumers": [
+   "compose/ImageShrink/ImageShrink.fsproj",
+   "compose/ImageShrink/ImageShrinkIo.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ImeShield",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 29,
+  "members": [
+   "ImeShield.fs"
+  ],
+  "consumers": [
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/PaletteDesk/PaletteDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "InputSense",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 42,
+  "members": [
+   "InputSense.fs"
+  ],
+  "consumers": [
+   "compose/EntryShells/EntryShells.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "JintScriptHost",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 31,
+  "members": [
+   "JintScriptHost.fs"
+  ],
+  "consumers": [
+   "compose/RichJint/RichJint.fsproj"
+  ],
+  "external": [
+   "Jint"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "JsonLinesLog",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 69,
+  "members": [
+   "JsonLinesLog.fs"
+  ],
+  "consumers": [
+   "compose/HostLog/HostLog.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "JsonRpc",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 4,
+  "loc": 253,
+  "members": [
+   "JsonRpc.fs",
+   "LineProcess.fs",
+   "McpProtocol.fs",
+   "StreamableHttp.fs"
+  ],
+  "consumers": [
+   "compose/McpClient/McpClient.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "JsonSeq",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 7,
+  "loc": 352,
+  "members": [
+   "CheckpointJson.fs",
+   "Envelope.fs",
+   "Frame.fs",
+   "JsonSeqFile.fs",
+   "Ledger.fs",
+   "Snapshot.fs",
+   "Types.fs"
+  ],
+  "consumers": [
+   "compose/LedgerStore/LedgerStore.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "KatexHtml",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 148,
+  "members": [
+   "KatexHtml.fs"
+  ],
+  "consumers": [
+   "compose/MathTypeset/MathTypeset.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "KeyChord",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 14,
+  "members": [
+   "KeyChord.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "LinkInbox",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 22,
+  "members": [
+   "LinkInbox.fs"
+  ],
+  "consumers": [
+   "compose/ExternalLinks/ExternalLinks.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ListenAddress",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 42,
+  "members": [
+   "ListenAddress.fs",
+   "WsHandshake.fs"
+  ],
+  "consumers": [
+   "compose/ServerApp/ServerApp.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "LocalHostGate",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 4,
+  "loc": 92,
+  "members": [
+   "LocalHostGate.fs",
+   "PwaAssets.fs",
+   "ShutdownSignals.fs",
+   "SingleInstance.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "LocalState",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 98,
+  "members": [
+   "LocalState.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/UiPrefsFile/UiPrefsFile.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "MarkdownBlocks",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 209,
+  "members": [
+   "MarkdownBlocks.fs"
+  ],
+  "consumers": [
+   "compose/MarkdownView/MarkdownView.fsproj"
+  ],
+  "external": [
+   "Markdig"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "MathBaseline",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 12,
+  "members": [
+   "MathBaseline.fs"
+  ],
+  "consumers": [
+   "compose/MathFigure/MathFigure.fsproj",
+   "compose/MathFigure/tools/figuregold/figuregold.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "MediaContent",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 267,
+  "members": [
+   "MediaContent.fs",
+   "MessageSerde.fs"
+  ],
+  "consumers": [
+   "compose/AgentContent/AgentContent.fsproj",
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj"
+  ],
+  "external": [
+   "Microsoft.Extensions.AI.Abstractions"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "MediaTypes",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 76,
+  "members": [
+   "MediaTypes.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ComposerDesk/ComposerDesk.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/ImageShrink/ImageShrink.fsproj",
+   "compose/ImageShrink/ImageShrinkIo.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "MessageText",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 57,
+  "members": [
+   "MessageText.fs",
+   "TextMatch.fs"
+  ],
+  "consumers": [
+   "compose/Search/Search.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "MessageView",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 257,
+  "members": [
+   "MessageView.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/ComposerDesk/ComposerDesk.fsproj",
+   "compose/ConversationExport/ConversationExport.fsproj",
+   "compose/ConversationRuns/ConversationRuns.fsproj",
+   "compose/ImageShrink/ImageShrink.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ProtocolDispatch/ProtocolDispatch.fsproj",
+   "compose/TransferDesk/TransferDesk.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ModelListing",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 118,
+  "members": [
+   "ModelListing.fs"
+  ],
+  "consumers": [
+   "compose/ProviderCatalog/ProviderCatalog.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ModelSwitchPanel",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 2,
+  "loc": 173,
+  "members": [
+   "ModelPickerList.fs",
+   "ModelSwitchPanel.fs"
+  ],
+  "consumers": [
+   "compose/ModelSwitchDesk/ModelSwitchDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "ModelSwitcher",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 24,
+  "members": [
+   "ModelSwitcher.fs"
+  ],
+  "consumers": [
+   "compose/Catalog/Catalog.fsproj",
+   "compose/ModelSwitchDesk/ModelSwitchDesk.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "MotionSwitch",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 96,
+  "members": [
+   "MotionSwitch.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/AppShell/AppShell.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ReadingLook/ReadingLook.fsproj",
+   "compose/SidebarDesk/SidebarDesk.fsproj",
+   "compose/Theme/Theme.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "NavigationState",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 51,
+  "members": [
+   "NavigationState.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ShellDesk/ShellDesk.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "PairingCodeInput",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 23,
+  "members": [
+   "PairingCodeInput.fs"
+  ],
+  "consumers": [
+   "compose/DialogsDesk/DialogsDesk.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "PairingHint",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 15,
+  "members": [
+   "PairingHint.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "PalettePanel",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 164,
+  "members": [
+   "PalettePanel.fs"
+  ],
+  "consumers": [
+   "compose/PaletteDesk/PaletteDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "PayloadFields",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 64,
+  "members": [
+   "PayloadFields.fs"
+  ],
+  "consumers": [
+   "compose/ConfigMutation/ConfigMutation.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "PendingDeletion",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 57,
+  "members": [
+   "PendingDeletion.fs"
+  ],
+  "consumers": [
+   "compose/ConversationList/ConversationList.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "PlainText",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 48,
+  "members": [
+   "PlainText.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj",
+   "compose/ServerModel/ServerModel.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "PopupMenu",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 202,
+  "members": [
+   "PopupMenu.fs"
+  ],
+  "consumers": [
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/OverlayDesk/OverlayDesk.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/SidebarDesk/SidebarDesk.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "PromptHistory",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 59,
+  "members": [
+   "PromptHistory.fs"
+  ],
+  "consumers": [
+   "compose/EntryShells/EntryShells.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "RefreshingPool",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 33,
+  "members": [
+   "RefreshingPool.fs"
+  ],
+  "consumers": [
+   "compose/ToolRegistry/ToolRegistry.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "RichBackend",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 8,
+  "members": [
+   "RichBackend.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "SandboxFiles",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 57,
+  "members": [
+   "SandboxFiles.fs"
+  ],
+  "consumers": [
+   "compose/BuiltinTools/BuiltinTools.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ServerErrorRoute",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 16,
+  "members": [
+   "ServerErrorRoute.fs"
+  ],
+  "consumers": [
+   "compose/ProtocolDispatch/ProtocolDispatch.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "SharedHttpClients",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 26,
+  "members": [
+   "SharedHttpClients.fs"
+  ],
+  "consumers": [
+   "compose/AgentRuntime/AgentRuntime.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ShortcutKeys",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 59,
+  "members": [
+   "ShortcutKeys.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ShellCommands/ShellCommands.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "SpacingRamp",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 66,
+  "members": [
+   "SpacingRamp.fs"
+  ],
+  "consumers": [
+   "compose/ChatPane/ChatPane.fsproj",
+   "compose/ComposerDesk/ComposerDesk.fsproj",
+   "compose/DesignRhythm/DesignRhythm.fsproj",
+   "compose/ReadingLook/ReadingLook.fsproj",
+   "compose/Theme/Theme.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ThemeFonts",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 7,
+  "members": [
+   "ThemeFonts.fs"
+  ],
+  "consumers": [
+   "compose/MathFigure/MathFigure.fsproj",
+   "compose/Theme/Theme.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "ThemeMetrics",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 427,
+  "members": [
+   "ThemeMetrics.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/ChatPane/ChatPane.fsproj",
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/Gallery/Gallery.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ReadingLook/ReadingLook.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/SidebarDesk/SidebarDesk.fsproj",
+   "compose/Theme/Theme.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ThemePalette",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 236,
+  "members": [
+   "ThemePalette.fs"
+  ],
+  "consumers": [
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/Gallery/Gallery.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ReadingLook/ReadingLook.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/SidebarDesk/SidebarDesk.fsproj",
+   "compose/Theme/Theme.fsproj",
+   "compose/Workspace/Workspace.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": []
+ },
+ {
+  "name": "ToastStrip",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 172,
+  "members": [
+   "ToastStrip.fs"
+  ],
+  "consumers": [
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/OverlayDesk/OverlayDesk.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj"
+  ],
+  "external": [
+   "Avalonia"
+  ],
+  "wanxiang": [
+   "Wanxiang2.WorkspaceState"
+  ]
+ },
+ {
+  "name": "ToolNames",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 17,
+  "members": [
+   "ToolNames.fs"
+  ],
+  "consumers": [
+   "compose/BuiltinTools/BuiltinTools.fsproj",
+   "compose/ToolRegistry/ToolRegistry.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "ToolSummary",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 47,
+  "members": [
+   "ToolSummary.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ToolApproval/ToolApproval.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "UiPrefs",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 159,
+  "members": [
+   "UiPrefs.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/AppShell/AppShell.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/Gallery/Gallery.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/ShellCommands/ShellCommands.fsproj",
+   "compose/UiPrefsFile/UiPrefsFile.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "UrlSchemeRegistration",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 15,
+  "members": [
+   "UrlSchemeRegistration.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "compose/UrlSchemeRegistrationIo/UrlSchemeRegistrationIo.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "VerifiedCopy",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 1,
+  "loc": 24,
+  "members": [
+   "VerifiedCopy.fs"
+  ],
+  "consumers": [
+   "compose/EventStore/EventStore.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "Wire",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 6,
+  "loc": 1618,
+  "members": [
+   "RateLimit.fs",
+   "SessionConfig.fs",
+   "Types.fs",
+   "WireCodec.fs",
+   "WireCommands.fs",
+   "WireEvent.fs"
+  ],
+  "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/AgentRuntime/AgentRuntime.fsproj",
+   "compose/AguiWire/AguiWire.fsproj",
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ApprovalDesk/ApprovalDesk.fsproj",
+   "compose/Catalog/Catalog.fsproj",
+   "compose/ChatDomain/ChatDomain.fsproj",
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj",
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/ConversationExport/ConversationExport.fsproj",
+   "compose/ConversationList/ConversationList.fsproj",
+   "compose/ConversationRuns/ConversationRuns.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/Gallery/Gallery.fsproj",
+   "compose/HostStatus/HostStatus.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/Outbox/Outbox.fsproj",
+   "compose/PartialReplies/PartialReplies.fsproj",
+   "compose/ProtocolDispatch/ProtocolDispatch.fsproj",
+   "compose/ProviderFailure/ProviderFailure.fsproj",
+   "compose/ProviderTransports/ProviderTransports.fsproj",
+   "compose/Search/Search.fsproj",
+   "compose/ServerModel/ServerModel.fsproj",
+   "compose/ToolApproval/ToolApproval.fsproj",
+   "compose/TransferDesk/TransferDesk.fsproj",
+   "libs/WorkspaceState/WorkspaceState.fsproj"
+  ],
+  "external": [],
+  "wanxiang": []
+ },
+ {
+  "name": "WorkspaceState",
+  "stale": false,
+  "has_agents": true,
+  "has_tests": true,
+  "unwired": false,
+  "files": 11,
+  "loc": 1837,
+  "members": [
+   "DraftSummaryText.fs",
+   "ForkAnchor.fs",
+   "MessageLink.fs",
+   "Model.fs",
+   "OlderPageLoad.fs",
+   "Project.fs",
+   "ReconnectBackoff.fs",
+   "RevealTarget.fs",
+   "Types.fs",
+   "Update.fs",
+   "ViewState.fs"
+  ],
+  "consumers": [
+   "compose/AppShell/AppShell.fsproj",
+   "compose/ApprovalDesk/ApprovalDesk.fsproj",
+   "compose/ChatPane/ChatPane.fsproj",
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/ComposerDesk/ComposerDesk.fsproj",
+   "compose/EntryShells/EntryShells.fsproj",
+   "compose/Gallery/Gallery.fsproj",
+   "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/OverlayDesk/OverlayDesk.fsproj",
+   "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/SidebarDesk/SidebarDesk.fsproj",
+   "compose/Workspace/Workspace.fsproj",
+   "libs/ActionStrip/ActionStrip.fsproj",
+   "libs/AttachmentTray/AttachmentTray.fsproj",
+   "libs/BatchBar/BatchBar.fsproj",
+   "libs/ChatEmpty/ChatEmpty.fsproj",
+   "libs/ChatHeader/ChatHeader.fsproj",
+   "libs/ConfirmPane/ConfirmPane.fsproj",
+   "libs/CopyButton/CopyButton.fsproj",
+   "libs/DevicesPane/DevicesPane.fsproj",
+   "libs/ToastStrip/ToastStrip.fsproj"
+  ],
+  "external": [],
+  "wanxiang": [
+   "Wanxiang2.BoundedWait",
+   "Wanxiang2.ConnectionIssue",
+   "Wanxiang2.ConversationSummary",
+   "Wanxiang2.DevicesModel",
+   "Wanxiang2.DraftStore",
+   "Wanxiang2.ForkLineage",
+   "Wanxiang2.HostCatalog",
+   "Wanxiang2.MessageView",
+   "Wanxiang2.NavigationState",
+   "Wanxiang2.UiPrefs",
+   "Wanxiang2.Wire"
+  ]
+ }
+]

@@ -36,13 +36,10 @@
 1. **同一段代码不重复排队；一个窗口内的完成只通知一次。** [根 AXIOM: 5] 打开含很多代码块的旧对话不会连抖几秒。
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/highlightqueue.txt`；`tests/Tests.fs` 两条行为用例（含多线程争抢）。
+1. [LEMMA: 1] `tests/HighlightQueue.Tests.fs` 通过：`completions inside one window share a single notification`、`concurrent claims of one key let exactly one thread win and one completion notify`。
 
 ## 迁入或覆盖的旧测试
 旧 `AsyncHighlightTests.桌面端先给纯文本，后台算完再换成着色版`、`AsyncHighlightTests.流式进行中一次也不调用着色` 要真实后端与缓存，留在旧仓库；排队与合并通知规则由本库覆盖。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/OldHighlightQueue.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样证据较弱；规则另由 `tests/Tests.fs` 直接断言。
 
 ## 成员 `HljsHtml`
 

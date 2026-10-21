@@ -76,6 +76,8 @@
     <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MarkdownView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChangeWatch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
   </ItemGroup>
   <!-- AMD/ANGLE Chrome：Avalonia 默认 failIfMajorPerformanceCaveat=true 会得到“能创建但不呈现 Skia 帧”的 WebGL 上下文，表现为启动画面后白屏。
        构建后补丁 avalonia.js（禁止软渲染回退；见 tools/patch_avalonia_js.py）。 -->

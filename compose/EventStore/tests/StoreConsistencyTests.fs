@@ -276,5 +276,12 @@ let ``EventStore 正常 Dispose 释放 writer 且不抛出`` () =
         let convId = newConversationId ()
         coord.SubmitEvents [ ConversationCreated { conversationId = convId; title = "Test"; config = testConfig () } ] |> ignore
         coord.Shutdown()
+        // 「释放 writer」不是「不抛异常」就成立：目录锁必须真的放开，
+        // 同一个目录能再开一个 EventStore（旧写法只验不抛——锁没释放也照样绿）。
+        // 显式断言：再开一次**不**抛「is locked」。
+        let again =
+            try new EventStore(dir) with ex -> failwithf "Dispose 后目录锁应释放，却抛: %s" ex.Message
+        Assert.NotNull(again)
+        again.Shutdown()
     finally
         cleanup dir

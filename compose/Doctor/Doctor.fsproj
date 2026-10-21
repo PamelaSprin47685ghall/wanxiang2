@@ -16,5 +16,6 @@
     <PackageReference Include="Wanxiang2.AttachmentRefs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Agui" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.HostLog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Conversations" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

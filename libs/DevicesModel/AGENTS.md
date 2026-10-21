@@ -6,8 +6,8 @@
 1. **解析、文案、地址和二维码矩阵与旧实现相同。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/devices.txt` 锁解析结果与文案。设备时间字段用不变文化的 roundtrip（`o`），不锁 `%A`；`%A` 的日期格式随当前文化区变，不是契约。`createdText` 仍是本地日历日，金样按 UTC 机器记录，非 UTC 机器只跳过含 `lastSeenText` 的行。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`countdown rounds up and never goes negative`、`only six digit codes are grouped`、`loopback host offers lan candidates on the same port`、`non websocket urls have no invite address`、`malformed device entries are skipped or defaulted`、`revoked wins over online in the last seen text`、`qr matrix is square and non-empty`。设备时间字段用不变文化的 roundtrip（`o`），不锁 `%A`；`%A` 的日期格式随当前文化区变，不是契约。`createdText` 仍是本地日历日。
 2. 与旧代码的差异：`InviteTarget` 加了 RequireQualifiedAccess，因为 Reachable、NoAddress 是泛化的名字。UI 的调用点要改成 `InviteTarget.Reachable` 这样的写法。
 
 # 迁入或覆盖的旧测试
-旧 DevicesUiTests 都要渲染控件，留在旧仓库。本库新增：金样、倒计时取整、分组码、回环地址给出局域网候选、非 ws 地址、残缺条目、吊销优先、二维码是方阵。
+旧 DevicesUiTests 都要渲染控件，留在旧仓库。本库新增：倒计时取整、分组码、回环地址给出局域网候选、非 ws 地址、残缺条目、吊销优先、二维码是方阵。

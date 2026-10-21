@@ -18,6 +18,31 @@ jobs:
           tail -1 check.log
       - id: libs
         run: echo "libs=$(ls libs | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+  # 断言卫生：恒真断言 / 恒真谓词 / 空转的事实一律红灯。
+  # 只读源码，不需要构建产物，所以只 checkout、不 needs pack（秒级，不占矩阵）。
+  # 2026-10-21 起随「测试完整性」工作流落地：审计发现过一批「无论行为如何都通过」
+  # 的断言，它们让「测试全绿」失去意义；本 job 防止这类写法再次进来。
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 断言卫生
+        run: |
+          if ! ./x hygiene > hygiene.log 2>&1; then
+            tail -40 hygiene.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -1 hygiene.log
+      # 界面文案：产品文案规则（术语表、取消类提示须写明 Esc、中文省略号）
+      # 没有运行时可观察，所以走独立的 lint 脚本而不是 xunit 用例。
+      # 覆盖 libs + compose + app 的生产 .fs（比原先放在 Theme 测试里的范围更宽）。
+      - name: 界面文案
+        run: |
+          if ! ./x lint > lint.log 2>&1; then
+            tail -40 lint.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -1 lint.log
   # 一次产包，供组合、仓库外消费与入口构建共用（那些环节只能从交付包构建）。
   pack:
     needs: check

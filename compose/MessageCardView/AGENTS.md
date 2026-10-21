@@ -19,7 +19,7 @@
 3. **改度量，已显示的卡跟着变。**
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/cards.txt`（553 行）由 `tools/cardgold/run.sh <旧仓库>` 生成：引用旧仓库构建出的 Wanxiang.UI，10 条消息样本与 3 张错误卡（`tests/Samples.fs`，两边同一份数据；`committedAt` 为空以免时区与当前时间进金样；品牌头像两边都是同一个占位方块），用共用的 `tests/Dump.fs` 在内嵌正文字体的窗口里转写。`every sample card renders the same tree as the old MessageCard` 逐行相同。
+1. [LEMMA: 1] 旧仓库的整卡控件树金样复刻已退役（金样文件与生成器一并删除，理由见根 AGENTS.md《界面与前端组装》规则 3：单入口幂等渲染、单出口意图事件）。改为行为断言：`tests/BehaviorTests.fs` 覆盖工具卡头开合、错误卡倒计时与重试、消息菜单、右键复制、卡片堆按身份复用、外观来自主题活值、读屏 Invoke 与报按钮。
 2. [LEMMA: 2] `tests/BehaviorTests.fs` 的各用例（见下）。
 3. [LEMMA: 3] `外观来自主题管理者的活值`。
 
@@ -31,6 +31,6 @@
 
 # 迁入或覆盖的旧测试
 按名迁入：`MessageCard toolCallCard header toggles argument and result details`（CraftsmanshipPolishTests）、`工具概览在等待批准时用警示色，不显示「完成」对勾配色`（VisualPassV4Tests）、`230 错误卡有半截回复时先给「继续生成」，没有时不给`（ContinueLinkUndoTests）、`§215 密钥失效的错误卡给出「打开模型服务设置」并路由到 sink`（LibraryUndoTests）、`262 限流倒计时未结束时重试按钮不可按并显示剩余秒数`（JourneyR9Tests，扩成「走完才可按」）、`262 没有倒计时的可重试错误照常可按`（JourneyR9Tests）、`error card toggles technical detail and triggers retry action`（DeliveryPolishingTests）、`r8 右键消息正文弹消息菜单（含复制消息链接）`（PartialPersistAndUrlSchemeTests）、`streaming completion keeps the message footnote row geometry constant`（UiStabilityTests）、`rebuilt streaming caret continues the breath run instead of restarting at peak`（PresentationRefreshTests）。
-由金样覆盖：`message card renders user and assistant with reasoning and tools without error`、`message card renders assistant markdown without extra view mode`（DeliveryPolishingTests）、`long user messages get a clipped viewport with an expand entry`（SelectionOperabilityTests）、`等审批的工具调用显示「等待批准」而不是「执行中」`（VisualPassR3Tests）。
+由本组合的行为断言覆盖：`message card renders user and assistant with reasoning and tools without error`、`message card renders assistant markdown without extra view mode`（DeliveryPolishingTests）、`long user messages get a clipped viewport with an expand entry`（SelectionOperabilityTests）、`等审批的工具调用显示「等待批准」而不是「执行中」`（VisualPassR3Tests）。
 由控件库覆盖：`large tool detail is bounded first and can explicitly expand fully`（RevealPane）、`reduced motion keeps spinner static`（MessageCards 原生 spinner）、`streaming caret keeps opacity inside the breath band and pins to max under reduced motion`（StreamCaret 原生声明式动画）、`限流倒计时读屏名带剩余时间、走完才播报一次`（ErrorPanel）、`disclosure headers share one bordered transition` 与 `disclosure chevron and copy confirmation ride the shared easeOutCubic`（FoldHeader；过渡由主题的 hover-bordered 样式给）。
 另加：`生成中的消息没有菜单项也没有操作按钮`、`复制按钮走宿主的复制入口并换成已复制`、`卡片堆按身份复用，流式卡每次重建`、`流式光标挂载声明式 anim-breathe 动效类`、`错误卡重建不重置倒计时，剩余秒数不回跳`、`错误卡倒计时走完只播报一次`。

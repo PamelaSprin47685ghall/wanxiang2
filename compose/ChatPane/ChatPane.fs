@@ -262,5 +262,3 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
             scroller.Viewer.IsVisible <- true
             emptyScroller.IsVisible <- false
             itemsControl.IsVisible <- true
-        | ChatPhase.Error err ->
-            this.ShowOlderFailure(err, ignore)

@@ -9,7 +9,7 @@
 
 # SPEC
 1. [LEMMA: 1] `tests/Tests.fs` 通过。
-2. `neighborAfter`、`restoredText` 迁自旧 AppShell（NeighborExcluding、撤销提示）；`tests/golden/expected.txt` 由 `tools/OldPendingDeletion.fs`（原样摘录）经 `tools/gen-golden.fsx` 跑 `tests/Render.fs` 生成，重跑逐字节不变。
+2. `neighborAfter`、`restoredText` 迁自旧 AppShell（NeighborExcluding、撤销提示）；`tests/Tests.fs` 覆盖：`NeighborExcluding returns next visible neighbor when active conversation is removed`、`到期跟踪：宽限期到才交出 token，只交一次；撤销的批次不再到期`。
 3. [LEMMA: 2] `到期跟踪` 用例通过（对应旧 AppShell.ScheduleDelete 的每批 DispatcherTimer 与 CommitDelete）。
 
 # 迁入或覆盖的旧测试

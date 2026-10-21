@@ -8,5 +8,6 @@
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AttachmentRefs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PlainText" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Conversations" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

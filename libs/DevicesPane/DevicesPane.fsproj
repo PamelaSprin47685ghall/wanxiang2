@@ -7,6 +7,17 @@
     <Compile Include="ProvidersPane.fs" />
     <Compile Include="SettingsFrame.fs" />
     <Compile Include="ToolsPane.fs" />
+    <Compile Include="GenerationDraft.fs" />
+    <Compile Include="GenerationForm.fs" />
+    <Compile Include="LocalDraftControls.fs" />
+    <Compile Include="McpForm.fs" />
+    <Compile Include="OnboardingFlow.fs" />
+    <Compile Include="ProbeFailureKind.fs" />
+    <Compile Include="ProbeSlot.fs" />
+    <Compile Include="ProviderForm.fs" />
+    <Compile Include="ProviderProbeText.fs" />
+    <Compile Include="SectionMemory.fs" />
+    <Compile Include="ToolsPolicy.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

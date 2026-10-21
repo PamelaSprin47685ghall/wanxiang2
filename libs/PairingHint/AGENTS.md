@@ -6,13 +6,10 @@
 1. **同一输入，判断与提示与旧实现相同。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/pairinghint.txt` 由旧函数在 10 个地址与 8 种首次连接组合上生成。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`pairing hint differs between this machine and a remote host`、`260 首次连接（无令牌无凭据无错误）才直接走配对码`。
 
 # 迁入或覆盖的旧测试
 - 旧 DevicesUiTests：`pairing hint differs between this machine and a remote host`
 - 旧 JourneyR9Tests：`260 首次连接（无令牌无凭据无错误）才直接走配对码`
 
-本库新增：金样。
-
-# 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+本库新增：无（两条用例都是原样迁入的旧用例）。

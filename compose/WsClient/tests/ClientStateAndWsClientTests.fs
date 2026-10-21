@@ -593,17 +593,24 @@ module WsClientLiveNetworkTests =
             // Disconnecting while connecting bumps generation so the connect completion fails generation check
             client.Disconnect()
 
+            // 契约：连接过程中 Disconnect 把代号推进，连接完成时代号对不上 → 抛
+            // OperationCanceledException("connection superseded")（TextSocket 的 install 检查）。
+            // 旧写法把异常吞掉（`| _ -> ()`）且从不断言 caughtSuperseded：
+            // 「抛 superseded」与「静默取消」都算通过，这条用例什么也没钉住。
             let mutable caughtSuperseded = false
+            let mutable otherFailure = ""
             try
                 let! _ = connectTask
                 ()
             with
             | :? OperationCanceledException as oce when oce.Message.Contains("superseded") ->
                 caughtSuperseded <- true
-            | _ -> ()
+            | :? OperationCanceledException as oce -> otherFailure <- "OperationCanceledException: " + oce.Message
+            | ex -> otherFailure <- ex.GetType().Name + ": " + ex.Message
 
-            // Either it threw superseded or was canceled cleanly
-            Assert.True(client.ConnectionGeneration >= 2)
+            Assert.True(caughtSuperseded, "连接被 Disconnect 抢占时应抛 superseded，实际: " + (if otherFailure = "" then "没有抛异常" else otherFailure))
+            // Disconnect 至少把代号推进了一代（连接请求里的代号不再是当前代号）。
+            Assert.True(client.ConnectionGeneration >= 2, sprintf "代号应推进，实际 %d" client.ConnectionGeneration)
         } :> Task
 
     [<Fact>]

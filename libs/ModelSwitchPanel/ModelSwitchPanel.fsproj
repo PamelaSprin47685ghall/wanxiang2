@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="ModelSwitchPanel.fs" />
+    <Compile Include="ModelPickerList.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

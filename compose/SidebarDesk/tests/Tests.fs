@@ -18,6 +18,7 @@ open Wanxiang2.Theme
 open Wanxiang2.OverlayDesk
 open Wanxiang2.SidebarDesk
 open Wanxiang2.DeskTests
+open Wanxiang2.WorkspaceState
 
 let private all (root: Visual) = root.GetVisualDescendants() |> Seq.choose (function :? Control as c -> Some c | _ -> None) |> List.ofSeq
 let private byName (root: Visual) name = all root |> List.tryFind (fun c -> AutomationProperties.GetName c = name)
@@ -47,13 +48,31 @@ type private Log() =
     member val Items = ResizeArray<string>()
     member this.Add(s: string) = this.Items.Add s
 
-type private Rig = { desk: SidebarDesk; overlay: OverlayDesk; log: Log; window: Window; root: Grid }
+/// 真状态树：多选的唯一事实在这里。用例走「动作 → 消息 → 状态 → 投影 → 渲染」的真链路。
+type private ModelCell() =
+    let mutable v = Workspace.init ()
+    member _.Value = v
+    member _.Set(m) = v <- m
+
+type private Rig = { desk: SidebarDesk; log: Log; overlay: OverlayDesk; window: Window; root: Grid
+                     model: ModelCell }
 
 let private setupWith (allPinned: Guid list -> bool) =
     let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
     let root = Grid()
     let overlay = OverlayDesk(root, Desk.look ())
     let log = Log()
+    // 状态树：侧栏多选的唯一事实。多选动作走这里，再由投影回到侧栏。
+    let model = ModelCell()
+    let rig = ref Unchecked.defaultof<Rig>
+    let dispatch (m: SidebarUserMsg) =
+        let m', _ = Workspace.update DateTimeOffset.UtcNow (Msg.User (UserMsg.Sidebar m)) model.Value
+        model.Set m'
+        // 用例既调动作也调状态，两者要看到同一份投影。
+        let vs = (Workspace.project m').Sidebar
+        let vs = { vs with Host = { vs.Host with Connected = true; StatusText = "已连接" } }
+        rig.Value.desk.Render vs
+        pump ()
     let actions =
         { newConversation = (fun () -> log.Add "new")
           openConversation = (fun id -> log.Add(sprintf "open %O" id))
@@ -65,6 +84,10 @@ let private setupWith (allPinned: Guid list -> bool) =
           setPinnedMany = (fun ids v -> for id in ids do log.Add(sprintf "pinMany %O %b" id v))
           setArchivedMany = (fun ids v -> for id in ids do log.Add(sprintf "archiveMany %O %b" id v))
           deleteMany = (fun ids -> log.Add(sprintf "deleteMany %d" ids.Length))
+          enterSelection = (fun id -> dispatch (SidebarUserMsg.EnterBatch id))
+          toggleSelected = (fun id -> dispatch (SidebarUserMsg.ToggleBatch id))
+          exitSelection = (fun () -> dispatch (SidebarUserMsg.ExitBatch))
+          toggleSelectAllVisible = (fun ids -> dispatch (SidebarUserMsg.ToggleBatchAllVisible ids))
           duplicateAsFork = (fun s -> log.Add("fork " + s.title))
           exportConversation = (fun s -> log.Add("export " + s.title))
           openSettings = (fun () -> log.Add "settings")
@@ -74,9 +97,11 @@ let private setupWith (allPinned: Guid list -> bool) =
     let desk = SidebarDesk(theme, overlay, actions, fun s -> Border(Width = s, Height = s) :> Control)
     root.Children.Insert(0, desk.View)
     let window = Desk.show root 360.0 800.0
-    let emptySidebarVS () = (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Sidebar
+    let emptySidebarVS () = (Workspace.project (Workspace.init ())).Sidebar
     desk.Render({ emptySidebarVS () with Host = { (emptySidebarVS ()).Host with Connected = true; StatusText = "已连接" } })
-    { desk = desk; overlay = overlay; log = log; window = window; root = root }
+    let r = { desk = desk; overlay = overlay; log = log; window = window; root = root; model = model }
+    rig := r
+    r
 
 let private emptySidebarVS () =
     let vs = (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Sidebar
@@ -101,8 +126,13 @@ let private rowVS (s: ConversationSummary) : Wanxiang2.WorkspaceState.SidebarRow
       LastCommitId = s.lastCommitId
       Busy = false }
 
+/// 把会话放进**状态树**（`Summaries`），再由投影渲染侧栏。
+/// 行是唯一输入，测试不再直接构造 `SidebarRowVS`。
 let private load r (items: ConversationSummary list) =
-    r.desk.Render { emptySidebarVS () with Rows = items |> List.map rowVS }
+    r.model.Set { r.model.Value with Summaries = items }
+    let vs = (Workspace.project r.model.Value).Sidebar
+    let vs = { vs with Host = { vs.Host with Connected = true; StatusText = "已连接" } }
+    r.desk.Render vs
     pump ()
     r.window.UpdateLayout()
     pump ()

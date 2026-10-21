@@ -3,6 +3,9 @@
   <ItemGroup>
     <Compile Include="Headless.fs" />
     <Compile Include="Tests.fs" />
+    <Compile Include="ModelPickerList.Samples.fs" />
+    <Compile Include="ModelPickerList.Render.fs" />
+    <Compile Include="ModelPickerList.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

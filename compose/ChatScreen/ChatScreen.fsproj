@@ -14,7 +14,6 @@
     <PackageReference Include="Wanxiang2.ApprovalDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BreadcrumbAction" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ForkLineage" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ExchangeJump" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
@@ -25,5 +24,6 @@
     <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.SpacingRamp" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

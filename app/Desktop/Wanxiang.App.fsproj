@@ -30,14 +30,10 @@
     <PackageReference Include="Wanxiang2.CliArgs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.StoreLaunch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesktopPairing" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ClientTomlFile" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.LocalHostGate" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AgentRuntime" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ProviderFailure" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AgentContent" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.AgentHistory" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.AguiMessageMap" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MediaContent" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ProviderTransports" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.EventStore" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.AguiWire" VersionOverride="0.0.0-local" />
@@ -103,6 +99,9 @@
          KeyShortcut 换算桥与 UnansweredReply 失败卡经 AppShell 包传递。 -->
     <PackageReference Include="Wanxiang2.ChangeWatch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CommandPalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ShortcutKeys" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
     <!-- 依赖缺口（见回报）：ImageShrinkIo 目录不存在，未引用。 -->
   </ItemGroup>
 

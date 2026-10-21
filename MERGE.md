@@ -21,7 +21,7 @@ consume：仓库外消费者提交后重开得到 Used 1UL
 ### 与本文原方案的出入
 
 1. **库的终数是 123，不是 122。** 表中 161 个成员名里，`LocalHostGate` 在旧仓库
-    不是独立目录，而是 `libs/StartupTrace/LocalHostGate.fsproj`（异名工程，见 `x` 的
+    不是独立目录，而是「StartupTrace 目录下的 `LocalHostGate.fsproj`」（异名工程，见 `x` 的
     `component_projs` 注释）。它连同 `StartupTrace` 的其余文件一起并入 `LocalHostGate`
     包，所以被去掉的目录是 119 个：`242 - 119 = 123`。
 2. **依赖图分 9 波不变**（`111 / 44 / 18 / 14 / 2 / 2 / 2 / 2 / 1`），但工程总数
@@ -136,7 +136,7 @@ consume：仓库外消费者提交后重开得到 Used 1UL
 
 ## 后续合并（2026-10-20 W7-B2）：ModelVision → HostCatalog
 
-`libs/ModelVision` 并入 `libs/HostCatalog`（与本文同一条物理并库的先例）。
+ModelVision 库并入 `libs/HostCatalog`（与本文同一条物理并库的先例）。
 
 **起因**：`Catalog.visionOf` 从 `compose/Catalog` 下沉到 `libs/HostCatalog` 后，
 它的名字推断分支要用 `ModelVision.classify`，多出一条兄弟包依赖边
@@ -146,7 +146,7 @@ consume：仓库外消费者提交后重开得到 Used 1UL
 **做法**：
 
 1. `ModelVision.fs` 落盘为 `libs/HostCatalog/ModelVision.fs`，编译序在 `HostCatalog.fs` 之前；
-2. `libs/ModelVision` 整个目录删除（含 `AGENTS.md` 与测试工程），`Wanxiang2.ModelVision` 包不再交付；
+2. ModelVision 整个目录删除（含 `AGENTS.md` 与测试工程），`Wanxiang2.ModelVision` 包不再交付；
 3. 测试用例并入 `libs/HostCatalog/tests/ModelVision.Tests.fs`（按本文「测试工程的合并约定」的文件命名，顶层模块改名 `ModelVisionTests`，避免与既有 `Tests` 撞名），断言口径原样保留；
 4. 消费方的 `PackageReference` 从 `Wanxiang2.ModelVision` 换成 `Wanxiang2.HostCatalog`：
    `libs/WorkspaceState`（状态树投影看图判定）、`compose/Catalog`、`compose/ComposerDesk`（新增 HostCatalog 引用）、
@@ -157,3 +157,97 @@ consume：仓库外消费者提交后重开得到 Used 1UL
 
 **结果**：`libs` 由 119 个减到 **118** 个包（本文执行时为 123 个，其后各波继续并库）；
 HostCatalog 仍是零兄弟依赖的库。
+
+## 追加判据（2026-10-21 W7-CLEANBREAK）：依赖闭包判据
+
+上文《判据》的三条是**充分**条件，不是必要条件。本节追加一条可机械核验的**放宽**判据，
+它与上文同一条目的：「合并后任何消费者都不会多拿到它本来不用的 API」。
+
+### 判据本体
+
+两个库 A、B 满足以下全部条件时可合并：
+
+1. **生产消费者集合完全相同**（与上文《判据》第 1 条一致）；
+2. **依赖并集已在消费者的直接声明里**：令
+   `U = 外部依赖(A) ∪ 外部依赖(B) ∪ Wanxiang2依赖(A) ∪ Wanxiang2依赖(B)`，
+   则该消费者的 `.fsproj` 必须**直接声明** `U` 里的每一项。
+
+第 2 条与上文《判据》第 2、3 条（「外部依赖相同」「Wanxiang2 依赖相同」）不同：
+它要求的是**并集被包含**，不是**两边相等**。
+
+### 为什么放宽是安全的（纯减法）
+
+若 `U` 已被消费者直接声明，合并后新包声明的依赖集合是 `U`——与消费者原本直接声明的
+依赖集合逐项相同或为其子集。合并因此：
+
+- **不新增任何传递依赖边**（消费者的依赖闭包不变）；
+- **不让消费者多拿到任何它本来不用的 API**（消费者集合相同意味着它要么全要、要么全不要）；
+- 是**纯减法**：包数减一，交付物少一份。
+
+反过来说，上文《判据》原来的第 2、3 条（「两边依赖相等」）**比这条更严**，
+并且是它的**子情形而非特例**：两边依赖相等时并集就等于其中一边，
+但那一项**是否已被消费者直接声明**仍要另查——若它只经传递依赖拿到，
+原判据会放行、本判据不会。所以本判据是原判据的**收紧**：
+「原判据通过」推不出「本判据通过」。
+
+### 反向规则：并集不在闭包里则**不合并**
+
+若 `U` 中有任一项不在消费者的直接声明里（只经传递依赖拿到），则**不合并**——
+合并后消费者必须新增一条 `PackageReference`，那就变成「多拿到」，判据不成立。
+这类组合**只能靠先把依赖下沉/上提成双方共有依赖**来解，不能靠合并绕过。
+
+### 2026-10-21 一次扫描的结果
+
+对当时全部 118 个包做机械枚举（同消费者集合的候选对共 16 对）：
+
+**按本判据可合并（10 组，其中 1 组因死包退出，实际执行 8 组）**——
+`ActionStrip`+`CardBits`、`Anthropic`+`HttpRetry`、`ApprovalPanel`+`ApprovalCardText`、
+`AttachmentTray`+`ComposerSendState`、`BatchBar`+`RowFocus`、`ChatHeader`+`BreadcrumbAction`、
+`ChatEmpty`+`BreathPhase`、`DevicesPane`+`GenerationDraft`、`ExportSheet`+`ExportFileName`、
+`ModelSwitchPanel`+`ModelPickerList`（各组的 `U` 均已被其唯一消费者直接声明）。
+
+**按本判据不可合并（5 对，逐条记下缺口，下一波不必重新论证）**：
+
+| 候选对 | 依赖并集 `U` | 缺口来源链 |
+| --- | --- | --- |
+| `AguiMessageMap` + `LocalHostGate` | `AGUI.Abstractions`, `Microsoft.Agents.AI` | `app/Desktop` 只能经 `Wanxiang2.AguiMessageMap` 传递拿到 `AGUI.Abstractions`，经 `Wanxiang2.AgentHistory` 拿到 `Microsoft.Agents.AI` |
+| `BlockDiff` + `MarkdownBlocks` | `Markdig` | `compose/MarkdownView` 经 `Wanxiang2.MarkdownBlocks` 传递拿到 |
+| `BoundedWait` + `DevicesModel` | `QRCoder` | 三个消费者都经 `Wanxiang2.DevicesModel` 传递拿到 |
+| `ConfirmPane` + `PairingCodeInput` | `Avalonia`, `Wanxiang2.WorkspaceState` | `compose/DialogsDesk` 经 `Wanxiang2.ConfirmPane` 传递拿到 `WorkspaceState` |
+| `ContextTrim` + `ContinuableReply` | `Microsoft.Extensions.AI.Abstractions` | `compose/ChatOrchestrator` 经 `Wanxiang2.MediaContent` 传递拿到 |
+
+**因职责边界被否决（2 组）**：即使依赖并集满足本判据，也不合并——
+`ActionStrip`+`CardBits`（合并后 1747 行 / 19 源文件，会成为全仓第三大包，
+且 `ActionStrip` 已含 10 个成员，继续加料会坐实「外观拼盘」）、
+`Anthropic`+`HttpRetry`（协议请求/流整形与重试策略是传输管线上的两件不同职责，
+两者各自已不小，合并会掩盖真实的边界）。
+
+### 本次执行结果（2026-10-21）
+
+那一轮机械枚举出 **11 个候选**（消费者集合相同的对），去向如下：
+
+- **10 个满足本判据**（依赖并集已被消费者的直接声明包含）→ 可执行；
+- **1 个不满足**：`InputSense` + `PromptHistory`——`PromptHistory` 查实为「未接线的真实功能」
+  而非死包（见 `docs/W7-CLEANBREAK-AUDIT.md` §2.3），不是可并入的碎片；
+- **2 个因职责/体积边界否决**（见上段）：`ActionStrip`+`CardBits`、`Anthropic`+`HttpRetry`。
+
+**11 候选 − 1 不满足判据 − 2 边界否决 = 实际执行 8 组**：
+
+| # | 目标包 | 并入的成员 | 结果 |
+| --- | --- | --- | --- |
+| A3 | `ApprovalPanel` | `ApprovalCardText` | `./x test ApprovalPanel` 通过（12 项） |
+| A4 | `AttachmentTray` | `ComposerSendState` | `./x test AttachmentTray` 通过（16 项） |
+| A5 | `BatchBar` | `RowFocus` | `./x test BatchBar` 通过（51 项） |
+| A6 | `ChatHeader` | `BreadcrumbAction` | `./x test ChatHeader` 通过（7 项） |
+| A7 | `ChatEmpty` | `BreathPhase` | `./x test ChatEmpty` 通过（18 项） |
+| A8 | `DevicesPane` | `GenerationDraft` | `./x test DevicesPane` 通过（87 项） |
+| A9 | `ExportSheet` | `ExportFileName` | `./x test ExportSheet` 通过（23 项） |
+| A10 | `ModelSwitchPanel` | `ModelPickerList` | `./x test ModelSwitchPanel` 通过（7 项） |
+
+每个组的动作顺序：源文件按各成员**原工程的编译顺序**并入目标工程 → 删被并库目录
+（源、tests、AGENTS.md）→ 改消费者的 `PackageReference` → 按本文《测试工程的合并约定》
+合并测试工程（测试文件改名 `<成员名>.<原文件名>.fs`，顶层模块改名 `<成员名><模块名>`，
+Avalonia 控件库的测试工程保留 `AssemblySettings.fs`）→ 把被并成员的 `AGENTS.md` 分节
+折进目标包的 `AGENTS.md` → `./x sln` → `./x check` → `./x test <目标>`。
+
+**包数：118 → 109**（8 组合并 −8，另删死包 `AguiMessageMap` −1）。

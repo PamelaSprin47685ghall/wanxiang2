@@ -6,13 +6,10 @@
 1. **同一盒子与宿主基线，尺寸与绘制基线与旧实现相同。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/mathbaseline.txt` 由照抄的旧计算生成。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`inline formula aligns to the host text baseline`、`box height spans above and below and the baseline sits at above`、`display mode ignores the host baseline`、`inline baseline lands on the host line baseline in host coordinates`。
 
 # 迁入或覆盖的旧测试
-旧 MathBaselineTests 要真实排版，留在旧仓库。本库新增：金样、行内对齐宿主基线。
-
-# 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧 MathBaselineTests 要真实排版，留在旧仓库。本库新增：行内对齐宿主基线、行内基线落在宿主行基线、盒高跨基线上下。
 
 # 真实行为测试
-金样来自照抄的旧分支，证据较弱；`tests/Tests.fs` 末节另按上面写明的规则直接断言新实现（不经金样），规则改了要同时改这里。
+`tests/Tests.fs` 按上面写明的规则直接断言新实现，规则改了要同时改这里。

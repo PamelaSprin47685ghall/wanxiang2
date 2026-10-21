@@ -3,10 +3,14 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Headless.fs" />
     <Compile Include="Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
     <ProjectReference Include="../EntryShells.fsproj" />
   </ItemGroup>
 </Project>

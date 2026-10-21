@@ -6,11 +6,13 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.ApprovalPanel" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ApprovalCardText" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

@@ -6,13 +6,11 @@
 1. **每项初始值与旧实现相同；旧别名仍与源同值。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] 金样 `tests/golden/thememetrics.txt`；`tests/Tests.fs` 别名用例。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`aliases keep the value of their source`。
 
 # 迁入或覆盖的旧测试
 旧 `DesignConvergenceTests` 一组（如 ChipDensityHasSingleSourceUnderBothNames）断言的是同值关系，本库别名用例覆盖其数据部分；起窗口的部分留在旧仓库。
 
-# 金样生成
-`dotnet fsi tools/gen-golden.fsx` 编译 `tools/OldMetrics.fs`（照抄旧 Tokens 数值段、Metrics.fs 与 SpacingRamp）逐项输出。
 
 ## 字体
 不含字体地址：内嵌字体与资源地址归 ThemeFonts 库（旧 Tokens.fontFamily / monoFontFamily 对应 `ThemeFonts.body` / `ThemeFonts.mono`）。

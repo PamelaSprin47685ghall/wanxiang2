@@ -344,6 +344,10 @@ type FolderEditor(validationFor: TextBox -> Control option) =
     let field = Ui.fieldGroup "文件夹的绝对路径" "模型只能读取这个文件夹以内的文件，不能读到它之外。" pathBox (validationFor pathBox)
     let text () = if isNull pathBox.Text then "" else pathBox.Text.Trim()
     let cancelButton = Ui.button "ghost" "取消" cancel.Trigger
+    // 这个对话框由 overlay.ShowDialog 承载，Esc 会关掉它（ToolsDesk 的 canDismiss 只在
+    // 保存在途时拦）。取消键的提示必须写明 Esc 可用（a11y 回归「取消按钮的提示文案都写明 Esc」）。
+    do AutomationProperties.SetHelpText(cancelButton, "取消并关闭授权文件夹对话框 (Esc)")
+    do ToolTip.SetTip(cancelButton, "取消并关闭授权文件夹对话框 (Esc)")
     let confirm = Ui.button "primary" "授权" (fun () -> save.Trigger(text ()))
     let form =
         let buttons = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)

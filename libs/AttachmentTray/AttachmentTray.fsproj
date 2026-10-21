@@ -3,6 +3,7 @@
     <Compile Include="AttachmentTray.fs" />
     <Compile Include="ComposerBox.fs" />
     <Compile Include="ModelChip.fs" />
+    <Compile Include="ComposerSendState.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

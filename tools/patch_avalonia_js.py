@@ -14,8 +14,15 @@ Does NOT enable Software2D.
   insertFromDrop (CDP Input.insertText, iOS autocorrect, voice dictation, long-press paste) is dropped.
   We forward those exactly once via InputHelper.OnCompositionEnd(data) (-> RawTextEvent), first
   mapping the replaced range into the Avalonia selection via the existing deleteContentBackward
-  selection sync, and preventDefault so the hidden <input> never drifts from Avalonia's text.
-  Only insertReplacementText remaps the selection (others trust Avalonia's own). Skipped while composing and for paste right after a Ctrl/Cmd+V keydown (Avalonia pastes that itself).
+  selection sync. Only insertReplacementText remaps the selection (others trust Avalonia's own).
+  Skipped while composing and for paste right after a Ctrl/Cmd+V keydown (Avalonia pastes that itself).
+- 2026-10-21: the bridge used to preventDefault() every intercepted insert, so the browser never
+  wrote into the hidden <input>. That is fatal: Avalonia's own beforeinput handler
+  (InputHelper.OnBeforeInput) reads the text from the DOM element's **value**, so with the default
+  insertion blocked the value stayed "" and the composer never received any text (measured:
+  value="" and no TextInput reached Avalonia). We now let the browser insert for the plain text
+  inputs (insertText / insertReplacementText) and only preventDefault for the ones that carry no
+  DOM text (paste / drop / dictation / yank) — those keep going through OnCompositionEnd.
 """
 from __future__ import annotations
 import hashlib, pathlib, re, sys
@@ -84,11 +91,36 @@ BRIDGE_NEW = BRIDGE_OLD + BRIDGE_MARK + (
     'e.addEventListener("beforeinput",o=>{let y=o.inputType;'
     'if(o.isComposing||e.__wxComp||!/^(insertText|insertReplacementText|insertFromPaste|insertFromPasteAsQuotation|insertFromDrop|insertFromDictation|insertFromYank)$/.test(y))return;'
     'if(y.startsWith("insertFromPaste")&&Date.now()-(globalThis.__wxPasteKey||0)<1e3)return;'
-    'let d=o.data,x=o.target&&o.target.setSelectionRange?o.target:e;d==null&&o.dataTransfer&&(d=o.dataTransfer.getData("text/plain"));o.preventDefault();'
+    'let d=o.data,x=o.target&&o.target.setSelectionRange?o.target:e;d==null&&o.dataTransfer&&(d=o.dataTransfer.getData("text/plain"));'
+    # 纯文本输入（insertText / insertReplacementText）：
+    #   Avalonia 浏览器端的 `OnBeforeInput` **根本不插文本**——反编译它的实现：
+    #     if (inputType != "deleteByComposition") {
+    #         if (inputType == "deleteContentBackward") { start = selectionStart; end = selectionEnd; }
+    #         else { start = -1; end = -1; }
+    #     }
+    #     if (start != -1 && end != -1 && _client != null) _client.Selection = new TextSelection(start, end);
+    #   也就是说 `OnBeforeInput` 只会**挪光标**，一个字符都不插。
+    #   真正把文本插进 TextBox 的只有 `OnCompositionEnd(data)`：
+    #     _client.SetPreeditText(null); if (data != null) _inputHandler.RawTextEvent(data);
+    #   `RawTextEvent` 才是发 `RawTextInputEventArgs`、最终被 TextBox 收下变成 `Text` 的那一步。
+    #
+    #   所以纯文本也走 `OnCompositionEnd`，**不能**用 `OnBeforeInput`。
+    #   拦下浏览器的默认插入（preventDefault）：DOM input 的 value 是 Avalonia 文本的**镜像**
+    #   （Avalonia 用 setSurroundingText 往里推），让浏览器自己插会让镜像与真值脱节。
+    #   转发用 `o.data`（本次插入的增量），**不是** DOM 的整个 value——
+    #   用整个 value 会把已有的内容再插一遍（实测会出现 "万象ok万象ok"）。
+    # 不带 DOM 文本的那几种（粘贴 / 拖放 / 听写 / yank）：同样拦下并当场转发。
+    'if(y==="insertFromPaste"||y==="insertFromDrop"||y==="insertFromDictation"||y==="insertFromYank"){o.preventDefault();'
+    'd&&l.InputHelper.OnCompositionEnd(t,d.replace(/\\r\\n?/g,"\\n"));return;}'
+    'if(y==="insertText"||y==="insertReplacementText"){'
+    'if(d==null)return;'
+    # 替换一段：先把选区挪到被替换的范围（浏览器还没插，DOM 里还是旧的）。
     'if(y==="insertReplacementText"){let g=o.getTargetRanges&&o.getTargetRanges();'
     'g&&g.length&&g[0].startOffset!==g[0].endOffset&&x.setSelectionRange&&x.setSelectionRange(g[0].startOffset,g[0].endOffset);'
     'x.selectionStart!=null&&x.selectionStart!==x.selectionEnd&&l.InputHelper.OnBeforeInput(t,"deleteContentBackward",-1,-1)}'
-    'd&&l.InputHelper.OnCompositionEnd(t,d.replace(/\\r\\n?/g,"\\n"))});')
+    'o.preventDefault();'
+    'l.InputHelper.OnCompositionEnd(t,d.replace(/\\r\\n?/g,"\\n"));return;}'
+    'e.__wxPending=d});')
 if BRIDGE_MARK in t:
     print(f"insert bridge already present {path}")
 elif BRIDGE_OLD in t:

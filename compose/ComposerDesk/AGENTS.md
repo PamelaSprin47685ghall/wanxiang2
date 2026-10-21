@@ -29,10 +29,11 @@ PendingPanel 原生化为纯投影：`PendingAppearance` 记录（IObservable �
 输入区留白（根 Border 的 Margin / Padding）也不再订阅主题活值：主题部分走主题派生资源键 `Margin.Composer`（宽屏：顶=Space.X2l、底=Space.Xl）与 `Margin.ComposerCompact`（窄屏：左右=Space.Xl、底=Space.Md），窄屏/宽屏切换时换绑对应键；水平档随自身宽度取（`LayoutPolicy.horizontalInset`，旧 ApplyComposerPadding），落在控件的 Padding 上。
 
 ## 测试
-`tests/Tests.fs` 全部以 `Render { emptyComposerVS () with ... }` 帧驱动做行为断言（上传挡发送 / 不能看图挡发送并出提示 / 模型芯片名称固定 / 失败残留 / 提交清空 / 生成中主键是停止 / 缩略图与缩小说明并入 chip / 同一帧重复渲染幂等）。整棵控件树金样（`tests/golden/composer.txt`、`tools/composergold`）随 Set* API 退役删除——禁止金样测试，门控逐分支在 libs/ComposerSendState 有测试。
+`tests/Tests.fs` 全部以 `Render { emptyComposerVS () with ... }` 帧驱动做行为断言（上传挡发送 / 不能看图挡发送并出提示 / 模型芯片名称固定 / 失败残留 / 提交清空 / 生成中主键是停止 / 缩略图与缩小说明并入 chip / 同一帧重复渲染幂等）。整棵控件树金样及其生成器随 Set* API 退役删除——禁止金样测试，门控逐分支在 libs/AttachmentTray 有测试。
 
 ## 与旧实现的差异
-- 待发送消息面板、SessionConfig 摘要拼装、发送历史召回（PromptHistory）、IME 守护（ImeShield）在宿主/入口侧，经 `SlotPendingMessages` / `WireKeyHook` / `WireImeProbe` 接入。
+- 待发送消息面板、SessionConfig 摘要拼装、IME 守护（ImeShield）在宿主/入口侧，经 `SlotPendingMessages` / `WireImeProbe` 接入。
+- **发送历史召回（`PromptHistory`）由本组合者接线**（2026-10-21 恢复）：本组合者持 `PromptHistory` 实例，把 `Up`/`Down`/`Escape` 挂到 `ComposerBox` 已有的 `WireKeyHook` 钩子上（控件库不认识 `PromptHistory`）；`Record` 只在 `actions.Submit` 返回 true（已被接受）后记；`ApplyDraftText`（外部改写输入框）时 `Reset` 退出召回。该接线曾在提交 `82d5628` 里随 `compose/EntryShells/Composer.fs` 一起被删，功能静默消失；库与规则没变，只把接线放回真正的输入区所有者。回归用例见 `tests/PromptHistoryRecall.Tests.fs`（6 条）。
 - `chip.Render(None)` 现在把标签重置为「未选择模型」（幂等投影），旧实现保留上一次标签；模型未选与芯片消失自此一致。
 - 看图门控自此真正生效：旧 desk 的 `vision` mutable 因 `SetModelVision` 从未接线而恒为 `VisionUnknown`；现在由 VS 投影驱动，无目录（未连接）时保持未知即放行、由主机决定。
 - `libs/AttachmentTray` 的有损 `Render(AttachmentVS list, compact)` 转换（丢缩略图/缩小说明）已删除；托盘唯一入口是 `Render(items: TrayItem list, compact: bool)`（items 与窄屏密度一次给全），由本组合者的 `trayItem` 投影喂全呈现事实。

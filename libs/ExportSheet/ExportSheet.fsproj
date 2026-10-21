@@ -2,6 +2,11 @@
   <ItemGroup>
     <Compile Include="ExportSheet.fs" />
     <Compile Include="ImportSheet.fs" />
+    <Compile Include="ExportFileName.fs" />
+    <Compile Include="ExportView.fs" />
+    <Compile Include="ImportView.fs" />
+    <Compile Include="ProgressThrottle.fs" />
+    <Compile Include="TranscriptMarkdown.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

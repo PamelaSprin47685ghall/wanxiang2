@@ -32,6 +32,10 @@ type ShellPorts =
       OpenLink: string -> unit
       SaveDownload: string -> byte[] -> unit
       ApplyDraftWrite: DraftWrite -> unit
+      /// 读本机草稿快照（上次关窗前输入区里的那段文本）。`None` 表示没有。
+      /// 恢复草稿是**宿主侧**的活：它读的是宿主的落点（浏览器 IndexedDB / 桌面文件），
+      /// 组合者只负责把读到的文本派进状态树。
+      LoadLocalDraft: unit -> Async<string option>
       PrefsLoad: unit -> UiPrefs
       PrefsSave: UiPrefs -> unit
       TryLoadClientToml: unit -> (string * string) option
@@ -84,6 +88,11 @@ type ShellComposer(ports: ShellPorts) =
     let mutable views: ShellViews option = None
     let mutable protocolDispatch: ProtocolDispatch option = None
     let mutable shellCommands: ShellCommands option = None
+    /// 在途连接：一次只连一个。
+    /// `AutoConnect`（启动时）与 `reconnect`（用户点「重连」）可能撞在一起；
+    /// 没有这道闸就会**连两次**——两次 `Connect` 抢同一个 `epoch`，
+    /// 后一次把前一次的 socket 顶掉，表现为「连上了又立刻断」。
+    let mutable connecting = false
 
     // 账本状态参与者（由 ProtocolDispatch 处理）
     let state = ClientState()
@@ -110,6 +119,36 @@ type ShellComposer(ports: ShellPorts) =
                 action ())
         handle <- timer
         timer
+
+    /// 草稿自动保存的闸：**800 ms**（产品契约：打字停下来 800 ms 后落盘一次）。
+    ///
+    /// 闸的所有权在这里（宿主侧），不在状态树、也不在控件库：
+    /// - 状态树只管「文本是什么」——它不按键就发一次 `DraftWrite`（那会每个键击写一次 IndexedDB）；
+    /// - `libs/DraftStore` 的 `DraftStore.Save` 记着上次落盘内容，返回 `Unchanged` 就不写——
+    ///   那是**去重**，不是**节流**，两者都要。
+    ///
+    /// 决策器是 `Wanxiang.UI.DraftSaveGate`（纯函数 + 注入时钟），
+    /// 真正的计时器由宿主排（`ports.After`）——所以它能被确定性地测，不依赖真实时间。
+    let draftGate = DraftSaveGate(800.0)
+    let mutable draftSaveTimer: IDisposable = null
+
+    /// 文本变了：交给闸决定「现在落」还是「等窗口」。
+    /// 窗口到期时闸给出**最后一次**的文本（中途又改过就落最新的）。
+    let scheduleDraftSave (text: string) : unit =
+        let now = DateTimeOffset.UtcNow
+        if draftGate.Request(now, text) then
+            draftGate.Saved(now)
+            ports.ApplyDraftWrite(DraftWrite.Write text)
+        else
+            // 排尾巴：窗口到期再落一次。旧计时器要先停掉（每次变字都重排）。
+            if not (isNull draftSaveTimer) then draftSaveTimer.Dispose()
+            draftSaveTimer <-
+                afterOnce (TimeSpan.FromMilliseconds 800.0) (fun () ->
+                    draftSaveTimer <- null
+                    match draftGate.Flush(DateTimeOffset.UtcNow) with
+                    | Some t -> ports.ApplyDraftWrite(DraftWrite.Write t)
+                    | None -> ())
+
 
     let ms (t: Timing) = TimeSpan.FromMilliseconds (MotionTimings.initialMs t)
 
@@ -184,15 +223,17 @@ type ShellComposer(ports: ShellPorts) =
             | Some (conv, run) ->
                 v.Chat.Pane.Render vs.Chat
                 v.Chat.Header.Render vs.Header
-                let isGenerating, streamMsg, runError =
+                let isGenerating, streamMsg =
                     match run with
-                    | RunState.Generating(_, _, partial) -> true, partial, None
-                    | RunState.Idle err -> false, None, err
+                    | RunState.Generating(_, _, partial) -> true, partial
+                    | RunState.Idle _ -> false, None
                 let retry () = this.Dispatch(User(Chat(ChatUserMsg.Regenerate)))
                 v.Chat.Render
                     { Messages = conv.Messages
                       Streaming = streamMsg
-                      Error = runError |> Option.map (fun e -> e, retry)
+                      // 错误取**投影**（`vs.Chat.Error`，由 `Workspace.project` 从 `RunState.Idle` 投影），
+                      // 不再在这里另读一份 `RunState`：错误卡的归属只有状态树一处。
+                      Error = vs.Chat.Error |> Option.map (fun e -> e, retry)
                       FontSize = model.Prefs.fontScale
                       Title = Some conv.Title
                       CanEditTitle = true
@@ -502,6 +543,27 @@ type ShellComposer(ports: ShellPorts) =
         ports.SubscribeHostEvents(fun ev -> this.HandleEvent ev) |> subs.Add
         ports.SubscribeClosed(fun detail -> this.HandleConnectionClosed detail) |> subs.Add
 
+        // 本机草稿恢复：把上次关窗前输入区里的那段文本读回来。
+        // 读的是**宿主的落点**（浏览器 IndexedDB / 桌面文件），所以走端口。
+        // 只在输入区**还是空的**时候恢复——用户这次已经打了字，就不该被旧草稿盖掉。
+        // 恢复走的是与打字**同一条**路（`ComposerUserMsg.TextChanged`），
+        // 于是状态树、发送门控、草稿节流三者天然一致，不另开一条路。
+        let restoreDraft () =
+            async {
+                let! saved = ports.LoadLocalDraft()
+                match saved with
+                | Some text when not (String.IsNullOrWhiteSpace text) ->
+                    // 读盘回来的那一刻已经在**线程池线程**上了，
+                    // 而 `Dispatch` 会去渲染 Avalonia 控件——那必须在 UI 线程。
+                    // 所以只把「读到了什么」带回去，真正的派发交给 `ports.Post`。
+                    ports.Post (fun () ->
+                        if String.IsNullOrEmpty model.Composer.Text then
+                            this.Dispatch(User(Composer(ComposerUserMsg.TextChanged text))))
+                | _ -> ()
+            }
+            |> Async.Start
+        restoreDraft ()
+
         // 侧栏：正文搜索的出口（查询词 → 线协议）与命中打开（打开对话 + 定位消息）。
         built.Sidebar.SearchHandler <-
             Some(fun query includeArchived offset ->
@@ -581,17 +643,63 @@ type ShellComposer(ports: ShellPorts) =
                 expiry.Dispose()
                 for sub in subs do sub.Dispose() }
 
-    member this.AutoConnect() =
-        match ports.TryLoadClientToml() with
-        | Some(url, token) ->
+    /// 连一次主机。已经在连就直接返回（不重复发 `Connect`）。
+    ///
+    /// 在途闸的作用：`AutoConnect`（启动时）与 `reconnect`（用户点「重连」）可能撞在一起。
+    /// 没有闸就会连两次——两次 `Connect` 抢同一个 epoch，后一次把前一个 socket 顶掉，
+    /// 表现为「连上了又立刻断」。
+    ///
+    /// 失败**不静默**：连接抛错时按既有的断线契约走 `HandleConnectionClosed`
+    /// （与壳侧主动断开同一条路），界面因此能看到「连接已断开」而不是静默停在连接中。
+    member private this.ConnectTo (url: string) (token: string) : unit =
+        if not connecting then
+            connecting <- true
             this.Dispatch(Msg.ConnectionRequested url)
             async {
                 try
                     let! epoch = ports.Connect url
                     ports.SendAuth epoch (AuthPresent {| token = token |})
-                with _ -> ()
+                with e ->
+                    // 回到 UI 线程再改状态（后台续体不直接碰模型）。
+                    ports.Post(fun () ->
+                        connecting <- false
+                        this.HandleConnectionClosed (Some (e.Message)))
             } |> Async.Start
-        | None -> ()
+
+    /// 在 UI 线程上「如果还空闲就连一次」。
+    ///
+    /// 浏览器凭据是异步读出来的，回调必须经 `ports.Post` 回到 UI 线程再动模型——
+    /// 但**在途闸要在 Post 之前就判**，否则两个 Post 回调依次进来时，
+    /// 第一个把闸占上、第二个被挡掉，而第一个自己还没连（闸被占但连接没发出去）。
+    member private this.ConnectToOnUiThread (url: string) (token: string) : unit =
+        if not connecting then
+            ports.Post(fun () -> this.ConnectTo url token)
+
+    member this.AutoConnect() =
+        match ports.TryLoadClientToml() with
+        | Some(url, token) -> this.ConnectTo url token
+        | None ->
+            // 浏览器里没有 toml：凭据在 IndexedDB（`Wanxiang2.BrowserInterop` 的 `credList`）。
+            // 此前这个端口**只有声明、没有调用点**——PWA 因此从不自动连上主机，
+            // composer 一直停在「未连接」态（打不进字、不写草稿）。
+            // 回落读浏览器凭据：取最近一条（`CredentialStore.tryLoadBrowserConnectionAsync` 取列表头）。
+            //
+            // **代次守卫**：浏览器凭据是异步读出来的，可能在用户已经手动选了另一台主机之后才回来。
+            // 那时不能拿它去覆盖用户的选择——只有「当前没有在途连接、也没连上」时才用它。
+            async {
+                try
+                    let! conn = ports.TryLoadBrowserConnection()
+                    match conn with
+                    | Some(url, token, _instanceId) ->
+                        // 读凭据期间用户可能已经连上了别的：那时不动作。
+                        let stillIdle =
+                            not connecting
+                            && (match model.Conn with ConnPhase.Authed _ -> false | _ -> true)
+                        if stillIdle then this.ConnectToOnUiThread url token
+                    | None -> ()
+                with e ->
+                    ports.Post(fun () -> this.HandleConnectionClosed (Some (e.Message)))
+            } |> Async.Start
 
     member this.ForkFromHere() =
         match model.Conn with
@@ -669,15 +777,68 @@ type ShellComposer(ports: ShellPorts) =
             for name, bytes in files do
                 let mediaType = Wanxiang.UI.MediaTypes.ofFileName name
                 let sha = Wanxiang.UI.UploadFacts.sha256Hex bytes
-                this.Dispatch(User(Composer(ComposerUserMsg.Attach(name, mediaType, int64 bytes.Length, sha))))
+                // 上传 id 由这里生成：它同时是状态树里这条附件草稿的身份、
+                // 以及线协议 `attachment.begin` / `chunk` / `complete` 的 id——三处必须是同一个，
+                // 上传进度消息才对得上。
+                let attachmentId = Guid.NewGuid()
+                this.Dispatch(User(Composer(ComposerUserMsg.Attach(attachmentId, name, mediaType, int64 bytes.Length, sha))))
+                this.UploadAttachmentBytes(attachmentId, name, mediaType, sha, bytes)
                 if Wanxiang.UI.MediaTypes.isModelImage mediaType then
                     ports.MakeThumbnail (Guid.NewGuid()) bytes
 
+    /// 把一个附件按内容寻址协议传上去：`attachment.begin` → 若干 `attachment.chunk` → `attachment.complete`。
+    ///
+    /// **就绪信号来自主机的确认，不是「发出 complete」**：主机落盘成功后回
+    /// `attachment.committed`（带 attachmentId 与 sha256），落盘失败回 `attachment.aborted`。
+    /// 那两个事件由状态树处理（`libs/WorkspaceState/Update.fs` 的
+    /// `WireEvent.AttachmentCommitted` / `AttachmentAborted`），把附件草稿推进到 `Ready` / `Failed`。
+    /// 发出 `attachment.complete` 只是「我发完了」，此时附件**还不该**随消息发出。
+    ///
+    /// 发送门控在状态主人那里（`ComposerUserMsg.Send`）：有附件在上传中或失败就整条挡住。
+    // 参数写成**一个元组**而不是 curried：调用点在 `for name, bytes in files do` 里面，
+    // 那里 `name` / `bytes` 是元组模式；curried 的同名方法会被 F# 解析成「把实参拼成一个元组」，
+    // 于是第一个实参的类型被推成整个元组。写成元组参数即可（`mini5.fsx` / `mini6.fsx` 复现过）。
+    member private this.UploadAttachmentBytes (attachmentId: Guid, name: string, mediaType: string, sha: string, bytes: byte[]) : unit =
+        let total = int64 bytes.Length
+        ports.Send(
+            WireEvent.AttachmentBegin {|
+                attachmentId = attachmentId
+                totalBytes = total
+                sha256 = sha
+                mediaType = mediaType
+                fileName = name
+            |})
+        // 分块大小与主机一致（默认 256 KiB，见 `libs/AppConfig` 的 `network.chunkSizeBytes`）。
+        let chunkSize = 256 * 1024
+        let mutable index = 0
+        let mutable sent = 0L
+        while sent < total do
+            let take = int (min (int64 chunkSize) (total - sent))
+            let chunk = bytes.[int sent .. int sent + take - 1]
+            ports.Send(
+                WireEvent.AttachmentChunk {|
+                    attachmentId = attachmentId
+                    index = index
+                    dataBase64 = Convert.ToBase64String(chunk)
+                |})
+            sent <- sent + int64 take
+            index <- index + 1
+            this.Dispatch(Msg.Internal(InternalMsg.UploadProgress(attachmentId, int (sent * 100L / max 1L total))))
+        // 发完最后一块：等主机确认（`attachment.committed`）才算就绪。
+        ports.Send(WireEvent.AttachmentComplete {| attachmentId = attachmentId; sha256 = sha |})
+
     member this.ComposerActions(pickAttachment: unit -> unit, dropFiles: IStorageItem list -> unit, pasteFromClipboard: unit -> bool) : Wanxiang2.ComposerDesk.ComposerDeskActions =
-        { Submit = fun text ->
-            this.Dispatch(User(Composer(ComposerUserMsg.TextChanged text)))
+        { Submit = fun _text ->
+            // 文本在**打字时**就已经进状态树了（`TextChanged` 那条路），这里不再重复派发——
+            // 一条路，不两条。
             this.Dispatch(User(Composer(ComposerUserMsg.Send)))
             true
+          // 打字：文本进状态树 + 草稿落盘的 800 ms 闸在这里起。
+          TextChanged = fun text ->
+              this.Dispatch(User(Composer(ComposerUserMsg.TextChanged text)))
+              scheduleDraftSave text
+          CaretChanged = fun caret ->
+              this.Dispatch(User(Composer(ComposerUserMsg.CaretChanged (Some caret))))
           StopGeneration = fun () -> this.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
           PickAttachment = pickAttachment
           RemoveAttachment = fun id -> this.Dispatch(User(Composer(ComposerUserMsg.RemoveAttachment id)))
@@ -744,6 +905,13 @@ type ShellComposer(ports: ShellPorts) =
                       this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
                   | None -> ()
           deleteMany = fun ids -> this.Dispatch(User(Sidebar(SidebarUserMsg.BatchDelete ids)))
+          // 多选的事实在状态树（Chrome.BatchMode / Chrome.SelectedRowIds）：
+          // 侧栏只发意图，这里派发成状态树消息，再由投影回到侧栏。
+          enterSelection = fun id -> this.Dispatch(User(Sidebar(SidebarUserMsg.EnterBatch id)))
+          toggleSelected = fun id -> this.Dispatch(User(Sidebar(SidebarUserMsg.ToggleBatch id)))
+          exitSelection = fun () -> this.Dispatch(User(Sidebar(SidebarUserMsg.ExitBatch)))
+          toggleSelectAllVisible =
+              fun visibleIds -> this.Dispatch(User(Sidebar(SidebarUserMsg.ToggleBatchAllVisible visibleIds)))
           duplicateAsFork = fun s ->
               this.Dispatch(User(Sidebar(SidebarUserMsg.SelectConv s.id)))
               ports.EffectSink.ShowToast("已打开对话，可从任意消息分叉。", ToastTone.Info)
@@ -751,15 +919,18 @@ type ShellComposer(ports: ShellPorts) =
           openSettings = fun () -> this.Dispatch(User(Settings(SettingsUserMsg.OpenSection None)))
           reconnect = fun () ->
               match ports.TryLoadClientToml() with
-              | Some(url, token) ->
-                  this.Dispatch(Msg.ConnectionRequested url)
+              | Some(url, token) -> this.ConnectTo url token
+              | None ->
+                  // 浏览器：与 `AutoConnect` 同一条回落路径（凭据在 IndexedDB，不在 toml）。
                   async {
                       try
-                          let! epoch = ports.Connect url
-                          ports.SendAuth epoch (AuthPresent {| token = token |})
-                      with _ -> ()
+                          let! conn = ports.TryLoadBrowserConnection()
+                          match conn with
+                          | Some(url, token, _instanceId) -> this.ConnectToOnUiThread url token
+                          | None -> ()
+                      with e ->
+                          ports.Post(fun () -> this.HandleConnectionClosed (Some (e.Message)))
                   } |> Async.Start
-              | None -> ()
           toggleArchivedVisibility = fun () ->
               this.Dispatch(User(Sidebar(SidebarUserMsg.ToggleShowArchived)))
           closeNavigation = fun () -> this.Dispatch(User(Overlay(OverlayUserMsg.Escape))) }

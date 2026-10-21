@@ -20,6 +20,13 @@
     <Compile Include="SidebarSearch.Headless.fs" />
     <Compile Include="SidebarSearch.Probe.fs" />
     <Compile Include="SidebarSearch.Tests.fs" />
+    <Compile Include="RowFocus.RowFocus.Tests.fs" />
+    <Compile Include="RowFocus.SearchHit.Tests.fs" />
+    <Compile Include="RowFocus.SearchSegments.Samples.fs" />
+    <Compile Include="RowFocus.SearchSegments.Tests.fs" />
+    <Compile Include="RowFocus.SearchSession.Tests.fs" />
+    <Compile Include="RowFocus.SidebarSelection.Samples.fs" />
+    <Compile Include="RowFocus.SidebarSelection.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />

@@ -17,5 +17,10 @@
     <PackageReference Include="Wanxiang2.AguiWire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ClientToken" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DeviceListJson" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Agui" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Conversations" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.CommandId" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

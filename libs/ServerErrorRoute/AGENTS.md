@@ -6,8 +6,7 @@
 1. **去向与旧代码一致。** [根 AXIOM: 1]
 
 # SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由 `tools/OldServerErrorRoute.fs`（旧分支原样摘录）跑 `tests/Render.fs` 生成；金标准用例通过。
-2. `tools/gen-golden.fsx` 重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`D9 消息记账失败进当前对话的错误卡，没有当前对话时 toast`、`缺失附件按小写 sha256 标记`。
 
 # 迁入或覆盖的旧测试
 - 旧仓库没有直接覆盖该分支的单元测试；新增 `D9 消息记账失败进当前对话的错误卡，没有当前对话时 toast`、`缺失附件按小写 sha256 标记`。

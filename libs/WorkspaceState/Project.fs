@@ -99,15 +99,9 @@ module Project =
             Debouncing = model.Chrome.SearchDebouncingUntil.IsSome
         }
 
-        let batchBarVS =
-            if model.Chrome.BatchMode then
-                Some {
-                    SelectedCount = Set.count model.Chrome.SelectedRowIds
-                    AllSelected = Set.count model.Chrome.SelectedRowIds = model.Summaries.Length && not (List.isEmpty model.Summaries)
-                    Busy = false
-                    AllPinned = false
-                }
-            else None
+        // 多选的可见性相关的派生（可见计数、「可见行全选」、「是否全部置顶」）**不在这里**：
+        // 「可见行」是侧栏的事实（搜索框与归档开关都在侧栏），状态树看不到。
+        // 这里只投影模型知道的事实：是否多选、选中了哪些 id。
 
         let busyRows =
             model.Feedback.PendingDeletions
@@ -123,7 +117,8 @@ module Project =
                 PresetsVisible = currentCatalog |> Option.exists (fun c -> not (List.isEmpty c.presets))
                 Compact = model.Nav.CompactMode
             }
-            Batch = batchBarVS
+            BatchMode = model.Chrome.BatchMode
+            SelectedRowIds = model.Chrome.SelectedRowIds
             Host = {
                 ServerUrl = model.ServerUrl
                 Connected = isAuthed
@@ -231,6 +226,13 @@ module Project =
             Streaming = isStreaming
             ScrollHint = Some { CanScrollDown = true; CanLoadOlder = false }
             RevealTarget = model.Chrome.RevealTarget |> Option.map snd
+            // 生成错误：唯一的来源是 `RunState.Idle (Some err)`（线协议的 generation.finished 带错误）。
+            // 这是错误卡的**单一归属**——之前错误由宿主从 `RunState` 直接读、经
+            // `ChatScreen.Render` 的 `Error` 字段传下去，状态树里没有它。
+            Error =
+                match model.Conn with
+                | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(_, RunState.Idle err))) -> err
+                | _ -> None
         }
 
         let composerEnabled, disabledReason =

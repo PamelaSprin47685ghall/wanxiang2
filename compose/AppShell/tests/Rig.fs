@@ -39,6 +39,8 @@ type FakePorts(prefs0: UiPrefs) =
     let commands = ResizeArray<ClientCommand>()
     let savedPrefs = ResizeArray<UiPrefs>()
     let draftWrites = ResizeArray<DraftWrite>()
+    /// 宿主侧存着的本机草稿（`LoadLocalDraft` 端口读它）。
+    let localDraft = ref None
     let thumbnails = ResizeArray<Guid * byte[]>()
     let themes = ResizeArray<bool>()
     let motions = ResizeArray<bool>()
@@ -54,6 +56,8 @@ type FakePorts(prefs0: UiPrefs) =
     let mutable generation = 7
     let mutable connected = true
     let mutable sendsSucceed = true
+    /// 浏览器凭据（IndexedDB 里那一条）。测试可设成 `Some` 来验 PWA 的自动连接回落。
+    let mutable browserConnection: (string * string * string) option = None
     let mutable editing = false
     let mutable dark = false
     let mutable hostHandler: (WireEvent -> unit) option = None
@@ -66,6 +70,9 @@ type FakePorts(prefs0: UiPrefs) =
     member _.Commands = commands |> List.ofSeq
     member _.SavedPrefs = savedPrefs |> List.ofSeq
     member _.DraftWrites = draftWrites |> List.ofSeq
+    /// 设置宿主侧存着的本机草稿（`LoadLocalDraft` 端口会读到它）。
+    member _.SetLocalDraft(text: string option) = localDraft := text
+    member _.LocalDraft = !localDraft
     member _.Thumbnails = thumbnails |> List.ofSeq
     member _.AppliedThemes = themes |> List.ofSeq
     member _.ReducedMotion = motions |> List.ofSeq
@@ -95,6 +102,11 @@ type FakePorts(prefs0: UiPrefs) =
     member _.EditingText
         with get () = editing
         and set value = editing <- value
+
+    /// 浏览器里的已存连接（`Some (url, token, instanceId)` 时 `AutoConnect` 应当用它连上）。
+    member _.BrowserConnection
+        with get () = browserConnection
+        and set value = browserConnection <- value
 
     member _.SystemDark
         with get () = dark
@@ -143,7 +155,26 @@ type FakePorts(prefs0: UiPrefs) =
             fun ev ->
                 events.Add ev
                 Task.FromResult true
-          After = fun _ _ -> { new IDisposable with member _.Dispose() = () }
+          // 真把延时回调排上：草稿落盘的 800 ms 闸走的就是这个端口
+          // （`compose/AppShell` 的 `afterOnce`）。只记录不调度的话，
+          // 闸永远不会到期，测不出「打字停下来才落盘」。
+          After = fun ms action ->
+              let mutable handle: IDisposable = null
+              let timer =
+                  DispatcherTimer(
+                      ms,
+                      DispatcherPriority.Background,
+                      EventHandler(fun _ _ ->
+                          let h = handle
+                          if not (isNull h) then h.Dispose()
+                          action ()))
+              timer.Start()
+              // `DispatcherTimer` 本身不是 IDisposable，用一个壳把 `Stop` 暴露成 `Dispose`。
+              let wrapper =
+                  { new IDisposable with
+                      member _.Dispose() = timer.Stop() }
+              handle <- wrapper
+              handle
           Every = fun _ _ -> { new IDisposable with member _.Dispose() = () }
           Post =
             fun action ->
@@ -156,10 +187,11 @@ type FakePorts(prefs0: UiPrefs) =
           OpenLink = fun url -> links.Add url
           SaveDownload = fun name bytes -> downloads.Add(name, bytes)
           ApplyDraftWrite = fun write -> draftWrites.Add write
+          LoadLocalDraft = fun () -> async { return !localDraft }
           PrefsLoad = fun () -> prefs0
           PrefsSave = fun next -> savedPrefs.Add next
           TryLoadClientToml = fun () -> None
-          TryLoadBrowserConnection = fun () -> async { return None }
+          TryLoadBrowserConnection = fun () -> async { return browserConnection }
           SaveBrowserConnection = fun _ _ _ _ -> ()
           BrowserViewportWidth = fun () -> 0.0
           BrowserResumeEpoch = fun () -> 0

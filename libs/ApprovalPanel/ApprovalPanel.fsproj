@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <Compile Include="ApprovalPanel.fs" />
+    <Compile Include="ApprovalCardText.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />

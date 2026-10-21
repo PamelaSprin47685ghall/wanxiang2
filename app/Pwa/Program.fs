@@ -526,6 +526,10 @@ module Program =
         let styles = SharedTheme.styles
         let root = Grid()
         rootGrid <- root
+        // 浏览器端没有系统字体：整棵可视树必须显式用内嵌的 Sarasa，
+        // 否则所有没单独指定字体的控件（标签、侧栏、引导页…）的中文都是豆腐块。
+        // `TextElement.FontFamilyProperty` 是 inherits 的附加属性，设在根上整棵树继承。
+        root.SetValue(Avalonia.Controls.Documents.TextElement.FontFamilyProperty, SharedTheme.manager.FontFamily.Value) |> ignore
         // 输入方式（触屏 / 键鼠）的隧道监听挂在根控件上（旧 InputSense.Track MainView）。
         SharedTheme.input.Track root
         let ov = Wanxiang2.OverlayDesk.OverlayDesk(root, overlayLook ())
@@ -743,6 +747,10 @@ module Program =
           OpenLink = openLink
           SaveDownload = saveDownload
           ApplyDraftWrite = applyDraftWrite
+          LoadLocalDraft =
+            fun () ->
+                // 端口要求 Async；IDraftBackend 返回 Task，用 AwaitTask 转换。
+                draftBackend.Load() |> Async.AwaitTask
           PrefsLoad = prefsLoad
           PrefsSave = prefsSave
           TryLoadClientToml = tryLoadClientToml
@@ -826,11 +834,6 @@ module Program =
         paletteDesk.Run.Add(fun _ -> paletteRecentSave (shell.PaletteRecent ()))
         BrowserPage.add_Hidden(fun () -> paletteRecentSave (shell.PaletteRecent ()))
 
-    /// 读本机保存的草稿（IndexedDB，异步）喂给组合者；读完之前不写盘，
-    /// 避免用空内存覆盖尚未读到的内容（旧 AppShell.LoadLocalDrafts）。
-    let private loadDrafts () =
-        ()
-
     /// App.Build：视图挂载后调用 ShellComposer.Build（协议事件、连接关闭由组合者经端口自行订阅）。
     let private buildApp (_view: Control) =
         if not started then
@@ -843,7 +846,6 @@ module Program =
             subscribeSystemTheme ()
             subscribeTintReady ()
             subscribePaletteRecent ()
-            loadDrafts ()
             // 浏览器没有 Window.Opened。根视图挂上后的下一帧就是 firstFrame。
             // exit 模式不在这一帧退出；组合者在 listReady / chatReady 调 requestExit。
             StartupTrace.requestExit <- fun () -> Environment.Exit 0

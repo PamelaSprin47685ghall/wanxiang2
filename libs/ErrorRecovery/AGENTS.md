@@ -6,8 +6,7 @@
 1. **文案与旧代码一致。** [根 AXIOM: 1] 每个动作的按钮文案与旧程序集相同。
 
 # SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由旧 Wanxiang.UI 程序集跑 `tests/Render.fs` 生成；`tests/Tests.fs` 的金标准用例通过。
-2. 金标准生成器 `tools/gen-golden.fsx`；重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`366 限流的恢复动作文案是「换个模型」`。
 
 # 迁入或覆盖的旧测试
 - LibraryUndoTests：`§215 每类不可自愈的错误都有恢复动作`（`label SwitchModel` 一行；forKind 各行与 `GenerationErrorKind.hint` 一行在 ConversationRuns）

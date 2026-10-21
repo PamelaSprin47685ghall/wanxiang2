@@ -18,6 +18,11 @@
 - `Onboarding : OnboardingFacts`：引导卡的三项在途事实（所选预设 / 本机发现的模型 / 兼容端点建议）。
   归属模型：引导卡经 `OnboardingUserMsg` 回报，宿主按单一入口 `OnboardingDesk.Render` 投影回来；
   卡片自己的步进机（OnboardingFlow）仍归桌内。
+- `Chrome.BatchMode : bool` 与 `Chrome.SelectedRowIds : Set<Guid>`：**侧栏多选的唯一事实**。
+  归属模型：由 `SidebarUserMsg.EnterBatch` / `ToggleBatch` / `ExitBatch` / `ToggleBatchAllVisible` 四条消息驱动，
+  经 `SidebarVS.BatchMode` / `SidebarVS.SelectedRowIds` 投影给侧栏；侧栏只发意图，不再自己记一份选择集合。
+  取消最后一项即退出多选；「全选可见」会换掉不可见的旧选择；状态树**不清理**看不见的已选项
+  （可见行是侧栏的事实——搜索框与归档开关都在侧栏——由侧栏按可见范围派生计数与文案）。
 - 死消息已删（零派发、零消费）：`SettingsUserMsg.FormChanged / SaveProvider / DeleteProvider / ProbeProvider`，
   `OnboardingUserMsg.StartDiscovery / ConnectDirect / CompleteOnboarding`——这些路径实际走设置页/引导卡的端口。
 - 侧栏的品牌行与页脚各有唯一投影：`SidebarVS.Brand`（`SidebarBrandVS`：`PresetsVisible` / `Compact`）与
@@ -38,5 +43,10 @@
 4. 不变式 4：`update` 无 IO、无可变跨调用状态；同一 `(model, msg)` 两次调用结果严格相等。
 
 ## 证据
-- `tests/WorkspaceState.Tests.fsproj` 单元与旅程测试通过（8 条：含「对话列表快照同时带出分叉谱系」与
-  「定位目标：搜索命中进模型，快照到达且消息已加载时统一发滚动 Effect」两条接线用例）。
+- `tests/WorkspaceState.Tests.fsproj` 单元与旅程测试通过（含「对话列表快照同时带出分叉谱系」与
+  「定位目标：搜索命中进模型，快照到达且消息已加载时统一发滚动 Effect」两条接线用例，
+  以及 9 条侧栏多选用例：`EnterBatch 选中第一项并进入多选`、`EnterBatch 在多选中只并入这一项`、
+  `ToggleBatch 取消最后一项时退出多选`、`ToggleBatchAllVisible 全选可见行；已全选则退出多选`、
+  `ToggleBatchAllVisible 换一批可见行会清掉旧的不可见选择`、`ExitBatch 清空选择并退出多选`、
+  `多选投影：SidebarVS.SelectedRowIds 与批量条同源于 Chrome`、`多选投影：全部选中的行都置顶时 AllPinned 为真`、
+  `多选投影：状态树不清理看不见的已选项`）。

@@ -14,13 +14,10 @@
 1. **走完只播报一次，走完就停表。** [根 AXIOM: 5] 读屏用户只在可以重试那一刻听到一次，之后反复刷新不再打扰。
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/countdownticker.txt`；`tests/Tests.fs` 行为用例。
+1. [LEMMA: 1] `tests/CountdownTicker.Tests.fs` 通过：`ready is announced once and the timer stops at zero`。
 
 ## 迁入或覆盖的旧测试
 旧 `A11yRegressionTests.限流倒计时读屏名带剩余时间、走完才播报一次`、`ModelChipUiTests.rate limited error card shows a live countdown instead of a static hint`、`JourneyR9Tests.262 限流倒计时未结束时重试按钮不可按并显示剩余秒数` 要起窗口查控件，留在旧仓库；其中「只播报一次、走完停表」的规则由本库覆盖。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/OldCountdownTicker.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样证据较弱；规则另由 `tests/Tests.fs` 直接断言。
 
 ## 成员 `DurationText`
 
@@ -32,13 +29,10 @@
 1. **同一毫秒数，文案与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/durationtext.txt` 由旧函数生成。
+1. [LEMMA: 1] `tests/DurationText.Tests.fs` 通过：`zero shows nothing`、`seconds keep one decimal`。
 
 ## 迁入或覆盖的旧测试
-旧仓库没有直接测它的用例。本库新增：金样、零不显示、秒保留一位小数。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧仓库没有直接测它的用例。本库新增：零不显示、秒保留一位小数。
 
 ## 成员 `GenerationErrorTitle`
 
@@ -50,13 +44,10 @@
 1. **同一 message，标题与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/generationerrortitle.txt` 由旧函数（外包一个只有 message 的记录）生成。
+1. [LEMMA: 1] `tests/GenerationErrorTitle.Tests.fs` 通过：`raw exception text falls back to a fixed title`、`human message is kept trimmed`。
 
 ## 迁入或覆盖的旧测试
-旧仓库没有直接测它的用例。本库新增：金样、异常文本降级、人话去首尾空白。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧仓库没有直接测它的用例。本库新增：异常文本降级、人话去首尾空白。
 
 ## 成员 `MessageMenu`
 
@@ -68,14 +59,11 @@
 1. **同一组状态，菜单项、次序、文案与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/messagemenu.txt`（96 种组合）。
+1. [LEMMA: 1] `tests/MessageMenu.Tests.fs` 通过：`streaming hides the whole menu`、`user gets edit, last assistant gets regenerate with hints`、`blank text has no copy; link needs a sink; delete is danger`、`tool and system are reply-side, regenerate only for the last one`、`roleOfText maps the wire roles`。
 2. 生成中整个菜单为空；复制要有非空文本；编辑并分叉只给用户消息；重新生成只给最新回复；复制链接要有提交号和链接出口；删除只要有提交号。
 
 ## 迁入或覆盖的旧测试
-旧右键菜单用例要起窗口，留在旧仓库。本库新增：金样与 3 条规则用例。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样只证明照抄的分支与新实现一致，证据较弱；规则另由 `tests/Tests.fs` 的「真实行为」测试直接断言。
+旧右键菜单用例要起窗口，留在旧仓库。本库新增 5 条规则用例。
 
 ## 成员 `MessageTimestamp`
 
@@ -87,13 +75,10 @@
 1. **同一 now 与时刻，文案与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/messagetimestamp.txt` 由旧函数（把 Now 换成参数）在不变文化下生成。格式串沿用当前文化（`:` 是文化的时间分隔符），与旧实现一致。
+1. [LEMMA: 1] `tests/MessageTimestamp.Tests.fs` 通过：`same day shows time only and older days show dates`。格式串沿用当前文化（`:` 是文化的时间分隔符），与旧实现一致。
 
 ## 迁入或覆盖的旧测试
-旧 OperabilityTests 的 `footer timestamp carries the full timestamp for hover and screen readers` 要渲染消息卡，留在旧仓库。本库新增：金样、四档文案。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧 OperabilityTests 的 `footer timestamp carries the full timestamp for hover and screen readers` 要渲染消息卡，留在旧仓库。本库新增：四档文案。
 
 ## 成员 `ToolArgsPreview`
 
@@ -105,13 +90,10 @@
 1. **同一段参数，摘要（键数与预览）和缩进结果与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/toolargspreview.txt` 由旧函数在 16 段参数上生成。
+1. [LEMMA: 1] `tests/ToolArgsPreview.Tests.fs` 通过：`empty object reads as no arguments`、`long previews end with an ellipsis at 96 chars`、`non json is returned unchanged by prettyJson`。
 
 ## 迁入或覆盖的旧测试
-旧仓库没有直接测这两个私有函数的用例（MessageCardTests 经渲染间接覆盖，留在旧仓库）。本库新增：金样、空对象、96 字截断、非 JSON 原样。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧仓库没有直接测这两个私有函数的用例（MessageCardTests 经渲染间接覆盖，留在旧仓库）。本库新增：空对象、96 字截断、非 JSON 原样。
 
 ## 成员 `ToolCallState`
 
@@ -123,13 +105,10 @@
 1. **同一组输入，状态与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/toolcallstate.txt`（36 种组合）。
+1. [LEMMA: 1] `tests/ToolCallState.Tests.fs` 通过：`a result decides regardless of streaming`、`without a result streaming decides running or awaiting, else unknown`。
 
 ## 迁入或覆盖的旧测试
-旧 MessageCard 的 `resolveStatus` 用例要构造 MessageContext，留在旧仓库。本库新增：金样与 2 条规则用例。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样只证明照抄的分支与新实现一致，证据较弱；规则另由 `tests/Tests.fs` 的「真实行为」测试直接断言。
+旧 MessageCard 的 `resolveStatus` 用例要构造 MessageContext，留在旧仓库。本库新增 2 条规则用例。
 
 ## 成员 `ToolErrorSummary`
 
@@ -141,7 +120,7 @@
 1. **同一段结果文本，认定与摘要和旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/toolerrorsummary.txt` 由旧函数在 38 段结果上生成。
+1. [LEMMA: 1] `tests/ToolErrorSummary.Tests.fs` 通过：`no result means no error`、`json error object yields its message`、`traceback summary is the last non blank line`。
 2. 已知旧行为，原样保留：非首行的 HTTP 状态行只认整行精确匹配（`404 Not Found extra` 不算失败）；`{"error":5}` 摘要为 `5`。
 
 ## 迁入或覆盖的旧测试
@@ -150,10 +129,7 @@
 - `resolveToolCallStatus returns Failed when result matches error patterns`（部分覆盖）
 - `resolveToolCallStatus extracts last line from python traceback as failure summary`（部分覆盖）
 
-本库新增：金样、无结果、JSON 嵌套 message、traceback 末行。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+本库新增：无结果、JSON 嵌套 message、traceback 末行。
 
 ## 成员 `ToolOverview`
 
@@ -165,11 +141,9 @@
 1. **同一组计数，结果与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/tooloverview.txt`（48 种组合）。
+1. [LEMMA: 1] `tests/ToolOverview.Tests.fs` 通过：`single call names its state; several list counts in fixed order`、`awaiting outranks running; never a check while anything is pending`。
 2. 等待批准优先于执行中；有待定的就绝不显示完成。
 
 ## 迁入或覆盖的旧测试
-旧工具概览用例（第 206 节）要起窗口，留在旧仓库。本库新增：金样与 2 条规则用例。
+旧工具概览用例（第 206 节）要起窗口，留在旧仓库。本库新增 2 条规则用例。
 
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样只证明照抄的分支与新实现一致，证据较弱；规则另由 `tests/Tests.fs` 的「真实行为」测试直接断言。

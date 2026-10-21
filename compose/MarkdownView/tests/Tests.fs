@@ -256,6 +256,56 @@ let ``markdown renderer renders complex markdown with code, tables and math with
         let doc =
             "# 标题一\n正文包含 **粗体**、*斜体*、`行内代码` 和 [链接](https://example.com)。\n\n> 引用块测试\n\n- [x] 任务完成\n- [ ] 任务待办\n\n| 列 A | 列 B |\n|---|---|\n| 1 | 2 |\n\n```fsharp\nlet x = 42\n```\n\n$$E = mc^2$$\n"
         let w = show (view.RenderText doc)
+        // 断言渲染出的**具体内容**（旧写法只有 w.Close()：什么也没验）。
+        //
+        // 段落/标题的文本在 TextBlock 的 Inlines 里（Text 本身是 null——多段富文本
+        // 不能塞进 Text 属性），所以这里把 Text 与 Run 都收进来。
+        let texts =
+            descendants w
+            |> Seq.collect (fun c ->
+                match c with
+                | :? TextBlock as t ->
+                    // TextBlock 同时有 Text 与 Inlines 时读 Text 会抛；
+                    // 这里按「有没有 Inlines」二选一。
+                    if isNull t.Inlines then
+                        [ t.Text ]
+                    else
+                        t.Inlines
+                        |> Seq.choose (fun i -> match i with :? Documents.Run as r -> Some r.Text | _ -> None)
+                        |> Seq.toList
+                | _ -> [])
+            |> Seq.toList
+        // 1) 标题渲染出来了（文本「标题一」在树里）。
+        Assert.True(texts |> List.exists (fun t -> t = "标题一"), "应渲染出标题「标题一」")
+        // 2) 正文渲染出来了。
+        Assert.True(texts |> List.exists (fun t -> t.Contains "正文包含"), "应渲染出正文")
+        // 3) 行内代码渲染出来了。
+        Assert.True(texts |> List.exists (fun t -> t = "行内代码"), "应渲染出行内代码")
+        // 4) 表格渲染出来了：网格控件存在，且第一行的两个表头都在。
+        let grids =
+            descendants w
+            |> Seq.choose (fun c -> match c with :? Grid as g -> Some g | _ -> None)
+            |> Seq.toList
+        Assert.True(grids.Length > 0, "应渲染出表格网格")
+        Assert.True(texts |> List.exists (fun t -> t = "列 A"), "应渲染出表头「列 A」")
+        Assert.True(texts |> List.exists (fun t -> t = "列 B"), "应渲染出表头「列 B」")
+        // 5) 代码块内容在（fsharp 着色后的文本）。
+        Assert.True(texts |> List.exists (fun t -> t = "let x = 42"), "应渲染出代码块内容")
+        // 6) 引用块内容在。
+        Assert.True(texts |> List.exists (fun t -> t.Contains "引用块测试"), "应渲染出引用块内容")
+        // 7) 链接文本在。
+        // 链接不是 Run（它是带可访问名称的行内控件），所以按 AutomationProperties 查。
+        let linkNames =
+            descendants w
+            |> Seq.map (fun c -> AutomationProperties.GetName c)
+            |> Seq.filter (fun n -> not (isNull n) && n <> "")
+            |> Seq.toList
+        Assert.True(linkNames |> List.exists (fun n -> n = "链接"), "应渲染出链接（可访问名称「链接」）")
+        // 8) 任务列表的两个条目在。
+        Assert.True(texts |> List.exists (fun t -> t.Contains "任务完成"), "应渲染出任务「任务完成」")
+        Assert.True(texts |> List.exists (fun t -> t.Contains "任务待办"), "应渲染出任务「任务待办」")
+        // 9) 公式渲染出来了（MathHtml 在本测试里是 None → 退化成行内代码的原文）。
+        Assert.True(texts |> List.exists (fun t -> t.Contains "E = mc^2"), "应渲染出公式")
         w.Close())
 
 [<Fact>]

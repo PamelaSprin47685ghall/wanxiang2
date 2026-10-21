@@ -111,7 +111,9 @@ type App() =
 
         this.FlattenTextBoxChrome()
 
-        // 弹出层（ToolTip 等）不在 AppShell 的可视树下，继承不到 AppShell.FontFamily；
+        // 弹出层（ToolTip 等）挂在**独立的弹出根**上，不在可视树里，
+        // 继承不到根控件上设的 `TextElement.FontFamily`（PWA 入口在根上设了内嵌字体，
+        // 见 app/Pwa/Program.fs 的 buildViewsOnce）。
         // browser-wasm 又拿不到系统字体，中文提示会渲染成豆腐块（视觉走查：
         // 「Enter □□ / Shift+Enter □□」）。这里给 ToolTip 显式指定内嵌字体。
         let toolTipFont = Style(fun selector -> selector.OfType<ToolTip>())

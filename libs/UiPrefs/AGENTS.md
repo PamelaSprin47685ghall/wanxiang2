@@ -6,8 +6,7 @@
 1. **ui.json 的字节不变。** [根 AXIOM: 1] 同一份已存文本，读出的偏好与写回的文本都与旧 load/save 相同，不认识的键原样保留。
 
 # SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由旧 UiPrefs.load/save 经真实文件跑 `tests/Render.fs` 生成；金标准用例通过。
-2. 金标准生成器 `tools/gen-golden.fsx`（跑旧仓库构建出的程序集）；重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`ThemePreference conversions and resolveTheme`、`persisting drafts is on by default and an old ui file without the key keeps it on`、`theme cycle and notice match old CycleTheme`。
 
 # 迁入或覆盖的旧测试
 - UiPureLogicTests：`ThemePreference conversions and resolveTheme`

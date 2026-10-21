@@ -8,5 +8,8 @@
     <PackageReference Include="Wanxiang2.BrandMark" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.NavigationState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

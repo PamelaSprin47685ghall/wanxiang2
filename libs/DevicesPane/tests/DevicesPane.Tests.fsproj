@@ -20,6 +20,18 @@
     <Compile Include="ToolsPane.Headless.fs" />
     <Compile Include="ToolsPane.Probe.fs" />
     <Compile Include="ToolsPane.Tests.fs" />
+    <Compile Include="GenerationDraft.GenerationDraft.Tests.fs" />
+    <Compile Include="GenerationDraft.GenerationForm.Tests.fs" />
+    <Compile Include="GenerationDraft.LocalDraftControls.Tests.fs" />
+    <Compile Include="GenerationDraft.McpForm.Tests.fs" />
+    <Compile Include="GenerationDraft.OnboardingFlow.Tests.fs" />
+    <Compile Include="GenerationDraft.ProbeFailureKind.Tests.fs" />
+    <Compile Include="GenerationDraft.ProbeSlot.Tests.fs" />
+    <Compile Include="GenerationDraft.ProviderForm.Samples.fs" />
+    <Compile Include="GenerationDraft.ProviderForm.Tests.fs" />
+    <Compile Include="GenerationDraft.ProviderProbeText.Tests.fs" />
+    <Compile Include="GenerationDraft.SectionMemory.Tests.fs" />
+    <Compile Include="GenerationDraft.ToolsPolicy.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />

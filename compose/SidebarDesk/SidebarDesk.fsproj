@@ -11,11 +11,9 @@
     <PackageReference Include="Wanxiang2.ConversationList" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BatchBar" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.RowFocus" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ForkLineage" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />

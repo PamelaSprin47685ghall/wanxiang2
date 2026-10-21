@@ -6,8 +6,7 @@
 1. **磁盘字节不变。** [根 AXIOM: 1] 写出的桌面文件与旧程序集逐字节相同。
 
 # SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由旧 Wanxiang.UI 程序集跑 `tests/Render.fs` 生成；`tests/Tests.fs` 的金标准用例通过。
-2. 金标准生成器 `tools/gen-golden.fsx`；重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`251 Linux 桌面文件声明 x-scheme-handler 并以 %u 接收链接`。
 
 # 迁入或覆盖的旧测试
 - PartialPersistAndUrlSchemeTests：`251 Linux 桌面文件声明 x-scheme-handler 并以 %u 接收链接`

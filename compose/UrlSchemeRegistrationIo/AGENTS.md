@@ -11,13 +11,13 @@
 
 # LEMMA
 1. **桌面文件字节与旧实现相同，且幂等。** [根 AXIOM: 1]
-    - 推理：正文由 `Wanxiang2.UrlSchemeRegistration` 按旧字节生成（金样钉住）；内容不变就不写文件、不调 xdg 工具、不写注册表。
+    - 推理：正文由 `Wanxiang2.UrlSchemeRegistration` 按旧字节生成（库的用例钉住）；内容不变就不写文件、不调 xdg 工具、不写注册表。
 2. **尽力而为，失败只记日志。** [根 AXIOM: 5]
     - 推理：协议关联缺失只影响「点链接打开」，不该阻塞启动；旧代码就是吞异常交给 `log`。
 3. **`launchCommand` 认 apphost 与 `dotnet <dll>` 两种启动形态。** [根 AXIOM: 1]
 
 # SPEC
-1. [LEMMA: 1] 纯文本金样与旧用例在 `libs/UrlSchemeRegistration/tests/Tests.fs`：`golden matches old code`（`tests/golden/expected.txt` 由旧程序集生成）与 `251 Linux 桌面文件声明 x-scheme-handler 并以 %u 接收链接`（旧用例原样迁入），通过；`./x test UrlSchemeRegistration` 可重跑。
+1. [LEMMA: 1] 纯文本与旧用例在 `libs/UrlSchemeRegistration/tests/Tests.fs`：`251 Linux 桌面文件声明 x-scheme-handler 并以 %u 接收链接`（旧用例原样迁入），通过；`./x test UrlSchemeRegistration` 可重跑。
 2. 本组合者无独立测试工程：`./x compose` 跳过它（`x` 的 `compose()` 注释点名）。写桌面文件 / 注册表与 `launchCommand` 旧仓库也没有用例（旧仓库历史 `git log -S registerCurrentUser -- tests/` 无结果）；本壳保留旧代码逐字实现，写入动作由 `app/Desktop` 启动时执行。
 
 # 迁入或覆盖的旧测试
@@ -25,5 +25,5 @@
 - `registerCurrentUser` / `registerLinux` / `registerWindows` / `launchCommand` 旧仓库没有用例可迁。
 
 # 拆分与复核
-- 旧模块一拆为二：`desktopFileName` / `desktopEntry` / `quote` 归 `libs/UrlSchemeRegistration`（旧程序集金样），`launchCommand` / `registerCurrentUser` 与 Linux / Windows 分支留本壳。桌面文件的字节由库的金样钉住，本壳不复制文本。
+- 旧模块一拆为二：`desktopFileName` / `desktopEntry` / `quote` 归 `libs/UrlSchemeRegistration`（旧程序集生成的字节由库的用例钉住），`launchCommand` / `registerCurrentUser` 与 Linux / Windows 分支留本壳。桌面文件的字节由库的用例钉住，本壳不复制文本。
 - 逐字对照：`git -C /tmp/wx-old show bfdda85^:src/Wanxiang.UI/Model/DesktopLinks.fs | sed -n '/^module UrlSchemeRegistration =/,/^\/\/\/ 决策 251：单实例转发/p' | head -n -1 | diff - compose/UrlSchemeRegistrationIo/UrlSchemeRegistrationIo.fs`（旧仓库退役检出在 `/tmp/wx-old`；`bfdda85^` 是这些文件被删除前的最后一版）。输出只有开头 9 行（命名空间 / `open` / 说明注释）与一个空行的差异。

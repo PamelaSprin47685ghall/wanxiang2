@@ -88,7 +88,10 @@ type SidebarVS = {
     Empty: SidebarEmptyKind
     Search: SearchBoxVS
     Brand: SidebarBrandVS
-    Batch: BatchBarVS option
+    /// 是否处于多选模式（同源于 `Chrome.BatchMode`）。
+    BatchMode: bool
+    /// 多选选中的对话 id（**多选的唯一事实**）。侧栏只读它，不再自己记一份选择集合。
+    SelectedRowIds: Set<Guid>
     Host: HostSwitcherVS
     Compact: bool
     BusyRows: Set<Guid>
@@ -125,7 +128,6 @@ type ChatPhase =
     | Skeleton
     | Empty of IdleEmptyKind
     | Messages of MessageRowVS list
-    | Error of reason: string
 
 type ScrollHintVS = {
     CanScrollDown: bool
@@ -253,6 +255,12 @@ type ChatVS = {
     Streaming: bool
     ScrollHint: ScrollHintVS option
     RevealTarget: string option
+    /// 生成错误（来自 `RunState.Idle (Some err)`）。
+    ///
+    /// 这是**生成**错误（生成失败、可重试），与 `ChatPhase.Error` 那个分支**不是同一件事**：
+    /// 后者原本用来画「加载更早消息失败」的横幅，无生产者，是死分支（见《已知缺口》）。
+    /// 错误卡（`MessageCardView.Card.ErrorCard`）要拿到的是本字段。
+    Error: GenerationError option
 }
 
 type SendButtonState =

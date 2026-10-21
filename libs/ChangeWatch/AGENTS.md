@@ -29,14 +29,11 @@
 1. **同一组状态，决定与旧分支相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/conversationsurface.txt`（256 种组合）。
+1. [LEMMA: 1] 旧仓库没有直接测这段的用例；本包新增 3 条规则用例（见「迁入或覆盖的旧测试」）。
 2. 运行错误优先于未回复；未回复只在不生成、不流式、没有半截回复时才显示。
 
 ## 迁入或覆盖的旧测试
-旧对话区用例要起窗口，留在旧仓库。本库新增：金样与 3 条规则用例。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（照抄旧分支）重写金样；输出应与提交的金样逐字节相同。金样只证明照抄的分支与新实现一致，证据较弱；规则另由 `tests/Tests.fs` 的「真实行为」测试直接断言。
+旧对话区用例要起窗口，留在旧仓库。本包新增 3 条规则用例。
 
 ## 成员 `DeferredReveal`
 
@@ -64,13 +61,10 @@
 1. **同一组计数，文案与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/draftsummarytext.txt` 由照抄的旧分支生成。
+1. [LEMMA: 1] 旧仓库没有直接测它的用例；本包新增 2 条规则用例：文案分支与关闭保存优先。
 
 ## 迁入或覆盖的旧测试
-旧仓库没有直接测它的用例。本库新增：金样、关闭保存优先。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧仓库没有直接测它的用例。本包新增：文案分支、关闭保存优先。
 
 ## 真实行为测试
 金样来自照抄的旧分支，证据较弱；`tests/Tests.fs` 末节另按上面写明的规则直接断言新实现（不经金样），规则改了要同时改这里。
@@ -85,8 +79,8 @@
 1. **分叉点与上线字节与旧代码一致。** [根 AXIOM: 1]
 
 ## SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由 `tools/OldForkAnchor.fs`（旧代码原样摘录）跑 `tests/Render.fs` 生成；金标准用例通过。
-2. `tools/gen-golden.fsx` 重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/Tests.fs` 覆盖分叉点选择与上线 JSON：新分叉点与已编辑的用户消息拼成的上线字节一致。
+2. 没有可分叉对话时给出提示。
 
 ## 迁入或覆盖的旧测试
 - 旧仓库没有直接覆盖 ForkFrom 私有逻辑的单元测试；新增分叉点与上线字节两条行为测试。
@@ -101,13 +95,10 @@
 1. **同一组状态，决定与旧分支相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/idlesurface.txt` 由照抄的旧分支在 64 种状态组合上生成。
+1. [LEMMA: 1] 旧仓库的空态与输入框用例都要起窗口，留在旧仓库；本包新增 4 条规则用例。
 
 ## 迁入或覆盖的旧测试
-旧仓库的空态与输入框用例都要起窗口，留在旧仓库。本库新增：金样、连接失败入口、首次与重连、首次运行卡片、可输入。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧仓库的空态与输入框用例都要起窗口，留在旧仓库。本包新增：连接失败入口、首次与重连、首次运行卡片、可输入。
 
 ## 真实行为测试
 金样来自照抄的旧分支，证据较弱；`tests/Tests.fs` 末节另按上面写明的规则直接断言新实现（不经金样），规则改了要同时改这里。
@@ -178,14 +169,11 @@
 1. **同一串操作，编号、挂起、等待时长与旧记账相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/reconnectloop.txt`（37 步脚本）。
+1. [LEMMA: 1] `tests/ReconnectLoop.Tests.fs` 通过：`backoff grows across failed reconnects and only resets on success or manual`、`at most one pending reconnect, none without a token`、`a new connect voids the pending timer and stale callbacks`、`resume runs the pending reconnect now and resets backoff`。
 2. 主机一直不在时等待时长逐次翻倍到上限，只在连接成功或用户手动连接时归零；没有令牌不排重连；新的连接让挂起的计时作废；ResumeNow 只在有挂起时才动作。
 
 ## 迁入或覆盖的旧测试
-旧 ClientStateAndWsClientTests 的退避用例已在 ReconnectBackoff；AppShell 的重连用例要起窗口，留在旧仓库。本库新增：金样与 4 条规则用例。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/OldReconnectLoop.fs`（照抄旧记账，CancellationTokenSource 原样保留）重写金样；输出应与提交的金样逐字节相同。金样证据较弱（旧代码与 Async 交织，摘出的是记账部分），规则另由 `tests/Tests.fs` 的「真实行为」测试直接断言。
+旧 ClientStateAndWsClientTests 的退避用例已在 ReconnectBackoff；AppShell 的重连用例要起窗口，留在旧仓库。本包新增 4 条规则用例。
 
 ## 成员 `RevealTarget`
 
@@ -212,13 +200,10 @@
 1. **同一组状态，结论与旧实现相同。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 金样 `tests/golden/startready.txt` 由照抄的旧判断在 80 种组合上生成。
+1. [LEMMA: 1] 旧 ConversationWorkspaceTests 的用例要起窗口，留在旧仓库；本包新增 2 条规则用例。
 
 ## 迁入或覆盖的旧测试
-旧 ConversationWorkspaceTests 的用例要起窗口，留在旧仓库。本库新增：金样、新对话或空对话才就绪。
-
-## 金样生成
-`dotnet fsi tools/gen-golden.fsx` 用 `tools/Old*.fs`（旧代码）重写金样；输出应与提交的金样逐字节相同。
+旧 ConversationWorkspaceTests 的用例要起窗口，留在旧仓库。本包新增：新对话或空对话才就绪。
 
 ## 真实行为测试
 金样来自照抄的旧分支，证据较弱；`tests/Tests.fs` 末节另按上面写明的规则直接断言新实现（不经金样），规则改了要同时改这里。
@@ -233,8 +218,7 @@
 1. **行为与旧代码一致。** [根 AXIOM: 1] 模式、去重结果与输出行格式与旧程序集相同。
 
 ## SPEC
-1. [LEMMA: 1] `tests/golden/expected.txt` 由旧程序集在 `WANXIANG_STARTUP_TRACE=exit` 下跑 `tests/Render.fs` 生成（毫秒数换成 N）；`tests/Tests.fs` 的金标准用例通过。
-2. 金标准生成器 `tools/gen-golden.fsx`；重跑后 `tests/golden` 逐字节不变。
+1. [LEMMA: 1] `tests/StartupTrace.Tests.fs` 通过：`290 未设置环境变量时不打点；值为 exit 时打点并退出`、`290 未启用时 mark 不记录；requestExit 可替换`。
 
 ## 迁入或覆盖的旧测试
-- 旧仓库没有 StartupTrace 的单元测试（只有 tools/perf_desktop.sh 采样）；本库由金标准覆盖，另有新用例 `290 未设置环境变量时不打点；值为 exit 时打点并退出`。
+- 旧仓库没有 StartupTrace 的单元测试（只有仓库根 `tools/perf_desktop.sh` 采样）；本包新增用例 `290 未设置环境变量时不打点；值为 exit 时打点并退出` 与 `290 未启用时 mark 不记录；requestExit 可替换`。

@@ -8,12 +8,14 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.ExportSheet" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ExportFileName" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationTransfer" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationExport" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.OverlayDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

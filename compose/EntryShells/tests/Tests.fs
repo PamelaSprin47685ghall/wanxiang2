@@ -121,3 +121,115 @@ module EmbeddedFontTests =
     let ``等宽字体把正文字体列为回落（否则中文变豆腐块）`` () =
         // 等宽子集只含拉丁与符号；不把正文字体列为回落，中文段落就全是方框。
         Assert.Contains("Sarasa Gothic SC", ThemeFonts.mono)
+
+/// 弹出层（ToolTip / ContextMenu / MenuFlyoutPresenter）的字体契约。
+///
+/// 弹出层挂在**独立的弹出根**上，不在可视树里，继承不到根控件上设的
+/// `TextElement.FontFamily`；browser-wasm 又拿不到系统字体，于是弹出层里的中文
+/// 会渲染成豆腐块。这里钉住两件事：
+/// 1) 应用样式里三类弹出层（以及菜单项）都被显式指定了内嵌正文字体；
+/// 2) 该字体的复合回落能覆盖界面用到的符号（⌘ ⚙ ✎ ✓ ✕ 📦 🔍 🗑）。
+module PopupFontTests =
+
+    open Avalonia.Controls
+    open Avalonia.Controls.Primitives
+    open Avalonia.Media
+    open Avalonia.Styling
+    open Avalonia.Threading
+    open Wanxiang2.ThemeFonts
+
+    /// 找出针对该控件类型设置了 `FontFamily` 的应用样式。
+    ///
+    /// `Selector.TargetType` 在 Avalonia 12.1.2 里是 internal，外面看不见；
+    /// `Selector.ToString()` 是 public，且对 `OfType<T>()` 选择器渲染的就是目标类型名
+    /// （见 `TypeNameAndClassSelector.BuildSelectorString`），因此用它来定位样式。
+    /// 组合选择器（如 `Descendant().OfType<MenuItem>()`）的字符串是「父 子」，
+    /// 不会与单个类型名相等，不会误命中。
+    let private fontSetterFor (app: Application) (t: Type) =
+        app.Styles
+        |> Seq.choose (fun s ->
+            match s with
+            | :? Style as st -> Some st
+            | _ -> None)
+        |> Seq.filter (fun s ->
+            match s.Selector with
+            | null -> false
+            | sel -> sel.ToString() = t.Name)
+        |> Seq.collect (fun s -> s.Setters)
+        |> Seq.choose (fun s ->
+            match s with
+            | :? Setter as st -> Some st
+            | _ -> None)
+        |> Seq.tryFind (fun s -> s.Property = TemplatedControl.FontFamilyProperty)
+
+    [<Fact>]
+    let ``弹出层三类都被指定了内嵌正文字体`` () =
+        Headless.run (fun () ->
+            // Application.Current 是可空的：没有应用实例就谈不上「应用级样式」。
+            let app =
+                match Application.Current with
+                | null -> failwith "没有应用实例"
+                | a -> a
+
+            let expected = FontFamily ThemeFonts.body
+
+            for t in PopupFonts.popupTypes do
+                let setter = fontSetterFor app t
+                Assert.True(setter.IsSome, sprintf "%s 没有设置 FontFamily" t.Name)
+                let st = setter.Value :?> Setter
+                let family = st.Value :?> FontFamily
+                Assert.True(family = expected, sprintf "%s 的字体不是内嵌正文字体" t.Name))
+
+    [<Fact>]
+    let ``弹出层控件在窗口里真的用上了内嵌正文字体`` () =
+        Headless.run (fun () ->
+            // 光有样式不够：弹出层控件得真的被样式命中。
+            // 放进窗口内容里，控件就有了逻辑父级，样式（应用的 Styles 经 TopLevel 下发）会真正套用。
+            let toolTip = ToolTip(Content = "对话操作")
+            let contextMenu = ContextMenu()
+            let menuItem = MenuItem(Header = "复制")
+            let flyout = MenuFlyoutPresenter()
+            let host = StackPanel()
+            host.Children.Add toolTip
+            host.Children.Add contextMenu
+            host.Children.Add menuItem
+            host.Children.Add flyout
+            let w = Window(Width = 800.0, Height = 600.0, Content = host)
+
+            try
+                w.Show()
+                Dispatcher.UIThread.RunJobs()
+                let expected = FontFamily ThemeFonts.body
+
+                for c in
+                    [
+                        toolTip :> TemplatedControl
+                        contextMenu :> TemplatedControl
+                        menuItem :> TemplatedControl
+                        flyout :> TemplatedControl
+                    ] do
+                    Assert.True(c.FontFamily = expected, sprintf "%s 实际字体不是内嵌正文字体" (c.GetType().Name))
+            finally
+                w.Close()
+                Dispatcher.UIThread.RunJobs())
+
+    [<Fact>]
+    let ``弹出层字体的复合回落覆盖界面符号`` () =
+        Headless.run (fun () ->
+            let family = FontFamily ThemeFonts.body
+
+            for cp in [ 0x2318; 0x2699; 0x270E; 0x2713; 0x2715; 0x1F4E6; 0x1F50D; 0x1F5D1 ] do
+                let matched, typeface =
+                    FontManager.Current.TryMatchCharacter(
+                        cp,
+                        FontStyle.Normal,
+                        FontWeight.Normal,
+                        FontStretch.Normal,
+                        family,
+                        null
+                    )
+
+                Assert.True(matched, sprintf "弹出层字体缺字 U+%04X" cp)
+                let ok, glyph = FontManager.Current.TryGetGlyphTypeface(typeface)
+                Assert.True(ok, sprintf "U+%04X 匹配到的字族没有字形" cp)
+                Assert.NotEqual(0us, glyph.CharacterToGlyphMap.[cp]))

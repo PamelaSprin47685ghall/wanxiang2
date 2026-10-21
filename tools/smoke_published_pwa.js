@@ -16,7 +16,11 @@ if (!BASE) { console.error('--base required'); process.exit(2); }
 mkdirSync(OUT, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
+let skipped = 0;
 const check = (name, ok, detail) => { if (!ok) failed++; console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
+// SKIP 不算失败：用于「这个环境本身渲染不出中文」的情形（如本机 headless Chrome 的字体限制），
+// 判据要诚实，不能把环境缺陷算成产品缺陷，也不能用 SKIP 掩盖真缺陷。
+const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${name} — ${reason}${detail ? ' — ' + detail : ''}`); };
 (async () => {
     const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage', '--enable-unsafe-swiftshader'] });
     try {
@@ -64,14 +68,15 @@ const check = (name, ok, detail) => { if (!ok) failed++; console.log(`${ok ? 'PA
             return !!e && document.activeElement === e && getComputedStyle(e).display !== 'none';
         })()`);
         // 输入区在主内容区中下部（左侧栏右边、工具栏上面）。
-        // 之前写死了 (738, 720)——那是输入区**下方**的工具栏，点不到输入框。
+        // 记下真正聚焦的那个点：弹出层（输入框右键菜单）要右键到**同一个点**上。
+        let focusPoint = { x: 732, y: 400 };
         const focusComposer = async () => {
             if (await bridgeFocused()) return true;
             for (const y of [400, 380, 420, 360, 440, 340, 460, 320]) {
                 for (const x of [732, 600, 860, 450, 1000]) {
                     await page.mouse.click(x, y);
                     await sleep(120);
-                    if (await bridgeFocused()) return true;
+                    if (await bridgeFocused()) { focusPoint = { x, y }; return true; }
                 }
             }
             return await bridgeFocused();
@@ -201,7 +206,219 @@ const check = (name, ok, detail) => { if (!ok) failed++; console.log(`${ok ? 'PA
             check('认证态：草稿落进 IndexedDB', back && savedToDb, `back=${back} saved=${savedToDb}`);
             check('认证态：重开页面草稿回到输入框', restored,
                 `draft=${JSON.stringify(restoredRaw.slice(0, 160))} expected=${JSON.stringify(EXPECTED_AFTER)}`);
+
+            // ---- 弹出层（ToolTip / 上下文菜单 / 输入框右键菜单）的像素检查 ----
+            // avalonia.js 没有可用的 DOM 无障碍树，弹出层也没有 DOM 节点，
+            // 所以判据只能是**像素**：开/关弹出层各截一张画布，求差得到弹出层的
+            // 外接矩形，再在这块矩形里统计字形笔画。
+            //
+            // 统计量：**每行笔画段数的均值**。豆腐块（.notdef 空心方框）每行只有
+            // 左右两段竖笔画 → 均值 ≈ 2；真正的中日韩字形笔画段数明显更多。
+            // 阈值 2.8 由两次实跑标定（正常字体 vs 去掉 CJK 字体的坏构建）。
+            const GRID_W = 240, GRID_H = 160, CELL = 10; // 网格覆盖整张画布，1 格 = 10 设备像素
+            const canvasCount = () => page.evaluate(() => document.querySelectorAll('canvas').length);
+            const snapAll = async () => {
+                const n = await canvasCount();
+                const out = [];
+                for (let i = 0; i < n; i++) {
+                    out.push(await page.evaluate((idx) => {
+                        const c = document.querySelectorAll('canvas')[idx];
+                        if (!c) return null;
+                        const off = document.createElement('canvas');
+                        off.width = 240; off.height = 160;
+                        const ctx = off.getContext('2d');
+                        ctx.drawImage(c, 0, 0, 240, 160);
+                        return Array.from(ctx.getImageData(0, 0, 240, 160).data);
+                    }, i));
+                }
+                return out;
+            };
+            const diffBbox = (a, b) => {
+                if (!a || !b) return null;
+                let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+                for (let i = 0; i < a.length; i += 4) {
+                    if (Math.abs(a[i] - b[i]) > 24 || Math.abs(a[i + 1] - b[i + 1]) > 24 || Math.abs(a[i + 2] - b[i + 2]) > 24) {
+                        const p = i / 4, x = p % GRID_W, y = (p / GRID_W) | 0;
+                        if (x < x0) x0 = x; if (x > x1) x1 = x;
+                        if (y < y0) y0 = y; if (y > y1) y1 = y;
+                    }
+                }
+                return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+            };
+            // 找到「哪块画布、哪块矩形」是这次变化最大的区域。
+            const popupRegion = async (before) => {
+                const after = await snapAll();
+                let best = null;
+                for (let i = 0; i < after.length; i++) {
+                    const bb = diffBbox(before[i], after[i]);
+                    if (!bb) continue;
+                    const area = bb.w * bb.h;
+                    if (!best || area > best.bb.w * best.bb.h) best = { canvas: i, bb };
+                }
+                return best;
+            };
+            // 在弹出层矩形里统计笔画：背景取众数色，其余像素算笔画。
+            const regionStats = (canvasIdx, bb) => page.evaluate((args) => {
+                const c = document.querySelectorAll('canvas')[args.i];
+                if (!c) return null;
+                const cell = 10;
+                // 内缩（去掉弹出层描边）不能吃掉小块：按尺寸自适应。
+                const shrink = Math.max(0, Math.min(2, Math.floor(Math.min(args.bb.w, args.bb.h) / 3)));
+                const sx = (args.bb.x + shrink) * cell, sy = (args.bb.y + shrink) * cell;
+                const sw = Math.max(1, (args.bb.w - shrink * 2) * cell), sh = Math.max(1, (args.bb.h - shrink * 2) * cell);
+                const off = document.createElement('canvas');
+                off.width = sw; off.height = sh;
+                const ctx = off.getContext('2d');
+                ctx.drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh);
+                const d = ctx.getImageData(0, 0, sw, sh).data;
+                const counts = new Map();
+                for (let i = 0; i < d.length; i += 4) {
+                    const k = ((d[i] >> 3) << 16) | ((d[i + 1] >> 3) << 8) | (d[i + 2] >> 3);
+                    counts.set(k, (counts.get(k) || 0) + 1);
+                }
+                let bgKey = 0, best = -1;
+                for (const [k, v] of counts) if (v > best) { best = v; bgKey = k; }
+                const br = (bgKey >> 16) & 255, bgc = (bgKey >> 8) & 255, bb2 = bgKey & 255;
+                const rowRuns = [];
+                const rowShapes = new Set();
+                let ink = 0;
+                for (let y = 0; y < sh; y++) {
+                    let runs = 0, prev = false, shape = '';
+                    for (let x = 0; x < sw; x++) {
+                        const i = (y * sw + x) * 4;
+                        const on = (Math.abs(d[i] - br) + Math.abs(d[i + 1] - bgc) + Math.abs(d[i + 2] - bb2)) > 60;
+                        if (on) ink++;
+                        if (on && !prev) runs++;
+                        prev = on;
+                        shape += on ? '1' : '0';
+                    }
+                    if (runs > 0) { rowRuns.push(runs); rowShapes.add(shape); }
+                }
+                const meanRuns = rowRuns.length ? rowRuns.reduce((a, b) => a + b, 0) / rowRuns.length : 0;
+                // distinctShapes：这一段文字里**不同形状的行**有多少种。
+                // 豆腐块（.notdef 空心方框）所有字一样 → 行形状只有几种；
+                // 真正的中日韩字形各不相同 → 行形状很多。
+                return { w: sw, h: sh, ink, inkFrac: ink / (sw * sh), rows: rowRuns.length, meanRuns, distinctShapes: rowShapes.size };
+            }, { i: canvasIdx, bb });
+            // 弹出层的截图（CSS 坐标裁剪，1 网格格 = 10 设备像素 = 5 CSS 像素）。
+            const shotRegion = async (name, bb) => {
+                const path = `${OUT}/popup-${name}.png`;
+                await page.screenshot({
+                    path,
+                    clip: { x: bb.x * 5, y: bb.y * 5, width: bb.w * 5, height: bb.h * 5 },
+                });
+                return path;
+            };
+            // 一个弹出层的完整判据：
+            //   1) 出现了（有变化区域）；
+            //   2) 文字不是豆腐块 —— 判据**自校准**：拿弹出层里的文字与**同一次渲染里
+            //      界面正文的中文**比。豆腐块（.notdef 空心方框）每个字都一样，
+            //      所以「每行笔画段数的均值」低、「不同形状的行数」少；
+            //      真正的中日韩字形笔画多、形状各异。
+            //      判据用**比值**：弹出层笔画密度不应低于正文中文的 70%。
+            //      若正文中文本身就是豆腐块（本机 headless Chrome 的字体限制），
+            //      这次弹出层检查判为 SKIP，而不是把环境缺陷算成产品缺陷。
+            let bodyRef = null; // 正文中文的笔画基准：{ meanRuns, distinctShapes }
+            const measureBodyChinese = async () => {
+                // 主内容区（已打开的对话正文）左半部分，避开侧栏。
+                const bb = { x: 60, y: 20, w: 90, h: 60 };
+                const s = await regionStats(0, bb);
+                if (!s || s.inkFrac <= 0.005) return null;
+                return { meanRuns: s.meanRuns, distinctShapes: s.distinctShapes, inkFrac: s.inkFrac };
+            };
+            const assertPopup = async (name, region, bb) => {
+                if (!region) { check(`弹出层 ${name} 出现`, false, '开/关两帧没有差异区域'); return null; }
+                const stats = await regionStats(region.canvas, region.bb);
+                const path = await shotRegion(name, region.bb);
+                check(`弹出层 ${name} 出现`, true, `canvas=${region.canvas} rect=${region.bb.w}x${region.bb.h} 截图=${path}`);
+                if (!stats || stats.inkFrac <= 0.01) {
+                    checkSkip(`弹出层 ${name} 文字不是豆腐块`, '弹出层区域没有可见文字', `inkFrac=${stats ? stats.inkFrac.toFixed(3) : 'n/a'}`);
+                    return stats;
+                }
+                const detail = `inkFrac=${stats.inkFrac.toFixed(3)} meanRuns=${stats.meanRuns.toFixed(2)} distinctShapes=${stats.distinctShapes}`;
+                if (!bodyRef) {
+                    checkSkip(`弹出层 ${name} 文字不是豆腐块`, '界面正文本身没有可测的中文，无法自校准', detail);
+                    return stats;
+                }
+                // 自校准：弹出层的笔画密度至少要达到正文中文的 70%。
+                const ratio = bodyRef.meanRuns > 0 ? stats.meanRuns / bodyRef.meanRuns : 0;
+                const shapeOk = stats.distinctShapes >= Math.max(3, Math.floor(bodyRef.distinctShapes * 0.5));
+                check(`弹出层 ${name} 文字不是豆腐块`, ratio >= 0.7 && shapeOk,
+                    `${detail} 正文基准 meanRuns=${bodyRef.meanRuns.toFixed(2)} distinctShapes=${bodyRef.distinctShapes} 比值=${ratio.toFixed(2)}`);
+                return stats;
+            };
+            const closePopups = async () => {
+                await page.mouse.click(5, 5);
+                await page.keyboard.press('Escape');
+                await sleep(400);
+            };
+
+            // (0) 先打开种子对话（主内容区出现中文正文），量出**界面正文的中文笔画基准**，
+            //     后面三个弹出层都拿它自校准：弹出层是弹出层自己的字体问题，
+            //     正文是同一套渲染路径的对照组。
+            let opened = false;
+            for (const y of [140, 170, 200, 230, 110]) {
+                for (const x of [110, 150, 80]) {
+                    const before = await snapAll();
+                    await page.mouse.click(x, y);
+                    await sleep(900);
+                    const region = await popupRegion(before);
+                    if (region && region.bb.x > 40) { opened = true; break; }
+                }
+                if (opened) break;
+            }
+            check('侧栏对话可打开（主内容区有变化）', opened);
+            bodyRef = await measureBodyChinese();
+            check('界面正文有可测的中文（自校准基准）', !!bodyRef,
+                bodyRef ? `meanRuns=${bodyRef.meanRuns.toFixed(2)} distinctShapes=${bodyRef.distinctShapes} inkFrac=${bodyRef.inkFrac.toFixed(3)}` : '主内容区没有测到文字');
+
+            // (1) ToolTip：悬停侧栏「新建对话」按钮（提示是「新建对话（Ctrl / ⌘ + N）」）。
+            //     提示条是**扁而宽**的矩形，出现在按钮下方/右侧。
+            let tipFound = null;
+            for (const y of [150, 120, 180, 90, 210, 60, 240]) {
+                for (const x of [110, 60, 160, 200, 30]) {
+                    const before = await snapAll();
+                    await page.mouse.move(x, y);
+                    await sleep(700);
+                    const region = await popupRegion(before);
+                    if (region && region.bb.w > 12 && region.bb.w > region.bb.h * 1.5 && region.bb.h < 14) {
+                        tipFound = region; break;
+                    }
+                }
+                if (tipFound) break;
+            }
+            await assertPopup('tooltip', tipFound, tipFound && tipFound.bb);
+            await closePopups();
+
+            // (2) 上下文菜单：在消息卡上右键。
+            let menuRegion = null;
+            for (const [x, y] of [[600, 220], [600, 180], [700, 250], [500, 200]]) {
+                const before = await snapAll();
+                await page.mouse.click(x, y, { button: 'right' });
+                await sleep(700);
+                menuRegion = await popupRegion(before);
+                if (menuRegion && menuRegion.bb.h >= 6) break;
+                await closePopups();
+            }
+            await assertPopup('contextmenu', menuRegion, menuRegion && menuRegion.bb);
+            await closePopups();
+
+            // (3) 输入框右键菜单（MenuFlyoutPresenter）：右键到真正聚焦过的那个点。
+            await focusComposer();
+            let flyoutRegion = null;
+            for (const pt of [focusPoint, { x: 600, y: 400 }]) {
+                if (!pt) continue;
+                const before = await snapAll();
+                await page.mouse.click(pt.x, pt.y, { button: 'right' });
+                await sleep(700);
+                flyoutRegion = await popupRegion(before);
+                if (flyoutRegion && flyoutRegion.bb.h >= 5) break;
+                await closePopups();
+            }
+            await assertPopup('flyout', flyoutRegion, flyoutRegion && flyoutRegion.bb);
+            await closePopups();
         }
+        if (skipped > 0) console.log(`SKIP 小计 ${skipped} 条（环境限制，不计入失败）`);
         check('无未捕获页面异常', errors.length === 0, errors.slice(0, 3).join(' | '));
     } finally { await browser.close(); }
     process.exit(failed ? 1 : 0);

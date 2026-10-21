@@ -26,7 +26,7 @@
 # SPEC
 1. [LEMMA: 1, 3] 五个文件与旧实现逐段对照：逻辑差异只有设计层转调（`Tokens` → 活画笔 / `IconSet` / `ComposerDesk`）与注入端口，其余是注释（对照命令见「证据」）。
 2. [LEMMA: 2] 两个入口只经包消费本壳：`app/Desktop/Wanxiang.App.fsproj` 与 `app/Pwa/Wanxiang.Pwa.fsproj` 各有一条 `Wanxiang2.EntryShells` 的 `PackageReference`；`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（真实界面验收要人看，仓库内未自动化）。
-3. 本组合者无独立测试工程：`./x compose` 跳过它（`x` 的 `compose()` 注释点名无 tests/ 的组合者）；`./x pack` 产出的 `Wanxiang2.EntryShells.0.0.0-local.nupkg` 是编译级验收。
+3. 本组合者有独立测试工程 `compose/EntryShells/tests/EntryShells.Tests.fsproj`（`./x compose` 自动发现并运行）：覆盖弹出层字体契约（`PopupFontTests`：应用样式命中 / 窗口内实际生效 / 复合回落覆盖界面符号）与内嵌正文字体的基本可用性（`EmbeddedFontTests`）。
 4. [LEMMA: 1] 源级回归：`compose/Theme/tests/A11yRegression.fs`（迁自旧 `A11yRegressionTests`）的 `模型选择不再保留隐藏顶栏入口` 读 `compose/EntryShells/Composer.fs`，验证旧入口符号（`HeaderModelAnchor` / `SetHeaderModel`）不存在、新入口（`ModelAnchor()`）在；`./x compose` 运行。
 
 # 迁入或覆盖的旧测试

@@ -11,6 +11,48 @@ PUB=$(cd "$1" && pwd)
 PORT="${2:-$(python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1])')}"
 WORK=$(mktemp -d /tmp/wanxiang2-smoke-XXXX)
 mkdir -p "$WORK/data"
+# 预置一条对话（一条用户消息），让冒烟能真的打开对话、右键消息卡、触发弹出层。
+# 账本格式与宿主读的一致：RFC 7464 分帧（RS + 正文 + LF），正文是 JsonSeq 的提交外壳
+# {"v":1,"id":"<str>","at":"<ISO8601>","events":[…]}，事件是 EventJson 的形状
+# {"type":…,"version":1,"data":{…}}（见 libs/JsonSeq/Envelope.fs、libs/Conversations/EventJson.fs）。
+mkdir -p "$WORK/data/ledger"
+python3 - "$WORK/data/ledger/log.jsonseq" <<'PY'
+import json, sys
+
+path = sys.argv[1]
+conv = "11111111-2222-3333-4444-555555555555"
+
+def envelope(commit_id, at, events):
+    return json.dumps(
+        {"v": 1, "id": str(commit_id), "at": at, "events": events},
+        ensure_ascii=False, separators=(",", ":"))
+
+created = {
+    "type": "conversation.created",
+    "version": 1,
+    "data": {
+        "conversationId": conv,
+        "title": "中文冒烟",
+        "config": {"provider": "demo", "model": "test-model"},
+    },
+}
+message = {
+    "type": "agent-message-recorded",
+    "version": 1,
+    "data": {
+        "conversationId": conv,
+        "payload": {"role": "user", "contents": [{"type": "text", "text": "你好，世界"}]},
+    },
+}
+
+frames = b""
+for body in (envelope(1, "2026-10-21T00:00:00.0000000+00:00", [created]),
+             envelope(2, "2026-10-21T00:00:01.0000000+00:00", [message])):
+    frames += b"\x1e" + body.encode("utf-8") + b"\x0a"
+
+with open(path, "wb") as f:
+    f.write(frames)
+PY
 TOKEN="smoke-$(python3 -c 'import secrets;print(secrets.token_hex(16))')"
 HASH=$(printf '%s' "$TOKEN" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d' ' -f1)
 INSTANCE=$(python3 -c 'import uuid;print(uuid.uuid4())')
@@ -24,6 +66,12 @@ pwa = true
 fix = false
 [network]
 listen = "127.0.0.1:$PORT"
+# 一个不联网的假 provider：只为让预置的对话能出现在侧栏（目录按 provider 过滤）。
+[providers.demo]
+kind = "openai"
+baseUrl = "http://127.0.0.1:1/v1"
+models = ["test-model"]
+defaultModel = "test-model"
 
 [[auth.clients]]
 tokenHash = "$HASH"

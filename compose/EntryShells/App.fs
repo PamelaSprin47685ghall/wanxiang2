@@ -1,5 +1,6 @@
 namespace Wanxiang.UI
 
+open System
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Controls.ApplicationLifetimes
@@ -32,6 +33,42 @@ module TouchMenuGestures =
 
         s.Setters.Add(Setter(Visual.IsVisibleProperty, false))
         s
+
+/// 弹出层字体的显式契约（2026-10-21 PWA 中文豆腐块走查）。
+///
+/// 弹出层（ToolTip / ContextMenu / MenuFlyoutPresenter）挂在**独立的弹出根**上，
+/// 不在可视树里，继承不到根控件上设的 `TextElement.FontFamily`（PWA 入口在根上设了
+/// 内嵌字体，见 app/Pwa/Program.fs 的 buildViewsOnce）。browser-wasm 又拿不到系统
+/// 字体，于是弹出层里的中文渲染成豆腐块。
+///
+/// 这里把「哪些弹出层控件类型必须显式指定内嵌正文字体」写成一份可断言的清单，
+/// 由 App.Initialize 装成应用级样式；测试直接对着这份清单与实际生效的字体断言，
+/// 免得以后有人删掉其中一条样式却没人发现。
+module PopupFonts =
+
+    /// 必须显式指定内嵌字体的弹出层控件类型。
+    ///
+    /// - ToolTip：悬浮提示。
+    /// - ContextMenu / MenuItem：右键菜单本体与菜单项。
+    /// - MenuFlyoutPresenter：输入框的 ContextFlyout（Fluent 的剪切/复制/粘贴菜单）。
+    let popupTypes: Type list =
+        [
+            typeof<ToolTip>
+            typeof<ContextMenu>
+            typeof<MenuItem>
+            typeof<MenuFlyoutPresenter>
+        ]
+
+    /// 弹出层用的字体：内嵌正文字体（自带符号字族的逐字回落）。
+    let family () = SharedTheme.manager.FontFamily.Value
+
+    /// 每种弹出层一条样式：显式指定字体。
+    let styles () =
+        popupTypes
+        |> List.map (fun t ->
+            let s = Style(fun selector -> selector.OfType(t))
+            s.Setters.Add(Setter(TemplatedControl.FontFamilyProperty, family ()))
+            s)
 
 /// 万象应用（迁自宿主 src/Wanxiang.UI/App.fs；clean-room：仅以原项目为灵感，UI 独立设计）。
 ///
@@ -137,28 +174,13 @@ type App() =
 
         this.FlattenTextBoxChrome()
 
-        // 弹出层（ToolTip 等）挂在**独立的弹出根**上，不在可视树里，
-        // 继承不到根控件上设的 `TextElement.FontFamily`（PWA 入口在根上设了内嵌字体，
-        // 见 app/Pwa/Program.fs 的 buildViewsOnce）。
-        // browser-wasm 又拿不到系统字体，中文提示会渲染成豆腐块（视觉走查：
-        // 「Enter □□ / Shift+Enter □□」）。这里给 ToolTip 显式指定内嵌字体。
-        let toolTipFont = Style(fun selector -> selector.OfType<ToolTip>())
-        toolTipFont.Setters.Add(Setter(TemplatedControl.FontFamilyProperty, SharedTheme.manager.FontFamily.Value))
-        this.Styles.Add toolTipFont
-        // 右键菜单同理：ContextMenu 是弹出层，PWA 里菜单文字曾整排渲染成豆腐块。
-        for popupFont in
-            [
-                Style(fun selector -> selector.OfType<ContextMenu>())
-                Style(fun selector -> selector.OfType<MenuItem>())
-            ] do
-            popupFont.Setters.Add(Setter(TemplatedControl.FontFamilyProperty, SharedTheme.manager.FontFamily.Value))
+        // 弹出层（ToolTip / ContextMenu / MenuFlyoutPresenter）的字体：
+        // 挂在独立弹出根上，拿不到根控件的内嵌字体，browser-wasm 里中文会变豆腐块。
+        // 显式指定，理由与清单见 PopupFonts 模块。
+        for popupFont in PopupFonts.styles () do
             this.Styles.Add popupFont
 
         TextFlyoutLocale.apply this.Resources
-        // 输入框菜单是 MenuFlyoutPresenter（不是 ContextMenu），同样拿不到内嵌字体。
-        let flyoutFont = Style(fun selector -> selector.OfType<MenuFlyoutPresenter>())
-        flyoutFont.Setters.Add(Setter(TemplatedControl.FontFamilyProperty, SharedTheme.manager.FontFamily.Value))
-        this.Styles.Add flyoutFont
         // 决策 276：画布固定浅色变体，输入框菜单因此在深色主题下仍是一块白板。
         // 菜单底色 / 描边 / 文字改走万象的实时画笔，随主题补间一起变。
         let flyoutChrome = Style(fun selector -> selector.OfType<MenuFlyoutPresenter>())

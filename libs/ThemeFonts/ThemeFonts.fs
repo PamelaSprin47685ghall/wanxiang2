@@ -11,10 +11,24 @@ module ThemeFonts =
     let directory = "avares://ThemeFonts/Assets/Fonts/"
 
     /// 正文字体（比例宽度；等宽会把中文段落里的拉丁词拉成日志样）
-    let body = directory + "#Sarasa Gothic SC"
+    ///
+    /// 尾部的「符号字族」是**逐字回落**：Sarasa 子集不含 ⌘ ⚙ ✎ ✓ ✕ 📦 🔍 🗑 等符号，
+    /// browser-wasm 又拿不到系统字体，缺字就是豆腐块。Avalonia 的复合字族按**字符**回落
+    /// （FontManager.TryMatchCharacter 逐段尝试，见 Avalonia 12.1.2 源码），
+    /// 所以把符号字族列在后面即可补上这些码位。
+    let body = directory + "#Sarasa Gothic SC, " + directory + "#Wanxiang Symbols"
 
     /// 代码与等宽：等宽子集只含拉丁与符号，正文字体列为回落，否则中文变豆腐块
-    let mono = directory + "#Sarasa Term SC, Sarasa Gothic SC"
+    let mono =
+        directory
+        + "#Sarasa Term SC, "
+        + directory
+        + "#Sarasa Gothic SC, "
+        + directory
+        + "#Wanxiang Symbols"
+
+    /// 符号字族（Noto Sans Symbols 子集，OFL 1.1）：正文与等宽的逐字回落来源
+    let symbols = directory + "#Wanxiang Symbols"
 
     /// 同一目录下按字族名取字体（公式的 KaTeX_* 字族）
     let family (name: string) = FontFamily(directory + "#" + name)

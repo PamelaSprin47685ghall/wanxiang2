@@ -613,6 +613,12 @@ python3 tools/audit_inventory.py     # 表格输出 + tools/audit_inventory.json
 
 `tools/audit_inventory.json` 是本文表格的原始数据（每包一行：成员文件、消费者列表、外部依赖、Wanxiang2 依赖、`AGENTS.md`/`tests/`/`UNWIRED.md` 存在性）。
 
+`tools/audit_inventory.py` 是**手工重算的清点工具，不是门禁**：它不进 `./x check` / `./x all`，CI 也不执行。
+只在结构性变更后跑一次（新增/删除/合并 `libs/<Name>` 包、改动包的 `<Compile Include>` 成员文件、
+改动某包的 `PackageReference`、新增/删除包的生产消费者）；日常改代码不需要跑。
+它会**覆写** `tools/audit_inventory.json`，重算后请连同 `tools/audit_inventory.py` 一起提交，
+免得 JSON 与源码脱节。
+
 ## 7. PWA 输入上屏：三个真缺陷（2026-10-21 收尾）
 
 这一段是画廊照出来的**真 bug**，不是声明/归属错配。三个缺陷叠在一起，

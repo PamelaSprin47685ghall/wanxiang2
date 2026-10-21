@@ -4,3 +4,4 @@ obj/
 artifacts/
 node_modules/
 dist/
+__pycache__/

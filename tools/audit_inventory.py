@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
-"""库清单审计：每个 libs/<Name> 包的规模、自身依赖、生产消费者。"""
+"""库清单审计：每个 libs/<Name> 包的规模、自身依赖、生产消费者。
+
+用途：一次性清点全库清单（每包的生产文件数、生产 LOC、外部依赖、Wanxiang2 依赖、
+生产消费者、AGENTS.md/tests/UNWIRED.md 存在性），供 docs/W7-CLEANBREAK-AUDIT.md 的
+§1 表格引用；`tools/audit_inventory.json` 是本文表格的原始数据。
+
+触发时机：**只在结构性变更后手工重算一次**，即
+  - 新增/删除/合并 libs/<Name> 包，或改动包的 `<Compile Include>` 成员文件；
+  - 改动某包的 `PackageReference`（外部依赖或 Wanxiang2.* 依赖）；
+  - 新增/删除包的生产消费者（compose/ 或 app/ 下工程引用 `Wanxiang2.<Name>`）。
+日常改代码、改测试、跑构建**不需要**跑它；它不是门禁，不进 `./x check` / `./x all`，
+CI 也不执行（门禁由 ./x check、tools/assert-hygiene.sh、tools/lint-copy.sh 承担）。
+
+用法：仓库根执行 `python3 tools/audit_inventory.py`。
+它会打印表格并**覆写** tools/audit_inventory.json；重算后请连同本文件一起提交，
+免得 JSON 与源码脱节（下次重算时 diff 应为空或只反映真实变更）。
+"""
 import json, os, re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

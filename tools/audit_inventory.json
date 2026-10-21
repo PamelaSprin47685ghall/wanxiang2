@@ -6,7 +6,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 10,
-  "loc": 1344,
+  "loc": 1611,
   "members": [
    "ActionStrip.fs",
    "AttachmentChip.fs",
@@ -36,7 +36,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 43,
+  "loc": 47,
   "members": [
    "AgentHistory.fs"
   ],
@@ -56,14 +56,15 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 62,
+  "loc": 70,
   "members": [
    "Capabilities.fs",
    "TolerantReader.fs"
   ],
   "consumers": [
    "compose/AguiWire/AguiWire.fsproj",
-   "compose/Doctor/Doctor.fsproj"
+   "compose/Doctor/Doctor.fsproj",
+   "compose/WsConnection/WsConnection.fsproj"
   ],
   "external": [
    "AGUI.Abstractions"
@@ -77,7 +78,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 617,
+  "loc": 757,
   "members": [
    "AnthropicRequest.fs",
    "AnthropicStream.fs",
@@ -99,7 +100,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 1105,
+  "loc": 1475,
   "members": [
    "ConfigModel.fs",
    "TomlCodec.fs"
@@ -116,8 +117,10 @@
    "compose/McpClient/McpClient.fsproj",
    "compose/ProviderCatalog/ProviderCatalog.fsproj",
    "compose/ProviderTransports/ProviderTransports.fsproj",
+   "compose/ServerApp/ServerApp.fsproj",
    "compose/ToolApproval/ToolApproval.fsproj",
-   "compose/ToolRegistry/ToolRegistry.fsproj"
+   "compose/ToolRegistry/ToolRegistry.fsproj",
+   "compose/WsConnection/WsConnection.fsproj"
   ],
   "external": [
    "Tomlyn"
@@ -131,7 +134,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 180,
+  "loc": 207,
   "members": [
    "ApprovalCardText.fs",
    "ApprovalPanel.fs"
@@ -151,7 +154,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 42,
+  "loc": 43,
   "members": [
    "Approvals.fs"
   ],
@@ -168,7 +171,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 84,
+  "loc": 119,
   "members": [
    "AtomicTextFile.fs"
   ],
@@ -185,7 +188,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 6,
-  "loc": 93,
+  "loc": 153,
   "members": [
    "AttachmentAudit.fs",
    "HostProbe.fs",
@@ -207,7 +210,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 149,
+  "loc": 208,
   "members": [
    "AttachmentBlobs.fs",
    "MediaSniff.fs"
@@ -225,7 +228,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 31,
+  "loc": 52,
   "members": [
    "AttachmentRefs.fs"
   ],
@@ -243,7 +246,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 891,
+  "loc": 1085,
   "members": [
    "AttachmentTray.fs",
    "ComposerBox.fs",
@@ -267,7 +270,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 11,
-  "loc": 1259,
+  "loc": 1398,
   "members": [
    "BatchBar.fs",
    "ConversationRows.fs",
@@ -282,6 +285,7 @@
    "SidebarSelection.fs"
   ],
   "consumers": [
+   "compose/AppShell/AppShell.fsproj",
    "compose/SidebarDesk/SidebarDesk.fsproj"
   ],
   "external": [
@@ -298,7 +302,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 63,
+  "loc": 104,
   "members": [
    "BlockDiff.fs",
    "LinkChunks.fs"
@@ -316,7 +320,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 3,
-  "loc": 150,
+  "loc": 200,
   "members": [
    "BoundedCache.fs",
    "HighlightQueue.fs",
@@ -335,7 +339,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 346,
+  "loc": 415,
   "members": [
    "BoundedWait.fs",
    "HostHealth.fs",
@@ -357,7 +361,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 151,
+  "loc": 185,
   "members": [
    "BrandMark.fs",
    "ShellLayout.fs"
@@ -401,7 +405,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 10,
+  "loc": 11,
   "members": [
    "Canonical.fs"
   ],
@@ -420,7 +424,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 9,
-  "loc": 403,
+  "loc": 529,
   "members": [
    "CountdownTicker.fs",
    "DurationText.fs",
@@ -445,7 +449,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 95,
+  "loc": 106,
   "members": [
    "ChangeWatch.fs",
    "DeferredReveal.fs",
@@ -467,7 +471,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 6,
-  "loc": 615,
+  "loc": 758,
   "members": [
    "ChatEmpty.fs",
    "ChatEmptyText.fs",
@@ -494,7 +498,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 3,
-  "loc": 341,
+  "loc": 413,
   "members": [
    "BreadcrumbAction.fs",
    "ChatHeader.fs",
@@ -517,7 +521,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 82,
+  "loc": 158,
   "members": [
    "CliArgs.fs",
    "RunModes.fs"
@@ -536,7 +540,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 51,
+  "loc": 56,
   "members": [
    "ClientConnections.fs"
   ],
@@ -553,7 +557,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 40,
+  "loc": 51,
   "members": [
    "ClientToken.fs",
    "DesktopClient.fs"
@@ -573,7 +577,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 33,
+  "loc": 40,
   "members": [
    "ClientTomlFile.fs"
   ],
@@ -590,7 +594,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 65,
+  "loc": 91,
   "members": [
    "ColorBlend.fs",
    "ThemeTween.fs"
@@ -608,7 +612,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 63,
+  "loc": 74,
   "members": [
    "CommandFeedback.fs"
   ],
@@ -627,13 +631,14 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 13,
+  "loc": 14,
   "members": [
    "CommandId.fs"
   ],
   "consumers": [
    "compose/ChatDomain/ChatDomain.fsproj",
-   "compose/ChatOrchestrator/ChatOrchestrator.fsproj"
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj",
+   "compose/WsConnection/WsConnection.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -645,7 +650,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 143,
+  "loc": 180,
   "members": [
    "CommitTimeline.fs",
    "TextSocket.fs"
@@ -663,7 +668,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 121,
+  "loc": 153,
   "members": [
    "ComposerDrafts.fs"
   ],
@@ -683,7 +688,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 189,
+  "loc": 230,
   "members": [
    "ConfigFeedback.fs",
    "DownloadBuffers.fs",
@@ -705,7 +710,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 6,
-  "loc": 934,
+  "loc": 1103,
   "members": [
    "ConfirmPane.fs",
    "ConnectPane.fs",
@@ -731,7 +736,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 44,
+  "loc": 55,
   "members": [
    "ConnectionIssue.fs"
   ],
@@ -751,7 +756,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 56,
+  "loc": 62,
   "members": [
    "ContextTrim.fs",
    "UsageTally.fs"
@@ -771,7 +776,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 45,
+  "loc": 57,
   "members": [
    "ContinuableReply.fs",
    "TitleText.fs"
@@ -789,7 +794,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 162,
+  "loc": 205,
   "members": [
    "ConversationSummary.fs"
   ],
@@ -797,7 +802,6 @@
    "compose/CommandPalette/CommandPalette.fsproj",
    "compose/ConversationList/ConversationList.fsproj",
    "compose/ConversationRuns/ConversationRuns.fsproj",
-   "compose/Gallery/Gallery.fsproj",
    "compose/SidebarDesk/SidebarDesk.fsproj",
    "libs/WorkspaceState/WorkspaceState.fsproj"
   ],
@@ -811,7 +815,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 207,
+  "loc": 303,
   "members": [
    "ConversationTransfer.fs"
   ],
@@ -831,7 +835,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 597,
+  "loc": 755,
   "members": [
    "Conversations.fs",
    "EventJson.fs",
@@ -840,7 +844,12 @@
   ],
   "consumers": [
    "compose/ChatDomain/ChatDomain.fsproj",
-   "compose/Search/Search.fsproj"
+   "compose/ChatOrchestrator/ChatOrchestrator.fsproj",
+   "compose/Doctor/Doctor.fsproj",
+   "compose/EventStore/EventStore.fsproj",
+   "compose/Search/Search.fsproj",
+   "compose/ServerModel/ServerModel.fsproj",
+   "compose/WsConnection/WsConnection.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -852,7 +861,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 75,
+  "loc": 76,
   "members": [
    "CopyButton.fs"
   ],
@@ -875,7 +884,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 3,
-  "loc": 114,
+  "loc": 144,
   "members": [
    "DeviceListJson.fs",
    "DeviceRules.fs",
@@ -894,7 +903,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 120,
+  "loc": 150,
   "members": [
    "DevicesModel.fs"
   ],
@@ -915,7 +924,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 18,
-  "loc": 2485,
+  "loc": 3043,
   "members": [
    "DevicesPane.fs",
    "GeneralPane.fs",
@@ -953,7 +962,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 27,
+  "loc": 31,
   "members": [
    "DirLock.fs"
   ],
@@ -971,7 +980,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 234,
+  "loc": 343,
   "members": [
    "DraftBackend.fs",
    "DraftStore.fs"
@@ -1013,7 +1022,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 67,
+  "loc": 91,
   "members": [
    "ExchangeJump.fs"
   ],
@@ -1031,7 +1040,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 7,
-  "loc": 569,
+  "loc": 751,
   "members": [
    "ExportFileName.fs",
    "ExportSheet.fs",
@@ -1056,7 +1065,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 104,
+  "loc": 133,
   "members": [
    "FailureLimiter.fs",
    "PairingCode.fs"
@@ -1074,7 +1083,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 108,
+  "loc": 120,
   "members": [
    "FieldCheck.fs"
   ],
@@ -1094,7 +1103,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 299,
+  "loc": 404,
   "members": [
    "FocusOrigin.fs",
    "OverlayLayer.fs"
@@ -1114,7 +1123,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 68,
+  "loc": 98,
   "members": [
    "ForkLineage.fs"
   ],
@@ -1134,7 +1143,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 74,
+  "loc": 100,
   "members": [
    "FuzzyMatch.fs",
    "PinyinInitials.fs"
@@ -1152,7 +1161,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 45,
+  "loc": 58,
   "members": [
    "HljsCatalog.fs",
    "RichScripts.fs"
@@ -1170,7 +1179,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 300,
+  "loc": 431,
   "members": [
    "HostCatalog.fs",
    "ModelVision.fs"
@@ -1193,7 +1202,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 71,
+  "loc": 92,
   "members": [
    "HttpFailureFacts.fs"
   ],
@@ -1210,7 +1219,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 3,
-  "loc": 155,
+  "loc": 178,
   "members": [
    "HttpRetry.fs",
    "JsonPick.fs",
@@ -1229,7 +1238,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 176,
+  "loc": 183,
   "members": [
    "IconSet.fs"
   ],
@@ -1260,7 +1269,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 41,
+  "loc": 45,
   "members": [
    "ImageFit.fs"
   ],
@@ -1278,7 +1287,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 29,
+  "loc": 33,
   "members": [
    "ImeShield.fs"
   ],
@@ -1298,7 +1307,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 42,
+  "loc": 51,
   "members": [
    "InputSense.fs"
   ],
@@ -1317,7 +1326,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 31,
+  "loc": 34,
   "members": [
    "JintScriptHost.fs"
   ],
@@ -1336,7 +1345,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 69,
+  "loc": 74,
   "members": [
    "JsonLinesLog.fs"
   ],
@@ -1353,7 +1362,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 253,
+  "loc": 341,
   "members": [
    "JsonRpc.fs",
    "LineProcess.fs",
@@ -1373,7 +1382,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 7,
-  "loc": 352,
+  "loc": 483,
   "members": [
    "CheckpointJson.fs",
    "Envelope.fs",
@@ -1384,6 +1393,7 @@
    "Types.fs"
   ],
   "consumers": [
+   "compose/EventStore/EventStore.fsproj",
    "compose/LedgerStore/LedgerStore.fsproj"
   ],
   "external": [],
@@ -1396,7 +1406,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 148,
+  "loc": 164,
   "members": [
    "KatexHtml.fs"
   ],
@@ -1413,7 +1423,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 14,
+  "loc": 18,
   "members": [
    "KeyChord.fs"
   ],
@@ -1432,7 +1442,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 22,
+  "loc": 31,
   "members": [
    "LinkInbox.fs"
   ],
@@ -1449,7 +1459,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 42,
+  "loc": 66,
   "members": [
    "ListenAddress.fs",
    "WsHandshake.fs"
@@ -1467,7 +1477,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 92,
+  "loc": 139,
   "members": [
    "LocalHostGate.fs",
    "PwaAssets.fs",
@@ -1487,7 +1497,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 98,
+  "loc": 112,
   "members": [
    "LocalState.fs"
   ],
@@ -1506,7 +1516,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 209,
+  "loc": 251,
   "members": [
    "MarkdownBlocks.fs"
   ],
@@ -1525,7 +1535,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 12,
+  "loc": 13,
   "members": [
    "MathBaseline.fs"
   ],
@@ -1543,7 +1553,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 267,
+  "loc": 341,
   "members": [
    "MediaContent.fs",
    "MessageSerde.fs"
@@ -1564,12 +1574,13 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 76,
+  "loc": 100,
   "members": [
    "MediaTypes.fs"
   ],
   "consumers": [
    "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
    "compose/AppShell/AppShell.fsproj",
    "compose/ComposerDesk/ComposerDesk.fsproj",
    "compose/EntryShells/EntryShells.fsproj",
@@ -1586,7 +1597,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 57,
+  "loc": 79,
   "members": [
    "MessageText.fs",
    "TextMatch.fs"
@@ -1604,7 +1615,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 257,
+  "loc": 303,
   "members": [
    "MessageView.fs"
   ],
@@ -1615,6 +1626,7 @@
    "compose/ConversationExport/ConversationExport.fsproj",
    "compose/ConversationRuns/ConversationRuns.fsproj",
    "compose/ImageShrink/ImageShrink.fsproj",
+   "compose/ImageShrink/ImageShrinkIo.fsproj",
    "compose/MessageCardView/MessageCardView.fsproj",
    "compose/ProtocolDispatch/ProtocolDispatch.fsproj",
    "compose/TransferDesk/TransferDesk.fsproj",
@@ -1630,7 +1642,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 118,
+  "loc": 148,
   "members": [
    "ModelListing.fs"
   ],
@@ -1647,7 +1659,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 173,
+  "loc": 255,
   "members": [
    "ModelPickerList.fs",
    "ModelSwitchPanel.fs"
@@ -1667,7 +1679,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 24,
+  "loc": 32,
   "members": [
    "ModelSwitcher.fs"
   ],
@@ -1685,7 +1697,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 96,
+  "loc": 101,
   "members": [
    "MotionSwitch.fs"
   ],
@@ -1693,10 +1705,13 @@
    "app/Desktop/Wanxiang.App.fsproj",
    "app/Pwa/Wanxiang.Pwa.fsproj",
    "compose/AppShell/AppShell.fsproj",
+   "compose/Gallery/Gallery.fsproj",
    "compose/MessageCardView/MessageCardView.fsproj",
    "compose/ReadingLook/ReadingLook.fsproj",
+   "compose/ShellDesk/ShellDesk.fsproj",
    "compose/SidebarDesk/SidebarDesk.fsproj",
-   "compose/Theme/Theme.fsproj"
+   "compose/Theme/Theme.fsproj",
+   "compose/TransferDesk/TransferDesk.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -1708,7 +1723,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 51,
+  "loc": 74,
   "members": [
    "NavigationState.fs"
   ],
@@ -1727,7 +1742,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 23,
+  "loc": 24,
   "members": [
    "PairingCodeInput.fs"
   ],
@@ -1744,7 +1759,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 15,
+  "loc": 14,
   "members": [
    "PairingHint.fs"
   ],
@@ -1762,7 +1777,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 164,
+  "loc": 230,
   "members": [
    "PalettePanel.fs"
   ],
@@ -1781,7 +1796,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 64,
+  "loc": 90,
   "members": [
    "PayloadFields.fs"
   ],
@@ -1798,7 +1813,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 57,
+  "loc": 98,
   "members": [
    "PendingDeletion.fs"
   ],
@@ -1815,7 +1830,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 48,
+  "loc": 62,
   "members": [
    "PlainText.fs"
   ],
@@ -1834,7 +1849,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 202,
+  "loc": 265,
   "members": [
    "PopupMenu.fs"
   ],
@@ -1857,12 +1872,12 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 59,
+  "loc": 65,
   "members": [
    "PromptHistory.fs"
   ],
   "consumers": [
-   "compose/EntryShells/EntryShells.fsproj"
+   "compose/ComposerDesk/ComposerDesk.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -1874,7 +1889,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 33,
+  "loc": 34,
   "members": [
    "RefreshingPool.fs"
   ],
@@ -1909,7 +1924,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 57,
+  "loc": 80,
   "members": [
    "SandboxFiles.fs"
   ],
@@ -1926,7 +1941,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 16,
+  "loc": 19,
   "members": [
    "ServerErrorRoute.fs"
   ],
@@ -1943,7 +1958,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 26,
+  "loc": 33,
   "members": [
    "SharedHttpClients.fs"
   ],
@@ -1960,11 +1975,12 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 59,
+  "loc": 82,
   "members": [
    "ShortcutKeys.fs"
   ],
   "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
    "compose/AppShell/AppShell.fsproj",
    "compose/ShellCommands/ShellCommands.fsproj"
   ],
@@ -1978,12 +1994,13 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 66,
+  "loc": 81,
   "members": [
    "SpacingRamp.fs"
   ],
   "consumers": [
    "compose/ChatPane/ChatPane.fsproj",
+   "compose/ChatScreen/ChatScreen.fsproj",
    "compose/ComposerDesk/ComposerDesk.fsproj",
    "compose/DesignRhythm/DesignRhythm.fsproj",
    "compose/ReadingLook/ReadingLook.fsproj",
@@ -2019,23 +2036,28 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 427,
+  "loc": 429,
   "members": [
    "ThemeMetrics.fs"
   ],
   "consumers": [
    "app/Desktop/Wanxiang.App.fsproj",
    "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/ApprovalDesk/ApprovalDesk.fsproj",
    "compose/ChatPane/ChatPane.fsproj",
    "compose/ChatScreen/ChatScreen.fsproj",
    "compose/DialogsDesk/DialogsDesk.fsproj",
    "compose/EntryShells/EntryShells.fsproj",
    "compose/Gallery/Gallery.fsproj",
    "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ModelSwitchDesk/ModelSwitchDesk.fsproj",
+   "compose/PaletteDesk/PaletteDesk.fsproj",
    "compose/ReadingLook/ReadingLook.fsproj",
    "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/ShellDesk/ShellDesk.fsproj",
    "compose/SidebarDesk/SidebarDesk.fsproj",
-   "compose/Theme/Theme.fsproj"
+   "compose/Theme/Theme.fsproj",
+   "compose/TransferDesk/TransferDesk.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -2047,21 +2069,27 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 236,
+  "loc": 240,
   "members": [
    "ThemePalette.fs"
   ],
   "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
    "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/ApprovalDesk/ApprovalDesk.fsproj",
    "compose/ChatScreen/ChatScreen.fsproj",
    "compose/DialogsDesk/DialogsDesk.fsproj",
    "compose/EntryShells/EntryShells.fsproj",
    "compose/Gallery/Gallery.fsproj",
    "compose/MessageCardView/MessageCardView.fsproj",
+   "compose/ModelSwitchDesk/ModelSwitchDesk.fsproj",
+   "compose/PaletteDesk/PaletteDesk.fsproj",
    "compose/ReadingLook/ReadingLook.fsproj",
    "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/ShellDesk/ShellDesk.fsproj",
    "compose/SidebarDesk/SidebarDesk.fsproj",
    "compose/Theme/Theme.fsproj",
+   "compose/TransferDesk/TransferDesk.fsproj",
    "compose/Workspace/Workspace.fsproj"
   ],
   "external": [
@@ -2076,11 +2104,14 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 172,
+  "loc": 229,
   "members": [
    "ToastStrip.fs"
   ],
   "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
+   "compose/ApprovalDesk/ApprovalDesk.fsproj",
    "compose/DialogsDesk/DialogsDesk.fsproj",
    "compose/EntryShells/EntryShells.fsproj",
    "compose/OverlayDesk/OverlayDesk.fsproj",
@@ -2118,7 +2149,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 47,
+  "loc": 56,
   "members": [
    "ToolSummary.fs"
   ],
@@ -2138,7 +2169,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 159,
+  "loc": 182,
   "members": [
    "UiPrefs.fs"
   ],
@@ -2163,7 +2194,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 15,
+  "loc": 19,
   "members": [
    "UrlSchemeRegistration.fs"
   ],
@@ -2198,7 +2229,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 6,
-  "loc": 1618,
+  "loc": 2687,
   "members": [
    "RateLimit.fs",
    "SessionConfig.fs",
@@ -2232,9 +2263,12 @@
    "compose/ProviderFailure/ProviderFailure.fsproj",
    "compose/ProviderTransports/ProviderTransports.fsproj",
    "compose/Search/Search.fsproj",
+   "compose/ServerApp/ServerApp.fsproj",
    "compose/ServerModel/ServerModel.fsproj",
    "compose/ToolApproval/ToolApproval.fsproj",
    "compose/TransferDesk/TransferDesk.fsproj",
+   "compose/WsClient/WsClient.fsproj",
+   "compose/WsConnection/WsConnection.fsproj",
    "libs/WorkspaceState/WorkspaceState.fsproj"
   ],
   "external": [],
@@ -2247,7 +2281,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 11,
-  "loc": 1837,
+  "loc": 2676,
   "members": [
    "DraftSummaryText.fs",
    "ForkAnchor.fs",

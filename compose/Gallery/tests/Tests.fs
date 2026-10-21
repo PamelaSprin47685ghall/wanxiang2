@@ -251,3 +251,79 @@ module Tests =
         let idle = project "ComposerBox.idle"
         let typing = project "ComposerBox.typing"
         Assert.NotEqual<Wanxiang2.WorkspaceState.ComposerVS>(idle.Composer, typing.Composer)
+
+    [<Fact>]
+    let ``批量条：计数真的跟着选中项走`` () =
+        Headless.run (fun () ->
+            let control, _ = render "BatchBar.selection"
+            let words = texts control
+            Assert.Contains(words, (fun (w: string) -> w = "已选 2 项"))
+            Assert.Contains(words, (fun (w: string) -> w = "归档")))
+
+    [<Fact>]
+    let ``确认框：标题与取消键真的画了出来`` () =
+        Headless.run (fun () ->
+            let confirm, _ = render "ConfirmPane.confirm"
+            let confirmWords = texts confirm
+            Assert.Contains(confirmWords, (fun (w: string) -> w = "删除对话"))
+            Assert.Contains(confirmWords, (fun (w: string) -> w = "取消")))
+
+    [<Fact>]
+    let ``导出表：标题与状态行真的画了出来`` () =
+        Headless.run (fun () ->
+            let sheet, _ = render "ExportSheet.export"
+            let sheetWords = texts sheet
+            Assert.Contains(sheetWords, (fun (w: string) -> w.Contains("导出对话")))
+            Assert.Contains(sheetWords, (fun (w: string) -> w.Contains("正在生成 Markdown"))))
+
+    [<Fact>]
+    let ``浮层菜单：条目字与危险项真的画了出来`` () =
+        Headless.run (fun () ->
+            let control, _ = render "PopupMenu.menu"
+            let words = texts control
+            Assert.Contains(words, (fun (w: string) -> w = "复制"))
+            Assert.Contains(words, (fun (w: string) -> w = "删除对话")))
+
+    [<Fact>]
+    let ``字段校验：出错的输入壳真的标了 invalid`` () =
+        Headless.run (fun () ->
+            let control, _ = render "FieldCheck.invalid"
+            let words = texts control
+            Assert.Contains(words, (fun (w: string) -> w.Contains("地址不能为空")))
+
+            let invalidShells =
+                Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(control :> Avalonia.Visual)
+                |> Seq.choose (fun (v: Avalonia.Visual) ->
+                    match v with
+                    | :? Border as b when b.Classes.Contains Wanxiang2.FieldCheck.FieldCheck.InvalidClass -> Some b
+                    | _ -> None)
+                |> List.ofSeq
+
+            Assert.NotEmpty(invalidShells))
+
+    [<Fact>]
+    let ``提示条：删除对话后真的出现「已删除对话」`` () =
+        let vs = project "ToastStrip.toast"
+        Assert.Contains(vs.Toasts, (fun (t: Wanxiang2.WorkspaceState.ToastVS) -> t.Text = "已删除对话"))
+
+        Headless.run (fun () ->
+            let control, _ = render "ToastStrip.toast"
+            let words = texts control
+            Assert.Contains(words, (fun (w: string) -> w.Contains("已删除对话"))))
+
+    [<Fact>]
+    let ``品牌标与图标集：字与图标真的画了出来`` () =
+        Headless.run (fun () ->
+            let mark, _ = render "BrandMark.tile"
+            Assert.Contains(texts mark, (fun (w: string) -> w = "万"))
+            let icons, _ = render "IconSet.glyphs"
+
+            let iconCount =
+                Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(icons :> Avalonia.Visual)
+                |> Seq.filter (fun (v: Avalonia.Visual) ->
+                    match v with
+                    | :? Image -> true
+                    | _ -> false)
+                |> List.ofSeq
+
+            Assert.True(iconCount.Length >= 4))

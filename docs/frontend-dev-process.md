@@ -25,7 +25,7 @@
 | 桌面启动冒烟 | `tools/smoke_desktop.sh` | 进程退出码 0、stderr 有 `startup.firstFrame` 与 `startup.listReady` 打点、无未处理异常/异常栈行、数据目录有 `ledger/log.jsonseq`/`.lock`/`.lock.pid`、`attachments/` 存在、锁已释放、临时目录被清理 | 证明「窗口真的画出来了并且应用能干净退出」。**firstFrame 是打点，不是画面**：一个全黑、错位、只有骨架的窗口同样会打出 firstFrame。它还依赖 `DISPLAY`（默认 `:0`），本机无 X 时只能靠 CI 的 ubuntu runner。 |
 | 发布产物 PWA 冒烟 | `tools/smoke_published.sh` + `tools/smoke_published_pwa.js` | headless Chrome（`puppeteer-core`，根 `package.json` 的 devDependency）打开发布产物：画布出现、DPR=2（像素= CSS×2）、画布非纯色（64×64 采样**至少 3 种颜色**）、CDP `Input.insertText` 走文本上屏桥、认证态下草稿 800 ms 自动落 IndexedDB、重开页面草稿恢复、无页面异常 | 「画布非纯色」= **画布不是一块纯色**。一个只有背景色加一条错误提示的界面照样通过。交互只覆盖「把字塞进输入框」，不覆盖发送、审批、删除、搜索、主题切换。 |
 | 性能采样 | `tools/perf_desktop.sh`（N 次启动读 `StartupTrace` 打点）、`tools/perf_pwa.js` | 冷启动 `firstFrame` / `listReady` 的毫秒数 | 脚本注释写「跑 N 次取中位数」，**实现只是逐次 echo，没有取中位数、没有阈值、没有进 CI**。性能是观测工具，不是门禁。 |
-| 组件画廊（人工工具） | `compose/Gallery` + `tools/gallery.sh` | `--list` 列出 **24** 条状态条目；`--window` 开真实桌面窗口；`--render <条目名> <输出.png>` 出一个 **720×900** 的 PNG（实测 `MessageCardView.toolcall`）。**它不是门禁**：没有基线、没有 diff，渲染变了 CI 不会红。 |
+| 组件画廊（人工工具） | `compose/Gallery` + `tools/gallery.sh` | `--list` 列出 **40** 条状态条目；`--window` 开真实桌面窗口；`--render <条目名> <输出.png>` 出一个 **720×900** 的 PNG（实测 `MessageCardView.toolcall`）。**它不是门禁**：没有基线、没有 diff，渲染变了 CI 不会红。 |
 | 金样 | `compose/*/tests/golden/*.txt`、`libs/ThemeFonts/tests/golden/fonts.sha256` | 协议字节、错误文案、公式 HTML 与**公式控件的布局量**（`compose/MathFigure/tests/Probe.fs` 用 `RenderTargetBitmap` 量 Bounds / 基线 / 留白 / 读屏名；**整块像素哈希已从金样移除**——Skia 在 macOS 的 CoreText 与 Linux 的 FreeType 上光栅化结果不同，跨平台不稳定，故只做同一进程内的前后像素对比） | 公式渲染一处做的是**布局级**锁定，**不再**是跨平台像素级锁定。根 AGENTS.md 已明令「不再新增与旧仓库死代码比对的金样测试」，所以这里**没有**可复用的全界面视觉回归基线。 |
 
 ### 1.3 唯一可复用的技术前提
@@ -53,7 +53,7 @@
   bash tools/gallery.sh --window                             # 打开真实桌面窗口看这些状态
   bash tools/gallery.sh --render MessageCardView.toolcall /tmp/gallery.png   # 渲染单个状态成 PNG
   ```
-  `--list` 现有 **24** 条；`--render MessageCardView.toolcall /tmp/gallery.png` 产出 **720×900** 的 PNG（`file` 报 `PNG image data, 720 x 900`）。
+  `--list` 现有 **40** 条；`--render MessageCardView.toolcall /tmp/gallery.png` 产出 **720×900** 的 PNG（`file` 报 `PNG image data, 720 x 900`）。
 - **画廊解决了什么**：控件的某个状态不再只能通过「整条用户旅程」触达——它现在可以被单独列出来、单独渲染、单独看。
 - **画廊没有解决什么（不要误当门禁）**：
   - **它不是像素回归门禁**。`--render` 出一张 PNG 供人看，但**没有基线、没有 diff、没有 CI 判定**。谁改了渲染结果，CI 不会红。
@@ -154,7 +154,7 @@
 
 - **跑什么**：`compose/Gallery` 组合者 + `tools/gallery.sh` 外壳：
   ```
-  bash tools/gallery.sh --list                              # 24 条条目
+  bash tools/gallery.sh --list                              # 40 条条目
   bash tools/gallery.sh --window                             # 真实桌面窗口
   bash tools/gallery.sh --render <条目名> <输出.png>          # 单个状态 → PNG（720×900）
   ```
@@ -165,7 +165,7 @@
 
 ### G3 — 视觉回归（像素 diff）
 
-- **跑什么**：以 G2 的**状态矩阵**为输入（24 条，`tools/gallery.sh --list`），用**已有的** `RenderTargetBitmap` 手法（照抄 `compose/MathFigure/tests/Probe.fs`）对每个状态渲染，基线存在画廊组合者的 tests 目录下的 golden 子目录里。**用 PNG 做逐像素 diff，不建议用像素哈希**：`compose/MathFigure/AGENTS.md` LEMMA 1 已记下，Skia 在 macOS（CoreText）与 Linux（FreeType）上光栅化结果不同，整块像素哈希**跨平台不稳定**（金样里那部分已被移除，见 §1.2）。深浅两套主题都做。
+- **跑什么**：以 G2 的**状态矩阵**为输入（40 条，`tools/gallery.sh --list`），用**已有的** `RenderTargetBitmap` 手法（照抄 `compose/MathFigure/tests/Probe.fs`）对每个状态渲染，基线存在画廊组合者的 tests 目录下的 golden 子目录里。**用 PNG 做逐像素 diff，不建议用像素哈希**：`compose/MathFigure/AGENTS.md` LEMMA 1 已记下，Skia 在 macOS（CoreText）与 Linux（FreeType）上光栅化结果不同，整块像素哈希**跨平台不稳定**（金样里那部分已被移除，见 §1.2）。深浅两套主题都做。
 - **与画廊的关系**：画廊**已经能出 PNG**（`--render` 出 720×900），但**没有基线也没有 diff**——所以 G3 不是「让画廊出图」，而是「给这些图加基线与判定」。G3 未建之前，画廊出的 PNG 只供人看。
 - **成本**：未建，不给数字（没有可核对的测量就不写）。要预先说清的是：基线的**审核**成本随控件数线性增长，所以必须配「基线变更需附截图」的评审规则，否则基线会变成无人看的锁。
 - **拦什么**：§2.(a) 的全部布局/配色/遮挡/裁切缺陷，以及主题切换后样式没跟上的问题。
@@ -208,7 +208,7 @@
 | | 内容 | 状态 |
 | --- | --- | --- |
 | G1 | 断言卫生门禁（`./x hygiene`） | **已建** |
-| G2 | 组件画廊（`compose/Gallery` + `tools/gallery.sh`） | **已建**（24 条条目） |
+| G2 | 组件画廊（`compose/Gallery` + `tools/gallery.sh`） | **已建**（40 条条目） |
 | G5 的一半 | 产品文案规则（`./x lint`） | **已建**（从测试套件迁出，范围补到 libs+compose+app） |
 | G7 | 界面改动交付清单（本文 §5） | **已建** |
 | G6 的格式部分 | F# 格式门禁（`./x check` 里的 `dotnet fantomas --check`） | **已建**（Fantomas 8.0.10 钉版 + `.editorconfig`；全仓已重排） |
@@ -222,7 +222,7 @@
   2. **G2/G3/G4/G5 全部建在现有测试之上**——如果底层的断言是恒真的，那么画廊、像素基线、e2e、无障碍遍历都会继承这份不可信。**先修断言，再修覆盖面，顺序不能反。**
   3. 它直接处理本次审计最硬的发现：§4 列出的恒真与空断言。
 
-**G2（组件画廊）已建成**（24 条条目，见 §2.(b)）：它是「快回路」的一部分，也是 G3（像素基线）的输入来源；但 G3 仍未建——**画廊出图不等于像素门禁**。
+**G2（组件画廊）已建成**（40 条条目，见 §2.(b)）：它是「快回路」的一部分，也是 G3（像素基线）的输入来源；但 G3 仍未建——**画廊出图不等于像素门禁**。
 
 ---
 
@@ -381,7 +381,7 @@ bash tools/gallery.sh --render <条目名> /tmp/gallery.png     # 单个状态 �
 - **跑本仓组合者测试时的两个陈旧缓存坑**（都实测踩过，写在这里免得下一个人再踩）：
   1. **全局 NuGet 缓存会留下旧的本仓包**——`~/.nuget/packages/wanxiang2.*` 里存着旧版本的本仓包（实测 84 个目录）。跑本仓组合者测试若**不带** `-p:RestorePackagesPath="$PWD/artifacts/packages"`，会解析到旧程序集，表现为「**我明明改了却不生效**」。
   2. **`bin/` 里的陈旧同名 dll 会让 F# 编译器解析到错误的程序集**——包合并之后输出目录里可能还留着合并前的独立 dll（例如合并 `ComposerSendState` 时留着旧的 `ComposerSendState.dll`），编译器就以为它还是独立程序集，报一堆「类型找不到」。合并后先清输出目录再构建。
-- 画廊覆盖 **24** 条条目（`--list` 实测）。**覆盖不到的条目要如实说「画廊里没有这一条」**，不要假装看过了。
+- 画廊覆盖 **40** 条条目（`--list` 实测）。**覆盖不到的条目要如实说「画廊里没有这一条」**，不要假装看过了。
 - 画廊的夹具**已收口**：附件、侧栏多选、错误卡三条状态归属都落定了（见 `compose/Gallery/AGENTS.md`《已知缺口与各自的归属》）。画廊**如实渲染当前真实状态**——看到的就是现在的真实样子，不是应有的样子。
 - 侧栏多选已收口：画廊的 `SidebarDesk.batch` 条目走**真状态树消息**（`SidebarUserMsg.EnterBatch` + `SidebarUserMsg.ToggleBatch` → `update` → `project` → 渲染），不再调侧栏自己的 API。
 - **画廊是确定性的**：状态用固定时钟（`Scenes.fixedNow = 2026-10-21T08:00:00Z`），同一条目连渲两次 PNG **逐字节相同**（实测 `MessageCardView.toolcall` 两次渲染 md5 一致）。这让「同一状态渲染两次做像素 diff」成为可能——但**基线与判定仍没建**（G3 未建）。
@@ -426,7 +426,7 @@ CI 里这三道秒级门禁在同一个 `hygiene` 作业里跑；`./x all` 的�
 - **本轮加上的三样**：
   1. **断言卫生门禁**（`./x hygiene`）——把「恒真断言 / 恒真谓词 / 空转的事实」变成红灯；已用植入**原始**缺陷验证会红。
   2. **界面文案门禁**（`./x lint`）——产品文案规则（术语表、取消类提示须写明 Esc、中文省略号、PWA 壳术语）从测试套件迁出，覆盖范围补到 `libs` + `compose` + `app`。
-  3. **组件画廊**（`compose/Gallery` + `tools/gallery.sh`）——24 条状态条目可单独列出、渲染（720×900 PNG）与人工查看。**它是工具，不是门禁。**
+  3. **组件画廊**（`compose/Gallery` + `tools/gallery.sh`）——40 条状态条目可单独列出、渲染（720×900 PNG）与人工查看。**它是工具，不是门禁。**
 - **仍然没有的**：像素级视觉回归、浏览器侧真实交互 e2e、无障碍树整树遍历断言、真机屏幕阅读器实测。
 - **Top 3 缺口（按严重度）**：
   1. **没有任何像素级或真实交互级的界面门禁**（§2.a + §2.d）——界面正确性仍然**没有自动化担保**；§5 的清单里第 4、5、9 步靠人。

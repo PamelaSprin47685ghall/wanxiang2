@@ -32,6 +32,8 @@ type GalleryContext =
         Styles: ThemeStyles
         /// 浮层根（对话框与浮层挂这里）
         OverlayRoot: Grid
+        /// 浮层桌（对话框、浮层、提示条都挂它；提示条带就是真实的 ToastStrip 控件）
+        Overlay: OverlayDesk
         /// 侧栏
         Sidebar: SidebarDesk
         /// 输入区
@@ -230,6 +232,7 @@ module Gallery =
             Theme = theme
             Styles = styles
             OverlayRoot = root
+            Overlay = overlay
             Sidebar = sidebar
             Composer = composer
             Chat = chat
@@ -554,6 +557,480 @@ module Gallery =
                         let panel = StackPanel(Spacing = 8.0, Width = 520.0)
                         panel.Children.Add(skeleton.Host)
                         panel :> Control
+            }
+
+
+            // ---- ActionStrip（消息脚注的操作条）----
+            {
+                Name = "ActionStrip.actions"
+                Widget = "ActionStrip"
+                Note = "操作条：复制与删除两个图标键"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let strip =
+                            Wanxiang2.ActionStrip.ActionStrip(Wanxiang2.ActionStrip.StripRest.Subtle)
+
+                        strip.Render(
+                            {
+                                Items =
+                                    [
+                                        {
+                                            Id = "copy"
+                                            Glyph = "copy"
+                                            Tip = "复制"
+                                            Name = "复制助手消息"
+                                            Help = "把这条回复复制到剪贴板"
+                                            Enabled = true
+                                        }
+                                        {
+                                            Id = "delete"
+                                            Glyph = "trash"
+                                            Tip = "删除"
+                                            Name = "删除助手消息"
+                                            Help = "删掉这条回复"
+                                            Enabled = true
+                                        }
+                                    ]
+                                Subtle = false
+                                Visible = true
+                            },
+                            ignore
+                        )
+
+                        let panel = StackPanel(Orientation = Orientation.Horizontal, Spacing = 4.0)
+                        panel.Children.Add(strip.Host)
+                        panel :> Control
+            }
+
+            // ---- ApprovalPanel（工具审批卡）----
+            {
+                Name = "ApprovalPanel.approval"
+                Widget = "ApprovalPanel"
+                Note = "审批卡：模型想用工具，等用户批准"
+                Steps =
+                    Scenes.withConversation (JsonArray())
+                    @ [
+                        Scenes.Wire(
+                            WireEvent.ToolApprovalRequested
+                                {|
+                                    approvalId = Guid.Parse "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+                                    conversationId = Guid.Parse Scenes.conversationId
+                                    generationId = Guid.Parse "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+                                    callId = "call-1"
+                                    toolName = "read_file"
+                                    summary = "读取 /tmp/example.txt"
+                                    arguments = JsonNode.Parse """{"path":"/tmp/example.txt"}"""
+                                    policy = "first"
+                                    expiresInSeconds = 120
+                                |}
+                        )
+                    ]
+                Build =
+                    fun ctx vs ->
+                        ctx.Approval.Render(vs.Approval, Some(Guid.Parse Scenes.conversationId))
+                        ctx.Approval.View
+            }
+
+            // ---- AttachmentTray（输入区附件托盘）----
+            {
+                Name = "AttachmentTray.items"
+                Widget = "AttachmentTray"
+                Note = "托盘：一张已就绪的图片与一个上传中的文件"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let tray = Wanxiang2.AttachmentTray.AttachmentTray()
+
+                        let items: Wanxiang2.AttachmentTray.TrayItem list =
+                            [
+                                {
+                                    Id = Guid.Parse "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                                    FileName = "screenshot.png"
+                                    SizeText = "200 KB"
+                                    StateText = "已就绪"
+                                    Tip = "200 KB · image/png"
+                                    Name = "screenshot.png"
+                                    Failed = false
+                                    Ready = true
+                                    IsImage = true
+                                    ShrinkNote = None
+                                    Thumbnail = None
+                                }
+                                {
+                                    Id = Guid.Parse "dddddddd-dddd-dddd-dddd-dddddddddddd"
+                                    FileName = "notes.txt"
+                                    SizeText = "12 KB"
+                                    StateText = "上传中 40%"
+                                    Tip = "12 KB · text/plain"
+                                    Name = "notes.txt"
+                                    Failed = false
+                                    Ready = false
+                                    IsImage = false
+                                    ShrinkNote = None
+                                    Thumbnail = None
+                                }
+                            ]
+
+                        tray.Render(items, false)
+                        let panel = StackPanel(Spacing = 4.0)
+                        panel.Children.Add(tray.Host)
+                        panel :> Control
+            }
+
+            // ---- BatchBar（多选批量条）----
+            {
+                Name = "BatchBar.selection"
+                Widget = "BatchBar"
+                Note = "批量条：已选 2 项，全选与置顶 / 归档 / 删除"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let bar = Wanxiang2.BatchBar.BatchBar()
+
+                        bar.Render(
+                            Some
+                                {
+                                    SelectedCount = 2
+                                    AllSelected = false
+                                    Busy = false
+                                    AllPinned = false
+                                }
+                        )
+
+                        let panel = StackPanel(Spacing = 8.0)
+                        panel.Children.Add(bar.Header)
+                        panel.Children.Add(bar.ActionBar)
+                        panel :> Control
+            }
+
+            // ---- BrandMark（品牌标）----
+            {
+                Name = "BrandMark.tile"
+                Widget = "BrandMark"
+                Note = "品牌标：没有图时退化成「万」字"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let panel = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)
+                        panel.Children.Add(Wanxiang2.BrandMark.BrandMark.tile None 48.0)
+                        panel :> Control
+            }
+
+            // ---- ChatHeader（对话顶栏）----
+            {
+                Name = "ChatHeader.header"
+                Widget = "ChatHeader"
+                Note = "顶栏：对话标题、侧栏键与更多键"
+                Steps = Scenes.withConversation (JsonArray())
+                Build =
+                    fun ctx vs ->
+                        ctx.Chat.Header.Render vs.Header
+                        ctx.Chat.Header.Host
+            }
+
+            // ---- ConfirmPane（破坏性操作确认）----
+            {
+                Name = "ConfirmPane.confirm"
+                Widget = "ConfirmPane"
+                Note = "确认框：标题、正文与取消 / 删除两键"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let pane =
+                            Wanxiang2.ConfirmPane.ConfirmPane("删除对话", "「画廊里的第一条对话」将被删除，8 秒内可撤销。", "删除", false)
+
+                        pane.View
+            }
+
+            // ---- DevicesPane（设置里的设备分区）----
+            {
+                Name = "DevicesPane.devices"
+                Widget = "DevicesPane"
+                Note = "设备分区：配对码、地址与已授权设备"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let pane = Wanxiang2.DevicesPane.DevicesPane()
+
+                        let qr =
+                            [| [| true; false; true |]; [| false; true; false |]; [| true; true; false |] |]
+
+                        let state: Wanxiang2.DevicesPane.DevicesPaneState =
+                            {
+                                Invite =
+                                    Wanxiang2.DevicesPane.DevicesPaneInvite.Code(
+                                        "482913",
+                                        "四八二九一三",
+                                        "4 分 58 秒后失效",
+                                        false,
+                                        Wanxiang2.DevicesPane.DevicesPaneAddress.Reachable("ws://192.168.1.10:8080", qr)
+                                    )
+                                List =
+                                    Wanxiang2.DevicesPane.DevicesPaneList.Rows
+                                        [
+                                            {
+                                                Id = "dev-1"
+                                                Name = "phone"
+                                                Title = "我的手机"
+                                                Meta = "这台设备 · 手机 · 在线 · 创建于 2026-10-20"
+                                                Revoked = false
+                                                CanRename = true
+                                                CanRevoke = true
+                                            }
+                                        ]
+                                Editing = None
+                            }
+
+                        pane.Render state
+                        pane.View
+            }
+
+            // ---- ExportSheet（导出对话框）----
+            {
+                Name = "ExportSheet.export"
+                Widget = "ExportSheet"
+                Note = "导出对话框：状态行、进度条与保存两键"
+                Steps = Scenes.authed
+                Build =
+                    fun ctx _ ->
+                        let brush k = ctx.Theme.Brush k :> IBrush
+
+                        let look: Wanxiang2.ExportSheet.ExportSheetAppearance =
+                            {
+                                Text = brush Wanxiang2.ThemePalette.PaletteKey.Text
+                                Muted = brush Wanxiang2.ThemePalette.PaletteKey.TextMuted
+                                Success = brush Wanxiang2.ThemePalette.PaletteKey.Success
+                                Danger = brush Wanxiang2.ThemePalette.PaletteKey.Danger
+                            }
+
+                        let sheet = Wanxiang2.ExportSheet.ExportSheet(look, "画廊里的第一条对话", "导出的文件只写在本机。")
+
+                        sheet.Render(
+                            {
+                                StatusText = "正在生成 Markdown"
+                                Tone = Wanxiang2.ExportSheet.ExportSheetTone.Text
+                                Progress = Wanxiang2.ExportSheet.ExportSheetProgress.Determinate 40.0
+                                Action =
+                                    Wanxiang2.ExportSheet.ExportSheetAction.Save(
+                                        Wanxiang2.ExportSheet.ExportSaveGate.Enabled,
+                                        true
+                                    )
+                                CloseText = "取消导出"
+                            }
+                        )
+
+                        sheet.View
+            }
+
+            // ---- FieldCheck（字段级校验反馈）----
+            {
+                Name = "FieldCheck.invalid"
+                Widget = "FieldCheck"
+                Note = "字段校验：出错时输入壳标红并给出错误行"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let check = Wanxiang2.FieldCheck.FieldCheck()
+                        let box = TextBox(PlaceholderText = "主机地址")
+                        let shell = Border(Child = box, Padding = Thickness(8.0))
+                        let message = check.MessageFor(box)
+                        check.ApplyError(box, "地址不能为空")
+                        let panel = StackPanel(Spacing = 4.0)
+                        panel.Children.Add(shell)
+                        panel.Children.Add(message)
+                        panel :> Control
+            }
+
+            // ---- FocusOrigin（聚焦来源标记）----
+            {
+                Name = "FocusOrigin.programmatic"
+                Widget = "FocusOrigin"
+                Note = "聚焦来源：接上报告器后，程序化聚焦会给控件挂 focus-by-program 类"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let button = Button(Content = "程序化聚焦我")
+                        Wanxiang2.FocusOrigin.FocusOrigin.report button
+                        let panel = StackPanel(Spacing = 8.0)
+                        panel.Children.Add(button)
+                        panel :> Control
+            }
+
+            // ---- IconSet（Lucide 图标集）----
+            {
+                Name = "IconSet.glyphs"
+                Widget = "IconSet"
+                Note = "图标集：搜索、齿轮、扳手与数据库"
+                Steps = Scenes.authed
+                Build =
+                    fun ctx _ ->
+                        let brush = ctx.Theme.Brush Wanxiang2.ThemePalette.PaletteKey.Text :> IBrush
+
+                        let size =
+                            ctx.Theme.Metric Wanxiang2.ThemeMetrics.Metric.IconGlyph :> IObservable<float>
+
+                        let panel = StackPanel(Orientation = Orientation.Horizontal, Spacing = 12.0)
+
+                        for glyph in
+                            [
+                                Wanxiang2.IconSet.Glyph.Search
+                                Wanxiang2.IconSet.Glyph.Gear
+                                Wanxiang2.IconSet.Glyph.Wrench
+                                Wanxiang2.IconSet.Glyph.Database
+                            ] do
+                            panel.Children.Add(Wanxiang2.IconSet.IconSet.image glyph brush size)
+
+                        panel :> Control
+            }
+
+            // ---- ModelSwitchPanel（模型切换浮层）----
+            {
+                Name = "ModelSwitchPanel.models"
+                Widget = "ModelSwitchPanel"
+                Note = "模型切换：搜索框、模型行与默认 / 当前标记"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let slots: Wanxiang2.ModelSwitchPanel.ModelSwitchSlots =
+                            {
+                                Groups = (fun _ opts -> [ None, opts ])
+                                SearchHelp = "输入筛选，↑↓ 选择，回车切换"
+                                EmptyText = "没有匹配的模型"
+                                AppliesNote = "切换只影响当前对话，新对话仍用默认模型。"
+                            }
+
+                        let options: Wanxiang2.ModelSwitchPanel.ModelChoice list =
+                            [
+                                {
+                                    ProviderId = "openai"
+                                    ProviderLabel = "OpenAI"
+                                    Model = "gpt-5"
+                                    IsCurrent = true
+                                    IsDefault = true
+                                }
+                                {
+                                    ProviderId = "anthropic"
+                                    ProviderLabel = "Anthropic"
+                                    Model = "claude-opus-4"
+                                    IsCurrent = false
+                                    IsDefault = false
+                                }
+                            ]
+
+                        Wanxiang2.ModelSwitchPanel.ModelSwitchPanel.build None slots options "切换模型" ignore
+            }
+
+            // ---- PalettePanel（命令面板）----
+            {
+                Name = "PalettePanel.palette"
+                Widget = "PalettePanel"
+                Note = "命令面板：搜索框、最近使用与结果计数"
+                Steps = Scenes.authed
+                Build =
+                    fun _ _ ->
+                        let slots: Wanxiang2.PalettePanel.PaletteSlots =
+                            {
+                                Query =
+                                    (fun _ ->
+                                        {
+                                            Rows =
+                                                [
+                                                    {
+                                                        Id = "conv-1"
+                                                        Title = "画廊里的第一条对话"
+                                                        Subtitle = "上一条回复的摘要"
+                                                        KindLabel = "对话"
+                                                        Shortcut = Some "Ctrl+1"
+                                                        Recent = true
+                                                    }
+                                                    {
+                                                        Id = "act-1"
+                                                        Title = "新建对话"
+                                                        Subtitle = "开始一条新对话"
+                                                        KindLabel = "操作"
+                                                        Shortcut = None
+                                                        Recent = false
+                                                    }
+                                                ]
+                                            MatchCount = 2
+                                            HasRecent = true
+                                        })
+                                CompactKeys = (fun keys -> keys)
+                                PrefersTouch = (fun () -> false)
+                            }
+
+                        let content, _search =
+                            Wanxiang2.PalettePanel.PalettePanel.build slots (fun _ _ -> ())
+
+                        content
+            }
+
+            // ---- PopupMenu（浮层菜单）----
+            {
+                Name = "PopupMenu.menu"
+                Widget = "PopupMenu"
+                Note = "浮层菜单：复制、重命名与危险项删除"
+                Steps = Scenes.authed
+                Build =
+                    fun ctx _ ->
+                        let look = (overlayLook ctx.Theme).Menu
+
+                        let entries: Wanxiang2.PopupMenu.PopupEntry list =
+                            [
+                                {
+                                    Label = "复制"
+                                    Hint = "Ctrl+C"
+                                    Icon = None
+                                    Selected = false
+                                    Danger = false
+                                    Action = ignore
+                                }
+                                {
+                                    Label = "重命名"
+                                    Hint = ""
+                                    Icon = None
+                                    Selected = true
+                                    Danger = false
+                                    Action = ignore
+                                }
+                                {
+                                    Label = "删除对话"
+                                    Hint = ""
+                                    Icon = None
+                                    Selected = false
+                                    Danger = true
+                                    Action = ignore
+                                }
+                            ]
+
+                        match Wanxiang2.PopupMenu.PopupMenu.build look ignore entries with
+                        | Some content -> content
+                        | None -> Border() :> Control
+            }
+
+            // ---- ToastStrip（提示条带）----
+            {
+                Name = "ToastStrip.toast"
+                Widget = "ToastStrip"
+                Note = "提示条：删除对话后的成功提示"
+                Steps =
+                    Scenes.withConversation (JsonArray())
+                    @ [
+                        Scenes.Msg(
+                            Msg.User(
+                                UserMsg.Sidebar(SidebarUserMsg.DeleteConversation(Guid.Parse Scenes.conversationId))
+                            )
+                        )
+                    ]
+                Build =
+                    fun ctx vs ->
+                        // 提示条带是**真的 ToastStrip 控件**（外观与 OverlayDesk 同一份口径），
+                        // 但自己带一条：OverlayDesk 那条已经挂在浮层根上，
+                        // 拿它当画布内容会二次挂父（控件不能有两个父）。
+                        let strip = Wanxiang2.ToastStrip.ToastStrip((overlayLook ctx.Theme).Toasts)
+                        strip.Render vs.Toasts
+                        strip.View :> Control
             }
         ]
 

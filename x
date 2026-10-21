@@ -49,6 +49,48 @@ abspath() { python3 -c 'import os,sys; print(os.path.abspath(os.path.normpath(sy
 # wanxiang2.slnx 逐字节比对（2026-10-18 首轮 CI 就因为本机 en_US 与 runner 的 C 排序不同而失败）。
 sort_c() { LC_ALL=C sort "$@"; }
 
+# 控件库判定：什么算「控件库」（判据见根 AGENTS.md §5《控件库交付约定（沿用）》）。
+# libs/<Name>/ 的生产源码（不含 tests/、obj/、bin/）里构造了 Avalonia 控件类型清单
+# （tools/avalonia-controls.txt，外部 API 的快照）中的至少一个类型 → 该库是控件库。
+# 清单是外部 API 事实的快照，不是仓库事实，所以放在 tools/ 下并写明再生成方法。
+control_types_pattern() {
+  { grep -v '^#' tools/avalonia-controls.txt || true; } | grep -v '^[[:space:]]*$' | paste -sd'|' -
+}
+
+# 控件库名单（每行一个库名）。
+control_libs() {
+  local pattern; pattern="$(control_types_pattern)"
+  for d in libs/*/; do
+    local name; name="$(basename "$d")"
+    local hit
+    hit="$(find "$d" \( -name '*.fs' -o -name '*.cs' \) \
+      -not -path '*/tests/*' -not -path '*/obj/*' -not -path '*/bin/*' \
+      -exec grep -lP "(?<![.\\w])($pattern)\\(" {} + 2>/dev/null | head -1 || true)"
+    if [[ -n "$hit" ]]; then echo "$name"; fi
+  done
+}
+
+# 画廊条目覆盖的控件库（从 compose/Gallery/Gallery.fs 的 Widget = "..." 读，不另设名单）。
+gallery_widgets() {
+  grep -oP 'Widget\s*=\s*"\K[^"]+' compose/Gallery/Gallery.fs 2>/dev/null | sort -u || true
+}
+
+# 控件库覆盖：每个控件库都要在 compose/Gallery 至少有一条条目。
+# 覆盖数写在全局 GALLERY_COVERED（缺失的库在 stdout 上逐条报错），返回值非零即有缺口。
+GALLERY_COVERED=0
+gallery_coverage() {
+  local bad=0 covered=0
+  local widgets; widgets="$(gallery_widgets)"
+  for lib in $(control_libs); do
+    if grep -qx "$lib" <<< "$widgets"; then covered=$((covered+1)); else
+      echo "FAIL $lib: control library has no gallery entry"
+      bad=1
+    fi
+  done
+  GALLERY_COVERED=$covered
+  return $bad
+}
+
 check() {
   local bad=0
   for lib in $(libs); do
@@ -129,7 +171,11 @@ FAIL $f: references missing $ref"
   # F# 格式门禁（Fantomas）：规则在 .editorconfig，工具版本钉在 .config/dotnet-tools.json。
   # 只需源码、不需构建产物，所以放在依赖检查之后、最后汇总之前。
   if ! format_check; then bad=1; fi
-  [[ $bad == 0 ]] && echo "check ok: $(libs | wc -l) libs with no sibling references; $(composers | wc -l) composer(s) using packages only"
+  # 控件库覆盖：每个控件库都要在 compose/Gallery 至少有一条条目（判据见根 AGENTS.md §5）。
+  local covered=0
+  if ! gallery_coverage; then bad=1; fi
+  covered="$GALLERY_COVERED"
+  [[ $bad == 0 ]] && echo "check ok: $(libs | wc -l) libs with no sibling references; $(composers | wc -l) composer(s) using packages only; $covered control librar(y|ies) with a gallery entry"
   return $bad
 }
 

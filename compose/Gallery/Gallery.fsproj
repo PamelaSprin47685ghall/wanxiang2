@@ -42,5 +42,20 @@
     <PackageReference Include="Wanxiang2.ShellDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatEmpty" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ActionStrip" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ApprovalPanel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AttachmentTray" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BatchBar" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.BrandMark" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ChatHeader" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ConfirmPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.DevicesPane" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ExportSheet" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.FieldCheck" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.FocusOrigin" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ModelSwitchPanel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PalettePanel" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

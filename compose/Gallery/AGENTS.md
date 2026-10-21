@@ -54,7 +54,7 @@
 
 ## 条目
 
-24 条，按控件库分：
+40 条，按控件库分（每个控件库至少一条，由 `./x check` 核对；判据见根 `AGENTS.md` §5《控件库交付约定（沿用）》）：
 
 | 控件库 | 条目 |
 | --- | --- |
@@ -64,6 +64,22 @@
 | `SettingsScreen` | `SettingsScreen.providers` / `.tools` / `.generation` / `.devices` / `.appearance` / `.about`（六个分区各一条） |
 | `OverlayDesk` | `OverlayDesk.dialog.confirm` / `.prompt` / `.connect` / `.shortcuts`（四种对话框） |
 | `ChatEmpty` | `ChatEmpty.skeleton`（对话列骨架屏） |
+| `ActionStrip` | `ActionStrip.actions`（消息脚注的操作条） |
+| `ApprovalPanel` | `ApprovalPanel.approval`（工具审批卡——走真实 `ToolApprovalRequested` 事件） |
+| `AttachmentTray` | `AttachmentTray.items`（一张已就绪的图片与一个上传中的文件） |
+| `BatchBar` | `BatchBar.selection`（已选 2 项） |
+| `BrandMark` | `BrandMark.tile`（没有图时退化成「万」字） |
+| `ChatHeader` | `ChatHeader.header`（对话顶栏——走状态树投影 `vs.Header`） |
+| `ConfirmPane` | `ConfirmPane.confirm`（破坏性操作确认） |
+| `DevicesPane` | `DevicesPane.devices`（配对码、地址与已授权设备） |
+| `ExportSheet` | `ExportSheet.export`（导出对话框） |
+| `FieldCheck` | `FieldCheck.invalid`（字段级校验反馈） |
+| `FocusOrigin` | `FocusOrigin.programmatic`（聚焦来源标记） |
+| `IconSet` | `IconSet.glyphs`（Lucide 图标集） |
+| `ModelSwitchPanel` | `ModelSwitchPanel.models`（模型切换浮层） |
+| `PalettePanel` | `PalettePanel.palette`（命令面板） |
+| `PopupMenu` | `PopupMenu.menu`（浮层菜单） |
+| `ToastStrip` | `ToastStrip.toast`（删除对话后的成功提示——走真实 `DeleteConversation` 消息） |
 
 ## 命令
 
@@ -100,8 +116,8 @@ bash tools/gallery.sh --window                            开交互窗口（开�
    画廊用一串消息直接把它造出来。
 
 ## SPEC
-1. [LEMMA: 1] `tests/Tests.fs`（11 条，全是**状态差异**断言，不是「没抛异常 / 不是空板 / 清单对得上」那类烟雾）。
-   **当前 11 条全过**（实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 11, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
+1. [LEMMA: 1] `tests/Tests.fs`（18 条，全是**状态差异**断言，不是「没抛异常 / 不是空板 / 清单对得上」那类烟雾）。
+   **当前 18 条全过**（实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 18, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
    - `输入区：空闲、输入中、带附件、生成中是四个不同的状态`（读投影：草稿文本、托盘、发送键状态、禁用位）；
    - `输入区：未连接时禁用并给出原因`（`DisabledReason` 与侧栏空态）；
    - `对话列：空态、有消息、流式是三个不同的状态`（流式那条走**真的** `generation.delta`，
@@ -115,16 +131,22 @@ bash tools/gallery.sh --window                            开交互窗口（开�
    - `对话框：确认框真的把标题、正文与确认键画了出来`；
    - `骨架屏：真的处于显示态且带呼吸类`；
    - `画廊的每个条目都由状态树驱动：投影真的变了`（钉住「画廊不是手搓记录」这个前提本身）。
+   - `批量条：计数真的跟着选中项走`（断言「已选 2 项」与「归档」真的在控件里）；
+   - `确认框与导出表：标题与状态真的画了出来`（断言「删除对话」/「取消」/「正在生成 Markdown」）；
+   - `浮层菜单：条目字与危险项真的画了出来`（断言「复制」/「删除对话」）；
+   - `字段校验：出错的输入壳真的标了 invalid`（断言错误文案与 `invalid` 类）；
+   - `提示条：删除对话后真的出现「已删除对话」`（断言投影里的 toast 与控件树里的字）；
+   - `品牌标与图标集：字与图标真的画了出来`（断言「万」与 4 个图标控件）；
 
    **断言从状态树与真实控件读事实，不抄控件树的字符串**：抄来的期望值换个控件实现就假了，
    而状态差异是画廊存在的理由。
 
-2. [LEMMA: 2] `bash tools/gallery.sh --list` 列出 24 条；
+2. [LEMMA: 2] `bash tools/gallery.sh --list` 列出 40 条；
    `bash tools/gallery.sh --render MessageCardView.toolcall /tmp/g.png` 产出一张
-   `PNG image data, 720 x 900`（实测 18510 字节）。24 条逐条渲染全部成功（实测）。
+   `PNG image data, 720 x 900`（实测 18510 字节）。40 条逐条渲染全部成功（实测）。
 3. [LEMMA: 2] `bash tools/gallery.sh --window` 开交互窗口：左侧条目表、右侧真实控件，
    点条目即切换。改一个控件库 → 只重建那个库 → 重开窗口就看到新样子。
-   实测：窗口标题「万象组件画廊」，左侧 24 条条目表（选中项高亮），右侧是选中条目的真实控件。
+   实测：窗口标题「万象组件画廊」，左侧 40 条条目表（选中项高亮），右侧是选中条目的真实控件。
 
 ## 已知缺口与各自的归属
 
@@ -186,6 +208,26 @@ bash tools/gallery.sh --window                            开交互窗口（开�
      不发明「只带部分附件」的消息；草稿与附件都留着，等用户处理完再发。
 
    `ComposerBox.attachments` 的用例因此**转绿**：画廊测试 **11 条全过**。
+
+5. **2026-10-21 新增的 16 条控件库条目 —— 状态来源逐条登记。**
+   判据（什么算控件库）见根 `AGENTS.md` §5《控件库交付约定（沿用）》；
+   「每个控件库至少一条条目」由 `./x check` 机器核对（不设人工名单）。
+
+   **走真状态树的条目**（视图状态来自 `Workspace.project`）：
+   - `ChatHeader.header`：喂 `vs.Header` 给 `ctx.Chat.Header.Render`；
+   - `ToastStrip.toast`：喂真消息 `SidebarUserMsg.DeleteConversation` → 投影里的 `vs.Toasts` → `ctx.Overlay.RenderToasts`；
+   - `ApprovalPanel.approval`：喂真线协议事件 `WireEvent.ToolApprovalRequested` → 投影里的 `vs.Approval` → `ctx.Approval.Render`。
+
+   **走该控件自己的真实入口的条目**（这些状态本来就属于控件库自己，状态树里没有它的投影，
+   手搓 `WorkspaceViewState` 才是错的）：
+   `ActionStrip.actions`、`AttachmentTray.items`、`BatchBar.selection`、`BrandMark.tile`、
+   `ConfirmPane.confirm`、`DevicesPane.devices`、`ExportSheet.export`、`FieldCheck.invalid`、
+   `FocusOrigin.programmatic`、`IconSet.glyphs`、`ModelSwitchPanel.models`、`PalettePanel.palette`、
+   `PopupMenu.menu`。
+
+   这些条目喂给控件的是**库自己的输入类型**（`ActionStripVS` / `TrayItem` / `BatchBarVS` /
+   `DevicesPaneState` / `ExportSheetState` / `ModelChoice` / `PaletteRow` / `PopupEntry`），
+   不是工作区的投影记录——两者是不同的东西，不构成「手搓视图状态」。
 
 ## 与旧实现的差异
 无（旧仓库没有画廊这一物）。

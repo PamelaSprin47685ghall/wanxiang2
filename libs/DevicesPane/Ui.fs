@@ -153,8 +153,10 @@ module internal Ui =
         panel.Children.Add shell
         // 没有单独命名的输入框，用字段标题作可访问名（读屏能听到这一栏叫什么）。
         let existing = AutomationProperties.GetName shell
+
         if String.IsNullOrWhiteSpace existing then
             AutomationProperties.SetName(shell, labelStr)
+
         validation |> Option.iter (fun v -> panel.Children.Add v)
         panel :> Control
 

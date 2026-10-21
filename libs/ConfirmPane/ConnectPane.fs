@@ -72,6 +72,7 @@ type ConnectPane(?defaultUrl: string, ?rules: CodeRules) =
 
     let pairingHint =
         TextBlock(Text = effectiveRules.Hint initialUrl, TextWrapping = TextWrapping.Wrap)
+
     do pairingHint.Classes.Add "muted"
 
     let codeSection =

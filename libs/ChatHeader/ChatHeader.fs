@@ -132,6 +132,8 @@ type ChatHeader() =
             HorizontalAlignment = HorizontalAlignment.Stretch
         )
 
+    do AutomationProperties.SetName(editBox, "对话标题")
+
     let editShell =
         Border(
             CornerRadius = CornerRadius 4.0,

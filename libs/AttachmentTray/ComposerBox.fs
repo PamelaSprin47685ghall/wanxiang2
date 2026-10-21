@@ -59,6 +59,7 @@ type ComposerBox() =
         )
 
     do input.Classes.Add "text-area"
+    do AutomationProperties.SetName(input, "输入消息")
 
     let shell =
         Border(CornerRadius = CornerRadius 8.0, BorderThickness = Thickness 1.0, Padding = Thickness(12.0, 8.0))

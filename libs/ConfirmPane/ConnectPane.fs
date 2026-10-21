@@ -51,8 +51,10 @@ type ConnectPane(?defaultUrl: string, ?rules: CodeRules) =
 
     let urlBox = TextBox(PlaceholderText = "ws://127.0.0.1:8765/ws")
     do urlBox.Classes.Add "control-stroke"
+    do AutomationProperties.SetName(urlBox, "主机地址")
     let tokenBox = TextBox(PlaceholderText = "有令牌就粘贴，没有就用配对码")
     do tokenBox.Classes.Add "control-stroke"
+    do AutomationProperties.SetName(tokenBox, "访问令牌")
 
     let fieldGroup label (box: Control) =
         let p = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
@@ -66,10 +68,10 @@ type ConnectPane(?defaultUrl: string, ?rules: CodeRules) =
     let tokenField = fieldGroup "访问令牌" tokenBox
     let codeBox = TextBox(PlaceholderText = "6 位配对码")
     do codeBox.Classes.Add "control-stroke"
+    do AutomationProperties.SetName(codeBox, "配对码")
 
     let pairingHint =
         TextBlock(Text = effectiveRules.Hint initialUrl, TextWrapping = TextWrapping.Wrap)
-
     do pairingHint.Classes.Add "muted"
 
     let codeSection =

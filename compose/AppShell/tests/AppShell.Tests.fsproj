@@ -8,6 +8,7 @@
     <Compile Include="JourneyAttachmentTests.fs" />
     <Compile Include="DraftSaveGateTests.fs" />
     <Compile Include="ExpiryDeletionTests.fs" />
+    <Compile Include="A11yTraversalTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

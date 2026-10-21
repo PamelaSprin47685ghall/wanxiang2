@@ -240,6 +240,7 @@ type SessionPrefsPane(?modelPicker: Control, ?init: SessionPrefsInit, ?validatio
         let lbl = TextBlock(Text = label, FontWeight = FontWeight.Medium)
         lbl.Classes.Add "muted"
         p.Children.Add lbl
+        do AutomationProperties.SetName(box, label)
         p.Children.Add box
 
         match validationFor with

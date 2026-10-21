@@ -9,6 +9,7 @@
 
 - 依据：读旧仓库的 `src/Wanxiang.UI` 与 `src/Wanxiang.Pwa/wwwroot` 源码（对应今天的 `libs/*` + `compose/*` 与 `app/Pwa/wwwroot`），按调色板数值计算 WCAG 2.x 对比度。
 - 未做：真机屏幕阅读器（NVDA / VoiceOver / TalkBack）实测、PWA 的 Lighthouse 跑分、真实 Tab 轨迹录像。以下凡写“待实测”的条目都属此类。
+- **已自动化（2026-10-22，决策 G5）**：整棵无障碍树遍历断言 `compose/AppShell/tests/A11yTraversalTests.fs`（随 `compose/AppShell` 的测试跑）。它在无头 Avalonia 里搭出全部主屏幕，把每棵控件树走一遍，断言**每个可聚焦控件都有可访问名称与角色**。判定口径见 §4 与 §8。
 - 判据：文字 ≥ 4.5:1（WCAG 1.4.3）；焦点环等非文本指示器 ≥ 3:1（1.4.11）；所有可交互控件有可访问名称（4.1.2）；键盘可达且焦点可见（2.1.1 / 2.4.7）。
 
 ## 2. 对比度
@@ -42,6 +43,13 @@
 
 - 共享原语 `iconButton`（今天在 `UiKit`）在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。
 - 规则（已测）：图标按钮调用不得传空字符串或 null 作为 tip，否则按钮对辅助技术是无名控件。
+- **整树遍历断言（已测，决策 G5）**：`compose/AppShell/tests/A11yTraversalTests.fs` 对每个主屏幕的控件树（视觉树 ∪ 逻辑树）逐节点判定：
+  - 可聚焦 = `Focusable` 且沿祖先链可见且沿祖先链可用（与 `libs/FocusOrigin` 的 `focusables` 同口径）；
+  - 可访问名称 = 自动化 peer 的 `GetName()`，为空时退回 `AutomationProperties.Name`；自动派生的类型名（`Avalonia.*` / `*Control` / `*Panel` / `*Presenter`）不算名字；
+  - 角色 = 自动化 peer 的 `GetAutomationControlType()`；`None`（未暴露给辅助技术）与 `Custom`（未指定具体角色）都算缺角色。
+  - 覆盖的屏幕：工作区、侧栏、对话区、输入区、审批区、起步引导、命令面板、模型切换浮层、提示条、重命名 / 确认 / 编辑消息 / 连接 / 对话设置对话框、快捷键帮助、导出面板、导入面板，以及设置页的 6 个分区（模型服务 / 工具 / 对话默认值 / 设备 / 外观与操作 / 关于）。
+  - 违例一次性汇总成一份清单（屏幕 / 路径 / 控件类型 / 原因），便于一次改完。
+  - 边界：弹层内容不在工作区的视觉树里，所以每个弹层按自己的树单独走；这条断言只管**名字与角色**，不管焦点顺序、朗读顺序与实际发音。
 - PWA 启动页有 `role="status"`、`aria-live`、`aria-busy`，装饰条 `aria-hidden`，图片有 `alt`。入口页 `lang="zh-CN"`，viewport 不禁止缩放。
 
 ## 5. 动效
@@ -77,7 +85,7 @@
 | ~~输入框静止态边界对比度~~ | 全部输入壳 | 已由 `ControlStroke`（2026-10-18，见 §2）解决，机械断言在 `compose/Theme/tests/A11yRegression.fs` |
 | ~~术语：会话→对话~~ | 已由 W6 完成 | 见 §6 |
 | ~~快捷键格式统一~~ | 已统一 | 见 §6 |
-| 屏幕阅读器实测 | 全部 | 见 §1 |
+| 屏幕阅读器实测 | 全部 | 见 §1（**仍需人工**） |
 | ~~仓库 `NuGet.config` 的 `fallbackPackageFolders` 写死了某开发者家目录，目录不存在时 restore 报 NU1301~~ | 旧仓库的 NuGet.config | 旧仓库问题；本仓库 `NuGet.config` 已重写为本地 feed（`artifacts/feed`，见 `./x pack`）+ nuget.org，无家目录写死 |
 
 ## 8. 回归测试清单
@@ -93,5 +101,18 @@
 - 图标按钮无空名称；共享原语同时设置 ToolTip 与 AutomationProperties.Name
 - 文案：禁用同义词、禁用 `...`、取消类提示含 Esc
 - PWA：`lang`、`<title>`、可缩放、启动页 aria、`prefers-reduced-motion`、`:focus-visible`、manifest 名称与图标
+
+`compose/AppShell/tests/A11yTraversalTests.fs`（2026-10-22 新增，决策 G5；UI 测试，随 `compose/AppShell` 的测试跑，需要无头 Avalonia 会话）：
+
+- 每个主屏幕（工作区 / 侧栏 / 对话区 / 输入区 / 审批区 / 起步引导 / 命令面板 / 模型切换浮层 / 提示条 / 五个对话框 / 快捷键帮助 / 导出面板 / 导入面板）与设置页 6 个分区：每个可聚焦控件都有可访问名称
+- 同一批控件都有角色（control type），不允许 `None` / `Custom`
+- 口径与边界见 §4
+
+**这条断言替不了的，仍要人在真机上做**：
+
+- 真机屏幕阅读器实测（NVDA / VoiceOver / TalkBack）：名字念出来是否通顺、角色念出来是否符合预期、中文混排是否错读；
+- PWA 壳的 Lighthouse / axe 跑分与浏览器内置可访问性树；
+- 真实 Tab 轨迹录像：焦点顺序是否与视觉顺序一致、焦点环是否始终可见、弹层关闭后焦点是否回到触发处；
+- 高对比度模式、字体放大、屏幕阅读器与浏览器快捷键抢键的实测。
 
 新增调色板槽位或新的取消类控件时，先看是否需要补进这些测试。

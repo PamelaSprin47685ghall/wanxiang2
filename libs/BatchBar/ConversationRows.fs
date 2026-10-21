@@ -64,6 +64,7 @@ type ConversationRows() =
     let list =
         ListBox(Background = Brushes.Transparent, BorderThickness = Thickness 0.0, Focusable = true)
 
+    do AutomationProperties.SetName(list, "对话列表")
     let rowHosts = Dictionary<Guid, Control>()
     let moreButtons = Dictionary<Guid, Button>()
     let models = Dictionary<Guid, RowModel>()

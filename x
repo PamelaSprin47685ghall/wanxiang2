@@ -137,10 +137,13 @@ FAIL $f: references missing $ref"
 # 格式工具是本地工具（.config/dotnet-tools.json），没恢复过就先 restore 一次。
 format_check() {
   local restore_out out rc=0
-  if ! restore_out="$(dotnet tool restore 2>&1)"; then
-    echo "FAIL format: dotnet tool restore failed"
-    echo "$restore_out" | tail -5
-    return 1
+  # 工具已经在本地时直接用（dotnet tool restore 会碰 NuGet 缓存，没必要每次都跑）。
+  if ! dotnet fantomas --version >/dev/null 2>&1; then
+    if ! restore_out="$(dotnet tool restore 2>&1)"; then
+      echo "FAIL format: dotnet tool restore failed"
+      echo "$restore_out" | tail -5
+      return 1
+    fi
   fi
   out="$(dotnet fantomas --check . 2>&1)" || rc=$?
   if [[ $rc == 0 ]]; then return 0; fi

@@ -91,15 +91,19 @@
 - **会漏掉的缺陷**：新增控件忘记设 `AutomationProperties.Name`（屏幕阅读器读作「按钮」）、把 `TextBlock` 当按钮用（角色错）、`AccessibilityView` 未设 Raw（内容被朗读两遍）、Tab 序与视觉序错位。
 - **今天为什么漏**：`docs/ux/a11y-audit.md` §4 写明「旧仓库当时有 220 余处 `AutomationProperties` 使用」——**这个总数本身说明覆盖面远超现有零散断言；今天的机械检查只剩逐点手写断言，全树遍历断言（§3 G5）仍待建。**
 
-### (f) 没有格式 / lint 门禁
+### (f) 格式门禁已建；lint 门禁只覆盖文案
 
-- **实测仓库现状**：
-  - **没有 `.editorconfig`**（`ls .editorconfig` 不存在）。
-  - **没有 Fantomas 配置**：无 `.config/dotnet-tools.json`、无 `fantomas.json`、根 `package.json` 只有 `puppeteer-core`、`Directory.Build.props` / `Directory.Packages.props` 里没有 `Fantomas` 相关项。
-  - **CI 没有任何 lint/format 步骤**。
-  - 唯一接近的编译级约束：`Directory.Build.props` 的 `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` 与 `<WarnOn>3390;1182</WarnOn>`——**只管编译器警告，不管格式**。
-- **会漏掉的缺陷**：F# 格式漂移让 diff 噪声淹没真改动（review 疲劳 → 漏审）；没有 lint 意味着「未使用的绑定」「模式匹配写错」「可变状态误用」这类编译器抓不到的错误要靠人眼。
-- **今天为什么漏**：仓库用 `AGENTS.md` 承载了全部约定（很详尽），但**约定没有机器强制的那一层**，全靠评审自觉。
+- **实测仓库现状（2026-10-21 更新）**：
+  - **`.editorconfig` 已存在**（仓库根），写明 F# 格式规则：缩进 4、行宽 120、LF、文件末换行，以及 Fantomas 8 的多行括号风格（`aligned`）。
+  - **Fantomas 已钉版**：`.config/dotnet-tools.json` 钉住本地工具 `fantomas 8.0.10`（`rollForward: false`），`dotnet tool restore` 即可复现同一版本。
+  - **`.fantomasignore` 排除生成物**（`bin/`、`obj/`、`artifacts/`、`node_modules/`），格式门禁不会误报构建产物。
+  - **门禁已接进 `./x check`**：`check()` 末尾跑 `dotnet fantomas --check .`，未格式化的文件逐个打印 `FAIL format` 行并让 `./x check` 以非零退出。
+  - **一次性重排用 `./x format`**（等价于 `dotnet tool restore && dotnet fantomas .`）。
+  - CI 侧：`./x check` 是 CI 的 `check` 作业，格式门禁随它一起跑。
+  - 仍**没有**的：F# 语义层面的 lint（未使用的绑定、模式匹配写错、可变状态误用这类编译器抓不到的错误）——`./x lint` 管的是**界面文案**（禁用同义词 / 取消类提示须写明 Esc / 中文省略号 / PWA 壳术语），不是代码格式。
+  - 编译级约束仍在：`Directory.Build.props` 的 `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` 与 `<WarnOn>3390;1182</WarnOn>`。
+- **还剩的缺陷**：格式漂移已经拦住，但「F# 语义 lint」这一类仍然只靠人眼。
+- **状态**：格式部分**已解除**（见 §3 G6）；语义 lint 未建。
 
 ### (g) `docs/ux/a11y-audit.md` 自身记录的「待实测」项
 
@@ -183,12 +187,14 @@
 - **拦什么**：§2.(e) 的无名称控件、角色错、重复朗读。
 - **怎么响**：遍历断言失败时打印「控件类型 + 所在路径 + 缺什么」，CI 红。
 
-### G6 — 格式 / lint 门禁
+### G6 — 格式 / lint 门禁 —— **格式部分已建**
 
-- **跑什么**：加 `.editorconfig`（F# 标准缩进 + 行尾 + 换行），用 `dotnet tool` 本地清单（`.config/dotnet-tools.json`）引入 **Fantomas**，CI 增加一步只检查**变更文件**（避免一次性重排全仓造成巨型 diff）。
-- **成本**：未建，不给数字。**首次全仓格式化会产生大 diff**——建议策略：先只对**新改动的文件**强制，全仓格式化另起一次独立提交并在 PR 里说明。
-- **拦什么**：格式漂移导致的 diff 噪声（review 疲劳）、以及 F# lint 类问题。
-- **怎么响**：`fantomas --check` 非零退出，逐文件列出未格式化路径。
+- **跑什么（已建）**：仓库根 `.editorconfig` 写明 F# 格式规则（Fantomas 8 的显式默认值：缩进 4、行宽 120、LF、文件末换行、`fsharp_multiline_bracket_style = aligned`）；`.config/dotnet-tools.json` 把本地工具 **Fantomas 8.0.10** 钉死（`rollForward: false`）；`.fantomasignore` 挡掉 `bin/` `obj/` `artifacts/` `node_modules/`；`./x check` 的 `check()` 末尾跑 `dotnet fantomas --check .`。
+- **一次性重排**：`./x format`（= `dotnet tool restore && dotnet fantomas .`）。
+- **成本（实测）**：全仓 895 个 `.fs`，重排动了 **816 个文件、+54644 / −19854** 行，**纯排版、行为不变**；一次提交（`a4727a3`）落地。门禁本身只需源码，不依赖构建产物，`./x check` 里多花约 60 秒（整仓 `--check` 的耗时）。
+- **拦什么**：格式漂移导致的 diff 噪声（review 疲劳 → 漏审）。
+- **怎么响（实测）**：`fantomas --check` 退出码 99 → `./x check` 打印 `FAIL format: F# files are not formatted (run: dotnet tool restore && dotnet fantomas .)` 并逐个列出 `! <路径> needs formatting.`，`./x check` 退出码 **1**。
+- **仍未建**：**F# 语义层面的 lint**（未使用的绑定、模式匹配写错、可变状态误用这类编译器抓不到的错误）。`./x lint` 管的是界面文案，不是代码格式。
 
 ### G7 — 界面改动完成定义（DoD）清单
 
@@ -205,10 +211,11 @@
 | G2 | 组件画廊（`compose/Gallery` + `tools/gallery.sh`） | **已建**（24 条条目） |
 | G5 的一半 | 产品文案规则（`./x lint`） | **已建**（从测试套件迁出，范围补到 libs+compose+app） |
 | G7 | 界面改动交付清单（本文 §5） | **已建** |
+| G6 的格式部分 | F# 格式门禁（`./x check` 里的 `dotnet fantomas --check`） | **已建**（Fantomas 8.0.10 钉版 + `.editorconfig`；全仓已重排） |
 | G4 | 浏览器侧真实交互 e2e | 未建 |
 | G3 | 像素基线门禁 | 未建（画廊能出 PNG，但无基线无 diff） |
 | G5 剩下 | 无障碍树整树遍历断言 | 未建 |
-| G6 | 格式 / lint 门禁 | 未建（`./x lint` 管的是文案，不是代码格式） |
+| G6 剩下 | F# **语义** lint（未使用绑定、模式匹配写错、可变状态误用） | 未建（`./x lint` 管的是文案，不是代码格式） |
 
 **为什么 G1 排在最前**（当时只有它可建，且顺序不能反）：
   1. 成本最低（只需源码、秒级完成），立刻让「绿灯」重新有意义；

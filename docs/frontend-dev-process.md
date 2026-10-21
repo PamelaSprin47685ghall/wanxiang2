@@ -26,11 +26,11 @@
 | 发布产物 PWA 冒烟 | `tools/smoke_published.sh` + `tools/smoke_published_pwa.js` | headless Chrome（`puppeteer-core`，根 `package.json` 的 devDependency）打开发布产物：画布出现、DPR=2（像素= CSS×2）、画布非纯色（64×64 采样**至少 3 种颜色**）、CDP `Input.insertText` 走文本上屏桥、认证态下草稿 800 ms 自动落 IndexedDB、重开页面草稿恢复、无页面异常 | 「画布非纯色」= **画布不是一块纯色**。一个只有背景色加一条错误提示的界面照样通过。交互只覆盖「把字塞进输入框」，不覆盖发送、审批、删除、搜索、主题切换。 |
 | 性能采样 | `tools/perf_desktop.sh`（N 次启动读 `StartupTrace` 打点）、`tools/perf_pwa.js` | 冷启动 `firstFrame` / `listReady` 的毫秒数 | 脚本注释写「跑 N 次取中位数」，**实现只是逐次 echo，没有取中位数、没有阈值、没有进 CI**。性能是观测工具，不是门禁。 |
 | 组件画廊（人工工具） | `compose/Gallery` + `tools/gallery.sh` | `--list` 列出 **24** 条状态条目；`--window` 开真实桌面窗口；`--render <条目名> <输出.png>` 出一个 **720×900** 的 PNG（实测 `MessageCardView.toolcall`）。**它不是门禁**：没有基线、没有 diff，渲染变了 CI 不会红。 |
-| 金样 | `compose/*/tests/golden/*.txt`、`libs/ThemeFonts/tests/golden/fonts.sha256` | 协议字节、错误文案、公式 HTML 与**公式控件的像素哈希**（`compose/MathFigure/tests/Probe.fs` 用 `RenderTargetBitmap` + SHA256 取前 16 位） | 只有公式渲染一处真做了像素级锁定。根 AGENTS.md 已明令「不再新增与旧仓库死代码比对的金样测试」，所以这里**没有**可复用的全界面视觉回归基线。 |
+| 金样 | `compose/*/tests/golden/*.txt`、`libs/ThemeFonts/tests/golden/fonts.sha256` | 协议字节、错误文案、公式 HTML 与**公式控件的布局量**（`compose/MathFigure/tests/Probe.fs` 用 `RenderTargetBitmap` 量 Bounds / 基线 / 留白 / 读屏名；**整块像素哈希已从金样移除**——Skia 在 macOS 的 CoreText 与 Linux 的 FreeType 上光栅化结果不同，跨平台不稳定，故只做同一进程内的前后像素对比） | 公式渲染一处做的是**布局级**锁定，**不再**是跨平台像素级锁定。根 AGENTS.md 已明令「不再新增与旧仓库死代码比对的金样测试」，所以这里**没有**可复用的全界面视觉回归基线。 |
 
 ### 1.3 唯一可复用的技术前提
 
-`compose/MathFigure/tests/Probe.fs` 已经示范了本仓库能做的最强视觉断言：headless 窗口 → `RenderTargetBitmap(PixelSize(w,h), Vector(96,96))` → `CopyPixels` → `SHA256` 哈希。**像素回归所需的能力已经在仓库里，只是只用在了一个组件上。**
+`compose/MathFigure/tests/Probe.fs` 已经示范了本仓库能做的最强视觉断言：headless 窗口 → `RenderTargetBitmap(PixelSize(w,h), Vector(96,96))` → `CopyPixels` → 像素哈希（**只用于同一进程内的前后对比**；整块像素哈希**不进金样**，因为 Skia 在 macOS 的 CoreText 与 Linux 的 FreeType 上光栅化结果不同，跨平台不稳定——见 `compose/MathFigure/AGENTS.md` LEMMA 1）。**像素回归所需的渲染与取样能力已经在仓库里，只是只用在了一个组件上。**
 
 ---
 
@@ -165,11 +165,11 @@
 
 ### G3 — 视觉回归（像素 diff）
 
-- **跑什么**：以 G2 的**状态矩阵**为输入（24 条，`tools/gallery.sh --list`），用**已有的** `RenderTargetBitmap` 手法（照抄 `compose/MathFigure/tests/Probe.fs`）对每个状态渲染并取哈希，基线存在画廊组合者的 tests 目录下的 golden 子目录里；或存 PNG 做逐像素 diff（同一手法，写 PNG 即可）。深浅两套主题都做。
+- **跑什么**：以 G2 的**状态矩阵**为输入（24 条，`tools/gallery.sh --list`），用**已有的** `RenderTargetBitmap` 手法（照抄 `compose/MathFigure/tests/Probe.fs`）对每个状态渲染，基线存在画廊组合者的 tests 目录下的 golden 子目录里。**用 PNG 做逐像素 diff，不建议用像素哈希**：`compose/MathFigure/AGENTS.md` LEMMA 1 已记下，Skia 在 macOS（CoreText）与 Linux（FreeType）上光栅化结果不同，整块像素哈希**跨平台不稳定**（金样里那部分已被移除，见 §1.2）。深浅两套主题都做。
 - **与画廊的关系**：画廊**已经能出 PNG**（`--render` 出 720×900），但**没有基线也没有 diff**——所以 G3 不是「让画廊出图」，而是「给这些图加基线与判定」。G3 未建之前，画廊出的 PNG 只供人看。
 - **成本**：未建，不给数字（没有可核对的测量就不写）。要预先说清的是：基线的**审核**成本随控件数线性增长，所以必须配「基线变更需附截图」的评审规则，否则基线会变成无人看的锁。
 - **拦什么**：§2.(a) 的全部布局/配色/遮挡/裁切缺陷，以及主题切换后样式没跟上的问题。
-- **怎么响**：哈希不一致 → 打印 `状态名: 期望 <hash> 实际 <hash>`，CI 红；基线文件缺失 → 明确报错「这是新状态，请生成基线并人工核对截图」，不允许静默通过。
+- **怎么响**：基线 PNG 与本次渲染逐像素不一致 → 打印 `状态名: 基线 <路径> 实际 <路径> 差异 <区域>`，CI 红；基线文件缺失 → 明确报错「这是新状态，请生成基线并人工核对截图」，不允许静默通过。
 
 ### G4 — 浏览器侧 e2e（PWA 真实交互）
 
@@ -421,7 +421,7 @@ CI 里这三道秒级门禁在同一个 `hygiene` 作业里跑；`./x all` 的�
 
 ## 6. 汇总
 
-- **现有界面验证**：**1906** 条 `[<Fact>]`（`compose/*/tests` 956 + `libs/*/tests` 950；按 `[<Theory>]` 的 `[<InlineData>]` 行展开计，则为 1034 + 979 = **2013** 条用例），其中界面相关的绝大多数是**控件树结构与状态机**断言；像素断言只有公式一处（`compose/MathFigure/tests/Probe.fs`）；交互断言在 PWA 侧只有「文本能进输入框」一处。
+- **现有界面验证**：**1906** 条 `[<Fact>]`（`compose/*/tests` 956 + `libs/*/tests` 950；按 `[<Theory>]` 的 `[<InlineData>]` 行展开计，则为 1034 + 979 = **2013** 条用例），其中界面相关的绝大多数是**控件树结构与状态机**断言；**像素**断言只有公式一处（`compose/MathFigure/tests/Probe.fs`），且那里的整块像素哈希**已从金样移除**（跨平台光栅化不稳定，现只做同进程内前后对比与布局量锁定，见 §1.2）；交互断言在 PWA 侧只有「文本能进输入框」一处。
 - **本轮加上的三样**：
   1. **断言卫生门禁**（`./x hygiene`）——把「恒真断言 / 恒真谓词 / 空转的事实」变成红灯；已用植入**原始**缺陷验证会红。
   2. **界面文案门禁**（`./x lint`）——产品文案规则（术语表、取消类提示须写明 Esc、中文省略号、PWA 壳术语）从测试套件迁出，覆盖范围补到 `libs` + `compose` + `app`。

@@ -590,7 +590,7 @@
 
 - **`PromptHistory` 已恢复接线**（不是退役）——§2.3 查明它是未接线的真实功能，
   产品确认保留，接线已接到 `compose/ComposerDesk`（真正的输入区所有者），并补了 6 条回归用例。
-- ~~未跑 `./x all`~~ —— **已跑**（见 §8 最终验证）：110 个库工程 + 67 个组合者工程全通过。
+- ~~未跑 `./x all`~~ —— **已跑**（见 §8 最终验证）：109 个库工程 + 67 个组合者工程全通过。
 - 未动 `compose/` 的**行为**（只改过 `compose/*/*.fsproj` 的 `PackageReference`，
   以及 §3.6 里补的 33 条直接声明）。
 - 未碰 `libs/DevicesPane/ToolsPane.fs`（并行会话正在改它，改动引入了 FS0010 编译错误；
@@ -787,13 +787,13 @@ FAIL 认证态：重开页面草稿回到输入框 — draft="｜恢复验证后
 ## 9. 最终验证（2026-10-21，全部本轮实跑）
 
 **本波最终计数**：库 **109**（合并前 118，合并 8 组、删死包 1 个、
-收回碎片 1 个）；组合者 **71**；库测试 **1034** 条、组合者测试 **976** 条，
+收回碎片 1 个）；组合者 **71**；库测试 **1034** 条、组合者测试 **979** 条，
 **失败 0**；已发布 PWA 冒烟 **10 PASS / 0 FAIL**。
 
 | 步骤 | 命令 | 结果 |
 |---|---|---|
-| 基线检查 | `./x check` | exit 0 —— `110 libs with no sibling references; 71 composer(s) using packages only` |
-| 逐库测试 | `./x all` | exit 0 —— `110 个工程全部通过` |
+| 基线检查 | `./x check` | exit 0 —— `109 libs with no sibling references; 71 composer(s) using packages only` |
+| 逐库测试 | `./x all` | exit 0 —— `109 个工程全部通过` |
 | 组合者测试 | `./x all` | exit 0 —— `67 个工程全部通过` |
 | 仓库外消费者 | `./x all` | exit 0 —— `consume ok: commit and reopen yield Used 1UL` |
 | 产包 | `./x pack` | exit 0 —— wave 1..9 |
@@ -809,10 +809,15 @@ FAIL 认证态：重开页面草稿回到输入框 — draft="｜恢复验证后
 
 已发布 PWA 冒烟的完整断言输出：
 
+> **注意：下面是**修复字体前**的那次实跑输出**（`distinct colors=12` 是修复前的值；
+> 修复后同一条断言为 `distinct colors=18`——字形真的画出来了，见 §10）。
+> 该断言的门槛只是 `distinct >= 3`（`tools/smoke_published_pwa.js:53`），
+> 所以颜色数是**信息**，不是门禁。
+>
 ```
 PASS Avalonia 画布与输入桥元素出现
 PASS DPR 2 画布像素 = CSS × 2 — {"w":2400,"h":1600,"cw":1200,"ch":800,"dpr":2}
-PASS 画布有实际内容（非纯色） — distinct colors=12
+PASS 画布有实际内容（非纯色） — distinct colors=12   ← 修复字体前的实跑值（修复后为 18）
 PASS 预置客户端凭据
 PASS 认证态：输入框能被点聚焦
 PASS 文本上屏桥：insertText 各落一次 — draft="万象ok草稿往返" expected="万象ok草稿往返"
@@ -826,11 +831,14 @@ PASS 无未捕获页面异常
 `smoke-render.png`（首屏）、`smoke-draft.png`（打完字）、
 `smoke-restored.png`（重开页面并追加后缀之后）、
 `smoke-insert.png`（插入过程）。
+> 这些 PNG 在 `artifacts/` 下，而 `artifacts/` 被 `.gitignore` 忽略，**不在仓库里**——
+> 复核者需自己跑一次冒烟生成，或按上面的字节数与肉眼描述对照。
 
-> 截图里中文显示为方框，是**本机 headless Chrome 走软件 WebGL** 的字体限制
-> （`WEBGL_debug_renderer_info not enabled` / SwiftShader 弃用），
-> 不是产品缺陷——桌面端字体正常。文本的权威判据是 IndexedDB 里的草稿快照，
-> 那里是**逐字精确相等**的。
+> **更正**：这段说明原先写「截图里中文显示为方框，是**本机 headless Chrome 走软件 WebGL** 的字体限制
+> （`WEBGL_debug_renderer_info not enabled` / SwiftShader 弃用），不是产品缺陷」——**这是错的归因**。
+> 真因是**可视树根上没指定字体族**：浏览器端拿不到系统字体，而没在根上设 `TextElement.FontFamily`，
+> 所有没单独指定字体的控件都回落到不含汉字的默认族。已修（见 §10）。
+> 文本的权威判据仍是 IndexedDB 里的草稿快照，那里是**逐字精确相等**的。
 
 宿主日志里 `GET /ws` 的升级是 `101 Switching Protocols`（认证态下自动重连走通了）。
 
@@ -845,3 +853,55 @@ PASS 无未捕获页面异常
 报错是 `Address already in use`（端口 48064）——**端口冲突**，来自本轮我自己并行跑的
 探针宿主与冒烟宿主抢端口，与本次改动无关。
 单独重跑该工程：`158/158 全部通过`；随后重跑 `./x compose`：`67 个工程全部通过`。
+
+## 10. PWA 中文字体：根可视树没设字体（已修，2026-10-21）
+
+已发布 PWA 产物里所有中文标签整片渲染成方框（豆腐块），拉丁字母正常。
+**根因不是环境问题**——是**可视树根上没指定字体族**。
+
+### 10.1 根因
+
+- `TextElement.FontFamilyProperty` 是 Avalonia 里的 **inherits 附加属性**；
+- 仓库里只有极少数控件单独绑定了字体动态资源
+  （`compose/ComposerDesk/Pending.fs:39`、`compose/MarkdownView/MarkdownView.fs:61-62`、
+  `compose/MathFigure/MathFigure.fs:60`），其余控件（标签、侧栏、引导页……）用**默认字体族**；
+- 浏览器端**没有系统字体**，默认族里没有汉字 → 豆腐块。
+
+### 10.2 修法与证据
+
+- **修法**：PWA 入口在根控件上设一次内嵌字体，整棵树继承——
+  `app/Pwa/Program.fs:529-532`（`buildViewsOnce` 内，`root = Grid()` 之后）：
+
+  ```fsharp
+  root.SetValue(Avalonia.Controls.Documents.TextElement.FontFamilyProperty, SharedTheme.manager.FontFamily.Value) |> ignore
+  ```
+
+- **桌面端未改**（`app/Desktop/Program.fs` 无字体改动）：桌面有系统字体；强行换成子集字体
+  反而会让子集外的字变豆腐块。
+- **弹出层另有显式样式**：ToolTip / ContextMenu / MenuItem / MenuFlyoutPresenter 挂在
+  独立弹出根上、继承不到根字体，故在 `compose/EntryShells/App.fs:115-132` 显式指定同一字体族。
+- **字体资源**：`libs/ThemeFonts/Assets/Fonts/SarasaGothicSC-Regular.subset.ttf`（12.6 MB，Git 跟踪），
+  `libs/ThemeFonts/ThemeFonts.fs:20` 的 `family` 构造 `FontFamily`；`ThemeFonts.body` = `"Sarasa Gothic SC"`。
+
+### 10.3 回归用例
+
+`compose/EntryShells/tests/Tests.fs:81` 的 `EmbeddedFontTests`，3 条：
+
+1. `内嵌正文字体族能解析出字形`——`FontManager.Current.TryGetGlyphTypeface` 能解析出 `Sarasa Gothic SC`；
+2. `内嵌正文字体覆盖常用汉字`——`TryMatchCharacter` 对 U+4E2D / 6587 / 4E07 / 8C61 全部命中；
+3. `等宽字体把正文字体列为回落（否则中文变豆腐块）`——`ThemeFonts.mono` 含 `"Sarasa Gothic SC"`。
+
+该文件共 5 条 `[<Fact>]`（`:9`、`:28`、`:86`、`:94`、`:105`），后 3 条即上述字体回归用例；
+跑法：`dotnet test --project compose/EntryShells/tests/EntryShells.Tests.fsproj`。
+
+### 10.4 本轮排除掉的说法
+
+「SwiftShader 软件 WebGL 导致字形渲染不出来」——**不成立**。
+WebGL 坏掉的话拉丁字母也会没了；实测拉丁正常、CJK 缺字，是**字体族**问题。
+本轮一开始就是靠这条把方向带偏的，现已纠正（§9 末尾那段说明也已改写）。
+
+### 10.5 仍未覆盖
+
+- **弹出层**（ToolTip / ContextMenu / MenuFlyoutPresenter）的渲染**没有**单独截图验证，
+  靠 §10.2 的显式字体样式兜底（回归用例只覆盖字族解析、常用汉字覆盖与等宽回落，不覆盖弹出层渲染）；
+- 真实手机浏览器与系统字体差异环境下的表现，未验。

@@ -10,7 +10,7 @@
 
 ### 1.1 全局：CI 实际跑什么
 
-`.github/workflows/ci.yml` 的作业：`check`（`./x check`，依赖与文档引用检查）、`pack`（`./x pack` 产本地 feed 工件）、`test`（每个库一个矩阵任务跑 `./x test <lib>`）、`compose`（`./x compose`，跑 66 个组合者测试工程）、`consume`（仓库外消费）、`app`（构建 `app/Desktop` 与 `app/Pwa`）、`published-smoke`（`publish.sh` + `tools/smoke_published.sh`）、`widget-template`（`./x new-widget CiSmoke` 生成与自检）。
+`.github/workflows/ci.yml` 的作业：`check`（`./x check`，依赖与文档引用检查）、`pack`（`./x pack` 产本地 feed 工件）、`test`（每个库一个矩阵任务跑 `./x test <lib>`）、`compose`（`./x compose`，跑 67 个组合者测试工程）、`consume`（仓库外消费）、`app`（构建 `app/Desktop` 与 `app/Pwa`）、`published-smoke`（`publish.sh` + `tools/smoke_published.sh`）、`widget-template`（`./x new-widget CiSmoke` 生成与自检）。
 
 **证明的东西**：代码能编译、库与组合者能只经交付包构建、发布产物能在 headless Chrome 里跑起来。
 **不能证明的东西**：任何界面外观、任何交互结果、任何无障碍树形态。CI 里没有一个 job 会因为「按钮画歪了」「焦点丢了」「对比度错了」「文案错字」而失败——除非该缺陷恰好被某条结构断言覆盖。
@@ -20,7 +20,7 @@
 | 手段 | 文件 | 断言了什么 | 覆盖边界（诚实的说法） |
 | --- | --- | --- | --- |
 | 逐控件 headless 行为测试 | `libs/*/tests/*.Headless.fs`（如 `libs/ActionStrip/tests/ActionStrip.Headless.fs`）、`compose/*/tests/Headless.fs` | 用 `HeadlessUnitTestSession`（不是 `Avalonia.Headless.XUnit`，见根 AGENTS.md「控件库交付约定」）在 UI 线程上构造控件，断言控件树形状、可见性、`AutomationProperties` 名称、点击后的状态转移 | **只断言控件树与行为，不看像素。** 没有任何一处比较渲染结果；颜色、字号、间距、内边距错位、遮挡、裁切、文字溢出全部不可见。`AutomationProperties.GetName` 的断言是逐点手写的，不是「每个可交互控件都有名字」的系统性遍历（见 §2.5）。 |
-| 组合者 headless 旅程测试 | `compose/AppShell/tests/ComposerTests.fs`（16 个 `[<Fact>]`）+ `compose/AppShell/tests/Tests.fs`（3 个） | 假 `ShellPorts`（`compose/AppShell/tests/Rig.fs`）记录 `Effect`，断言 MVU 状态机投影 | 断言的是**模型与 Effect 序列**，不是控件树。SPEC 7 要求的「原生交互证明」（焦点流转、无障碍角色）在这一层根本没有发生；旅程 2 的断言只有一条负向断言（§4）。 |
+| 组合者 headless 旅程测试 | `compose/AppShell/tests/ComposerTests.fs`（21 个 `[<Fact>]`）+ `compose/AppShell/tests/Tests.fs`（3 个） | 假 `ShellPorts`（`compose/AppShell/tests/Rig.fs`）记录 `Effect`，断言 MVU 状态机投影 | 断言的是**模型与 Effect 序列**，不是控件树。SPEC 7 要求的「原生交互证明」（焦点流转、无障碍角色）在这一层根本没有发生；旅程 2 已改为强断言（见 §4.5），但旅程 1/5/6 仍只验状态投影与 Effect 序列（见 §4.5）。 |
 | 主题 a11y 机械回归 | `compose/Theme/tests/A11yRegression.fs` | 纯数值对比度计算（`ThemePalette` 的色值算 WCAG 比值）+ PWA 壳的**交付物**检查（`index.html` / `app.css` / `manifest.webmanifest` 的真实属性） | **不构造任何 Avalonia 控件**，不读真实无障碍树：对比度是按调色板数值算的，控件若没绑定该资源，对比度全绿而界面仍是错的。**产品文案规则（术语表、取消类提示须写明 Esc、中文省略号）已从本文件迁到 `tools/lint-copy.sh`**（见 §4.5），因为文案规则没有运行时可观察，不该伪装成 xunit 用例。 |
 | 桌面启动冒烟 | `tools/smoke_desktop.sh` | 进程退出码 0、stderr 有 `startup.firstFrame` 与 `startup.listReady` 打点、无未处理异常/异常栈行、数据目录有 `ledger/log.jsonseq`/`.lock`/`.lock.pid`、`attachments/` 存在、锁已释放、临时目录被清理 | 证明「窗口真的画出来了并且应用能干净退出」。**firstFrame 是打点，不是画面**：一个全黑、错位、只有骨架的窗口同样会打出 firstFrame。它还依赖 `DISPLAY`（默认 `:0`），本机无 X 时只能靠 CI 的 ubuntu runner。 |
 | 发布产物 PWA 冒烟 | `tools/smoke_published.sh` + `tools/smoke_published_pwa.js` | headless Chrome（`puppeteer-core`，根 `package.json` 的 devDependency）打开发布产物：画布出现、DPR=2（像素= CSS×2）、画布非纯色（64×64 采样**至少 3 种颜色**）、CDP `Input.insertText` 走文本上屏桥、认证态下草稿 800 ms 自动落 IndexedDB、重开页面草稿恢复、无页面异常 | 「画布非纯色」= **画布不是一块纯色**。一个只有背景色加一条错误提示的界面照样通过。交互只覆盖「把字塞进输入框」，不覆盖发送、审批、删除、搜索、主题切换。 |
@@ -231,17 +231,17 @@
 | --- | --- | --- | --- |
 | A4 | `compose/Theme/tests/A11yRegression.fs`（原 `:123`） | 正则 `\.IconButton\(\s*…(""|null)\s*,` 扫 `libs` + `compose` 的生产 `.fs` | 本仓库的图标按钮 API 是**小写** `iconButton`（`libs/DevicesPane/Ui.fs:101`、`compose/MarkdownView/MarkdownView.fs:71`、`compose/MessageCardView/Looks.fs:35`）。在 `libs` 与 `compose` 的**每一个生产文件**上**正则命中 0 次** → `bad` 恒为空 → `Assert.True(bad.IsEmpty, …)` **永远通过**。**已迁为 `tools/lint-copy.sh` 的口径（覆盖 libs+compose+app），并在 `./x lint` 与 CI hygiene 作业里执行**——但它是文案规则，不是「控件对外暴露了什么」的断言；控件的可访问名称仍应由控件自己的 headless 测试断言。 |
 | A5 | `compose/Theme/tests/A11yRegression.fs`（原 `:194`） | 扫「`"取消并关闭` 开头且不含 `Esc`」的字符串，范围只覆盖 `compose` + `app` | 全仓 14 处「取消并关闭…」字符串（7 个取消按钮 × `SetHelpText` + `SetTip`）**全部住在 `libs`**（`libs/ConfirmPane/*`、`libs/DevicesPane/*`、`libs/ExportSheet/*`），而扫描范围不含 `libs` → 断言**永远在空集合上运行，永远通过**。**已迁为 `tools/lint-copy.sh` 的 C2 规则（覆盖 libs+compose+app），并在 `./x lint` 与 CI hygiene 作业里执行。** |
-| A1 | `compose/AppShell/tests/ComposerTests.fs:41` | `\| _ -> false \|\| true)` | 谓词恒为 `true`。`Assert.Contains(rig.Fake.RecordedEffects, fun eff -> ...)` 退化成「RecordedEffects 列表非空」——**它对 `Effect.Focus` 存在与否一字未验**。而这个断言所在的测试名叫「附件上传按开始-分块-完成发事件，图片另走缩略图端口」，恰恰声称在验上传事件序列。 |
-| A2 | `compose/AppShell/tests/ComposerTests.fs:68` | `\| ConnPhase.Connecting _ -> Assert.True(true)` | 分支体是恒真断言。该分支里的 `Connecting` 与否**没有任何语义**。 |
-| A3 | `compose/AppShell/tests/ComposerTests.fs:69` | `\| _ -> Assert.True(true)` | 同上，且这是**兜底分支**——无论 `Conn` 落到哪个状态（包括完全不合理的 `Authed`），测试都通过。整个测试「断开连接：清空状态并转入断开」**不验证任何断开语义**。 |
+| A1 | `compose/AppShell/tests/ComposerTests.fs`（原 `:41`，现 `:40-49`） | `\| _ -> false \|\| true)` | 谓词恒为 `true`。`Assert.Contains(rig.Fake.RecordedEffects, fun eff -> ...)` 退化成「RecordedEffects 列表非空」——**它对 `Effect.Focus` 存在与否一字未验**。而这个断言所在的测试名叫「附件上传按开始-分块-完成发事件，图片另走缩略图端口」，恰恰声称在验上传事件序列。**已改为** `Assert.Equal(1, thumbnails.Length)` + 缩略图字节逐字节相等（`:40-49`）。 |
+| A2 | `compose/AppShell/tests/ComposerTests.fs`（原 `:68`，现 `:81-84`） | `\| ConnPhase.Connecting _ -> Assert.True(true)` | 分支体是恒真断言。该分支里的 `Connecting` 与否**没有任何语义**。**已改为** `Assert.Equal(1, attempt)`，其余状态 `Assert.Fail`。 |
+| A3 | `compose/AppShell/tests/ComposerTests.fs`（原 `:69`，现 `:84`） | `\| _ -> Assert.True(true)` | 同上，且这是**兜底分支**——无论 `Conn` 落到哪个状态（包括完全不合理的 `Authed`），测试都通过。整个测试「断开连接：清空状态并转入断开」**不验证任何断开语义**。**已改为** `Assert.Fail`（`:84`）。 |
 
 ### 4.2 B 层：弱断言（关键正向结果无人断言）
 
 | # | 位置 | 形态 | 为什么弱 |
 | --- | --- | --- | --- |
-| B1 | `compose/AppShell/tests/ComposerTests.fs:111-113` | `match vs.Composer.Send.State with \| SendButtonState.GeneratingStop -> Assert.Fail "…" \| _ -> ()` | **旅程 2「引导流程配置模型」的唯一断言是负向的**：只证明「状态不是 GeneratingStop」。测试名声称验的是「引导流程配置模型」，但**没有任何断言检查目录是否装载、预设是否选中、引导卡是否投影**。且负向断言只能捕捉「恰好是 GeneratingStop」这一种错误值。 |
-| B2 | `compose/AppShell/tests/ComposerTests.fs:238-240` | 同上形态 | 旅程 5 的收尾断言只验「不是 GeneratingStop」；错误状态若是别的值（如 `Idle` 但其实没停）照样通过。 |
-| B3 | `compose/AppShell/tests/ComposerTests.fs:275-279` | `match toastUndoAction with \| Some actionId -> … \| None -> ()` | 「撤销删除」这一步的断言**只在 `UndoAction` 是 `Some` 时才执行**。如果撤销入口消失（`None`），测试静默通过。上面 `Assert.True(rig.Shell.Model.Toasts.Length > 0)` 只证明有 toast，不证明 toast 带撤销动作。**这正是「批量删除恢复」旅程最该守住的那一环。** |
+| B1 | `compose/AppShell/tests/ComposerTests.fs`（原 `:111-113`，现 `:126-128`） | `match vs.Composer.Send.State with \| SendButtonState.GeneratingStop -> Assert.Fail "…" \| _ -> ()` | **旅程 2「引导流程配置模型」的唯一断言是负向的**：只证明「状态不是 GeneratingStop」。测试名声称验的是「引导流程配置模型」，但**没有任何断言检查目录是否装载、预设是否选中、引导卡是否投影**。且负向断言只能捕捉「恰好是 GeneratingStop」这一种错误值。**已改为**目录就绪且 `providers` 为空、引导事实为空、输入区禁用且原因正确、空态是 `NoConversation`（`:129-148`）。 |
+| B2 | `compose/AppShell/tests/ComposerTests.fs`（原 `:238-240`，现 `:303-307`） | 同上形态 | 旅程 5 的收尾断言只验「不是 GeneratingStop」；错误状态若是别的值（如 `Idle` 但其实没停）照样通过。**已改为** `Assert.Equal(SendButtonState.Idle, …)` + `RunState.Idle (Some err)` 带 kind/message/retryable + `GenerationCancel` 发给那一个对话与代号（`:307-330`）。 |
+| B3 | `compose/AppShell/tests/ComposerTests.fs`（原 `:275-279`，现 `:364-379`） | `match toastUndoAction with \| Some actionId -> … \| None -> ()` | 「撤销删除」这一步的断言**只在 `UndoAction` 是 `Some` 时才执行**。如果撤销入口消失（`None`），测试静默通过。上面 `Assert.True(rig.Shell.Model.Toasts.Length > 0)` 只证明有 toast，不证明 toast 带撤销动作。**这正是「批量删除恢复」旅程最该守住的那一环。** **已改为** `None -> Assert.Fail`（`:367-378`）。 |
 | B4 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs:600-606` | `with \| :? OperationCanceledException as oce when oce.Message.Contains "superseded" -> caughtSuperseded <- true \| _ -> ()` | `caughtSuperseded` 被赋值后**从未被断言**；非匹配异常被 `\| _ -> ()` 静默吞掉。最后那句注释「Either it threw superseded or was canceled cleanly」把**两种行为都当成通过**——测试名「generation check」想验的「连接代次检查生效」实际上没被断言（只断言了 `ConnectionGeneration >= 2`）。 |
 | B5 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs:41-46` | `match oldBuffers.Append(sha256, bytes) with \| DownloadChunkResult.Capped when not downloadCappedNotified -> … \| _ -> ()` + `with _ -> ()` | 旧实现摘录里，**非 Capped 结果与所有异常都被静默吞掉**。`oldStep` 的返回值只反映「是否 toast 过」，因此「坏 base64 被忽略」「第二次触顶不再 toast」等语义**只由新旧两份实现的相等性担保**，而 `newStep` 那侧一旦也退化成同样行为，测试仍然绿。 |
 
@@ -261,7 +261,7 @@
 
 ### 4.4 结构性观察（不是单行空断言，但同样削弱证据）
 
-- **`compose/AppShell/tests/ComposerTests.fs` 整体只断言模型与 Effect**，SPEC 7 要求的「原生交互证明（Headless 窗口中验证焦点流转、无障碍角色）」在这一层**没有发生**。旅程 1–6 中唯一触及原生控件的是 `Assert.Single rig.Fake.Thumbnails`（A1 所在测试）与 `rig.Views.Onboarding.*` 三个属性断言。
+- **`compose/AppShell/tests/ComposerTests.fs` 整体只断言模型与 Effect**，SPEC 7 要求的「原生交互证明（Headless 窗口中验证焦点流转、无障碍角色）」在这一层**没有发生**。旅程 1–6 中唯一触及原生控件的是缩略图端口断言（`Assert.Equal(1, thumbnails.Length)`，A1 所在测试，现 `:40`）与 `rig.Views.Onboarding.*` 三个属性断言。
 - **`docs/ux/r28-pwa-parity.md` 表中明确标注「CI 未断言」的行为**（剪贴板、文件选择/保存、右键菜单、拖放、限流倒计时/搜索防抖）今天仍无断言——这些是**已被记录但从未自动化**的缺口。
 - **`compose/EntryShells/AGENTS.md` SPEC 2 自陈**：「`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（**真实界面验收要人看，仓库内未自动化**）」——这是全仓对「界面缺陷为何靠人肉发现」最明确的一句自白。
 - **`compose/Theme/tests/A11yRegression.fs` 的 7 条对比度用例**走 `check()` 帮助函数，**函数体内确实有 `Assert.True(bad.IsEmpty, …)`**，**不是空断言**；但它们只算调色板数值，**不构造控件、不看实际渲染出的颜色**（控件若没绑定该资源，对比度全绿而界面仍是错的）。
@@ -277,6 +277,7 @@
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 2 | 断言目录就绪且 `providers` 为空、引导事实为空、输入区禁用且原因正确、空态是 `NoConversation` | 目录状态错 / 输入区在无模型服务时仍可发 / 禁用原因丢失 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 5 | 断言发送键回到 `Idle`、`RunState.Idle (Some err)` 带 kind/message/retryable、`GenerationCancel` 发给**那一个**对话与代号 | 停止后仍不可发 / 错误被丢掉 / 取消发错对话 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 6 | 断言提示条**必须**带撤销动作、撤销前有一个待删批次且含那两段对话、撤销后批次清空 | 撤销入口消失 / 批次漏记 / 撤销后仍残留 |
+| `compose/AppShell/tests/ComposerTests.fs` | 旅程 3 | 断言发送被主机的 `attachment.committed` 确认门控（未就绪时发不出去、草稿与附件都留着），并断言真正发出的 `SendUserMessage` 载荷：`contents` 有 2 条、文本「你好」、附件带 `fileName` / `sha256` / `size`（`:150-198`） | 附件没随消息发出 / 附件元数据不全 / 未就绪时也能发 |
 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs` | 连接被抢占 | 断言真的抛 `OperationCanceledException("superseded")`（旧写法吞掉异常且从不断言标志位） | 不抛 superseded / 抛别的异常 |
 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs` | 旧实现摘录 | 逐个写出 `Accepted` / `Unknown` / 坏 base64 三条分支，不再 `| _ -> ()` 一锅端 | 新旧摘录行为不一致 |
 | `compose/ServerApp/tests/ServerAppTests.fs` | 截尾事件文件 | 断言进入**只读降级模式**并留下 `read-only-degraded` 诊断、且**没有**偷偷改用户的日志（S-001 契约） | 降级诊断缺失 / 启动擅自截断日志 |
@@ -286,6 +287,16 @@
 | `compose/MarkdownView/tests/Tests.fs` | 复杂 Markdown 渲染 | 断言标题、正文、行内代码、表头、代码块、引用块、链接（按可访问名称）、任务条目、公式**都在渲染树里** | 任一块没渲染 / 渲染成别的内容 |
 | `compose/EventStore/tests/StoreConsistencyTests.fs` | Dispose 释放 writer | 断言同目录能再开一个 EventStore | 锁没释放 |
 | `libs/BrowserInterop/tests/BrowserPage.Tests.fs` | 无订阅者时 NotifyHidden | 断言零订阅者时不误触发，且之后新订阅者仍能被触发 | 状态被破坏 / 误触发 |
+
+**旅程层仍缺的（不是断言强度问题，是「用例没走到那一步」）** —— 见 `展望.md` §2：
+
+| 旅程 | 还缺什么 | 证据位置 |
+|---|---|---|
+| 旅程 1 | 用例止于 `ConnPhase.Authed(inst, CatalogPhase.LoadingCatalog)`，**没有走完配对后的首条消息** | `compose/AppShell/tests/ComposerTests.fs:90-117` |
+| 旅程 5 | 断言了失败落进 `RunState.Idle (Some err)` 且带 `retryable`，但**没有触发重试** | 同上（旅程 5 用例，`:260-331`）；重试入口在 `libs/WorkspaceState/ViewState.fs:339-340,394`（`RetryVisible` / `RetryLabel`），无用例触及 |
+| 旅程 6 | 断言了待删批次与撤销把批次清空，但**没有验到期提交真删** | 同上（旅程 6 用例，`:333-382`）；到期删除在 `libs/BoundedWait` 侧 |
+
+旅程 1 / 5 / 6 这三条属**代码侧缺口**，本轮未改代码，故上表只登记、不伪称已修。
 
 **已迁移（产品文案规则 → lint 脚本，不是测试）**
 
@@ -402,7 +413,7 @@ CI 里这三道秒级门禁在同一个 `hygiene` 作业里跑；`./x all` 的�
 
 ## 6. 汇总
 
-- **现有界面验证**：约 1848 条 `[<Fact>]`（`compose/*/tests` + `libs/*/tests`），其中界面相关的绝大多数是**控件树结构与状态机**断言；像素断言只有公式一处（`compose/MathFigure/tests/Probe.fs`）；交互断言在 PWA 侧只有「文本能进输入框」一处。
+- **现有界面验证**：**1906** 条 `[<Fact>]`（`compose/*/tests` 956 + `libs/*/tests` 950；按 `[<Theory>]` 的 `[<InlineData>]` 行展开计，则为 1034 + 979 = **2013** 条用例），其中界面相关的绝大多数是**控件树结构与状态机**断言；像素断言只有公式一处（`compose/MathFigure/tests/Probe.fs`）；交互断言在 PWA 侧只有「文本能进输入框」一处。
 - **本轮加上的三样**：
   1. **断言卫生门禁**（`./x hygiene`）——把「恒真断言 / 恒真谓词 / 空转的事实」变成红灯；已用植入**原始**缺陷验证会红。
   2. **界面文案门禁**（`./x lint`）——产品文案规则（术语表、取消类提示须写明 Esc、中文省略号、PWA 壳术语）从测试套件迁出，覆盖范围补到 `libs` + `compose` + `app`。

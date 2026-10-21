@@ -58,7 +58,7 @@
 - **画廊没有解决什么（不要误当门禁）**：
   - **它不是像素回归门禁**。`--render` 出一张 PNG 供人看，但**没有基线、没有 diff、没有 CI 判定**。谁改了渲染结果，CI 不会红。
   - **它不是无障碍证明**。条目渲染出来不等于无障碍树正确（`AutomationProperties` 另说，见 §2.(e)）。
-  - **它的夹具仍在修正中，但附件那条已经收口**：状态树此前给不出附件（`ComposerUserMsg.Attach` / `.RemoveAttachment` 与 `InternalMsg.UploadProgress` / `.UploadFinished` / `.UploadFailed` 都没有处理分支，而且 `Send` **只把 `text` 放进消息、把附件静默丢掉**——那是真 bug）。现在 `libs/WorkspaceState/Update.fs` 补齐了这些处理分支，并按 `compose/Outbox` 的 `MessageOutbox.BuildMessage` 同一份形状构造带附件的消息；画廊测试**现在 11 条全过**（实测 `total: 11, failed: 0`）。
+  - **它的夹具仍在修正中，但附件那条已经收口**：状态树此前给不出附件（`ComposerUserMsg.Attach` / `.RemoveAttachment` 与 `InternalMsg.UploadProgress` / `.UploadFinished` / `.UploadFailed` 都没有处理分支，而且 `Send` **只把 `text` 放进消息、把附件静默丢掉**——那是真 bug）。现在 `libs/WorkspaceState/Update.fs` 补齐了这些处理分支，并按 `compose/Outbox` 的 `MessageOutbox.BuildMessage` 同一份形状构造带附件的消息；画廊测试**现在 18 条全过**（实测 `total: 18, failed: 0`）。
   - **已收口**：侧栏多选——多选模式与选中集合是 `libs/WorkspaceState` 的 `Chrome.BatchMode` / `Chrome.SelectedRowIds`，经 `SidebarVS.BatchMode` / `SidebarVS.SelectedRowIds` 投影给侧栏；`SidebarDesk` 改从投影读，只发意图（`SidebarDeskActions` 的 `enterSelection` / `toggleSelected` / `exitSelection` / `toggleSelectAllVisible`），`libs/BatchBar/SidebarSelection.fs` 不再记账。
   - **错误卡也已收成单一归属**：生成错误是 `ChatVS.Error` 字段，由 `Workspace.project` 从 `RunState.Idle (Some err)` 投影；宿主改从投影取，不再自己读 `RunState`；`ChatPhase.Error` 那个无生产者的死分支已删除。详见 `compose/Gallery/AGENTS.md`《已知缺口与各自的归属》。
   - **已查清不改的一条**：对话框的「打开」状态没有投影生产者，但**这是「投影是壳、真实控件在桌内」的分工**，不是两份互相打架的事实——`compose/DialogsDesk/DialogsDesk.fs` 直接 `overlay.ShowDialog(...)` 造真实控件，`compose/OverlayDesk/OverlayDesk.fs` 的 `OverlayVS.Dialog` 分支只设 `currentOverlayPhase`、不造控件。

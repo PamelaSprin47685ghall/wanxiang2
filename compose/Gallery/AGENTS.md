@@ -207,7 +207,7 @@ bash tools/gallery.sh --window                            开交互窗口（开�
      （与控件层 `libs/AttachmentTray/ComposerSendState.fs` 的 `blockReason` 同一口径），
      不发明「只带部分附件」的消息；草稿与附件都留着，等用户处理完再发。
 
-   `ComposerBox.attachments` 的用例因此**转绿**：画廊测试 **11 条全过**。
+   `ComposerBox.attachments` 的用例因此**转绿**：画廊测试当时 **11 条全过**（现 18 条，见上）。
 
 5. **2026-10-21 新增的 16 条控件库条目 —— 状态来源逐条登记。**
    判据（什么算控件库）见根 `AGENTS.md` §5《控件库交付约定（沿用）》；

@@ -58,6 +58,10 @@ type FakePorts(prefs0: UiPrefs) =
     let mutable sendsSucceed = true
     /// 浏览器凭据（IndexedDB 里那一条）。测试可设成 `Some` 来验 PWA 的自动连接回落。
     let mutable browserConnection: (string * string * string) option = None
+    /// 宿主侧的「打开文件选择器」回调：测试台里没有真正的文件选择器，
+    /// 但「添加附件」按键必须能走到宿主的真实上传入口（`ShellComposer.AttachFiles`），
+    /// 于是这里给一个可替换的钩子。默认什么都不做（老行为）。
+    let mutable pickAttachment: unit -> unit = fun () -> ()
     let mutable editing = false
     let mutable dark = false
     let mutable hostHandler: (WireEvent -> unit) option = None
@@ -102,6 +106,10 @@ type FakePorts(prefs0: UiPrefs) =
     member _.EditingText
         with get () = editing
         and set value = editing <- value
+    /// 替换「添加附件」按键的宿主行为（点真按键 → 走真上传路径）。
+    member _.OnPickAttachment
+        with get () = pickAttachment
+        and set value = pickAttachment <- value
 
     /// 浏览器里的已存连接（`Some (url, token, instanceId)` 时 `AutoConnect` 应当用它连上）。
     member _.BrowserConnection
@@ -377,8 +385,8 @@ module Rig =
                 Border(Width = size, Height = size) :> Control
 
             let composer =
-                ComposerDesk(shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false)))
-
+                ComposerDesk(
+                shell.ComposerActions((fun () -> fake.OnPickAttachment()), (fun _ -> ()), (fun () -> false)))
             let approval = ApprovalDesk(theme, overlay, ignore)
 
             let cards =

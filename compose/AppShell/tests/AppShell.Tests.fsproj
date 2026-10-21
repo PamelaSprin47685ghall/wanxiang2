@@ -5,6 +5,7 @@
     <Compile Include="Rig.fs" />
     <Compile Include="Tests.fs" />
     <Compile Include="ComposerTests.fs" />
+    <Compile Include="JourneyAttachmentTests.fs" />
     <Compile Include="DraftSaveGateTests.fs" />
   </ItemGroup>
   <ItemGroup>

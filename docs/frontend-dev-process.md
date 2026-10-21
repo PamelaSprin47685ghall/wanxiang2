@@ -20,7 +20,7 @@
 | 手段 | 文件 | 断言了什么 | 覆盖边界（诚实的说法） |
 | --- | --- | --- | --- |
 | 逐控件 headless 行为测试 | `libs/*/tests/*.Headless.fs`（如 `libs/ActionStrip/tests/ActionStrip.Headless.fs`）、`compose/*/tests/Headless.fs` | 用 `HeadlessUnitTestSession`（不是 `Avalonia.Headless.XUnit`，见根 AGENTS.md「控件库交付约定」）在 UI 线程上构造控件，断言控件树形状、可见性、`AutomationProperties` 名称、点击后的状态转移 | **只断言控件树与行为，不看像素。** 没有任何一处比较渲染结果；颜色、字号、间距、内边距错位、遮挡、裁切、文字溢出全部不可见。`AutomationProperties.GetName` 的断言是逐点手写的，不是「每个可交互控件都有名字」的系统性遍历（见 §2.5）。 |
-| 组合者 headless 旅程测试 | `compose/AppShell/tests/ComposerTests.fs`（21 个 `[<Fact>]`）+ `compose/AppShell/tests/Tests.fs`（3 个）+ `compose/AppShell/tests/JourneyAttachmentTests.fs`（1 个，**真实控件树**） | 假 `ShellPorts`（`compose/AppShell/tests/Rig.fs`）记录 `Effect`，断言 MVU 状态机投影；`JourneyAttachmentTests.fs` 额外驱动真实控件（「添加附件」按键、发送按键、托盘 chip）并断言控件的可用性/提示/状态字 | 前两处断言的是**模型与 Effect 序列**，不是控件树。SPEC 7 要求的「原生交互证明」（焦点流转、无障碍角色）在这一层仍没有系统性发生；旅程 2 已改为强断言（见 §4.5），旅程 3 已有**真实控件树**用例（见 §4.5），但旅程 1/5/6 仍只验状态投影与 Effect 序列（见 §4.5）。 |
+| 组合者 headless 旅程测试 | `compose/AppShell/tests/ComposerTests.fs`（21 个 `[<Fact>]`）+ `compose/AppShell/tests/Tests.fs`（3 个）+ `compose/AppShell/tests/JourneyAttachmentTests.fs`（1 个，**真实控件树**）+ `compose/AppShell/tests/ExpiryDeletionTests.fs`（1 个，**到期真删**） | 假 `ShellPorts`（`compose/AppShell/tests/Rig.fs`）记录 `Effect`，断言 MVU 状态机投影；`JourneyAttachmentTests.fs` 额外驱动真实控件（「添加附件」按键、发送按键、托盘 chip）并断言控件的可用性/提示/状态字；`ExpiryDeletionTests.fs` 用可推进的假时钟推进宽限期，断言真的发出 `conversation.delete`，并把**同一条**命令落进服务端事件存储，断言投影里该对话被标记删除、列表里不再出现 | 前两处断言的是**模型与 Effect 序列**，不是控件树。SPEC 7 要求的「原生交互证明」（焦点流转、无障碍角色）在这一层仍没有系统性发生；旅程 2 已改为强断言（见 §4.5），旅程 3 已有**真实控件树**用例（见 §4.5），旅程 6 已有**到期真删**用例（见 §4.5），但旅程 1/5 仍只验状态投影与 Effect 序列（见 §4.5）。 |
 | 主题 a11y 机械回归 | `compose/Theme/tests/A11yRegression.fs` | 纯数值对比度计算（`ThemePalette` 的色值算 WCAG 比值）+ PWA 壳的**交付物**检查（`index.html` / `app.css` / `manifest.webmanifest` 的真实属性） | **不构造任何 Avalonia 控件**，不读真实无障碍树：对比度是按调色板数值算的，控件若没绑定该资源，对比度全绿而界面仍是错的。**产品文案规则（术语表、取消类提示须写明 Esc、中文省略号）已从本文件迁到 `tools/lint-copy.sh`**（见 §4.5），因为文案规则没有运行时可观察，不该伪装成 xunit 用例。 |
 | 桌面启动冒烟 | `tools/smoke_desktop.sh` | 进程退出码 0、stderr 有 `startup.firstFrame` 与 `startup.listReady` 打点、无未处理异常/异常栈行、数据目录有 `ledger/log.jsonseq`/`.lock`/`.lock.pid`、`attachments/` 存在、锁已释放、临时目录被清理 | 证明「窗口真的画出来了并且应用能干净退出」。**firstFrame 是打点，不是画面**：一个全黑、错位、只有骨架的窗口同样会打出 firstFrame。它还依赖 `DISPLAY`（默认 `:0`），本机无 X 时只能靠 CI 的 ubuntu runner。 |
 | 发布产物 PWA 冒烟 | `tools/smoke_published.sh` + `tools/smoke_published_pwa.js` | headless Chrome（`puppeteer-core`，根 `package.json` 的 devDependency）打开发布产物：画布出现、DPR=2（像素= CSS×2）、画布非纯色（64×64 采样**至少 3 种颜色**）、CDP `Input.insertText` 走文本上屏桥、认证态下草稿 800 ms 自动落 IndexedDB、重开页面草稿恢复、无页面异常 | 「画布非纯色」= **画布不是一块纯色**。一个只有背景色加一条错误提示的界面照样通过。交互只覆盖「把字塞进输入框」，不覆盖发送、审批、删除、搜索、主题切换。 |
@@ -286,6 +286,7 @@
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 6 | 断言提示条**必须**带撤销动作、撤销前有一个待删批次且含那两段对话、撤销后批次清空 | 撤销入口消失 / 批次漏记 / 撤销后仍残留 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 3 | 断言发送被主机的 `attachment.committed` 确认门控（未就绪时发不出去、草稿与附件都留着），并断言真正发出的 `SendUserMessage` 载荷：`contents` 有 2 条、文本「你好」、附件带 `fileName` / `sha256` / `size`（`:165-238`） | 附件没随消息发出 / 附件元数据不全 / 未就绪时也能发 |
 | `compose/AppShell/tests/JourneyAttachmentTests.fs` | 旅程 3（**真实控件树**，2026-10-22 新增） | 走真实「添加附件」按键与真实发送按键；认证/目录/ACK 全经真实线协议事件入口（`FakePorts.Deliver` → 宿主事件订阅 → `ShellComposer.HandleEvent` → 状态树）。断言：上传完成（`attachment.complete`）后附件**仍未就绪**——发送键 `IsEnabled = false`、提示为「附件上传中，请稍候…」、托盘 chip 状态字为「上传中」；走真实控件的提交入口也**发不出**任何 `SendUserMessage`；主机 `attachment.committed` 之后附件才 `Ready`、发送键启用、chip 状态字变为文件大小；点真实发送键后出线的 `SendUserMessage` 真的带上附件（`type` / `fileName` / `mediaType` / `size` / `sha256`） | 附件没等主机确认就能发 / 确认后仍发不出去 / 发送键的可用性或提示与真实状态不一致 / 发出的消息不带附件或元数据不全 |
+| `compose/AppShell/tests/ExpiryDeletionTests.fs` | 旅程 6（到期真删） | 假时钟推进过宽限期后，断言客户端**恰好**发出一条 `conversation.delete` 命令、待删批次清空；再把**同一条**命令送进服务端事件存储，断言投影里该对话被标记删除、列表里不再出现 | 到期不发命令 / 发多条 / 发错对话 / 批次不清 / 命令落库后对话还在列表里 |
 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs` | 连接被抢占 | 断言真的抛 `OperationCanceledException("superseded")`（旧写法吞掉异常且从不断言标志位） | 不抛 superseded / 抛别的异常 |
 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs` | 旧实现摘录 | 逐个写出 `Accepted` / `Unknown` / 坏 base64 三条分支，不再 `| _ -> ()` 一锅端 | 新旧摘录行为不一致 |
 | `compose/ServerApp/tests/ServerAppTests.fs` | 截尾事件文件 | 断言进入**只读降级模式**并留下 `read-only-degraded` 诊断、且**没有**偷偷改用户的日志（S-001 契约） | 降级诊断缺失 / 启动擅自截断日志 |
@@ -302,9 +303,9 @@
 |---|---|---|
 | 旅程 1 | 用例止于 `ConnPhase.Authed(inst, CatalogPhase.LoadingCatalog)`，**没有走完配对后的首条消息** | `compose/AppShell/tests/ComposerTests.fs:90-121` |
 | 旅程 5 | 断言了失败落进 `RunState.Idle (Some err)` 且带 `retryable`，但**没有触发重试** | 同上（旅程 5 用例，`:339-451`）；重试入口在 `libs/WorkspaceState/ViewState.fs:365-366,424`（`RetryVisible` / `RetryLabel`），无用例触及 |
-| 旅程 6 | 断言了待删批次与撤销把批次清空，但**没有验到期提交真删** | 同上（旅程 6 用例，`:454-497`）；到期删除在 `libs/BoundedWait` 侧 |
+| 旅程 6 | ~~断言了待删批次与撤销把批次清空，但**没有验到期提交真删**~~ —— **已补**：到期真删另有独立用例（见 §4.5 的 `ExpiryDeletionTests.fs` 行） | `compose/AppShell/tests/ExpiryDeletionTests.fs`；到期删除在 `libs/WorkspaceState/Update.fs` 的 `MsgTick` 分支（不是 `libs/BoundedWait`） |
 
-旅程 1 / 5 / 6 这三条属**代码侧缺口**，本轮未改代码，故上表只登记、不伪称已修。
+旅程 1 / 5 这两条属**代码侧缺口**，本轮未改代码，故上表只登记、不伪称已修。旅程 6 的到期真删已由 `compose/AppShell/tests/ExpiryDeletionTests.fs` 覆盖（假时钟推进宽限期 → 发出 `conversation.delete` → 同一条命令落进服务端事件存储后对话从投影里消失）。
 
 **已迁移（产品文案规则 → lint 脚本，不是测试）**
 

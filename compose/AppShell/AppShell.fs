@@ -26,6 +26,10 @@ type ShellPorts =
         SendAtGeneration: WireEvent -> Task<bool>
         After: TimeSpan -> (unit -> unit) -> IDisposable
         Every: TimeSpan -> (unit -> unit) -> IDisposable
+        /// 当前时间（宿主注入）。组合者不直接读系统时钟：
+        /// 到期删除这类**按时间推进**的行为必须能被确定性地测（假时钟）。
+        /// 生产入口给 `DateTimeOffset.UtcNow`，行为与读系统时钟完全一致。
+        Now: unit -> DateTimeOffset
         Post: (unit -> unit) -> unit
         Toast: string -> ShellToastTone -> unit
         ToastUndo: string -> (unit -> unit) -> unit
@@ -149,7 +153,7 @@ type ShellComposer(ports: ShellPorts) =
     /// 文本变了：交给闸决定「现在落」还是「等窗口」。
     /// 窗口到期时闸给出**最后一次**的文本（中途又改过就落最新的）。
     let scheduleDraftSave (text: string) : unit =
-        let now = DateTimeOffset.UtcNow
+        let now = ports.Now ()
 
         if draftGate.Request(now, text) then
             draftGate.Saved(now)
@@ -163,7 +167,7 @@ type ShellComposer(ports: ShellPorts) =
                 afterOnce (TimeSpan.FromMilliseconds 800.0) (fun () ->
                     draftSaveTimer <- null
 
-                    match draftGate.Flush(DateTimeOffset.UtcNow) with
+                    match draftGate.Flush(ports.Now ()) with
                     | Some t -> ports.ApplyDraftWrite(DraftWrite.Write t)
                     | None -> ())
 
@@ -193,7 +197,7 @@ type ShellComposer(ports: ShellPorts) =
     member _.Model = model
 
     member this.Dispatch(msg: Msg) : unit =
-        let now = DateTimeOffset.UtcNow
+        let now = ports.Now ()
         let next, effects = Workspace.update now msg model
         model <- next
         this.ReprojectInternal effects
@@ -691,7 +695,7 @@ type ShellComposer(ports: ShellPorts) =
                     this.Dispatch(User(Sidebar(SidebarUserMsg.SearchHitSelect(convId, Some(string commitId)))))
                 | None ->
                     let queryId = Guid.CreateVersion7()
-                    search.Sent(queryId, DateTimeOffset.UtcNow)
+                    search.Sent(queryId, ports.Now ())
 
                     ports.Send(
                         WireEvent.SearchQuery
@@ -742,11 +746,11 @@ type ShellComposer(ports: ShellPorts) =
         built.Settings.WirePresets(this.RenamePreset, this.DeletePreset)
 
         let ticker =
-            ports.Every (TimeSpan.FromMilliseconds 250.0) (fun () -> this.Dispatch(MsgTick DateTimeOffset.UtcNow))
+            ports.Every (TimeSpan.FromMilliseconds 250.0) (fun () -> this.Dispatch(MsgTick (ports.Now ())))
         // 决策 443/444：石沉大海的配置/命令/探活请求统一在计时器里收尾（界面提示归桌面壳订阅）
         let expiry =
             ports.Every (ms Timing.OutboxDeliveryCheckTick) (fun () ->
-                let now = DateTimeOffset.UtcNow
+                let now = ports.Now ()
                 let timeout = ms Timing.HostRequestTimeout
                 // 换主机：上一台主机的检查结果与配置问题都不属于新主机。
                 let instanceId =
@@ -1273,7 +1277,7 @@ type ShellComposer(ports: ShellPorts) =
                     | ConnPhase.Authed(_, _) ->
                         let requestId = Guid.NewGuid()
                         doctorRequestId <- Some requestId
-                        doctorWait.Begin(DateTimeOffset.UtcNow)
+                        doctorWait.Begin(ports.Now ())
                         ports.Send(DoctorRequest {| requestId = requestId |})
                     | _ -> v().Settings.Health.ApplyUnavailable(BoundedWaits.doctorOfflineText)
         }
@@ -1331,7 +1335,7 @@ type ShellComposer(ports: ShellPorts) =
     /// 探活：登记请求再发出；回执由 ProtocolDispatch 结算（超时走 ExpireHostRequests）。
     member this.ProbeProvider(providerId: string) =
         let requestId = Guid.NewGuid()
-        probes.Track(requestId, providerId, DateTimeOffset.UtcNow)
+        probes.Track(requestId, providerId, ports.Now ())
 
         ports.Send(
             ProviderProbeRequest

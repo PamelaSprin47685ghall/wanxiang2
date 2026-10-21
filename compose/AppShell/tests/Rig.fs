@@ -67,6 +67,10 @@ type FakePorts(prefs0: UiPrefs) =
     let mutable hostHandler: (WireEvent -> unit) option = None
     let mutable closedHandler: (string option -> unit) option = None
 
+    /// 假时钟：组合者的时间来源（`ShellPorts.Now`）。
+    /// 到期删除这类按时间推进的行为要能被确定性地测，就不能读系统时钟。
+    let mutable clockNow = DateTimeOffset(2026, 10, 21, 8, 0, 0, TimeSpan.Zero)
+
     member _.Toasts = toasts |> List.ofSeq
     member _.UndoToasts = undos |> List.ofSeq
     member _.Events = events |> List.ofSeq
@@ -111,6 +115,14 @@ type FakePorts(prefs0: UiPrefs) =
     member _.OnPickAttachment
         with get () = pickAttachment
         and set value = pickAttachment <- value
+
+    /// 当前假时钟时刻。
+    member _.Now
+        with get () = clockNow
+        and set value = clockNow <- value
+
+    /// 把假时钟往前拨 `seconds` 秒（到期删除这类行为的唯一推进方式）。
+    member _.AdvanceSeconds(seconds: float) = clockNow <- clockNow.AddSeconds seconds
 
     /// 浏览器里的已存连接（`Some (url, token, instanceId)` 时 `AutoConnect` 应当用它连上）。
     member _.BrowserConnection
@@ -191,6 +203,8 @@ type FakePorts(prefs0: UiPrefs) =
                 fun ev ->
                     events.Add ev
                     Task.FromResult true
+            // 假时钟：组合者的时间来源。生产入口给系统时钟，测试给可推进的假时钟。
+            Now = fun () -> clockNow
             // 真把延时回调排上：草稿落盘的 800 ms 闸走的就是这个端口
             // （`compose/AppShell` 的 `afterOnce`）。只记录不调度的话，
             // 闸永远不会到期，测不出「打字停下来才落盘」。

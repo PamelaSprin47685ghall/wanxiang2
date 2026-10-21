@@ -1093,6 +1093,7 @@ module Program =
                             SendAtGeneration = sendAtGeneration
                             After = after
                             Every = every
+                            Now = fun () -> DateTimeOffset.UtcNow
                             Post = post
                             Toast = toast
                             ToastUndo = toastUndo

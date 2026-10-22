@@ -222,12 +222,19 @@ jobs:
         with: { global-json-file: global.json }
       - run: ./x new-widget CiSmoke
       - run: "! ./x new-widget CiSmoke"
-      - name: 生成后 check
+      # UNWIRED 只豁免生产消费者；未接画廊的控件仍须被覆盖门禁拒绝。
+      - name: 生成后检查精确拒绝缺失画廊条目
         run: |
-          if ! ./x check > check.log 2>&1; then
-            tail -20 check.log | sed 's/^/::error::/'
+          if ./x check > check.log 2>&1; then
+            echo '::error::未接画廊的控件不应通过 check'
             exit 1
           fi
+          failures="$(grep '^FAIL ' check.log || true)"
+          if [ "$failures" != 'FAIL CiSmoke: control library has no gallery entry' ]; then
+            tail -30 check.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          cat check.log
       - name: 生成后测试
         run: |
           if ! ./x test CiSmoke > test.log 2>&1; then
@@ -236,5 +243,9 @@ jobs:
           fi
       - name: check rejects a lib-to-lib reference
         run: |
-          sed -i 's#<PackageReference Include="Avalonia" />#<PackageReference Include="Avalonia" /><ProjectReference Include="../PairingCode/PairingCode.fsproj" />#' libs/CiSmoke/CiSmoke.fsproj
-          ! ./x check
+          sed -i 's#<PackageReference Include="Avalonia" />#<PackageReference Include="Avalonia" /><ProjectReference Include="../AppConfig/AppConfig.fsproj" />#' libs/CiSmoke/CiSmoke.fsproj
+          if ./x check > reference-check.log 2>&1; then
+            echo '::error::兄弟库源码引用不应通过 check'
+            exit 1
+          fi
+          grep -Fx 'FAIL CiSmoke: main project must have no ProjectReference' reference-check.log

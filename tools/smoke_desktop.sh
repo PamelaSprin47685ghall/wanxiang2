@@ -40,22 +40,27 @@ FEED="artifacts/feed"
 command -v dotnet >/dev/null 2>&1 || { echo "FAIL 前置：找不到 dotnet（$HOME/.dotnet 下也没有）" >&2; exit 2; }
 
 feed_fingerprint() {
-  find "$FEED" -type f 2>/dev/null | sort | xargs sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1
+  find "$FEED" -type f -print0 2>/dev/null | LC_ALL=C sort -z | xargs -0 -r sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1
 }
+
+# 跨平台超时执行（macOS 无 GNU timeout 时走 python3；超时返回 124）。
+# 工具本身放在 tools/timeout.sh：desktop 冒烟与 perf 基准共用同一份实现，不各写一份。
+# shellcheck source=tools/timeout.sh
+. "$ROOT/tools/timeout.sh"
 
 if [ "${WX_SKIP_BUILD:-0}" != "1" ]; then
   BEFORE=$(feed_fingerprint)
-  echo "构建桌面入口：$PROJ（Debug，包源 $FEED）" >&2
+  echo "构建桌面入口：${PROJ}（Debug，包源 ${FEED}）" >&2
   if ! dotnet build "$PROJ" -c Debug --verbosity minimal -p:RestorePackagesPath="$PWD/artifacts/packages"; then
     echo "FAIL 前置：桌面入口构建失败（feed 缺包或包过期时先 ./x pack 再重跑）" >&2
     exit 2
   fi
   AFTER=$(feed_fingerprint)
-  [ "$BEFORE" = "$AFTER" ] || { echo "FAIL 前置：构建期间包源发生变化（$FEED），先 ./x pack 再重跑" >&2; exit 2; }
+  [ "$BEFORE" = "$AFTER" ] || { echo "FAIL 前置：构建期间包源发生变化（${FEED}），先 ./x pack 再重跑" >&2; exit 2; }
 fi
 
-APP=$(find "$BIN_DIR" -maxdepth 3 -type f -perm -111 ! -name '*.dll' ! -name '*.pdb' ! -name '*.so' ! -name '*.dylib' ! -name '*.a' 2>/dev/null | head -1)
-[ -n "$APP" ] && [ -x "$APP" ] || { echo "FAIL 前置：$BIN_DIR 下没有桌面 apphost（不设 WX_SKIP_BUILD 构建一次）" >&2; exit 2; }
+APP=$(find "$BIN_DIR" -maxdepth 3 -type f -perm -111 ! -name '*.dll' ! -name '*.pdb' ! -name '*.so' ! -name '*.dylib' ! -name '*.a' 2>/dev/null | head -1 || true)
+[ -n "$APP" ] && [ -x "$APP" ] || { echo "FAIL 前置：${BIN_DIR} 下没有桌面 apphost（不设 WX_SKIP_BUILD 构建一次）" >&2; exit 2; }
 
 # 空闲端口：连得上就说明被占用（纯 bash，不依赖 ss/netstat/python）。
 port_in_use() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
@@ -80,10 +85,10 @@ OUT="$T/stdout.log"
 mkdir -p "$HOME_DIR" "$DATA_DIR"
 printf 'configVersion = 2\n[network]\nlisten = "127.0.0.1:%s"\n' "$PORT" > "$CONFIG"
 
-echo "运行：$APP --config $CONFIG --data $DATA_DIR --server --client --pwa=false（端口 $PORT，超时 ${TIMEOUT_SECS}s）"
+echo "运行：$APP --config $CONFIG --data $DATA_DIR --server --client --pwa=false（端口 ${PORT}，超时 ${TIMEOUT_SECS}s）"
 rc=0
 WANXIANG_HOME="$HOME_DIR" WANXIANG_STARTUP_TRACE=exit WANXIANG_NO_URL_SCHEME=1 \
-  timeout -k 10 "$TIMEOUT_SECS" "$APP" \
+  run_with_timeout "$TIMEOUT_SECS" "$APP" \
     --config "$CONFIG" --data "$DATA_DIR" --server --client --pwa=false \
     >"$OUT" 2>"$ERR" || rc=$?
 
@@ -93,16 +98,16 @@ fail() { printf '  FAIL %s\n' "$1"; FAILED=$((FAILED + 1)); }
 
 MARKS=$(grep -o 'startup\.[a-zA-Z]* uptime_ms=[0-9]*' "$ERR" 2>/dev/null || true)
 echo
-echo "断言（stderr：$ERR）："
+echo "断言（stderr：${ERR}）："
 printf '  启动打点：%s\n' "$(printf '%s' "$MARKS" | tr '\n' ' ')"
 
 # 1) 退出码：timeout 到期（124/137）算失败，不是「反正退出了」。
 if [ "$rc" -eq 0 ]; then
   pass "进程退出码 0"
 elif [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
-  fail "进程退出码 $rc：timeout ${TIMEOUT_SECS}s 到期被杀（启动或退出挂住）"
+  fail "进程退出码 ${rc}：timeout ${TIMEOUT_SECS}s 到期被杀（启动或退出挂住）"
 else
-  fail "进程退出码 $rc（期望 0）"
+  fail "进程退出码 ${rc}（期望 0）"
 fi
 
 # 2) 启动里程碑：firstFrame 证明窗口真的画出来了；同进程主机在跑，listReady 必须到。
@@ -151,19 +156,19 @@ fi
 # 5) 成功才清理临时目录；清理本身就是断言。
 if [ "$FAILED" -eq 0 ]; then
   rm -rf "$T"
-  if [ -d "$T" ]; then fail "临时目录未删除：$T"; else pass "临时目录已删除（$T）"; fi
+  if [ -d "$T" ]; then fail "临时目录未删除：$T"; else pass "临时目录已删除（${T}）"; fi
 fi
 
 echo
 if [ "$FAILED" -ne 0 ]; then
   echo "结果：$FAILED 项断言失败"
-  echo "--- stderr 尾部（最多 40 行：$ERR）"
+  echo "--- stderr 尾部（最多 40 行：${ERR}）"
   tail -n 40 "$ERR" 2>/dev/null || true
   if [ -s "$OUT" ]; then
-    echo "--- stdout 尾部（最多 20 行：$OUT）"
+    echo "--- stdout 尾部（最多 20 行：${OUT}）"
     tail -n 20 "$OUT" || true
   fi
-  echo "临时目录保留：$T（config $CONFIG，data $DATA_DIR）"
+  echo "临时目录保留：${T}（config ${CONFIG}，data ${DATA_DIR}）"
   exit 1
 fi
 echo "结果：全部断言通过（$(printf '%s' "$MARKS" | tr '\n' ' ')）"

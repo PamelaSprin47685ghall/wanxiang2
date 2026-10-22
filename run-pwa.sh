@@ -48,7 +48,7 @@ src_fingerprint() {
 }
 
 feed_fingerprint() {
-  find artifacts/feed -type f 2>/dev/null | LC_ALL=C sort | xargs -r sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1
+  find artifacts/feed -type f -print0 2>/dev/null | LC_ALL=C sort -z | xargs -0 -r sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1
 }
 
 # 入口构建指纹：PWA 工程与入口源文件（构建产物目录除外）+ 构建配置。

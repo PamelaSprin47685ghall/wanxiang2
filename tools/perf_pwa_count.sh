@@ -5,7 +5,7 @@
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 TARGET="$1"; PORT="${2:-18913}"
-LOG=$(mktemp /tmp/wxperf-proxy-XXXX.log)
+LOG=$(mktemp "${TMPDIR:-/tmp}/wxperf-proxy.XXXXXX")
 node "$ROOT/tools/throttle_proxy.js" --listen "$PORT" --target "$TARGET" --rtt 0 --mbps 100000 > "$LOG" 2>&1 &
 PROXY=$!
 sleep 1

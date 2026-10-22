@@ -22,8 +22,15 @@ type TestAppBuilder =
             .UseHeadless(AvaloniaHeadlessPlatformOptions(UseHeadlessDrawing = false))
 
 module Headless =
+    // 隔离级别用 PerAssembly 而不是 PerTest：这里的 TestApp 是**真的** Wanxiang.UI.App，
+    // 它的 Initialize 会装进程级单例（SharedTheme.styles 的 Styles 组、
+    // SharedTheme.manager.Resources 的资源字典）。Avalonia 的资源提供者只有一个 owner，
+    // PerTest 下每个用例新建一个 Application，第二个用例再挂同一份单例就抛
+    // "The Styles already has a owner."
+    // PerAssembly 让整个测试程序集只有一个 Application，等同生产的一次启动：
+    // 单例资源只装一次，和真实宿主是同一条路。
     let private session =
-        lazy (HeadlessUnitTestSession.StartNew(typeof<TestAppBuilder>, AvaloniaTestIsolationLevel.PerTest))
+        lazy (HeadlessUnitTestSession.StartNew(typeof<TestAppBuilder>, AvaloniaTestIsolationLevel.PerAssembly))
 
     /// 在 Avalonia UI 线程上同步执行测试体。
     let run (body: unit -> unit) : unit =

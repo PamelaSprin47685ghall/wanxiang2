@@ -22,38 +22,47 @@ open Wanxiang2.WorkspaceState
 open Wanxiang2.AppShell.Tests
 
 let private tempDir () =
-    let dir = Path.Combine(Path.GetTempPath(), "wanxiang-expiry-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "wanxiang-expiry-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
     dir
 
 let private testConfig () : SessionConfig =
-    { provider = "openai"
-      model = "test-model"
-      instructions = None
-      tools = []
-      temperature = None
-      topP = None
-      maxTokens = None
-      thinkingBudget = None
-      extraJson = None }
+    {
+        provider = "openai"
+        model = "test-model"
+        instructions = None
+        tools = []
+        temperature = None
+        topP = None
+        maxTokens = None
+        thinkingBudget = None
+        extraJson = None
+    }
 
 /// 服务端：建一段对话，提交进事件存储。
 let private seedConversation (store: Wanxiang.Store.EventStore) (convId: Guid) =
     let createCmd =
         ClientCommand.CreateConversation
-            {| invocationId = Guid.CreateVersion7()
-               conversationId = convId
-               title = "待删的对话"
-               config = testConfig () |}
+            {|
+                invocationId = Guid.CreateVersion7()
+                conversationId = convId
+                title = "待删的对话"
+                config = testConfig ()
+            |}
+
     match CommandEngine.plan store.Projection store.LastCommitId createCmd with
     | PlanResult.Planned plan ->
         match
             store.Submit
-                { events = plan.events
-                  commandId = Some plan.commandId
-                  commandType = Some plan.commandType
-                  commandHash = Some plan.canonicalHash
-                  nowUtc = None }
+                {
+                    events = plan.events
+                    commandId = Some plan.commandId
+                    commandType = Some plan.commandType
+                    commandHash = Some plan.canonicalHash
+                    nowUtc = None
+                }
         with
         | Wanxiang.Store.SubmitResult.Committed _ -> ()
         | other -> failwithf "建对话提交失败: %A" other
@@ -75,8 +84,15 @@ let ``旅程 6：宽限期过后到期真删——删除命令真的把对话从
         let convId = Guid.NewGuid()
         seedConversation store convId
         // 前置：对话确实在存储里（后面要证明它被删掉，所以先证明它在）。
-        Assert.True(Projection.conversationList store.Projection |> List.exists (fun c -> c.conversationId = convId))
-        Assert.True(Projection.tryConversation store.Projection convId |> Option.exists (fun c -> not c.deleted))
+        Assert.True(
+            Projection.conversationList store.Projection
+            |> List.exists (fun c -> c.conversationId = convId)
+        )
+
+        Assert.True(
+            Projection.tryConversation store.Projection convId
+            |> Option.exists (fun c -> not c.deleted)
+        )
 
         let rig = Rig.create ()
         // 假时钟：组合者的时间来源（生产环境是系统时钟）。
@@ -85,18 +101,27 @@ let ``旅程 6：宽限期过后到期真删——删除命令真的把对话从
         let item = JsonObject()
         item["conversationId"] <- string convId
         item["title"] <- "待删的对话"
+
         rig.Shell.Dispatch(
-            WireRecv(ConversationListSnapshot {|
-                lastCommitId = 0UL
-                items = JsonArray([| item :> JsonNode |])
-            |}))
+            WireRecv(
+                ConversationListSnapshot
+                    {|
+                        lastCommitId = 0UL
+                        items = JsonArray([| item :> JsonNode |])
+                    |}
+            )
+        )
 
         // 删除：进入待删批次，宽限期 8 秒。
         rig.Shell.Dispatch(User(Sidebar(SidebarUserMsg.BatchDelete [ convId ])))
         Assert.Equal(1, rig.Shell.Model.Feedback.PendingDeletions.Count)
         // 到期前：一条删除命令都没发出去，存储里的对话也还在。
         Assert.Empty(deleteCommands rig)
-        Assert.True(Projection.conversationList store.Projection |> List.exists (fun c -> c.conversationId = convId))
+
+        Assert.True(
+            Projection.conversationList store.Projection
+            |> List.exists (fun c -> c.conversationId = convId)
+        )
 
         // 推进假时钟过宽限期，再打一拍 tick。
         rig.Fake.AdvanceSeconds 9.0
@@ -111,24 +136,33 @@ let ``旅程 6：宽限期过后到期真删——删除命令真的把对话从
         // 这条命令真的能让存储里的对话消失：按同一条命令规划并提交。
         let deleteCmd =
             ClientCommand.DeleteConversation
-                {| invocationId = deletes.Head.invocationId
-                   conversationId = deletes.Head.conversationId |}
+                {|
+                    invocationId = deletes.Head.invocationId
+                    conversationId = deletes.Head.conversationId
+                |}
+
         match CommandEngine.plan store.Projection store.LastCommitId deleteCmd with
         | PlanResult.Planned plan ->
             match
                 store.Submit
-                    { events = plan.events
-                      commandId = Some plan.commandId
-                      commandType = Some plan.commandType
-                      commandHash = Some plan.canonicalHash
-                      nowUtc = None }
+                    {
+                        events = plan.events
+                        commandId = Some plan.commandId
+                        commandType = Some plan.commandType
+                        commandHash = Some plan.canonicalHash
+                        nowUtc = None
+                    }
             with
             | Wanxiang.Store.SubmitResult.Committed _ -> ()
             | other -> failwithf "删除提交失败: %A" other
         | other -> failwithf "删除规划失败: %A" other
 
         // 真删了：列表里不再出现，投影里标记为已删除。
-        Assert.False(Projection.conversationList store.Projection |> List.exists (fun c -> c.conversationId = convId))
+        Assert.False(
+            Projection.conversationList store.Projection
+            |> List.exists (fun c -> c.conversationId = convId)
+        )
+
         match Projection.tryConversation store.Projection convId with
         | Some c -> Assert.True(c.deleted)
         | None -> Assert.Fail "删除后投影里应仍保留已删除的对话记录（墓碑）"

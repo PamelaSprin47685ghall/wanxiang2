@@ -247,7 +247,7 @@
 | # | 位置 | 形态 | 为什么弱 |
 | --- | --- | --- | --- |
 | B1 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:111-113`，现 `:141-143`） | `match vs.Composer.Send.State with \| SendButtonState.GeneratingStop -> Assert.Fail "…" \| _ -> ()` | **旅程 2「引导流程配置模型」的唯一断言是负向的**：只证明「状态不是 GeneratingStop」。测试名声称验的是「引导流程配置模型」，但**没有任何断言检查目录是否装载、预设是否选中、引导卡是否投影**。且负向断言只能捕捉「恰好是 GeneratingStop」这一种错误值。**已改为**目录就绪且 `providers` 为空（`:151`）、引导事实为空（`:154-155`）、输入区禁用且原因正确（`:157-158`）、空态是 `NoConversation`（`:160-162`）。 |
-| B2 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:238-240`，现 `:421-427`） | 同上形态 | 旅程 5 的收尾断言只验「不是 GeneratingStop」；错误状态若是别的值（如 `Idle` 但其实没停）照样通过。**已改为** `Assert.Equal(SendButtonState.Idle, …)`（`:427`）+ `RunState.Idle(Some err)` 带 kind/message/retryable（`:432-436`）+ `GenerationCancel` 发给那一个对话与代号（`:449-451`）。 |
+| B2 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:238-240`，现 `:424-453`） | 同上形态 | 旅程 5 的收尾断言只验「不是 GeneratingStop」；错误状态若是别的值（如 `Sending`）照样通过。**已改为** `Assert.Equal(SendButtonState.Idle, …)`（`:429`，负向 match 已删除）+ `RunState.Idle(Some err)` 带 kind/message/retryable（`:432-441`）+ `GenerationCancel` 发给那一个对话与代号（`:450-453`）。 |
 | B3 | `compose/AppShell/tests/ComposerTests.fs`（旧 `:275-279`，现 `:482-497`） | `match toastUndoAction with \| Some actionId -> … \| None -> ()` | 「撤销删除」这一步的断言**只在 `UndoAction` 是 `Some` 时才执行**。如果撤销入口消失（`None`），测试静默通过。上面 `Assert.True(rig.Shell.Model.Toasts.Length > 0)` 只证明有 toast，不证明 toast 带撤销动作。**这正是「批量删除恢复」旅程最该守住的那一环。** **已改为** `None -> Assert.Fail`（`:497`）。 |
 | B4 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs:802-840` | `with \| :? OperationCanceledException as oce when oce.Message.Contains "superseded" -> caughtSuperseded <- true \| _ -> ()` | `caughtSuperseded` 被赋值后**从未被断言**；非匹配异常被 `\| _ -> ()` 静默吞掉。最后那句注释「Either it threw superseded or was canceled cleanly」把**两种行为都当成通过**——测试名「generation check」想验的「连接代次检查生效」实际上没被断言（只断言了 `ConnectionGeneration >= 2`）。 |
 | B5 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs:45-57` | `match oldBuffers.Append(sha256, bytes) with \| DownloadChunkResult.Capped when not downloadCappedNotified -> … \| _ -> ()` + `with _ -> ()` | 旧实现摘录里，**非 Capped 结果与所有异常都被静默吞掉**。`oldStep` 的返回值只反映「是否 toast 过」，因此「坏 base64 被忽略」「第二次触顶不再 toast」等语义**只由新旧两份实现的相等性担保**，而 `newStep` 那侧一旦也退化成同样行为，测试仍然绿。 |
@@ -282,7 +282,8 @@
 | `compose/AppShell/tests/ComposerTests.fs` | 附件上传 | 断言缩略图端口恰好一次且字节相同；非图片不走该端口 | 缩略图不再被调 / 调了两次 / 字节不符 |
 | `compose/AppShell/tests/ComposerTests.fs` | 断开连接 | 断言在途计数归零（不变式 3）、`Conn = Connecting 1`、有「已断开连接」提示 | 断线后在途命令未清 / 状态没落回 Connecting / 没提示 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 2 | 断言目录就绪且 `providers` 为空、引导事实为空、输入区禁用且原因正确、空态是 `NoConversation` | 目录状态错 / 输入区在无模型服务时仍可发 / 禁用原因丢失 |
-| `compose/AppShell/tests/ComposerTests.fs` | 旅程 5 | 断言发送键回到 `Idle`、`RunState.Idle (Some err)` 带 kind/message/retryable、`GenerationCancel` 发给**那一个**对话与代号 | 停止后仍不可发 / 错误被丢掉 / 取消发错对话 |
+| `compose/AppShell/tests/ComposerTests.fs` | 旅程 5 | 断言发送键**精确**回到 `Idle`（B2：不再只验「不是 GeneratingStop」）、`RunState.Idle (Some err)` 带 kind/message/retryable、`GenerationCancel` 发给**那一个**对话与代号 | 停止后仍不可发 / 发送键停在别的忙态 / 错误被丢掉 / 取消发错对话 |
+| `compose/AppShell/tests/ComposerTests.fs` | 旅程 5b（新增，提交 `2d6a58e`） | 在**真实控件树**里按可访问名「重试生成」找到 ErrorPanel 的重试按钮并点击；断言重试命令真的作为 `Effect.SendWire` 发出（`chat.regenerate`）、进入待确认队列、发送键进 `Sending`；命令确认后待确认清空、发送键回 `Idle`；重新生成开始时进 `GeneratingStop`、成功后回 `Idle` 且错误卡与重试按钮消失 | 重试按钮点不动 / 命令没发出 / 待确认没入队或没清 / 发送键状态错 / 成功后错误卡仍在 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 6 | 断言提示条**必须**带撤销动作、撤销前有一个待删批次且含那两段对话、撤销后批次清空 | 撤销入口消失 / 批次漏记 / 撤销后仍残留 |
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 3 | 断言发送被主机的 `attachment.committed` 确认门控（未就绪时发不出去、草稿与附件都留着），并断言真正发出的 `SendUserMessage` 载荷：`contents` 有 2 条、文本「你好」、附件带 `fileName` / `sha256` / `size`（`:165-238`） | 附件没随消息发出 / 附件元数据不全 / 未就绪时也能发 |
 | `compose/AppShell/tests/JourneyAttachmentTests.fs` | 旅程 3（**真实控件树**，2026-10-22 新增） | 走真实「添加附件」按键与真实发送按键；认证/目录/ACK 全经真实线协议事件入口（`FakePorts.Deliver` → 宿主事件订阅 → `ShellComposer.HandleEvent` → 状态树）。断言：上传完成（`attachment.complete`）后附件**仍未就绪**——发送键 `IsEnabled = false`、提示为「附件上传中，请稍候…」、托盘 chip 状态字为「上传中」；走真实控件的提交入口也**发不出**任何 `SendUserMessage`；主机 `attachment.committed` 之后附件才 `Ready`、发送键启用、chip 状态字变为文件大小；点真实发送键后出线的 `SendUserMessage` 真的带上附件（`type` / `fileName` / `mediaType` / `size` / `sha256`） | 附件没等主机确认就能发 / 确认后仍发不出去 / 发送键的可用性或提示与真实状态不一致 / 发出的消息不带附件或元数据不全 |
@@ -302,10 +303,10 @@
 | 旅程 | 还缺什么 | 证据位置 |
 |---|---|---|
 | 旅程 1 | 用例止于 `ConnPhase.Authed(inst, CatalogPhase.LoadingCatalog)`，**没有走完配对后的首条消息** | `compose/AppShell/tests/ComposerTests.fs:90-121` |
-| 旅程 5 | 断言了失败落进 `RunState.Idle (Some err)` 且带 `retryable`，但**没有触发重试** | 同上（旅程 5 用例，`:339-451`）；重试入口在 `libs/WorkspaceState/ViewState.fs:365-366,424`（`RetryVisible` / `RetryLabel`），无用例触及 |
+| 旅程 5 | ~~断言了失败落进 `RunState.Idle (Some err)` 且带 `retryable`，但**没有触发重试**~~ —— **已补**：旅程 5b 在真实控件树里点 ErrorPanel 的「重试」按钮走完整条重试路径（用例提交 `2d6a58e`） | `compose/AppShell/tests/ComposerTests.fs:455-644`（旅程 5b）；重试按钮在 `libs/ActionStrip/ErrorPanel.fs:369-393`，派发在 `compose/AppShell/AppShell.fs` 的 `retry ()` → `ChatUserMsg.Regenerate`，命令构造在 `libs/WorkspaceState/Update.fs:1208-1215` |
 | 旅程 6 | ~~断言了待删批次与撤销把批次清空，但**没有验到期提交真删**~~ —— **已补**：到期真删另有独立用例（见 §4.5 的 `ExpiryDeletionTests.fs` 行） | `compose/AppShell/tests/ExpiryDeletionTests.fs`；到期删除在 `libs/WorkspaceState/Update.fs` 的 `MsgTick` 分支（不是 `libs/BoundedWait`） |
 
-旅程 1 / 5 这两条属**代码侧缺口**，本轮未改代码，故上表只登记、不伪称已修。旅程 6 的到期真删已由 `compose/AppShell/tests/ExpiryDeletionTests.fs` 覆盖（假时钟推进宽限期 → 发出 `conversation.delete` → 同一条命令落进服务端事件存储后对话从投影里消失）。
+旅程 1 这条属**代码侧缺口**，本轮未改代码，故上表只登记、不伪称已修。旅程 5 的真实重试已由 `compose/AppShell/tests/ComposerTests.fs` 的旅程 5b 覆盖（失败 → 真实「重试」按钮 → `chat.regenerate` 发出 → 待确认 → `CommandCommitted` → 重新生成 → 错误卡消失）；旅程 6 的到期真删已由 `compose/AppShell/tests/ExpiryDeletionTests.fs` 覆盖（假时钟推进宽限期 → 发出 `conversation.delete` → 同一条命令落进服务端事件存储后对话从投影里消失）。
 
 **已迁移（产品文案规则 → lint 脚本，不是测试）**
 

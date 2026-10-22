@@ -212,9 +212,13 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // 所以判据只能是**像素**：开/关弹出层各截一张画布，求差得到弹出层的
             // 外接矩形，再在这块矩形里统计字形笔画。
             //
-            // 统计量：**每行笔画段数的均值**。豆腐块（.notdef 空心方框）每行只有
-            // 左右两段竖笔画 → 均值 ≈ 2；真正的中日韩字形笔画段数明显更多。
-            // 阈值 2.8 由两次实跑标定（正常字体 vs 去掉 CJK 字体的坏构建）。
+            // 统计量有两个，各自的作用分开说（别把没起作用的判据当门禁）：
+            //   meanRuns（每行笔画段数的均值）—— 只用来跟正文比「笔画密度」；
+            //     正常字形与正文接近（实测 0.76~0.99）。但它**不能识别豆腐块**：
+            //     .notdef 空心方框每行也有好几段笔画，实测均值和正文差不多。
+            //   distinctShapes / 有笔画行数（形状多样性）—— 才是识别豆腐块的判据。
+            //     豆腐块每个字同形 → 每行形状雷同，实测 0.06；真字形各不相同 →
+            //     实测 tooltip 1.00、contextmenu 1.00、flyout 0.69、正文 0.63。
             const GRID_W = 240, GRID_H = 160, CELL = 10; // 网格覆盖整张画布，1 格 = 10 设备像素
             const canvasCount = () => page.evaluate(() => document.querySelectorAll('canvas').length);
             const snapAll = async () => {
@@ -271,14 +275,20 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 const ctx = off.getContext('2d');
                 ctx.drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh);
                 const d = ctx.getImageData(0, 0, sw, sh).data;
+                // 找背景色：把颜色量化到 5 位（>> 3）后取众数桶。量化只用来**选桶**——
+                // 桶号不是 0-255 的颜色值，直接拿它跟像素比会把背景自己也判成笔画
+                // （240 >> 3 = 30，|240-30| = 210 > 60）。所以要记下桶里第一个像素的原始 RGB，
+                // 用真实颜色作背景基准。
                 const counts = new Map();
                 for (let i = 0; i < d.length; i += 4) {
                     const k = ((d[i] >> 3) << 16) | ((d[i + 1] >> 3) << 8) | (d[i + 2] >> 3);
-                    counts.set(k, (counts.get(k) || 0) + 1);
+                    const c = counts.get(k);
+                    if (c) c.n++;
+                    else counts.set(k, { n: 1, r: d[i], g: d[i + 1], b: d[i + 2] });
                 }
-                let bgKey = 0, best = -1;
-                for (const [k, v] of counts) if (v > best) { best = v; bgKey = k; }
-                const br = (bgKey >> 16) & 255, bgc = (bgKey >> 8) & 255, bb2 = bgKey & 255;
+                let bg = null;
+                for (const c of counts.values()) if (!bg || c.n > bg.n) bg = c;
+                const br = bg.r, bgc = bg.g, bb2 = bg.b;
                 const rowRuns = [];
                 const rowShapes = new Set();
                 let ink = 0;
@@ -342,9 +352,16 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 }
                 // 自校准：弹出层的笔画密度至少要达到正文中文的 70%。
                 const ratio = bodyRef.meanRuns > 0 ? stats.meanRuns / bodyRef.meanRuns : 0;
-                const shapeOk = stats.distinctShapes >= Math.max(3, Math.floor(bodyRef.distinctShapes * 0.5));
+                // distinctShapes 是**绝对**计数，上限就是「有笔画的行数」：tooltip 那种
+                // 34x7 的小提示条只有 26 条笔画行，形状数最多也就 26，永远够不到正文
+                // 900x600 区域测出的 147。拿绝对数比是量纲错误，会稳定误报。
+                // 改成比**每行形状多样性**（distinctShapes / 有笔画行数）：字形越丰富该值越高，
+                // 豆腐块则所有字同形、该值趋近 1/行数（每行只有一种形状）。实测：
+                // tooltip 1.00、flyout 0.73、正文 0.63 —— 小区域反而更高，与尺寸无关。
+                const shapeDiversity = stats.rows > 0 ? stats.distinctShapes / stats.rows : 0;
+                const shapeOk = shapeDiversity >= 0.3;
                 check(`弹出层 ${name} 文字不是豆腐块`, ratio >= 0.7 && shapeOk,
-                    `${detail} 正文基准 meanRuns=${bodyRef.meanRuns.toFixed(2)} distinctShapes=${bodyRef.distinctShapes} 比值=${ratio.toFixed(2)}`);
+                    `${detail} 形状多样性=${shapeDiversity.toFixed(2)} 正文基准 meanRuns=${bodyRef.meanRuns.toFixed(2)} 比值=${ratio.toFixed(2)}`);
                 return stats;
             };
             const closePopups = async () => {
@@ -391,8 +408,15 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             await closePopups();
 
             // (2) 上下文菜单：在消息卡上右键。
+            //     消息卡的实际位置随窗口与内容变化，写死坐标会点到空白处（空白处没有
+            //     ContextMenu，开/关两帧无差异 → 误报「菜单没出现」）。这里扫主内容区
+            //     （避开左侧栏 x<300 与底部输入区 y>560）找一张真的能弹出菜单的卡。
             let menuRegion = null;
-            for (const [x, y] of [[600, 220], [600, 180], [700, 250], [500, 200]]) {
+            const menuSpots = [];
+            for (const y of [300, 340, 380, 420, 260, 460, 500]) {
+                for (const x of [600, 700, 500, 800, 400, 900]) menuSpots.push([x, y]);
+            }
+            for (const [x, y] of menuSpots) {
                 const before = await snapAll();
                 await page.mouse.click(x, y, { button: 'right' });
                 await sleep(700);

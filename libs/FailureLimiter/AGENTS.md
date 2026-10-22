@@ -18,6 +18,8 @@
     - 推理：攻击者可以换很多地址，每个只失败一次。条目数超过阈值时清理过期条目，单次成本 O(n)，摊下来可以忽略。
 3. **时间由调用方给出。** [根 AXIOM: 2]
     - 推理：于是测试不必等真实时间，行为也完全确定。
+4. **记失败不因参数极端而抛异常。** [根 AXIOM: 1, 5]
+    - 推理：`RecordFailure` 由攻击者触发的错误码路径调用，抛异常等于主机被打崩。窗口大到减法越界时按「永不滑出」处理：宁可多记，不可崩、也不能把限流悄悄关掉。
 
 ## SPEC
 1. [LEMMA: 1] 达到阈值冻结、键之间隔离、到期解除、`Clear` 立即解除：`tests/Tests.fs` `freezes at the threshold per key, expires, clears`，通过。
@@ -25,6 +27,7 @@
 3. [LEMMA: 2] 1000 个不同键、阈值 100 时，跟踪的键数不超过 161：`many distinct keys stay bounded`，通过。
 4. 非法参数拒绝构造：`max failures must be positive`，通过。
 5. [LEMMA: 1] `Retune` 换限额不丢已记的失败与已有冻结：`retune keeps counted failures and existing freezes`，通过。
+6. [LEMMA: 1, 3] 窗口大到 `now - window` 超出 `DateTimeOffset` 可表示的早期时刻时，记失败不抛异常，且既有失败仍计入阈值（按「永不滑出」处理）：`huge window does not throw when recording failures`、`unrepresentable window keeps earlier failures counted`，通过。旧实现直接算 `now - window`，在 `window` 取 `Int32.MaxValue` 分钟时抛 `ArgumentOutOfRangeException`——而记失败正好发生在攻击者手里，等于主机可被一条超长窗口配置打崩。
 
 ## 成员 `PairingCode`
 

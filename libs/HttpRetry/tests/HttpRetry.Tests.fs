@@ -72,3 +72,23 @@ let ``transient failures are retried up to the limit, then the last response is 
 let ``non-transient failures and zero retries are not retried`` () =
     Assert.Equal((HttpStatusCode.BadRequest, 1), send [ HttpStatusCode.BadRequest ] 3)
     Assert.Equal((HttpStatusCode.ServiceUnavailable, 1), send [ HttpStatusCode.ServiceUnavailable ] 0)
+
+[<Theory>]
+[<InlineData(1, 250.0)>]
+[<InlineData(2, 500.0)>]
+[<InlineData(3, 1000.0)>]
+[<InlineData(6, 8000.0)>]
+[<InlineData(31, 8000.0)>]
+[<InlineData(32, 8000.0)>]
+[<InlineData(64, 8000.0)>]
+[<InlineData(1000, 8000.0)>]
+let ``退避时长翻倍并收敛到八秒上限，位移不再溢出`` (attempt: int, expectedMs: float) =
+    let delay = HttpRetry.backoffDelay attempt
+    Assert.True(delay >= TimeSpan.Zero, $"attempt={attempt} 的退避时长为负：{delay}")
+
+    Assert.Equal(expectedMs, delay.TotalMilliseconds)
+
+[<Fact>]
+let ``退避时长在所有尝试次数上都非负`` () =
+    for attempt in 1..200 do
+        Assert.True(HttpRetry.backoffDelay attempt >= TimeSpan.Zero)

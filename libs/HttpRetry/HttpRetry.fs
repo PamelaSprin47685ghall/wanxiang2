@@ -42,6 +42,16 @@ module HttpRetry =
         let code = int status
         code = 429 || code = 408 || code >= 500
 
+    /// 指数退避的等待时长：250 ms 起步，每次翻倍，上限 8 秒。
+    ///
+    /// 单独抽出来是为了能直接断言边界：位移 `1 <<< (attempt - 1)` 在 attempt ≥ 32 时
+    /// 会溢出成负数（`1 <<< 31` 本身已是 `Int32.MinValue`），乘出来的等待是负值，
+    /// `Task.Delay` 收到负延迟会直接抛异常。这里用浮点幂再收敛到上限，位移彻底不参与。
+    let backoffDelay (attempt: int) : TimeSpan =
+        let exponent = max 0 (attempt - 1)
+        let scaled = 250.0 * (2.0 ** float exponent)
+        TimeSpan.FromMilliseconds(min 8000.0 scaled)
+
     /// 按 maxRetries 退避重试。
     ///
     /// 只在**首个字节之前**重试：先用 ResponseHeadersRead 拿到状态行，
@@ -90,7 +100,7 @@ module HttpRetry =
                         if retryAfter > TimeSpan.Zero then
                             retryAfter
                         else
-                            TimeSpan.FromMilliseconds(float (min 8000 (250 * (1 <<< (attempt - 1)))))
+                            backoffDelay attempt
 
                     do! Task.Delay(backoff, ct)
 

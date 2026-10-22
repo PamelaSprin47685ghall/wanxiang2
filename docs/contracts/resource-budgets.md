@@ -58,7 +58,7 @@
 | 对象 | 预算 | 策略 | 状态 |
 |---|---|---|---|
 | 附件最大大小 | 64 MiB | `AppConfig.maxAttachmentBytes = 64 * 1024 * 1024`（Q171 中置信度默认值） | ✅ |
-| 分块大小 | 256 KiB | `chunkSizeBytes = 256 * 1024`（Q172）；`AttachmentStore.maxChunkBytes` 校验 | ✅ |
+| 分块大小 | 256 KiB（配置范围 256 KiB – 1 MiB） | `chunkSizeBytes = 256 * 1024`（Q172）；`AttachmentStore.maxChunkBytes` 校验。**协议无通告字段，客户端固定 256 KiB，故配置不得低于此值**（低于即拒绝启动）。**上限 1 MiB**：下载时主机按该值 `Array.zeroCreate<byte>`，无上界等于让配置决定单次分配多大（超过即拒绝启动） | ✅ |
 | 上传中临时文件 | 每连接并发 | `uploads` ConcurrentDictionary；`AbortByConnection` 断线清理（决策 71） | ✅ |
 | 孤儿附件 | 无自动清理 | doctor `orphan-attachments` 检查（O-003）只读报告；**不自动删除**（R1 用户数据优先） | ⚠️ |
 

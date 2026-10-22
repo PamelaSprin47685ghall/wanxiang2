@@ -10,7 +10,7 @@
 
 对模型提供方的 HTTP 请求：在首字节之前退避重试；把非 2xx 翻成带状态码的异常。只依赖 BCL。根规则见项目根目录 AGENTS.md。
 
-公开面：`HttpRetry.sendWithRetry http makeRequest maxRetries ct`、`HttpRetry.statusError response body`。
+公开面：`HttpRetry.sendWithRetry http makeRequest maxRetries ct`、`HttpRetry.statusError response body`、`HttpRetry.backoffDelay attempt`。
 
 ## LEMMA
 1. **只在首字节之前重试。** [根 AXIOM: 5]
@@ -23,6 +23,7 @@
 ## SPEC
 1. [LEMMA: 2] 2xx 不算错误；非 2xx 的异常带状态码、正文和 Retry-After：`tests/Tests.fs`，通过。
 2. [LEMMA: 1] 临时性失败重试到上限，然后返回最后一次响应；非临时失败、重试次数为 0 时都不重试：通过。
+3. [LEMMA: 1] 退避时长从 250 ms 翻倍到 8 秒上限，任何尝试次数下都非负。位移 `1 <<< (attempt - 1)` 在 attempt ≥ 32 时溢出成负数（`1 <<< 31` 已是 `Int32.MinValue`），乘出来的等待为负，`Task.Delay` 会直接抛异常。`backoffDelay` 用浮点幂再收敛到上限，位移不参与计算：`tests/HttpRetry.Tests.fs` 的 `退避时长翻倍并收敛到八秒上限，位移不再溢出` 与 `退避时长在所有尝试次数上都非负`，通过。
 
 ## 成员 `JsonPick`
 

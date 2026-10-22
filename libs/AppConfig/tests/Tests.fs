@@ -17,7 +17,7 @@ fix = false
 [network]
 listen = "127.0.0.1:9999"
 maxAttachmentBytes = 1048576
-chunkSizeBytes = 65536
+chunkSizeBytes = 262144
 [generation]
 temperature = 0.7
 maxContextMessages = 120
@@ -46,6 +46,145 @@ name = "test"
 createdAt = "2026-01-01T00:00:00Z"
 revoked = false
 """
+
+[<Theory>]
+[<InlineData("0")>]
+[<InlineData("-1")>]
+[<InlineData("2147483648")>]
+[<InlineData("4294967297")>]
+[<InlineData("\"bad\"")>]
+[<InlineData("true")>]
+[<InlineData("1.5")>]
+let ``配对限流显式非法值拒绝整份配置`` (value: string) =
+    for version in [ 2; 3; 4 ] do
+        for key in [ "failureWindowMinutes"; "maxFailures"; "freezeMinutes" ] do
+            let toml =
+                (TomlCodec.serialize (AppConfig.defaults (Guid.Parse "11111111-1111-1111-1111-111111111111")))
+                    .Replace("configVersion = 4", $"configVersion = {version}")
+
+            let line =
+                match key with
+                | "failureWindowMinutes" -> "failureWindowMinutes = 1"
+                | "maxFailures" -> "maxFailures = 5"
+                | _ -> "freezeMinutes = 5"
+
+            match TomlCodec.tryParse (toml.Replace(line, $"{key} = {value}")) with
+            | Error errors -> Assert.Contains(errors, fun error -> error.StartsWith($"pairing.{key}:"))
+            | Ok _ -> failwith $"configVersion={version}: pairing.{key}={value} 不应被接受"
+
+[<Fact>]
+let ``配对三个限流参数都接受 Int32.MaxValue 这一上界`` () =
+    // 三个参数都是 int32 正整数：分钟数乘 60 秒后仍远小于 TimeSpan 上限，
+    // 主机侧的 TimeSpan.FromMinutes 不会溢出，没有理由再设一个更小的分钟上界。
+    let baseText =
+        TomlCodec.serialize (AppConfig.defaults (Guid.Parse "11111111-1111-1111-1111-111111111111"))
+
+    for (key, original) in [ "failureWindowMinutes", 1; "maxFailures", 5; "freezeMinutes", 5 ] do
+        let toml = baseText.Replace($"{key} = {original}", $"{key} = {Int32.MaxValue}")
+
+        match TomlCodec.tryParse toml with
+        | Ok cfg ->
+            let parsed =
+                match key with
+                | "failureWindowMinutes" -> cfg.pairingFailureWindowMinutes
+                | "maxFailures" -> cfg.pairingMaxFailures
+                | _ -> cfg.pairingFreezeMinutes
+
+            Assert.Equal(Int32.MaxValue, parsed)
+        | Error errors -> failwith $"{key}=Int32.MaxValue 应被接受，实际报错：{errors}"
+
+[<Fact>]
+let ``分块大小小于客户端固定块时被拒绝`` () =
+    for version in [ 2; 3; 4 ] do
+        let toml =
+            (TomlCodec.serialize (AppConfig.defaults (Guid.Parse "11111111-1111-1111-1111-111111111111")))
+                .Replace("configVersion = 4", $"configVersion = {version}")
+                .Replace("chunkSizeBytes = 262144", "chunkSizeBytes = 65536")
+
+        match TomlCodec.tryParse toml with
+        | Error errors -> Assert.Contains(errors, fun error -> error.Contains "network.chunkSizeBytes")
+        | Ok _ -> failwith $"configVersion={version}: chunkSizeBytes=65536 小于客户端块大小，不应被接受"
+
+[<Fact>]
+let ``分块大小超出 int32 范围时按原值拒绝而不被截断`` () =
+    // 4295229440 = 2^32 + 262144：截断成 int32 后正好是 262144（下界之上），
+    // 只看截断值就会把一个越界配置当成合法配置放过去。
+    let toml =
+        (TomlCodec.serialize (AppConfig.defaults (Guid.Parse "11111111-1111-1111-1111-111111111111")))
+            .Replace("chunkSizeBytes = 262144", "chunkSizeBytes = 4295229440")
+
+    match TomlCodec.tryParse toml with
+    | Error errors -> Assert.Contains(errors, fun error -> error.Contains "network.chunkSizeBytes")
+    | Ok _ -> failwith "chunkSizeBytes=4295229440 超出 int32 范围，不应被接受"
+
+[<Fact>]
+let ``分块大小过大时被拒绝，避免下载时单次分配巨量缓冲`` () =
+    // 主机下载附件时按这个值 Array.zeroCreate<byte>，没有上界就等于
+    // 一份配置让主机单次分配任意大的缓冲（20 亿字节 ≈ 1.86 GB）。
+    for value in [ "4194304"; "2000000000" ] do
+        let toml =
+            sampleToml.Replace("chunkSizeBytes = 262144", $"chunkSizeBytes = {value}")
+
+        match TomlCodec.tryParse toml with
+        | Error errors -> Assert.Contains(errors, fun error -> error.Contains "network.chunkSizeBytes")
+        | Ok _ -> failwith $"chunkSizeBytes={value} 超过上传上限，不应被接受"
+
+[<Fact>]
+let ``附件上限超出 int32 范围时保留原值而不被截断`` () =
+    // maxAttachmentBytes 在配置模型里是 int64，4294967360（4 GiB + 64）本身合法。
+    // 旧实现走 int32 截断变成 64，校验看到 64 > 0 就放行：
+    // 运维以为给了 4 GiB，主机实际只收 64 字节，而且不报错。
+    let toml =
+        sampleToml.Replace("maxAttachmentBytes = 1048576", "maxAttachmentBytes = 4294967360")
+
+    match TomlCodec.tryParse toml with
+    | Ok cfg -> Assert.Equal(4294967360L, cfg.maxAttachmentBytes)
+    | Error errors -> failwith $"maxAttachmentBytes=4294967360 应被接受并保留原值，实际报错：{errors}"
+
+[<Theory>]
+[<InlineData("timeoutSeconds", "4294967297")>]
+[<InlineData("maxRetries", "4294967296")>]
+let ``模型服务整数参数越界时不被截断成合法值`` (key: string, value: string) =
+    // 4294967297 = 2^32 + 1：截断成 int32 后是 1，正好落在合法范围内，
+    // 于是越界配置被静默当成 1 秒超时 / 1 次重试。
+    let line =
+        match key with
+        | "timeoutSeconds" -> "timeoutSeconds = 90"
+        | _ -> "maxRetries = 3"
+
+    let toml = sampleToml.Replace(line, $"{key} = {value}")
+
+    match TomlCodec.tryParse toml with
+    | Error errors -> Assert.Contains(errors, fun error -> error.Contains $"providers.openai.{key}")
+    | Ok _ -> failwith $"providers.openai.{key}={value} 超出 int32 范围，不应被接受"
+
+[<Fact>]
+let ``分块大小按取值分别判定：越界与非正数报正值，低于下界报下界，恰在下界被接受`` () =
+    let baseText =
+        TomlCodec.serialize (AppConfig.defaults (Guid.Parse "11111111-1111-1111-1111-111111111111"))
+
+    let parse value =
+        TomlCodec.tryParse (baseText.Replace("chunkSizeBytes = 262144", $"chunkSizeBytes = {value}"))
+
+    // 越界（2^32 + 262144）与非正数都按「不是正整数」拒绝。
+    for value in [ "4295229440"; "0"; "-1" ] do
+        match parse value with
+        | Error errors -> Assert.Contains(errors, fun error -> error = "network.chunkSizeBytes: must be positive")
+        | Ok _ -> failwith $"chunkSizeBytes={value} 不应被接受"
+
+    // 低于客户端固定块大小：按「装不下客户端的块」拒绝。
+    match parse "65536" with
+    | Error errors ->
+        Assert.Contains(
+            errors,
+            fun error -> error = "network.chunkSizeBytes: must be at least 262144 to accept client uploads"
+        )
+    | Ok _ -> failwith "chunkSizeBytes=65536 低于客户端块大小，不应被接受"
+
+    // 恰在下界：被接受，且取到的就是用户写的值。
+    match parse "262144" with
+    | Ok cfg -> Assert.Equal(262144, cfg.chunkSizeBytes)
+    | Error errors -> failwith $"chunkSizeBytes=262144 应被接受，实际报错：{errors}"
 
 let private withNetwork (extra: string) =
     sampleToml.Replace("listen = \"127.0.0.1:9999\"", "listen = \"0.0.0.0:9999\"\n" + extra)
@@ -87,6 +226,18 @@ name = "v1-client"
 createdAt = "2026-01-01T00:00:00Z"
 revoked = false
 """
+
+[<Theory>]
+[<InlineData("0")>]
+[<InlineData("-3")>]
+[<InlineData("2147483648")>]
+[<InlineData("\"bad\"")>]
+let ``v1 配对限流显式非法值同样被拒绝`` (value: string) =
+    let toml = sampleTomlV1.Replace("freezeMinutes = 5", $"freezeMinutes = {value}")
+
+    match TomlCodec.tryParse toml with
+    | Error errors -> Assert.Contains(errors, fun error -> error.StartsWith("pairing.freezeMinutes:"))
+    | Ok _ -> failwith $"v1: pairing.freezeMinutes={value} 不应被接受"
 
 [<Fact>]
 let ``TOML parses every section and survives a serialize roundtrip`` () =
@@ -322,7 +473,7 @@ let ``network 节非表、缺少listen、非法尺寸与未知字段报错`` () 
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network.maxAttachmentBytes: must be positive")
     | Ok _ -> failwith "maxAttachmentBytes <= 0 应报错"
 
-    let badChunk = sampleToml.Replace("chunkSizeBytes = 65536", "chunkSizeBytes = -1")
+    let badChunk = sampleToml.Replace("chunkSizeBytes = 262144", "chunkSizeBytes = -1")
 
     match TomlCodec.tryParse badChunk with
     | Error errs -> Assert.Contains(errs, fun e -> e.Contains "network.chunkSizeBytes: must be positive")
@@ -817,7 +968,7 @@ fix = true
 [network]
 listen = "0.0.0.0:8080"
 maxAttachmentBytes = 33554432
-chunkSizeBytes = 131072
+chunkSizeBytes = 262144
 [pairing]
 failureWindowMinutes = 2
 maxFailures = 10

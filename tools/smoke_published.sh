@@ -9,7 +9,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 PUB=$(cd "$1" && pwd)
 PORT="${2:-$(python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1])')}"
-WORK=$(mktemp -d /tmp/wanxiang2-smoke-XXXX)
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/wanxiang2-smoke-XXXXXX")
 mkdir -p "$WORK/data"
 # 预置一条对话（一条用户消息），让冒烟能真的打开对话、右键消息卡、触发弹出层。
 # 账本格式与宿主读的一致：RFC 7464 分帧（RS + 正文 + LF），正文是 JsonSeq 的提交外壳
@@ -81,7 +81,7 @@ revoked = false
 TOML
 BIN=$(find "$PUB" -maxdepth 1 -type f -perm -111 ! -name '*.dll' ! -name '*.pdb' ! -name '*.so' ! -name '*.dylib' ! -name '*.a' 2>/dev/null | head -1)
 if [ -z "$BIN" ] || [ ! -x "$BIN" ]; then
-    echo "发布目录里没有可执行文件：$PUB（应传 artifacts/publish/<rid>；dist/ 内是压缩包需先解压）" >&2
+  echo "发布目录里没有可执行文件：${PUB}（应传 artifacts/publish/<rid>；dist/ 内是压缩包需先解压）" >&2
     exit 1
 fi
 WANXIANG_NO_URL_SCHEME=1 "$BIN" --config "$WORK/config.toml" --data "$WORK/data" --client=false --pwa > "$WORK/host.log" 2>&1 &
@@ -102,5 +102,12 @@ rc=0
 # 这样草稿往返这类「登录后才有的界面」也能真跑（见 smoke_published_pwa.js 的第二段）。
 WX_SMOKE_TOKEN="$TOKEN" WX_SMOKE_INSTANCE="$INSTANCE" \
     node "$ROOT/tools/smoke_published_pwa.js" --base "http://127.0.0.1:$PORT" --out "${SMOKE_OUT:-$WORK/shots}" || rc=$?
-[ $rc -eq 0 ] || { echo "--- host.log (tail)"; tail -40 "$WORK/host.log"; }
+if [ $rc -eq 0 ]; then
+    # 成功时回收临时目录（若外部未显式指定 SMOKE_OUT 落点在 WORK 内，一并清理）。
+    kill $HOST 2>/dev/null || true
+    wait $HOST 2>/dev/null || true
+    rm -rf "$WORK"
+else
+    echo "--- host.log (tail, retained at $WORK)"; tail -40 "$WORK/host.log"
+fi
 exit $rc

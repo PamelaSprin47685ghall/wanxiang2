@@ -9,11 +9,14 @@ SEED="$1"; RUNS="${2:-3}"; PORT="${3:-18914}"
 BIN=$(find "$ROOT/app/Desktop/bin/Debug" -maxdepth 3 -type f -perm -111 ! -name '*.dll' ! -name '*.pdb' ! -name '*.so' ! -name '*.dylib' ! -name '*.a' 2>/dev/null | head -1)
 [ -n "$BIN" ] && [ -x "$BIN" ] || { echo "未找到桌面可执行文件（app/Desktop/bin/Debug 下无 apphost；先 ./run-desktop.sh 构建一次）" >&2; exit 1; }
 export DISPLAY="${DISPLAY:-:2}"
+# 跨平台超时执行（与 tools/smoke_desktop.sh 共用同一份实现）。
+# shellcheck source=tools/timeout.sh
+. "$ROOT/tools/timeout.sh"
 for i in $(seq 1 "$RUNS"); do
-  T=$(mktemp -d /tmp/wxperf-desk-XXXX)
+  T=$(mktemp -d /tmp/wxperf-desk-XXXXXX)
   cp -r "$SEED" "$T/data"
   printf 'configVersion = 2\n[network]\nlisten = "127.0.0.1:%s"\n' "$PORT" > "$T/config.toml"
-  WANXIANG_HOME="$T" WANXIANG_STARTUP_TRACE=exit timeout 90 "$BIN" --config "$T/config.toml" --data "$T/data" --server --client --pwa=false 2>"$T/err.log" >/dev/null
+  WANXIANG_HOME="$T" WANXIANG_STARTUP_TRACE=exit run_with_timeout 90 "$BIN" --config "$T/config.toml" --data "$T/data" --server --client --pwa=false 2>"$T/err.log" >/dev/null
   echo "run $i: $(grep -o 'startup\.[a-zA-Z]* uptime_ms=[0-9]*' "$T/err.log" | tr '\n' ' ')"
   rm -rf "$T"
 done

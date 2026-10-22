@@ -27,7 +27,7 @@ case "${1:-}" in
   *) TARGETS=("$1"); shift ;;
 esac
 for r in "${TARGETS[@]}"; do
-  case "$r" in linux-x64|win-x64|osx-arm64|osx-x64) ;; *) echo "未知 RID：$r（可用：${RIDS[*]}）" >&2; exit 2 ;; esac
+  case "$r" in linux-x64|win-x64|osx-arm64|osx-x64) ;; *) echo "未知 RID：${r}（可用：${RIDS[*]}）" >&2; exit 2 ;; esac
 done
 VER="${1:-${WX_VERSION:-v0.0.0-dev}}"
 
@@ -49,6 +49,8 @@ fi
 # app/Pwa/bin/.../AppBundle 整份拷进 pwa/）。删干净后 publish 只可能对应当前源码。
 rm -rf app/*/bin app/*/obj
 
+# 每次发布前清空 dist/，防止上一次不同 RID 或不同版本号的残留压缩包被 `--draft` 的 `"$OUT_DIR"/*` 一并上传。
+rm -rf dist
 mkdir -p dist
 OUT_DIR=$(cd dist && pwd)
 PUB_ROOT="$PWD/artifacts/publish"

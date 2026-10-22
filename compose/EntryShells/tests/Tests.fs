@@ -131,6 +131,9 @@ module EmbeddedFontTests =
 /// 2) 该字体的复合回落能覆盖界面用到的符号（⌘ ⚙ ✎ ✓ ✕ 📦 🔍 🗑）。
 module PopupFontTests =
 
+    // `Application` 在 Avalonia 命名空间（不在 Avalonia.Controls）；F# 的 open 不跨文件传递，
+    // Headless.fs 里的 open 到不了本文件，所以这里要自己开一次。
+    open Avalonia
     open Avalonia.Controls
     open Avalonia.Controls.Primitives
     open Avalonia.Media
@@ -176,9 +179,11 @@ module PopupFontTests =
             for t in PopupFonts.popupTypes do
                 let setter = fontSetterFor app t
                 Assert.True(setter.IsSome, sprintf "%s 没有设置 FontFamily" t.Name)
-                let st = setter.Value :?> Setter
-                let family = st.Value :?> FontFamily
-                Assert.True(family = expected, sprintf "%s 的字体不是内嵌正文字体" t.Name))
+                // fontSetterFor 已经只挑出 Setter，取出来就是 Setter，不必再 `:?>` 一次。
+                let family = setter.Value.Value :?> FontFamily
+                // `family = expected` 必须加括号：F# 会把裸的 `name = value` 解析成命名参数，
+                // 而命名参数必须排在所有位置参数之后（FS0691）。
+                Assert.True((family = expected), sprintf "%s 的字体不是内嵌正文字体" t.Name))
 
     [<Fact>]
     let ``弹出层控件在窗口里真的用上了内嵌正文字体`` () =

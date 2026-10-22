@@ -51,6 +51,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: 超时工具进程组回归
+        run: python3 tools/test_timeout.py
       - name: 断言卫生
         run: |
           if ! ./x hygiene > hygiene.log 2>&1; then
@@ -160,6 +162,37 @@ jobs:
             exit 1
           fi
           grep -c "Build succeeded" app.log | sed 's/^/入口构建成功数: /'
+  # 桌面启动冒烟：ubuntu runner 没有物理显示器，Avalonia 的原生渲染定时器需要可用的
+  # X display（没有时进程直接以 "Avalonia.Native was not able to start the RenderTimer"
+  # 退出，与产品缺陷无关）。用 xvfb-run 提供一个虚拟 display 真跑一次进程：
+  # 断言退出码 0、startup.firstFrame / startup.listReady 打点、无异常、存储文件与锁收尾。
+  # 这条此前只有人工在本机跑，CI 从不覆盖；macOS 的图形会话若起不了渲染定时器就验不了。
+  desktop-smoke:
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - uses: actions/download-artifact@v8
+        with: { name: feed, path: artifacts/feed }
+      # Avalonia 在 X11 上要的运行时库（libSkiaSharp 依赖的字体/图形栈）与 xvfb 一起装。
+      - name: 安装 X11 与虚拟显示器
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb \
+            libx11-6 libice6 libsm6 libfontconfig1 libfreetype6 \
+            libxrandr2 libxinerama1 libxcursor1 libxi6 libgl1 libegl1
+      - name: 桌面冒烟（xvfb）
+        run: |
+          if ! xvfb-run -a --server-args="-screen 0 1280x800x24" \
+              bash tools/smoke_desktop.sh > smoke.log 2>&1; then
+            grep -E '^  (ok|FAIL)|^结果' smoke.log | tail -20 | sed 's/^/::error::/'
+            tail -30 smoke.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          grep -E '^结果' smoke.log
   # 发布产物冒烟：自包含 publish（含 PWA 包与 avalonia.js 补丁）+ headless Chrome 真跑一遍
   #（画布渲染、DPR 2 补丁、文本上屏桥）。这是用户实际拿到的那份产物的验证，与 Debug 构建互补。
   published-smoke:
@@ -191,12 +224,19 @@ jobs:
         with: { global-json-file: global.json }
       - run: ./x new-widget CiSmoke
       - run: "! ./x new-widget CiSmoke"
-      - name: 生成后 check
+      # UNWIRED 只豁免生产消费者；未接画廊的控件仍须被覆盖门禁拒绝。
+      - name: 生成后检查精确拒绝缺失画廊条目
         run: |
-          if ! ./x check > check.log 2>&1; then
-            tail -20 check.log | sed 's/^/::error::/'
+          if ./x check > check.log 2>&1; then
+            echo '::error::未接画廊的控件不应通过 check'
             exit 1
           fi
+          failures="$(grep '^FAIL ' check.log || true)"
+          if [ "$failures" != 'FAIL CiSmoke: control library has no gallery entry' ]; then
+            tail -30 check.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          cat check.log
       - name: 生成后测试
         run: |
           if ! ./x test CiSmoke > test.log 2>&1; then
@@ -205,5 +245,9 @@ jobs:
           fi
       - name: check rejects a lib-to-lib reference
         run: |
-          sed -i 's#<PackageReference Include="Avalonia" />#<PackageReference Include="Avalonia" /><ProjectReference Include="../PairingCode/PairingCode.fsproj" />#' libs/CiSmoke/CiSmoke.fsproj
-          ! ./x check
+          sed -i 's#<PackageReference Include="Avalonia" />#<PackageReference Include="Avalonia" /><ProjectReference Include="../AppConfig/AppConfig.fsproj" />#' libs/CiSmoke/CiSmoke.fsproj
+          if ./x check > reference-check.log 2>&1; then
+            echo '::error::兄弟库源码引用不应通过 check'
+            exit 1
+          fi
+          grep -Fx 'FAIL CiSmoke: main project must have no ProjectReference' reference-check.log

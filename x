@@ -59,6 +59,10 @@ control_types_pattern() {
 }
 
 # 控件库名单（每行一个库名）。
+# 用 POSIX ERE（`grep -E`），不用 `grep -P`：`-P` 是 GNU 扩展，macOS 自带 BSD grep 不支持，
+# 报错被 2>/dev/null 吞掉 → 判定恒为空 → 覆盖门禁永远通过（fail-open），门禁形同虚设。
+# 原来的 `(?<![.\w])(TYPE)\(`（负向后顾）改写成 `(^|[^.[:alnum:]_])(TYPE)\(`：
+# 前一个字符要么是行首，要么不是「点 / 字母数字 / 下划线」——语义等价，两平台都支持。
 control_libs() {
   local pattern; pattern="$(control_types_pattern)"
   for d in libs/*/; do
@@ -66,14 +70,16 @@ control_libs() {
     local hit
     hit="$(find "$d" \( -name '*.fs' -o -name '*.cs' \) \
       -not -path '*/tests/*' -not -path '*/obj/*' -not -path '*/bin/*' \
-      -exec grep -lP "(?<![.\\w])($pattern)\\(" {} + 2>/dev/null | head -1 || true)"
+      -exec grep -lE "(^|[^.[:alnum:]_])($pattern)\(" {} + 2>/dev/null | head -1 || true)"
     if [[ -n "$hit" ]]; then echo "$name"; fi
   done
 }
 
 # 画廊条目覆盖的控件库（从 compose/Gallery/Gallery.fs 的 Widget = "..." 读，不另设名单）。
+# `grep -oP '…\K…'`（\K 是 GNU 扩展）改写成 POSIX ERE：整体匹配后用 cut 取分组 1。
 gallery_widgets() {
-  grep -oP 'Widget\s*=\s*"\K[^"]+' compose/Gallery/Gallery.fs 2>/dev/null | sort -u || true
+  grep -oE 'Widget[[:space:]]*=[[:space:]]*"[^"]+"' compose/Gallery/Gallery.fs 2>/dev/null \
+    | cut -d'"' -f2 | sort -u || true
 }
 
 # 控件库覆盖：每个控件库都要在 compose/Gallery 至少有一条条目。
@@ -380,10 +386,13 @@ compose() {
 # 每个并发工程按 2 GiB 计，另给系统与编辑器留 4 GiB，再按核数封顶（最多 8）。
 test_jobs() {
   if [[ -n "${XJOBS:-}" ]]; then echo "$XJOBS"; else
-    local n; n="$(nproc 2>/dev/null || echo 4)"
+    local n; n="$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
     local mem_gb=8
     if [[ -r /proc/meminfo ]]; then
       mem_gb="$(awk '/^MemTotal:/ {printf "%d", $2 / 1048576}' /proc/meminfo)"
+    elif command -v sysctl >/dev/null 2>&1; then
+      local mem_bytes; mem_bytes="$(sysctl -n hw.memsize 2>/dev/null || echo 0)"
+      if (( mem_bytes > 0 )); then mem_gb=$(( mem_bytes / 1073741824 )); fi
     fi
     local by_mem=$(( (mem_gb - 4) / 2 ))
     # 用 if 而不是 `(( )) && ...`：条件不成立时后者让整条语句返回 1，set -e 会当场中止。
@@ -392,6 +401,19 @@ test_jobs() {
     if (( j > by_mem )); then j=$by_mem; fi
     if (( j > 12 )); then j=12; fi
     echo "$j"
+  fi
+}
+
+# 等后台槽位降到 < $1：Bash 4.3+ 直接调 `wait -n`；macOS 自带 Bash 3.2 没有 `-n`（返回码 2），
+# 回落为轮询 `jobs -pr` 在跑子进程数，避免 `wait -n || true` 把并发上限彻底击穿。
+wait_for_slot() {
+  local max_jobs="$1"
+  if (( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 3) )); then
+    wait -n 2>/dev/null || true
+  else
+    while (( $(jobs -pr | wc -l) >= max_jobs )); do
+      sleep 0.05
+    done
   fi
 }
 
@@ -432,7 +454,7 @@ run_tests_parallel() {
       fi
     ) &
     running=$((running+1))
-    if [[ $running -ge $jobs ]]; then wait -n || true; running=$((running-1)); fi
+    if [[ $running -ge $jobs ]]; then wait_for_slot "$jobs"; running="$(jobs -pr | wc -l)"; fi
   done <<< "$rest"
   wait || true
   local failed=0 recorded=0
@@ -495,7 +517,7 @@ app() {
       dotnet build "$proj" -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages" --verbosity minimal -nologo > "$logdir/$(basename "$(dirname "$proj")").log" 2>&1
     ) &
     running=$((running+1))
-    if [[ $running -ge $jobs ]]; then wait -n || true; running=$((running-1)); fi
+    if [[ $running -ge $jobs ]]; then wait_for_slot "$jobs"; running="$(jobs -pr | wc -l)"; fi
   done
   wait || true
   for f in "$logdir"/*.log; do
@@ -543,7 +565,19 @@ gen_sln() {
 }
 
 case "${1:-}" in
-  test)    need_lib "${2:-}"; dotnet test --project "libs/$2/tests/$2.Tests.fsproj" ;;
+  test)
+    need_lib "${2:-}"
+    # 若该库或其测试工程引用了兄弟包（如 WorkspaceState 例外项），包必须来自本地 feed：
+    # feed 尚未生成就先产包，清掉仓库内缓存里的 Wanxiang2.* 并把 RestorePackagesPath 指向
+    # artifacts/packages，禁止回落读取 ~/.nuget/packages 里的同版本号陈旧包。
+    # 不引用兄弟包的库保持原样走默认包缓存（不必为它引入一次仓库内冷恢复）。
+    if grep -qE 'Include="Wanxiang2\.[A-Za-z0-9]+"' "$(libproj "$2")" "libs/$2/tests/$2.Tests.fsproj" 2>/dev/null; then
+      [[ -d artifacts/feed ]] || pack
+      rm -rf artifacts/packages/wanxiang2.* "libs/$2/obj" "libs/$2/tests/obj"
+      dotnet test --project "libs/$2/tests/$2.Tests.fsproj" -p:RestorePackagesPath="$PWD/artifacts/packages"
+    else
+      dotnet test --project "libs/$2/tests/$2.Tests.fsproj"
+    fi ;;
   check)   check ;;
   # 断言卫生：把「恒真断言 / 恒真谓词 / 空转的事实」变成红灯（tools/assert-hygiene.sh）。
   # 不需要构建产物，秒级；CI 里单独一个 job（只 checkout）。
@@ -569,7 +603,27 @@ case "${1:-}" in
     [[ -e "libs/$2" ]] && { echo "refuse: libs/$2 already exists" >&2; exit 1; }
     cp -r tools/widget-template "libs/$2"
     for f in $(find "libs/$2" -name '*__NAME__*' | sort -r); do mv "$f" "${f//__NAME__/$2}"; done
-    find "libs/$2" -type f -exec sed -i "s/__NAME__/$2/g" {} +
+    # `sed -i` 的后缀参数在 GNU 与 BSD 上不同：GNU 允许省略，BSD 必须给（空串即原地）。
+    # 没有可移植的单一写法，所以用 python3 直接改写文件（两平台都自带）。
+    python3 - "libs/$2" "$2" <<'PY'
+import pathlib, sys
+root = pathlib.Path(sys.argv[1])
+name = sys.argv[2]
+for f in root.rglob("*"):
+    if f.is_file() and "obj" not in f.parts and "bin" not in f.parts:
+        t = f.read_text(encoding="utf-8")
+        if "__NAME__" in t:
+            f.write_text(t.replace("__NAME__", name), encoding="utf-8")
+PY
+    # 模板里的占位符在替换后要符合 Fantomas 规则：`__NAME__ ()` 换成 `CiSmoke ()` 不合规，
+    # 应写 `CiSmoke()`。所以生成后立刻按仓库规则排一次格式，再由 ./x check 的门禁兜住。
+    # 格式化失败要当作失败处理：吞掉错误再输出 "created" 会留下一个不合规的库目录，
+    # 而下一次运行会被「已存在」检查挡住，只能人工清理。这里失败就删掉半成品并退出。
+    if ! dotnet tool restore >/dev/null 2>&1 || ! dotnet fantomas "libs/$2" >/dev/null 2>&1; then
+      rm -rf "libs/$2"
+      echo "FAIL：格式化 libs/$2 失败（dotnet tool restore / dotnet fantomas 未成功），已删除半成品" >&2
+      exit 1
+    fi
     gen_sln > wanxiang2.slnx; echo "created libs/$2" ;;
   all)
     check
@@ -578,7 +632,10 @@ case "${1:-}" in
     # pack 在逐库 test 之前：少数库引用兄弟包（WorkspaceState 的例外清单项、以及依赖它的控件库），
     # 测试时要从 artifacts/feed 取包。CI 用 needs: [check, pack] 保证同样顺序。
     pack
-    run_tests_parallel "逐库测试" "$(libs | sed 's#^\(.*\)$#libs/\1/tests/\1.Tests.fsproj#')" "$(test_jobs)"
+    # 干净消费：与 compose 一致，清掉缓存里的 Wanxiang2.* 并指向仓库内 RestorePackagesPath，
+    # 防止逐库测试从 ~/.nuget/packages 拿到旧的 0.0.0-local 交付包。
+    rm -rf artifacts/packages/wanxiang2.* libs/*/obj libs/*/tests/obj
+    run_tests_parallel "逐库测试" "$(libs | sed 's#^\(.*\)$#libs/\1/tests/\1.Tests.fsproj#')" "$(test_jobs)" "-p:RestorePackagesPath=$PWD/artifacts/packages"
     compose; consume ;;
   # 用法块 = 开头连续的注释行；行数变化自动同步（末行是第一条非注释行，去掉）
   *) sed -n '2,/^[^#]/p' "$0" | sed '$d'; exit 2 ;;

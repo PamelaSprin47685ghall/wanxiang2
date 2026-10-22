@@ -986,6 +986,8 @@ let ``AutoConnect 在没有 toml 时回落读浏览器凭据并连上`` () =
         // 等后台续体落地（`Async.Start` + `ports.Post` 回 UI 线程，测试自己驱动消息循环）
         Pump.until (fun () -> not (List.isEmpty rig.Fake.Connects))
         Assert.Equal<string list>([ "ws://127.0.0.1:9/ws" ], rig.Fake.Connects)
+        // AuthPresent 是连接之后的另一条消息，要单独等它落地；只等 Connects 会在慢机器上抢先断言
+        Pump.until (fun () -> not (List.isEmpty rig.Fake.AuthEvents))
         // 认证用的是浏览器那条凭据的 token
         Assert.Equal(1, (rig.Fake.AuthEvents |> List.length))
 
@@ -1002,7 +1004,8 @@ let ``AutoConnect 与 reconnect 撞在一起时只连一次`` () =
         rig.Fake.BrowserConnection <- Some("ws://127.0.0.1:9/ws", "browser-token", "inst-browser")
         rig.Shell.AutoConnect()
         rig.Shell.SidebarActions().reconnect()
-        Pump.until (fun () -> not (List.isEmpty rig.Fake.Connects))
+        Pump.until (fun () -> not (List.isEmpty rig.Fake.Connects) && not (List.isEmpty rig.Fake.AuthEvents))
+
         Pump.settle ()
         Assert.Equal(1, (rig.Fake.Connects |> List.length)))
 

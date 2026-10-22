@@ -5,6 +5,9 @@ module Wanxiang2.AppShell.Tests.ComposerTests
 
 open System
 open System.Text.Json.Nodes
+open Avalonia.Automation
+open Avalonia.Controls
+open Avalonia.LogicalTree
 open Xunit
 open Wanxiang.Core
 open Wanxiang.Protocol
@@ -420,10 +423,9 @@ let ``旅程 5：中途停止与失败重试`` () =
 
         let vsFinished = Workspace.project rig.Shell.Model
 
-        match vsFinished.Composer.Send.State with
-        | SendButtonState.GeneratingStop -> Assert.Fail "停止后不应再有停止按钮"
-        | _ -> ()
         // 正向：生成结束后可以再发（Idle，而不是别的忙态）。
+        // （B2：旧写法只有 `| GeneratingStop -> Assert.Fail` 的负向断言——
+        //  错误值（如 Sending）照样通过。这里钉死**期望的那个值**。）
         Assert.Equal(SendButtonState.Idle, vsFinished.Composer.Send.State)
         // RunState 带上了这次失败的 GenerationError（重试依据，不是丢掉）。
         // （旧断言只有上面那一条负向：错误内容、错误类型都没验。）
@@ -449,6 +451,195 @@ let ``旅程 5：中途停止与失败重试`` () =
         Assert.Equal(1, cancels.Length)
         Assert.Equal(convId, cancels.Head.conversationId)
         Assert.Equal(genId, cancels.Head.generationId))
+
+// 旅程 5b：失败后点**真实**的「重试」按钮，走完重试路径。
+// 旅程 5 只验了错误状态与取消派发，没有真的点重试；这里补上：
+// 真实控件树里找到 ErrorPanel 的「重试」按钮 → 点击 → 断言命令真的发出去、
+// 待确认命令入队、按钮进入 Sending，命令确认后回到 Idle，重新生成后错误卡消失。
+[<Fact>]
+let ``旅程 5b：失败后点真实重试按钮走完重试路径`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray([| JsonObject() :> JsonNode |])
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
+
+        let convId = Guid.NewGuid()
+        let msg = JsonObject()
+        msg["commitId"] <- 1UL
+        msg["role"] <- "assistant"
+        msg["text"] <- "你好"
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                ConversationSnapshot
+                    {|
+                        conversationId = convId
+                        title = "对话"
+                        lastCommitId = 1UL
+                        runtimeState = "idle"
+                        generationId = None
+                        messages = JsonArray([| msg :> JsonNode |])
+                        snapshotEarliestCommitId = 0UL
+                        snapshotHasMore = false
+                        config = SessionConfig.empty
+                    |}
+            )
+        )
+
+        let genId = Guid.NewGuid()
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                GenerationStarted
+                    {|
+                        conversationId = convId
+                        generationId = genId
+                        providerId = "p"
+                        model = "m"
+                    |}
+            )
+        )
+
+        let err: GenerationError =
+            {
+                kind = GenerationErrorKind.ProviderTimeout
+                message = "超时"
+                retryable = true
+                detail = None
+                retryAfterSeconds = None
+            }
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                GenerationFinished
+                    {|
+                        conversationId = convId
+                        generationId = genId
+                        status = "failed"
+                        error = Some err
+                        usage = None
+                    |}
+            )
+        )
+
+        Pump.settle ()
+
+        // 找**真实**的重试按钮：逻辑树里 AutomationName = "重试生成" 的 Button。
+        let rec findRetry (c: Control) : Button option =
+            match c with
+            | :? Button as b when AutomationProperties.GetName b = "重试生成" -> Some b
+            | _ ->
+                c.GetLogicalChildren()
+                |> Seq.choose (fun ch ->
+                    match ch with
+                    | :? Control as cc -> findRetry cc
+                    | _ -> None)
+                |> Seq.tryHead
+
+        let retryBtn =
+            findRetry (rig.Views.Chat.Pane.Messages :> Control)
+            |> Option.defaultWith (fun () -> failwith "失败后真实控件树里应有「重试」按钮")
+
+        Assert.True(retryBtn.IsEnabled, "无倒计时时重试按钮应可用")
+        Assert.Equal("重试", retryBtn.Content :?> string)
+
+        // 点真实控件。
+        retryBtn.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, retryBtn))
+        Pump.settle ()
+
+        // 重试路径真的走了：命令发出去、待确认入队、按钮进入 Sending。
+        let regenCmds =
+            rig.Fake.Events
+            |> List.choose (fun e ->
+                match e with
+                | WireEvent.Command(ClientCommand.RegenerateResponse d) -> Some d
+                | _ -> None)
+
+        Assert.Equal(1, regenCmds.Length)
+        let regen = regenCmds.Head
+        Assert.Equal(convId, regen.conversationId)
+
+        Assert.True(
+            rig.Fake.RecordedEffects
+            |> List.exists (fun e ->
+                match e with
+                | Effect.SendWire(WireEvent.Command(ClientCommand.RegenerateResponse d)) ->
+                    d.invocationId = regen.invocationId
+                | _ -> false),
+            "重试命令应作为 Effect.SendWire 发出"
+        )
+
+        Assert.True(rig.Shell.Model.Feedback.PendingCommands.ContainsKey regen.invocationId, "重试命令应进入待确认队列")
+        Assert.Equal(SendButtonState.Sending, (Workspace.project rig.Shell.Model).Composer.Send.State)
+
+        // 命令被确认：待确认清空，按钮回 Idle。
+        rig.Shell.Dispatch(
+            WireRecv(
+                CommandCommitted
+                    {|
+                        invocationId = regen.invocationId
+                        commandId = "cmd-1"
+                        commitId = 1UL
+                    |}
+            )
+        )
+
+        Pump.settle ()
+        Assert.Empty rig.Shell.Model.Feedback.PendingCommands
+        Assert.Equal(SendButtonState.Idle, (Workspace.project rig.Shell.Model).Composer.Send.State)
+
+        // 重新生成开始：按钮变停止态。
+        let genId2 = Guid.NewGuid()
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                GenerationStarted
+                    {|
+                        conversationId = convId
+                        generationId = genId2
+                        providerId = "p"
+                        model = "m"
+                    |}
+            )
+        )
+
+        Pump.settle ()
+        Assert.Equal(SendButtonState.GeneratingStop, (Workspace.project rig.Shell.Model).Composer.Send.State)
+
+        // 重新生成成功：回到 Idle、错误清空、错误卡（含重试按钮）消失。
+        rig.Shell.Dispatch(
+            WireRecv(
+                GenerationFinished
+                    {|
+                        conversationId = convId
+                        generationId = genId2
+                        status = "ok"
+                        error = None
+                        usage = None
+                    |}
+            )
+        )
+
+        Pump.settle ()
+        let vsAfter = Workspace.project rig.Shell.Model
+        Assert.Equal(SendButtonState.Idle, vsAfter.Composer.Send.State)
+        Assert.True(vsAfter.Chat.Error.IsNone, "重试成功后不应再有生成错误")
+
+        match rig.Shell.Model.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(_, RunState.Idle None))) -> ()
+        | other -> Assert.Fail(sprintf "重试成功后 RunState 应回到 Idle None: %A" other)
+
+        Assert.True((findRetry (rig.Views.Chat.Pane.Messages :> Control)).IsNone, "重试成功后错误卡与重试按钮应消失"))
 
 [<Fact>]
 let ``旅程 6：切换对话、搜索与批量删除恢复`` () =

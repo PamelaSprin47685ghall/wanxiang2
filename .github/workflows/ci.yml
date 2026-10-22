@@ -51,6 +51,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: 超时工具进程组回归
+        run: python3 tools/test_timeout.py
       - name: 断言卫生
         run: |
           if ! ./x hygiene > hygiene.log 2>&1; then

@@ -23,6 +23,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 
 secs = float(sys.argv[1])
 cmd = sys.argv[2:]
@@ -34,7 +35,7 @@ proc = subprocess.Popen(cmd, start_new_session=True)
 
 def kill_group(sig):
     try:
-        os.killpg(os.getpgid(proc.pid), sig)
+        os.killpg(proc.pid, sig)
     except (ProcessLookupError, PermissionError):
         pass
 
@@ -43,11 +44,18 @@ try:
     sys.exit(proc.wait(timeout=secs))
 except subprocess.TimeoutExpired:
     kill_group(signal.SIGTERM)
-    try:
-        proc.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        kill_group(signal.SIGKILL)
-        proc.wait()
+    # 父进程退出不代表整组退出；组号在 start_new_session 时就是 proc.pid，
+    # 不能等父进程退出后再用 getpgid 查询。宽限期内轮询整组而不是只等父进程。
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        proc.poll()
+        try:
+            os.killpg(proc.pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.05)
+    kill_group(signal.SIGKILL)
+    proc.wait()
     sys.exit(124)
 PY
   fi

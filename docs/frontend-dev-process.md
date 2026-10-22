@@ -97,9 +97,10 @@
   - **`.editorconfig` 已存在**（仓库根），写明 F# 格式规则：缩进 4、行宽 120、LF、文件末换行，以及 Fantomas 8 的多行括号风格（`aligned`）。
   - **Fantomas 已钉版**：`.config/dotnet-tools.json` 钉住本地工具 `fantomas 8.0.10`（`rollForward: false`），`dotnet tool restore` 即可复现同一版本。
   - **`.fantomasignore` 排除生成物**（`bin/`、`obj/`、`artifacts/`、`node_modules/`），格式门禁不会误报构建产物。
-  - **门禁已接进 `./x check`**：`check()` 末尾跑 `dotnet fantomas --check .`，未格式化的文件逐个打印 `FAIL format` 行并让 `./x check` 以非零退出。
-  - **一次性重排用 `./x format`**（等价于 `dotnet tool restore && dotnet fantomas .`）。
-  - CI 侧：`./x check` 是 CI 的 `check` 作业，格式门禁随它一起跑。
+  - **门禁已接进 `./x check`**：`check()` 末尾跑格式门禁，未格式化的文件逐个打印 `FAIL format` 行并让 `./x check` 以非零退出。
+  - **格式检查只跑目标文件（2026-10-22 所有者规则）**：`dotnet fantomas --check .` 与 `dotnet fantomas .`（全仓）**一律禁止**。目标集合 = 显式文件列表 `./x format-check <文件…>`，或没给列表时的**改动集合**：相对基准提交改动的 `.fs`（基准默认取 `origin/main` 的合并基点；CI 用 `WX_FORMAT_BASE` 传 PR base / push 的上一个提交；detached HEAD 或缺 `origin/main` 时退 `HEAD~1`）∪ 暂存区/工作区/未跟踪的 `.fs`，再按 `.fantomasignore` 过滤。集合为空时打印「无文件可查」并通过（退出码 0）。
+  - **一次性重排用 `./x format <文件…>`**（不带参数时重排上述改动集合，同样不是全仓）。
+  - CI 侧：`./x check` 是 CI 的 `check` 作业，格式门禁随它一起跑；CI 侧用 `fetch-depth: 0` + 合并基点/上一个提交算改动集合，**不跑全仓**。
   - 仍**没有**的：F# 语义层面的 lint（未使用的绑定、模式匹配写错、可变状态误用这类编译器抓不到的错误）——`./x lint` 管的是**界面文案**（禁用同义词 / 取消类提示须写明 Esc / 中文省略号 / PWA 壳术语），不是代码格式。
   - 编译级约束仍在：`Directory.Build.props` 的 `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` 与 `<WarnOn>3390;1182</WarnOn>`。
 - **还剩的缺陷**：格式漂移已经拦住，但「F# 语义 lint」这一类仍然只靠人眼。
@@ -189,11 +190,12 @@
 
 ### G6 — 格式 / lint 门禁 —— **格式部分已建**
 
-- **跑什么（已建）**：仓库根 `.editorconfig` 写明 F# 格式规则（Fantomas 8 的显式默认值：缩进 4、行宽 120、LF、文件末换行、`fsharp_multiline_bracket_style = aligned`）；`.config/dotnet-tools.json` 把本地工具 **Fantomas 8.0.10** 钉死（`rollForward: false`）；`.fantomasignore` 挡掉 `bin/` `obj/` `artifacts/` `node_modules/`；`./x check` 的 `check()` 末尾跑 `dotnet fantomas --check .`。
-- **一次性重排**：`./x format`（= `dotnet tool restore && dotnet fantomas .`）。
-- **成本（实测）**：全仓 895 个 `.fs`，重排动了 **816 个文件、+54644 / −19854** 行，**纯排版、行为不变**；一次提交（`a4727a3`）落地。门禁本身只需源码，不依赖构建产物，`./x check` 里多花约 60 秒（整仓 `--check` 的耗时）。
+- **跑什么（已建）**：仓库根 `.editorconfig` 写明 F# 格式规则（Fantomas 8 的显式默认值：缩进 4、行宽 120、LF、文件末换行、`fsharp_multiline_bracket_style = aligned`）；`.config/dotnet-tools.json` 把本地工具 **Fantomas 8.0.10** 钉死（`rollForward: false`）；`.fantomasignore` 挡掉 `bin/` `obj/` `artifacts/` `node_modules/`；`./x check` 的 `check()` 末尾跑**目标文件**的格式门禁。
+- **一次性重排**：`./x format <文件…>`（不给参数时重排改动集合）。
+- **只跑目标文件（2026-10-22 所有者规则，硬约束）**：`dotnet fantomas --check .` 与 `dotnet fantomas .`（全仓）**禁止**。目标集合 = 显式文件列表 `./x format-check <文件…>`，或没给列表时的**改动集合**：相对基准提交改动的 `.fs`（基准默认 `origin/main` 的合并基点；CI 用 `WX_FORMAT_BASE` 传 PR base / push 的上一个提交；detached HEAD 或缺 `origin/main` 时退 `HEAD~1`）∪ 暂存区/工作区/未跟踪的 `.fs`，再按 `.fantomasignore` 过滤；集合为空即打印「无文件可查」并通过。
+- **成本（实测）**：全仓 895 个 `.fs` 一次性重排曾动了 **816 个文件、+54644 / −19854** 行（提交 `a4727a3`，纯排版、行为不变）。门禁本身只需源码、不依赖构建产物；**改成只查改动文件后，全仓 `--check` 那约 60–83 秒的开销不再每次支付**（干净分支上 `./x check` 的格式部分直接跳过）。
 - **拦什么**：格式漂移导致的 diff 噪声（review 疲劳 → 漏审）。
-- **怎么响（实测）**：`fantomas --check` 退出码 99 → `./x check` 打印 `FAIL format: F# files are not formatted (run: dotnet tool restore && dotnet fantomas .)` 并逐个列出 `! <路径> needs formatting.`，`./x check` 退出码 **1**。
+- **怎么响（实测）**：`fantomas --check` 退出码 99 → `./x check` 打印 `FAIL format: F# files are not formatted (run: ./x format <文件…>)` 并逐个列出 `! <路径> needs formatting.`，`./x check` 退出码 **1**。
 - **仍未建**：**F# 语义层面的 lint**（未使用的绑定、模式匹配写错、可变状态误用这类编译器抓不到的错误）。`./x lint` 管的是界面文案，不是代码格式。
 
 ### G7 — 界面改动完成定义（DoD）清单
@@ -211,7 +213,7 @@
 | G2 | 组件画廊（`compose/Gallery` + `tools/gallery.sh`） | **已建**（40 条条目） |
 | G5 的一半 | 产品文案规则（`./x lint`） | **已建**（从测试套件迁出，范围补到 libs+compose+app） |
 | G7 | 界面改动交付清单（本文 §5） | **已建** |
-| G6 的格式部分 | F# 格式门禁（`./x check` 里的 `dotnet fantomas --check`） | **已建**（Fantomas 8.0.10 钉版 + `.editorconfig`；全仓已重排） |
+| G6 的格式部分 | F# 格式门禁（`./x check` 里的**目标文件** `dotnet fantomas --check`） | **已建**（Fantomas 8.0.10 钉版 + `.editorconfig`；全仓已重排；**全仓运行被禁止**，只查改动文件） |
 | G4 | 浏览器侧真实交互 e2e | 未建 |
 | G3 | 像素基线门禁 | 未建（画廊能出 PNG，但无基线无 diff） |
 | G5 剩下 | 无障碍树整树遍历断言 | 未建 |
@@ -401,7 +403,7 @@ bash tools/gallery.sh --render <条目名> /tmp/gallery.png     # 单个状态 �
 这份清单里，**第 4、5、8、9 步目前靠人**；能自动化的部分只有：
 
 - 第 6 步的一部分由 `./x hygiene` 兜底（恒真断言 / 恒真谓词 / 空转的事实）。
-- 第 3 步的**格式**部分由 `./x check` 里的格式门禁兜底（`dotnet fantomas --check .`，见 §2.(f)）；语义仍靠评审。
+- 第 3 步的**格式**部分由 `./x check` 里的格式门禁兜底（**只查改动文件**的 `dotnet fantomas --check`；全仓运行被禁止，见 §2.(f)）；语义仍靠评审。
 - 文案类规则由 `./x lint` 兜底（禁用同义词 / 取消类提示须写明 Esc / 中文省略号 / PWA 壳术语）。
 - 第 7 步由 `./x compose` 与 `./x consume` 兜底（干净包缓存、仓库外真实消费）。
 - 第 9 步由 `tools/smoke_published.sh` 兜底一部分（画布、DPR、上屏桥、草稿落盘与恢复、无页面异常）。
@@ -413,7 +415,7 @@ bash tools/gallery.sh --render <条目名> /tmp/gallery.png     # 单个状态 �
 
 | 命令 | 管什么 | 需要构建产物吗 |
 | --- | --- | --- |
-| `./x check` | 依赖边界（库不引源码、组合者只用包、文档点名的路径存在）**+ F# 格式**（`dotnet fantomas --check .`，未格式化即红；见 §2.(f) 与 §3 G6） | 否 |
+| `./x check` | 依赖边界（库不引源码、组合者只用包、文档点名的路径存在）**+ F# 格式**（**只查改动文件**的 `dotnet fantomas --check`，未格式化即红；全仓运行被禁止；见 §2.(f) 与 §3 G6） | 否 |
 | `./x hygiene` | 断言卫生（恒真断言 / 恒真谓词 / 空转的事实） | 否 |
 | `./x lint` | 界面文案（禁用同义词 / 取消类提示须写明 Esc / 中文省略号 / PWA 壳术语） | 否 |
 | `bash tools/gallery.sh --render …` | 人工看单个状态（**不是门禁**） | 否（用独立缓存） |

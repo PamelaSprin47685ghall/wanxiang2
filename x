@@ -3,7 +3,8 @@
 #   ./x test  <lib>   单独构建并测试 libs/<lib>（只凭本库与声明的外部包）
 #   ./x check         依赖检查：库不引用本库以外的源码；组合者只经交付包使用库
 #   ./x hygiene       断言卫生：恒真断言 / 恒真谓词 / 空转的事实一律红灯（秒级，只需源码）
-#   ./x format        把全仓 F# 排成 Fantomas 格式（规则见 .editorconfig，工具见 .config/dotnet-tools.json）
+#   ./x format-check [files...]  只对指定的（或本分支改动的）.fs 跑 Fantomas --check（禁止全仓）
+#   ./x format [files...]        只重排指定的（或本分支改动的）.fs（禁止全仓）
 #   ./x lint          界面文案：禁用同义词 / 取消类提示须写明 Esc / 中文省略号（秒级，只需源码）
 #   ./x pack          把每个库和组合者打成包，放进 artifacts/feed
 #   ./x compose       用干净的包缓存消费 artifacts/feed，测试 compose/ 下的组合者
@@ -179,10 +180,96 @@ FAIL $f: references missing $ref"
   return $bad
 }
 
-# F# 格式门禁：dotnet fantomas --check 覆盖全仓 .fs（.fantomasignore 挡掉 obj/bin 等生成物）。
+# F# 格式门禁：**只对目标文件**跑 Fantomas --check。
+# 目标文件集合 = 调用方给的显式列表；没给时 = 本分支相对 origin/main 的合并基点改动的 .fs
+# （外加暂存区/工作区/未跟踪的 .fs）。**禁止全仓**（895 个 .fs、约 83 秒，且会拖慢每条 CI）。
+# 2026-10-22（所有者规则）：格式检查只能跑目标文件；`dotnet fantomas --check .` / `dotnet fantomas .` 一律禁止。
+
+# .fantomasignore 里的路径不进目标集合（生成物与依赖目录）。
+# 语义：带 '/' 的按仓库根相对路径前缀匹配；否则按任意路径段匹配（与 gitignore 的目录名语义一致）。
+format_ignored() {
+  local path="$1" pat
+  [[ -f .fantomasignore ]] || return 1
+  while IFS= read -r pat || [[ -n "$pat" ]]; do
+    pat="${pat%%#*}"
+    pat="${pat//[[:space:]]/}"
+    [[ -z "$pat" ]] && continue
+    pat="${pat%/}"
+    case "$pat" in
+      */*) [[ "$path" == "$pat" || "$path" == "$pat/"* ]] && return 0 ;;
+      *)   [[ "/$path/" == *"/$pat/"* ]] && return 0 ;;
+    esac
+  done < .fantomasignore
+  return 1
+}
+
+# 计算基准提交：显式 WX_FORMAT_BASE（CI 用 PR base sha / push 的上一个提交）优先；
+# 否则 origin/main 的合并基点；再退 HEAD~1（detached HEAD 或缺 origin/main 时）。
+format_base_ref() {
+  local mb
+  if [[ -n "${WX_FORMAT_BASE:-}" ]] && git cat-file -e "${WX_FORMAT_BASE}^{commit}" 2>/dev/null; then
+    echo "$WX_FORMAT_BASE"; return 0
+  fi
+  if mb="$(git merge-base origin/main HEAD 2>/dev/null)" && [[ -n "$mb" ]]; then
+    echo "$mb"; return 0
+  fi
+  if git rev-parse --verify --quiet HEAD~1 >/dev/null 2>&1; then
+    git rev-parse HEAD~1; return 0
+  fi
+  return 1
+}
+
+# 本分支改动的 .fs（相对基准提交）∪ 暂存区/工作区/未跟踪的 .fs。
+format_changed_files() {
+  local base="$1"
+  {
+    git diff --name-only --diff-filter=ACMR "$base" -- '*.fs' 2>/dev/null || true
+    git diff --name-only --diff-filter=ACMR --cached -- '*.fs' 2>/dev/null || true
+    git diff --name-only --diff-filter=ACMR -- '*.fs' 2>/dev/null || true
+    git ls-files --others --exclude-standard -- '*.fs' 2>/dev/null || true
+  } | sort -u
+}
+
+# 目标文件集合：显式列表优先；否则改动的 .fs；再按 .fantomasignore 过滤、去掉已删除的文件。
+# 结果放进全局数组 FORMAT_TARGETS；返回非零表示参数非法（错误信息已打印）。
+FORMAT_TARGETS=()
+format_targets() {
+  FORMAT_TARGETS=()
+  if [[ $# -gt 0 ]]; then
+    local f
+    for f in "$@"; do
+      [[ -f "$f" ]] || { echo "FAIL format: no such file: $f" >&2; return 1; }
+      [[ "$f" == *.fs ]] || { echo "FAIL format: not an F# file: $f" >&2; return 1; }
+      format_ignored "$f" && continue
+      FORMAT_TARGETS+=("$f")
+    done
+    return 0
+  fi
+  local base
+  if ! base="$(format_base_ref)"; then
+    echo "format: no base commit found (need origin/main or HEAD~1); nothing to check" >&2
+    return 0
+  fi
+  local f
+  while IFS= read -r f; do
+    [[ -n "$f" && -f "$f" ]] || continue
+    format_ignored "$f" && continue
+    FORMAT_TARGETS+=("$f")
+  done < <(format_changed_files "$base")
+  return 0
+}
+
+# F# 格式门禁（只对目标文件）：dotnet fantomas --check <files...>
 # 格式工具是本地工具（.config/dotnet-tools.json），没恢复过就先 restore 一次。
 format_check() {
   local restore_out out rc=0
+  format_targets "$@" || return 1
+  local -a files=("${FORMAT_TARGETS[@]+"${FORMAT_TARGETS[@]}"}")
+  if [[ ${#files[@]} == 0 ]]; then
+    echo "format: no changed .fs files to check (format check skipped)"
+    return 0
+  fi
+  echo "format: checking ${#files[@]} file(s)"
   # 工具已经在本地时直接用（dotnet tool restore 会碰 NuGet 缓存，没必要每次都跑）。
   if ! dotnet fantomas --version >/dev/null 2>&1; then
     if ! restore_out="$(dotnet tool restore 2>&1)"; then
@@ -191,10 +278,10 @@ format_check() {
       return 1
     fi
   fi
-  out="$(dotnet fantomas --check . 2>&1)" || rc=$?
+  out="$(dotnet fantomas --check "${files[@]}" 2>&1)" || rc=$?
   if [[ $rc == 0 ]]; then return 0; fi
   if [[ $rc == 99 ]]; then
-    echo "FAIL format: F# files are not formatted (run: dotnet tool restore && dotnet fantomas .)"
+    echo "FAIL format: F# files are not formatted (run: ./x format ${files[*]})"
     echo "$out" | grep -E 'needs formatting' | head -40
     return 1
   fi
@@ -203,10 +290,17 @@ format_check() {
   return 1
 }
 
-# 一次性把全仓 F# 排成 Fantomas 格式（改完跑这个；./x check 负责拦未格式化的提交）。
+# 一次性重排（只对目标文件）：没给文件时重排本分支改动的 .fs。
 format() {
+  format_targets "$@" || return 1
+  local -a files=("${FORMAT_TARGETS[@]+"${FORMAT_TARGETS[@]}"}")
+  if [[ ${#files[@]} == 0 ]]; then
+    echo "format: no changed .fs files to format"
+    return 0
+  fi
   dotnet tool restore
-  dotnet fantomas .
+  dotnet fantomas "${files[@]}"
+  echo "format: reformatted ${#files[@]} file(s)"
 }
 
 # 组件工程枚举：libs/ 与 compose/ 顶层目录直属（路径深度恰好 <root>/<dir>/<file>）的全部 .fsproj/.csproj，
@@ -457,8 +551,14 @@ case "${1:-}" in
   # 界面文案：产品文案规则没有运行时可观察，所以走独立的 lint 脚本而不是 xunit 用例
   # （tools/lint-copy.sh）。扫描 libs + compose + app 的生产 .fs。
   lint) bash tools/lint-copy.sh ;;
-  # F# 格式：一次性把全仓 .fs 排成 Fantomas 格式（规则见 .editorconfig）。
-  format)  format ;;
+  # F# 格式：只对目标文件（显式列表，或本分支改动的 .fs）。全仓运行被禁止。
+  format)
+    shift
+    format "$@" ;;
+  # F# 格式门禁：只对目标文件跑 Fantomas --check。全仓运行被禁止。
+  format-check)
+    shift
+    format_check "$@" ;;
   pack)    pack ;;
   compose) compose ;;
   consume) consume ;;

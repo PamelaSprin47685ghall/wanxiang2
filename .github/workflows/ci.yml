@@ -7,9 +7,34 @@ jobs:
       libs: ${{ steps.libs.outputs.libs }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 格式门禁只跑「本次改动涉及的 .fs」，所以需要历史来算改动集合。
+          fetch-depth: 0
       # 失败时把原因逐行写成注解：仓库日志接口对普通权限可能不可读，注解在 run 页面与
       # `gh run view` 里都能看到（2026-10-18 首次上线时靠这条定位 CI 专属失败）。
+      # 格式门禁的目标集合 = 本次改动相对 PR base（或 push 的上一个提交）的 .fs；
+      # **禁止全仓 Fantomas**（895 个 .fs、约 83 秒，且会拖慢每条 CI）。
+      - name: 确定格式检查基准
+        id: fmtbase
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          base=""
+          if [ -n "${PR_BASE_SHA:-}" ] && git cat-file -e "${PR_BASE_SHA}^{commit}" 2>/dev/null; then
+            # PR：取 PR base 与 PR head 的合并基点，避免把 base 分支上别人的提交算进来。
+            base="$(git merge-base "${PR_BASE_SHA}" HEAD)"
+          elif [ -n "${BEFORE_SHA:-}" ] && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            base="$BEFORE_SHA"
+          elif git rev-parse --verify --quiet HEAD~1 >/dev/null 2>&1; then
+            base="$(git rev-parse HEAD~1)"
+          fi
+          echo "base=${base}" >> "$GITHUB_OUTPUT"
+          echo "format check base: ${base:-<none>}"
       - name: 依赖检查
+        env:
+          WX_FORMAT_BASE: ${{ steps.fmtbase.outputs.base }}
         run: |
           if ! ./x check > check.log 2>&1; then
             tail -30 check.log | sed 's/^/::error::/'

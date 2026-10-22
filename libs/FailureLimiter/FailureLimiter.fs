@@ -18,9 +18,23 @@ type FailureLimiter(window: TimeSpan, maxFailures: int, freeze: TimeSpan, ?prune
     let failures = Dictionary<string, Queue<DateTimeOffset>>()
     let frozenUntil = Dictionary<string, DateTimeOffset>()
 
+    /// 窗口的起点。窗口大到 `now - window` 超出 `DateTimeOffset` 可表示的早期时刻时，
+    /// 减法本身就会抛 `ArgumentOutOfRangeException`；这时按「永不滑出」处理，
+    /// 返回 `None`，调用方保留全部已记失败。记失败发生在攻击者手里，这条路径不能抛。
+    let windowStart (now: DateTimeOffset) : DateTimeOffset option =
+        if window <= TimeSpan.Zero then
+            Some now
+        else
+            let earliest = now - DateTimeOffset.MinValue
+
+            if window > earliest then None else Some(now - window)
+
     let trim (now: DateTimeOffset) (q: Queue<DateTimeOffset>) =
-        while q.Count > 0 && q.Peek() <= now - window do
-            q.Dequeue() |> ignore
+        match windowStart now with
+        | None -> ()
+        | Some start ->
+            while q.Count > 0 && q.Peek() <= start do
+                q.Dequeue() |> ignore
 
     let prune (now: DateTimeOffset) =
         for kv in Seq.toArray failures do

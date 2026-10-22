@@ -68,3 +68,29 @@ let ``retune keeps counted failures and existing freezes`` () =
     Assert.True(l.RecordFailure(t0, "a"))
     Assert.Equal(Some(t0 + System.TimeSpan.FromMinutes 9.0), l.FrozenUntil(t0, "a"))
     Assert.Equal(9.0, l.Freeze.TotalMinutes)
+
+// 极大窗口不能让记失败本身崩掉：Trim 里算 now - window，窗口大到超出
+// DateTimeOffset 可表示的早期时刻，减法会抛 ArgumentOutOfRangeException。
+// 配对失败发生在攻击者手里，这条路径崩了就是主机崩了。
+[<Fact>]
+let ``huge window does not throw when recording failures`` () =
+    let huge = TimeSpan.FromMinutes(float Int32.MaxValue)
+    let l = FailureLimiter(huge, 3, TimeSpan.FromMinutes 5.0)
+
+    // 2026-01-01 减去 149 万年已超出 DateTimeOffset 的下界。
+    Assert.False(l.RecordFailure(t0, "a"))
+    Assert.False(l.RecordFailure(t0, "a"))
+
+    // 极大冻结仍可表示（1900 万分钟后是公元 6109 年），不得抛。
+    let frozen = FailureLimiter(TimeSpan.FromMinutes 1.0, 1, huge)
+    Assert.True(frozen.RecordFailure(t0, "b"))
+
+// 窗口不可表示时按「永不滑出」处理：早先的失败仍计入阈值，
+// 而不是被当成过期清掉（那会让限流在极大窗口下彻底失效）。
+[<Fact>]
+let ``unrepresentable window keeps earlier failures counted`` () =
+    let huge = TimeSpan.FromMinutes(float Int32.MaxValue)
+    let l = FailureLimiter(huge, 3, TimeSpan.FromMinutes 5.0)
+    Assert.False(l.RecordFailure(t0, "a"))
+    Assert.False(l.RecordFailure(t0 + s 600.0, "a"))
+    Assert.True(l.RecordFailure(t0 + s 1200.0, "a"))

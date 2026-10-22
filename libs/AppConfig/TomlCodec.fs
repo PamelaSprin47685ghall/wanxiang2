@@ -160,11 +160,36 @@ module TomlCodec =
         | :? bool as b -> Some b
         | _ -> None
 
-    let private asInt (v: obj) : int option =
+    /// 精确取整数，不做 int32 截断：范围校验必须看到原值，
+    /// 截断后 4294967297 会变成 1，越界检查就放过了。
+    let private asInt64Exact (v: obj) : int64 option =
         match v with
-        | :? int64 as i -> Some(int i)
-        | :? int as i -> Some i
+        | :? int64 as i -> Some i
+        | :? int as i -> Some(int64 i)
         | _ -> None
+
+    /// 取 int32 字段。写进来的整数越出 int32 就记错并返回 `None`，
+    /// 不截断成「看起来合法」的值：`4294967297` 截断后是 1，
+    /// 会让 `timeoutSeconds` 静默变成 1 秒、`maxRetries` 静默变成 1 次。
+    let private getInt32 (errors: ResizeArray<string>) (scope: string) (t: TomlTable) (k: string) : int option =
+        match t.TryGetValue k with
+        | true, b ->
+            match asInt64Exact b with
+            | Some n when n >= int64 Int32.MinValue && n <= int64 Int32.MaxValue -> Some(int n)
+            | _ ->
+                errors.Add $"{scope}.{k}: must be a 32-bit integer"
+                None
+        | _ -> None
+
+    /// 客户端上传附件的固定块大小（`libs/ConfigFeedback` 的 `UploadFacts.chunkSize`）。
+    /// 这里写的是同一个数值而不是引用：库之间不互相依赖（根 LEMMA 5）。
+    /// 改动时必须两边一起改，否则上传会被主机拒掉。
+    let private clientChunkBytes = 256 * 1024
+
+    /// 分块大小的上限。主机下载附件时按这个值 `Array.zeroCreate<byte>`，
+    /// 没有上界就等于一份配置能让主机单次分配任意大的缓冲。
+    /// 客户端实际发的是 256 KiB（`clientChunkBytes`），留 4 倍余量足够。
+    let private maxChunkBytes = 1024 * 1024
 
     let private asFloat (v: obj) : float option =
         match v with
@@ -305,12 +330,22 @@ module TomlCodec =
             | Some t ->
                 checkKeys t knownPairingKeys "pairing" errors
 
-                let getInt k def =
+                // 省略用默认值；显式写了必须是正整数。
+                // 上界取 Int32.MaxValue：三个参数都是 int32，分钟数乘 60 秒后仍远小于 TimeSpan
+                // 的上限（约 153.7 亿分钟），主机侧 TimeSpan.FromMinutes 不会溢出，不需要更小的上界。
+                // 旧实现把错误类型静默换成默认值、把越界整数截断，
+                // 结果是配对限流要么失效、要么在主机侧崩溃，用户看不到原因。
+                let getPositive k def =
                     match t.TryGetValue k with
-                    | true, b -> asInt b |> Option.defaultValue def
+                    | true, b ->
+                        match asInt64Exact b with
+                        | Some n when n >= 1L && n <= int64 Int32.MaxValue -> int n
+                        | _ ->
+                            errors.Add $"pairing.{k}: must be a positive integer"
+                            def
                     | _ -> def
 
-                getInt "failureWindowMinutes" 1, getInt "maxFailures" 5, getInt "freezeMinutes" 5
+                getPositive "failureWindowMinutes" 1, getPositive "maxFailures" 5, getPositive "freezeMinutes" 5
             | None ->
                 errors.Add "pairing: expected table"
                 1, 5, 5
@@ -397,14 +432,28 @@ module TomlCodec =
                     | true, b -> asString b |> Option.defaultValue def
                     | _ -> def
 
+                // maxAttachmentBytes 在配置模型里是 int64，必须精确取值：
+                // 走 int32 截断后 4294967360（4 GiB + 64）会变成 64，
+                // 校验看到 64 > 0 就放行，运维以为给了 4 GiB、主机只收 64 字节。
                 let getInt64 k def =
                     match t.TryGetValue k with
-                    | true, b -> (asInt b |> Option.map int64) |> Option.defaultValue def
+                    | true, b -> asInt64Exact b |> Option.defaultValue def
                     | _ -> def
 
-                getStr "listen" "127.0.0.1:8765",
-                getInt64 "maxAttachmentBytes" (64L * 1024L * 1024L),
-                int (getInt64 "chunkSizeBytes" (256L * 1024L))
+                // chunkSizeBytes 走精确取值：截断后的值可能仍然落在下界之上，
+                // 于是越界配置被当成合法配置放过去。
+                // 非法值在这里就地报错，不把非法悄悄换成默认值后交给校验层。
+                let getChunkSize =
+                    match t.TryGetValue "chunkSizeBytes" with
+                    | true, b ->
+                        match asInt64Exact b with
+                        | Some n when n >= 1L && n <= int64 Int32.MaxValue -> int n
+                        | _ ->
+                            errors.Add "network.chunkSizeBytes: must be positive"
+                            256 * 1024
+                    | _ -> 256 * 1024
+
+                getStr "listen" "127.0.0.1:8765", getInt64 "maxAttachmentBytes" (64L * 1024L * 1024L), getChunkSize
             | None ->
                 errors.Add "network: expected table"
                 "127.0.0.1:8765", 64L * 1024L * 1024L, 256 * 1024
@@ -490,9 +539,7 @@ module TomlCodec =
                                 | _ -> None
 
                             let getInt k =
-                                match mt.TryGetValue k with
-                                | true, b -> asInt b
-                                | _ -> None
+                                getInt32 errors (sprintf "mcp.%s" kv.Key) mt k
 
                             let args =
                                 match mt.TryGetValue "args" with
@@ -545,6 +592,10 @@ module TomlCodec =
 
         if chunk <= 0 then
             errors.Add "network.chunkSizeBytes: must be positive"
+        else if chunk < clientChunkBytes then
+            errors.Add $"network.chunkSizeBytes: must be at least {clientChunkBytes} to accept client uploads"
+        else if chunk > maxChunkBytes then
+            errors.Add $"network.chunkSizeBytes: must be at most {maxChunkBytes} to bound download buffers"
 
         for kv in providers do
             let p = kv.Value
@@ -643,16 +694,33 @@ module TomlCodec =
                     | true, b -> asString b |> Option.defaultValue def
                     | _ -> def
 
+                // maxAttachmentBytes 在配置模型里是 int64，必须精确取值：
+                // 走 int32 截断后 4294967360（4 GiB + 64）会变成 64，
+                // 校验看到 64 > 0 就放行，运维以为给了 4 GiB、主机只收 64 字节。
                 let getInt64 k def =
                     match t.TryGetValue k with
-                    | true, b -> (asInt b |> Option.map int64) |> Option.defaultValue def
+                    | true, b -> asInt64Exact b |> Option.defaultValue def
                     | _ -> def
+
+                // chunkSizeBytes 走精确取值：截断后的值可能仍然落在下界之上，
+                // 于是越界配置被当成合法配置放过去。
+                // 非法值在这里就地报错，不把非法悄悄换成默认值后交给校验层：
+                // 校验层看到的仍是合法默认值，就不会再报这个错。
+                let getChunkSize =
+                    match t.TryGetValue "chunkSizeBytes" with
+                    | true, b ->
+                        match asInt64Exact b with
+                        | Some n when n >= 1L && n <= int64 Int32.MaxValue -> int n
+                        | _ ->
+                            errors.Add "network.chunkSizeBytes: must be positive"
+                            256 * 1024
+                    | _ -> 256 * 1024
 
                 getStr "listen" "127.0.0.1:8765",
                 getStr "tlsCertPath" "",
                 getStr "tlsKeyPath" "",
                 getInt64 "maxAttachmentBytes" (64L * 1024L * 1024L),
-                int (getInt64 "chunkSizeBytes" (256L * 1024L))
+                getChunkSize
             | None ->
                 errors.Add "network: expected table"
                 "127.0.0.1:8765", "", "", 64L * 1024L * 1024L, 256 * 1024
@@ -673,10 +741,7 @@ module TomlCodec =
                     | true, b -> asFloat b
                     | _ -> None
 
-                let getIntOpt k =
-                    match t.TryGetValue k with
-                    | true, b -> asInt b
-                    | _ -> None
+                let getIntOpt k = getInt32 errors "generation" t k
 
                 let d = GenerationDefaults.defaults
 
@@ -728,15 +793,13 @@ module TomlCodec =
                          | true, b -> asStringList b |> Option.defaultValue []
                          | _ -> [])
                     callTimeoutSeconds =
-                        (match t.TryGetValue "callTimeoutSeconds" with
-                         | true, b -> asInt b |> Option.defaultValue d.callTimeoutSeconds
-                         | _ -> d.callTimeoutSeconds)
+                        getInt32 errors "tools" t "callTimeoutSeconds"
+                        |> Option.defaultValue d.callTimeoutSeconds
                     policyDefault = policyDefault
                     policy = policy
                     approvalTimeoutSeconds =
-                        (match t.TryGetValue "approvalTimeoutSeconds" with
-                         | true, b -> asInt b |> Option.defaultValue d.approvalTimeoutSeconds
-                         | _ -> d.approvalTimeoutSeconds)
+                        getInt32 errors "tools" t "approvalTimeoutSeconds"
+                        |> Option.defaultValue d.approvalTimeoutSeconds
                     exposeDebug =
                         (match t.TryGetValue "exposeDebug" with
                          | true, (:? bool as b) -> b
@@ -756,9 +819,7 @@ module TomlCodec =
             | _ -> None
 
         let getInt k =
-            match pt.TryGetValue k with
-            | true, b -> asInt b
-            | _ -> None
+            getInt32 errors (sprintf "providers.%s" id) pt k
 
         let listOf k =
             match pt.TryGetValue k with
@@ -853,9 +914,7 @@ module TomlCodec =
                                 | _ -> None
 
                             let getInt k =
-                                match mt.TryGetValue k with
-                                | true, b -> asInt b
-                                | _ -> None
+                                getInt32 errors (sprintf "mcp.%s" kv.Key) mt k
 
                             let args =
                                 match mt.TryGetValue "args" with
@@ -914,9 +973,7 @@ module TomlCodec =
                                 | _ -> None
 
                             let getInt k =
-                                match pt.TryGetValue k with
-                                | true, b -> asInt b
-                                | _ -> None
+                                getInt32 errors (sprintf "presets.%s" kv.Key) pt k
 
                             let getFloat k =
                                 match pt.TryGetValue k with
@@ -975,6 +1032,13 @@ module TomlCodec =
 
         if chunk <= 0 then
             errors.Add "network.chunkSizeBytes: must be positive"
+        else if chunk < clientChunkBytes then
+            // 客户端上传的块大小是固定的 256 KiB，协议里没有通告字段。
+            // 主机把它当上传块上限时，配小了就等于每一次上传都被拒。
+            errors.Add $"network.chunkSizeBytes: must be at least {clientChunkBytes} to accept client uploads"
+        else if chunk > maxChunkBytes then
+            // 下载时按这个值 Array.zeroCreate，没有上界就是让配置决定单次分配多大。
+            errors.Add $"network.chunkSizeBytes: must be at most {maxChunkBytes} to bound download buffers"
         // 只填一半是配置事故：会静默退回明文，而运维以为已经加密
         match String.IsNullOrWhiteSpace tlsCert, String.IsNullOrWhiteSpace tlsKey with
         | false, true -> errors.Add "network.tlsKeyPath: required when tlsCertPath is set"
@@ -1155,20 +1219,24 @@ module TomlCodec =
         match parsed with
         | Error errs -> Error errs
         | Ok top ->
+            // configVersion 越出 int32 必须报错：截断后可能落进 1..4，
+            // 于是用错版本的解析器读整份配置。
             let configVersion =
                 match top.TryGetValue "configVersion" with
-                | true, v -> asInt v |> Option.defaultValue 0
-                | _ -> 1
+                | true, v ->
+                    match asInt64Exact v with
+                    | Some n when n >= int64 Int32.MinValue && n <= int64 Int32.MaxValue -> Some(int n)
+                    | _ -> None
+                | _ -> Some 1
 
             match configVersion with
-            | 1 -> tryParseV1 top
+            | None -> Error [ "configVersion: must be a 32-bit integer" ]
+            | Some 1 -> tryParseV1 top
             // 3 = 2 + `[generation] defaultProvider/defaultModel`；读入后统一视为当前结构，
             // 写回时按是否设置了全局默认重新决定 2 或 3（`AppConfig.versionToWrite`）。
             // 4 = 3 + `[presets]`（决策 431），同样读入为当前结构。
-            | 2
-            | 3
-            | 4 -> tryParseV2 top
-            | v ->
+            | Some(2 | 3 | 4) -> tryParseV2 top
+            | Some v ->
                 Error
                     [
                         sprintf "configVersion %d not supported (expected %d)" v AppConfig.CurrentVersion

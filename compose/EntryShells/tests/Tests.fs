@@ -34,6 +34,7 @@ module EffectSinkTests =
                 Focus = fun target -> executionLog.Add $"Focus:{target}"
                 ScrollChat = fun cmd -> executionLog.Add $"Scroll:{cmd}"
                 SendWire = fun _ -> executionLog.Add "SendWire"
+                SendCommand = fun _ -> executionLog.Add "SendCommand"
                 After = fun (ms, _) -> executionLog.Add $"After:{ms}"
                 Every = fun (h, ms) -> executionLog.Add $"Every:{h}:{ms}"
                 StopEvery = fun h -> executionLog.Add $"StopEvery:{h}"

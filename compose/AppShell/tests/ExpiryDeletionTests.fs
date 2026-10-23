@@ -73,7 +73,7 @@ let private deleteCommands (rig: Rig) =
     rig.Fake.RecordedEffects
     |> List.choose (fun e ->
         match e with
-        | Effect.SendWire(WireEvent.Command(ClientCommand.DeleteConversation d)) -> Some d
+        | Effect.SendCommand(ClientCommand.DeleteConversation d) -> Some d
         | _ -> None)
 
 [<Fact>]

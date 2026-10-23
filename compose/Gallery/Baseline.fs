@@ -47,12 +47,21 @@ module Baseline =
         let h = bmp.PixelSize.Height
         let stride = w * 4
         let buffer = Array.zeroCreate<byte>(stride * h)
-        let handle = GCHandle.Alloc(buffer, GCHandleType.Pinned)
 
-        try
-            bmp.CopyPixels(PixelRect(0, 0, w, h), handle.AddrOfPinnedObject(), buffer.Length, stride)
-        finally
-            handle.Free()
+        // PNG 解码与渲染目标可能使用不同通道顺序，交给原生转换统一为 BGRA。
+        use normalized =
+            new WriteableBitmap(
+                PixelSize(w, h),
+                Vector(96.0, 96.0),
+                Avalonia.Platform.PixelFormat.Bgra8888,
+                Avalonia.Platform.AlphaFormat.Premul
+            )
+
+        use frame = normalized.Lock()
+        bmp.CopyPixels frame
+
+        for row in 0 .. h - 1 do
+            Marshal.Copy(IntPtr.Add(frame.Address, row * frame.RowBytes), buffer, row * stride, stride)
 
         let pixels = Array.zeroCreate<uint32>(w * h)
         Buffer.BlockCopy(buffer, 0, pixels, 0, buffer.Length)

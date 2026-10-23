@@ -48,6 +48,32 @@ let private invoke (c: Control) =
     (Assert.IsAssignableFrom<IInvokeProvider> peer).Invoke()
     Dispatcher.UIThread.RunJobs()
 
+[<Fact>]
+let ``关于页环境事实可固定且不随测试运行时改变`` () =
+    Headless.run (fun () ->
+        let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), true)
+        let overlay = OverlayDesk(Grid(), Desk.look ())
+
+        let desk =
+            GeneralDesk(
+                theme,
+                overlay,
+                (fun () -> SettingsHooks.none),
+                UiPrefs.defaults
+                    {
+                        sidebarMinWidth = 180.0
+                        sidebarMaxWidth = 600.0
+                        sidebarWidth = 280.0
+                        windowMinWidth = 600.0
+                    },
+                ignore,
+                environmentInfo = ("固定客户端平台", "固定操作系统")
+            )
+
+        let text = textOf desk.AboutView
+        Assert.Contains("固定客户端平台", text)
+        Assert.Contains("固定操作系统", text))
+
 let private prefs: UiPrefs =
     {
         theme = FollowSystem

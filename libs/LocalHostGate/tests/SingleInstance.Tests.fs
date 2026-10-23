@@ -63,6 +63,39 @@ let ``listen 收到转发的链接并回 ok；空行只当唤起；Dispose 后�
     Assert.False(SingleInstance.tryForward path (Some "wanxiang://y"))
 
 [<Fact>]
+let ``tryForward 等待分段到达的完整确认行`` () =
+    let dir = tempDir ()
+    let path = SingleInstance.socketPath dir
+
+    use server =
+        new Net.Sockets.Socket(
+            Net.Sockets.AddressFamily.Unix,
+            Net.Sockets.SocketType.Stream,
+            Net.Sockets.ProtocolType.Unspecified
+        )
+
+    server.Bind(Net.Sockets.UnixDomainSocketEndPoint path)
+    server.Listen 1
+
+    let receiver =
+        Threading.Tasks.Task.Run(fun () ->
+            use client = server.Accept()
+            use stream = new Net.Sockets.NetworkStream(client)
+            use reader = new StreamReader(stream)
+            Assert.Equal("wanxiang://open", reader.ReadLine())
+            stream.WriteByte(byte 'o')
+            // 刻意拆开确认行，验证流套接字不保证一次读取收齐。
+            Threading.Thread.Sleep 100
+            stream.WriteByte(byte 'k')
+            stream.WriteByte(byte '\n'))
+
+    try
+        Assert.True(SingleInstance.tryForward path (Some "wanxiang://open"))
+    finally
+        receiver.GetAwaiter().GetResult()
+        File.Delete path
+
+[<Fact>]
 let ``没有监听者时 tryForward 一律 false`` () =
     let dir = tempDir ()
     let path = SingleInstance.socketPath dir

@@ -398,9 +398,7 @@ type ShellComposer(ports: ShellPorts) =
                                 | CatalogSnapshot _ ->
                                     // 引导交接在投影里做（目录可用即可取走），这里只留启动打点
                                     if StartupTrace.enabled then
-                                        ports.Post(fun () ->
-                                            if StartupTrace.mark "catalogReady" && StartupTrace.exitAfter then
-                                                StartupTrace.requestExit ())
+                                        ports.Post(fun () -> StartupTrace.mark "catalogReady" |> ignore)
                                 | ProviderProbeResult d ->
                                     // 探活回执先到引导卡；它没在等，再由设置页接走
                                     let models = ProbeModels.ofJson d.models

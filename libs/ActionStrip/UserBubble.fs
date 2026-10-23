@@ -45,7 +45,7 @@ type UserBubble(body: Control) =
     let bubble =
         Border(
             HorizontalAlignment = HorizontalAlignment.Right,
-            Focusable = true,
+            Focusable = false,
             BorderThickness = Thickness 1.0,
             CornerRadius = CornerRadius(12.0, 12.0, 6.0, 12.0),
             Padding = Thickness(16.0, 12.0),

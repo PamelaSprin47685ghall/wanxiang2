@@ -26,17 +26,16 @@ module SingleInstance =
                 let line =
                     (url |> Option.defaultValue "").Replace("\n", "").Replace("\r", "") + "\n"
 
-                s.Send(Encoding.UTF8.GetBytes line) |> ignore
-                let buf = Array.zeroCreate<byte> 3
                 s.ReceiveTimeout <- 2000
-
-                let n =
-                    try
-                        s.Receive buf
-                    with _ ->
-                        0
-
-                n > 0 && Encoding.ASCII.GetString(buf, 0, n).StartsWith "ok"
+                s.SendTimeout <- 2000
+                use stream = new NetworkStream(s)
+                let bytes = Encoding.UTF8.GetBytes line
+                stream.Write(bytes, 0, bytes.Length)
+                // 流套接字可拆分确认回包；在总时限内读满固定确认行。
+                let ack = Array.zeroCreate<byte> 3
+                use timeout = new CancellationTokenSource(2000)
+                stream.ReadExactlyAsync(Memory<byte>(ack), timeout.Token).AsTask().GetAwaiter().GetResult()
+                Encoding.ASCII.GetString ack = "ok\n"
             with _ ->
                 false
 

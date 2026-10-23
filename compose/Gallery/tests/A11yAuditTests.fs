@@ -25,6 +25,23 @@ module A11yAuditTests =
         win.UpdateLayout()
         control, win
 
+    [<Theory>]
+    [<InlineData("ComposerBox.attachments")>]
+    [<InlineData("MessageCardView.user")>]
+    [<InlineData("AttachmentTray.items")>]
+    [<InlineData("FieldCheck.invalid")>]
+    [<InlineData("ApprovalPanel.approval")>]
+    let ``交互条目必须呈现真实控件且没有无障碍缺陷`` (name: string) =
+        Headless.run (fun () ->
+            let _, win = renderEntryControl name
+
+            try
+                let items = A11yAudit.auditWindow win
+                Assert.NotEmpty items
+                Assert.Empty(A11yAudit.defectsOf items)
+            finally
+                win.Close())
+
     // ---------------------------------------------------------------- 画廊真实控件树遍历断言 (G5)
 
     [<Fact>]

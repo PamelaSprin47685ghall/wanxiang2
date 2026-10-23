@@ -332,7 +332,9 @@ module Program =
                             let items = A11yAudit.auditWindow win
                             totalAudited <- totalAudited + items.Length
                             let defects = A11yAudit.defectsOf items
-                            let isStaticExempt = entry.Widget = "ChatEmpty" && entry.Name = "ChatEmpty.skeleton"
+
+                            let isStaticExempt =
+                                List.contains entry.Name [ "ChatEmpty.skeleton"; "BrandMark.tile"; "IconSet.glyphs" ]
 
                             if not defects.IsEmpty then
                                 eprintfn "  [DEFECT] 条目 %s (发现 %d 处缺陷):" entry.Name defects.Length

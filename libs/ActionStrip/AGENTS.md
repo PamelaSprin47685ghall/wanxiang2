@@ -176,7 +176,7 @@
 
 ## UserBubble
 
-用户消息（迁自旧 `Views/MessageCard.fs` 的 `renderWithStream` 用户分支）：右对齐的深色气泡（细描边、右下角收小、可聚焦、读屏名「用户消息」）+「你」头像；气泡内容由组装者放进来。`UserBubble.text` 给气泡正文。根规则见项目根目录 AGENTS.md。
+用户消息（迁自旧 `Views/MessageCard.fs` 的 `renderWithStream` 用户分支）：右对齐的深色气泡（细描边、右下角收小、非交互外壳不进入 Tab 焦点序、读屏名「用户消息」）+「你」头像；气泡内容由组装者放进来。`UserBubble.text` 给气泡正文。根规则见项目根目录 AGENTS.md。
 
 ### 外观
 

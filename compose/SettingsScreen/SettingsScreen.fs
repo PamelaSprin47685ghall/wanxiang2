@@ -16,7 +16,14 @@ open Wanxiang2.WorkspaceState
 /// - ApplyOpenAddProvider: 直达添加服务表单
 /// 切进设备分区时读取最新列表；各分区的协作在 ProvidersDesk / ToolsDesk / GeneralDesk / DevicesDesk。
 /// 外框、导航与响应式归 SettingsFrame。
-type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: SettingsHooks, initialPrefs: UiPrefs) =
+type SettingsScreen
+    (
+        theme: ThemeManager,
+        overlay: OverlayDesk,
+        initialHooks: SettingsHooks,
+        initialPrefs: UiPrefs,
+        ?environmentInfo: string * string
+    ) =
     let mutable hooks = initialHooks
     let prefsChanged = Event<UiPrefs>()
     let closeRequested = Event<unit>()
@@ -50,7 +57,8 @@ type SettingsScreen(theme: ThemeManager, overlay: OverlayDesk, initialHooks: Set
             initialPrefs,
             (fun p ->
                 hooks.SavePrefs p
-                prefsChanged.Trigger p)
+                prefsChanged.Trigger p),
+            ?environmentInfo = environmentInfo
         )
 
     let devices = DevicesDesk(theme, overlay)

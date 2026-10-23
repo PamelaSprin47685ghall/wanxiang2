@@ -56,7 +56,7 @@
 
 # 证据
 - 构建：`dotnet build compose/AppShell/AppShell.fsproj -c Release -p:RestorePackagesPath="$PWD/artifacts/packages"`（需 `artifacts/feed` 已有依赖包）。
-- 测试：`dotnet test compose/AppShell/tests/AppShell.Tests.fsproj -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages"`；`./x compose` 会跑全部有测试的组合者。
+- 测试：`dotnet test compose/AppShell/tests/AppShell.Tests.fsproj -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages"`；`./x compose` 会跑全部有测试的组合者。`Headless.fs` 声明 `CollectionBehavior(DisableTestParallelization = true)`，防止多测试模块并发调用 `HeadlessUnitTestSession.EnsureIsolatedApplication` 抢占 Avalonia UI 线程。
 - 交付独立：`./x pack` 产出 `artifacts/feed/Wanxiang2.AppShell.0.0.0-local.nupkg`；`./x compose` 在干净包缓存里消费它。
 - 入口消费：`grep -n Wanxiang2.AppShell app/Desktop/Wanxiang.App.fsproj app/Pwa/Wanxiang.Pwa.fsproj`。
 - 端到端：`tools/smoke_desktop.sh`（构建桌面入口 → 临时 home/data 真机启动 → 断言 `startup.firstFrame` / `startup.listReady`、无异常、存储文件与锁收尾）。

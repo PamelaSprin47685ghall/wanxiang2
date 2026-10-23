@@ -18,6 +18,59 @@ open Wanxiang2.AppShell.Tests
 
 let private toasts (rig: Rig) = rig.Fake.Toasts |> List.map fst
 
+[<Fact>]
+let ``第五批：启动加载偏好并应用外观，不反写偏好`` () =
+    Headless.run (fun () ->
+        let prefs =
+            { UiPrefsFile.defaults with
+                theme = AlwaysDark
+                reduceMotion = true
+                codeWrap = true
+                enterSends = false
+            }
+
+        let rig = Rig.createWith prefs
+        Assert.Equal(prefs, rig.Shell.Model.Prefs)
+        Assert.Contains(true, rig.Fake.ReducedMotion)
+        Assert.Contains(true, rig.Fake.CodeWraps)
+        Assert.Contains(true, rig.Fake.AppliedThemes)
+        Assert.Empty rig.Fake.SavedPrefs)
+
+[<Fact>]
+let ``第五批：退出立即保存窗口内的最新草稿`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        let actions = rig.Shell.ComposerActions(ignore, ignore, fun () -> false)
+        actions.TextChanged "第一版"
+        actions.TextChanged "最后一版"
+        rig.Shell.FlushDrafts()
+        Assert.Equal(DraftWrite.Write "最后一版", List.last rig.Fake.DraftWrites))
+
+[<Fact>]
+let ``第五批：关闭持久化时输入与退出均不写草稿`` () =
+    Headless.run (fun () ->
+        let rig =
+            Rig.createWith
+                { UiPrefsFile.defaults with
+                    persistDrafts = false
+                }
+
+        let actions = rig.Shell.ComposerActions(ignore, ignore, fun () -> false)
+        actions.TextChanged "不保存"
+        rig.Shell.FlushDrafts()
+        Assert.Empty rig.Fake.DraftWrites)
+
+[<Fact>]
+let ``第五批：退出取当前模型，不把发送前的延时草稿写回`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        let actions = rig.Shell.ComposerActions(ignore, ignore, fun () -> false)
+        actions.TextChanged "旧草稿"
+        actions.TextChanged "待发送"
+        rig.Shell.Dispatch(User(Composer(ComposerUserMsg.TextChanged "")))
+        rig.Shell.FlushDrafts()
+        Assert.Equal(DraftWrite.Write "", List.last rig.Fake.DraftWrites))
+
 let private authenticate (rig: Rig) =
     rig.Fake.Deliver(AuthAccepted {| instanceId = "inst-1" |})
 

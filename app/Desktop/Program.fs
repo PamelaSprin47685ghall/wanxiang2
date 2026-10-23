@@ -1168,7 +1168,7 @@ module Program =
 
                             shell.AutoConnect())
                     // 关窗：先落草稿，再落面板最近使用（同一拍）。
-                    Wanxiang.UI.App.FlushDrafts <- Some(fun () -> ())
+                    Wanxiang.UI.App.FlushDrafts <- Some(fun () -> shell.FlushDrafts())
                     Wanxiang.UI.App.LoadPrefs <- Some Wanxiang.UI.UiPrefsFile.load
                     Wanxiang.UI.App.SavePrefs <- Some Wanxiang.UI.UiPrefsFile.save
                     // 宿主 StartupTrace（决策 290）：采样退出由入口安装

@@ -39,6 +39,7 @@ type EffectSink =
         Focus: FocusTarget -> unit
         ScrollChat: ScrollCommand -> unit
         SendWire: WireEvent -> unit
+        SendCommand: Wanxiang.Core.ClientCommand -> unit
         After: int * obj -> unit
         Every: string * int -> unit
         StopEvery: string -> unit
@@ -65,6 +66,7 @@ type EffectSink =
             | Effect.ScrollChat cmd ->
                 Dispatcher.UIThread.Post((fun () -> this.ScrollChat cmd), DispatcherPriority.Input)
             | Effect.SendWire ev -> this.SendWire ev
+            | Effect.SendCommand cmd -> this.SendCommand cmd
             | Effect.After(ms, msg) -> this.After(ms, msg)
             | Effect.Every(handle, ms) -> this.Every(handle, ms)
             | Effect.StopEvery handle -> this.StopEvery handle
@@ -87,6 +89,7 @@ type EffectSink =
             | Effect.Focus target -> this.Focus target
             | Effect.ScrollChat cmd -> this.ScrollChat cmd
             | Effect.SendWire ev -> this.SendWire ev
+            | Effect.SendCommand cmd -> this.SendCommand cmd
             | Effect.After(ms, msg) -> this.After(ms, msg)
             | Effect.Every(handle, ms) -> this.Every(handle, ms)
             | Effect.StopEvery handle -> this.StopEvery handle

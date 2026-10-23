@@ -1007,6 +1007,7 @@ module Program =
                             Focus = resolveDesktopFocus
                             ScrollChat = resolveDesktopScrollChat
                             SendWire = send
+                            SendCommand = fun cmd -> sendCommand cmd |> ignore
                             After =
                                 fun (ms, action) ->
                                     after (TimeSpan.FromMilliseconds(float ms)) (fun () ->

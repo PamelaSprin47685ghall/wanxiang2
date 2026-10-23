@@ -31,6 +31,12 @@
   两处都由组合者经各自控件的 `Render` 单入口消费，状态树不再旁路写控件。
   命令面板键是否出现不是每帧事实（宿主自己知道），走组合者插槽 `HostSwitcher.SlotPalette`。
 
+## 第四批命令与游标契约
+- 用户写操作只产出独立命令 Effect，由入口调用命令编码通道；不得作为入站事件回灌。
+- 权威快照与增量先应用到状态，再确认实际应用的全局水位；命令提交回执不是投影应用证据。
+- 重命名、置顶与父对话导航必须形成意图、状态更新、Effect 与投影闭环。
+- 验证状态：已验证（`WorkspaceState.Tests` 45 条、`EntryShells.Tests` 8 条、`AppShell.Tests` 36 条、全量 109 库 + 67 组合者、`./x consume`、`./x app`、`tools/smoke_desktop.sh` 全部通过）。
+
 ## LEMMA
 1. **单一状态树与互斥 DU 消除非法状态**：`ConnPhase`、`CatalogPhase`、`WorkspacePhase`、`RunState`、`OverlayPhase` 编译期互斥，非法状态不可表示。
 2. **纯函数与确定性**：`update` 与 `project` 为无副作用纯函数，同一 `(model, msg)` 两次运算严格相等。

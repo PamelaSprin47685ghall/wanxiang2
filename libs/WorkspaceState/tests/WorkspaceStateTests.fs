@@ -544,6 +544,182 @@ module WorkspaceStateTests =
             Conn = ConnPhase.Authed("inst-1", catalog)
         }
 
+    /// 对话快照（默认空闲态）。
+    let private snapshotOf convId runtimeState generationId =
+        WireEvent.ConversationSnapshot
+            {|
+                conversationId = convId
+                title = "对话"
+                lastCommitId = 50UL
+                runtimeState = runtimeState
+                generationId = generationId
+                messages = JsonArray()
+                snapshotEarliestCommitId = 1UL
+                snapshotHasMore = false
+                config = SessionConfig.empty
+            |}
+
+    let private runOf model =
+        match model.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(_, run))) -> run
+        | other -> failwithf "期望 Active 对话，实际 %A" other
+
+    [<Fact>]
+    let ``第四批审查：生成中收到对话更新与快照，不得丢掉生成状态`` () =
+        let model = authedWithConversation ()
+        let convId = Guid.Parse("11111111-1111-1111-1111-111111111111")
+        let genId = Guid.NewGuid()
+
+        let generating, _ =
+            Workspace.update
+                now0
+                (Msg.WireRecv(
+                    WireEvent.GenerationStarted
+                        {|
+                            conversationId = convId
+                            generationId = genId
+                            providerId = "p"
+                            model = "m"
+                        |}
+                ))
+                model
+
+        // 主机因这次生成广播 conversation.updated，客户端重新取快照
+        let _, updateEffects =
+            Workspace.update
+                now0
+                (Msg.WireRecv(
+                    WireEvent.ConversationUpdated
+                        {|
+                            conversationId = convId
+                            commitId = 0UL
+                            change = JsonObject()
+                        |}
+                ))
+                generating
+
+        Assert.NotEmpty(updateEffects)
+
+        let afterSnapshot, _ =
+            Workspace.update now0 (Msg.WireRecv(snapshotOf convId "generating" (Some genId))) generating
+
+        match runOf afterSnapshot with
+        | RunState.Generating(gid, _, _) -> Assert.Equal(genId, gid)
+        | other -> Assert.Fail(sprintf "快照声明仍在生成，状态却被重置为 %A" other)
+
+        // 流式增量必须继续被接受
+        let partial = JsonObject()
+        partial["role"] <- "assistant"
+        partial["text"] <- "半截"
+
+        let afterDelta, deltaEffects =
+            Workspace.update
+                now0
+                (Msg.WireRecv(
+                    WireEvent.GenerationDelta
+                        {
+                            conversationId = convId
+                            generationId = genId
+                            payload = partial :> JsonNode
+                        }
+                ))
+                afterSnapshot
+
+        Assert.Contains(Effect.ScrollChat ScrollCommand.End, deltaEffects)
+
+        match runOf afterDelta with
+        | RunState.Generating(_, _, Some msg) -> Assert.Equal("半截", msg.text)
+        | other -> Assert.Fail(sprintf "增量丢失，生成状态为 %A" other)
+
+        // 权威空闲快照才结束生成
+        let afterIdle, _ =
+            Workspace.update now0 (Msg.WireRecv(snapshotOf convId "idle" None)) afterDelta
+
+        match runOf afterIdle with
+        | RunState.Idle None -> ()
+        | other -> Assert.Fail(sprintf "空闲快照应结束生成，实际 %A" other)
+
+    [<Fact>]
+    let ``第四批：命令只走独立通道并登记在途`` () =
+        let model = authedWithConversation ()
+
+        let cmd =
+            ClientCommand.RenameConversation
+                {|
+                    invocationId = Guid.NewGuid()
+                    conversationId = Guid.NewGuid()
+                    title = "标题"
+                |}
+
+        let next, effects = Workspace.update now0 (Msg.CommandRequested cmd) model
+        Assert.Equal<Effect list>([ Effect.SendCommand cmd ], effects)
+        Assert.True(next.Feedback.PendingCommands.ContainsKey(ClientCommand.invocationId cmd))
+
+    [<Fact>]
+    let ``第四批：重复快照不重复确认，断线后水位清零`` () =
+        let model = authedWithConversation ()
+
+        let message =
+            Msg.WireRecv(
+                WireEvent.ConversationListSnapshot
+                    {|
+                        items = JsonArray()
+                        lastCommitId = 42UL
+                    |}
+            )
+
+        let next, _ = Workspace.update now0 message model
+        let repeated, effects = Workspace.update now0 message next
+        Assert.Empty effects
+        Assert.Equal(42UL, repeated.AppliedCursor)
+        let disconnected, _ = Workspace.update now0 (Msg.ConnectionDown None) repeated
+        Assert.Equal(0UL, disconnected.AppliedCursor)
+
+    [<Fact>]
+    let ``第四批：列表快照应用后确认主机游标`` () =
+        let model = authedWithConversation ()
+
+        let _, effects =
+            Workspace.update
+                now0
+                (Msg.WireRecv(
+                    WireEvent.ConversationListSnapshot
+                        {|
+                            items = JsonArray()
+                            lastCommitId = 42UL
+                        |}
+                ))
+                model
+
+        Assert.Contains(Effect.SendWire(WireEvent.CursorAdvanced {| id = 42UL |}), effects)
+
+    [<Fact>]
+    let ``第四批：标题提交必须发出重命名命令`` () =
+        let model = authedWithConversation ()
+
+        let _, effects =
+            Workspace.update now0 (Msg.User(UserMsg.Header(HeaderUserMsg.CommitRename "新标题"))) model
+
+        let command =
+            effects
+            |> List.pick (function
+                | Effect.SendCommand c -> Some c
+                | _ -> None)
+
+        match command with
+        | ClientCommand.RenameConversation d -> Assert.Equal("新标题", d.title)
+        | other -> Assert.Fail(sprintf "期望重命名命令，实际为 %A" other)
+
+    [<Fact>]
+    let ``第四批：父对话导航必须进入加载并发起观察`` () =
+        let model = authedWithConversation ()
+        let parent = Guid.NewGuid()
+
+        let _, effects =
+            Workspace.update now0 (Msg.User(UserMsg.Header(HeaderUserMsg.CrumbClick parent))) model
+
+        Assert.Contains(Effect.SendWire(WireEvent.ObserveConversation {| conversationId = parent |}), effects)
+
     [<Fact>]
     let ``ChatUserMsg.JumpBeginning 与 JumpEnd 产出滚动 Effect`` () =
         let model = Workspace.init ()
@@ -569,7 +745,7 @@ module WorkspaceStateTests =
             effs1
             |> List.filter (fun e ->
                 match e with
-                | Effect.SendWire _ -> true
+                | Effect.SendCommand _ -> true
                 | _ -> false)
         )
         |> ignore
@@ -577,7 +753,7 @@ module WorkspaceStateTests =
         let cmd =
             effs1
             |> List.pick (function
-                | Effect.SendWire(WireEvent.Command c) -> Some c
+                | Effect.SendCommand c -> Some c
                 | _ -> None)
 
         match cmd with
@@ -595,7 +771,7 @@ module WorkspaceStateTests =
         let cmd =
             effs
             |> List.pick (function
-                | Effect.SendWire(WireEvent.Command c) -> Some c
+                | Effect.SendCommand c -> Some c
                 | _ -> None)
 
         match cmd with
@@ -621,7 +797,7 @@ module WorkspaceStateTests =
         let cmd =
             effs
             |> List.pick (function
-                | Effect.SendWire(WireEvent.Command c) -> Some c
+                | Effect.SendCommand c -> Some c
                 | _ -> None)
 
         match cmd with
@@ -810,7 +986,7 @@ module WorkspaceStateTests =
     let private sentCommand (effs: Effect list) =
         effs
         |> List.tryPick (function
-            | Effect.SendWire(WireEvent.Command c) -> Some c
+            | Effect.SendCommand c -> Some c
             | _ -> None)
 
     let private sentMessageJson (effs: Effect list) =

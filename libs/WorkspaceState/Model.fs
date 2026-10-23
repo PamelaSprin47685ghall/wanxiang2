@@ -225,4 +225,5 @@ type WorkspaceModel =
         ServerUrl: string
         /// 最近一次节拍时刻：设备倒计时与超时的唯一时钟
         Now: DateTimeOffset
+        AppliedCursor: uint64
     }

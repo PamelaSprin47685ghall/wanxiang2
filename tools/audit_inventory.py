@@ -133,8 +133,9 @@ def main():
             "members": [os.path.basename(f) for f in files],
             "consumers": sorted(consumers), "external": external, "wanxiang": wan,
         })
-    json.dump(rows, open(os.path.join(ROOT, "tools", "audit_inventory.json"), "w"),
-              ensure_ascii=False, indent=1)
+    with open(os.path.join(ROOT, "tools", "audit_inventory.json"), "w", encoding="utf-8") as fh:
+        json.dump(rows, fh, ensure_ascii=False, indent=1)
+        fh.write("\n")
     for r in rows:
         if r["stale"]:
             print(f"STALE {r['name']} agents={r['has_agents']} tests={r['has_tests']}")

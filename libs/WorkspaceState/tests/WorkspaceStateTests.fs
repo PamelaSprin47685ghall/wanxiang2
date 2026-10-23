@@ -1274,3 +1274,206 @@ module WorkspaceStateTests =
 
         Assert.Equal("草稿内容", m1.Composer.Text)
         Assert.Empty(effs)
+
+    [<Fact>]
+    let ``配对到首发：从 PairingStarted、PairingSucceeded 到 AuthPresent，再到目录就绪后发送首条消息`` () =
+        let m0 = Workspace.init ()
+        Assert.Equal(ConnPhase.Connecting 0, m0.Conn)
+
+        // 1. 主机要求配对
+        let m1, _ = Workspace.update now0 (Msg.WireRecv (WireEvent.PairingStarted {| expiresInSeconds = 300 |})) m0
+        match m1.Conn with
+        | ConnPhase.Pairing _ -> ()
+        | other -> Assert.Fail(sprintf "未进入配对状态: %A" other)
+
+        // 2. 配对成功，发出 AuthPresent
+        let m2, effs2 = Workspace.update now0 (Msg.WireRecv (WireEvent.PairingSucceeded {| token = "tok-first" |})) m1
+        Assert.Contains(Effect.SendWire (WireEvent.AuthPresent {| token = "tok-first" |}), effs2)
+
+        // 3. 认证接受，转入装载目录
+        let m3, _ = Workspace.update now0 (Msg.WireRecv (WireEvent.AuthAccepted {| instanceId = "inst-first" |})) m2
+        match m3.Conn with
+        | ConnPhase.Authed("inst-first", CatalogPhase.LoadingCatalog) -> ()
+        | other -> Assert.Fail(sprintf "认证后状态不对: %A" other)
+
+        // 4. 目录装载就绪（带可用模型服务），工作区进入 IdleEmpty
+        let readyCatalog: Catalog = {
+            Catalog.empty with
+                providers = [
+                    { id = "p1"; label = "P1"; kind = "openai"; baseUrl = ""; hasApiKey = true
+                      models = [ "m1" ]; defaultModel = "m1"; timeoutSeconds = 60; maxRetries = 2
+                      enabled = true; visionOverrides = Map.empty; visionDetected = Map.empty }
+                ]
+        }
+        let m4 = { m3 with Conn = ConnPhase.Authed("inst-first", CatalogPhase.Ready(readyCatalog, WorkspacePhase.IdleEmpty)) }
+        let vs4 = Workspace.project m4
+        Assert.True vs4.Composer.Enabled
+        Assert.Equal(SendButtonState.Idle, vs4.Composer.Send.State)
+
+        // 5. 用户在空态输入首条消息并发送
+        let m5, _ = Workspace.update now0 (Msg.User (UserMsg.Composer (ComposerUserMsg.TextChanged "你好，首条消息"))) m4
+        let m6, effs6 = Workspace.update now0 (Msg.User (UserMsg.Composer ComposerUserMsg.Send)) m5
+        Assert.Equal("", m6.Composer.Text)
+        Assert.Equal(2, m6.Feedback.PendingCommands.Count)
+
+        let createCmd =
+            effs6
+            |> List.tryPick (function
+                | Effect.SendWire(WireEvent.Command(ClientCommand.CreateConversation d)) -> Some d
+                | _ -> None)
+        Assert.True(createCmd.IsSome, "应当发出 CreateConversation 命令")
+        Assert.Equal("你好，首条消息", createCmd.Value.title)
+
+        let sendCmd =
+            effs6
+            |> List.tryPick (function
+                | Effect.SendWire(WireEvent.Command(ClientCommand.SendUserMessage d)) -> Some d
+                | _ -> None)
+        Assert.True(sendCmd.IsSome, "应当发出 SendUserMessage 命令")
+        Assert.Equal(createCmd.Value.conversationId, sendCmd.Value.conversationId)
+        let contents = sendCmd.Value.messageJson.["contents"].AsArray()
+        Assert.Equal(1, contents.Count)
+        Assert.Equal("你好，首条消息", contents[0].["text"].GetValue<string>())
+
+        let observeCmd =
+            effs6
+            |> List.tryPick (function
+                | Effect.SendWire(WireEvent.ObserveConversation d) -> Some d
+                | _ -> None)
+        Assert.True(observeCmd.IsSome, "应当发出 ObserveConversation 事件")
+        Assert.Equal(createCmd.Value.conversationId, observeCmd.Value.conversationId)
+
+        // 6. 主机返回该对话快照，工作区转入 Active
+        let convSnapshotEv = WireEvent.ConversationSnapshot {|
+            conversationId = createCmd.Value.conversationId
+            title = "你好，首条消息"
+            lastCommitId = 1UL
+            runtimeState = "idle"
+            generationId = None
+            messages = JsonArray([|
+                let u = JsonObject()
+                u["commitId"] <- 1UL
+                u["role"] <- "user"
+                u["text"] <- "你好，首条消息"
+                u :> JsonNode
+            |])
+            snapshotEarliestCommitId = 1UL
+            snapshotHasMore = false
+            config = SessionConfig.empty
+        |}
+        let m7, _ = Workspace.update now0 (Msg.WireRecv convSnapshotEv) m6
+        let vs7 = Workspace.project m7
+        match vs7.Chat.Phase with
+        | ChatPhase.Messages msgs ->
+            Assert.Equal(1, msgs.Length)
+            Assert.Equal("你好，首条消息", msgs[0].Text)
+        | other -> Assert.Fail(sprintf "应当呈现首条消息，实际: %A" other)
+        match vs7.Header.Title with
+        | TitleMode.Viewing(t, _) -> Assert.Equal("你好，首条消息", t)
+        | TitleMode.Editing draft -> Assert.Equal("你好，首条消息", draft)
+
+    [<Fact>]
+    let ``到期提交：未撤销时到期 Tick 触发 DeleteConversation 命令并清除待删台账`` () =
+        let c1 = sid 1
+        let c2 = sid 2
+        let m0 = modelWithSummaries [ summary c1 "对话1" false false; summary c2 "对话2" false false ]
+        // 1. 批量删除两项
+        let m1, _ = Workspace.update now0 (batchMsg (SidebarUserMsg.BatchDelete [ c1; c2 ])) m0
+        Assert.Equal(1, m1.Feedback.PendingDeletions.Count)
+        let batch = m1.Feedback.PendingDeletions |> Map.toList |> List.head |> snd
+        Assert.Equal<Set<Guid>>(set [ c1; c2 ], set batch.Ids)
+        let dueAt = batch.DueAt
+
+        // 2. 未到期 Tick（比如 4 秒后）：不触发删除命令，台账保留
+        let m2, effs2 = Workspace.update (now0.AddSeconds 4.0) (Msg.MsgTick (now0.AddSeconds 4.0)) m1
+        Assert.Equal(1, m2.Feedback.PendingDeletions.Count)
+        let deleteCmdsBefore =
+            effs2
+            |> List.choose (function
+                | Effect.SendWire(WireEvent.Command(ClientCommand.DeleteConversation d)) -> Some d.conversationId
+                | _ -> None)
+        Assert.Empty deleteCmdsBefore
+
+        // 3. 到期 Tick（8.5 秒后）：触发两条 DeleteConversation 命令，台账清空
+        let expiryTick = dueAt.AddSeconds 0.5
+        let m3, effs3 = Workspace.update expiryTick (Msg.MsgTick expiryTick) m2
+        Assert.Empty m3.Feedback.PendingDeletions
+        let deleteCmdsAfter =
+            effs3
+            |> List.choose (function
+                | Effect.SendWire(WireEvent.Command(ClientCommand.DeleteConversation d)) -> Some d.conversationId
+                | _ -> None)
+        Assert.Equal(2, deleteCmdsAfter.Length)
+        Assert.Contains(c1, deleteCmdsAfter)
+        Assert.Contains(c2, deleteCmdsAfter)
+
+    [<Fact>]
+    let ``失败重试：失败后携带 lastError，Regenerate 发出命令并在新生成完成后清除错误`` () =
+        let model = authedWithConversation ()
+        let convId = Guid.Parse("11111111-1111-1111-1111-111111111111")
+        let genId = Guid.NewGuid()
+
+        // 1. 生成失败，上报 GenerationError
+        let err: GenerationError = { kind = GenerationErrorKind.ProviderTimeout; message = "请求超时"; retryable = true; detail = None; retryAfterSeconds = None }
+        let finishFailedEv = WireEvent.GenerationFinished {|
+            conversationId = convId
+            generationId = genId
+            status = "failed"
+            error = Some err
+            usage = None
+        |}
+        let m1, _ = Workspace.update now0 (Msg.WireRecv finishFailedEv) model
+        match m1.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(_, run))) ->
+            match run with
+            | RunState.Idle (Some e) ->
+                Assert.Equal(GenerationErrorKind.ProviderTimeout, e.kind)
+                Assert.Equal("请求超时", e.message)
+                Assert.True e.retryable
+            | other -> Assert.Fail(sprintf "RunState 应携带失败信息，实际: %A" other)
+        | other -> Assert.Fail(sprintf "连接状态不对: %A" other)
+
+        let vs1 = Workspace.project m1
+        Assert.True(vs1.Chat.Error.IsSome, "视图状态应当展示错误卡")
+        Assert.Equal("请求超时", vs1.Chat.Error.Value.message)
+
+        // 2. 用户触发重新生成（重试）
+        let m2, effs2 = Workspace.update now0 (Msg.User (UserMsg.Chat ChatUserMsg.Regenerate)) m1
+        let regenCmd =
+            effs2
+            |> List.tryPick (function
+                | Effect.SendWire(WireEvent.Command(ClientCommand.RegenerateResponse d)) -> Some d
+                | _ -> None)
+        Assert.True(regenCmd.IsSome, "应当发出 RegenerateResponse 命令")
+        Assert.Equal(convId, regenCmd.Value.conversationId)
+        Assert.Equal(1, m2.Feedback.PendingCommands.Count)
+        let ackEv = WireEvent.CommandCommitted {| invocationId = regenCmd.Value.invocationId; commandId = string regenCmd.Value.invocationId; commitId = 1UL |}
+        let m2Ack, _ = Workspace.update now0 (Msg.WireRecv ackEv) m2
+        Assert.Equal(0, m2Ack.Feedback.PendingCommands.Count)
+
+        // 3. 主机启动重试生成
+        let newGenId = Guid.NewGuid()
+        let startEv = WireEvent.GenerationStarted {| conversationId = convId; generationId = newGenId; providerId = "p"; model = "m" |}
+        let m3, _ = Workspace.update now0 (Msg.WireRecv startEv) m2Ack
+        let vs3 = Workspace.project m3
+        Assert.True vs3.Chat.Streaming
+        Assert.Equal(SendButtonState.GeneratingStop, vs3.Composer.Send.State)
+
+        // 4. 重试成功完成：错误被清除，返回 Idle None
+        let finishOkEv = WireEvent.GenerationFinished {|
+            conversationId = convId
+            generationId = newGenId
+            status = "completed"
+            error = None
+            usage = None
+        |}
+        let m4, _ = Workspace.update now0 (Msg.WireRecv finishOkEv) m3
+        match m4.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(_, run))) ->
+            match run with
+            | RunState.Idle None -> ()
+            | other -> Assert.Fail(sprintf "重试完成后 RunState 应为 Idle None，实际: %A" other)
+        | other -> Assert.Fail(sprintf "连接状态不对: %A" other)
+        let vs4 = Workspace.project m4
+        Assert.Equal(None, vs4.Chat.Error)
+        Assert.Equal(SendButtonState.Idle, vs4.Composer.Send.State)

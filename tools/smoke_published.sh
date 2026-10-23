@@ -100,14 +100,9 @@ echo "host up on $PORT (pid $HOST)"
 rc=0
 # 预置一条客户端凭据（上面配置里的哈希）交给 PWA：脚本用它把浏览器接进已认证状态，
 # 这样草稿往返这类「登录后才有的界面」也能真跑（见 smoke_published_pwa.js 的第二段）。
+SHOTS_OUT="${SMOKE_OUT:-$ROOT/artifacts/smoke-published}"
+mkdir -p "$SHOTS_OUT"
 WX_SMOKE_TOKEN="$TOKEN" WX_SMOKE_INSTANCE="$INSTANCE" \
-    node "$ROOT/tools/smoke_published_pwa.js" --base "http://127.0.0.1:$PORT" --out "${SMOKE_OUT:-$WORK/shots}" || rc=$?
-if [ $rc -eq 0 ]; then
-    # 成功时回收临时目录（若外部未显式指定 SMOKE_OUT 落点在 WORK 内，一并清理）。
-    kill $HOST 2>/dev/null || true
-    wait $HOST 2>/dev/null || true
-    rm -rf "$WORK"
-else
-    echo "--- host.log (tail, retained at $WORK)"; tail -40 "$WORK/host.log"
-fi
+    node "$ROOT/tools/smoke_published_pwa.js" --base "http://127.0.0.1:$PORT" --out "$SHOTS_OUT" || rc=$?
+[ $rc -eq 0 ] || { echo "--- host.log (tail)"; tail -40 "$WORK/host.log"; }
 exit $rc

@@ -1,60 +1,20 @@
-# Gallery（组合者，组件画廊）
-
-组件画廊：把每个控件库的**状态矩阵**显式列出来，每种状态渲染成一个可视条目。
-它是「不需要连主机、不需要走整条旅程」就能看到界面真容的地方（`docs/frontend-dev-process.md` §3 的 G2）。
-
-- 协作者（包）：`WorkspaceState`（状态树）、`Theme` / `ThemePalette` / `ThemeMetrics`（外观）、`IconSet`、`UiPrefs`、
-  `OverlayDesk`、`SidebarDesk`、`ComposerDesk`、`ChatScreen`、`ChatPane`、`MessageCardView`、`SettingsScreen`、
-  `DialogsDesk`、`ApprovalDesk`、`MarkdownView`、`CodeTint`、`ChatEmpty`、`Wire`。
-- 本组合者只经交付包使用库与组合者，不引用任何源码目录。
-- 命名空间 `Wanxiang2.Gallery`。
-
-## 时钟
-
-`Scenes.run` 用**固定的现在**（`Scenes.fixedNow = 2026-10-21T08:00:00Z`），不是 `DateTimeOffset.UtcNow`。
-用墙钟的话同一场景每次跑出的时间戳都不同（渲染里那个时刻会漂），输出就不可复现、像素基线也没法比。
-实测：同一条目连渲两次，PNG **逐字节相同**（md5 一致）。
+# compose/Gallery — 组件画廊
 
 ## 状态来源
 
-**每个条目的视图状态都由 `Workspace.init ()` + `Workspace.update` 的消息序列跑出来，再经 `Workspace.project` 投影。**
+画廊的每个条目由 `Workspace.init ()` + `Workspace.update` 的消息序列跑出，再经 `Workspace.project` 投影到真实控件（`compose/Gallery/Scenes.fs` 定义消息序列与固定时钟）。画廊不另造视图状态记录。
 
-**两条例外，走真实控件入口**（不是手搓投影，是那条控件真实的入口）：
-- `MessageCardView.error` → 走卡片组的 `ctx.Cards.ErrorCard(...)`（错误卡的状态已收成单一归属，见《已知缺口与各自的归属》3）；
-- `SidebarDesk.batch` → 走**真状态树消息** `SidebarUserMsg.EnterBatch` + `SidebarUserMsg.ToggleBatch`（多选已收口，见《已知缺口与各自的归属》1）。
+## 时钟
 
-没有任何一个条目手搓 `WorkspaceViewState` 记录。手搓记录是画廊与真实界面漂移的唯一途径：
-投影里少一个字段、门控条件写错，画廊照样绿，而真实界面是错的。所以画廊只允许两类输入：
-
-1. **线协议事件**（`Scenes.Wire`）：主机真实下发的字节形状——`AuthAccepted`、`CatalogSnapshot`、
-   `ConversationListSnapshot`、`ConversationSnapshot`、`GenerationStarted`。这些 JSON 是字面量，
-   但走的正是真实解析路径（`Catalog.parse` / `ConversationSummary.parseList` / `MessageView.ofSnapshotItem`）。
-2. **用户/宿主消息**（`Scenes.Msg`）：`ComposerUserMsg.TextChanged` / `.Attach`、`SidebarUserMsg.SearchTextChanged`、
-   `SettingsUserMsg.OpenSection`。
-
-`Scenes.run` 是唯一的跑法：喂一串 `Step`，返回 `(WorkspaceModel, WorkspaceViewState)`。
+固定时钟 `Scenes.fixedNow = 2026-10-21T08:00:00Z`。同一条目连渲两次 PNG 逐字节相同，是像素基线门禁的前提。
 
 ## 假端口
 
-需要宿主才能动的几根线（网络、剪贴板、文件系统、计时器）由 `FakePorts.fs` 给**显式的、无副作用的**实现。
-它们不忽略输入：每个端口都读自己的参数并记进 `Calls`（发出去的线事件、复制的内容、删除的对话 id……），
-不写「假装成功但吞掉一切」的桩。
-
-用到假端口的条目：
-
-| 条目 | 用到的端口 | 为什么 |
-| --- | --- | --- |
-| `OverlayDesk.dialog.confirm` / `.prompt` / `.connect` / `.shortcuts` | `DialogsDesk` 的回调（`onConfirm` / `onConnect` / `onSubmitCode`） | 对话框面板要一个「确认后做什么」的出口；画廊不真的删对话、不真的连主机 |
-| `MessageCardView.*` | `CardActions`（复制 / 重新生成 / 分叉 / 删除 / 下载附件 / 打开链接） | 消息卡的动作出口 |
-| `ComposerBox.*` | `ComposerDeskActions`（提交 / 停止 / 选附件 / 打开模型选择器 / 粘贴） | 输入区的动作出口 |
-| `SidebarDesk.*` | `SidebarDeskActions`（新建 / 打开 / 重命名 / 删除 / 置顶 / 导出 / 打开设置……） | 侧栏的动作出口 |
-| `SettingsScreen.*` | `SettingsHooks`（写配置 / 探活 / 保存偏好） | 设置页写配置要走主机；画廊只记一笔 |
-
-**这些假端口只影响「点了之后会发生什么」，不影响「界面长什么样」。** 画廊的每一条断言都落在渲染结果上。
+需要宿主端口的条目（对话框、审批、模型切换）由 `FakePorts` 那一小组显式假端口驱动，逐条列在本文件《条目》表与 `Gallery.fs` 注释。
 
 ## 条目
 
-40 条，按控件库分（每个控件库至少一条，由 `./x check` 核对；判据见根 `AGENTS.md` §5《控件库交付约定（沿用）》）：
+41 条，按控件库分（每个控件库至少一条，由 `./x check` 的 `gallery_coverage` 核对；判据见根 `AGENTS.md` §5《控件库交付约定（沿用）》）：
 
 | 控件库 | 条目 |
 | --- | --- |
@@ -63,7 +23,7 @@
 | `SidebarDesk` | `SidebarDesk.empty`（未连接）、`SidebarDesk.rows`（置顶 / 普通 / 归档三行）、`SidebarDesk.batch`（批量模式——**多选已收口，走真状态树消息**）、`SidebarDesk.search`（搜索中） |
 | `SettingsScreen` | `SettingsScreen.providers` / `.tools` / `.generation` / `.devices` / `.appearance` / `.about`（六个分区各一条） |
 | `OverlayDesk` | `OverlayDesk.dialog.confirm` / `.prompt` / `.connect` / `.shortcuts`（四种对话框） |
-| `ChatEmpty` | `ChatEmpty.skeleton`（对话列骨架屏） |
+| `ChatEmpty` | `ChatEmpty.skeleton`（对话列骨架屏）、`ChatEmpty.empty`（新对话空态欢迎卡与起手式芯片——走真实 `ShowPrompt` 入口） |
 | `ActionStrip` | `ActionStrip.actions`（消息脚注的操作条） |
 | `ApprovalPanel` | `ApprovalPanel.approval`（工具审批卡——走真实 `ToolApprovalRequested` 事件） |
 | `AttachmentTray` | `AttachmentTray.items`（一张已就绪的图片与一个上传中的文件） |
@@ -81,21 +41,50 @@
 | `PopupMenu` | `PopupMenu.menu`（浮层菜单） |
 | `ToastStrip` | `ToastStrip.toast`（删除对话后的成功提示——走真实 `DeleteConversation` 消息） |
 
+## 深浅双主题渲染与像素基线门禁 (G3)
+
+画廊支持确定性的深浅（`Light` / `Dark`）双主题渲染与像素比对门禁（`Wanxiang2.Gallery.Baseline`，`compose/Gallery/Baseline.fs`）：
+
+- **深浅两态切换**：`Gallery.setMode PaletteMode.Light` / `PaletteMode.Dark`，不仅切换万象自身活画笔，同时驱动 `Application.Current.RequestedThemeVariant` 同步切换 FluentTheme 原生控件模板主题，确保两套主题在同一画布尺寸（720 × 900）下具有确定性渲染。
+- **基线契约**：基线必须由 DevOps 在实机环境中真实执行生成（`bash tools/gallery-baseline.sh --generate <目录>`），严禁伪造假图进仓库。
+- **见红门禁**：`bash tools/gallery-baseline.sh` 执行时，缺少基线文件、位图尺寸不匹配或像素发生任何改变，必须以非零退出码（1）失败并红灯报错；差异时自动在 `<基线目录>/diff/` 输出高亮差异图（相同像素压暗，不同像素品红高亮）。
+- **当前覆盖**：仓库内 `compose/Gallery/baselines/` 有 25 个条目 × 深浅两态 = 50 张基线（DevOps 实机生成）。其余 16 个条目（`ActionStrip.actions`、`ApprovalPanel.approval`、`AttachmentTray.items`、`BatchBar.selection`、`BrandMark.tile`、`ChatHeader.header`、`ConfirmPane.confirm`、`DevicesPane.devices`、`ExportSheet.export`、`FieldCheck.invalid`、`FocusOrigin.programmatic`、`ModelSwitchPanel.models`、`PalettePanel.palette`、`PopupMenu.menu`、`ToastStrip.toast`，以及 `ChatEmpty.empty`）**还没有基线**——按契约缺基线必红，须 DevOps 在实机补齐后门禁才转绿 `[待验证]`。
+
+## 真实控件树无障碍遍历与原生 Peer 审查 (G5)
+
+针对全画廊真实控件树的系统性无障碍审查（`Wanxiang2.Gallery.A11yAudit`，`compose/Gallery/A11yAudit.fs`）：
+
+- **全树遍历**：挂入 Headless 窗口完成首帧布局与渲染后，递归遍历全可视树，甄别所有可见的可聚焦（`Focusable = true`）与实体交互控件（`Button`, `TextBox`, `ToggleSwitch`, `CheckBox`, `MenuItem`, `ComboBox` 等）。
+- **原生 Peer 角色与名称**：必须通过 `ControlAutomationPeer.CreatePeerForElement` 获取原生 peer，校验 `peer.GetAutomationControlType() <> AutomationControlType.None` 且 `peer.GetName()` 具有非空白有效名称。
+- **拒绝只读属性冒充**：严禁以只读 `AutomationProperties.GetName` 绕过 peer（原生按钮靠 Content 派生可访问名称，只读属性为 null 但读屏能真实获取；反之仅挂属性而不具备有效 peer 属于虚假无障碍）。
+- **无名负例反例守护**：针对无内容无名称按钮、无提示输入框、可聚焦无名自定义元素及纯空白字符，均有明确单测证明审查会精确亮红灯拒收。
+- 与 `compose/AppShell/tests/A11yTraversalTests.fs`（AppShell 各屏幕的整树遍历断言）分工：画廊审查覆盖画廊条目，AppShell 测试覆盖真实屏幕；两者都是「真实控件树」口径，不互相替代。
+
+## 控件库显式清单与覆盖规则
+
+详见 `docs/ux/widget-coverage.md`。覆盖核对由 `./x check` 内置的 `gallery_coverage` 完成（每个实体控件库至少一条画廊条目），不再使用独立脚本。
+
 ## 命令
 
 ```
-bash tools/gallery.sh --list                             列出全部条目
-bash tools/gallery.sh --render <条目名> <输出.png>       渲染一个状态成 PNG
-bash tools/gallery.sh --window                            开交互窗口（开发用法）
+bash tools/gallery.sh --list                                                      列出全部条目
+bash tools/gallery.sh --render <条目名> <输出.png> [--theme <light|dark>]          渲染一个状态成 PNG（默认浅色）
+bash tools/gallery.sh --check-baselines <基线目录> [--theme <light|dark|both>]     执行像素基线核查（门禁 G3）
+bash tools/gallery.sh --generate-baselines <输出目录> [--theme <light|dark|both>]  生成像素基线（DevOps 命令）
+bash tools/gallery.sh --a11y-audit                                                遍历全画廊真实控件树审查无障碍（门禁 G5）
+bash tools/gallery.sh --window                                                    开交互窗口（开发用法）
+bash tools/gallery-baseline.sh [基线目录]                                          基线门禁独立脚本（缺基线或像素变化必红）
 ```
 
 - `--render` 在 Avalonia headless（Skia，`UseHeadlessDrawing = false`）下进行：
   不连主机、不读本机文件、不写仓库里的任何东西。未知条目名以非零码退出（退出码 2）。
   画布尺寸固定 720 × 900，条目之间可比。
+- `--check-baselines` / `gallery-baseline.sh` 消费 `artifacts/feed` 的交付包真实渲染比对，**不放进 `./x check`**（避免日常检查反复构建）；门禁接入点由 DevOps 按轮次执行。
+- `--a11y-audit` 同样消费真实渲染的控件树。
 - `--window` 是**开发用法**（真实桌面窗口，`Avalonia.Desktop` + `UsePlatformDetect`）：
   左侧是条目表，右侧是当前条目的真实控件，点条目即切换。
   改一个控件库 → 只重建那个库 → 重开窗口就看到新样子，不需要连主机、不需要走旅程、不需要打整个 feed。
-- 两者都用**隔离的包缓存** `artifacts/gallery-cache`（`tools/gallery.sh` 里设 `RestorePackagesPath`）：
+- 都用**隔离的包缓存** `artifacts/gallery-cache`（`tools/gallery.sh` 里设 `RestorePackagesPath`）：
   `artifacts/packages` 是 `./x pack` / `./x compose` 的缓存，同一时刻只允许一个写者。
 
 ### 跑本仓组合者测试时的两个陈旧缓存坑（都实测踩过）
@@ -110,12 +99,16 @@ bash tools/gallery.sh --window                            开交互窗口（开�
    合并后先清掉输出目录再构建。
 
 ## LEMMA
+
 1. **画廊里的状态与真实界面的状态是同一个状态。** [根 AXIOM: 5] 投影只有一条来源（`Workspace.project`），
    画廊不另造视图状态记录；改了状态树的投影，画廊立刻跟着变。
 2. **每条状态都能被单独看见。** [根 AXIOM: 3] 一个状态不依赖整条用户旅程才可达——
    画廊用一串消息直接把它造出来。
+3. **视觉基线具有确定性，缺基线与像素变化必须见红。** [根 AXIOM: 1, 4] 锁定时钟与尺寸，两套主题像素不漂移，任何偏差敏锐告警。
+4. **无障碍信息由原生 Peer 担保。** [根 AXIOM: 5] 拒绝只读属性遮羞布，凡可聚焦/交互控件必有真实角色与非空名称。
 
 ## SPEC
+
 1. [LEMMA: 1] `tests/Tests.fs`（18 条，全是**状态差异**断言，不是「没抛异常 / 不是空板 / 清单对得上」那类烟雾）。
    **当前 18 条全过**（实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 18, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
    - `输入区：空闲、输入中、带附件、生成中是四个不同的状态`（读投影：草稿文本、托盘、发送键状态、禁用位）；
@@ -141,93 +134,55 @@ bash tools/gallery.sh --window                            开交互窗口（开�
    **断言从状态树与真实控件读事实，不抄控件树的字符串**：抄来的期望值换个控件实现就假了，
    而状态差异是画廊存在的理由。
 
-2. [LEMMA: 2] `bash tools/gallery.sh --list` 列出 40 条；
+2. [LEMMA: 3] `tests/BaselineTests.fs`（5 条基线比对引擎断言，`[待验证]` 合并后动态运行）：
+   - `缺少基线文件时核查必须红（MissingBaseline）`；
+   - `同图比较必定 100% 匹配（Match）`；
+   - `像素改变时核查必须红并指出坐标（PixelMismatch）`；
+   - `尺寸不匹配时核查必须红（SizeMismatch）`；
+   - `深浅两套主题渲染出的位图背景与像素真实不同`。
+
+3. [LEMMA: 4] `tests/A11yAuditTests.fs`（11 条原生 peer 与无障碍遍历断言，`[待验证]` 合并后动态运行）：
+   - 输入区、对话列、侧栏、设置页、对话框真实控件树遍历通过断言；
+   - `原生 peer 角色与名称证明：peer.GetName() 优于只读 AutomationProperties`；
+   - 4 条无名负例反例判定（无内容按钮、无提示输入框、可聚焦无名元素、纯空白名称）；
+   - `负例审查失败判定：存在缺陷时 assertClean 必须抛出异常亮红灯`。
+
+4. [LEMMA: 2] `bash tools/gallery.sh --list` 列出 41 条；
    `bash tools/gallery.sh --render MessageCardView.toolcall /tmp/g.png` 产出一张
-   `PNG image data, 720 x 900`（实测 18510 字节）。40 条逐条渲染全部成功（实测）。
-3. [LEMMA: 2] `bash tools/gallery.sh --window` 开交互窗口：左侧条目表、右侧真实控件，
+   `PNG image data, 720 x 900`（实测 18510 字节，40 条时代的实测值；41 条全量逐条渲染 `[待验证]`）。
+5. [LEMMA: 2] `bash tools/gallery.sh --window` 开交互窗口：左侧条目表、右侧真实控件，
    点条目即切换。改一个控件库 → 只重建那个库 → 重开窗口就看到新样子。
-   实测：窗口标题「万象组件画廊」，左侧 40 条条目表（选中项高亮），右侧是选中条目的真实控件。
+   实测：窗口标题「万象组件画廊」，左侧条目表（选中项高亮），右侧是选中条目的真实控件。
 
 ## 已知缺口与各自的归属
 
-画廊只画**状态树真的到得了**的状态。逐条查过之后，下面四件事各有各的归属与结论；
+画廊只画**状态树真的到得了**的状态。逐条查过之后，下面这些事各有各的归属与结论；
 画廊不自己造投影绕过它们：该走真实控件入口的走控件入口（对话框、错误卡），
 状态树到不了的就在这里写清楚。
 
 1. **侧栏多选（批量模式）—— 已收口。**
    多选现在只有一个事实来源：
-   - `libs/WorkspaceState` 的 `Chrome.BatchMode` 与 `Chrome.SelectedRowIds` 是仅有的两份事实；
-   - 四条入口消息：`SidebarUserMsg.EnterBatch` / `ToggleBatch` / `ExitBatch` / `ToggleBatchAllVisible`；
-   - `libs/WorkspaceState/Project.fs` 经 `SidebarVS.BatchMode` / `SidebarVS.SelectedRowIds` 投影给侧栏；
-   - `compose/SidebarDesk` 从投影读，多选动作只发意图
-     （`SidebarDeskActions` 的 `enterSelection` / `toggleSelected` / `exitSelection` / `toggleSelectAllVisible`）；
-   - `libs/BatchBar/SidebarSelection.fs` 不再记账，只剩「按可见行过滤已选项」这个派生读法。
-
-   **可见范围的派生留在侧栏**：搜索框与归档开关都在侧栏，状态树看不到，
-   所以批量条的计数、「全选 / 取消全选」、「置顶 / 取消置顶」由侧栏按自己看到的可见行算。
-
-   画廊的 `SidebarDesk.batch` 条目走**真消息**：`EnterBatch` + `ToggleBatch` → `update` → `project` → 渲染。
-
+   `SidebarUserMsg.EnterBatch` / `SidebarUserMsg.ToggleBatch` 直接进 `WorkspaceModel`
+   的侧栏多选状态；`Workspace.project` 从它投影出 `SidebarVS.Selection`，
+   `SidebarDesk` 据此渲染批量条。画廊条目 `SidebarDesk.batch` 走真状态树消息（`Scenes` 里发
+   `User(Sidebar(SidebarUserMsg.EnterBatch))` + 两条 `ToggleBatch`），不手搓视图状态。
 2. **对话框与浮层的「打开」状态 —— 分工不同，不改。**
-   `OverlayPhase.DialogOpen` 的投影没有生产者（`Update.fs` 里只有 `Escape` / `Dismiss` 会把它关掉）。
-   但这不是两份互相打架的事实，而是**「投影是壳、真实控件在桌内」**的分工：
-   - `compose/DialogsDesk` 直接 `overlay.ShowDialog(...)` 造真实控件；
-   - `compose/OverlayDesk` 的 `OverlayVS.Dialog` 分支**只设 `currentOverlayPhase`、不造控件**。
-
-   要让投影也带内容，就得把整套对话框内容搬进状态树——**那是新设计，不是缺陷修复**，所以不改。
-   画廊的对话框条目因此直接调 `DialogsDesk`，走真实控件入口。
-
+   对话框的「打开」是桌内分工（`DialogsDesk` 自己的 `Open` 记录），不在 `WorkspaceModel` 里。
+   画廊里对话框条目因此走真实控件入口（`ctx.Dialogs.Connect(...)` 等），
+   不经过状态树——这是分工，不是缺口；状态树只记「有对话框在场」的相位。
 3. **错误卡 —— 已收成单一归属。**
-   此前 `ChatPhase.Error` 无生产者（死分支），真实错误由 `compose/AppShell` 私读 `RunState.Idle err`，
-   经 `compose/ChatScreen` 的 `Error: (GenerationError * (unit -> unit)) option` 字段传下去——
-   错误卡没有单一归属。
-
-   **现在**：生成错误是 `ChatVS.Error` 字段，由 `Workspace.project` 从 `RunState.Idle (Some err)` 投影；
-   `compose/AppShell` 改从投影取（不再自己读 `RunState`）；`ChatPhase.Error` 那个死分支与其渲染分支一并删除
-   （它画的是「加载更早消息失败」的横幅，与生成错误卡本就是两件事）。
-
-   画廊的 `MessageCardView.error` 条目仍走卡片组的 `MessageCards.ErrorCard` 入口——
-   那是**真实控件的入口**，不是伪造投影。
-
+   错误状态在状态树里是 `ChatVS.Error`（由 `Workspace.project` 从 `RunState.Idle` + 错误事实投影），
+   渲染走卡片组的 `ErrorCard` 单一入口。画廊条目 `MessageCardView.error` 用真实入口渲染，
+   不另造错误卡视图。
 4. **输入区的附件 —— 已修。**
-   此前 `ComposerUserMsg.Attach` / `.RemoveAttachment` 与 `InternalMsg.UploadProgress` / `.UploadFinished` /
-   `.UploadFailed` 在 `WorkspaceState.Update` 里**没有处理分支**，附件托盘永远是空的；
-   而且 `Send` **只把 `text` 放进消息，附件被静默丢掉**——那是真 bug，不是「画廊画错了」。
-
-   **现在**：
-   - `ComposerUserMsg.Attach` 带一个 `attachmentId`——**由发起方给**（客户端开始上传时生成）。
-     它同时是这条草稿的身份与线协议 `attachment.begin` / `chunk` / `complete` 的 id，两侧必须是同一个，
-     上传进度消息才对得上；
-   - `RemoveAttachment` 按 id 移除；`UploadProgress` / `UploadFinished` / `UploadFailed` 按 id 推进阶段
-     （完成置 `Ready=true`；失败置 `Failed=true` 且 `Ready=false`）；
-   - 同一批还补上了 `ComposerUserMsg.CaretChanged` / `EnterSendsToggled` / `ModelPick` 的处理分支；
-   - **`Send` 丢附件的 bug**：`buildMessageJson` 按 `compose/Outbox` 的 `MessageOutbox.BuildMessage`
-     同一份形状构造 `{"role":"user","contents":[{"text":…},{"type":"attachment",…}]}`；
-   - **发送门控在状态主人手里**：有附件在上传中、或有附件上传失败，**整条发送被挡住**
-     （与控件层 `libs/AttachmentTray/ComposerSendState.fs` 的 `blockReason` 同一口径），
-     不发明「只带部分附件」的消息；草稿与附件都留着，等用户处理完再发。
-
-   `ComposerBox.attachments` 的用例因此**转绿**：画廊测试当时 **11 条全过**（现 18 条，见上）。
-
-5. **2026-10-21 新增的 16 条控件库条目 —— 状态来源逐条登记。**
-   判据（什么算控件库）见根 `AGENTS.md` §5《控件库交付约定（沿用）》；
-   「每个控件库至少一条条目」由 `./x check` 机器核对（不设人工名单）。
-
-   **走真状态树的条目**（视图状态来自 `Workspace.project`）：
-   - `ChatHeader.header`：喂 `vs.Header` 给 `ctx.Chat.Header.Render`；
-   - `ToastStrip.toast`：喂真消息 `SidebarUserMsg.DeleteConversation` → 投影里的 `vs.Toasts` → `ctx.Overlay.RenderToasts`；
-   - `ApprovalPanel.approval`：喂真线协议事件 `WireEvent.ToolApprovalRequested` → 投影里的 `vs.Approval` → `ctx.Approval.Render`。
-
-   **走该控件自己的真实入口的条目**（这些状态本来就属于控件库自己，状态树里没有它的投影，
-   手搓 `WorkspaceViewState` 才是错的）：
-   `ActionStrip.actions`、`AttachmentTray.items`、`BatchBar.selection`、`BrandMark.tile`、
-   `ConfirmPane.confirm`、`DevicesPane.devices`、`ExportSheet.export`、`FieldCheck.invalid`、
-   `FocusOrigin.programmatic`、`IconSet.glyphs`、`ModelSwitchPanel.models`、`PalettePanel.palette`、
-   `PopupMenu.menu`。
-
-   这些条目喂给控件的是**库自己的输入类型**（`ActionStripVS` / `TrayItem` / `BatchBarVS` /
-   `DevicesPaneState` / `ExportSheetState` / `ModelChoice` / `PaletteRow` / `PopupEntry`），
-   不是工作区的投影记录——两者是不同的东西，不构成「手搓视图状态」。
+   状态树已补齐 `ComposerUserMsg.Attach` / `.RemoveAttachment` 与
+   `InternalMsg.UploadProgress` / `.UploadFinished` / `.UploadFailed` 分支；
+   画廊条目 `ComposerBox.attachments` 走真实消息序列（`Scenes.composerAttach`），
+   发送时附件元数据随发件出去（`Send` 丢附件的 bug 已修并有用例钉住）。
+5. **像素基线覆盖 25/41 条目 —— 待 DevOps 实机补齐。**
+   见《深浅双主题渲染与像素基线门禁 (G3)》的当前覆盖一节。缺基线期间门禁按契约红灯，
+   不伪造基线图。
 
 ## 与旧实现的差异
+
 无（旧仓库没有画廊这一物）。

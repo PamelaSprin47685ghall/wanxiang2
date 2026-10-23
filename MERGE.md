@@ -381,3 +381,77 @@ Avalonia 控件库的测试工程保留 `AssemblySettings.fs`）→ 把被并成
 其余 37 个多成员包按上表理由整包保留（全纯或全视觉，或状态落差处有横跨引用边）。
 
 **包数：109 → 116**（7 组拆分 +7）。
+## 多成员包内部异质性与对话框状态归属静态评估（2026-10-23）
+
+> 依据 `展望.md` §4（对话框打开态归属）与 §5（包结构与多成员包内部异质性），
+> 结合根规则 AXIOM 2、LEMMA 3、LEMMA 4、LEMMA 11 及 Kolmogorov 之书，
+> 针对 `DialogOpen` 及 `ChatEmpty`、`BatchBar` 等多成员包进行独立职责、状态归属与改动后果评估。
+
+### 1. 评估原则与裁决尺度
+
+1. **粒度下限与反碎片化**（LEMMA 11）：
+   库（`libs/`）的边界是独立领域职责或完整契约组件，不是单一数据结构或零散算式。
+   属于同一复合视口内部紧密协作的子组件与内部辅助逻辑，在无跨场景复用需求时合为一个交付包，能够有效降低包依赖图与 CI 构建的偶然复杂度。
+2. **状态单一归属与真相来源**（LEMMA 3, 12）：
+   事实在内存中只有一个主人。桌面层模态控件由控件树与图层调度持有，不应在无实际业务需求时强行向状态树造假消息或维持双权威。
+3. **改动后果驱动，反对机械拆分**：
+   严禁单凭代码行数、文件数量或「控件 vs 纯逻辑」的概念标签盲目拆包。拆分必须且仅当存在**真实的独立演进边界**或**消除跨层依赖污染**时才具有正向价值。
+
+---
+
+### 2. 展望 §4 对话框打开态（`OverlayPhase.DialogOpen`）评估
+
+- **现状核查**：
+  - `libs/WorkspaceState/Model.fs:87` 声明了 `type OverlayPhase = ... | DialogOpen of DialogKind`，并在 `Project.fs:317` 与 `Update.fs:621` 中保留了相位投影与 Escape 清理分支；
+  - 但在 `WorkspaceState` 的状态转移逻辑中，**完全没有产生 `DialogOpen` 的消息分支（零生产者）**；
+  - 真实的模态对话框（确认框、输入框、连接配对、会话偏好、快捷键帮助）全由 `compose/DialogsDesk` 直接调用 `overlay.ShowDialog(...)` 挂入 Avalonia 控件树，其可视状态、遮罩拦截、Tab 键焦点圈定 (`TrapTab`) 与嵌套关闭由 `libs/FocusOrigin/OverlayLayer` 自治管理。
+- **交付阻碍评估**：
+  - **不阻碍当前交付**。所有对话框交互链路完整，打开、输入、校验、确定/取消回调、焦点恢复均已通过全量无头自动化测试与桌面冒烟验证。
+- **无生产者裁决**：
+  - **维持现状，无真实需求坚决不创建 `DialogOpen` 生产者**。
+  - 当前没有任何远程协议事件、后台异步任务或跨组件业务流要求由状态机自发弹出模态框；若凭空增加 `OpenDialog` 消息或在桌面弹出时反向 dispatch，会引入双重真相来源和状态不同步风险。
+- **后续优化建议（记录在案，不抢写）**：
+  - 真正的小瑕疵位于 `compose/AppShell/AppShell.fs:405`：`IsDialogOpen` 查的是 `model.Overlay`（恒为 false），建议未来将 `ShellCommands` 的 `IsDialogOpen` 改为直接委托 `views().Overlay.Layer.IsDialogOpen`，并将 `OverlayEscape` 对齐至 `views().Overlay.HandleEscape()`。
+  - 未来做死代码清理时，可按 Via Negativa 移除 `WorkspaceState` 中未使用的 `DialogOpen` 构造器与 `OverlayDesk` 中只写不读的 `currentOverlayPhase`。
+
+---
+
+### 3. 展望 §5 多成员包内部异质性评估
+
+#### 3.1 `Wanxiang2.ChatEmpty`（判定：维持现状，不拆包）
+
+- **成员清单**：
+  - 界面控件：`ChatEmpty.fs`（空态面板/起手式）、`ChatScroller.fs`（对话流滚动/贴底浮钮）、`ExchangeNav.fs`（轮次跳转）、`SkeletonList.fs`（骨架屏列表）。
+  - 纯逻辑/状态机：`ChatEmptyText.fs`（空态文案与空态枚举）、`ScrollFollow.fs`（滚动贴底跟随状态机）。
+- **消费者现状**：
+  - 仅由 `compose/ChatPane` 一处在生产中完整消费全部 6 个成员（`compose/Gallery` 仅为画廊抽检，不构成独立业务依赖）。
+- **异质性性质分析**：
+  - 表面存在「Avalonia 控件 + 纯逻辑/算法」的并存，且包名为 `ChatEmpty` 但实际包含了整个聊天面板滚动视口的构件。
+  - 但深入职责可见：所有 6 个文件均从属于 `ChatPane` 对话视口的内部装配。`ScrollFollow` 与 `ChatScroller` 强耦合，`ChatEmptyText` 专属于 `ChatEmpty`。
+- **拆分后果推演**：
+  - 若按纯逻辑或控件逐个拆包，包数量将增加 5 个，工程数与 CI 依赖大幅膨胀，而消费者 `ChatPane` 必须额外声明 5 条 `PackageReference`；没有任何其他包能复用这些碎片。
+  - 拆分收益为 0，成本显著增加。
+- **裁决**：**维持当前合并形态，不拆包**。
+
+#### 3.2 `Wanxiang2.BatchBar`（判定：暂不拆包，建议未来精准下沉 `SearchHit`）
+
+- **成员清单**：
+  - 界面控件：`BatchBar.fs`（多选批量条）、`ConversationRows.fs`（会话列表项渲染器）、`HostSwitcher.fs`（主机切换）、`ListEmptyCard.fs`（列表空态）、`SidebarBrand.fs`（品牌与新会话按钮）、`SidebarSearch.fs`（搜索输入框）。
+  - 纯逻辑/状态机：`RowFocus.fs`（行焦点计算）、`SearchSegments.fs`（搜索切片高亮）、`SearchSession.fs`（搜索会话状态）、`SidebarSelection.fs`（可见行多选过滤）、`SearchHit.fs`（搜索结果模型与协议 JSON 解析）。
+- **消费者现状**：
+  - `compose/SidebarDesk`：消费全部 11 个成员，装配出完整的侧边栏；
+  - `compose/AppShell`：**仅消费 1 个成员 `SearchHit.fs`**（用于解析服务端搜索结果数据 `SearchHit.parse`）。
+- **异质性性质分析**：
+  - 其余 10 个成员完全内聚于侧栏 UI 及其内部交互，由 `SidebarDesk` 独占消费，无拆分必要。
+  - 但 `SearchHit` 属于**跨层领域/协议事实**：将其并入 `BatchBar` 导致上层编排者 `AppShell` 产生了一条非必要的直接 UI 包依赖（`PackageReference Include="Wanxiang2.BatchBar"`），构成了真实的异质性依赖泄漏。
+- **改动后果与实施建议**：
+  - **当前不阻碍交付**：编译与测试完全正常，当前轮次无需紧急改动；
+  - **架构改进建议（待后续窗口施工，不抢写）**：
+    将 `SearchHit.fs` 迁出并下沉至领域模型包（例如 `Wanxiang2.Search` 或 `Wanxiang2.WorkspaceState`），随后切断 `AppShell` 对 `Wanxiang2.BatchBar` 的引用，使 `Wanxiang2.BatchBar` 纯净化为 `SidebarDesk` 的专有界面包。其余 10 个成员保持合并，不予拆散。
+
+#### 3.3 其他多成员包评估（`ActionStrip`、`DevicesPane`、`ExportSheet` 等）
+
+- `Wanxiang2.ActionStrip`（10 成员）：全部为 `MessageCardView` 内部各卡片/折叠块部件，单一消费者，**维持现状，不拆包**。
+- `Wanxiang2.DevicesPane`（7 成员）：全部为 `SettingsScreen` 内部面板与设置草稿，单一消费者，**维持现状，不拆包**。
+- `Wanxiang2.ExportSheet`（3 成员）：全部为 `TransferDesk` 内部导入导出组件与文件名生成，单一消费者，**维持现状，不拆包**。
+- **维持既有否决项**：`ActionStrip`+`CardBits`（防拼盘失控）与 `Anthropic`+`HttpRetry`（防混淆协议与传输重试边界）的合并否决依然成立，不得合并。

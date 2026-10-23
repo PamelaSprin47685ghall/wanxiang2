@@ -13,6 +13,8 @@
     <Compile Include="Scenes.fs" />
     <Compile Include="FakePorts.fs" />
     <Compile Include="Gallery.fs" />
+    <Compile Include="Baseline.fs" />
+    <Compile Include="A11yAudit.fs" />
     <Compile Include="Window.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

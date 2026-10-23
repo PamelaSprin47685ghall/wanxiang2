@@ -4,6 +4,7 @@ open System
 open System.Collections.Generic
 open System.Text.Json.Nodes
 open Avalonia
+open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Layout
 open Avalonia.Media
@@ -51,6 +52,7 @@ type GalleryContext =
         /// 品牌标工厂（画廊用占位方块，与 AppShell 测试台同口径）
         BrandLogo: float -> Control
     }
+
 
 /// 画廊：一个状态 = 一条可命名的可视条目。
 ///
@@ -166,10 +168,32 @@ module Gallery =
 
              theme, styles)
 
+    /// 设置画廊的主题模式（Light 或 Dark）
+    let setMode (mode: Wanxiang2.ThemePalette.PaletteMode) =
+        let theme, _ = themeSingleton.Value
+        if theme.Mode <> mode then
+            theme.Apply mode
+            theme.CompleteTransition()
+        if not (isNull Avalonia.Application.Current) then
+            Avalonia.Application.Current.RequestedThemeVariant <-
+                (if mode = Wanxiang2.ThemePalette.PaletteMode.Dark then
+                     Avalonia.Styling.ThemeVariant.Dark
+                 else
+                     Avalonia.Styling.ThemeVariant.Light)
+
+    /// 获取当前画廊的主题模式
+    let currentMode () : Wanxiang2.ThemePalette.PaletteMode =
+        let theme, _ = themeSingleton.Value
+        theme.Mode
+
     /// 造一套画廊上下文（真实控件库 + 假端口）。
     /// 主题是单例；各个 Desk 是**每次新建**的——Desk 持有桌内瞬态（上一帧投影、滚动位置、选中项），
     /// 复用会让上一个条目的状态漏进下一个条目。
-    let createContext () : GalleryContext =
+    /// 造一套画廊上下文（真实控件库 + 假端口）。
+    /// 主题是单例；各个 Desk 是**每次新建**的——Desk 持有桌内瞬态（上一帧投影、滚动位置、选中项），
+    /// 复用会让上一个条目的状态漏进下一个条目。
+    let createContextMode (mode: Wanxiang2.ThemePalette.PaletteMode) : GalleryContext =
+        setMode mode
         let prefLimits: UiPrefLimits =
             {
                 sidebarWidth = 260.0
@@ -182,12 +206,11 @@ module Gallery =
 
         let root = Grid()
         let overlay = OverlayDesk(root, overlayLook theme)
-        // 品牌标：**真的** ShellBrand（与 app/Desktop 的 SharedTheme.logo 同一个类）。
-        // 不用占位方块——画廊是给人看界面真容的，占位方块会把「品牌标长什么样」这件事藏起来。
         let brandMark = Wanxiang2.ShellDesk.ShellBrand(theme)
         let brandLogo (size: float) = brandMark.Logo size
 
         let composer = ComposerDesk(FakePorts.composerActions ())
+        AutomationProperties.SetName(composer.Box.Input, "输入消息")
         let approval = ApprovalDesk(theme, overlay, ignore)
 
         let cards =
@@ -242,6 +265,9 @@ module Gallery =
             Approval = approval
             BrandLogo = brandLogo
         }
+
+    let createContext () : GalleryContext =
+        createContextMode (currentMode ())
 
     // ---------------------------------------------------------------- 条目
 
@@ -557,6 +583,25 @@ module Gallery =
                         let panel = StackPanel(Spacing = 8.0, Width = 520.0)
                         panel.Children.Add(skeleton.Host)
                         panel :> Control
+            }
+
+            // ---- ChatEmpty 空态（真实 ShowPrompt 入口）----
+            {
+                Name = "ChatEmpty.empty"
+                Widget = "ChatEmpty"
+                Note = "对话区空态欢迎页（起手式芯片与欢迎提示）"
+                Steps = Scenes.withConversation (JsonArray())
+                Build =
+                    fun ctx _ ->
+                        let empty =
+                            Wanxiang2.ChatEmpty.ChatEmpty(
+                                [ "整理会议要点", "帮我归纳讨论要点" ],
+                                Some ignore,
+                                ctx.BrandLogo
+                            )
+
+                        empty.ShowPrompt("今天想讨论什么？", "发出第一条消息后，会自动建立对话。", None)
+                        empty.Host
             }
 
 

@@ -365,6 +365,7 @@ type Rig =
         Summary: ConversationSummary
         ImportDesks: ResizeArray<Wanxiang2.TransferDesk.ImportDesk>
         ExportDesks: ResizeArray<Wanxiang2.TransferDesk.ExportDesk>
+        Root: Grid
     }
 
 module Rig =
@@ -395,9 +396,11 @@ module Rig =
         let exportDesks = ResizeArray<Wanxiang2.TransferDesk.ExportDesk>()
         let mutable shell: ShellComposer = Unchecked.defaultof<_>
         let mutable built: ShellViews option = None
+        let mutable rootGrid: Grid option = None
 
         let buildViews () : ShellViews =
             let root = Grid()
+            rootGrid <- Some root
             let overlay = OverlayDesk(root, Look.overlay ())
 
             let brandLogo (size: float) =
@@ -514,6 +517,7 @@ module Rig =
             Summary = summaryOf (Guid "11111111-1111-1111-1111-111111111111")
             ImportDesks = importDesks
             ExportDesks = exportDesks
+            Root = rootGrid.Value
         }
 
     let create () : Rig = createWith UiPrefsFile.defaults

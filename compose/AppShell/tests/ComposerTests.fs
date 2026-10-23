@@ -6,7 +6,10 @@ module Wanxiang2.AppShell.Tests.ComposerTests
 open System
 open System.Text.Json.Nodes
 open Avalonia.Automation
+open Avalonia
 open Avalonia.Controls
+open Avalonia.Input
+open Avalonia.Threading
 open Avalonia.LogicalTree
 open Xunit
 open Wanxiang.Core
@@ -1053,3 +1056,92 @@ let ``光标位置也进状态树`` () =
         let vs = Workspace.project rig.Shell.Model
         Assert.Equal("abcdef", vs.Composer.Text)
         Assert.Equal(Some 3, vs.Composer.Caret))
+
+/// 原生交互证明（补充 A11yTraversalTests 的静态名称/角色断言）：
+/// 真实顶层窗口下验证 Tab 焦点前移、Esc 清空搜索、删除邻位聚焦三段行为。
+/// 名称与角色的全树断言在 A11yTraversalTests.fs，这里不重复。
+let keyOn (c: Control) (key: Key) =
+    c.RaiseEvent(
+        KeyEventArgs(
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = key,
+            KeyModifiers = KeyModifiers.None,
+            Source = c
+        )
+    )
+
+[<Fact>]
+let ``真实控件树下：Tab 焦点前移、Esc 清空搜索、删除邻位聚焦`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        authenticate rig
+        rig.Shell.Dispatch(WireRecv(AuthAccepted {| instanceId = "inst-test" |}))
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers = JsonArray()
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
+
+        // 挂入顶层无头窗口：焦点管理器需要真实的视觉根与焦点作用域。
+        let window = Window(Width = 1024.0, Height = 768.0, Content = rig.Root)
+        window.Show()
+        Dispatcher.UIThread.RunJobs()
+        let topLevel = TopLevel.GetTopLevel(window)
+        Assert.NotNull topLevel
+
+        // Tab：焦点沿原生键盘导航链前移，不留在输入框。
+        rig.Views.Composer.Box.Input.Focus() |> ignore
+        Dispatcher.UIThread.RunJobs()
+        Assert.Equal<IInputElement>(rig.Views.Composer.Box.Input, topLevel.FocusManager.GetFocusedElement())
+
+        keyOn rig.Views.Composer.Box.Input Key.Tab
+        Dispatcher.UIThread.RunJobs()
+        let postTabFocused = topLevel.FocusManager.GetFocusedElement()
+        Assert.NotNull postTabFocused
+        Assert.NotEqual<IInputElement>(rig.Views.Composer.Box.Input, postTabFocused)
+
+        // Esc：搜索输入清空（既有文本与状态树同时回空）。
+        rig.Views.Sidebar.Search.Box.Text <- "查询待清空"
+        rig.Shell.Dispatch(User(Sidebar(SidebarUserMsg.SearchTextChanged "查询待清空")))
+        rig.Views.Sidebar.Search.Box.Focus() |> ignore
+        Dispatcher.UIThread.RunJobs()
+        Assert.Equal("查询待清空", rig.Views.Sidebar.Search.Text)
+
+        keyOn rig.Views.Sidebar.Search.Box Key.Escape
+        Dispatcher.UIThread.RunJobs()
+        Assert.Equal("", rig.Views.Sidebar.Search.Text)
+
+        // 删除邻位聚焦：删中间项选下一个邻位，删末尾项回退上一个，清空后回落搜索框。
+        let id1 = Guid.NewGuid()
+        let id2 = Guid.NewGuid()
+        let id3 = Guid.NewGuid()
+
+        let item (id: Guid) (title: string) =
+            let j = JsonObject()
+
+            j["conversationId"] <- JsonValue.Create(string id)
+            j["title"] <- JsonValue.Create(title)
+            j :> JsonNode
+
+        let snapshot lastCommitId (items: JsonNode seq) =
+            WireRecv(ConversationListSnapshot {| lastCommitId = lastCommitId; items = JsonArray(items |> Seq.toArray) |})
+
+        rig.Shell.Dispatch(snapshot 0UL [ item id1 "对话1"; item id2 "对话2"; item id3 "对话3" ])
+
+        Assert.Equal(Some id3, rig.Views.Sidebar.NeighborAfterDelete(string id2))
+        rig.Views.Sidebar.FocusAfterDelete(string id2)
+
+        rig.Shell.Dispatch(snapshot 1UL [ item id1 "对话1"; item id3 "对话3" ])
+        Assert.Equal(Some id1, rig.Views.Sidebar.NeighborAfterDelete(string id3))
+        rig.Views.Sidebar.FocusAfterDelete(string id3)
+
+        rig.Shell.Dispatch(snapshot 0UL [])
+        rig.Views.Sidebar.FocusAfterDelete(string id1)
+
+        window.Close())

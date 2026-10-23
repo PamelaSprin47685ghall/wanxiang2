@@ -472,14 +472,20 @@ type ShellComposer(ports: ShellPorts) =
                                 true
                         IsDialogOpen =
                             fun () ->
-                                match model.Overlay with
-                                | OverlayPhase.DialogOpen _ -> true
-                                | _ -> false
+                                match views with
+                                | Some v -> v.Overlay.Layer.IsDialogOpen
+                                | None ->
+                                    match model.Overlay with
+                                    | OverlayPhase.DialogOpen _ -> true
+                                    | _ -> false
                         IsPopupOpen =
                             fun () ->
-                                match model.Overlay with
-                                | OverlayPhase.PopupOpen _ -> true
-                                | _ -> false
+                                match views with
+                                | Some v -> v.Overlay.Layer.IsPopupOpen
+                                | None ->
+                                    match model.Overlay with
+                                    | OverlayPhase.PopupOpen _ -> true
+                                    | _ -> false
                         IsSettingsOpen = fun () -> model.Settings.Open
                         IsDrawerOpen = fun () -> model.Nav.DrawerOpen
                         IsGenerating =

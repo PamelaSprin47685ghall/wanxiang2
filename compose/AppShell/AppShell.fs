@@ -386,7 +386,7 @@ type ShellComposer(ports: ShellPorts) =
 
                                 ports.EffectSink.ShowToast(text, t)
                         ObserveList = fun () -> ports.Send WireEvent.ObserveConversationList
-                        DispatchPending = fun item -> this.Dispatch(Msg.WireRecv(WireEvent.Command item.command))
+                        DispatchPending = fun item -> this.Dispatch(Msg.CommandRequested item.command)
                         Downloaded = fun name bytes -> ports.SaveDownload name bytes
                         MissingAttachment =
                             fun sha -> ports.EffectSink.ShowToast((sprintf "缺少附件：%s" sha), ToastTone.Warning)
@@ -596,7 +596,7 @@ type ShellComposer(ports: ShellPorts) =
                                                         config = cfg
                                                     |}
 
-                                            this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
+                                            this.Dispatch(Msg.CommandRequested cmd)
                                         | _ -> ())
                                 | _ -> ports.EffectSink.ShowToast("连接主机后才能使用预设。", ToastTone.Warning)
                         SavePreset =
@@ -927,7 +927,7 @@ type ShellComposer(ports: ShellPorts) =
                                     editedMessageJson = editedMsg
                                 |}
 
-                        this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
+                        this.Dispatch(Msg.CommandRequested cmd)
                         this.Dispatch(User(Sidebar(SidebarUserMsg.SelectConv newId)))
                         ports.EffectSink.Focus FocusTarget.ComposerInput
                 )
@@ -1135,7 +1135,16 @@ type ShellComposer(ports: ShellPorts) =
         {
             newConversation = fun () -> this.Dispatch(User(Sidebar(SidebarUserMsg.NewConversation)))
             openConversation = fun id -> this.Dispatch(User(Sidebar(SidebarUserMsg.SelectConv id)))
-            renameConversation = fun s -> this.Dispatch(User(Sidebar(SidebarUserMsg.RenameConversation(s.id, s.title))))
+            renameConversation =
+                fun s ->
+                    v()
+                        .Dialogs.EditText(
+                            "重命名对话",
+                            s.title,
+                            "保存",
+                            fun title -> this.Dispatch(User(Sidebar(SidebarUserMsg.RenameConversation(s.id, title))))
+                        )
+                    |> ignore
             deleteConversation = fun s -> this.Dispatch(User(Sidebar(SidebarUserMsg.DeleteConversation s.id)))
             setPinned = fun s _ -> this.Dispatch(User(Sidebar(SidebarUserMsg.TogglePin s.id)))
             setArchived =
@@ -1151,7 +1160,7 @@ type ShellComposer(ports: ShellPorts) =
                                 archived = archived
                             |}
 
-                    this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
+                    this.Dispatch(Msg.CommandRequested cmd)
             selectionAllPinned =
                 fun ids ->
                     let rows = model.Summaries |> List.filter (fun s -> List.contains s.id ids)
@@ -1170,7 +1179,7 @@ type ShellComposer(ports: ShellPorts) =
                                         archived = s.archived
                                     |}
 
-                            this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
+                            this.Dispatch(Msg.CommandRequested cmd)
                         | None -> ()
             setArchivedMany =
                 fun ids archived ->
@@ -1186,7 +1195,7 @@ type ShellComposer(ports: ShellPorts) =
                                         archived = archived
                                     |}
 
-                            this.Dispatch(Msg.WireRecv(WireEvent.Command cmd))
+                            this.Dispatch(Msg.CommandRequested cmd)
                         | None -> ()
             deleteMany = fun ids -> this.Dispatch(User(Sidebar(SidebarUserMsg.BatchDelete ids)))
             // 多选的事实在状态树（Chrome.BatchMode / Chrome.SelectedRowIds）：

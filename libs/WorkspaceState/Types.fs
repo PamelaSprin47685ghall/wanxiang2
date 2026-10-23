@@ -44,6 +44,7 @@ type Effect =
     | Focus of FocusTarget
     | ScrollChat of ScrollCommand
     | SendWire of WireEvent
+    | SendCommand of ClientCommand
     | After of ms: int * Msg: Msg
     | Every of handle: string * ms: int
     | StopEvery of handle: string
@@ -62,6 +63,7 @@ type Effect =
 and Msg =
     | MsgTick of now: DateTimeOffset
     | WireRecv of WireEvent
+    | CommandRequested of ClientCommand
     | ConnectionUp of instanceId: string
     | ConnectionDown of reason: ConnectionIssue option
     /// 用户/宿主发起了到某个地址的连接：ServerUrl 的唯一来源（设置页设备分区与侧栏主机条都读它）。

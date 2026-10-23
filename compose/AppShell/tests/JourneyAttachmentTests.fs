@@ -81,10 +81,10 @@ let private trayText (rig: Rig) : string =
 
 /// 已出线的「发送用户消息」命令。
 let private sentMessages (rig: Rig) =
-    rig.Fake.Events
+    rig.Fake.Commands
     |> List.choose (fun ev ->
         match ev with
-        | WireEvent.Command(ClientCommand.SendUserMessage d) -> Some d
+        | ClientCommand.SendUserMessage d -> Some d
         | _ -> None)
 
 [<Fact>]

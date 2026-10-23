@@ -145,6 +145,10 @@ type FakePorts(prefs0: UiPrefs) =
         {
             Focus = fun f -> recordedEffects.Add(Effect.Focus f)
             ScrollChat = fun s -> recordedEffects.Add(Effect.ScrollChat s)
+            SendCommand =
+                fun cmd ->
+                    recordedEffects.Add(Effect.SendCommand cmd)
+                    commands.Add cmd
             SendWire =
                 fun w ->
                     recordedEffects.Add(Effect.SendWire w)

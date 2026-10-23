@@ -279,9 +279,9 @@ let ``旅程 3：发送含附件消息`` () =
 
         // **断言真正发出去的 payload**：文本 + 那条附件（不是只断「输入框清空了」）
         let sent =
-            rig.Fake.Events
+            rig.Fake.Commands
             |> List.tryPick (function
-                | WireEvent.Command(ClientCommand.SendUserMessage d) -> Some d.messageJson
+                | ClientCommand.SendUserMessage d -> Some d.messageJson
                 | _ -> None)
 
         Assert.True(sent.IsSome)
@@ -612,10 +612,10 @@ let ``旅程 5b：失败后点真实重试按钮走完重试路径`` () =
 
         // 重试路径真的走了：命令发出去、待确认入队、按钮进入 Sending。
         let regenCmds =
-            rig.Fake.Events
+            rig.Fake.Commands
             |> List.choose (fun e ->
                 match e with
-                | WireEvent.Command(ClientCommand.RegenerateResponse d) -> Some d
+                | ClientCommand.RegenerateResponse d -> Some d
                 | _ -> None)
 
         Assert.Equal(1, regenCmds.Length)
@@ -626,10 +626,9 @@ let ``旅程 5b：失败后点真实重试按钮走完重试路径`` () =
             rig.Fake.RecordedEffects
             |> List.exists (fun e ->
                 match e with
-                | Effect.SendWire(WireEvent.Command(ClientCommand.RegenerateResponse d)) ->
-                    d.invocationId = regen.invocationId
+                | Effect.SendCommand(ClientCommand.RegenerateResponse d) -> d.invocationId = regen.invocationId
                 | _ -> false),
-            "重试命令应作为 Effect.SendWire 发出"
+            "重试命令应作为 Effect.SendCommand 发出"
         )
 
         Assert.True(rig.Shell.Model.Feedback.PendingCommands.ContainsKey regen.invocationId, "重试命令应进入待确认队列")
@@ -1008,9 +1007,9 @@ let ``附件：AttachFiles 用同一个 id 走状态树与线协议，就绪后�
         rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Send))) |> ignore
 
         let sent =
-            rig.Fake.Events
+            rig.Fake.Commands
             |> List.tryPick (function
-                | WireEvent.Command(ClientCommand.SendUserMessage d) -> Some d.messageJson
+                | ClientCommand.SendUserMessage d -> Some d.messageJson
                 | _ -> None)
 
         Assert.True(sent.IsSome)

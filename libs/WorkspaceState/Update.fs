@@ -111,6 +111,7 @@ module Workspace =
                 }
             ServerUrl = ""
             Now = DateTimeOffset.UnixEpoch
+            AppliedCursor = 0UL
         }
 
     let private addToast
@@ -138,6 +139,13 @@ module Workspace =
             }
 
         nextModel, [ Effect.ShowToast(text, tone) ]
+
+    let private acknowledge cursor (model: WorkspaceModel) effects =
+        if cursor > model.AppliedCursor then
+            { model with AppliedCursor = cursor },
+            effects @ [ Effect.SendWire(WireEvent.CursorAdvanced {| id = cursor |}) ]
+        else
+            model, effects
 
     let rec update (now: DateTimeOffset) (msg: Msg) (model: WorkspaceModel) : WorkspaceModel * Effect list =
         match msg with
@@ -188,7 +196,7 @@ module Workspace =
                                     conversationId = id
                                 |}
 
-                        Effect.SendWire(WireEvent.Command cmd)))
+                        Effect.SendCommand cmd))
 
             let modelAfterDeletions =
                 { modelAfterSearch with
@@ -227,6 +235,28 @@ module Workspace =
                 Now = tickNow
             },
             searchEffects @ deleteEffects
+
+        | CommandRequested cmd ->
+            match model.Conn with
+            | ConnPhase.Authed(_, CatalogPhase.Ready _) ->
+                let id = ClientCommand.invocationId cmd
+
+                let pending =
+                    {
+                        InvocationId = id
+                        Command = cmd
+                        SentAt = now
+                        SuccessMessage = None
+                    }
+
+                { model with
+                    Feedback =
+                        { model.Feedback with
+                            PendingCommands = Map.add id pending model.Feedback.PendingCommands
+                        }
+                },
+                [ Effect.SendCommand cmd ]
+            | _ -> model, []
 
         | WireRecv wireEvent ->
             match wireEvent with
@@ -294,11 +324,13 @@ module Workspace =
             | WireEvent.ConversationListSnapshot d ->
                 // 全量解析归 ConversationSummary 库（坏 id 行如实丢弃，见 D6）；
                 // 谱系出自同一份快照（有 parentId 的行才入表），不另造数据源。
-                { model with
-                    Summaries = ConversationSummary.parseList d.items
-                    Lineage = ForkLineage.parse d.items
-                },
-                []
+                acknowledge
+                    d.lastCommitId
+                    { model with
+                        Summaries = ConversationSummary.parseList d.items
+                        Lineage = ForkLineage.parse d.items
+                    }
+                    []
             | WireEvent.DevicesSnapshot d ->
                 { model with
                     Now = now
@@ -354,9 +386,22 @@ module Workspace =
                     }
 
                 match model.Conn with
-                | ConnPhase.Authed(instId, CatalogPhase.Ready(cat, _)) ->
+                | ConnPhase.Authed(instId, CatalogPhase.Ready(cat, currentWs)) ->
+                    let nextRun =
+                        match d.runtimeState, d.generationId, currentWs with
+                        | "generating",
+                          Some genId,
+                          WorkspacePhase.Active(c, RunState.Generating(existingId, startedAt, partial)) when
+                            c.ConversationId = d.conversationId && existingId = genId
+                            ->
+                            RunState.Generating(genId, startedAt, partial)
+                        | "generating", Some genId, _ -> RunState.Generating(genId, now, None)
+                        | _, None, WorkspacePhase.Active(c, RunState.Idle err) when c.ConversationId = d.conversationId ->
+                            RunState.Idle err
+                        | _ -> RunState.Idle None
+
                     let nextCatalog =
-                        CatalogPhase.Ready(cat, WorkspacePhase.Active(activeConv, RunState.Idle None))
+                        CatalogPhase.Ready(cat, WorkspacePhase.Active(activeConv, nextRun))
 
                     let nextModel =
                         { model with
@@ -386,10 +431,68 @@ module Workspace =
                                     }
                             }
 
-                        cleared, [ Effect.ScrollChat(ScrollCommand.ToExchange target) ]
+                        acknowledge d.lastCommitId cleared [ Effect.ScrollChat(ScrollCommand.ToExchange target) ]
                     else
-                        nextModel, [ Effect.ScrollChat ScrollCommand.End ]
+                        acknowledge d.lastCommitId nextModel [ Effect.ScrollChat ScrollCommand.End ]
                 | _ -> model, []
+            | WireEvent.MessageCommitted d ->
+                match model.Conn with
+                | ConnPhase.Authed(inst, CatalogPhase.Ready(cat, WorkspacePhase.Active(conv, run))) when
+                    conv.ConversationId = d.conversationId
+                    ->
+                    let item = JsonObject()
+                    item["commitId"] <- d.commitId
+                    item["committedAt"] <- d.committedAt.ToString("o")
+                    item["payload"] <- d.payload.DeepClone()
+
+                    let messages =
+                        if conv.Messages |> List.exists (fun m -> m.commitId = Some d.commitId) then
+                            conv.Messages
+                        else
+                            conv.Messages @ [ MessageView.ofSnapshotItem item ]
+
+                    let nextConv =
+                        { conv with
+                            Messages = messages
+                            LastCommitId = max conv.LastCommitId d.commitId
+                        }
+
+                    acknowledge
+                        d.commitId
+                        { model with
+                            Conn = ConnPhase.Authed(inst, CatalogPhase.Ready(cat, WorkspacePhase.Active(nextConv, run)))
+                        }
+                        []
+                | _ -> model, []
+            | WireEvent.AuthorityCatchUp _ ->
+                // 完整快照负责应用追赶结果；不能只凭批次声明抬高确认水位。
+                let effects =
+                    match model.Conn with
+                    | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(conv, _))) ->
+                        [
+                            Effect.SendWire(
+                                WireEvent.ObserveConversation
+                                    {|
+                                        conversationId = conv.ConversationId
+                                    |}
+                            )
+                        ]
+                    | _ -> []
+
+                model, effects @ [ Effect.SendWire WireEvent.ObserveConversationList ]
+            | WireEvent.ConversationUpdated d ->
+                // 更新可能改变标题、配置或删除消息；重新取得完整权威快照后再确认水位。
+                let refreshActive =
+                    match model.Conn with
+                    | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(conv, _))) when
+                        conv.ConversationId = d.conversationId
+                        ->
+                        [
+                            Effect.SendWire(WireEvent.ObserveConversation {| conversationId = d.conversationId |})
+                        ]
+                    | _ -> []
+
+                model, refreshActive @ [ Effect.SendWire WireEvent.ObserveConversationList ]
             | WireEvent.GenerationStarted d ->
                 match model.Conn with
                 | ConnPhase.Authed(instId, CatalogPhase.Ready(cat, WorkspacePhase.Active(activeConv, _))) when
@@ -619,6 +722,7 @@ module Workspace =
 
             { model with
                 Conn = nextConn
+                AppliedCursor = 0UL
                 Feedback = resetFeedback
                 PendingApprovals = Map.empty
                 Settings = resetDevices
@@ -668,6 +772,33 @@ module Workspace =
                             Conn = ConnPhase.Authed(instId, nextCatalog)
                         },
                         [ Effect.Focus FocusTarget.ComposerInput ]
+                    | _ -> model, []
+                | SidebarUserMsg.RenameConversation(convId, title) ->
+                    match model.Conn with
+                    | ConnPhase.Authed(_, CatalogPhase.Ready _) ->
+                        let cmd =
+                            ClientCommand.RenameConversation
+                                {|
+                                    invocationId = Guid.NewGuid()
+                                    conversationId = convId
+                                    title = title
+                                |}
+
+                        update now (CommandRequested cmd) model
+                    | _ -> model, []
+                | SidebarUserMsg.TogglePin convId ->
+                    match model.Conn, model.Summaries |> List.tryFind (fun s -> s.id = convId) with
+                    | ConnPhase.Authed(_, CatalogPhase.Ready _), Some row ->
+                        let cmd =
+                            ClientCommand.SetConversationFlags
+                                {|
+                                    invocationId = Guid.NewGuid()
+                                    conversationId = convId
+                                    pinned = not row.pinned
+                                    archived = row.archived
+                                |}
+
+                        update now (CommandRequested cmd) model
                     | _ -> model, []
                 | SidebarUserMsg.DeleteConversation convId ->
                     let token = Guid.NewGuid()
@@ -822,7 +953,6 @@ module Workspace =
                         }
 
                     { model with Prefs = nextPrefs }, [ Effect.PrefsSave nextPrefs ]
-                | _ -> model, []
 
             | UserMsg.Composer compMsg ->
                 match compMsg with
@@ -952,8 +1082,7 @@ module Workspace =
                                         Feedback = nextFeedback
                                     }
 
-                                nextModel,
-                                [ Effect.SendWire(WireEvent.Command cmd); Effect.ScrollChat ScrollCommand.End ]
+                                nextModel, [ Effect.SendCommand cmd; Effect.ScrollChat ScrollCommand.End ]
                             | WorkspacePhase.IdleEmpty ->
                                 let newConvId = Guid.NewGuid()
                                 let invId = Guid.NewGuid()
@@ -1011,8 +1140,8 @@ module Workspace =
 
                                 nextModel,
                                 [
-                                    Effect.SendWire(WireEvent.Command createCmd)
-                                    Effect.SendWire(WireEvent.Command appendCmd)
+                                    Effect.SendCommand createCmd
+                                    Effect.SendCommand appendCmd
                                     Effect.SendWire(WireEvent.ObserveConversation {| conversationId = newConvId |})
                                 ]
                             | _ -> model, []
@@ -1093,6 +1222,40 @@ module Workspace =
 
             | UserMsg.Header headerMsg ->
                 match headerMsg with
+                | HeaderUserMsg.CrumbClick parentId ->
+                    update now (User(Sidebar(SidebarUserMsg.SelectConv parentId))) model
+                | HeaderUserMsg.StartRename ->
+                    match model.Conn with
+                    | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(conv, _))) ->
+                        { model with
+                            Chrome =
+                                { model.Chrome with
+                                    HeaderEditingDraft = Some conv.Title
+                                }
+                        },
+                        []
+                    | _ -> model, []
+                | HeaderUserMsg.CancelRename ->
+                    { model with
+                        Chrome =
+                            { model.Chrome with
+                                HeaderEditingDraft = None
+                            }
+                    },
+                    []
+                | HeaderUserMsg.CommitRename title ->
+                    match model.Conn with
+                    | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(conv, _))) ->
+                        let next =
+                            { model with
+                                Chrome =
+                                    { model.Chrome with
+                                        HeaderEditingDraft = None
+                                    }
+                            }
+
+                        update now (User(Sidebar(SidebarUserMsg.RenameConversation(conv.ConversationId, title)))) next
+                    | _ -> model, []
                 | HeaderUserMsg.ToggleSidebar ->
                     let nextNav =
                         { model.Nav with
@@ -1231,7 +1394,7 @@ module Workspace =
                                 PendingCommands = Map.add invId pending model.Feedback.PendingCommands
                             }
 
-                        { model with Feedback = nextFeedback }, [ Effect.SendWire(WireEvent.Command cmd) ]
+                        { model with Feedback = nextFeedback }, [ Effect.SendCommand cmd ]
                     | _ -> model, []
                 | ChatUserMsg.ContinueReply ->
                     // 继续生成（决策 230）：把中途失败留下的半截助手回复落盘，再从它接着生成。
@@ -1263,7 +1426,7 @@ module Workspace =
                                 PendingCommands = Map.add invId pending model.Feedback.PendingCommands
                             }
 
-                        { model with Feedback = nextFeedback }, [ Effect.SendWire(WireEvent.Command cmd) ]
+                        { model with Feedback = nextFeedback }, [ Effect.SendCommand cmd ]
                     | _ -> model, []
                 | ChatUserMsg.DeleteExchange messageId ->
                     // 删除一条消息：messageId 是消息的 commit id（十进制串）。
@@ -1298,7 +1461,7 @@ module Workspace =
                                         }
                                 }
 
-                            nextFeedback, [ Effect.SendWire(WireEvent.Command cmd) ]
+                            nextFeedback, [ Effect.SendCommand cmd ]
                     | _ -> model, []
                 | ChatUserMsg.EditFork(commitId, seedText) ->
                     // 编辑并分叉：从当前对话分出新对话，把被编辑的那条消息换成编辑后的文本。
@@ -1339,7 +1502,7 @@ module Workspace =
 
                         nextFeedback,
                         [
-                            Effect.SendWire(WireEvent.Command cmd)
+                            Effect.SendCommand cmd
                             Effect.SendWire(WireEvent.ObserveConversation {| conversationId = newConvId |})
                         ]
                     | _ -> model, []

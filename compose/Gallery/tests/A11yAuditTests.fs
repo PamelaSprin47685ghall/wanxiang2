@@ -15,7 +15,10 @@ module A11yAuditTests =
         let entry = Gallery.find name |> Option.get
         let ctx = Gallery.createContextMode Wanxiang2.ThemePalette.PaletteMode.Light
         let control = Gallery.build ctx entry
-        let win = Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
+        let win =
+            Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
         win.Show()
         win.UpdateLayout()
         control.InvalidateVisual()
@@ -28,13 +31,21 @@ module A11yAuditTests =
     let ``画廊真实控件树遍历：输入区所有可聚焦可交互控件均有有效原生 peer 与非空名称`` () =
         Headless.run (fun () ->
             let _, win = renderEntryControl "ComposerBox.typing"
+
             try
                 let items = A11yAudit.auditWindow win
                 Assert.NotEmpty items
+
                 for item in items do
                     Assert.True(item.Defect.IsNone, sprintf "受检控件 %s 出现缺陷: %A" item.ControlType item.Defect)
-                    Assert.False(String.IsNullOrWhiteSpace item.AccessibleName, sprintf "控件 %s 的可访问名称为空" item.ControlType)
+
+                    Assert.False(
+                        String.IsNullOrWhiteSpace item.AccessibleName,
+                        sprintf "控件 %s 的可访问名称为空" item.ControlType
+                    )
+
                     Assert.NotEqual(AutomationControlType.None, item.Role)
+
                 A11yAudit.assertClean items
             finally
                 win.Close())
@@ -43,6 +54,7 @@ module A11yAuditTests =
     let ``画廊真实控件树遍历：对话列所有卡片按钮与动作均有有效原生 peer 与非空名称`` () =
         Headless.run (fun () ->
             let _, win = renderEntryControl "MessageCardView.toolcall"
+
             try
                 let items = A11yAudit.auditWindow win
                 Assert.NotEmpty items
@@ -54,6 +66,7 @@ module A11yAuditTests =
     let ``画廊真实控件树遍历：侧栏行与批量条所有操作控件均有有效原生 peer 与非空名称`` () =
         Headless.run (fun () ->
             let _, win = renderEntryControl "SidebarDesk.batch"
+
             try
                 let items = A11yAudit.auditWindow win
                 Assert.NotEmpty items
@@ -65,6 +78,7 @@ module A11yAuditTests =
     let ``画廊真实控件树遍历：设置页面板控件均有有效原生 peer 与非空名称`` () =
         Headless.run (fun () ->
             let _, win = renderEntryControl "SettingsScreen.providers"
+
             try
                 let items = A11yAudit.auditWindow win
                 Assert.NotEmpty items
@@ -76,6 +90,7 @@ module A11yAuditTests =
     let ``画廊真实控件树遍历：对话框确认取消键均有有效原生 peer 与非空名称`` () =
         Headless.run (fun () ->
             let _, win = renderEntryControl "OverlayDesk.dialog.confirm"
+
             try
                 let items = A11yAudit.auditWindow win
                 Assert.NotEmpty items
@@ -111,7 +126,9 @@ module A11yAuditTests =
                 let items = A11yAudit.auditWindow win
 
                 // 断言至少一个 MenuItem 被扫描到
-                let menuItems = items |> List.filter (fun i -> i.Role = AutomationControlType.MenuItem)
+                let menuItems =
+                    items |> List.filter (fun i -> i.Role = AutomationControlType.MenuItem)
+
                 Assert.NotEmpty menuItems
                 Assert.True(menuItems.Length >= 2, sprintf "期望扫描到至少 2 个 MenuItem，实际扫描到 %d 个" menuItems.Length)
 
@@ -154,7 +171,10 @@ module A11yAuditTests =
 
             try
                 let items = A11yAudit.auditWindow win
-                let menuItems = items |> List.filter (fun i -> i.Role = AutomationControlType.MenuItem)
+
+                let menuItems =
+                    items |> List.filter (fun i -> i.Role = AutomationControlType.MenuItem)
+
                 Assert.NotEmpty menuItems
 
                 let scannedExport = menuItems |> List.tryFind (fun i -> i.AccessibleName = "导出对话")
@@ -201,12 +221,12 @@ module A11yAuditTests =
             win.UpdateLayout()
 
             let item = A11yAudit.auditControl badBtn
+
             match item.Defect with
-            | Some (A11yDefect.MissingAccessibleName (ctlType, role, _)) ->
+            | Some(A11yDefect.MissingAccessibleName(ctlType, role, _)) ->
                 Assert.Equal("Button", ctlType)
                 Assert.Equal(AutomationControlType.Button, role)
-            | other ->
-                failwithf "期望检测出 MissingAccessibleName 缺陷，实际为: %A" other
+            | other -> failwithf "期望检测出 MissingAccessibleName 缺陷，实际为: %A" other
 
             win.Close())
 
@@ -219,12 +239,12 @@ module A11yAuditTests =
             win.UpdateLayout()
 
             let item = A11yAudit.auditControl badTb
+
             match item.Defect with
-            | Some (A11yDefect.MissingAccessibleName (ctlType, role, _)) ->
+            | Some(A11yDefect.MissingAccessibleName(ctlType, role, _)) ->
                 Assert.Equal("TextBox", ctlType)
                 Assert.Equal(AutomationControlType.Edit, role)
-            | other ->
-                failwithf "期望检测出 MissingAccessibleName 缺陷，实际为: %A" other
+            | other -> failwithf "期望检测出 MissingAccessibleName 缺陷，实际为: %A" other
 
             win.Close())
 
@@ -237,11 +257,11 @@ module A11yAuditTests =
             win.UpdateLayout()
 
             let item = A11yAudit.auditControl badBorder
+
             match item.Defect with
-            | Some (A11yDefect.MissingAccessibleName _)
-            | Some (A11yDefect.InvalidRole _) -> ()
-            | other ->
-                failwithf "期望检测出无名可聚焦元素缺陷，实际为: %A" other
+            | Some(A11yDefect.MissingAccessibleName _)
+            | Some(A11yDefect.InvalidRole _) -> ()
+            | other -> failwithf "期望检测出无名可聚焦元素缺陷，实际为: %A" other
 
             win.Close())
 
@@ -255,6 +275,7 @@ module A11yAuditTests =
 
             let item = A11yAudit.auditControl wsBtn
             Assert.True(item.Defect.IsSome)
+
             match item.Defect.Value with
             | A11yDefect.MissingAccessibleName _ -> ()
             | other -> failwithf "期望检测出空白名称缺陷，实际为: %A" other
@@ -292,11 +313,10 @@ module A11yAuditTests =
                 Assert.True(badScanned.Value.Defect.IsSome, "无名 MenuItem 必须被判定存在缺陷")
 
                 match badScanned.Value.Defect.Value with
-                | A11yDefect.MissingAccessibleName (ctl, role, _) ->
+                | A11yDefect.MissingAccessibleName(ctl, role, _) ->
                     Assert.Equal("MenuItem", ctl)
                     Assert.Equal(AutomationControlType.MenuItem, role)
-                | other ->
-                    failwithf "期望 MissingAccessibleName，实际为: %A" other
+                | other -> failwithf "期望 MissingAccessibleName，实际为: %A" other
 
                 // assertClean 必须抛出包含 MenuItem 缺陷的异常阻断
                 let ex = Assert.Throws<Exception>(fun () -> A11yAudit.assertClean items)

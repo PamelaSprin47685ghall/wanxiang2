@@ -186,3 +186,13 @@ bash tools/gallery-baseline.sh [基线目录]                                   
 ## 与旧实现的差异
 
 无（旧仓库没有画廊这一物）。
+
+## 合并后实测更正（2026-10-23）
+
+上述「25/41 条目有基线，其余待补齐」是合并中间状态，已由本节取代。合并远端后从源码重新 `./x pack`，清理画廊旧包缓存，再实际生成全部 41 个条目的深浅主题基线，共 82 张；独立进程逐像素复核 82 项全部通过。这证明本机渲染可重复，不代表人工视觉审查或跨平台像素一致。
+
+- `bash tools/gallery.sh --list`：41 条，实际运行成功。
+- `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/gallery-cache"`：37 条通过、0 失败。
+- AppShell 原生 Tab/Esc/删除邻位交互用例：1 条通过、0 失败。
+- `./x check`：109 个库、71 个组合者、17 个控件库覆盖检查通过。
+- 实际渲染暴露并修正两个重复挂载：ChatHeader 条目改用独立真实控件；审批条目呈现所属 OverlayRoot，不再把已有父节点的审批视图重复挂入画布。

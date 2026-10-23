@@ -171,9 +171,11 @@ module Gallery =
     /// 设置画廊的主题模式（Light 或 Dark）
     let setMode (mode: Wanxiang2.ThemePalette.PaletteMode) =
         let theme, _ = themeSingleton.Value
+
         if theme.Mode <> mode then
             theme.Apply mode
             theme.CompleteTransition()
+
         if not (isNull Avalonia.Application.Current) then
             Avalonia.Application.Current.RequestedThemeVariant <-
                 (if mode = Wanxiang2.ThemePalette.PaletteMode.Dark then
@@ -194,6 +196,7 @@ module Gallery =
     /// 复用会让上一个条目的状态漏进下一个条目。
     let createContextMode (mode: Wanxiang2.ThemePalette.PaletteMode) : GalleryContext =
         setMode mode
+
         let prefLimits: UiPrefLimits =
             {
                 sidebarWidth = 260.0
@@ -266,8 +269,7 @@ module Gallery =
             BrandLogo = brandLogo
         }
 
-    let createContext () : GalleryContext =
-        createContextMode (currentMode ())
+    let createContext () : GalleryContext = createContextMode (currentMode ())
 
     // ---------------------------------------------------------------- 条目
 
@@ -594,11 +596,7 @@ module Gallery =
                 Build =
                     fun ctx _ ->
                         let empty =
-                            Wanxiang2.ChatEmpty.ChatEmpty(
-                                [ "整理会议要点", "帮我归纳讨论要点" ],
-                                Some ignore,
-                                ctx.BrandLogo
-                            )
+                            Wanxiang2.ChatEmpty.ChatEmpty([ "整理会议要点", "帮我归纳讨论要点" ], Some ignore, ctx.BrandLogo)
 
                         empty.ShowPrompt("今天想讨论什么？", "发出第一条消息后，会自动建立对话。", None)
                         empty.Host
@@ -674,7 +672,7 @@ module Gallery =
                 Build =
                     fun ctx vs ->
                         ctx.Approval.Render(vs.Approval, Some(Guid.Parse Scenes.conversationId))
-                        ctx.Approval.View
+                        ctx.OverlayRoot
             }
 
             // ---- AttachmentTray（输入区附件托盘）----
@@ -769,9 +767,10 @@ module Gallery =
                 Note = "顶栏：对话标题、侧栏键与更多键"
                 Steps = Scenes.withConversation (JsonArray())
                 Build =
-                    fun ctx vs ->
-                        ctx.Chat.Header.Render vs.Header
-                        ctx.Chat.Header.Host
+                    fun _ vs ->
+                        let header = Wanxiang2.ChatHeader.ChatHeader()
+                        header.Render vs.Header
+                        header.Host
             }
 
             // ---- ConfirmPane（破坏性操作确认）----

@@ -29,7 +29,13 @@ type BaselineCheck =
     /// 尺寸不匹配（必须红）
     | SizeMismatch of entry: string * theme: string * expected: (int * int) * actual: (int * int)
     /// 像素变化（必须红）
-    | PixelChanged of entry: string * theme: string * diffCount: int * totalPixels: int * firstDiff: (int * int * Color * Color) * diffPath: string option
+    | PixelChanged of
+        entry: string *
+        theme: string *
+        diffCount: int *
+        totalPixels: int *
+        firstDiff: (int * int * Color * Color) *
+        diffPath: string option
     /// 渲染或加载异常
     | RenderError of entry: string * theme: string * message: string
 
@@ -40,13 +46,15 @@ module Baseline =
         let w = bmp.PixelSize.Width
         let h = bmp.PixelSize.Height
         let stride = w * 4
-        let buffer = Array.zeroCreate<byte> (stride * h)
+        let buffer = Array.zeroCreate<byte>(stride * h)
         let handle = GCHandle.Alloc(buffer, GCHandleType.Pinned)
+
         try
             bmp.CopyPixels(PixelRect(0, 0, w, h), handle.AddrOfPinnedObject(), buffer.Length, stride)
         finally
             handle.Free()
-        let pixels = Array.zeroCreate<uint32> (w * h)
+
+        let pixels = Array.zeroCreate<uint32>(w * h)
         Buffer.BlockCopy(buffer, 0, pixels, 0, buffer.Length)
         w, h, pixels
 
@@ -54,6 +62,7 @@ module Baseline =
     let compareBitmaps (baselineBmp: Bitmap) (actualBmp: Bitmap) : DiffResult * Bitmap option =
         let bw, bh = baselineBmp.PixelSize.Width, baselineBmp.PixelSize.Height
         let aw, ah = actualBmp.PixelSize.Width, actualBmp.PixelSize.Height
+
         if bw <> aw || bh <> ah then
             DiffResult.SizeMismatch((bw, bh), (aw, ah)), None
         else
@@ -66,22 +75,41 @@ module Baseline =
             for i in 0 .. total - 1 do
                 let bp = bPixels.[i]
                 let ap = aPixels.[i]
+
                 if bp <> ap then
                     diffCount <- diffCount + 1
+
                     if firstDiff.IsNone then
                         let x = i % bw
                         let y = i / bw
-                        let bc = Color.FromArgb(byte (bp >>> 24), byte ((bp >>> 16) &&& 0xFFu), byte ((bp >>> 8) &&& 0xFFu), byte (bp &&& 0xFFu))
-                        let ac = Color.FromArgb(byte (ap >>> 24), byte ((ap >>> 16) &&& 0xFFu), byte ((ap >>> 8) &&& 0xFFu), byte (ap &&& 0xFFu))
-                        firstDiff <- Some (x, y, bc, ac)
+
+                        let bc =
+                            Color.FromArgb(
+                                byte (bp >>> 24),
+                                byte ((bp >>> 16) &&& 0xFFu),
+                                byte ((bp >>> 8) &&& 0xFFu),
+                                byte (bp &&& 0xFFu)
+                            )
+
+                        let ac =
+                            Color.FromArgb(
+                                byte (ap >>> 24),
+                                byte ((ap >>> 16) &&& 0xFFu),
+                                byte ((ap >>> 8) &&& 0xFFu),
+                                byte (ap &&& 0xFFu)
+                            )
+
+                        firstDiff <- Some(x, y, bc, ac)
 
             if diffCount = 0 then
                 DiffResult.Match, None
             else
                 // 构造高亮差异位图：相同像素降低对比度变暗淡，差异像素标为高亮品红 (#FFFF00FF)
-                let diffBuffer = Array.zeroCreate<byte> (bw * 4 * bh)
+                let diffBuffer = Array.zeroCreate<byte>(bw * 4 * bh)
+
                 for i in 0 .. total - 1 do
                     let offset = i * 4
+
                     if bPixels.[i] = aPixels.[i] then
                         let c = aPixels.[i]
                         let b = byte (c &&& 0xFFu)
@@ -100,16 +128,26 @@ module Baseline =
                         diffBuffer.[offset + 2] <- 255uy
                         diffBuffer.[offset + 3] <- 255uy
 
-                let diffBmp = new WriteableBitmap(PixelSize(bw, bh), Vector(96.0, 96.0), Avalonia.Platform.PixelFormat.Bgra8888, Avalonia.Platform.AlphaFormat.Premul)
+                let diffBmp =
+                    new WriteableBitmap(
+                        PixelSize(bw, bh),
+                        Vector(96.0, 96.0),
+                        Avalonia.Platform.PixelFormat.Bgra8888,
+                        Avalonia.Platform.AlphaFormat.Premul
+                    )
+
                 use frame = diffBmp.Lock()
                 Marshal.Copy(diffBuffer, 0, frame.Address, diffBuffer.Length)
-                DiffResult.PixelMismatch(diffCount, total, firstDiff.Value), Some (diffBmp :> Bitmap)
+                DiffResult.PixelMismatch(diffCount, total, firstDiff.Value), Some(diffBmp :> Bitmap)
 
     /// 渲染一个条目成内存位图与承载窗口
     let renderEntry (ctx: GalleryContext) (entry: Entry) (mode: PaletteMode) : RenderTargetBitmap * Window =
         Gallery.setMode mode
         let control = Gallery.build ctx entry
-        let win = Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
+        let win =
+            Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
         win.Show()
         win.UpdateLayout()
         control.InvalidateVisual()
@@ -123,8 +161,10 @@ module Baseline =
     /// 保存位图到 PNG 文件并返回字节数
     let saveBitmap (bmp: Bitmap) (path: string) : int =
         let dir = Path.GetDirectoryName path
+
         if not (String.IsNullOrEmpty dir) && not (Directory.Exists dir) then
             Directory.CreateDirectory dir |> ignore
+
         bmp.Save(path, PngBitmapEncoderOptions())
         FileInfo(path).Length |> int
 
@@ -142,6 +182,7 @@ module Baseline =
     let checkEntry (baselineDir: string) (entry: Entry) (mode: PaletteMode) : BaselineCheck =
         let path = baselinePath baselineDir entry.Name mode
         let themeStr = themeKey mode
+
         if not (File.Exists path) then
             BaselineCheck.MissingBaseline(entry.Name, themeStr, path)
         else
@@ -149,21 +190,24 @@ module Baseline =
                 use baselineBmp = new Bitmap(path)
                 let ctx = Gallery.createContextMode mode
                 let actualBmp, win = renderEntry ctx entry mode
+
                 try
                     let diff, diffBmpOpt = compareBitmaps baselineBmp actualBmp
+
                     match diff with
-                    | DiffResult.Match ->
-                        BaselineCheck.Passed(entry.Name, themeStr)
-                    | DiffResult.SizeMismatch (exp, act) ->
-                        BaselineCheck.SizeMismatch(entry.Name, themeStr, exp, act)
-                    | DiffResult.PixelMismatch (diffCount, total, first) ->
+                    | DiffResult.Match -> BaselineCheck.Passed(entry.Name, themeStr)
+                    | DiffResult.SizeMismatch(exp, act) -> BaselineCheck.SizeMismatch(entry.Name, themeStr, exp, act)
+                    | DiffResult.PixelMismatch(diffCount, total, first) ->
                         let diffPath =
                             match diffBmpOpt with
                             | Some diffBmp ->
-                                let dp = Path.Combine(baselineDir, "diff", sprintf "%s.%s.diff.png" entry.Name themeStr)
+                                let dp =
+                                    Path.Combine(baselineDir, "diff", sprintf "%s.%s.diff.png" entry.Name themeStr)
+
                                 saveBitmap diffBmp dp |> ignore
                                 Some dp
                             | None -> None
+
                         BaselineCheck.PixelChanged(entry.Name, themeStr, diffCount, total, first, diffPath)
                 finally
                     win.Close()
@@ -174,27 +218,41 @@ module Baseline =
     /// 对所有条目和主题进行基线核查
     let checkAll (baselineDir: string) (entries: Entry list) (modes: PaletteMode list) : BaselineCheck list * bool =
         let results =
-            [ for entry in entries do
-                for mode in modes do
-                    checkEntry baselineDir entry mode ]
+            [
+                for entry in entries do
+                    for mode in modes do
+                        checkEntry baselineDir entry mode
+            ]
+
         let allPassed =
             results
-            |> List.forall (function BaselineCheck.Passed _ -> true | _ -> false)
+            |> List.forall (function
+                | BaselineCheck.Passed _ -> true
+                | _ -> false)
+
         results, allPassed
 
     /// 生成全量基线图片（DevOps 用）
-    let generateAll (outputDir: string) (entries: Entry list) (modes: PaletteMode list) : (string * string * string * int) list =
+    let generateAll
+        (outputDir: string)
+        (entries: Entry list)
+        (modes: PaletteMode list)
+        : (string * string * string * int) list =
         if not (Directory.Exists outputDir) then
             Directory.CreateDirectory outputDir |> ignore
-        [ for entry in entries do
-            for mode in modes do
-                let themeStr = themeKey mode
-                let path = baselinePath outputDir entry.Name mode
-                let ctx = Gallery.createContextMode mode
-                let bmp, win = renderEntry ctx entry mode
-                try
-                    let bytes = saveBitmap bmp path
-                    entry.Name, themeStr, path, bytes
-                finally
-                    win.Close()
-                    bmp.Dispose() ]
+
+        [
+            for entry in entries do
+                for mode in modes do
+                    let themeStr = themeKey mode
+                    let path = baselinePath outputDir entry.Name mode
+                    let ctx = Gallery.createContextMode mode
+                    let bmp, win = renderEntry ctx entry mode
+
+                    try
+                        let bytes = saveBitmap bmp path
+                        entry.Name, themeStr, path, bytes
+                    finally
+                        win.Close()
+                        bmp.Dispose()
+        ]

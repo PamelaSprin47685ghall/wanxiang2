@@ -1062,12 +1062,7 @@ let ``光标位置也进状态树`` () =
 /// 名称与角色的全树断言在 A11yTraversalTests.fs，这里不重复。
 let keyOn (c: Control) (key: Key) =
     c.RaiseEvent(
-        KeyEventArgs(
-            RoutedEvent = InputElement.KeyDownEvent,
-            Key = key,
-            KeyModifiers = KeyModifiers.None,
-            Source = c
-        )
+        KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = key, KeyModifiers = KeyModifiers.None, Source = c)
     )
 
 [<Fact>]
@@ -1130,7 +1125,13 @@ let ``真实控件树下：Tab 焦点前移、Esc 清空搜索、删除邻位聚
             j :> JsonNode
 
         let snapshot lastCommitId (items: JsonNode seq) =
-            WireRecv(ConversationListSnapshot {| lastCommitId = lastCommitId; items = JsonArray(items |> Seq.toArray) |})
+            WireRecv(
+                ConversationListSnapshot
+                    {|
+                        lastCommitId = lastCommitId
+                        items = JsonArray(items |> Seq.toArray)
+                    |}
+            )
 
         rig.Shell.Dispatch(snapshot 0UL [ item id1 "对话1"; item id2 "对话2"; item id3 "对话3" ])
 

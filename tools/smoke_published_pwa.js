@@ -256,11 +256,6 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             const typedCorrectly = draftRaw === EXPECTED;
             check('真实键盘输入与上屏桥：组合键与增量均精确落盘', typedCorrectly,
                 `draft=${JSON.stringify(draftRaw.slice(0, 160))} expected=${JSON.stringify(EXPECTED)}`);
-            // 文本上屏桥（决策 391）：两次 CDP insertText 只各落一次。必须是**精确相等**：
-            // 子串判据会放行「一次 insertText 被派发两次」的重复（'万象ok万象ok草稿往返'
-            // 含有 '万象ok草稿往返'）。EXPECTED 已是精确值，这条只换判据口径挡重复派发。
-            check('文本上屏桥：insertText 各落一次', typedCorrectly,
-                `draft=${JSON.stringify(draftRaw.slice(0, 160))} expected=${JSON.stringify(EXPECTED)}`);
             await page.screenshot({ path: `${OUT}/smoke-draft.png` });
 
             // ---- 阶段 4：右键菜单呼出与真实「粘贴」行为 ----
@@ -457,7 +452,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // 「支持追加」：SUFFIX 是重开后**追加**的，草稿 = 旧文 + 后缀精确相等，
             // 证明重开恢复的不是空输入框而是可继续编辑的草稿。
             check('认证态：重开页面草稿回到输入框并支持追加', restored,
-                `draft=${JSON.stringify(restoredRaw.slice(0, 160))} expected=${JSON.stringify(EXPECTED_AFTER)}`);
+                `draft=${JSON.stringify((restoredRaw || '').slice(0, 160))} expected=${JSON.stringify(EXPECTED_AFTER)}`);
 
             // ---- 弹出层（ToolTip / 上下文菜单 / 输入框右键菜单）的像素检查 ----
             // avalonia.js 没有可用的 DOM 无障碍树，弹出层也没有 DOM 节点，
@@ -682,7 +677,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // (3) 输入框右键菜单（MenuFlyoutPresenter）：右键到真正聚焦过的那个点。
             await focusComposer();
             let flyoutRegion = null;
-            for (const pt of [focusPoint, { x: 600, y: 400 }]) {
+            for (const pt of [composerCoord, { x: 600, y: 400 }]) {
                 if (!pt) continue;
                 const before = await snapAll();
                 await page.mouse.click(pt.x, pt.y, { button: 'right' });

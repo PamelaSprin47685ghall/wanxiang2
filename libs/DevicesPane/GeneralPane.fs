@@ -161,10 +161,12 @@ type GenerationSection(validationFor: TextBox -> Control option, ?_glyphOf: stri
     let maxTokensBox, maxTokensField = field "最大输出 token" "限制单次回复长度。" "留空不限制"
     let contextBox, contextField = field "上下文消息上限" "每次请求最多携带多少条历史，防止长对话撞上模型上限。" "200"
     let toolRoundsBox, toolRoundsField = field "工具调用轮数上限" "模型连续调用工具超过这个轮数就中止本次生成。" "12"
+
     let instructionsBox =
         let b = Ui.textArea "新对话的默认系统指令（可留空）" 72.0
         AutomationProperties.SetName(b, "默认系统指令")
         b
+
     let summary = Ui.caption ""
     let status = Ui.caption ""
 

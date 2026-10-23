@@ -168,7 +168,9 @@ type ShellComposer(ports: ShellPorts) =
                     draftSaveTimer <- null
 
                     match draftGate.Flush(ports.Now()) with
-                    | Some t -> ports.ApplyDraftWrite(DraftWrite.Write t)
+                    | Some _ when model.Prefs.persistDrafts ->
+                        ports.ApplyDraftWrite(DraftWrite.Write model.Composer.Text)
+                    | Some _ -> ()
                     | None -> ())
 
 
@@ -200,6 +202,15 @@ type ShellComposer(ports: ShellPorts) =
         let now = ports.Now()
         let next, effects = Workspace.update now msg model
         model <- next
+
+        match msg with
+        | PrefsLoaded prefs
+        | User(Settings(SettingsUserMsg.PrefsChanged prefs)) ->
+            ports.SetReducedMotion prefs.reduceMotion
+            ports.SetCodeWrap prefs.codeWrap
+            ports.ApplyTheme(UiPrefs.isDark prefs (ports.SystemPrefersDark()))
+        | _ -> ()
+
         this.ReprojectInternal effects
 
     member this.Reproject() : unit = this.ReprojectInternal []
@@ -654,9 +665,22 @@ type ShellComposer(ports: ShellPorts) =
 
     member this.PaletteRecent() : string list = model.PaletteRecent
 
+    /// 退出或页面隐藏：取消延时，保存状态树中的最新文本。
+    member _.FlushDrafts() =
+        if not (isNull draftSaveTimer) then
+            draftSaveTimer.Dispose()
+            draftSaveTimer <- null
+
+        draftGate.Saved(ports.Now())
+
+        if model.Prefs.persistDrafts then
+            ports.ApplyDraftWrite(DraftWrite.Write model.Composer.Text)
+
     member this.Build() : IDisposable =
         let built = ports.BuildViews()
         views <- Some built
+        this.Dispatch(PrefsLoaded(ports.PrefsLoad()))
+        ports.BrowserAddHidden this.FlushDrafts
         let subs = ResizeArray<IDisposable>()
         ports.SubscribeHostEvents(fun ev -> this.HandleEvent ev) |> subs.Add
 
@@ -678,13 +702,14 @@ type ShellComposer(ports: ShellPorts) =
                     // 而 `Dispatch` 会去渲染 Avalonia 控件——那必须在 UI 线程。
                     // 所以只把「读到了什么」带回去，真正的派发交给 `ports.Post`。
                     ports.Post(fun () ->
-                        if String.IsNullOrEmpty model.Composer.Text then
+                        if model.Prefs.persistDrafts && String.IsNullOrEmpty model.Composer.Text then
                             this.Dispatch(User(Composer(ComposerUserMsg.TextChanged text))))
                 | _ -> ()
             }
             |> Async.Start
 
-        restoreDraft ()
+        if model.Prefs.persistDrafts then
+            restoreDraft ()
 
         // 侧栏：正文搜索的出口（查询词 → 线协议）与命中打开（打开对话 + 定位消息）。
         built.Sidebar.SearchHandler <-
@@ -795,6 +820,10 @@ type ShellComposer(ports: ShellPorts) =
             member _.Dispose() =
                 ticker.Dispose()
                 expiry.Dispose()
+
+                if not (isNull draftSaveTimer) then
+                    draftSaveTimer.Dispose()
+                    draftSaveTimer <- null
 
                 for sub in subs do
                     sub.Dispose()
@@ -1043,7 +1072,9 @@ type ShellComposer(ports: ShellPorts) =
             TextChanged =
                 fun text ->
                     this.Dispatch(User(Composer(ComposerUserMsg.TextChanged text)))
-                    scheduleDraftSave text
+
+                    if model.Prefs.persistDrafts then
+                        scheduleDraftSave text
             CaretChanged = fun caret -> this.Dispatch(User(Composer(ComposerUserMsg.CaretChanged(Some caret))))
             StopGeneration = fun () -> this.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
             PickAttachment = pickAttachment

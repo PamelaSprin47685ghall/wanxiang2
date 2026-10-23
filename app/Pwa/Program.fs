@@ -1004,6 +1004,7 @@ module Program =
                 Some(fun () ->
                     if not (obj.ReferenceEquals(shell, null)) then
                         // 关窗（浏览器：页面转入后台）先落草稿，再落面板「最近使用」，同一拍。
+                        shell.FlushDrafts()
                         paletteRecentSave (shell.PaletteRecent()))
 
             App.LoadPrefs <- Some prefsLoad

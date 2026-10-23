@@ -53,7 +53,7 @@
 
 # 迁入或覆盖的旧测试
 - 旧 `AppShellTests` 的 `HandleEvent` / `HandleShortcut` 用例已按名迁入 `compose/ProtocolDispatch/tests` 与 `compose/ShellCommands/tests`（见各自 AGENTS.md）。
-- 本组合者的测试工程 `compose/AppShell/tests`：`Tests.fs` 3 条（`KeyShortcut` 按键换算与分派、`UnansweredReply` 失败卡形状），`ComposerTests.fs` 15 条（装配规则与端口扇出，清单见 SPEC 5）。旧壳的视图事件接线本身没有独立旧测试：它由旧整套 UI 测试间接覆盖，随旧视图退役；新的装配规则改由上面这组假端口测试直接钉住。
+- 本组合者的测试工程 `compose/AppShell/tests`：`Tests.fs` 3 条（`KeyShortcut` 按键换算与分派、`UnansweredReply` 失败卡形状），`ComposerTests.fs`（装配规则、端口扇出、SPEC 7 闭环旅程 1–6 完整闭环，以及新增的 `原生交互证明：真实控件树下的 Tab 序、Esc 退栈、删除邻位焦点与可访问名称角色`）。旧壳的视图事件接线本身没有独立旧测试：它由旧整套 UI 测试间接覆盖，随旧视图退役；新的装配规则改由上面这组假端口测试直接钉住。
 - 旧壳里随视图退役的用例（`OverlayMenuTests`、`UiStabilityTests`、`DismissFocusTests`、`R21ImeTests`、`SettingsSurfaceTests`、`DialogsTests`、`A11yRegressionTests` 等）已分别迁入对应 Desk 库 / 组合者与 `compose/Theme`，见各自 AGENTS.md。
 
 # 拆分与复核

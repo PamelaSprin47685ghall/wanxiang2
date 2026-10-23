@@ -85,8 +85,9 @@ for rid in "${TARGETS[@]}"; do
   # 干净消费（与 ./x app、tools/smoke_desktop.sh 同一约定）：Wanxiang2.* 必须从 artifacts/feed
   # 解到仓库内缓存。走 ~/.nuget/packages 时，同版本号（0.0.0-local）的陈旧解包命中缓存后
   # NuGet 不再重解，发布会对着过期包编译（2026-10-18 run-desktop.sh 实测 37 个 FS0039/FS1129；
-  # CI 的 release 工作流缓存 ~/.nuget/packages，同理）。
-  rm -rf artifacts/packages/wanxiang2.*
+  # CI 的 release 工作流缓存 ~/.nuget/packages，同理）。同版本本地包与 wasm/desktop 增量编译
+  # 会在 obj/bin 中残留旧程序集，必须同时清理 app/*/bin 与 app/*/obj 保证干净消费。
+  rm -rf artifacts/packages/wanxiang2.* app/*/bin app/*/obj
   dotnet publish "$PROJ" -c Release -r "$rid" --self-contained true -o "$PUB" --verbosity minimal -p:RestorePackagesPath="$PWD/artifacts/packages"
   package "$rid" "$PUB"
 done

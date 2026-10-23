@@ -591,7 +591,7 @@
 
 - **`PromptHistory` 已恢复接线**（不是退役）——§2.3 查明它是未接线的真实功能，
   产品确认保留，接线已接到 `compose/ComposerDesk`（真正的输入区所有者），并补了 6 条回归用例。
-- ~~未跑 `./x all`~~ —— **已跑**（见 §8 最终验证）：109 个库工程 + 67 个组合者工程全通过。
+- ~~未跑 `./x all`~~ —— **已跑**（见 §8、§9 最终验证）：在 110 库阶段完成一次全跑；后续草稿节流闸碎片收回 `compose/AppShell` 后，全仓收敛至 **109 个库工程 + 71 个组合者（67 个测试工程）**，在 §8 / §9 再次全绿验证通过。
 - 未动 `compose/` 的**行为**（只改过 `compose/*/*.fsproj` 的 `PackageReference`，
   以及 §3.6 里补的 33 条直接声明）。
 - 未碰 `libs/DevicesPane/ToolsPane.fs`（并行会话正在改它，改动引入了 FS0010 编译错误；
@@ -841,11 +841,11 @@ PASS 无未捕获页面异常
 > 这些 PNG 在 `artifacts/` 下，而 `artifacts/` 被 `.gitignore` 忽略，**不在仓库里**——
 > 复核者需自己跑一次冒烟生成，或按上面的字节数与肉眼描述对照。
 
-> **更正**：这段说明原先写「截图里中文显示为方框，是**本机 headless Chrome 走软件 WebGL** 的字体限制
-> （`WEBGL_debug_renderer_info not enabled` / SwiftShader 弃用），不是产品缺陷」——**这是错的归因**。
-> 真因是**可视树根上没指定字体族**：浏览器端拿不到系统字体，而没在根上设 `TextElement.FontFamily`，
-> 所有没单独指定字体的控件都回落到不含汉字的默认族。已修（见 §10）。
-> 文本的权威判据仍是 IndexedDB 里的草稿快照，那里是**逐字精确相等**的。
+> **【重要勘误与修复事实（2026-10-21 收尾）】**：
+> 上述关于「headless Chrome / SwiftShader 软件 WebGL 导致中文显示为方框」的推测已被证实为**错误判断**并予以纠正（实测拉丁字符正常、CJK 缺字）。
+> 真实根因：Avalonia PWA 根可视树此前未显式设置 `TextElement.FontFamilyProperty`，浏览器端缺少系统字体从而导致整个中文渲染区变为方框（豆腐块）。
+> 修复方案：在 `app/Pwa/Program.fs` 根控件显式注入内嵌中文字体 `SharedTheme.manager.FontFamily.Value`，整树继承。
+> 修复后结果：截图中文**逐字清晰可读**（涵盖首屏 `smoke-render.png`、输入态 `smoke-draft.png`、恢复态 `smoke-restored.png`），PWA 冒烟中画布颜色丰富度从 12 提升到 18（反映字形真实绘制而非纯色底板），`compose/EntryShells/tests/Tests.fs` 中的 `EmbeddedFontTests`（3 条：字体族解析、常用汉字覆盖、等宽回落）全部绿灯。
 
 宿主日志里 `GET /ws` 的升级是 `101 Switching Protocols`（认证态下自动重连走通了）。
 
@@ -913,3 +913,10 @@ WebGL 坏掉的话拉丁字母也会没了；实测拉丁正常、CJK 缺字，�
 - **弹出层**（ToolTip / ContextMenu / MenuFlyoutPresenter）的渲染**没有**单独截图验证，
   靠 §10.2 的显式字体样式兜底（回归用例只覆盖字族解析、常用汉字覆盖与等宽回落，不覆盖弹出层渲染）；
 - 真实手机浏览器与系统字体差异环境下的表现，未验。
+
+---
+
+## 10. 2026-10-23 交付状态准备（本轮状态）
+- **Git 工作树基线**：HEAD 为 `14e4625`，Git status 与 diff 均完全干净，与 `origin/main` 保持一致，旧文档中记录的「未提交」事实已过期解除。
+- **环境事实与真机限制**：DevOps 初始盘点确认（见 `docs/evidence/2026-10-23-handoff/initial-state.md`），宿主无 orca/speech-dispatcher/at-spi-bus-launcher，adb 无连接设备，本机不具备原生屏幕阅读器发声与真实手机实测条件，相关断言严格保持 `[待验证]`，不伪造测试结果。/tmp 历史失败日志已脱敏备份至 `docs/evidence/2026-10-23-handoff/pwa_smoke.log.bak`。
+- **团队协作与验证状态**：团队其他分工正在推进旅程闭环、画廊像素基线与无障碍遍历断言、PWA e2e 交互、格式工具与包异质性治理；本轮所有构建、测试与端到端运行结果当前处于 **`[待验证]`** 状态，待 DevOps 在 `docs/evidence/2026-10-23-handoff/` 留证后收口。

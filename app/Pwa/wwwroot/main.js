@@ -425,6 +425,7 @@ async function dismissSplashWhenPainted() {
 function focusAppContainer() {
     const out = document.getElementById("out");
     if (!out) return;
+    if (out.tabIndex !== -1) out.tabIndex = -1;
     const a = document.activeElement;
     if (!a || a === document.body || a === document.documentElement) out.focus({ preventScroll: true });
 }

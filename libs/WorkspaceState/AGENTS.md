@@ -55,4 +55,8 @@
   `ToggleBatch 取消最后一项时退出多选`、`ToggleBatchAllVisible 全选可见行；已全选则退出多选`、
   `ToggleBatchAllVisible 换一批可见行会清掉旧的不可见选择`、`ExitBatch 清空选择并退出多选`、
   `多选投影：SidebarVS.SelectedRowIds 与批量条同源于 Chrome`、`多选投影：全部选中的行都置顶时 AllPinned 为真`、
-  `多选投影：状态树不清理看不见的已选项`）。
+  `多选投影：状态树不清理看不见的已选项`，
+  以及 2026-10-23 补齐的状态机闭环用例：
+  `配对到首发：从 PairingStarted、PairingSucceeded 到 AuthPresent，再到目录就绪后发送首条消息`、
+  `到期提交：未撤销时到期 Tick 触发 DeleteConversation 命令并清除待删台账`、
+  `失败重试：失败后携带 lastError，Regenerate 发出命令并在新生成完成后清除错误`）。

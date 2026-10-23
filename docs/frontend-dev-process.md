@@ -271,6 +271,7 @@
 ### 4.4 结构性观察（不是单行空断言，但同样削弱证据）
 
 - **`compose/AppShell/tests/ComposerTests.fs` 整体只断言模型与 Effect**，SPEC 7 要求的「原生交互证明（Headless 窗口中验证焦点流转、无障碍角色）」在这一层**没有发生**。旅程 1–6 中唯一触及原生控件的是缩略图端口断言（`Assert.Equal(1, thumbnails.Length)`，A1 所在测试，现 `:41`）与 `rig.Views.Onboarding.*` 三个属性断言。**旅程 3 已另行补上真实控件树用例**（`compose/AppShell/tests/JourneyAttachmentTests.fs`，2026-10-22 新增，见 §4.5）：它驱动真实「添加附件」按键与真实发送按键，ACK 经真实线协议事件入口注入，并断言发送键的可用性、提示文案与托盘 chip 状态字。
+- **2026-10-23 增补**：`ComposerTests.fs` 再补旅程 1/5/6 的缺失路径与原生交互行为用例（真实无头窗口下 Tab 焦点流转、Esc 搜索清空、删除邻位聚焦；名称与角色的整树断言归 `A11yTraversalTests.fs`）。动态运行 `[待验证]`。
 - **`docs/ux/r28-pwa-parity.md` 表中明确标注「CI 未断言」的行为**（剪贴板、文件选择/保存、右键菜单、拖放、限流倒计时/搜索防抖）今天仍无断言——这些是**已被记录但从未自动化**的缺口。
 - **`compose/EntryShells/AGENTS.md` SPEC 2 自陈**：「`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（**真实界面验收要人看，仓库内未自动化**）」——这是全仓对「界面缺陷为何靠人肉发现」最明确的一句自白。
 - **`compose/Theme/tests/A11yRegression.fs` 的 7 条对比度用例**走 `check()` 帮助函数，**函数体内确实有 `Assert.True(bad.IsEmpty, …)`**，**不是空断言**；但它们只算调色板数值，**不构造控件、不看实际渲染出的颜色**（控件若没绑定该资源，对比度全绿而界面仍是错的）。
@@ -290,6 +291,8 @@
 | `compose/AppShell/tests/ComposerTests.fs` | 旅程 3 | 断言发送被主机的 `attachment.committed` 确认门控（未就绪时发不出去、草稿与附件都留着），并断言真正发出的 `SendUserMessage` 载荷：`contents` 有 2 条、文本「你好」、附件带 `fileName` / `sha256` / `size`（`:165-238`） | 附件没随消息发出 / 附件元数据不全 / 未就绪时也能发 |
 | `compose/AppShell/tests/JourneyAttachmentTests.fs` | 旅程 3（**真实控件树**，2026-10-22 新增） | 走真实「添加附件」按键与真实发送按键；认证/目录/ACK 全经真实线协议事件入口（`FakePorts.Deliver` → 宿主事件订阅 → `ShellComposer.HandleEvent` → 状态树）。断言：上传完成（`attachment.complete`）后附件**仍未就绪**——发送键 `IsEnabled = false`、提示为「附件上传中，请稍候…」、托盘 chip 状态字为「上传中」；走真实控件的提交入口也**发不出**任何 `SendUserMessage`；主机 `attachment.committed` 之后附件才 `Ready`、发送键启用、chip 状态字变为文件大小；点真实发送键后出线的 `SendUserMessage` 真的带上附件（`type` / `fileName` / `mediaType` / `size` / `sha256`） | 附件没等主机确认就能发 / 确认后仍发不出去 / 发送键的可用性或提示与真实状态不一致 / 发出的消息不带附件或元数据不全 |
 | `compose/AppShell/tests/ExpiryDeletionTests.fs` | 旅程 6（到期真删） | 假时钟推进过宽限期后，断言客户端**恰好**发出一条 `conversation.delete` 命令、待删批次清空；再把**同一条**命令送进服务端事件存储，断言投影里该对话被标记删除、列表里不再出现 | 到期不发命令 / 发多条 / 发错对话 / 批次不清 / 命令落库后对话还在列表里 |
+| `compose/AppShell/tests/ComposerTests.fs` | 旅程 1（2026-10-23 增补） | 断言配对后装载可用目录、输入首发文本、发出 CreateConversation + SendUserMessage + ObserveConversation、快照到达呈现活跃消息与标题 | 首发未发出建对话命令 / 消息载荷丢失 / 快照到达未进入活跃态 |
+| `compose/AppShell/tests/ComposerTests.fs` | 原生交互证明（2026-10-23 新增） | 真实无头窗口下 Tab 焦点流转、Esc 搜索清空、删除邻位聚焦与列表变空回落搜索框（名称与角色的整树断言在 `A11yTraversalTests.fs`） | 焦点不可移动 / Esc 未清空 / 邻位焦点算法退化 |
 | `compose/WsClient/tests/ClientStateAndWsClientTests.fs` | 连接被抢占 | 断言真的抛 `OperationCanceledException("superseded")`（旧写法吞掉异常且从不断言标志位） | 不抛 superseded / 抛别的异常 |
 | `libs/ConfigFeedback/tests/DownloadBuffers.Tests.fs` | 旧实现摘录 | 逐个写出 `Accepted` / `Unknown` / 坏 base64 三条分支，不再 `| _ -> ()` 一锅端 | 新旧摘录行为不一致 |
 | `compose/ServerApp/tests/ServerAppTests.fs` | 截尾事件文件 | 断言进入**只读降级模式**并留下 `read-only-degraded` 诊断、且**没有**偷偷改用户的日志（S-001 契约） | 降级诊断缺失 / 启动擅自截断日志 |
@@ -346,8 +349,9 @@
 
 ## 5. 界面改动交付清单（DoD）——由改界面的工程师自己走完
 
-> **所有权原则（SWE = DevOps）**：交付界面的人**自己**负责把它送上线，不把「验证」外包给下游。
+> **所有权原则**：交付界面的人**自己**对端到端交付闭环与验证证据负全责，不把「验证」外包给下游。
 > 下游（CI、评审、QA）只能**发现**问题，不能**代替**发现问题。所以下面每一步的证据都由**改这处界面的人**产出并附在改动里。
+> **职权边界与分工说明**：本原则要求的是交付责任闭环，绝不意味着 Engineer 角色可越权执行 bash 命令或自行跑构建冒烟。Engineer 负责代码实现、编写回归测试与文档契约；真实编译构建、运行测试、冒烟执行与真机采集全归 DevOps 履职，严禁伪造测试结果或绕过角色分工。
 >
 > 这不是引用某个外部权威标准的条款表——它是本仓库自己定的**本项目交付契约**，与根 `AGENTS.md` 的 SPEC 7 同源。
 > 清单会随实践变；改它要连同证据一起改。
@@ -396,7 +400,7 @@ bash tools/gallery.sh --render <条目名> /tmp/gallery.png     # 单个状态 �
 
 - 这次**没有**覆盖到什么（例如「只验了桌面，没验 PWA」「这一条画廊里没有」「读屏器没实测」）。
 - 哪些结论是**推断**而不是**观察**（例如「按状态机推断按钮会禁用，但我没在真实界面里按过」）。
-- 哪些是**已知不成立**的（`docs/ux/a11y-audit.md` §1 的「待实测」项：真机屏幕阅读器、PWA 的 Lighthouse、真实 Tab 轨迹录像等）。
+- 哪些是**已知不具备条件 / 尚未成立**的（宿主环境无 orca / speech-dispatcher / at-spi-bus-launcher，adb 无物理设备，因此本机不具备原生屏幕阅读器发声与真实手机实测条件，见 `docs/evidence/2026-10-23-handoff/initial-state.md`；全仓无障碍树整树自动遍历断言 G5 与像素级回归 G3 仍未建；真实 Tab 轨迹录像与 PWA Lighthouse 仍未建；2026-10-23 补齐的旅程与原生交互测试待 DevOps 执行构建与验证）。
 
 ### 5.4 现在还没有的自动化（不要假装有）
 
@@ -437,3 +441,12 @@ CI 里这三道秒级门禁在同一个 `hygiene` 作业里跑；`./x all` 的�
   2. **画廊不是回归门禁**——渲染变了 CI 不会红。
   3. **没有快速回路**（§2.c）——改一个控件后仍要走 `pack → 构建入口 → 起 app`；画廊补上了「单独看一个状态」，但没补上「改完立刻看到」。
 - **交付契约**：§5 是改界面的工程师自己走完的清单（需求/旅程 → 状态与交互设计 → 实现 → 真实界面截图 + 键盘 + 无障碍行为 → 针对性测试 → 包与干净消费 → 两个入口 → 已发布产物冒烟 → 证据与已知边界）。
+
+
+---
+
+## 7. 2026-10-23 交付状态准备（严格保持待验证）
+
+- **基线与时间范围澄清**：Git 完全干净仅为**接手时初始快照**（HEAD `14e4625`）的事实；当前各团队已有多路源码修改落盘，工作树处于活跃多团队协作态；历史字体修复与 11 条测试通过属于提交 `14e4625` 的历史证据，不得视为本轮动态核准。
+- **PWA 与真机/读屏限制**：PWA 新增 16 项端到端交互断言纯属源码待运行；截图存在或画布色彩/像素差异**绝不能**证明中文逐字清晰可读，必须由 DevOps 真实跑测并对截图进行人工目检；宿主环境无 orca/speech-dispatcher/at-spi，adb 无物理设备，真机读屏与手机端严格保持 `[待验证]`。
+- **收口方式**：不转交未确定的未来人员，本轮我们将继续至验证与收口，先保持待验证，等待接收 DevOps 的最终实跑结果与留证后，由本会话依据最终证据统一更新收口。

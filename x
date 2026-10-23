@@ -593,6 +593,9 @@ case "${1:-}" in
   format-check)
     shift
     format_check "$@" ;;
+  # 画廊深浅双主题像素基线核查（G3）：消费 artifacts/feed 的交付包真实渲染，
+  # 缺基线或像素差异即红灯；不放进 check，避免日常检查反复构建。
+  gallery-baseline) bash tools/gallery-baseline.sh "${2:-}" ;;
   pack)    pack ;;
   compose) compose ;;
   consume) consume ;;

@@ -4,6 +4,8 @@
     <Compile Include="AssemblySettings.fs" />
     <Compile Include="Headless.fs" />
     <Compile Include="Tests.fs" />
+    <Compile Include="BaselineTests.fs" />
+    <Compile Include="A11yAuditTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

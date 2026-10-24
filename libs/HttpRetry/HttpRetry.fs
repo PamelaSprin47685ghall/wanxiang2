@@ -8,6 +8,16 @@ open System.Threading.Tasks
 /// 对模型提供方的 HTTP 请求：首字节之前的退避重试，以及把非 2xx 翻成带状态码的异常。
 module HttpRetry =
 
+    let private maxTimerDelay = TimeSpan.FromMilliseconds(float Int32.MaxValue)
+
+    let private clampRetrySeconds (totalSeconds: float) : int =
+        if Double.IsNaN totalSeconds || totalSeconds <= 0.0 then
+            0
+        elif totalSeconds >= float Int32.MaxValue then
+            Int32.MaxValue
+        else
+            int totalSeconds
+
     /// 调用方按状态码给错误归类，所以必须是带状态码的 HttpRequestException，换成别的类型就只能归为「未知错误」。
     /// 非 2xx 时返回要抛出的异常；2xx 返回 None。异常带状态码，Retry-After 记在 Data["RetryAfterSeconds"]。
     let statusError (response: HttpResponseMessage) (body: string) : HttpRequestException option =
@@ -29,10 +39,16 @@ module HttpRetry =
                 if not (isNull response.Headers.RetryAfter) then
                     let ra = response.Headers.RetryAfter
 
-                    if ra.Delta.HasValue then
-                        ex.Data["RetryAfterSeconds"] <- int ra.Delta.Value.TotalSeconds
-                    elif ra.Date.HasValue then
-                        ex.Data["RetryAfterSeconds"] <- int (ra.Date.Value - DateTimeOffset.UtcNow).TotalSeconds
+                    let seconds =
+                        if ra.Delta.HasValue then
+                            clampRetrySeconds ra.Delta.Value.TotalSeconds
+                        elif ra.Date.HasValue then
+                            clampRetrySeconds (ra.Date.Value - DateTimeOffset.UtcNow).TotalSeconds
+                        else
+                            0
+
+                    if seconds > 0 then
+                        ex.Data["RetryAfterSeconds"] <- seconds
             with _ ->
                 ()
 
@@ -52,6 +68,24 @@ module HttpRetry =
         let scaled = 250.0 * (2.0 ** float exponent)
         TimeSpan.FromMilliseconds(min 8000.0 scaled)
 
+    let private retryAfterDelay (response: HttpResponseMessage) : TimeSpan =
+        let raw =
+            match response.Headers.RetryAfter with
+            | null -> TimeSpan.Zero
+            | value when value.Delta.HasValue && value.Delta.Value > TimeSpan.Zero -> value.Delta.Value
+            | value when value.Date.HasValue ->
+                let remaining = value.Date.Value - DateTimeOffset.UtcNow
+
+                if remaining > TimeSpan.Zero then
+                    remaining
+                else
+                    TimeSpan.Zero
+            | _ -> TimeSpan.Zero
+
+        if raw <= TimeSpan.Zero then TimeSpan.Zero
+        elif raw > maxTimerDelay then maxTimerDelay
+        else raw
+
     /// 按 maxRetries 退避重试。
     ///
     /// 只在**首个字节之前**重试：先用 ResponseHeadersRead 拿到状态行，
@@ -64,30 +98,26 @@ module HttpRetry =
         (ct: CancellationToken)
         : Task<HttpResponseMessage> =
         task {
-            let attempts = max 1 (maxRetries + 1)
+            let maxRetries = max 0 maxRetries
+            let mutable retriesUsed = 0
             let mutable attempt = 0
             let mutable result = Unchecked.defaultof<HttpResponseMessage>
             let mutable finished = false
 
             while not finished do
                 attempt <- attempt + 1
-                let last = attempt >= attempts
+                let last = retriesUsed >= maxRetries
                 let mutable retryAfter = TimeSpan.Zero
 
                 try
-                    let request = makeRequest ()
+                    use request = makeRequest ()
                     let! response = http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct)
 
                     if response.IsSuccessStatusCode || last || not (transient response.StatusCode) then
                         result <- response
                         finished <- true
                     else
-                        retryAfter <-
-                            match response.Headers.RetryAfter with
-                            | null -> TimeSpan.Zero
-                            | value when value.Delta.HasValue -> value.Delta.Value
-                            | _ -> TimeSpan.Zero
-
+                        retryAfter <- retryAfterDelay response
                         response.Dispose()
                 // 取消不是失败，直接向上传播；最后一次尝试的异常同样不吞，
                 // 交给 ProviderFailure 归类成面向用户的错误。
@@ -95,6 +125,7 @@ module HttpRetry =
                     ignore ex
 
                 if not finished then
+                    retriesUsed <- retriesUsed + 1
                     // 指数退避，上限 8 秒；上游给了 Retry-After 就听它的
                     let backoff =
                         if retryAfter > TimeSpan.Zero then

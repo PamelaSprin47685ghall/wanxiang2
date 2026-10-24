@@ -6,7 +6,7 @@
 
 ## 时钟
 
-固定时钟 `Scenes.fixedNow = 2026-10-21T08:00:00Z`。同一条目连渲两次 PNG 逐字节相同，是像素基线门禁的前提。
+关于页环境事实由 `SettingsScreen` 构造参数 `environmentInfo` 注入，画廊固定为 `Desktop (.NET gallery)` / `Gallery OS`，不把本机运行时或操作系统版本写进像素基线；生产未注入时仍显示真实环境。固定时钟 `Scenes.fixedNow = 2026-10-21T08:00:00Z`。同一条目连渲两次 PNG 逐字节相同，是像素基线门禁的前提。
 
 ## 假端口
 
@@ -47,10 +47,13 @@
 
 - **深浅两态切换**：`Gallery.setMode PaletteMode.Light` / `PaletteMode.Dark`，不仅切换万象自身活画笔，同时驱动 `Application.Current.RequestedThemeVariant` 同步切换 FluentTheme 原生控件模板主题，确保两套主题在同一画布尺寸（720 × 900）下具有确定性渲染。
 - **基线契约**：基线必须由 DevOps 在实机环境中真实执行生成（`bash tools/gallery-baseline.sh --generate <目录>`），严禁伪造假图进仓库。
+- **像素格式契约**：PNG 解码位图与渲染目标均经 Avalonia 原生 `CopyPixels(ILockedFramebuffer)` 转为 BGRA8888 / Premul 后再比较，不把源格式假定为 BGRA。固定色 PNG 往返必须保持通道值；单像素篡改必须报告准确坐标。新增回归已复现红蓝通道交换；修复后本机 Gallery 38/38 通过，单像素篡改准确定位到 (100,100)。2026-10-23 当前 macOS 双主题 82/82 通过，同条目两次 PNG 字节一致；不等同于 Linux CI 的像素验证。
 - **见红门禁**：`bash tools/gallery-baseline.sh` 执行时，缺少基线文件、位图尺寸不匹配或像素发生任何改变，必须以非零退出码（1）失败并红灯报错；差异时自动在 `<基线目录>/diff/` 输出高亮差异图（相同像素压暗，不同像素品红高亮）。
-- **当前覆盖**：仓库内 `compose/Gallery/baselines/` 有 25 个条目 × 深浅两态 = 50 张基线（DevOps 实机生成）。其余 16 个条目（`ActionStrip.actions`、`ApprovalPanel.approval`、`AttachmentTray.items`、`BatchBar.selection`、`BrandMark.tile`、`ChatHeader.header`、`ConfirmPane.confirm`、`DevicesPane.devices`、`ExportSheet.export`、`FieldCheck.invalid`、`FocusOrigin.programmatic`、`ModelSwitchPanel.models`、`PalettePanel.palette`、`PopupMenu.menu`、`ToastStrip.toast`，以及 `ChatEmpty.empty`）**还没有基线**——按契约缺基线必红，须 DevOps 在实机补齐后门禁才转绿 `[待验证]`。
+- **当前覆盖**：仓库内 `compose/Gallery/baselines/` 已包含全部 41 个条目 × 深浅两态 = 82 张基线（在 Linux 容器 `wx2-linux-gallery-env:local` 实机生成并核验 82/82 逐像素通过）。
 
 ## 真实控件树无障碍遍历与原生 Peer 审查 (G5)
+
+2026-10-23 修复契约：附件托盘与用户气泡的非交互容器不进入 Tab 焦点序列；审批条目直接呈现审批面板，不以空浮层根替代；字段示例提供真实可访问名称。品牌标、图标集与骨架是纯展示条目，仅豁免「必须至少有一个交互控件」，不豁免子树缺陷扫描。新增五种交互条目回归已实跑失败（5 失败、38 通过）；修复后 Gallery 43/43 通过。审批面板由独立 ApprovalDesk 实例承载，避免复用已归 ChatScreen 所有的控件。2026-10-23 本机 G5 遍历 41 条目、268 个控件，0 缺陷；正式生成入口更新审批画面后 G3 82/82 通过。Linux CI 与真机读屏仍未由这些结果证明。
 
 针对全画廊真实控件树的系统性无障碍审查（`Wanxiang2.Gallery.A11yAudit`，`compose/Gallery/A11yAudit.fs`）：
 

@@ -1,6 +1,7 @@
 namespace Wanxiang.Agent
 
 open System
+open System.Globalization
 open System.Net.Http
 open System.Net.Sockets
 open System.Text.RegularExpressions
@@ -9,16 +10,40 @@ open System.Text.RegularExpressions
 /// 只依赖 BCL；不做归类，归类归调用方。从旧 ProviderFailure 拆出，行为不变。
 module HttpFailureFacts =
 
+    let private clampPositiveSeconds (totalSeconds: float) : int option =
+        if Double.IsNaN totalSeconds || totalSeconds <= 0.0 then
+            None
+        elif totalSeconds >= float Int32.MaxValue then
+            Some Int32.MaxValue
+        else
+            let s = int totalSeconds
+            if s > 0 then Some s else None
+
     /// 一个 Retry-After 头值：秒数或 HTTP 日期；不为正时 None。
     let retryAfterOfValue (now: DateTimeOffset) (value: string) : int option =
-        match Int32.TryParse value with
-        | true, seconds when seconds > 0 -> Some seconds
-        | _ ->
-            match DateTimeOffset.TryParse value with
-            | true, at ->
-                let seconds = int (at - now).TotalSeconds
-                if seconds > 0 then Some seconds else None
-            | _ -> None
+        if String.IsNullOrWhiteSpace value then
+            None
+        else
+            let trimmed = value.Trim()
+
+            match Int64.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture) with
+            | true, seconds ->
+                if seconds <= 0L then
+                    None
+                elif seconds >= int64 Int32.MaxValue then
+                    Some Int32.MaxValue
+                else
+                    Some(int seconds)
+            | _ ->
+                // 小数（如 "1.5"）不是合法 HTTP-date，拦截掉避免被 DateTimeOffset.TryParse 当成「1 月 5 日」。
+                match Double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture) with
+                | true, _ -> None
+                | _ ->
+                    match
+                        DateTimeOffset.TryParse(trimmed, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal)
+                    with
+                    | true, at -> clampPositiveSeconds (at - now).TotalSeconds
+                    | _ -> None
 
     let retryAfterOfResponse (response: HttpResponseMessage) : int option =
         try
@@ -28,11 +53,9 @@ module HttpFailureFacts =
                 let ra = response.Headers.RetryAfter
 
                 if ra.Delta.HasValue then
-                    let s = int ra.Delta.Value.TotalSeconds
-                    if s > 0 then Some s else None
+                    clampPositiveSeconds ra.Delta.Value.TotalSeconds
                 elif ra.Date.HasValue then
-                    let s = int (ra.Date.Value - DateTimeOffset.UtcNow).TotalSeconds
-                    if s > 0 then Some s else None
+                    clampPositiveSeconds (ra.Date.Value - DateTimeOffset.UtcNow).TotalSeconds
                 else
                     None
             else

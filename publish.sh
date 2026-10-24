@@ -44,10 +44,11 @@ if [ "${WX_SKIP_PACK:-0}" != "1" ] || [ ! -d artifacts/feed ]; then
   ./x pack
 fi
 
-# 清掉入口工程的增量产物：app/*/bin 与 app/*/obj 留着旧的 AppBundle、wasm 与程序集时，
-# 同版本本地包（0.0.0-local）+ 增量打包会把旧程序集带进发布目录（桌面发布还会把
+# 清掉本地包缓存与入口工程的增量产物：同版本本地包（0.0.0-local）留在 artifacts/packages 时，
+# restore 不会从 artifacts/feed 重取新打的 nupkg；app/*/bin 与 app/*/obj 留着旧的 AppBundle、
+# wasm 与程序集时，增量打包也会把旧程序集带进发布目录（桌面发布还会把
 # app/Pwa/bin/.../AppBundle 整份拷进 pwa/）。删干净后 publish 只可能对应当前源码。
-rm -rf app/*/bin app/*/obj
+rm -rf artifacts/packages/wanxiang2.* app/*/bin app/*/obj
 
 # 每次发布前清空 dist/，防止上一次不同 RID 或不同版本号的残留压缩包被 `--draft` 的 `"$OUT_DIR"/*` 一并上传。
 rm -rf dist

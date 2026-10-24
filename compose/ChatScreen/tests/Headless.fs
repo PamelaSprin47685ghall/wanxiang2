@@ -116,3 +116,7 @@ module Desk =
         )
 
         Dispatcher.UIThread.RunJobs()
+
+// Avalonia 平台状态与 HeadlessUnitTestSession 是进程级全局量，多模块并行会并发调用 EnsureIsolatedApplication 互踩。
+[<assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)>]
+do ()

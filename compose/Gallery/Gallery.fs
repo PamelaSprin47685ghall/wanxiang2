@@ -250,7 +250,13 @@ module Gallery =
         let sidebar = SidebarDesk(theme, overlay, FakePorts.sidebarActions (), brandLogo)
 
         let settings =
-            SettingsScreen(theme, overlay, FakePorts.settingsHooks (), UiPrefs.defaults prefLimits)
+            SettingsScreen(
+                theme,
+                overlay,
+                FakePorts.settingsHooks (),
+                UiPrefs.defaults prefLimits,
+                environmentInfo = ("Desktop (.NET gallery)", "Gallery OS")
+            )
 
         let dialogs = DialogsDesk(theme, overlay)
 
@@ -671,8 +677,10 @@ module Gallery =
                     ]
                 Build =
                     fun ctx vs ->
-                        ctx.Approval.Render(vs.Approval, Some(Guid.Parse Scenes.conversationId))
-                        ctx.OverlayRoot
+                        // 上下文中的审批面板已归 ChatScreen 所有，独立条目创建自己的真实组合者。
+                        let approval = ApprovalDesk(ctx.Theme, ctx.Overlay, ignore)
+                        approval.Render(vs.Approval, Some(Guid.Parse Scenes.conversationId))
+                        approval.View
             }
 
             // ---- AttachmentTray（输入区附件托盘）----
@@ -877,6 +885,7 @@ module Gallery =
                     fun _ _ ->
                         let check = Wanxiang2.FieldCheck.FieldCheck()
                         let box = TextBox(PlaceholderText = "主机地址")
+                        AutomationProperties.SetName(box, "主机地址")
                         let shell = Border(Child = box, Padding = Thickness(8.0))
                         let message = check.MessageFor(box)
                         check.ApplyError(box, "地址不能为空")

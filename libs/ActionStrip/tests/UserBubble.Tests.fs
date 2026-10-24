@@ -9,11 +9,11 @@ open Wanxiang2.UserBubble
 open Wanxiang2.UserBubble.Tests
 
 [<Fact>]
-let ``气泡右下角收小、可聚焦、有读屏名，头像在右`` () =
+let ``气泡右下角收小、非交互壳不聚焦、有读屏名，头像在右`` () =
     Headless.run (fun () ->
         let b = UserBubble(Border())
         Assert.Equal(Avalonia.CornerRadius(12.0, 12.0, 6.0, 12.0), b.Bubble.CornerRadius)
-        Assert.True b.Bubble.Focusable
+        Assert.False b.Bubble.Focusable
         Assert.Equal("用户消息", AutomationProperties.GetName b.Bubble)
         let row = b.Host :?> StackPanel
         Assert.Same(b.Avatar, row.Children[1])

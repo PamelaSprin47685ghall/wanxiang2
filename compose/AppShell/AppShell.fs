@@ -168,7 +168,9 @@ type ShellComposer(ports: ShellPorts) =
                     draftSaveTimer <- null
 
                     match draftGate.Flush(ports.Now()) with
-                    | Some t -> ports.ApplyDraftWrite(DraftWrite.Write t)
+                    | Some _ when model.Prefs.persistDrafts ->
+                        ports.ApplyDraftWrite(DraftWrite.Write model.Composer.Text)
+                    | Some _ -> ()
                     | None -> ())
 
 
@@ -200,19 +202,34 @@ type ShellComposer(ports: ShellPorts) =
         let now = ports.Now()
         let next, effects = Workspace.update now msg model
         model <- next
-        this.ReprojectInternal effects
 
-    member this.Reproject() : unit = this.ReprojectInternal []
+        match msg with
+        | PrefsLoaded prefs
+        | User(Settings(SettingsUserMsg.PrefsChanged prefs)) ->
+            ports.SetReducedMotion prefs.reduceMotion
+            ports.SetCodeWrap prefs.codeWrap
+            ports.ApplyTheme(UiPrefs.isDark prefs (ports.SystemPrefersDark()))
+        | User(Settings(SettingsUserMsg.OpenSection _)) ->
+            views |> Option.iter (fun v -> ports.Post(fun () -> v.SettingsFocusInitial()))
+        | _ -> ()
 
-    member private this.ReprojectInternal(effects: Effect list) : unit =
+        this.ReprojectInternal msg effects
+
+    member this.Reproject() : unit =
+        this.ReprojectInternal (MsgTick(ports.Now())) []
+
+    member private this.ReprojectInternal (msg: Msg) (effects: Effect list) : unit =
         match views with
         | None -> ports.EffectSink.Run effects
         | Some v ->
             let vs = Workspace.project model
             // 1. Workspace
             v.Workspace.Render vs.Shell
-            // Overlay & Toasts
-            v.Overlay.Render vs.Overlay
+            // Overlay & Toasts：对话框与弹出菜单由各 Desk 直接在 OverlayDesk 上开关，
+            // 状态树只在显式进入非 Closed 阶段时驱动 Layer，避免 250ms MsgTick 把自治打开的命令面板或菜单关掉。
+            if vs.Overlay <> OverlayVS.Closed then
+                v.Overlay.Render vs.Overlay
+
             v.Overlay.RenderToasts vs.Toasts
 
             // 2. Chat / Header
@@ -291,6 +308,10 @@ type ShellComposer(ports: ShellPorts) =
                 v.SettingsHostVisible true
                 v.WorkspaceHostVisible false
                 v.Settings.Render settingsVS
+                // 导航键必须先进入可视树，焦点请求才有效。打开消息里的提前投递会发生在挂载前。
+                match msg with
+                | User(Settings(SettingsUserMsg.OpenSection _)) -> v.SettingsFocusInitial()
+                | _ -> ()
             | None ->
                 v.SettingsHostVisible false
                 v.WorkspaceHostVisible true
@@ -387,9 +408,7 @@ type ShellComposer(ports: ShellPorts) =
                                 | CatalogSnapshot _ ->
                                     // 引导交接在投影里做（目录可用即可取走），这里只留启动打点
                                     if StartupTrace.enabled then
-                                        ports.Post(fun () ->
-                                            if StartupTrace.mark "catalogReady" && StartupTrace.exitAfter then
-                                                StartupTrace.requestExit ())
+                                        ports.Post(fun () -> StartupTrace.mark "catalogReady" |> ignore)
                                 | ProviderProbeResult d ->
                                     // 探活回执先到引导卡；它没在等，再由设置页接走
                                     let models = ProbeModels.ofJson d.models
@@ -468,8 +487,14 @@ type ShellComposer(ports: ShellPorts) =
                     {
                         OverlayEscape =
                             fun () ->
-                                this.Dispatch(User(Overlay(OverlayUserMsg.Escape)))
-                                true
+                                match views with
+                                | Some v when v.Overlay.HandleEscape() -> true
+                                | _ ->
+                                    match model.Overlay with
+                                    | OverlayPhase.Closed -> false
+                                    | _ ->
+                                        this.Dispatch(User(Overlay(OverlayUserMsg.Escape)))
+                                        true
                         IsDialogOpen =
                             fun () ->
                                 match views with
@@ -501,20 +526,46 @@ type ShellComposer(ports: ShellPorts) =
                                 | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active _)) -> true
                                 | _ -> false
                         VisibleOrder = fun () -> model.Summaries |> List.map (fun s -> string s.id)
-                        HasPreset = fun _ -> false
+                        HasPreset =
+                            fun id ->
+                                match model.Conn with
+                                | ConnPhase.Authed(_, CatalogPhase.Ready(cat, _)) ->
+                                    cat.presets |> List.exists (fun p -> p.id = id)
+                                | _ -> false
                         PaletteInput =
                             fun () ->
+                                let catalog, hasConversation =
+                                    match model.Conn with
+                                    | ConnPhase.Authed(_, CatalogPhase.Ready(cat, workspace)) ->
+                                        let active =
+                                            match workspace with
+                                            | WorkspacePhase.Active _ -> true
+                                            | _ -> false
+
+                                        Some cat, active
+                                    | _ -> None, false
+
                                 {
-                                    hasConversation = false
-                                    presets = []
-                                    supportsPresets = false
-                                    supportsImport = false
-                                    themeLabel = "跟随系统"
-                                    sections = []
-                                    conversations = []
-                                    showArchived = false
+                                    hasConversation = hasConversation
+                                    presets =
+                                        catalog
+                                        |> Option.map (fun cat ->
+                                            cat.presets |> List.map (fun p -> p.id, p.name, Presets.describe cat p))
+                                        |> Option.defaultValue []
+                                    supportsPresets = HostFeatures.supports hostFeatures HostFeatures.Presets
+                                    supportsImport = HostFeatures.supports hostFeatures HostFeatures.ConversationImport
+                                    themeLabel = ThemePreference.label model.Prefs.theme
+                                    sections =
+                                        Wanxiang2.SettingsScreen.SettingsPart.groups
+                                        |> List.collect snd
+                                        |> List.map (fun p ->
+                                            sprintf "%A" p,
+                                            Wanxiang2.SettingsScreen.SettingsPart.label p,
+                                            Wanxiang2.SettingsScreen.SettingsPart.scope p)
+                                    conversations = model.Summaries
+                                    showArchived = model.Prefs.showArchived
                                 }
-                        Theme = fun () -> ThemePreference.FollowSystem
+                        Theme = fun () -> model.Prefs.theme
                         CloseSettings = fun () -> this.Dispatch(User(Settings(SettingsUserMsg.Close)))
                         CloseDrawer = fun () -> this.Dispatch(User(Overlay(OverlayUserMsg.Escape)))
                         StopGeneration = fun () -> this.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
@@ -637,7 +688,7 @@ type ShellComposer(ports: ShellPorts) =
                         SaveTheme =
                             fun theme ->
                                 let next = { model.Prefs with theme = theme }
-                                ports.EffectSink.PrefsSave next
+                                this.Dispatch(User(Settings(SettingsUserMsg.PrefsChanged next)))
                         Toast =
                             fun text tone ->
                                 let t =
@@ -660,9 +711,22 @@ type ShellComposer(ports: ShellPorts) =
 
     member this.PaletteRecent() : string list = model.PaletteRecent
 
+    /// 退出或页面隐藏：取消延时，保存状态树中的最新文本。
+    member _.FlushDrafts() =
+        if not (isNull draftSaveTimer) then
+            draftSaveTimer.Dispose()
+            draftSaveTimer <- null
+
+        draftGate.Saved(ports.Now())
+
+        if model.Prefs.persistDrafts then
+            ports.ApplyDraftWrite(DraftWrite.Write model.Composer.Text)
+
     member this.Build() : IDisposable =
         let built = ports.BuildViews()
         views <- Some built
+        this.Dispatch(PrefsLoaded(ports.PrefsLoad()))
+        ports.BrowserAddHidden this.FlushDrafts
         let subs = ResizeArray<IDisposable>()
         ports.SubscribeHostEvents(fun ev -> this.HandleEvent ev) |> subs.Add
 
@@ -684,13 +748,14 @@ type ShellComposer(ports: ShellPorts) =
                     // 而 `Dispatch` 会去渲染 Avalonia 控件——那必须在 UI 线程。
                     // 所以只把「读到了什么」带回去，真正的派发交给 `ports.Post`。
                     ports.Post(fun () ->
-                        if String.IsNullOrEmpty model.Composer.Text then
+                        if model.Prefs.persistDrafts && String.IsNullOrEmpty model.Composer.Text then
                             this.Dispatch(User(Composer(ComposerUserMsg.TextChanged text))))
                 | _ -> ()
             }
             |> Async.Start
 
-        restoreDraft ()
+        if model.Prefs.persistDrafts then
+            restoreDraft ()
 
         // 侧栏：正文搜索的出口（查询词 → 线协议）与命中打开（打开对话 + 定位消息）。
         built.Sidebar.SearchHandler <-
@@ -722,6 +787,8 @@ type ShellComposer(ports: ShellPorts) =
 
         // 设置页：关闭与各设备操作都换成模型消息；吊销前须经确认对话框。
         built.Settings.Bind(this.SettingsHooks())
+
+        built.Palette.Run.Add(fun (item, query) -> this.Commands.RunPaletteItem(item, query))
 
         built.Settings.CloseRequested.Add(fun () -> this.Dispatch(User(Settings(SettingsUserMsg.Close))))
         |> ignore
@@ -801,6 +868,10 @@ type ShellComposer(ports: ShellPorts) =
             member _.Dispose() =
                 ticker.Dispose()
                 expiry.Dispose()
+
+                if not (isNull draftSaveTimer) then
+                    draftSaveTimer.Dispose()
+                    draftSaveTimer <- null
 
                 for sub in subs do
                     sub.Dispose()
@@ -1049,7 +1120,9 @@ type ShellComposer(ports: ShellPorts) =
             TextChanged =
                 fun text ->
                     this.Dispatch(User(Composer(ComposerUserMsg.TextChanged text)))
-                    scheduleDraftSave text
+
+                    if model.Prefs.persistDrafts then
+                        scheduleDraftSave text
             CaretChanged = fun caret -> this.Dispatch(User(Composer(ComposerUserMsg.CaretChanged(Some caret))))
             StopGeneration = fun () -> this.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
             PickAttachment = pickAttachment

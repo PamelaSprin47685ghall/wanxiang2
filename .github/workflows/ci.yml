@@ -242,6 +242,15 @@ jobs:
             exit 1
           fi
           tail -1 baseline.log
+      - name: 留存画廊基线失败现场
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gallery-baseline-failure
+          path: |
+            baseline.log
+            compose/Gallery/baselines/diff/
+          retention-days: 14
   published-smoke:
     needs: pack
     runs-on: ubuntu-latest

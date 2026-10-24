@@ -46,12 +46,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // 再识别。坐标 ×2 还原成 CSS，两个平台用同一套算术。
 const OCR_SCRIPT = require('node:path').resolve(__dirname, 'smoke-ocr.swift');
 const OCR_UPSCALE_WIDTH = 2400;
-const runOcr = (path) => {
+const runOcr = (path, pageSegmentation = '6') => {
     let raw;
     if (process.platform === 'darwin' && process.env.WX_SMOKE_OCR !== 'tesseract') {
         raw = execFileSync('swift', [OCR_SCRIPT, path], { encoding: 'utf8', timeout: 60000 });
     } else {
-        raw = execFileSync('tesseract', [path, 'stdout', '-l', 'chi_sim+eng', '--psm', '6', 'tsv'],
+        raw = execFileSync('tesseract', [path, 'stdout', '-l', 'chi_sim+eng', '--psm', pageSegmentation, 'tsv'],
             { encoding: 'utf8', timeout: 30000 });
     }
     const words = [];
@@ -767,10 +767,10 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 return p;
             };
             // 定位用的识别统一走这里：先把画布按 2 倍放大导出再识别。
-            // 侧栏文字在原始 2400×1600 截图里太小，Tesseract 会切成乱码（「新建对话」→ `EHS`）；
-            // 放大后两个平台都能读出完整词。返回的包围盒仍是 CSS 坐标。
+            // 返回的包围盒仍是 CSS 坐标。散落的按钮标签可指定稀疏文字分割模式，
+            // 避免整段模式把「新建对话」误读成 `EHS`。
             const OCR_SCALE = 2;
-            const ocrShot = async (name) => {
+            const ocrShot = async (name, pageSegmentation = '6') => {
                 const p = `${OUT}/${name}-ocr.png`;
                 const b64 = await page.evaluate((scale) => {
                     const c = document.querySelector('canvas');
@@ -785,7 +785,8 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 writeFileSync(p, Buffer.from(b64, 'base64'));
                 // 画布位图是 CSS × DPR，导出时已缩放到 CSS × OCR_SCALE，
                 // 所以 OCR 像素 ÷ OCR_SCALE 就是 CSS 坐标（DPR 已在这一步消掉）。
-                const words = runOcr(p).map((w) => ({
+                // 界面包含彼此分离的标签，不是一个连续文字段落。
+                const words = runOcr(p, pageSegmentation).map((w) => ({
                     ...w,
                     left: w.left / OCR_SCALE,
                     top: w.top / OCR_SCALE,
@@ -804,9 +805,12 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             if (seedTitle) {
                 const pt = wordCenterCss(seedTitle);
                 await page.mouse.click(pt.x, pt.y);
-                await sleep(1200);
-                const openedWords = await ocrShot('smoke-opened');
-                const body = findPhrase(openedWords, '你好');
+                // CI 的加载速度不固定；只点击一次，等待主内容区确实出现正文。
+                // 侧栏预览也有「你好」，不能把它作为打开成功的证据。
+                const body = await until(async () => {
+                    const openedWords = await ocrShot('smoke-opened');
+                    return findPhraseInMain(openedWords, '你好');
+                }, 15000, 500);
                 opened = Boolean(body);
                 check('侧栏点「中文冒烟」后主内容区出现该对话正文', opened,
                     `标题包围盒=${JSON.stringify(seedTitle)} 正文=${JSON.stringify(body ? body.text : '')}`);
@@ -821,7 +825,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // (1) ToolTip：悬停侧栏「新建对话」按钮（提示是「新建对话（Ctrl / ⌘ + N）」）。
             //     位置同样由截图文字给出，不盲扫坐标。
             let tipFound = null;
-            const newChatWord = findPhrase(await ocrShot('smoke-tooltip-anchor'), '新建对话');
+            const newChatWord = findPhrase(await ocrShot('smoke-tooltip-anchor', '11'), '新建对话');
             if (newChatWord) {
                 const pt = wordCenterCss(newChatWord);
                 const before = await snapAll();

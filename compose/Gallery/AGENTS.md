@@ -47,7 +47,7 @@
 
 - **深浅两态切换**：`Gallery.setMode PaletteMode.Light` / `PaletteMode.Dark`，不仅切换万象自身活画笔，同时驱动 `Application.Current.RequestedThemeVariant` 同步切换 FluentTheme 原生控件模板主题，确保两套主题在同一画布尺寸（720 × 900）下具有确定性渲染。
 - **基线契约**：基线必须由 DevOps 在实机环境中真实执行生成（`bash tools/gallery-baseline.sh --generate <目录>`），严禁伪造假图进仓库。
-- **像素格式契约**：PNG 解码位图与渲染目标均经 Avalonia 原生 `CopyPixels(ILockedFramebuffer)` 转为 BGRA8888 / Premul 后再比较，不把源格式假定为 BGRA。固定色 PNG 往返必须保持通道值；单像素篡改必须报告准确坐标。新增回归已复现红蓝通道交换；修复后本机 Gallery 38/38 通过，单像素篡改准确定位到 (100,100)。**基线生成与核验平台：优先 Linux 本机（与 CI `gallery-baseline` 作业的 ubuntu-latest runner 同款环境），退而用 macOS 本机；不使用容器环境。** 2026-10-24 的 82/82 逐像素核验在本口径确立前于容器环境完成（证据见 docs/evidence/2026-10-24-verified-release/ 与根 AGENTS.md 2026-10-24 节），平台口径自本条起改为本机优先。
+- **像素格式契约**：PNG 解码位图与渲染目标均经 Avalonia 原生 `CopyPixels(ILockedFramebuffer)` 转为 BGRA8888 / Premul 后再比较，不把源格式假定为 BGRA。固定色 PNG 往返必须保持通道值；单像素篡改必须报告准确坐标。新增回归已复现红蓝通道交换；修复后本机 Gallery 38/38 通过，单像素篡改准确定位到 (100,100)。**基线生成与核验平台：CI 基线以 Ubuntu runner 的实际像素输出为准；Linux 发行版不同或 macOS 本机的生成结果不能直接覆盖同一套 CI 基线。不使用容器环境。** 2026-10-24 排查发现 `30eb138` 替换的 76 张基线在 Ubuntu CI 不匹配；本轮恢复到上次 Ubuntu CI 全绿提交 `29f3b97` 的图片，当前实现的远端复验仍待完成。 2026-10-24 的 82/82 逐像素核验在本口径确立前于容器环境完成（证据见 docs/evidence/2026-10-24-verified-release/ 与根 AGENTS.md 2026-10-24 节），平台口径自本条起改为本机优先。
 - **见红门禁**：`bash tools/gallery-baseline.sh` 执行时，缺少基线文件、位图尺寸不匹配或像素发生任何改变，必须以非零退出码（1）失败并红灯报错；差异时自动在 `<基线目录>/diff/` 输出高亮差异图（相同像素压暗，不同像素品红高亮）。
 - **当前覆盖**：仓库内 `compose/Gallery/baselines/` 已包含全部 41 个条目 × 深浅两态 = 82 张基线（生成与核验口径见上条：Linux 本机优先，macOS 本机次之）。
 

@@ -1,0 +1,192 @@
+gallery-baseline	Set up job	﻿2026-10-24T01:23:37.6884806Z Current runner version: '2.338.0'
+gallery-baseline	Set up job	2026-10-24T01:23:37.6905486Z ##[group]Runner Image Provisioner
+gallery-baseline	Set up job	2026-10-24T01:23:37.6906092Z Hosted Compute Agent
+gallery-baseline	Set up job	2026-10-24T01:23:37.6906505Z Version: 20261012.601
+gallery-baseline	Set up job	2026-10-24T01:23:37.6906907Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+gallery-baseline	Set up job	2026-10-24T01:23:37.6907345Z Build Date: 2026-10-12T17:48:21Z
+gallery-baseline	Set up job	2026-10-24T01:23:37.6907835Z Worker ID: {82712984-845b-4863-a000-edfb2a987031}
+gallery-baseline	Set up job	2026-10-24T01:23:37.6908388Z Region: centralus
+gallery-baseline	Set up job	2026-10-24T01:23:37.6908723Z Cloud: Azure
+gallery-baseline	Set up job	2026-10-24T01:23:37.6909108Z ##[endgroup]
+gallery-baseline	Set up job	2026-10-24T01:23:37.6909933Z ##[group]Operating System
+gallery-baseline	Set up job	2026-10-24T01:23:37.6910378Z Ubuntu
+gallery-baseline	Set up job	2026-10-24T01:23:37.6910706Z 24.04.5
+gallery-baseline	Set up job	2026-10-24T01:23:37.6911022Z LTS
+gallery-baseline	Set up job	2026-10-24T01:23:37.6911389Z ##[endgroup]
+gallery-baseline	Set up job	2026-10-24T01:23:37.6911733Z ##[group]Runner Image
+gallery-baseline	Set up job	2026-10-24T01:23:37.6912146Z Image: ubuntu-24.04
+gallery-baseline	Set up job	2026-10-24T01:23:37.6912515Z Version: 20261012.334.1
+gallery-baseline	Set up job	2026-10-24T01:23:37.6913149Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+gallery-baseline	Set up job	2026-10-24T01:23:37.6914239Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+gallery-baseline	Set up job	2026-10-24T01:23:37.6914856Z ##[endgroup]
+gallery-baseline	Set up job	2026-10-24T01:23:37.6915633Z ##[group]GITHUB_TOKEN Permissions
+gallery-baseline	Set up job	2026-10-24T01:23:37.6917278Z Contents: read
+gallery-baseline	Set up job	2026-10-24T01:23:37.6917656Z Metadata: read
+gallery-baseline	Set up job	2026-10-24T01:23:37.6918212Z Packages: read
+gallery-baseline	Set up job	2026-10-24T01:23:37.6918600Z ##[endgroup]
+gallery-baseline	Set up job	2026-10-24T01:23:37.6920239Z Secret source: Actions
+gallery-baseline	Set up job	2026-10-24T01:23:37.6920836Z Cache mode: write
+gallery-baseline	Set up job	2026-10-24T01:23:37.6921316Z Prepare workflow directory
+gallery-baseline	Set up job	2026-10-24T01:23:37.7203682Z Prepare all required actions
+gallery-baseline	Set up job	2026-10-24T01:23:37.7239123Z Getting action download info
+gallery-baseline	Set up job	2026-10-24T01:23:37.9757248Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+gallery-baseline	Set up job	2026-10-24T01:23:38.1977121Z Download action repository 'actions/setup-dotnet@v4' (SHA:67a3573c9a986a3f9c594539f4ab511d57bb3ce9)
+gallery-baseline	Set up job	2026-10-24T01:23:39.1786961Z Download action repository 'actions/download-artifact@v8' (SHA:9000827ccba6bdab643e8b6fd33ac0654aef8333)
+gallery-baseline	Set up job	2026-10-24T01:23:40.0163728Z Complete job name: gallery-baseline
+gallery-baseline	Run actions/checkout@v4	﻿2026-10-24T01:23:40.0680433Z ##[group]Run actions/checkout@v4
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0680815Z with:
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0681023Z   repository: PamelaSprin47685ghall/wanxiang2
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0682610Z   token: ***
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0682768Z   ssh-strict: true
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0682920Z   ssh-user: git
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0683077Z   persist-credentials: true
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0683245Z   clean: true
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0683406Z   sparse-checkout-cone-mode: true
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0683586Z   fetch-depth: 1
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0683736Z   fetch-tags: false
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0683890Z   show-progress: true
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0684047Z   lfs: false
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0684206Z   submodules: false
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0684363Z   set-safe-directory: true
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0684545Z   allow-unsafe-pr-checkout: false
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.0684804Z ##[endgroup]
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1381014Z Syncing repository: PamelaSprin47685ghall/wanxiang2
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1382506Z ##[group]Getting Git version info
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1382908Z Working directory is '/home/runner/work/wanxiang2/wanxiang2'
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1383541Z [command]/usr/bin/git version
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1429555Z git version 2.55.0
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1464950Z ##[endgroup]
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1469905Z Temporarily overriding HOME='/home/runner/work/_temp/51f55459-b2ba-4cd2-8118-7a933e874128' before making global git config changes
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1470618Z Adding repository directory to the temporary git global config as a safe directory
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1471245Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/wanxiang2/wanxiang2
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1513924Z Deleting the contents of '/home/runner/work/wanxiang2/wanxiang2'
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1518782Z ##[group]Initializing the repository
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1522072Z [command]/usr/bin/git init /home/runner/work/wanxiang2/wanxiang2
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1599022Z hint: Using 'master' as the name for the initial branch. This default branch name
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1602424Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1602903Z hint: to use in all of your new repositories, which will suppress this warning,
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1603591Z hint: call:
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1603811Z hint:
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1604173Z hint: 	git config --global init.defaultBranch <name>
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1604554Z hint:
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1604906Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1605240Z hint: 'development'. The just-created branch can be renamed via this command:
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1605510Z hint:
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1605674Z hint: 	git branch -m <name>
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1605850Z hint:
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1606078Z hint: Disable this message with "git config set advice.defaultBranchName false"
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1606665Z Initialized empty Git repository in /home/runner/work/wanxiang2/wanxiang2/.git/
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1610940Z [command]/usr/bin/git remote add origin https://github.com/PamelaSprin47685ghall/wanxiang2
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1652229Z ##[endgroup]
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1652697Z ##[group]Disabling automatic garbage collection
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1655648Z [command]/usr/bin/git config --local gc.auto 0
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1690098Z ##[endgroup]
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1690747Z ##[group]Setting up auth
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1695183Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.1723128Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.2010423Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.2040767Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.2221494Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.2251365Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.2436767Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.2475589Z ##[endgroup]
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.2476072Z ##[group]Fetching the repository
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:40.2482943Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +29f3b97187454800b8e7e7063b0e0addfb49ccdb:refs/remotes/origin/main
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0357371Z From https://github.com/PamelaSprin47685ghall/wanxiang2
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0358108Z  * [new ref]         29f3b97187454800b8e7e7063b0e0addfb49ccdb -> origin/main
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0362048Z ##[endgroup]
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0362392Z ##[group]Determining the checkout info
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0364314Z ##[endgroup]
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0368900Z [command]/usr/bin/git sparse-checkout disable
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0414941Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0443194Z ##[group]Checking out the ref
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.0446099Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.1820593Z Switched to a new branch 'main'
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.1823613Z branch 'main' set up to track 'origin/main'.
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.1834521Z ##[endgroup]
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.1877588Z [command]/usr/bin/git log -1 --format=%H
+gallery-baseline	Run actions/checkout@v4	2026-10-24T01:23:41.1903204Z 29f3b97187454800b8e7e7063b0e0addfb49ccdb
+gallery-baseline	Run actions/setup-dotnet@v4	﻿2026-10-24T01:23:41.2089296Z ##[group]Run actions/setup-dotnet@v4
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:41.2089524Z with:
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:41.2089651Z   global-json-file: global.json
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:41.2089796Z   cache: false
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:41.2090070Z ##[endgroup]
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:41.3087296Z (node:2082) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:41.3088308Z (Use `node --trace-deprecation ...` to show where the warning was created)
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:41.3103815Z [command]/home/runner/work/_actions/actions/setup-dotnet/v4/externals/install-dotnet.sh --skip-non-versioned-files --runtime dotnet --channel LTS
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:41.9083497Z dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.13/dotnet-runtime-10.0.13-linux-x64.tar.gz
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:42.7398738Z dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.13/dotnet-runtime-10.0.13-linux-x64.tar.gz size is 36648012 bytes.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:42.7400051Z dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.13/dotnet-runtime-10.0.13-linux-x64.tar.gz
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.2375384Z dotnet-install: Downloaded file size is 36648012 bytes.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.2375763Z dotnet-install: The remote and local file sizes are equal.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.2632160Z dotnet-install: Installed version is 10.0.13
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.2675877Z dotnet-install: Adding to current process PATH: `/usr/share/dotnet`. Note: This change will be visible only when sourcing script.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.2676720Z dotnet-install: Note that the script does not resolve dependencies during installation.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.2677528Z dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.2678346Z dotnet-install: Installation finished successfully.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.2694604Z [command]/home/runner/work/_actions/actions/setup-dotnet/v4/externals/install-dotnet.sh --skip-non-versioned-files --channel 10.0
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:43.6177093Z dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.402/dotnet-sdk-10.0.402-linux-x64.tar.gz
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:46.6737400Z dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.402/dotnet-sdk-10.0.402-linux-x64.tar.gz size is 240279509 bytes.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:46.6739111Z dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.402/dotnet-sdk-10.0.402-linux-x64.tar.gz
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:50.1768092Z dotnet-install: Downloaded file size is 240279509 bytes.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:50.1768721Z dotnet-install: The remote and local file sizes are equal.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:50.9725118Z dotnet-install: Installed version is 10.0.402
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:50.9777157Z dotnet-install: Adding to current process PATH: `/usr/share/dotnet`. Note: This change will be visible only when sourcing script.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:50.9778218Z dotnet-install: Note that the script does not resolve dependencies during installation.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:50.9779117Z dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
+gallery-baseline	Run actions/setup-dotnet@v4	2026-10-24T01:23:50.9788935Z dotnet-install: Installation finished successfully.
+gallery-baseline	Run actions/download-artifact@v8	﻿2026-10-24T01:23:51.1028104Z ##[group]Run actions/download-artifact@v8
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1028336Z with:
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1028460Z   name: feed
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1028582Z   path: artifacts/feed
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1028714Z   merge-multiple: false
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1028877Z   repository: PamelaSprin47685ghall/wanxiang2
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1029038Z   run-id: 40049194275
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1029163Z   skip-decompress: false
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1029332Z   digest-mismatch: error
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1029504Z env:
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1029621Z   DOTNET_ROOT: /usr/share/dotnet
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.1029763Z ##[endgroup]
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.2052091Z Downloading single artifact
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.3786762Z Preparing to download the following artifacts:
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.3787520Z - feed (ID: 12542294246, Size: 11364195, Expected Digest: sha256:9a8a4ae2d93650f3f54f10d76f38e3e1cb164ad103131ccea75297bbd9c288da)
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.7344581Z Redirecting to blob download url: https://productionresultssa6.blob.core.windows.net/actions-results/6c404a75-a776-85b8-aa2e-32682592b0d3/workflow-job-run-f8513335-fcd6-5579-8208-46847505885a/artifacts/c8bc2586cdd87cd6f970fc4262c4bbc49165811788825fbc1ba3366bfde45413.zip
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.7345966Z Starting download of artifact to: /home/runner/work/wanxiang2/wanxiang2/artifacts/feed
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.9130207Z (node:2556) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:51.9131317Z (Use `node --trace-deprecation ...` to show where the warning was created)
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:52.6295830Z SHA256 digest of downloaded artifact is 9a8a4ae2d93650f3f54f10d76f38e3e1cb164ad103131ccea75297bbd9c288da
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:52.6296324Z Artifact download completed successfully.
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:52.6296556Z Total of 1 artifact(s) downloaded
+gallery-baseline	Run actions/download-artifact@v8	2026-10-24T01:23:52.6299955Z Download artifact has finished successfully
+gallery-baseline	画廊深浅双主题像素基线核查	﻿2026-10-24T01:23:52.6422697Z ##[group]Run if ! bash tools/gallery-baseline.sh compose/Gallery/baselines > baseline.log 2>&1; then
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6423183Z ^[[36;1mif ! bash tools/gallery-baseline.sh compose/Gallery/baselines > baseline.log 2>&1; then^[[0m
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6423487Z ^[[36;1m  tail -40 baseline.log | sed 's/^/::error::/'^[[0m
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6423667Z ^[[36;1m  exit 1^[[0m
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6423781Z ^[[36;1mfi^[[0m
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6423904Z ^[[36;1mtail -1 baseline.log^[[0m
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6618967Z shell: /usr/bin/bash -e {0}
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6619174Z env:
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6619302Z   DOTNET_ROOT: /usr/share/dotnet
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:23:52.6619455Z ##[endgroup]
+gallery-baseline	画廊深浅双主题像素基线核查	2026-10-24T01:24:09.8943015Z 基线核查全部通过（共 82 项测试）。
+gallery-baseline	Post Run actions/setup-dotnet@v4	﻿2026-10-24T01:24:09.9424435Z Post job cleanup.
+gallery-baseline	Post Run actions/setup-dotnet@v4	2026-10-24T01:24:10.0217696Z (node:2681) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+gallery-baseline	Post Run actions/setup-dotnet@v4	2026-10-24T01:24:10.0218472Z (Use `node --trace-deprecation ...` to show where the warning was created)
+gallery-baseline	Post Run actions/checkout@v4	﻿2026-10-24T01:24:10.0543541Z Post job cleanup.
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.1162328Z [command]/usr/bin/git version
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.1202736Z git version 2.55.0
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.1231269Z Temporarily overriding HOME='/home/runner/work/_temp/ca7b9314-6af7-44b4-b46d-da58a0d0e131' before making global git config changes
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.1231892Z Adding repository directory to the temporary git global config as a safe directory
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.1235891Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/wanxiang2/wanxiang2
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.1736445Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.1776392Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.1976354Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.2004901Z http.https://github.com/.extraheader
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.2015105Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.2930664Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.3131857Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+gallery-baseline	Post Run actions/checkout@v4	2026-10-24T01:24:10.3164713Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+gallery-baseline	Complete job	﻿2026-10-24T01:24:10.3495228Z Cleaning up orphan processes
+gallery-baseline	Complete job	2026-10-24T01:24:10.3748560Z Terminate orphan process: pid (2625) (dotnet)
+gallery-baseline	Complete job	2026-10-24T01:24:10.3820325Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-dotnet@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+EXIT_CODE=0

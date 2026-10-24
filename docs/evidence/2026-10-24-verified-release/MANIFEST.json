@@ -1,0 +1,85 @@
+{
+  "generated_at": "2026-10-24T03:32:00Z",
+  "environment": {
+    "os": "Linux 7.1.13-2-MANJARO x86_64",
+    "cpu": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics (16 vCPU)",
+    "ram_total_bytes": 65116774400,
+    "dotnet_version": "10.0.111",
+    "chrome_version": "Google Chrome 153.0.8010.36",
+    "node_version": "v26.8.1",
+    "lighthouse_version": "13.5.0",
+    "tesseract_version": "5.5.3"
+  },
+  "executions": [
+    {
+      "step": "gallery-generate",
+      "command": "bash tools/gallery-baseline.sh --generate compose/Gallery/baselines",
+      "log": "docs/evidence/2026-10-24-verified-release/logs/01-gallery-generate.log",
+      "exit_code": 0,
+      "passed": true,
+      "summary": "82/82 baselines generated on Linux native (41 entries x 2 themes)"
+    },
+    {
+      "step": "gallery-check",
+      "command": "bash tools/gallery-baseline.sh compose/Gallery/baselines",
+      "log": "docs/evidence/2026-10-24-verified-release/logs/final-gallery-check.log",
+      "exit_code": 0,
+      "passed": true,
+      "summary": "82/82 baselines pixel-perfect match (0 diffs) on Linux native"
+    },
+    {
+      "step": "x-all",
+      "command": "./x all",
+      "log": "docs/evidence/2026-10-24-verified-release/logs/final-x-all.log",
+      "exit_code": 0,
+      "passed": true,
+      "summary": "109 libs projects tested (1081/1081 tests passed), 9 pack waves completed, 67 compose projects tested (1033/1033 tests passed), consume smoke passed. Total 176 test projects, 2114/2114 tests passed, 0 failed, 0 skipped."
+    },
+    {
+      "step": "x-app",
+      "command": "./x app",
+      "log": "docs/evidence/2026-10-24-verified-release/logs/final-x-app.log",
+      "exit_code": 0,
+      "passed": true,
+      "summary": "Built Desktop (app/Desktop/Wanxiang.App.fsproj) and PWA (app/Pwa/Wanxiang.Pwa.fsproj) entry points successfully"
+    },
+    {
+      "step": "smoke-desktop",
+      "command": "bash tools/smoke_desktop.sh",
+      "log": "docs/evidence/2026-10-24-verified-release/logs/final-smoke-desktop.log",
+      "exit_code": 0,
+      "passed": true,
+      "summary": "Process exit code 0, stderr has startup.firstFrame (1448ms) and startup.listReady (1623ms) and startup.catalogReady (1667ms), no unhandled exceptions in stderr, data directory created with ledger/log.jsonseq, lock released, temporary directory deleted"
+    },
+    {
+      "step": "publish-linux-x64",
+      "command": "bash publish.sh linux-x64",
+      "log": "docs/evidence/2026-10-24-verified-release/logs/final-publish-linux-x64.log",
+      "exit_code": 0,
+      "passed": true,
+      "summary": "Publish succeeded; artifacts created in artifacts/publish/linux-x64 and dist/wanxiang2-v0.0.0-dev-linux-x64.tar.gz"
+    },
+    {
+      "step": "smoke-published-pwa",
+      "command": "bash tools/smoke_published.sh artifacts/publish/linux-x64",
+      "log": "docs/evidence/2026-10-24-verified-release/logs/final-smoke-published-pwa.log",
+      "exit_code": 0,
+      "passed": true,
+      "summary": "All 28 PWA smoke checks passed (0 failed). Initial run had 22 PASS / 6 FAIL due to missing tesseract configs/tsv ('Can't open tsv') recorded in final-smoke-published.log; after configuring tessedit_create_tsv and chi_sim/eng traineddata, all 28 checks passed"
+    },
+    {
+      "step": "lighthouse-accessibility",
+      "command": "npx lighthouse http://127.0.0.1:<PORT>/ --only-categories=accessibility",
+      "log": "docs/evidence/2026-10-24-verified-release/logs/final-lighthouse.log",
+      "exit_code": 0,
+      "passed": true,
+      "summary": "Lighthouse Accessibility score 100.0% on host DOM shell (Canvas internal accessibility tree limitation documented)"
+    }
+  ],
+  "boundaries": {
+    "hardware_orca_screen_reader": "UNVERIFIED (No physical audio hardware, Orca speech daemon, or physical display session available on this Linux host)",
+    "physical_mobile_browsers": "UNVERIFIED (No real iOS Safari / Android Chrome physical devices connected)",
+    "remote_ci_current_tree": "UNVERIFIED on remote CI (Current tree uncommitted; historical commit 29f3b97187454800b8e7e7063b0e0addfb49ccdb verified green in CI run 40049194275 on 2026-10-24T01:18:37Z)",
+    "context_menu_close_behavior": "MenuFlyout Escape关闭/重开/快捷键恢复已验证；ContextMenu只验证打开拦截与Escape认领，程序式Open(anchor)后Close未证明完成，PWA smoke的Esc回焦是独立浏览器证据，不冒充该单测关闭。"
+  }
+}

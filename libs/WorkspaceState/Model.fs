@@ -89,7 +89,6 @@ type PopupKind =
 type OverlayPhase =
     | Closed
     | DrawerOpen
-    | DialogOpen of DialogKind
     | PopupOpen of PopupKind
 
 type RunState =

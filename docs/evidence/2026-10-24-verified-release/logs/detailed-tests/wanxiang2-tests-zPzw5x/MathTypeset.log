@@ -1,0 +1,11 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/compose/MathTypeset/tests/bin/Debug/net10.0/MathTypeset.Tests.dll (net10.0|x64)
+[+26/x0/?0] MathTypeset.Tests.dll (net10.0|x64)(2s)
+
+/home/kunweiz/Desktop/vibe/wanxiang2/compose/MathTypeset/tests/bin/Debug/net10.0/MathTypeset.Tests.dll (net10.0|x64) passed (3s 504ms)
+
+Test run summary: Passed!
+  total: 40
+  failed: 0
+  succeeded: 40
+  skipped: 0
+  duration: 3s 876ms

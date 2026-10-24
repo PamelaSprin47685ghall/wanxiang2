@@ -8,6 +8,8 @@ open Avalonia.Layout
 open Avalonia.Media
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Threading
+open Avalonia.VisualTree
+open Avalonia.LogicalTree
 
 /// 动态资源绑定辅助：主题管理者把活值写进 ResourceDictionary，控件绑定即随主题资源生效。
 module private Dyn =
@@ -363,6 +365,103 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
                     e.Handled <- true
                     closePopupNow ())
 
+    /// 原生弹层（Avalonia 的 ContextMenu / MenuFlyout）挂在窗口可视层的独立宿主
+    /// （PopupRoot / OverlayPopupHost）上，不经过本层的浮层卡片。SPEC 7 §2.3 的
+    /// 「菜单打开时快捷键让路」要把它们一起算成浮层，否则原生菜单挡不住快捷键。
+    let nativeHosts () : Visual list =
+        let tl = TopLevel.GetTopLevel root
+
+        match tl with
+        | null -> []
+        | top ->
+            let pick (v: Visual) =
+                match box v with
+                | :? Avalonia.Controls.Primitives.PopupRoot -> Some v
+                | :? Avalonia.Controls.Primitives.OverlayPopupHost -> Some v
+                | _ -> None
+
+            // 首选焦点所在：原生菜单/浮出层要么有自己的 PopupRoot，要么挂在窗口
+            // 可视层的 OverlayPopupHost 上，两者都在焦点元素的可视祖先链里。
+            let fromFocus =
+                match top.FocusManager with
+                | null -> []
+                | fm ->
+                    match fm.GetFocusedElement() with
+                    | :? Control as c -> (c :> Visual).GetVisualAncestors() |> Seq.choose pick |> List.ofSeq
+                    | _ -> []
+
+            if not (List.isEmpty fromFocus) then
+                fromFocus
+            else
+                match Avalonia.Controls.Primitives.OverlayLayer.GetOverlayLayer top with
+                | null -> []
+                | layer -> (layer :> Visual).GetVisualChildren() |> Seq.choose pick |> List.ofSeq
+
+    /// 原生菜单的账本在原生对象自己身上（ContextMenu.IsOpen / FlyoutBase.IsOpen），
+    /// 所以这里只从宿主与宿主主控件上取「当前真开着」的那些，退栈时调用它们自带的
+    /// 关闭契约（MenuBase.Close / FlyoutBase.Hide），不直接拨宿主，避免账本不一致。
+    let openNativeMenus () : obj list =
+        let inHosts =
+            nativeHosts ()
+            |> List.collect (fun host ->
+                host.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match box v with
+                    | :? MenuBase as m when m.IsOpen -> Some(m :> obj)
+                    | _ -> None)
+                |> List.ofSeq)
+
+        let onOwners =
+            let descendants =
+                (root :> ILogical).GetLogicalDescendants()
+                |> Seq.choose (fun l ->
+                    match box l with
+                    | :? Control as c -> Some c
+                    | _ -> None)
+
+            seq {
+                yield root :> Control
+                yield! descendants
+            }
+            |> Seq.collect (fun (c: Control) ->
+                seq {
+                    let context = c.ContextFlyout
+
+                    if not (isNull context) && context.IsOpen then
+                        yield context :> obj
+
+                    // 挂在控件上的原生 ContextMenu（消息卡就是这么接的：
+                    // compose/MessageCardView/Card.fs 的 `ContextMenu = this.Menu(...)`），
+                    // 与 Gallery/A11yAudit 的观察口径一致。
+                    let menu = c.ContextMenu
+
+                    if not (isNull menu) && menu.IsOpen then
+                        yield menu :> obj
+
+                    let attached = Avalonia.Controls.Primitives.FlyoutBase.GetAttachedFlyout c
+
+                    if not (isNull attached) && attached.IsOpen then
+                        yield attached :> obj
+                })
+            |> List.ofSeq
+
+        List.append inHosts onOwners
+
+    let closeNativeMenu () : bool =
+        match List.tryLast (openNativeMenus ()) with
+        // 优先使用具体原生菜单自带的关闭契约（ContextMenu.Close），再退到其它
+        // MenuBase.Close / FlyoutBase.Hide。
+        | Some(:? ContextMenu as context) ->
+            context.Close()
+            true
+        | Some(:? MenuBase as menu) ->
+            menu.Close()
+            true
+        | Some(:? Avalonia.Controls.Primitives.FlyoutBase as flyout) ->
+            flyout.Hide()
+            true
+        | _ -> false
+
     member private _.HideDialog() =
         dialogCard.IsVisible <- false
         dialogCard.Child <- null
@@ -478,9 +577,14 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
                     positionPopup ()) // 跨线程/布局排队，非焦点竞态
         )
 
-    member _.IsPopupOpen = popupCard.IsVisible
+    /// 本层卡片浮层，或原生菜单（ContextMenu / MenuFlyout）开着。
+    /// 原生部分只认菜单/Flyout 对象自己的 IsOpen（实测口径），不从宿主状态推断。
+    member _.IsPopupOpen =
+        popupCard.IsVisible || (openNativeMenus () |> List.isEmpty |> not)
+
     member _.LastPopupFocus = lastPopupFocus
     member _.LastPopupAnchor = lastPopupAnchor
+
     member _.Focusables(content: Control) = focusables content
 
     /// Tab 圈定：Tab / Shift+Tab 在 content 的可聚焦集合内循环。compact 抽屉也用它。
@@ -490,6 +594,8 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
     member this.HandleEscape() : bool =
         if popupCard.IsVisible then
             this.ClosePopup()
+            true
+        elif closeNativeMenu () then
             true
         elif dialogCard.IsVisible then
             if dialogGuard () then

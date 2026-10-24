@@ -1,0 +1,14 @@
+=== SearchHit Smoke Package Consumption ===
+Package source: artifacts/feed/Wanxiang2.WorkspaceState.0.0.0-local.nupkg
+Hits parsed: 1
+conversationId: a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d
+messageId: 42
+title: 测试会话
+snippet: 这里是前缀**关键词**这里是后缀
+segment1 (prefix): "这里是"
+segment2 (match): "前缀*"
+segment3 (suffix): "*关键词**这里是后缀"
+plain segment1 (prefix): "这里是"
+plain segment2 (match): "前缀*"
+plain segment3 (suffix): "*关键词这里是后缀"
+STATUS: SUCCESS (all fields match expected values)

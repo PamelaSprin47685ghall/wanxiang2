@@ -499,10 +499,7 @@ type ShellComposer(ports: ShellPorts) =
                             fun () ->
                                 match views with
                                 | Some v -> v.Overlay.Layer.IsDialogOpen
-                                | None ->
-                                    match model.Overlay with
-                                    | OverlayPhase.DialogOpen _ -> true
-                                    | _ -> false
+                                | None -> false
                         IsPopupOpen =
                             fun () ->
                                 match views with

@@ -9,6 +9,10 @@
 - `Workspace.init` / `Workspace.update` 纯函数状态转移（无 IO、无可变静态）；
 - `Workspace.project` 纯投影输出 `WorkspaceViewState` 供前端原生控件与单入口 `Render` 消费。
 
+## 领域事实与协议事实（SearchHit）
+- `SearchHit` / `SearchPageState`（`libs/WorkspaceState/SearchHit.fs`）：全文搜索命中的协议事实、片段切分与去 Markdown、截断说明。只依赖 BCL，归属工作区领域事实。
+- 对应测试：`tests/SearchHitTests.fs`（`search hit parsing clamps bad highlight ranges and drops rows without ids`、`消息命中片段去掉 Markdown 记号，命中词保持原样`、`truncated page says so`）。
+
 ## 事实归属（W7-B3 补全）
 - `Chrome.RevealTarget : (Guid * string) option`：定位目标（对话 + 消息），来自搜索命中与消息链接。
   归属模型：消息加载后由 `update` 发 `Effect.ScrollChat (ScrollCommand.ToExchange 消息 id)`，

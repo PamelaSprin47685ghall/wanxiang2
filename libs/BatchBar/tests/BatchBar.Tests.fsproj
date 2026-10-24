@@ -21,7 +21,6 @@
     <Compile Include="SidebarSearch.Probe.fs" />
     <Compile Include="SidebarSearch.Tests.fs" />
     <Compile Include="RowFocus.RowFocus.Tests.fs" />
-    <Compile Include="RowFocus.SearchHit.Tests.fs" />
     <Compile Include="RowFocus.SearchSegments.Samples.fs" />
     <Compile Include="RowFocus.SearchSegments.Tests.fs" />
     <Compile Include="RowFocus.SearchSession.Tests.fs" />

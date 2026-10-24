@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/libs/ColorBlend/tests/bin/Debug/net10.0/ColorBlend.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/ColorBlend/tests/bin/Debug/net10.0/ColorBlend.Tests.dll (net10.0|x64) passed (2s 047ms)
+
+Test run summary: Passed!
+  total: 7
+  failed: 0
+  succeeded: 7
+  skipped: 0
+  duration: 2s 357ms

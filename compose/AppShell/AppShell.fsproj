@@ -57,6 +57,5 @@
     <PackageReference Include="Wanxiang2.ImageShrinkIo" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationTransfer" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ErrorRecovery" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BatchBar" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,33 @@
+host up on 39395 (pid 3424374)
+PASS 中文截图门禁拒绝缺字方框与空白
+PASS Avalonia 画布与输入桥元素出现
+PASS DPR 2 画布像素 = CSS × 2 — {"w":2400,"h":1600,"cw":1200,"ch":800,"dpr":2}
+PASS 画布有实际内容（非纯色） — distinct colors=18
+PASS 预置客户端凭据
+PASS 认证态：输入框能被点聚焦 — coord=(732,400)
+PASS 真实键盘输入与上屏桥：组合键与增量均精确落盘 — draft="万象ok｜键盘草稿往返" expected="万象ok｜键盘草稿往返"
+PASS 菜单真实行为后果：右键菜单点击「粘贴」后剪贴板标记入库
+PASS Esc 回焦：Esc 关闭菜单并恢复输入框焦点
+TRACE interaction {"stage":"before-palette","focus":{"tag":"INPUT","id":"inputElementswrh","cls":"avalonia-input-element"},"draft":"万象ok｜键盘草稿往返【菜单粘贴验证1792811661598】","keys":[]}
+TRACE interaction {"stage":"palette-shortcut","focus":{"tag":"INPUT","id":"inputElementswrh","cls":"avalonia-input-element"},"draft":"万象ok｜键盘草稿往返【菜单粘贴验证1792811661598】","keys":[{"key":"Control","code":"ControlLeft","ctrl":true,"meta":false,"target":"inputElementswrh"},{"key":"k","code":"KeyK","ctrl":true,"meta":false,"target":"inputElementswrh"}]}
+PASS 命令面板真实交互后果：过滤并回车执行命令后写入最近使用持久化记录 — recentBefore=[] recentAfter=recorded
+TRACE interaction {"stage":"after-palette-enter","focus":{"tag":"INPUT","id":"inputElementswrh","cls":"avalonia-input-element"},"draft":"万象ok｜键盘草稿往返【菜单粘贴验证1792811661598】","keys":[{"key":"Control","code":"ControlLeft","ctrl":true,"meta":false,"target":"inputElementswrh"},{"key":"k","code":"KeyK","ctrl":true,"meta":false,"target":"inputElementswrh"},{"key":"Enter","code":"Enter","ctrl":false,"meta":false,"target":"inputElementswrh"}]}
+PASS 设置弹窗真实交互后果：操作外观开关并观察到 localStorage 持久化变更 — toggled=showArchived: false -> true
+PASS 设置弹窗 Esc 回焦：关闭设置大面板后安全恢复工作区与输入框
+PASS 主题切换：Ctrl+Shift+S 触发主题轮转并持久化到 localStorage — initial=light -> dark -> system
+PASS 主题切换物理调色板变动：深色模式平均亮度明显低于浅色（非纯黑死锁、语义与对比度待视觉走查） — darkLum=24.6 lightLum=201.0
+PASS 面板与设置操作不改写草稿 — draft="万象ok｜键盘草稿往返【菜单粘贴验证1792811661598】"
+PASS localStorage：重开页面后访问计数继续递增 — visits 2 -> 3 -> 4
+PASS 认证态：草稿落进 IndexedDB — back=true saved=true
+PASS 认证态：重开页面草稿回到输入框并支持追加 — draft="万象ok｜键盘草稿往返【菜单粘贴验证1792811661598】｜恢复验证后缀" expected="万象ok｜键盘草稿往返【菜单粘贴验证1792811661598】｜恢复验证后缀"
+PASS 侧栏点「中文冒烟」后主内容区出现该对话正文 — 标题包围盒={"text":"中文冒烟","left":33,"top":172.5,"width":50,"height":23} 正文="你好"
+PASS 界面正文有可测的中文（自校准基准） — meanRuns=60.41 distinctShapes=48 inkFrac=0.020
+PASS 悬停「新建对话」出现提示条 — 包围盒={"text":"新建对话","left":33.5,"top":50.5,"width":49,"height":11.5} 提示区=45x14
+PASS 弹出层 tooltip 出现 — canvas=0 rect=45x14 截图=/home/kunweiz/Desktop/vibe/wanxiang2/artifacts/smoke-published/popup-tooltip.png
+PASS 弹出层 tooltip 中文文字可读 — 识别="新建对话新建对话(Ctrl/3+N)Q(ies" inkFrac=0.114
+PASS 弹出层 contextmenu 出现 — canvas=0 rect=32x24 截图=/home/kunweiz/Desktop/vibe/wanxiang2/artifacts/smoke-published/popup-contextmenu.png
+PASS 弹出层 contextmenu 中文文字可读 — 识别="(OD复制消息CO编辑并分又O复制消息链接ty)删除这条消息" inkFrac=0.145
+PASS 弹出层 flyout 出现 — canvas=0 rect=158x25 截图=/home/kunweiz/Desktop/vibe/wanxiang2/artifacts/smoke-published/popup-flyout.png
+PASS 弹出层 flyout 中文文字可读 — 识别="万象ok|键盘草稿往返【菜单粘贴验证1792811661598】|恢复验证后绥未选择模型、test-mode站o复制Ctrl+C粘贴Ctrl+V" inkFrac=0.072
+PASS 无未捕获页面异常
+EXIT_CODE=0

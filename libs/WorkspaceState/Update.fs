@@ -1176,11 +1176,6 @@ module Workspace =
                             Overlay = OverlayPhase.Closed
                         },
                         [ Effect.Focus FocusTarget.ComposerInput ]
-                    | OverlayPhase.DialogOpen _ ->
-                        { model with
-                            Overlay = OverlayPhase.Closed
-                        },
-                        [ Effect.Focus FocusTarget.ComposerInput ]
                     | OverlayPhase.DrawerOpen ->
                         { model with
                             Overlay = OverlayPhase.Closed

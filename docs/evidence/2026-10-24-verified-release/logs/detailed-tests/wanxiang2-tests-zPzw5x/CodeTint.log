@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/compose/CodeTint/tests/bin/Debug/net10.0/CodeTint.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/compose/CodeTint/tests/bin/Debug/net10.0/CodeTint.Tests.dll (net10.0|x64) passed (1s 943ms)
+
+Test run summary: Passed!
+  total: 8
+  failed: 0
+  succeeded: 8
+  skipped: 0
+  duration: 2s 224ms

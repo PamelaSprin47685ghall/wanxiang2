@@ -47,7 +47,6 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
     let strip = ToastStrip(look.Toasts)
     let queue = ToastQueue()
     let actions = ResizeArray<string * string * (unit -> unit)>()
-    let mutable currentOverlayPhase = OverlayPhase.Closed
     // 提示条带的留白跟覆盖层走：留白是层的主题资源，层变了这里重排。
     let fit () =
         strip.Fit(root.Bounds.Width, root.Bounds.Height, layer.ViewportInset)
@@ -114,11 +113,9 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
 
             if layer.IsDialogOpen then
                 layer.CloseDialog()
-
-            currentOverlayPhase <- OverlayPhase.Closed
-        | OverlayVS.Drawer _ -> currentOverlayPhase <- OverlayPhase.DrawerOpen
-        | OverlayVS.Dialog d -> currentOverlayPhase <- OverlayPhase.DialogOpen d.Kind
-        | OverlayVS.Popup p -> currentOverlayPhase <- OverlayPhase.PopupOpen p.Kind
+        | OverlayVS.Drawer _
+        | OverlayVS.Dialog _
+        | OverlayVS.Popup _ -> ()
 
     /// 单入口：幂等渲染 ToastVS 列表（计时由 WorkspaceState 的 MsgTick / ExpiresAt 管）
     member this.RenderToasts(toasts: ToastVS list) =

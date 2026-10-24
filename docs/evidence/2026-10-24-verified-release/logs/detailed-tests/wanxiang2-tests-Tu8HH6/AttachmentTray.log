@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/libs/AttachmentTray/tests/bin/Debug/net10.0/AttachmentTray.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/AttachmentTray/tests/bin/Debug/net10.0/AttachmentTray.Tests.dll (net10.0|x64) passed (2s 240ms)
+
+Test run summary: Passed!
+  total: 16
+  failed: 0
+  succeeded: 16
+  skipped: 0
+  duration: 2s 522ms

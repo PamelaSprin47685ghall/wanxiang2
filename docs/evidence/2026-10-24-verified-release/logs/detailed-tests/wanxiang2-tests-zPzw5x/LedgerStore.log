@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/compose/LedgerStore/tests/bin/Debug/net10.0/LedgerStore.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/compose/LedgerStore/tests/bin/Debug/net10.0/LedgerStore.Tests.dll (net10.0|x64) passed (1s 379ms)
+
+Test run summary: Passed!
+  total: 19
+  failed: 0
+  succeeded: 19
+  skipped: 0
+  duration: 1s 712ms

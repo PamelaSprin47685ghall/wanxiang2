@@ -7,7 +7,6 @@
     <Compile Include="SidebarBrand.fs" />
     <Compile Include="SidebarSearch.fs" />
     <Compile Include="RowFocus.fs" />
-    <Compile Include="SearchHit.fs" />
     <Compile Include="SearchSegments.fs" />
     <Compile Include="SearchSession.fs" />
     <Compile Include="SidebarSelection.fs" />

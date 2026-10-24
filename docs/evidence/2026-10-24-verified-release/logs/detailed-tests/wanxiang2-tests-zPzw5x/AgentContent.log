@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/compose/AgentContent/tests/bin/Debug/net10.0/AgentContent.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/compose/AgentContent/tests/bin/Debug/net10.0/AgentContent.Tests.dll (net10.0|x64) passed (1s 363ms)
+
+Test run summary: Passed!
+  total: 47
+  failed: 0
+  succeeded: 47
+  skipped: 0
+  duration: 1s 501ms

@@ -30,6 +30,14 @@
 - 浮层关闭只在层内归还焦点（`restorePopupFocus`），不向上报事件：层没有「关闭回调」这类出口，组合者不靠它拿用户意图。
 - 层的次序与旧代码相同：遮罩、对话框卡、浮层捕获层、浮层卡（提示条层由组合者随后加入）。
 
+### 原生菜单也算「浮层开着」（2026-10-24）
+
+- `IsPopupOpen` = 本层浮层卡可见 **或** 有原生菜单/Flyout 处于 `IsOpen`。原生判定只认对象自己的账本（`MenuBase.IsOpen` / `FlyoutBase.IsOpen`），不从宿主（PopupRoot / OverlayPopupHost）是否残留推断。
+- 判定范围（`openNativeMenus`，私有）：当前焦点祖先链所在宿主里的 `MenuBase`，加根与逻辑子孙上挂着的 `Control.ContextMenu` / `Control.ContextFlyout` / `FlyoutBase.GetAttachedFlyout`。生产入口对照：`compose/MessageCardView/Card.fs` 用 `ContextMenu = this.Menu(...)`（消息卡右键菜单），`libs/PopupMenu/PopupMenu.fs` 的原生下拉用 `MenuFlyout`；本层卡片菜单（`OverlayDesk.ShowMenu`）走 `popupCard`，不依赖这段判定。
+- `HandleEscape` 的退栈顺序改为：本层浮层卡 → 最上层原生菜单 → 对话框（受 `dialogGuard`）。原生关闭优先调用具体对象自带的契约：`ContextMenu.Close()` → 其它 `MenuBase.Close()` → `FlyoutBase.Hide()`，不反射、不直接 Hide 宿主（会把原生 `IsOpen` 账本改歪）。
+- 实测边界（Avalonia 12.1.2 + headless，编程式 `menu.Open(anchor)` 打开的 `ContextMenu`）：`Escape` 走 `ContextMenu.Close()` 后 `menu.IsOpen` 仍为 `true`（具体类与基类两种调法都一样；`MenuBase.IsOpen` 无公开 setter）——本层只保证「按键被原生处理器认领、不外溢到设置/抽屉/生成」，不宣称已关闭。`FlyoutBase.Hide()` 会翻转 `IsOpen`，账本同步。真实指针/键盘触发的 `ContextRequested` 路径不在本层的测试可达范围内（rig 只提供 `Root: Grid`，无 Window）。
+- 证据：`compose/AppShell/tests/ShortcutInterceptTests.fs` 三条原生/自研浮层拦截用例；`libs/FocusOrigin/tests` 8 条（含边界）全绿。修复前用修复前的交付包跑：AppShell 50 条里 2 条失败（两条原生用例报「独立宿主应被识别为浮层」），修复后 50/50 通过；日志 `artifacts/logs/appshell-BEFORE-fix-2026-10-24.log` / `artifacts/logs/appshell-AFTER-fix-2026-10-24.log`。
+
 ### 外观
 
 - `OverlayLayerAppearance`（W7 外观退役后的普通记录）：`Scrim`、`Surface`、`Edge`（画笔）；`DialogShadow`、`PopupShadow`（阴影）；`PopupGap`、`PopupMinWidth`（浮层几何）；`ScrimFade`（遮罩淡入淡出时长，减弱动效时组合者给 0）；`ScrimEasing`。

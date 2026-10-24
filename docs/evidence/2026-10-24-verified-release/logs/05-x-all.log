@@ -1,0 +1,28 @@
+format: checking 10 file(s)
+check ok: 109 libs with no sibling references; 71 composer(s) using packages only; 17 control librar(y|ies) with a gallery entry
+扫描 518 个测试文件（libs/*/tests、compose/*/tests）
+
+R1 恒真断言（Assert.True(true) / Assert.False(false) / Assert.True() / 自反比较）:
+  ok   无恒真断言
+
+R2 恒真谓词（Assert.* 参数里的 '|| true' / 'true ||'）:
+  ok   无恒真谓词
+
+R3 空转的事实（[<Fact>] 函数体里没有断言、failwith 或会断言的本文件辅助函数）:
+  ok   无空转事实
+
+结果：断言卫生全部通过
+扫描 378 个生产 .fs 文件（libs/ + compose/ + app/，排除 tests/tools/bin/obj），检查 1828 个中文串字面量
+另扫 3 个 PWA 壳交付物（index.html / main.js / manifest.webmanifest）
+结果：界面文案全部通过
+== pack wave 1（99 个工程，一个 solution 一次 restore/pack）
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(481,5): error FS0960: 'let' and 'do' bindings must come before member and interface definitions in type definitions [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(493,23): error FS0039: The type 'OverlayLayer' does not define the field, constructor or member 'GetVisualChildren'. Maybe you want one of the following:   get_VisualChildren   VisualChildren   get_VisualRoot   get_IsEnabledCore [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(496,23): error FS0008: This runtime coercion or type test from type    'a     to     Primitives.PopupRoot    involves an indeterminate type based on information prior to this program point. Runtime type tests are not allowed on some types. Further type annotations are needed. [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(508,22): error FS0039: The type 'Visual' does not define the field, constructor or member 'GetVisualDescendants'. Maybe you want one of the following:   get_VisualChildren [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(511,23): error FS0008: This runtime coercion or type test from type    'a     to     MenuBase    involves an indeterminate type based on information prior to this program point. Runtime type tests are not allowed on some types. Further type annotations are needed. [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(518,29): error FS0039: The type 'Grid' does not define the field, constructor or member 'GetLogicalDescendants'. Maybe you want one of the following:   get_LogicalChildren [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(518,56): error FS0001: This expression was expected to have type    ''a -> 'b'    but here has type    'Control seq' [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(518,73): error FS0001: The type 'unit' is not compatible with the type 'Collections.IEnumerable' [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/OverlayLayer.fs(518,56): error FS0001: This expression was expected to have type    ''a -> 'b'    but here has type    'Control seq' [/home/kunweiz/Desktop/vibe/wanxiang2/libs/FocusOrigin/FocusOrigin.fsproj]
+EXIT_CODE=1

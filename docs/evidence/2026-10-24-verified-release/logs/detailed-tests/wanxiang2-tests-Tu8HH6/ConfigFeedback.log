@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/libs/ConfigFeedback/tests/bin/Debug/net10.0/ConfigFeedback.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/ConfigFeedback/tests/bin/Debug/net10.0/ConfigFeedback.Tests.dll (net10.0|x64) passed (2s 133ms)
+
+Test run summary: Passed!
+  total: 9
+  failed: 0
+  succeeded: 9
+  skipped: 0
+  duration: 2s 380ms

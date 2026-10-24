@@ -1,0 +1,25 @@
+构建桌面入口：app/Desktop/Wanxiang.App.fsproj（Debug，包源 artifacts/feed）
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Wanxiang.App -> /home/kunweiz/Desktop/vibe/wanxiang2/app/Desktop/bin/Debug/net10.0/wanxiang.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.76
+运行：app/Desktop/bin/Debug/net10.0/wanxiang --config /tmp/wanxiang2-smoke-desk-5gEBQi/home/config.toml --data /tmp/wanxiang2-smoke-desk-5gEBQi/data --server --client --pwa=false（端口 37521，超时 180s）
+
+断言（stderr：/tmp/wanxiang2-smoke-desk-5gEBQi/stderr.log）：
+  启动打点：startup.firstFrame uptime_ms=1510 startup.listReady uptime_ms=1697 startup.catalogReady uptime_ms=1740
+  ok   进程退出码 0
+  ok   stderr 有 startup.firstFrame
+  ok   stderr 有 startup.listReady
+  ok   stderr 无未处理异常 / 异常栈行
+  ok   数据目录有存储文件 ledger/log.jsonseq ledger/.lock ledger/.lock.pid
+  ok   数据目录有 attachments/
+  ok   数据目录锁已释放（.lock.pid ﻿3250667 不是活进程）
+  ok   临时目录已删除（/tmp/wanxiang2-smoke-desk-5gEBQi）
+
+结果：全部断言通过（startup.firstFrame uptime_ms=1510 startup.listReady uptime_ms=1697 startup.catalogReady uptime_ms=1740）
+EXIT_CODE=0

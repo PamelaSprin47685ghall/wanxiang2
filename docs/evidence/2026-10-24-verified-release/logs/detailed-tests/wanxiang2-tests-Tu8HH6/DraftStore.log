@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/libs/DraftStore/tests/bin/Debug/net10.0/DraftStore.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/DraftStore/tests/bin/Debug/net10.0/DraftStore.Tests.dll (net10.0|x64) passed (1s 867ms)
+
+Test run summary: Passed!
+  total: 6
+  failed: 0
+  succeeded: 6
+  skipped: 0
+  duration: 2s 129ms

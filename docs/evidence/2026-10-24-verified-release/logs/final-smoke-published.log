@@ -1,0 +1,82 @@
+host up on 45719 (pid 3422312)
+read_params_file: Can't open tsv
+read_params_file: Can't open tsv
+PASS 中文截图门禁拒绝缺字方框与空白
+PASS Avalonia 画布与输入桥元素出现
+PASS DPR 2 画布像素 = CSS × 2 — {"w":2400,"h":1600,"cw":1200,"ch":800,"dpr":2}
+PASS 画布有实际内容（非纯色） — distinct colors=18
+PASS 预置客户端凭据
+PASS 认证态：输入框能被点聚焦 — coord=(732,400)
+PASS 真实键盘输入与上屏桥：组合键与增量均精确落盘 — draft="万象ok｜键盘草稿往返" expected="万象ok｜键盘草稿往返"
+PASS 菜单真实行为后果：右键菜单点击「粘贴」后剪贴板标记入库
+PASS Esc 回焦：Esc 关闭菜单并恢复输入框焦点
+TRACE interaction {"stage":"before-palette","focus":{"tag":"INPUT","id":"inputElementjnisld","cls":"avalonia-input-element"},"draft":"万象ok｜键盘草稿往返【菜单粘贴验证1792811320393】","keys":[]}
+TRACE interaction {"stage":"palette-shortcut","focus":{"tag":"INPUT","id":"inputElementjnisld","cls":"avalonia-input-element"},"draft":"万象ok｜键盘草稿往返【菜单粘贴验证1792811320393】","keys":[{"key":"Control","code":"ControlLeft","ctrl":true,"meta":false,"target":"inputElementjnisld"},{"key":"k","code":"KeyK","ctrl":true,"meta":false,"target":"inputElementjnisld"}]}
+PASS 命令面板真实交互后果：过滤并回车执行命令后写入最近使用持久化记录 — recentBefore=[] recentAfter=recorded
+TRACE interaction {"stage":"after-palette-enter","focus":{"tag":"INPUT","id":"inputElementjnisld","cls":"avalonia-input-element"},"draft":"万象ok｜键盘草稿往返【菜单粘贴验证1792811320393】","keys":[{"key":"Control","code":"ControlLeft","ctrl":true,"meta":false,"target":"inputElementjnisld"},{"key":"k","code":"KeyK","ctrl":true,"meta":false,"target":"inputElementjnisld"},{"key":"Enter","code":"Enter","ctrl":false,"meta":false,"target":"inputElementjnisld"}]}
+PASS 设置弹窗真实交互后果：操作外观开关并观察到 localStorage 持久化变更 — toggled=showArchived: false -> true
+PASS 设置弹窗 Esc 回焦：关闭设置大面板后安全恢复工作区与输入框
+PASS 主题切换：Ctrl+Shift+S 触发主题轮转并持久化到 localStorage — initial=light -> dark -> system
+PASS 主题切换物理调色板变动：深色模式平均亮度明显低于浅色（非纯黑死锁、语义与对比度待视觉走查） — darkLum=24.6 lightLum=242.4
+PASS 面板与设置操作不改写草稿 — draft="万象ok｜键盘草稿往返【菜单粘贴验证1792811320393】"
+PASS localStorage：重开页面后访问计数继续递增 — visits 2 -> 3 -> 4
+PASS 认证态：草稿落进 IndexedDB — back=true saved=true
+PASS 认证态：重开页面草稿回到输入框并支持追加 — draft="万象ok｜键盘草稿往返【菜单粘贴验证1792811320393】｜恢复验证后缀" expected="万象ok｜键盘草稿往返【菜单粘贴验证1792811320393】｜恢复验证后缀"
+read_params_file: Can't open tsv
+read_params_file: Can't open tsv
+FAIL 侧栏点「中文冒烟」后主内容区出现该对话正文 — 截图里没有识别到侧栏对话标题
+PASS 界面正文有可测的中文（自校准基准） — meanRuns=18.55 distinctShapes=134 inkFrac=0.033
+read_params_file: Can't open tsv
+read_params_file: Can't open tsv
+FAIL 悬停「新建对话」出现提示条 — 截图里没有识别到「新建对话」
+FAIL 弹出层 tooltip 出现 — 开/关两帧没有差异区域
+read_params_file: Can't open tsv
+read_params_file: Can't open tsv
+FAIL 消息卡右键开出的是消息卡菜单（不是输入框文本浮层） — 正文卡片位置未识别到
+FAIL 弹出层 contextmenu 出现 — 开/关两帧没有差异区域
+PASS 弹出层 flyout 出现 — canvas=0 rect=158x25 截图=/home/kunweiz/Desktop/vibe/wanxiang2/artifacts/smoke-published/popup-flyout.png
+read_params_file: Can't open tsv
+read_params_file: Can't open tsv
+FAIL 弹出层 flyout 中文文字可读 — 识别="" inkFrac=0.069
+PASS 无未捕获页面异常
+--- host.log (tail)
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://127.0.0.1:45719/_framework/avalonia.js?v=20261012b - - -
+info: Microsoft.AspNetCore.StaticFiles.StaticFileMiddleware[2]
+      Sending file. Request path: '/_framework/avalonia.js'. Physical path: '/home/kunweiz/Desktop/vibe/wanxiang2/artifacts/publish/linux-x64/pwa/_framework/avalonia.js'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://127.0.0.1:45719/_framework/avalonia.js?v=20261012b - 200 - text/javascript 1.1874ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://127.0.0.1:45719/ - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'HTTP: GET / => Invoke'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'HTTP: GET / => Invoke'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://127.0.0.1:45719/ - 200 - text/html 0.3057ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://127.0.0.1:45719/ws - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint '/ws => Invoke'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://127.0.0.1:45719/ - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'HTTP: GET / => Invoke'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'HTTP: GET / => Invoke'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://127.0.0.1:45719/ - 200 - text/html 0.2288ms
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint '/ws => Invoke'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://127.0.0.1:45719/ws - 101 - - 10655.4273ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://127.0.0.1:45719/ws - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint '/ws => Invoke'
+info: Microsoft.AspNetCore.Server.Kestrel.Connections[34]
+      Connection id "0HNPHFGB33PT0", Request id "0HNPHFGB33PT0:00000001": the application aborted the connection.
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint '/ws => Invoke'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://127.0.0.1:45719/ws - 101 - - 5387.9702ms

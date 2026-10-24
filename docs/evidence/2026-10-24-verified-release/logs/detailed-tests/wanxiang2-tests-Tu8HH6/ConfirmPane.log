@@ -1,0 +1,11 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/libs/ConfirmPane/tests/bin/Debug/net10.0/ConfirmPane.Tests.dll (net10.0|x64)
+[+13/x0/?0] ConfirmPane.Tests.dll (net10.0|x64)(2s)
+
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/ConfirmPane/tests/bin/Debug/net10.0/ConfirmPane.Tests.dll (net10.0|x64) passed (2s 903ms)
+
+Test run summary: Passed!
+  total: 13
+  failed: 0
+  succeeded: 13
+  skipped: 0
+  duration: 3s 144ms

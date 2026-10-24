@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/compose/ChatDomain/tests/bin/Debug/net10.0/ChatDomain.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/compose/ChatDomain/tests/bin/Debug/net10.0/ChatDomain.Tests.dll (net10.0|x64) passed (1s 779ms)
+
+Test run summary: Passed!
+  total: 45
+  failed: 0
+  succeeded: 45
+  skipped: 0
+  duration: 2s 106ms

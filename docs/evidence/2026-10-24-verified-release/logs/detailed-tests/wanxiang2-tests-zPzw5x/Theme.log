@@ -1,0 +1,11 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/compose/Theme/tests/bin/Debug/net10.0/Theme.Tests.dll (net10.0|x64)
+[+4/x0/?0] Theme.Tests.dll (net10.0|x64)(2s)
+
+/home/kunweiz/Desktop/vibe/wanxiang2/compose/Theme/tests/bin/Debug/net10.0/Theme.Tests.dll (net10.0|x64) passed (4s 821ms)
+
+Test run summary: Passed!
+  total: 27
+  failed: 0
+  succeeded: 27
+  skipped: 0
+  duration: 5s 051ms

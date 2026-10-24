@@ -1,0 +1,16 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/compose/AppShell/tests/bin/Debug/net10.0/AppShell.Tests.dll (net10.0|x64)
+failed Wanxiang2.AppShell.Tests.ShortcutInterceptTests.原生 ContextMenu（独立弹层宿主）打开时快捷键被拦，Escape 关闭后恢复可用 (118ms)
+  Escape 应关掉原生 ContextMenu
+  from /home/kunweiz/Desktop/vibe/wanxiang2/compose/AppShell/tests/bin/Debug/net10.0/AppShell.Tests.dll (net10.0|x64)
+  Escape 应关掉原生 ContextMenu
+    at Wanxiang2.AppShell.Tests.ShortcutInterceptTests.原生 ContextMenu（独立弹层宿主）打开时快捷键被拦，Escape 关闭后恢复可用@196.Invoke(Unit unitVar0) in /home/kunweiz/Desktop/vibe/wanxiang2/compose/AppShell/tests/ShortcutInterceptTests.fs:237
+    at Wanxiang2.AppShell.Tests.Headless.run@24.Invoke()
+    at Avalonia.Headless.HeadlessUnitTestSession.<>c__DisplayClass9_0.<Dispatch>b__0()
+    at Avalonia.Headless.HeadlessUnitTestSession.<>c__DisplayClass12_0`1.<DispatchCore>b__0()
+    --- End of stack trace from previous location ---
+    at Wanxiang2.AppShell.Tests.Headless.run(FSharpFunc`2 body) in /home/kunweiz/Desktop/vibe/wanxiang2/compose/AppShell/tests/Headless.fs:24
+    at Wanxiang2.AppShell.Tests.ShortcutInterceptTests.原生 ContextMenu（独立弹层宿主）打开时快捷键被拦，Escape 关闭后恢复可用() in /home/kunweiz/Desktop/vibe/wanxiang2/compose/AppShell/tests/ShortcutInterceptTests.fs:196
+    at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+    at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[+14/x1/?0] AppShell.Tests.dll (net10.0|x64)(2s)
+

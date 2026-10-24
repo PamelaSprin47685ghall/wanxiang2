@@ -1,0 +1,21 @@
+completed	success	Implement code changes to enhance functionality and improve performance	ci	main	push	40049194275	11m46s	2026-10-24T01:18:37Z
+completed	failure	Merge pull request #8 from lcw918110/delivery/verified-release-20261024	ci	main	push	40045649361	8m57s	2026-10-24T00:34:30Z
+completed	success	fix: 完成运行边界修复与发布产物验收闭环	ci	delivery/verified-release-20261024	pull_request	40044418193	10m37s	2026-10-24T00:19:41Z
+completed	success	fix: 修复 HTTP 重试资源释放并接通启动偏好与退出草稿保存	ci	fix/round3-round5-combined	pull_request	40043065891	11m54s	2026-10-24T00:03:53Z
+completed	failure	fix: 修复 HTTP 重试资源释放并接通启动偏好与退出草稿保存	ci	fix/round3-round5-combined	pull_request	39937408922	10m29s	2026-10-23T10:12:11Z
+completed	failure	fix: 修复 HTTP 重试资源释放并接通启动偏好与退出草稿保存	ci	fix/round3-round5-combined	pull_request	39914394840	11m41s	2026-10-23T06:54:35Z
+completed	failure	整合远端改动后的验证与修正：统一格式、补齐画廊双主题基线	ci	main	push	39913985379	10m23s	2026-10-23T06:50:38Z
+completed	failure	fix: 修复 HTTP 重试资源释放并接通启动偏好与退出草稿保存	ci	fix/round3-round5-combined	pull_request	39911503445	10m54s	2026-10-23T06:26:37Z
+completed	success	fix: 接通启动偏好与退出草稿保存	ci	fix/round5-prefs-draft-flush	pull_request	39909539615	9m18s	2026-10-23T06:06:39Z
+completed	success	Merge pull request #5 from lcw918110/fix/round4-command-cursor	ci	main	push	39909216815	10m9s	2026-10-23T06:03:28Z
+completed	success	fix: 修复命令发送、游标确认与对话操作丢失	ci	fix/round4-command-cursor	pull_request	39905095653	9m26s	2026-10-23T05:19:14Z
+completed	success	fix: 修复 HTTP 重试资源释放与等待边界	ci	fix/round3-http-lifecycle	pull_request	39891802361	10m7s	2026-10-23T02:50:57Z
+completed	success	Merge pull request #3 from lcw918110/fix/round2-boundaries	ci	main	push	39861532584	8m47s	2026-10-22T21:59:15Z
+completed	success	fix: 收紧配置取值边界与退避溢出	ci	fix/round2-boundaries	pull_request	39806804233	11m13s	2026-10-22T15:38:58Z
+completed	success	Merge pull request #2 from lcw918110/verify/round1-smoke	ci	main	push	39746581569	10m52s	2026-10-22T08:16:58Z
+completed	success	修复跨平台脚本与冒烟判据，补齐桌面 CI 验证	ci	verify/round1-smoke	pull_request	39738067977	11m48s	2026-10-22T07:05:02Z
+completed	success	修复跨平台脚本与冒烟判据，补齐桌面 CI 验证	ci	verify/round1-smoke	pull_request	39736115973	10m55s	2026-10-22T06:47:00Z
+completed	failure	G5: 更新 展望.md 的 G5 提交号为 rebase 后的实际 SHA（030566f）	ci	main	push	39717815308	11m38s	2026-10-22T03:37:00Z
+completed	failure	展望 §3：G6 行补上本次收窄提交的实际 SHA（82a74ec）	ci	main	push	39714340090	12m6s	2026-10-22T02:59:02Z
+completed	failure	格式门禁收窄为只查目标文件（禁止全仓 Fantomas）	ci	main	push	39714274752	14m2s	2026-10-22T02:58:18Z
+EXIT_CODE=0

@@ -2,6 +2,7 @@
   <ItemGroup>
     <Compile Include="Types.fs" />
     <Compile Include="Model.fs" />
+    <Compile Include="SearchHit.fs" />
     <Compile Include="ViewState.fs" />
     <Compile Include="ReconnectBackoff.fs" />
     <Compile Include="MessageLink.fs" />

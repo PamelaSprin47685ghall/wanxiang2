@@ -1,4 +1,4 @@
-module RowFocusSearchHitTests
+module SearchHitTests
 
 open System
 open System.Text.Json.Nodes

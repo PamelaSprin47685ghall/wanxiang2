@@ -1,5 +1,7 @@
 # 验收语义区分度与门禁有效性独立审计报告（2026-10-23）
 
+> 历史快照：本文件是 2026-10-23 交接时点的结论，可能与后续实测不一致；权威口径以 docs/evidence/2026-10-24-verified-release/ 与根 AGENTS.md〈2026-10-24 本轮交付验证收口证据〉为准。
+
 - **审计性质**：独立只读静态审计（**未执行真实命令**，不修改正在验证的源码）
 - **审计对象**：`tools/smoke_published_pwa.js`、`compose/Gallery/Baseline.fs`、`tools/gallery-baseline.sh`、`compose/Gallery/A11yAudit.fs` 及相关验收脚本
 - **遵循准则**：Common Law（门禁必须真会红、抓得住反例、不拿行数与表象遮掩漏洞）、Kolmogorov 之书（区分本质与偶然复杂度、追查根因）与根规则 SPEC 7。

@@ -1,5 +1,7 @@
 # 2026-10-23 核心文档静态一致性核验与交接报告（静态 / 未运行）
 
+> 历史快照：本文件是 2026-10-23 交接时点的结论，可能与后续实测不一致；权威口径以 docs/evidence/2026-10-24-verified-release/ 与根 AGENTS.md〈2026-10-24 本轮交付验证收口证据〉为准。
+
 - **报告性质**：静态事实核对、契约修正与交接备忘（未执行构建、测试或外部命令）
 - **涉及文档**：`AGENTS.md`、`docs/frontend-dev-process.md`、`docs/W7-CLEANBREAK-AUDIT.md`、`展望.md`
 - **工作区基线**：HEAD `14e4625`（与 `origin/main` 一致，status/diff 干净）

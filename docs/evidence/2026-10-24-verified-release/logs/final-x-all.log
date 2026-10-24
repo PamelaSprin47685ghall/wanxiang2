@@ -1,0 +1,35 @@
+format: checking 10 file(s)
+check ok: 109 libs with no sibling references; 71 composer(s) using packages only; 17 control librar(y|ies) with a gallery entry
+扫描 518 个测试文件（libs/*/tests、compose/*/tests）
+
+R1 恒真断言（Assert.True(true) / Assert.False(false) / Assert.True() / 自反比较）:
+  ok   无恒真断言
+
+R2 恒真谓词（Assert.* 参数里的 '|| true' / 'true ||'）:
+  ok   无恒真谓词
+
+R3 空转的事实（[<Fact>] 函数体里没有断言、failwith 或会断言的本文件辅助函数）:
+  ok   无空转事实
+
+结果：断言卫生全部通过
+扫描 378 个生产 .fs 文件（libs/ + compose/ + app/，排除 tests/tools/bin/obj），检查 1828 个中文串字面量
+另扫 3 个 PWA 壳交付物（index.html / main.js / manifest.webmanifest）
+结果：界面文案全部通过
+== pack wave 1（99 个工程，一个 solution 一次 restore/pack）
+== pack wave 2（32 个工程，一个 solution 一次 restore/pack）
+== pack wave 3（23 个工程，一个 solution 一次 restore/pack）
+== pack wave 4（9 个工程，一个 solution 一次 restore/pack）
+== pack wave 5（10 个工程，一个 solution 一次 restore/pack）
+== pack wave 6（2 个工程，一个 solution 一次 restore/pack）
+== pack wave 7（2 个工程，一个 solution 一次 restore/pack）
+== pack wave 8（3 个工程，一个 solution 一次 restore/pack）
+== pack wave 9（1 个工程，一个 solution 一次 restore/pack）
+== 逐库测试（并发 12；日志 /tmp/wanxiang2-tests-Tu8HH6）
+== 逐库测试：109 个工程全部通过（日志 /tmp/wanxiang2-tests-Tu8HH6）
+== compose（组合者测试）（并发 12；日志 /tmp/wanxiang2-tests-zPzw5x）
+== compose（组合者测试）：67 个工程全部通过（日志 /tmp/wanxiang2-tests-zPzw5x）
+== consume：仓库外消费者 /tmp/wanxiang2-consume-0AuNwF（Wanxiang2.* 只从 artifacts/feed 取）
+committed id=1
+reopen: startup={ snapshot = Used 1UL
+  replayedCommits = 0 } state=1 lastId=1
+consume ok: commit and reopen yield Used 1UL

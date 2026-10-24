@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/libs/ThemeFonts/tests/bin/Debug/net10.0/ThemeFonts.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/ThemeFonts/tests/bin/Debug/net10.0/ThemeFonts.Tests.dll (net10.0|x64) passed (1s 153ms)
+
+Test run summary: Passed!
+  total: 5
+  failed: 0
+  succeeded: 5
+  skipped: 0
+  duration: 1s 397ms

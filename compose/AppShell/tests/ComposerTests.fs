@@ -294,7 +294,181 @@ let ``旅程 1：首次配对到就绪`` () =
 
         match rig.Shell.Model.Conn with
         | ConnPhase.Authed(inst, CatalogPhase.LoadingCatalog) -> Assert.Equal("inst-test", inst)
-        | other -> Assert.Fail(sprintf "认证后状态不对: %A" other))
+        | other -> Assert.Fail(sprintf "认证后状态不对: %A" other)
+
+        // 目录装载完成。旅程 2 传空 `providers` 是为了走「还没有可用的模型服务」的引导分支；
+        // 旅程 1 要验「配对 → 首发」，输入区必须真的可用（`WorkspaceState/Project.fs` 的门控：
+        // `cat.providers` 为空 → Composer.Enabled=false），所以这里放一条**能被解析的**模型服务
+        // （`Catalog.parse` 只收带 id/label/models 的条目，空对象会被丢掉）。
+        rig.Shell.Dispatch(
+            WireRecv(
+                CatalogSnapshot
+                    {|
+                        providers =
+                            let provider = JsonObject()
+                            provider["id"] <- JsonValue.Create "p1"
+                            provider["label"] <- JsonValue.Create "P1"
+                            provider["models"] <- JsonArray([| JsonValue.Create "m1" :> JsonNode |])
+                            JsonArray([| provider :> JsonNode |])
+                        tools = JsonArray()
+                        generation = JsonObject()
+                    |}
+            )
+        )
+
+        match rig.Shell.Model.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.IdleEmpty)) -> ()
+        | other -> Assert.Fail(sprintf "目录就绪后应是空闲态: %A" other)
+
+        // 「新建对话」的真实入口（侧栏动作记录 → User(Sidebar NewConversation)）。
+        rig.Shell.Dispatch(User(Sidebar(SidebarUserMsg.NewConversation)))
+
+        match rig.Shell.Model.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.IdleEmpty)) -> ()
+        | other -> Assert.Fail(sprintf "新建对话后应回到空闲态: %A" other)
+
+        // 新建对话把焦点请回输入区：`Update.fs` 的 NewConversation 分支只产
+        // [ Effect.Focus FocusTarget.ComposerInput ]，而 Focus 经
+        // `compose/EntryShells/Effects.fs` 的 Dispatcher.Post(Input) 落地，
+        // 不在假端口的同步记录面里，所以这里不断言投递本身；
+        // 状态侧的真实可观测结果（回到 IdleEmpty）已在上面断言。
+
+        // 输入文本：与真实按键同一条回调（ComposerDesk 的 TextChanged → 状态树）。
+        let actions =
+            rig.Shell.ComposerActions((fun () -> ()), (fun _ -> ()), (fun () -> false))
+
+        let firstText = "第一次见面，请多指教"
+
+        actions.TextChanged firstText
+        Assert.Equal(firstText, (Workspace.project rig.Shell.Model).Composer.Text)
+        // 输入区此时确实可用（不是被门控挡住的假首发）。
+        Assert.True((Workspace.project rig.Shell.Model).Composer.Enabled)
+
+        // 首发：空闲态下的发送门控会**先建对话再发首条消息**。
+        rig.Shell.Dispatch(User(Composer(ComposerUserMsg.Send)))
+
+        // 统一效果序列（同一份 RecordedEffects，不挑 SendCommand 子序列）：
+        // 建对话命令 < 首条消息命令 < 订阅会话的 SendWire，且三者同属一个会话。
+        let effects = rig.Fake.RecordedEffects
+
+        let createIdx =
+            effects
+            |> List.findIndex (fun e ->
+                match e with
+                | Effect.SendCommand(ClientCommand.CreateConversation _) -> true
+                | _ -> false)
+
+        let appendIdx =
+            effects
+            |> List.findIndex (fun e ->
+                match e with
+                | Effect.SendCommand(ClientCommand.SendUserMessage _) -> true
+                | _ -> false)
+
+        let observeIdx =
+            effects
+            |> List.findIndex (fun e ->
+                match e with
+                | Effect.SendWire(WireEvent.ObserveConversation _) -> true
+                | _ -> false)
+
+        Assert.True(
+            createIdx < appendIdx && appendIdx < observeIdx,
+            sprintf "首发应是「建对话 → 发首条消息 → 订阅会话」次序，实际索引 %d/%d/%d" createIdx appendIdx observeIdx
+        )
+
+        let createPayload =
+            (match effects[createIdx] with
+             | Effect.SendCommand(ClientCommand.CreateConversation d) -> Some d
+             | _ -> None)
+            |> Option.defaultWith (fun () -> failwith "该位置应是建对话命令")
+
+        let appendPayload =
+            (match effects[appendIdx] with
+             | Effect.SendCommand(ClientCommand.SendUserMessage d) -> Some d
+             | _ -> None)
+            |> Option.defaultWith (fun () -> failwith "该位置应是发首条消息命令")
+
+        let observePayload =
+            (match effects[observeIdx] with
+             | Effect.SendWire(WireEvent.ObserveConversation d) -> Some d
+             | _ -> None)
+            |> Option.defaultWith (fun () -> failwith "该位置应是订阅会话")
+
+        let createConvId = createPayload.conversationId
+        let createTitle = createPayload.title
+
+        // 三条效果关联同一个 conversationId。
+        Assert.Equal(createConvId, appendPayload.conversationId)
+        Assert.Equal(createConvId, observePayload.conversationId)
+
+        // 标题取首句前 20 字（状态机的既有规则）。
+        Assert.Equal(firstText, createTitle)
+        // 命令载荷里有用户真正打的那句话。
+        let sentContents = appendPayload.messageJson.["contents"].AsArray()
+        Assert.Equal(firstText, sentContents[0].["text"].GetValue<string>())
+
+        // 两条命令都在途（回执未到之前不能当成已提交）。
+        Assert.Equal(2, rig.Shell.Model.Feedback.PendingCommands.Count)
+        // 发送清空输入区与草稿。
+        let vsSent = Workspace.project rig.Shell.Model
+        Assert.Equal("", vsSent.Composer.Text)
+
+        // 客户端在等对话快照：工作区进入「加载中」。
+        match rig.Shell.Model.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.LoadingConversation id)) ->
+            Assert.Equal(createConvId, id)
+        | other -> Assert.Fail(sprintf "发送后应是加载中: %A" other)
+
+        // 协议回执：对话快照到达（首条用户消息已在服务端提交），工作区进 Active。
+        // 快照条目形状 = `{commitId, payload}`，payload 就是客户端消息 DTO；
+        // 首条用户消息带的是用户真正发的那句话（不是占位）。
+        let userItem =
+            JsonNode.Parse(
+                sprintf
+                    """{"commitId":1,"payload":{"role":"user","contents":[{"type":"text","text":"%s"}]}}"""
+                    firstText
+            )
+
+        rig.Shell.Dispatch(
+            WireRecv(
+                ConversationSnapshot
+                    {|
+                        conversationId = createConvId
+                        title = createTitle
+                        lastCommitId = 1UL
+                        runtimeState = "idle"
+                        generationId = None
+                        messages = JsonArray([| userItem |])
+                        snapshotEarliestCommitId = 1UL
+                        snapshotHasMore = false
+                        config = SessionConfig.empty
+                    |}
+            )
+        )
+
+        match rig.Shell.Model.Conn with
+        | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(conv, _))) ->
+            // 投影的唯一数据源：活动对话里有了那条首发消息。
+            Assert.Equal(createConvId, conv.ConversationId)
+            Assert.Equal(1, conv.Messages.Length)
+
+            let firstMessage = conv.Messages[0]
+            Assert.Equal("user", firstMessage.role)
+            // 正文断言：投影里就是那句话本身。
+            Assert.Equal(firstText, firstMessage.text)
+            // 聊天投影（渲染层唯一数据源）里也是这句话。
+            match (Workspace.project rig.Shell.Model).Chat.Phase with
+            | ChatPhase.Messages rows ->
+                Assert.Equal(1, List.length rows)
+                Assert.Equal("user", rows[0].Role)
+                Assert.Equal(firstText, rows[0].Text)
+            | other -> Assert.Fail(sprintf "回执后聊天投影应是消息态: %A" other)
+            // 输入区已被发送清空。
+            Assert.Equal("", (Workspace.project rig.Shell.Model).Composer.Text)
+        | other -> Assert.Fail(sprintf "回执后应是 Active: %A" other)
+        // 首发之后输入区不再禁用（有可用模型服务）。
+        Assert.True((Workspace.project rig.Shell.Model).Composer.Enabled))
 
 [<Fact>]
 let ``旅程 2：引导流程配置模型`` () =

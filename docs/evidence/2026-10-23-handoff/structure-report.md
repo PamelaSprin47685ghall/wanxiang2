@@ -1,5 +1,7 @@
 # 2026-10-23 结构审计 IsDialogOpen 真实 Owner 归属与修复报告（静态 / 未运行）
 
+> 历史快照：本文件是 2026-10-23 交接时点的结论，可能与后续实测不一致；权威口径以 docs/evidence/2026-10-24-verified-release/ 与根 AGENTS.md〈2026-10-24 本轮交付验证收口证据〉为准。
+
 - **报告性质**：结构审计核查、真实 Owner 修正与回归测试说明（未执行构建、测试或外部命令，测试尚未运行，不据此冒充动态凭据）
 - **涉及文件**：`compose/AppShell/AppShell.fs`、`compose/AppShell/tests/ComposerTests.fs`
 

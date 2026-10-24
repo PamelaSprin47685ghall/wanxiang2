@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/libs/DeviceListJson/tests/bin/Debug/net10.0/DeviceListJson.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/libs/DeviceListJson/tests/bin/Debug/net10.0/DeviceListJson.Tests.dll (net10.0|x64) passed (1s 469ms)
+
+Test run summary: Passed!
+  total: 8
+  failed: 0
+  succeeded: 8
+  skipped: 0
+  duration: 1s 767ms

@@ -116,3 +116,12 @@
 - 高对比度模式、字体放大、屏幕阅读器与浏览器快捷键抢键的实测。
 
 新增调色板槽位或新的取消类控件时，先看是否需要补进这些测试。
+
+## 9. 2026-10-24 交付实跑无障碍证据与边界
+
+- **Lighthouse 审计**：对发布后 PWA 宿主执行无障碍专项审计（`npx lighthouse http://127.0.0.1:<PORT>/ --only-categories=accessibility`），得分 **100.0%**（9 项标准基准检查全绿，原始报告见 `docs/evidence/2026-10-24-verified-release/artifacts/lighthouse/` 与 `docs/evidence/2026-10-24-verified-release/logs/final-lighthouse.log`）。
+- **工具局限声明（Canvas UI）**：Avalonia Web 应用基于 Skia Canvas / WebAssembly 绘制。Lighthouse 100% 得分仅证明外部宿主 HTML 骨架（如 `<html lang="zh-CN">`、`<title>`、viewport、meta 等）无障碍达标，**不代表 Canvas 内部所有自绘控件已具备完整读屏与可访问语义**，不可替代屏幕阅读器等辅助技术。
+- **实机读屏与移动端真机未测边界**：
+  - 宿主环境缺少物理音频硬件与活动的 Orca 读屏守护进程，真实发音未测；
+  - 缺少物理 iOS Safari / Android Chrome 移动端连接，真实触控与手势未测；
+  - 详见 `docs/evidence/2026-10-24-verified-release/README.md` §七。

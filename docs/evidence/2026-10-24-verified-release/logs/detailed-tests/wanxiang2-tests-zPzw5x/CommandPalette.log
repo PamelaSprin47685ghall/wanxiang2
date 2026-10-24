@@ -1,0 +1,9 @@
+Running tests from /home/kunweiz/Desktop/vibe/wanxiang2/compose/CommandPalette/tests/bin/Debug/net10.0/CommandPalette.Tests.dll (net10.0|x64)
+/home/kunweiz/Desktop/vibe/wanxiang2/compose/CommandPalette/tests/bin/Debug/net10.0/CommandPalette.Tests.dll (net10.0|x64) passed (1s 502ms)
+
+Test run summary: Passed!
+  total: 16
+  failed: 0
+  succeeded: 16
+  skipped: 0
+  duration: 1s 805ms

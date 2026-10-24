@@ -723,7 +723,17 @@ module Program =
                         topLevel,
                         submit
                     )
-            SettingsHostVisible = fun visible -> settings.View.IsVisible <- visible
+            SettingsHostVisible =
+                fun visible ->
+                    if visible then
+                        // 插到索引 0：设置页是整页宿主，必须排在覆盖层（遮罩 / 对话框卡 / 浮层卡 / 提示条）
+                        // 之下，否则设置页自己打开的下拉菜单与确认框会被整页盖住。
+                        if not (root.Children.Contains settings.View) then
+                            root.Children.Insert(0, settings.View)
+                    else
+                        root.Children.Remove settings.View |> ignore
+
+                    settings.View.IsVisible <- visible
             WorkspaceHostVisible = fun visible -> workspace.Host.IsVisible <- visible
             SettingsFocusInitial = fun () -> settings.FocusInitial()
             SettingsShowSection =
@@ -1004,6 +1014,7 @@ module Program =
                 Some(fun () ->
                     if not (obj.ReferenceEquals(shell, null)) then
                         // 关窗（浏览器：页面转入后台）先落草稿，再落面板「最近使用」，同一拍。
+                        shell.FlushDrafts()
                         paletteRecentSave (shell.PaletteRecent()))
 
             App.LoadPrefs <- Some prefsLoad

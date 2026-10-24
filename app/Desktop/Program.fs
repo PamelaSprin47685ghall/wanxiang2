@@ -910,8 +910,7 @@ module Program =
 
                         let palette =
                             Wanxiang2.PaletteDesk.PaletteDesk(theme, ov, fun () -> SharedTheme.input.PrefersTouch)
-                        // 决策 452：每次执行后写回，不等关窗。崩溃或被杀时这次选择仍在。
-                        palette.Run.Add(fun _ -> PaletteRecentFile.saveRecent (shell.PaletteRecent()))
+
                         let modelSwitch = Wanxiang2.ModelSwitchDesk.ModelSwitchDesk(theme, ov)
 
                         {
@@ -947,7 +946,17 @@ module Program =
                                         topLevel,
                                         submit
                                     )
-                            SettingsHostVisible = fun visible -> settings.View.IsVisible <- visible
+                            SettingsHostVisible =
+                                fun visible ->
+                                    if visible then
+                                        // 插到索引 0：设置页是整页宿主，必须排在覆盖层（遮罩 / 对话框卡 / 浮层卡 / 提示条）
+                                        // 之下，否则设置页自己打开的下拉菜单与确认框会被整页盖住。
+                                        if not (root.Children.Contains settings.View) then
+                                            root.Children.Insert(0, settings.View)
+                                    else
+                                        root.Children.Remove settings.View |> ignore
+
+                                    settings.View.IsVisible <- visible
                             WorkspaceHostVisible = fun visible -> workspace.Host.IsVisible <- visible
                             SettingsFocusInitial = fun () -> settings.FocusInitial()
                             SettingsShowSection =
@@ -1158,6 +1167,10 @@ module Program =
                             |> ignore
 
                             shell.Build() |> ignore
+                            // 决策 452：每次执行后写回，不等关窗。必须在 shell.Build() 之后订阅：
+                            // Build() 里才挂上 RunPaletteItem（更新 PaletteRecent），先于它订阅会存下更新前的旧列表。
+                            (buildViews ())
+                                .Palette.Run.Add(fun _ -> PaletteRecentFile.saveRecent (shell.PaletteRecent()))
                             // 本机草稿（文件）读完再交给组合者：读完之前不写盘（与旧时序一致）。
                             // 系统深色变化：只有「跟随系统」时才重应用主题（组合者判断）。
                             match Application.Current with
@@ -1169,7 +1182,11 @@ module Program =
 
                             shell.AutoConnect())
                     // 关窗：先落草稿，再落面板最近使用（同一拍）。
-                    Wanxiang.UI.App.FlushDrafts <- Some(fun () -> ())
+                    Wanxiang.UI.App.FlushDrafts <-
+                        Some(fun () ->
+                            shell.FlushDrafts()
+                            PaletteRecentFile.saveRecent (shell.PaletteRecent()))
+
                     Wanxiang.UI.App.LoadPrefs <- Some Wanxiang.UI.UiPrefsFile.load
                     Wanxiang.UI.App.SavePrefs <- Some Wanxiang.UI.UiPrefsFile.save
                     // 宿主 StartupTrace（决策 290）：采样退出由入口安装

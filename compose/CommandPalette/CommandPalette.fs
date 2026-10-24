@@ -119,15 +119,27 @@ module PaletteRecent =
     /// 解析；坏文件、非字符串数组一律当作没有记录，超过 maxRecent 截断。
     let decode (text: string) : string list =
         try
-            Text.Json.JsonSerializer.Deserialize<string[]>(text)
-            |> Option.ofObj
-            |> Option.map (List.ofArray >> List.truncate CommandPalette.maxRecent)
-            |> Option.defaultValue []
+            match System.Text.Json.Nodes.JsonNode.Parse(text) with
+            | :? System.Text.Json.Nodes.JsonArray as arr ->
+                [
+                    for node in arr do
+                        if isNull node then
+                            yield null
+                        else
+                            yield node.GetValue<string>()
+                ]
+                |> List.truncate CommandPalette.maxRecent
+            | _ -> []
         with _ ->
             []
 
     let encode (recent: string list) : string =
-        Text.Json.JsonSerializer.Serialize(Array.ofList recent)
+        let arr = System.Text.Json.Nodes.JsonArray()
+
+        for s in recent do
+            arr.Add(System.Text.Json.Nodes.JsonValue.Create(s) :> System.Text.Json.Nodes.JsonNode)
+
+        arr.ToJsonString()
 
 /// 壳层命令面板条目的输入：都是 AppShell 手里的事实，按值传入。
 type ShellPaletteInput =

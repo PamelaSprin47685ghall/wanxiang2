@@ -1346,7 +1346,7 @@ module WorkspaceStateTests =
         let createCmd =
             effs6
             |> List.tryPick (function
-                | Effect.SendWire(WireEvent.Command(ClientCommand.CreateConversation d)) -> Some d
+                | Effect.SendCommand(ClientCommand.CreateConversation d) -> Some d
                 | _ -> None)
 
         Assert.True(createCmd.IsSome, "应当发出 CreateConversation 命令")
@@ -1355,7 +1355,7 @@ module WorkspaceStateTests =
         let sendCmd =
             effs6
             |> List.tryPick (function
-                | Effect.SendWire(WireEvent.Command(ClientCommand.SendUserMessage d)) -> Some d
+                | Effect.SendCommand(ClientCommand.SendUserMessage d) -> Some d
                 | _ -> None)
 
         Assert.True(sendCmd.IsSome, "应当发出 SendUserMessage 命令")
@@ -1435,7 +1435,7 @@ module WorkspaceStateTests =
         let deleteCmdsBefore =
             effs2
             |> List.choose (function
-                | Effect.SendWire(WireEvent.Command(ClientCommand.DeleteConversation d)) -> Some d.conversationId
+                | Effect.SendCommand(ClientCommand.DeleteConversation d) -> Some d.conversationId
                 | _ -> None)
 
         Assert.Empty deleteCmdsBefore
@@ -1448,7 +1448,7 @@ module WorkspaceStateTests =
         let deleteCmdsAfter =
             effs3
             |> List.choose (function
-                | Effect.SendWire(WireEvent.Command(ClientCommand.DeleteConversation d)) -> Some d.conversationId
+                | Effect.SendCommand(ClientCommand.DeleteConversation d) -> Some d.conversationId
                 | _ -> None)
 
         Assert.Equal(2, deleteCmdsAfter.Length)
@@ -1504,7 +1504,7 @@ module WorkspaceStateTests =
         let regenCmd =
             effs2
             |> List.tryPick (function
-                | Effect.SendWire(WireEvent.Command(ClientCommand.RegenerateResponse d)) -> Some d
+                | Effect.SendCommand(ClientCommand.RegenerateResponse d) -> Some d
                 | _ -> None)
 
         Assert.True(regenCmd.IsSome, "应当发出 RegenerateResponse 命令")

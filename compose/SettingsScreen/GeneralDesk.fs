@@ -26,7 +26,8 @@ type GeneralDesk
         overlay: OverlayDesk,
         hooks: unit -> SettingsHooks,
         initialPrefs: UiPrefs,
-        onPrefsChanged: UiPrefs -> unit
+        onPrefsChanged: UiPrefs -> unit,
+        ?environmentInfo: string * string
     ) =
     let check = FieldCheck()
 
@@ -46,11 +47,19 @@ type GeneralDesk
     let mutable presetDelete: PresetInfo -> unit = ignore
     let toast msg tone = overlay.Toast(msg, tone)
 
-    let platformText () =
-        if OperatingSystem.IsBrowser() then
-            "WebAssembly (PWA)"
-        else
-            sprintf "Desktop (.NET %s)" (Environment.Version.ToString())
+    let platform, operatingSystem =
+        match environmentInfo with
+        | Some info -> info
+        | None ->
+            let platform =
+                if OperatingSystem.IsBrowser() then
+                    "WebAssembly (PWA)"
+                else
+                    sprintf "Desktop (.NET %s)" (Environment.Version.ToString())
+
+            platform, Environment.OSVersion.ToString()
+
+    let platformText () = platform
 
     let orUnset (s: string) =
         if String.IsNullOrWhiteSpace s then "未连接" else s
@@ -60,7 +69,7 @@ type GeneralDesk
             "协议版本", string Constants.ProtocolVersion
             "日志格式版本", string Constants.FormatVersion
             "客户端平台", platformText ()
-            "操作系统", Environment.OSVersion.ToString()
+            "操作系统", operatingSystem
             "主机实例", orUnset instanceId
             "连接地址", orUnset serverUrl
         ]
@@ -220,7 +229,7 @@ type GeneralDesk
             Constants.ProtocolVersion
             Constants.FormatVersion
             (platformText ())
-            (Environment.OSVersion.ToString())
+            (operatingSystem)
             (orUnset instanceId)
             (orUnset serverUrl)
             (DateTimeOffset.UtcNow.ToString("O"))

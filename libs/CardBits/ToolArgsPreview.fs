@@ -17,9 +17,11 @@ module ToolArgsPreview =
                 || (trimmed.StartsWith "[" && trimmed.EndsWith "]")
             then
                 try
-                    use doc = JsonDocument.Parse trimmed
-                    let options = JsonSerializerOptions(WriteIndented = true)
-                    JsonSerializer.Serialize(doc.RootElement, options)
+                    match System.Text.Json.Nodes.JsonNode.Parse trimmed with
+                    | null -> raw
+                    | node ->
+                        let options = JsonSerializerOptions(WriteIndented = true)
+                        node.ToJsonString(options)
                 with _ ->
                     raw
             else

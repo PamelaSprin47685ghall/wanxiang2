@@ -44,7 +44,7 @@ module private Dyn =
 /// 上传进度 chip 动画改声明式 anim-breathe / anim-spin，废除 Look 与 DispatcherTimer。
 type AttachmentTray() =
     let strip =
-        WrapPanel(Orientation = Orientation.Horizontal, Focusable = true, ItemSpacing = 6.0, LineSpacing = 6.0)
+        WrapPanel(Orientation = Orientation.Horizontal, ItemSpacing = 6.0, LineSpacing = 6.0)
 
     do AutomationProperties.SetName(strip, "附件列表")
 

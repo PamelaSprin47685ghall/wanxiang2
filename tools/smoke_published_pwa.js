@@ -15,7 +15,8 @@
 // 用法：node tools/smoke_published_pwa.js --base http://127.0.0.1:<port> [--out <dir>] [--chrome /usr/bin/google-chrome]
 
 const puppeteer = require('puppeteer-core');
-const { mkdirSync } = require('node:fs');
+const { mkdirSync, writeFileSync } = require('node:fs');
+const { execFileSync } = require('node:child_process');
 
 const argv = process.argv.slice(2);
 const arg = (k, d) => {
@@ -35,6 +36,91 @@ if (!BASE) {
 mkdirSync(OUT, { recursive: true });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 截图文字识别：返回**带包围盒**的词，供脚本按文字定位真实控件。
+// macOS 用系统 Vision（tools/smoke-ocr.swift）；Linux 用 CI 安装的 Tesseract 中文模型。
+// 两者的输出都归一到 TSV 的同一批列，Node 侧只有一套解析。
+//
+// 侧栏这类小字号文字，Tesseract 在整张 2400×1600 图上会切成乱码（实测「新建对话」
+// 读成 `EHS`）。所以定位用的识别统一走 `ocrShot`：先把**画布**裁下来放大到固定宽度
+// 再识别。坐标 ×2 还原成 CSS，两个平台用同一套算术。
+const OCR_SCRIPT = require('node:path').resolve(__dirname, 'smoke-ocr.swift');
+const OCR_UPSCALE_WIDTH = 2400;
+const runOcr = (path) => {
+    let raw;
+    if (process.platform === 'darwin' && process.env.WX_SMOKE_OCR !== 'tesseract') {
+        raw = execFileSync('swift', [OCR_SCRIPT, path], { encoding: 'utf8', timeout: 60000 });
+    } else {
+        raw = execFileSync('tesseract', [path, 'stdout', '-l', 'chi_sim+eng', '--psm', '6', 'tsv'],
+            { encoding: 'utf8', timeout: 30000 });
+    }
+    const words = [];
+    for (const line of raw.split('\n')) {
+        const cols = line.split('\t');
+        if (cols.length < 12) continue;
+        const text = cols.slice(11).join('\t').trim();
+        const left = Number(cols[6]), top = Number(cols[7]);
+        const width = Number(cols[8]), height = Number(cols[9]), conf = Number(cols[10]);
+        if (!text || !Number.isFinite(left) || !Number.isFinite(top)) continue;
+        words.push({ text, left, top, width, height, conf });
+    }
+    return words;
+};
+const ocrText = (path) => runOcr(path).map((w) => w.text).join('').replace(/\s/g, '');
+// 在识别结果里找含某段文字的词；box 为 CSS 坐标（OCR 来源已在 ocrShot 归一）。
+const findWord = (words, needle) => words.find((w) => w.text.includes(needle)) || null;
+// 两个 OCR 的切词粒度不同：Vision 给整词（「新建对话」一个框），Tesseract 给单字
+// （「新」「建」「对」「话」四个框）。所以要能在同一行把相邻词拼起来再匹配，
+// 并返回合并后的包围盒。判据只认「这段文字确实出现在同一行」。
+const findPhrase = (words, needle, minLeft = 0) => {
+    const rows = new Map();
+    for (const w of words) {
+        if (w.left < minLeft) continue;
+        // 同一行：纵向中心相差不超过较高者的一半。
+        const key = [...rows.keys()].find((k) => Math.abs(k - (w.top + w.height / 2)) <= Math.max(w.height, 12) / 2);
+        const at = key === undefined ? w.top + w.height / 2 : key;
+        if (!rows.has(at)) rows.set(at, []);
+        rows.get(at).push(w);
+    }
+    for (const row of rows.values()) {
+        row.sort((a, b) => a.left - b.left);
+        for (let i = 0; i < row.length; i++) {
+            let text = '';
+            for (let j = i; j < row.length; j++) {
+                text += row[j].text;
+                if (text.includes(needle)) {
+                    const span = row.slice(i, j + 1);
+                    const left = Math.min(...span.map((w) => w.left));
+                    const top = Math.min(...span.map((w) => w.top));
+                    const right = Math.max(...span.map((w) => w.left + w.width));
+                    const bottom = Math.max(...span.map((w) => w.top + w.height));
+                    return { text, left, top, width: right - left, height: bottom - top };
+                }
+            }
+        }
+    }
+    return null;
+};
+// 同一段文字在侧栏（会话标题 / 消息预览）与主内容区都会出现。要精确点到主内容区的
+// 那张卡，必须按横向位置排除侧栏，否则右键开出来的是会话行菜单。
+const findPhraseInMain = (words, needle, minLeft = 300) => findPhrase(words, needle, minLeft);
+// 识别结果统一归一成 **CSS 坐标**（ocrShot 已按 OCR_SCALE 与 DPR 折算）。
+const wordCenterCss = (w) => ({ x: w.left + w.width / 2, y: w.top + w.height / 2 });
+
+const readablePopupText = (name, text) => {
+    // 每个弹出层只对**它自己真有**的标签作验收，不能拿另一类菜单的文案当统一判据：
+    // 消息卡右键菜单是「复制消息 / 编辑并分叉 / …」，输入框 ContextFlyout 才是「剪切 / 复制 / 粘贴」。
+    const { labels, need } = name === 'tooltip'
+        ? { labels: ['搜索对话', '新建对话'], need: 1 }
+        : name === 'contextmenu'
+            ? { labels: ['复制消息', '编辑并分叉', '重新生成', '删除这条消息'], need: 1 }
+            : { labels: ['剪切', '复制', '粘贴'], need: 2 };
+    return labels.filter(label => text.includes(label)).length >= need;
+};
+
+// 输入框 ContextFlyout 的文案特征：点错位置时会打开它，不能拿它冒充消息卡菜单。
+const isTextFlyoutText = (text) =>
+    text.includes('剪切') || text.includes('Ctrl+X') || text.includes('粘贴');
 
 // 声明式条件等待：按谓词 probe 轮询，避免盲目写死长延时
 const until = async (probe, timeoutMs = 20000, intervalMs = 200) => {
@@ -76,6 +162,22 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
         } catch (_) {}
 
         const page = await browser.newPage();
+        // 反例校验：缺字方框与空白图不能被中文可读性门禁接受。
+        const counterexample = `${OUT}/ocr-missing-glyphs.png`;
+        await page.setContent('<canvas width="640" height="160"></canvas>');
+        await page.evaluate(() => {
+            const c = document.querySelector('canvas');
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = 'white'; ctx.fillRect(0, 0, c.width, c.height);
+            ctx.strokeStyle = 'black'; ctx.lineWidth = 2;
+            for (let i = 0; i < 8; i++) ctx.strokeRect(20 + i * 70, 35, 40, 60);
+        });
+        await page.screenshot({ path: counterexample });
+        const missingText = ocrText(counterexample);
+        check('中文截图门禁拒绝缺字方框与空白',
+            !readablePopupText('tooltip', missingText) && !readablePopupText('contextmenu', missingText)
+            && !readablePopupText('flyout', missingText)
+            && !readablePopupText('tooltip', '') && !readablePopupText('contextmenu', ''));
         const errors = [];
         page.on('pageerror', (e) => errors.push(String(e)));
 
@@ -284,11 +386,33 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             await page.screenshot({ path: `${OUT}/smoke-esc-focus.png` });
             check('Esc 回焦：Esc 关闭菜单并恢复输入框焦点', Boolean(escRefocused));
 
+            // 记录阶段边界，定位焦点和草稿第一次偏离的位置，不以整段结束状态猜根因。
+            const traceInteraction = async (stage) => {
+                const focus = await page.evaluate(() => {
+                    const e = document.activeElement;
+                    return e ? { tag: e.tagName, id: e.id, cls: e.className } : null;
+                });
+                console.log('TRACE interaction ' + JSON.stringify({
+                    stage, focus, draft: await readDraftRaw(),
+                    keys: await page.evaluate(() => window.__wxSmokeKeys || []),
+                }));
+            };
+            await traceInteraction('before-palette');
+            await page.evaluate(() => {
+                window.__wxSmokeKeys = [];
+                document.addEventListener('keydown', e => {
+                    window.__wxSmokeKeys.push({ key: e.key, code: e.code, ctrl: e.ctrlKey, meta: e.metaKey, target: e.target.id });
+                }, true);
+            });
+
             // ---- 阶段 5：命令面板真实交互（从产品 UI 入口进入）----
-            // HostSwitcher 底部命令面板按钮 CSS(180, 796)
-            await page.mouse.click(180, 796);
+            // 使用已声明的快捷键，避免底部固定坐标误点其他操作。
+            await page.keyboard.down('Control');
+            await page.keyboard.press('k');
+            await page.keyboard.up('Control');
             await sleep(600);
-            await page.keyboard.type('theme');
+            await traceInteraction('palette-shortcut');
+            await cdp.send('Input.insertText', { text: '切换主题' });
             await sleep(400);
             await page.screenshot({ path: `${OUT}/smoke-palette.png` });
             const getRecents = () => page.evaluate(() => { try { return JSON.parse(localStorage.getItem('wanxiang.local:palette-recent.json') || '[]'); } catch (_) { return []; } });
@@ -297,27 +421,40 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             const recentPersisted = await until(async () => { const list = await getRecents(); return Array.isArray(list) && list.includes('act:theme'); }, 8000, 250);
             check('命令面板真实交互后果：过滤并回车执行命令后写入最近使用持久化记录', Boolean(recentPersisted), `recentBefore=${JSON.stringify(recentsBefore)} recentAfter=${recentPersisted ? 'recorded' : 'failed'}`);
 
+            await traceInteraction('after-palette-enter');
+
             // ---- 阶段 6：设置弹窗真实交互（从产品 UI 入口进入）----
             const getStoredPrefs = () => page.evaluate(() => { try { return JSON.parse(localStorage.getItem('wanxiang.local:ui.json') || '{}'); } catch (_) { return {}; } });
-            const prefsBefore = await getStoredPrefs();
-            // HostSwitcher 底部设置按钮 CSS(240, 796)
-            await page.mouse.click(240, 796);
-            await sleep(600);
-            await page.screenshot({ path: `${OUT}/smoke-settings.png` });
-            // 点击「外观与操作」分区
-            await page.mouse.click(280, 320);
-            await sleep(400);
-            // 点击开关尝试翻转偏好
+            // 未保存的字段按产品 UiPrefs.defaults 解释，不能把缺省值当作未知后跳过比较。
+            const prefsBefore = {
+                enterSends: true, autoCollapseReasoning: true, codeWrap: false,
+                reduceMotion: false, showArchived: false,
+                ...await getStoredPrefs(),
+            };
+            await page.keyboard.down('Control');
+            await page.keyboard.press(',');
+            await page.keyboard.up('Control');
+            // 浏览器里的 Avalonia 键盘入口始终是隐藏 input，不能拿 DOM activeElement
+            // 判断设置导航是否持焦。等打开后的布局稳定，再把方向键交给设置页。
+            await sleep(900);
+            // 分区会记住上次位置，先回到首项再定位外观，避免相对移动落到其他分区。
+            await page.keyboard.press('Home');
+            for (let i = 0; i < 4; i++) {
+              await page.keyboard.press('ArrowDown');
+              await sleep(200);
+            }
+            await page.screenshot({ path: `${OUT}/smoke-settings-appearance.png` });
+            // 固定 1200×800 视口：点击截图中外观选项的文字行，验收以持久化变更为准。
             let prefToggled = false, toggledKey = '';
-            for (const y of [260, 310, 360, 410, 460]) {
-              await page.mouse.click(900, y);
+            for (const y of [480, 540, 600, 660, 720]) {
+              await page.mouse.click(500, y);
               await sleep(300);
               const cur = await getStoredPrefs();
               for (const key of ['enterSends', 'autoCollapseReasoning', 'codeWrap', 'reduceMotion', 'showArchived']) {
                 if (cur[key] !== undefined && prefsBefore[key] !== undefined && cur[key] !== prefsBefore[key]) {
                   prefToggled = true;
                   toggledKey = `${key}: ${prefsBefore[key]} -> ${cur[key]}`;
-                  await page.mouse.click(900, y);
+                  await page.mouse.click(500, y);
                   await sleep(300);
                   break;
                 }
@@ -422,6 +559,11 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 `darkLum=${typeof darkLuminance === 'number' ? darkLuminance.toFixed(1) : darkLuminance} lightLum=${typeof lightLuminance === 'number' ? lightLuminance.toFixed(1) : lightLuminance}`);
 
             // ---- 阶段 8：重开页面恢复草稿验证 ----
+            // 菜单粘贴已修改草稿；恢复必须保留重开前的完整文本，而非粘贴前的旧值。
+            const draftBeforeReload = await readDraftRaw();
+            check('面板与设置操作不改写草稿',
+                draftBeforeReload.includes(EXPECTED) && draftBeforeReload.includes(CLIP_TOKEN),
+                `draft=${JSON.stringify(draftBeforeReload.slice(0, 160))}`);
             await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
             await canvasUp();
             await page.evaluate(() => {
@@ -439,7 +581,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 return raw.includes(SUFFIX) ? raw : false;
             }, 15000, 300);
 
-            const EXPECTED_AFTER = EXPECTED + SUFFIX;
+            const EXPECTED_AFTER = draftBeforeReload + SUFFIX;
             const restored = focusBack && restoredRaw === EXPECTED_AFTER;
             await page.screenshot({ path: `${OUT}/smoke-restored.png` });
 
@@ -459,13 +601,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // 所以判据只能是**像素**：开/关弹出层各截一张画布，求差得到弹出层的
             // 外接矩形，再在这块矩形里统计字形笔画。
             //
-            // 统计量有两个，各自的作用分开说（别把没起作用的判据当门禁）：
-            //   meanRuns（每行笔画段数的均值）—— 只用来跟正文比「笔画密度」；
-            //     正常字形与正文接近（实测 0.76~0.99）。但它**不能识别豆腐块**：
-            //     .notdef 空心方框每行也有好几段笔画，实测均值和正文差不多。
-            //   distinctShapes / 有笔画行数（形状多样性）—— 才是识别豆腐块的判据。
-            //     豆腐块每个字同形 → 每行形状雷同，实测 0.06；真字形各不相同 →
-            //     实测 tooltip 1.00、contextmenu 1.00、flyout 0.69、正文 0.63。
+            // 笔画数和行形状仅用于诊断；可读性由独立 OCR 对指定中文作验收。
             const GRID_W = 240, GRID_H = 160, CELL = 10; // 网格覆盖整张画布，1 格 = 10 设备像素
             const canvasCount = () => page.evaluate(() => document.querySelectorAll('canvas').length);
             const snapAll = async () => {
@@ -552,10 +688,14 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                     if (runs > 0) { rowRuns.push(runs); rowShapes.add(shape); }
                 }
                 const meanRuns = rowRuns.length ? rowRuns.reduce((a, b) => a + b, 0) / rowRuns.length : 0;
+                const glyphRows = rowRuns.filter(runs => runs >= 4);
+                const glyphMeanRuns = glyphRows.length
+                    ? glyphRows.reduce((a, b) => a + b, 0) / glyphRows.length
+                    : meanRuns;
                 // distinctShapes：这一段文字里**不同形状的行**有多少种。
                 // 豆腐块（.notdef 空心方框）所有字一样 → 行形状只有几种；
                 // 真正的中日韩字形各不相同 → 行形状很多。
-                return { w: sw, h: sh, ink, inkFrac: ink / (sw * sh), rows: rowRuns.length, meanRuns, distinctShapes: rowShapes.size };
+                return { w: sw, h: sh, ink, inkFrac: ink / (sw * sh), rows: rowRuns.length, meanRuns, glyphMeanRuns, distinctShapes: rowShapes.size };
             }, { i: canvasIdx, bb });
             // 弹出层的截图（CSS 坐标裁剪，1 网格格 = 10 设备像素 = 5 CSS 像素）。
             const shotRegion = async (name, bb) => {
@@ -566,49 +706,49 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 });
                 return path;
             };
-            // 一个弹出层的完整判据：
-            //   1) 出现了（有变化区域）；
-            //   2) 文字不是豆腐块 —— 判据**自校准**：拿弹出层里的文字与**同一次渲染里
-            //      界面正文的中文**比。豆腐块（.notdef 空心方框）每个字都一样，
-            //      所以「每行笔画段数的均值」低、「不同形状的行数」少；
-            //      真正的中日韩字形笔画多、形状各异。
-            //      判据用**比值**：弹出层笔画密度不应低于正文中文的 70%。
-            //      若正文中文本身就是豆腐块（本机 headless Chrome 的字体限制），
-            //      这次弹出层检查判为 SKIP，而不是把环境缺陷算成产品缺陷。
+            // 弹出层验收：两帧差异证明出现，截图识别证明指定中文确实可读。
+            // 像素统计只作诊断，不以不同长度文字的笔画数比值判定缺字。
             let bodyRef = null; // 正文中文的笔画基准：{ meanRuns, distinctShapes }
             const measureBodyChinese = async () => {
                 // 主内容区（已打开的对话正文）左半部分，避开侧栏。
                 const bb = { x: 60, y: 20, w: 90, h: 60 };
                 const s = await regionStats(0, bb);
                 if (!s || s.inkFrac <= 0.005) return null;
-                return { meanRuns: s.meanRuns, distinctShapes: s.distinctShapes, inkFrac: s.inkFrac };
+                return { meanRuns: s.glyphMeanRuns, distinctShapes: s.distinctShapes, inkFrac: s.inkFrac };
             };
-            const assertPopup = async (name, region, bb) => {
+            // 把一个弹出层区域放大后识别成文字。扫描阶段用它分辨「点到的是哪个菜单」，
+            // 验收阶段用它证明指定中文可读。
+            const popupText = async (name, region) => {
+                const ocrPath = `${OUT}/popup-${name}-ocr.png`;
+                const ocrImage = await page.evaluate(({ canvas, bb }) => {
+                    const source = document.querySelectorAll('canvas')[canvas];
+                    const output = document.createElement('canvas');
+                    output.width = bb.w * 40;
+                    output.height = bb.h * 40;
+                    const ctx = output.getContext('2d');
+                    ctx.drawImage(source, bb.x * 10, bb.y * 10, bb.w * 10, bb.h * 10,
+                        0, 0, output.width, output.height);
+                    return output.toDataURL('image/png').split(',')[1];
+                }, region);
+                writeFileSync(ocrPath, Buffer.from(ocrImage, 'base64'));
+                return ocrText(ocrPath);
+            };
+            const assertPopup = async (name, region, bb, recognized) => {
                 if (!region) { check(`弹出层 ${name} 出现`, false, '开/关两帧没有差异区域'); return null; }
                 const stats = await regionStats(region.canvas, region.bb);
                 const path = await shotRegion(name, region.bb);
                 check(`弹出层 ${name} 出现`, true, `canvas=${region.canvas} rect=${region.bb.w}x${region.bb.h} 截图=${path}`);
                 if (!stats || stats.inkFrac <= 0.01) {
-                    checkSkip(`弹出层 ${name} 文字不是豆腐块`, '弹出层区域没有可见文字', `inkFrac=${stats ? stats.inkFrac.toFixed(3) : 'n/a'}`);
+                    check(`弹出层 ${name} 中文文字可读`, false, '弹出层区域没有可见文字');
                     return stats;
                 }
-                const detail = `inkFrac=${stats.inkFrac.toFixed(3)} meanRuns=${stats.meanRuns.toFixed(2)} distinctShapes=${stats.distinctShapes}`;
-                if (!bodyRef) {
-                    checkSkip(`弹出层 ${name} 文字不是豆腐块`, '界面正文本身没有可测的中文，无法自校准', detail);
-                    return stats;
-                }
-                // 自校准：弹出层的笔画密度至少要达到正文中文的 70%。
-                const ratio = bodyRef.meanRuns > 0 ? stats.meanRuns / bodyRef.meanRuns : 0;
-                // distinctShapes 是**绝对**计数，上限就是「有笔画的行数」：tooltip 那种
-                // 34x7 的小提示条只有 26 条笔画行，形状数最多也就 26，永远够不到正文
-                // 900x600 区域测出的 147。拿绝对数比是量纲错误，会稳定误报。
-                // 改成比**每行形状多样性**（distinctShapes / 有笔画行数）：字形越丰富该值越高，
-                // 豆腐块则所有字同形、该值趋近 1/行数（每行只有一种形状）。实测：
-                // tooltip 1.00、flyout 0.73、正文 0.63 —— 小区域反而更高，与尺寸无关。
-                const shapeDiversity = stats.rows > 0 ? stats.distinctShapes / stats.rows : 0;
-                const shapeOk = shapeDiversity >= 0.3;
-                check(`弹出层 ${name} 文字不是豆腐块`, ratio >= 0.7 && shapeOk,
-                    `${detail} 形状多样性=${shapeDiversity.toFixed(2)} 正文基准 meanRuns=${bodyRef.meanRuns.toFixed(2)} 比值=${ratio.toFixed(2)}`);
+                const detail = `inkFrac=${stats.inkFrac.toFixed(3)}`;
+                // 短标签与长正文的每行字数不同，不能用笔画总数比值判定缺字。
+                // 直接读取当前截图的中文；空白或重复方框不能满足明确文字契约。
+                const text = typeof recognized === 'string' ? recognized : await popupText(name, region);
+                const readable = readablePopupText(name, text);
+                check(`弹出层 ${name} 中文文字可读`, readable,
+                    `识别=${JSON.stringify(text)} ${detail}`);
                 return stats;
             };
             const closePopups = async () => {
@@ -617,61 +757,115 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 await sleep(400);
             };
 
-            // (0) 先打开种子对话（主内容区出现中文正文），量出**界面正文的中文笔画基准**，
-            //     后面三个弹出层都拿它自校准：弹出层是弹出层自己的字体问题，
-            //     正文是同一套渲染路径的对照组。
+            // (0) 先打开种子对话（主内容区出现中文正文）。
+            //     判据不能只看「主内容区有像素变化」：侧栏点击会让选中态高亮变化，
+            //     空态页面同样有差异，于是「没打开对话」会被判成打开。这里用截图的
+            //     文字包围盒定位侧栏里的对话标题并点它，再用正文文字确认已打开。
+            const shotPath = async (name) => {
+                const p = `${OUT}/${name}.png`;
+                await page.screenshot({ path: p });
+                return p;
+            };
+            // 定位用的识别统一走这里：先把画布按 2 倍放大导出再识别。
+            // 侧栏文字在原始 2400×1600 截图里太小，Tesseract 会切成乱码（「新建对话」→ `EHS`）；
+            // 放大后两个平台都能读出完整词。返回的包围盒仍是 CSS 坐标。
+            const OCR_SCALE = 2;
+            const ocrShot = async (name) => {
+                const p = `${OUT}/${name}-ocr.png`;
+                const b64 = await page.evaluate((scale) => {
+                    const c = document.querySelector('canvas');
+                    if (!c) return '';
+                    const out = document.createElement('canvas');
+                    out.width = Math.round(c.clientWidth * scale);
+                    out.height = Math.round(c.clientHeight * scale);
+                    out.getContext('2d').drawImage(c, 0, 0, out.width, out.height);
+                    return out.toDataURL('image/png').split(',')[1];
+                }, OCR_SCALE);
+                if (!b64) return [];
+                writeFileSync(p, Buffer.from(b64, 'base64'));
+                // 画布位图是 CSS × DPR，导出时已缩放到 CSS × OCR_SCALE，
+                // 所以 OCR 像素 ÷ OCR_SCALE 就是 CSS 坐标（DPR 已在这一步消掉）。
+                return runOcr(p).map((w) => ({
+                    ...w,
+                    left: w.left / OCR_SCALE,
+                    top: w.top / OCR_SCALE,
+                    width: w.width / OCR_SCALE,
+                    height: w.height / OCR_SCALE,
+                }));
+            };
+            await shotPath('smoke-before-popups');
+            const sidebarWords = await ocrShot('smoke-sidebar');
+            const seedTitle = findPhrase(sidebarWords, '中文冒烟');
             let opened = false;
-            for (const y of [140, 170, 200, 230, 110]) {
-                for (const x of [110, 150, 80]) {
-                    const before = await snapAll();
-                    await page.mouse.click(x, y);
-                    await sleep(900);
-                    const region = await popupRegion(before);
-                    if (region && region.bb.x > 40) { opened = true; break; }
-                }
-                if (opened) break;
+            let openedShot = `${OUT}/smoke-opened.png`;
+            if (seedTitle) {
+                const pt = wordCenterCss(seedTitle);
+                await page.mouse.click(pt.x, pt.y);
+                await sleep(1200);
+                const openedWords = await ocrShot('smoke-opened');
+                const body = findPhrase(openedWords, '你好');
+                opened = Boolean(body);
+                check('侧栏点「中文冒烟」后主内容区出现该对话正文', opened,
+                    `标题包围盒=${JSON.stringify(seedTitle)} 正文=${JSON.stringify(body ? body.text : '')}`);
+            } else {
+                check('侧栏点「中文冒烟」后主内容区出现该对话正文', false, '截图里没有识别到侧栏对话标题');
             }
-            check('侧栏对话可打开（主内容区有变化）', opened);
+            // 正文的语义判据已由上面的文字识别给出；这里的像素基准只作诊断对照。
             bodyRef = await measureBodyChinese();
             check('界面正文有可测的中文（自校准基准）', !!bodyRef,
                 bodyRef ? `meanRuns=${bodyRef.meanRuns.toFixed(2)} distinctShapes=${bodyRef.distinctShapes} inkFrac=${bodyRef.inkFrac.toFixed(3)}` : '主内容区没有测到文字');
 
             // (1) ToolTip：悬停侧栏「新建对话」按钮（提示是「新建对话（Ctrl / ⌘ + N）」）。
-            //     提示条是**扁而宽**的矩形，出现在按钮下方/右侧。
+            //     位置同样由截图文字给出，不盲扫坐标。
             let tipFound = null;
-            for (const y of [150, 120, 180, 90, 210, 60, 240]) {
-                for (const x of [110, 60, 160, 200, 30]) {
-                    const before = await snapAll();
-                    await page.mouse.move(x, y);
-                    await sleep(700);
-                    const region = await popupRegion(before);
-                    if (region && region.bb.w > 12 && region.bb.w > region.bb.h * 1.5 && region.bb.h < 14) {
-                        tipFound = region; break;
-                    }
-                }
-                if (tipFound) break;
+            const newChatWord = findPhrase(await ocrShot('smoke-tooltip-anchor'), '新建对话');
+            if (newChatWord) {
+                const pt = wordCenterCss(newChatWord);
+                const before = await snapAll();
+                await page.mouse.move(pt.x, pt.y);
+                await sleep(900);
+                const region = await popupRegion(before);
+                // 提示条是扁矩形：比高宽得多，且不占满整屏。具体尺寸随文案与字体变，
+                // 不用写死数字阈值。
+                if (region && region.bb.w > region.bb.h * 1.2 && region.bb.w < 120) tipFound = region;
+                check('悬停「新建对话」出现提示条', true,
+                    `包围盒=${JSON.stringify(newChatWord)} 提示区=${region ? `${region.bb.w}x${region.bb.h}` : '无差异'}`);
+            } else {
+                check('悬停「新建对话」出现提示条', false, '截图里没有识别到「新建对话」');
             }
             await assertPopup('tooltip', tipFound, tipFound && tipFound.bb);
             await closePopups();
 
             // (2) 上下文菜单：在消息卡上右键。
-            //     消息卡的实际位置随窗口与内容变化，写死坐标会点到空白处（空白处没有
-            //     ContextMenu，开/关两帧无差异 → 误报「菜单没出现」）。这里扫主内容区
-            //     （避开左侧栏 x<300 与底部输入区 y>560）找一张真的能弹出菜单的卡。
-            let menuRegion = null;
-            const menuSpots = [];
-            for (const y of [300, 340, 380, 420, 260, 460, 500]) {
-                for (const x of [600, 700, 500, 800, 400, 900]) menuSpots.push([x, y]);
-            }
-            for (const [x, y] of menuSpots) {
+            //     消息卡的位置随窗口与内容变化，写死坐标或盲扫网格都会点到别的控件
+            //     （输入区开出的是 Fluent 的「剪切/复制/粘贴」文本浮层，侧栏会话行开出的是
+            //     会话菜单，两者同样有差异区域，却不是消息卡菜单）。这里用**主内容区**里
+            //     正文文字的包围盒定位那张卡，再在它身上右键。
+            const bodyWords = await ocrShot('smoke-contextmenu-anchor');
+            const bodyWord =
+                findPhraseInMain(bodyWords, '你好') || findPhraseInMain(bodyWords, '世界');
+            let menuRegion = null, menuText = null;
+            if (bodyWord) {
+                const pt = wordCenterCss(bodyWord);
                 const before = await snapAll();
-                await page.mouse.click(x, y, { button: 'right' });
+                await page.mouse.click(pt.x, pt.y, { button: 'right' });
                 await sleep(700);
-                menuRegion = await popupRegion(before);
-                if (menuRegion && menuRegion.bb.h >= 6) break;
-                await closePopups();
+                const region = await popupRegion(before);
+                if (region && region.bb.h >= 6) {
+                    menuText = await popupText('contextmenu', region);
+                    if (isTextFlyoutText(menuText)) {
+                        check('消息卡右键开出的是消息卡菜单（不是输入框文本浮层）', false,
+                            `识别=${JSON.stringify(menuText)} 右键点=(${pt.x.toFixed(0)},${pt.y.toFixed(0)})`);
+                        menuText = null;
+                    } else {
+                        menuRegion = region;
+                    }
+                }
+            } else {
+                check('消息卡右键开出的是消息卡菜单（不是输入框文本浮层）', false, '正文卡片位置未识别到');
             }
-            await assertPopup('contextmenu', menuRegion, menuRegion && menuRegion.bb);
+            // 先验收再关闭：closePopups 会把菜单关掉，之后截图就是空的。
+            await assertPopup('contextmenu', menuRegion, menuRegion && menuRegion.bb, menuText);
             await closePopups();
 
             // (3) 输入框右键菜单（MenuFlyoutPresenter）：右键到真正聚焦过的那个点。

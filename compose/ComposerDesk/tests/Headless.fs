@@ -27,3 +27,7 @@ module Headless =
         session.Value.Dispatch(Action body, CancellationToken.None).GetAwaiter().GetResult()
 
 /// 测试用的活尺寸：模拟主题管理者改值。
+
+// Avalonia 平台状态与 HeadlessUnitTestSession 是进程级全局量，多模块并行会并发调用 EnsureIsolatedApplication 互踩。
+[<assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)>]
+do ()

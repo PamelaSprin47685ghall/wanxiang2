@@ -233,6 +233,8 @@ jobs:
         with: { name: feed, path: artifacts/feed }
       - run: dotnet workload install wasm-tools --skip-manifest-update || dotnet workload install wasm-tools
       - run: npm ci
+      - name: 安装中文截图识别依赖
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-chi-sim
       - run: WX_SKIP_PACK=1 bash publish.sh linux-x64 v0.0.0-ci
       - name: 发布产物冒烟
         run: |

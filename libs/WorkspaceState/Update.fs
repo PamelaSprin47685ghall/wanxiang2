@@ -1294,7 +1294,7 @@ module Workspace =
                     { model with
                         Settings = { model.Settings with Open = false }
                     },
-                    []
+                    [ Effect.Focus FocusTarget.ComposerInput ]
                 | SettingsUserMsg.PrefsChanged prefs -> { model with Prefs = prefs }, [ Effect.PrefsSave prefs ]
 
             | UserMsg.Devices deviceMsg ->

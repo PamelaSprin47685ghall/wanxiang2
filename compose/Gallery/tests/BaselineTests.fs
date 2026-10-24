@@ -30,6 +30,31 @@ module BaselineTests =
             | other -> failwithf "期望缺失基线报告红灯，实际返回: %A" other)
 
     [<Fact>]
+    let ``PNG 往返保持红蓝通道与像素值`` () =
+        Headless.run (fun () ->
+            use bitmap =
+                new WriteableBitmap(
+                    PixelSize(2, 1),
+                    Vector(96.0, 96.0),
+                    Avalonia.Platform.PixelFormat.Bgra8888,
+                    Avalonia.Platform.AlphaFormat.Premul
+                )
+
+            let expected = [| 0xFF123456u; 0xFFABCDEFu |]
+            let bytes = Array.zeroCreate<byte> 8
+            Buffer.BlockCopy(expected, 0, bytes, 0, bytes.Length)
+
+            (use frame = bitmap.Lock()
+             Runtime.InteropServices.Marshal.Copy(bytes, 0, frame.Address, bytes.Length))
+
+            use stream = new MemoryStream()
+            bitmap.Save(stream, PngBitmapEncoderOptions())
+            stream.Position <- 0L
+            use loaded = new Bitmap(stream)
+            let _, _, actual = Baseline.extractPixels loaded
+            Assert.Equal<uint32>(expected, actual))
+
+    [<Fact>]
     let ``同图比较必定 100% 匹配（Match）`` () =
         Headless.run (fun () ->
             let entry = Gallery.find "ComposerBox.idle" |> Option.get

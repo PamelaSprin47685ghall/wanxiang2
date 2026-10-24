@@ -10,6 +10,8 @@ open Avalonia.Automation.Provider
 open Avalonia.Controls
 open Avalonia.Controls.Documents
 open Avalonia.Input
+open Avalonia.Input.Raw
+open Avalonia.Headless
 open Avalonia.Threading
 open Avalonia.VisualTree
 open Xunit
@@ -616,6 +618,29 @@ let ``sidebar marks fork rows and does not search when no handler is wired`` () 
         Assert.DoesNotContain("正在搜索", String.Join("\n", Desk.texts r.desk.View)))
 
 // ---- UiStabilityTests ----
+
+[<Fact>]
+let ``unchanged projection between pointer press and release still opens conversation`` () =
+    Headless.run (fun () ->
+        let r = setup ()
+        let a = conv "中文冒烟"
+        load r [ a ]
+        let host = row r a
+        let point = host.TranslatePoint(Point(10.0, 10.0), r.window).Value
+        r.window.MouseDown(point, MouseButton.Left, RawInputModifiers.None)
+        pump ()
+
+        // 模拟宿主 250 ms Tick：业务投影没变，但按下与释放之间仍会渲染。
+        r.desk.Render
+            { emptySidebarVS () with
+                Rows = [ rowVS a ]
+            }
+
+        r.window.UpdateLayout()
+        pump ()
+        r.window.MouseUp(point, MouseButton.Left, RawInputModifiers.None)
+        pump ()
+        Assert.Equal<string list>([ sprintf "open %O" a.id ], List.ofSeq r.log.Items))
 
 [<Fact>]
 let ``changing active sidebar row does not rebuild the conversation list`` () =

@@ -597,14 +597,22 @@ module Gallery =
             {
                 Name = "ChatEmpty.empty"
                 Widget = "ChatEmpty"
-                Note = "对话区空态欢迎页（起手式芯片与欢迎提示）"
+                Note = "对话区空态：从一句开始，三行起手式"
                 Steps = Scenes.withConversation (JsonArray())
                 Build =
                     fun ctx _ ->
                         let empty =
-                            Wanxiang2.ChatEmpty.ChatEmpty([ "整理会议要点", "帮我归纳讨论要点" ], Some ignore, ctx.BrandLogo)
+                            Wanxiang2.ChatEmpty.ChatEmpty(
+                                [
+                                    "用三句话说明这台主机现在能做什么", "用三句话说明这台主机现在能做什么"
+                                    "指出一份 TOML 配置里的错误", "指出一份 TOML 配置里的错误"
+                                    "把工具调用说成人话", "把工具调用说成人话"
+                                ],
+                                Some ignore,
+                                ctx.BrandLogo
+                            )
 
-                        empty.ShowPrompt("今天想讨论什么？", "发出第一条消息后，会自动建立对话。", None)
+                        empty.ShowPrompt("从一句开始", "模型、附件和发送都在下面。要找回以前的对话，用侧栏。", None)
                         empty.Host
             }
 

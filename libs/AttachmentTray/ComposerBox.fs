@@ -49,26 +49,28 @@ module private Dyn =
 type ComposerBox() =
     let input =
         TextBox(
-            PlaceholderText = "输入消息…",
+            PlaceholderText = "写下一句",
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
-            MinHeight = 44.0,
-            MaxHeight = 200.0,
+            MinHeight = 30.0,
+            MaxHeight = 240.0,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center
         )
 
     do input.Classes.Add "text-area"
+    do input.BorderThickness <- Thickness 0.0
+    do input.Background <- Brushes.Transparent
+    do input.Padding <- Thickness(0.0, 8.0, 0.0, 8.0)
     do AutomationProperties.SetName(input, "输入消息")
 
     let shell =
-        Border(CornerRadius = CornerRadius 8.0, BorderThickness = Thickness 1.0, Padding = Thickness(12.0, 8.0))
+        Border(CornerRadius = CornerRadius 16.0, BorderThickness = Thickness 1.0, Padding = Thickness(12.0, 8.0))
 
     do
-        shell.Bind(Border.BackgroundProperty, Dyn.res "Palette.Surface") |> ignore
+        shell.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceRaised") |> ignore
 
-        shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.ControlStroke")
-        |> ignore
+        shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Border") |> ignore
 
     let send =
         let b =
@@ -88,17 +90,23 @@ type ComposerBox() =
     let queue =
         let b =
             Button(
+                Content = "排队发送",
+                FontSize = 12.5,
                 Focusable = true,
                 Cursor = new Cursor(StandardCursorType.Hand),
                 VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Height = 34.0,
+                MinHeight = 34.0,
+                Padding = Thickness(8.0, 0.0),
+                CornerRadius = CornerRadius 8.0,
+                BorderThickness = Thickness 0.0,
                 IsVisible = false
             )
 
-        b.Classes.Add "icon-button"
-        b.Classes.Add "secondary"
-        b.Width <- 32.0
-        b.Height <- 32.0
-        b.Padding <- Thickness 0.0
+        b.Classes.Add "ghost"
+        b.Classes.Add "button-ghost"
+        b.Bind(Button.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
         b
 
     let attach =
@@ -141,7 +149,7 @@ type ComposerBox() =
     let mutable pendingCtl: Control option = None
 
     let outer =
-        StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0, MaxWidth = 800.0)
+        StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0, MaxWidth = 748.0)
 
     let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 6.0)
 
@@ -265,18 +273,8 @@ type ComposerBox() =
             send.Content <- p
             AutomationProperties.SetName(send, "发送")
 
-    let setQueueIcon () =
-        let p =
-            Path(
-                Data = Geometry.Parse "M 3 8 L 13 8 M 9 4 L 13 8 L 9 12",
-                StrokeThickness = 1.6,
-                Fill = Brushes.Transparent,
-                Width = 14.0,
-                Height = 14.0
-            )
-
-        p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
-        queue.Content <- p
+    /// 排队键是文字钮（react .text-btn「排队发送」）：常名与提示固定挂，内容不再换图标
+    let setQueueCaption () =
         AutomationProperties.SetName(queue, "排队发送")
         ToolTip.SetTip(queue, "排队发送")
 
@@ -304,8 +302,7 @@ type ComposerBox() =
             shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Accent") |> ignore
             dropHint.IsVisible <- false
         else
-            shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.ControlStroke")
-            |> ignore
+            shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Border") |> ignore
 
             dropHint.IsVisible <- false
 
@@ -315,16 +312,15 @@ type ComposerBox() =
             elif dragging && enabled then
                 "释放文件以添加到当前对话附件"
             else
-                "输入消息…"
+                "写下一句"
 
     let applySizes () =
-        let size = if compact then 36.0 else 32.0
+        let size = if compact then 44.0 else 30.0
         attach.Width <- size
         attach.Height <- size
         send.Width <- size
         send.Height <- size
-        queue.Width <- size
-        queue.Height <- size
+        // 排队键固定 34 高文字钮，不随紧凑档换尺寸（react .text-btn）
         context.IsVisible <- contextShown && not compact
 
     // 以下四个投影动作只在 Render 内部使用（测试改走 Render(vs)），不作为对外入口。
@@ -348,7 +344,7 @@ type ComposerBox() =
 
     do
         setSendIcon false
-        setQueueIcon ()
+        setQueueCaption ()
         setAttachIcon ()
 
         context.Content <- contextLabel
@@ -368,10 +364,10 @@ type ComposerBox() =
                 HorizontalAlignment = HorizontalAlignment.Right
             )
 
-        actionRow.Children.Add attach
         actionRow.Children.Add queue
         actionRow.Children.Add send
 
+        request.Children.Add attach
         request.Children.Add context
 
         let toolbar = Grid(ColumnSpacing = 8.0, RowSpacing = 4.0)
@@ -517,7 +513,8 @@ type ComposerBox() =
     /// 模型芯片控件插槽（宿主直注，非每帧投影）
     member _.SlotModel(c: Control) =
         modelCtl |> Option.iter (request.Children.Remove >> ignore)
-        request.Children.Insert(0, c)
+        let at = if request.Children.Contains attach then 1 else 0
+        request.Children.Insert(at, c)
         modelCtl <- Some c
 
     /// 未确认消息面板插槽（宿主直注，非每帧投影）

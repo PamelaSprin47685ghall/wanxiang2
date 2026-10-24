@@ -31,7 +31,7 @@ let ``闲置档：隐去或淡显，显示时全不透明`` () =
         Assert.Equal(0.0, opacity hidden.Host))
 
 [<Fact>]
-let ``按钮是方形命中区、带读屏名并执行动作`` () =
+let ``按钮带字、高 30、有读屏名并执行动作`` () =
     Headless.run (fun () ->
         let s = ActionStrip(StripRest.Hidden)
         let mutable hits = 0
@@ -39,9 +39,14 @@ let ``按钮是方形命中区、带读屏名并执行动作`` () =
         let b =
             s.Add(StripGlyph.Refresh, "重新生成", "重新生成", "丢弃最后一次回复并重新生成", fun () -> hits <- hits + 1)
 
-        Assert.Equal(30.0, b.Width)
+        Assert.Equal(30.0, b.Height)
+        Assert.True(Double.IsNaN b.Width)
+        let face = b.Content :?> StackPanel
+        Assert.Equal("重新生成", (face.Children[1] :?> TextBlock).Text)
+        Assert.Equal(box StripGlyph.Refresh, (face.Children[0]).Tag)
         Assert.Equal("丢弃最后一次回复并重新生成", AutomationProperties.GetHelpText b)
-        Assert.Contains("icon-button", b.Classes)
+        Assert.Contains("ghost", b.Classes)
+        Assert.DoesNotContain("icon-button", b.Classes)
 
         Assert.IsAssignableFrom<Avalonia.Automation.Provider.IInvokeProvider>(
             Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement b
@@ -51,7 +56,9 @@ let ``按钮是方形命中区、带读屏名并执行动作`` () =
         b.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent, b))
         Assert.Equal(1, hits)
         s.ApplyIcon(b, StripGlyph.Check, Brushes.Green)
-        Assert.Equal(box StripGlyph.Check, (b.Content :?> Control).Tag))
+        Assert.Equal(box StripGlyph.Check, (face.Children[0]).Tag)
+        s.ApplyCaption(b, "已复制")
+        Assert.Equal("已复制", (face.Children[1] :?> TextBlock).Text))
 
 [<Fact>]
 let ``复制读屏名带角色与序号`` () =
@@ -59,11 +66,13 @@ let ``复制读屏名带角色与序号`` () =
     Assert.Equal("复制助手消息", ActionStrip.copyName false None)
 
 [<Fact>]
-let ``按钮尺寸恒定为 30x30`` () =
+let ``按钮高度是 30，宽度跟文案`` () =
     Headless.run (fun () ->
         let s = ActionStrip(StripRest.Hidden)
         let b = s.Add(StripGlyph.Trash, "删", "删", "删", ignore)
         Assert.Equal(30.0, b.Height)
+        Assert.True(Double.IsNaN b.Width)
+        Assert.Equal("删", ((b.Content :?> StackPanel).Children[1] :?> TextBlock).Text)
         Assert.Equal(30.0, s.Host.MinHeight))
 
 let private invokeVia (c: Avalonia.Controls.Control) =

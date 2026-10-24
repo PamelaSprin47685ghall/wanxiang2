@@ -6,8 +6,21 @@ open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Input
 open Avalonia.Layout
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Avalonia.Controls.Shapes
 open Wanxiang2.WorkspaceState
+
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
+        ext.ProvideValue sp
 
 /// 搜索框按键；组合者置 Handled 表示已接手
 type SearchKeyArgs(key: Key) =
@@ -19,8 +32,14 @@ type SearchKeyArgs(key: Key) =
 /// 控件自身只 Render(SearchBoxVS)。
 type SidebarSearch() =
     let box =
-        let tb = TextBox(PlaceholderText = "搜索对话")
-        tb.Classes.Add "control-stroke"
+        let tb =
+            TextBox(
+                PlaceholderText = "搜索标题和正文",
+                BorderThickness = Thickness 0.0,
+                Background = Brushes.Transparent,
+                Padding = Thickness 0.0
+            )
+
         tb.VerticalAlignment <- VerticalAlignment.Center
         tb
 
@@ -88,10 +107,22 @@ type SidebarSearch() =
         b
 
     let searchIcon =
-        TextBlock(Text = "🔍", VerticalAlignment = VerticalAlignment.Center, Margin = Thickness(0.0, 0.0, 8.0, 0.0))
+        let p =
+            Path(
+                Data = Geometry.Parse "M 6 6 A 4 4 0 1 1 6 6.01 M 9 9 L 13 13",
+                StrokeThickness = 1.4,
+                Fill = Brushes.Transparent,
+                Width = 14.0,
+                Height = 14.0,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = Thickness(0.0, 0.0, 8.0, 0.0)
+            )
+
+        p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextFaint") |> ignore
+        p
 
     let view =
-        AutomationProperties.SetName(box, "搜索对话")
+        AutomationProperties.SetName(box, "搜索标题和正文")
         reserve false
 
         let row =
@@ -103,8 +134,19 @@ type SidebarSearch() =
         row.Children.Add searchIcon
         row.Children.Add clearButton
         row.Children.Add box
-        let area = Border(Child = row)
-        area.Padding <- Thickness(16.0, 8.0)
+
+        let area =
+            Border(
+                Child = row,
+                CornerRadius = CornerRadius 8.0,
+                BorderThickness = Thickness 1.0,
+                Padding = Thickness(12.0, 0.0),
+                Margin = Thickness(12.0, 12.0, 12.0, 4.0),
+                Height = 44.0
+            )
+
+        area.Bind(Border.BackgroundProperty, Dyn.res "Palette.Surface") |> ignore
+        area.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Border") |> ignore
         area
 
     do

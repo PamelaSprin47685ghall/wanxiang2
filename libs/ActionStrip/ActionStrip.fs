@@ -25,7 +25,7 @@ type StripGlyph =
 type StripRest =
     /// 完全隐去（仍占位、可命中、可聚焦，只改不透明度）
     | Hidden
-    /// 淡显（最新一条助手回复用作可发现锚点）
+    /// 恒显（对齐 react：msg-actions 不随悬停淡出，闲置也全程可见）
     | Subtle
 
 module private Dyn =
@@ -54,7 +54,7 @@ type ActionStrip(rest: StripRest) =
         )
 
     let mutable shown = false
-    let mutable subtle = 0.55
+    let mutable subtle = 1.0
 
     let apply () =
         row.Opacity <-
@@ -107,30 +107,58 @@ type ActionStrip(rest: StripRest) =
 
         p :> Control
 
-    /// 换按钮的图标（复制确认时换成对勾）
+    /// 换按钮里的图标，留下旁边的文案。
     member _.ApplyIcon(button: Button, glyph: StripGlyph, ?brush: IBrush) =
         let g = ActionStrip.GlyphControl(glyph, ?brush = brush)
-        button.Content <- g
 
-    /// 加一个图标按钮：tip 是悬停提示，name / help 是读屏名与说明
-    member this.Add(glyph: StripGlyph, tip: string, name: string, help: string, action: unit -> unit) : Button =
+        match button.Content with
+        | :? StackPanel as face when face.Children.Count > 0 ->
+            face.Children.RemoveAt 0
+            face.Children.Insert(0, g)
+        | _ -> button.Content <- g
+
+    /// 换按钮上看得见的字（复制确认时写成「已复制」）。
+    member _.ApplyCaption(button: Button, text: string) =
+        match button.Content with
+        | :? StackPanel as face ->
+            for child in face.Children do
+                match child with
+                | :? TextBlock as caption -> caption.Text <- text
+                | _ -> ()
+        | _ -> ()
+
+    /// 加一个带字的小按钮：tip 就是按钮上的字，也是悬停提示。name / help 是读屏名与说明。
+    member _.Add(glyph: StripGlyph, tip: string, name: string, help: string, action: unit -> unit) : Button =
         let button =
             Button(
                 Focusable = true,
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Margin = Thickness 0.0,
-                Padding = Thickness 0.0,
-                Width = 30.0,
+                Padding = Thickness(8.0, 0.0),
                 Height = 30.0,
-                MinWidth = 30.0,
                 MinHeight = 30.0,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             )
 
-        button.Classes.Add "icon-button"
         button.Classes.Add "ghost"
-        this.ApplyIcon(button, glyph)
+
+        let caption =
+            TextBlock(Text = tip, FontSize = 12.0, VerticalAlignment = VerticalAlignment.Center)
+
+        caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint")
+        |> ignore
+
+        let face =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 4.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
+        face.Children.Add(ActionStrip.GlyphControl glyph)
+        face.Children.Add caption
+        button.Content <- face
         ToolTip.SetTip(button, tip)
         AutomationProperties.SetName(button, name)
         AutomationProperties.SetHelpText(button, help)

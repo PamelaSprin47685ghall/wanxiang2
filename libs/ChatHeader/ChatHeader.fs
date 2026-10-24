@@ -99,7 +99,8 @@ type ChatHeader() =
     let titleText =
         TextBlock(
             Text = "",
-            FontWeight = FontWeight.Medium,
+            FontSize = 16.0,
+            FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
             HorizontalAlignment = HorizontalAlignment.Stretch
@@ -123,7 +124,8 @@ type ChatHeader() =
     let editBox =
         TextBox(
             PlaceholderText = "对话标题",
-            FontWeight = FontWeight.Medium,
+            FontSize = 16.0,
+            FontWeight = FontWeight.SemiBold,
             Padding = Thickness(4.0, 2.0),
             MinHeight = 24.0,
             Margin = Thickness 0.0,
@@ -193,7 +195,13 @@ type ChatHeader() =
         b.Classes.Add "button-ghost"
         b
 
-    let crumbBar = Border(IsVisible = false, Child = crumbAction)
+    let crumbLine =
+        StackPanel(Orientation = Orientation.Horizontal, Spacing = 8.0, VerticalAlignment = VerticalAlignment.Center)
+
+    let crumbBar = Border(IsVisible = false, Child = crumbLine)
+
+    let titleBlock =
+        StackPanel(Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center)
 
     let leftGroup =
         Grid(VerticalAlignment = VerticalAlignment.Center, ColumnSpacing = 8.0)
@@ -312,48 +320,29 @@ type ChatHeader() =
             if crumbClickable then
                 crumbPressed.Trigger())
 
+        // 标题块：标题在上、面包屑与生成指示同列在下（react 的 title-block 列）
+        titleBlock.Children.Add titleHost
+        titleBlock.Children.Add crumbBar
+
         leftGroup.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
         leftGroup.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
-        leftGroup.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
         Grid.SetColumn(sidebarButton, 0)
-        Grid.SetColumn(titleHost, 1)
-        Grid.SetColumn(generatingChip, 2)
+        Grid.SetColumn(titleBlock, 1)
         leftGroup.Children.Add sidebarButton
-        leftGroup.Children.Add titleHost
-        leftGroup.Children.Add generatingChip
+        leftGroup.Children.Add titleBlock
 
         rightGroup.Children.Add moreButton
         DockPanel.SetDock(rightGroup, Dock.Right)
         dock.Children.Add rightGroup
         dock.Children.Add leftGroup
 
-        let crumbIcon =
-            Path(
-                Data = Geometry.Parse "M 4 4 L 4 10 L 10 10 M 4 10 L 12 4",
-                StrokeThickness = 1.2,
-                Fill = Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Width = 12.0,
-                Height = 12.0
-            )
-
-        crumbIcon.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
-
-        let crumbRow =
-            StackPanel(
-                Orientation = Orientation.Horizontal,
-                Spacing = 6.0,
-                VerticalAlignment = VerticalAlignment.Center
-            )
-
-        crumbRow.Children.Add crumbIcon
-        crumbRow.Children.Add crumbText
-        crumbAction.Content <- crumbRow
+        // 面包屑无图标（react .crumb 是纯文字）；生成指示与其同住一行
+        crumbAction.Content <- crumbText
+        crumbLine.Children.Add generatingChip
+        crumbLine.Children.Add crumbAction
 
         top.Children.Add dock
-        top.Children.Add crumbBar
-        bar.Height <- 38.0
+        bar.Height <- 52.0
         bar.BorderThickness <- Thickness(0.0, 0.0, 0.0, 1.0)
 
     /// 布局根节点
@@ -427,25 +416,28 @@ type ChatHeader() =
 
         syncChip ()
 
-        // 面包屑
-        match vs.Crumb with
-        | Some c ->
-            crumbClickable <- c.Clickable
-            crumbText.Text <- c.ParentTitle
-            crumbAction.Focusable <- c.Clickable
+        // 面包屑与生成指示同住标题下方一行：任一可见即整行可见（react crumb = streaming || fork）
+        let crumbTextShown =
+            match vs.Crumb with
+            | Some c ->
+                crumbClickable <- c.Clickable
+                crumbText.Text <- c.ParentTitle
+                crumbAction.Focusable <- c.Clickable
 
-            crumbAction.Cursor <-
-                if c.Clickable then
-                    new Cursor(StandardCursorType.Hand)
-                else
-                    null
+                crumbAction.Cursor <-
+                    if c.Clickable then
+                        new Cursor(StandardCursorType.Hand)
+                    else
+                        null
 
-            ToolTip.SetTip(crumbAction, c.ParentTitle)
-            AutomationProperties.SetName(crumbAction, c.ParentTitle)
-            crumbBar.IsVisible <- not (String.IsNullOrEmpty c.ParentTitle)
-        | None ->
-            crumbClickable <- false
-            crumbBar.IsVisible <- false
+                ToolTip.SetTip(crumbAction, c.ParentTitle)
+                AutomationProperties.SetName(crumbAction, c.ParentTitle)
+                not (String.IsNullOrEmpty c.ParentTitle)
+            | None ->
+                crumbClickable <- false
+                false
+
+        crumbBar.IsVisible <- crumbTextShown || (not isCompact && isGenerating)
 
     member _.BeginRename() = beginEdit ()
     member _.CommitRename(_refocus: bool) = commit ()

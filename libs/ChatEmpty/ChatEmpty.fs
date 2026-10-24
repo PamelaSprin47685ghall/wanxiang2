@@ -41,7 +41,7 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
         StackPanel(
             Orientation = Orientation.Vertical,
             Spacing = 0.0,
-            MaxWidth = 600.0,
+            MaxWidth = 480.0,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             IsVisible = false
@@ -49,7 +49,6 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
 
     let mutable primary: unit -> unit = ignore
     let mutable lastKey: (string * string * string option) option = None
-    let mutable bottom = false
 
     /// 起手式芯片（标签、种子、回调）：没有宿主回调就没有可用的芯片
     let starterChips =
@@ -93,16 +92,22 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
         let heading =
             TextBlock(
                 Text = title,
-                FontWeight = FontWeight.Medium,
-                TextAlignment = TextAlignment.Center,
-                TextWrapping = TextWrapping.Wrap
+                FontWeight = FontWeight.SemiBold,
+                TextAlignment = TextAlignment.Left,
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = HorizontalAlignment.Stretch
             )
 
         heading.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
-        heading.FontSize <- 20.0
+        heading.FontSize <- 25.0
 
         let caption =
-            TextBlock(Text = hint, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap)
+            TextBlock(
+                Text = hint,
+                TextAlignment = TextAlignment.Left,
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            )
 
         caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
         |> ignore
@@ -113,9 +118,9 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
         let column =
             StackPanel(
                 Orientation = Orientation.Vertical,
-                HorizontalAlignment = HorizontalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Spacing = 8.0,
-                MaxWidth = 560.0
+                MaxWidth = 480.0
             )
 
         column.Children.Add heading
@@ -123,7 +128,7 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
 
         action
         |> Option.iter (fun button ->
-            button.HorizontalAlignment <- HorizontalAlignment.Center
+            button.HorizontalAlignment <- HorizontalAlignment.Left
             column.Children.Add button)
 
         column :> Control
@@ -173,27 +178,47 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
 
     let starterRow () =
         let row =
-            WrapPanel(
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = Thickness(0.0, 12.0, 0.0, 0.0)
+            StackPanel(
+                Orientation = Orientation.Vertical,
+                Spacing = 8.0,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Margin = Thickness(0.0, 20.0, 0.0, 0.0)
             )
 
         for label, seed, pick in starterChips do
-            let chip =
-                textButton label false label None (sprintf "填入「%s」" seed) (fun () -> pick seed)
+            let rowButton =
+                Button(
+                    Content = label,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    MinHeight = 44.0,
+                    Padding = Thickness(16.0, 12.0),
+                    CornerRadius = CornerRadius 8.0,
+                    BorderThickness = Thickness 1.0,
+                    Focusable = true,
+                    Cursor = new Cursor(StandardCursorType.Hand)
+                )
 
-            chip.Name <- "starter-chip"
-            chip.Margin <- Thickness 4.0
-            row.Children.Add chip
+            rowButton.Bind(Button.BackgroundProperty, Dyn.res "Palette.SurfaceRaised")
+            |> ignore
+
+            rowButton.Bind(Button.BorderBrushProperty, Dyn.res "Palette.BorderSoft")
+            |> ignore
+
+            rowButton.Bind(Button.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+
+            rowButton.Name <- "starter-chip"
+            AutomationProperties.SetName(rowButton, label)
+            ToolTip.SetTip(rowButton, sprintf "填入「%s」" seed)
+            rowButton.Click.Add(fun _ -> pick seed)
+            row.Children.Add rowButton
 
         row :> Control
 
     let applyMargin () =
-        // 空态留白只由这里归属：左右取主题 Space.X2l；贴底时底部收紧到同档，否则留宽
-        let side = Res.float "Space.X2l" 16.0
-        let bottomPad = if bottom then side else 40.0
-        panel.Margin <- Thickness(side, 0.0, side, bottomPad)
+        // 空态留白只由这里归属：水平留白归滚动区 inset（ChatPane.emptyScroller），底统一 Space.Xl（react .starter 底 padding）
+        let bottomPad = Res.float "Space.Xl" 12.0
+        panel.Margin <- Thickness(0.0, 0.0, 0.0, bottomPad)
 
     do applyMargin ()
 
@@ -201,15 +226,13 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
     member _.Host: Control = panel
     member _.IsShown = panel.IsVisible
 
-    /// 紧凑起步：空态贴底（旧 SetMode）；垂直对齐与外边距只由这里一处归属
+    /// 起步模式：贴底档空态贴输入区；非贴底 = 顶部（react dock 档 starter 在滚动区顶部）
     member _.ApplyBottomAligned(value: bool) =
-        bottom <- value
-
         panel.VerticalAlignment <-
             if value then
                 VerticalAlignment.Bottom
             else
-                VerticalAlignment.Center
+                VerticalAlignment.Top
 
         applyMargin ()
 
@@ -310,12 +333,9 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
                     |> Option.defaultWith (fun () -> Border(Width = 64.0, Height = 64.0) :> Control)
 
                 this.ShowBrand(logo, title, hint, onPrimary)
-            | IdleEmptyKind.NoConversation ->
-                let title = "今天想讨论什么？"
-                let hint = "发出第一条消息后，会自动建立对话。"
-                this.ShowPrompt(title, hint, onPrimary)
+            | IdleEmptyKind.NoConversation
             | IdleEmptyKind.EmptyConversation ->
-                let title = "开始这段对话"
-                let hint = "输入问题，或附上一份文件。"
+                let title = "从一句开始"
+                let hint = "模型、附件和发送都在下面。要找回以前的对话，用侧栏。"
                 this.ShowPrompt(title, hint, onPrimary)
         | _ -> this.Hide()

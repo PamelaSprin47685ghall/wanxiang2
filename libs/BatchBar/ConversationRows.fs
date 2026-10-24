@@ -10,10 +10,22 @@ open Avalonia.Controls.Documents
 open Avalonia.Controls.Templates
 open Avalonia.Input
 open Avalonia.Layout
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
 open Avalonia.Threading
 open Avalonia.VisualTree
 open Wanxiang2.WorkspaceState
+
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
+        ext.ProvideValue sp
 
 /// 一段文字：是否为搜索命中
 type RowSpan = { Text: string; IsMatch: bool }
@@ -109,8 +121,22 @@ type ConversationRows() =
         if lit then
             if not (host.Classes.Contains "selected") then
                 host.Classes.Add "selected"
+
         else
             host.Classes.Remove "selected" |> ignore
+
+        match host with
+        | :? Button as button ->
+            button.BorderThickness <- if lit then Thickness(2.0, 0.0, 0.0, 0.0) else Thickness 0.0
+
+            if lit then
+                if not (button.Classes.Contains "current-fill") then
+                    button.Classes.Add "current-fill"
+                    button.Bind(Button.BackgroundProperty, Dyn.res "Palette.Selected") |> ignore
+            elif button.Classes.Contains "current-fill" then
+                button.Classes.Remove "current-fill" |> ignore
+                button.ClearValue Button.BackgroundProperty
+        | _ -> ()
 
         let status =
             match models.TryGetValue id with
@@ -185,13 +211,23 @@ type ConversationRows() =
 
         let title =
             TextBlock(
+                FontSize = 13.5,
                 FontWeight = FontWeight.Medium,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center
             )
 
         let preview =
-            TextBlock(TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center)
+            TextBlock(
+                FontSize = 11.5,
+                TextWrapping = TextWrapping.Wrap,
+                MaxLines = 2,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
+        preview.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint")
+        |> ignore
 
         let slot =
             Border(
@@ -202,22 +238,22 @@ type ConversationRows() =
                 Margin = Thickness(0.0, 0.0, 8.0, 0.0)
             )
 
+        // react 行首无槽位：只有运行中圆点占位，其余整槽收成 0 宽（置顶由分组头表达）
         if m.Running then
             let dot =
                 Border(
                     Width = 6.0,
                     Height = 6.0,
                     CornerRadius = CornerRadius 3.0,
-                    Background = Brushes.DodgerBlue,
                     HorizontalAlignment = HorizontalAlignment.Center
                 )
 
+            dot.Bind(Border.BackgroundProperty, Dyn.res "Palette.Accent") |> ignore
             slot.Child <- dot
-        elif m.Pinned then
-            let pin = TextBlock(Text = "📌", VerticalAlignment = VerticalAlignment.Center)
-            slot.Child <- pin
         else
-            slot.Child <- null
+            slot.Width <- 0.0
+            slot.Height <- 0.0
+            slot.Margin <- Thickness 0.0
 
         let titleRow =
             DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)
@@ -250,10 +286,12 @@ type ConversationRows() =
 
         let host = Button(Content = column)
         host.Classes.Add "ghost"
-        host.Classes.Add "surface"
         host.Classes.Add "hover-plain"
         host.HorizontalAlignment <- HorizontalAlignment.Stretch
-        host.Padding <- Thickness(16.0, 8.0)
+        host.MinHeight <- 44.0
+        host.Padding <- Thickness(10.0, 6.0)
+        host.CornerRadius <- CornerRadius(0.0, 8.0, 8.0, 0.0)
+        host.Bind(Button.BorderBrushProperty, Dyn.res "Palette.Accent") |> ignore
         host.Click.Add(fun _ -> rowActivated.Trigger id)
         host.Tag <- id
         AutomationProperties.SetName(host, m.AccessibleName)
@@ -402,17 +440,27 @@ type ConversationRows() =
         b :> Control
 
     let renderToggle (expanded: bool) (count: int) : Control =
-        let labelText = if expanded then "收起已归档对话" else sprintf "已归档对话（%d）" count
-        let name = if expanded then labelText else sprintf "%s，点击展开" labelText
-        let content = StackPanel(Orientation = Orientation.Horizontal, Spacing = 8.0)
-        content.Children.Add(TextBlock(Text = "📦", VerticalAlignment = VerticalAlignment.Center))
-        content.Children.Add(TextBlock(Text = labelText, VerticalAlignment = VerticalAlignment.Center))
-        let host = Button(Content = content)
+        let labelText = if expanded then "返回对话" else sprintf "归档 %d" count
+
+        let name =
+            if expanded then
+                "收起已归档对话"
+            else
+                sprintf "已归档对话（%d），点击展开" count
+
+        let caption =
+            TextBlock(Text = labelText, FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center)
+
+        caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
+
+        let host = Button(Content = caption)
         host.Classes.Add "ghost"
-        host.Classes.Add "surface"
         host.Classes.Add "hover-plain"
-        host.HorizontalAlignment <- HorizontalAlignment.Stretch
-        host.Padding <- Thickness(16.0, 8.0)
+        host.HorizontalAlignment <- HorizontalAlignment.Left
+        host.MinHeight <- 34.0
+        host.Padding <- Thickness(8.0, 0.0)
+        host.Margin <- Thickness(12.0, 4.0)
 
         host.Click.Add(fun _ ->
             match toggleHost with
@@ -454,8 +502,14 @@ type ConversationRows() =
         match item with
         | RowItem.Header label ->
             let header =
-                TextBlock(Text = label, FontWeight = FontWeight.SemiBold, Margin = Thickness(16.0, 8.0, 16.0, 4.0))
+                TextBlock(
+                    Text = label,
+                    FontSize = 11.5,
+                    FontWeight = FontWeight.Medium,
+                    Margin = Thickness(8.0, 12.0, 8.0, 4.0)
+                )
 
+            header.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
             header.Classes.Add "section-label"
             header :> Control
         | RowItem.Conversation m -> renderRow m

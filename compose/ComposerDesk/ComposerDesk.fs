@@ -110,7 +110,7 @@ type ComposerDesk(actions: ComposerDeskActions) =
     let mutable last: Wanxiang2.WorkspaceState.ComposerVS =
         (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Composer
 
-    /// 输入区四周留白：主题部分走动态资源键（宽屏 Margin.Composer：顶=Space.X2l、底=Space.Xl；
+    /// 输入区四周留白：主题部分走动态资源键（宽屏 Margin.Composer：顶=Space.Md、底=Space.X2l；
     /// 窄屏 Margin.ComposerCompact：左右=Space.Xl、底=Space.Md），水平档随自身宽度取
     /// （LayoutPolicy.horizontalInset，旧 ApplyComposerPadding）。本组合者不再订阅主题活值。
     let host = box.Host :?> Border

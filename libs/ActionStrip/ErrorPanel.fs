@@ -92,7 +92,7 @@ type ErrorPanel(parts: ErrorPanelParts) =
     let card =
         Border(
             BorderThickness = Thickness 1.0,
-            CornerRadius = CornerRadius 8.0,
+            CornerRadius = CornerRadius 12.0,
             Padding = Thickness(16.0, 12.0),
             Margin = Thickness(0.0, 8.0, 0.0, 0.0),
             MaxWidth = 640.0,
@@ -281,12 +281,9 @@ type ErrorPanel(parts: ErrorPanelParts) =
         countdown.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Warning")
         |> ignore
 
-        card.Classes.Add "grouping-card"
+        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.DangerSoft") |> ignore
 
-        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer")
-        |> ignore
-
-        card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
+        card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Danger") |> ignore
         column.Children.Add titleBlock
         column.Children.Add hintBlock
         DockPanel.SetDock(icon, Dock.Left)

@@ -52,7 +52,12 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
         itemsControl.Margin <- Thickness(0.0, 0.0, 0.0, 48.0)
 
     let messages =
-        StackPanel(Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Stretch)
+        StackPanel(
+            Orientation = Orientation.Vertical,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            MaxWidth = 748.0,
+            Spacing = 24.0
+        )
 
     let emptyScroller =
         ScrollViewer(
@@ -124,9 +129,13 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
     let mutable top = 0.0
 
     let applyInsets () =
-        top <- resFloat "Space.X3l" Wanxiang.UI.Spacing.space3xl
+        // 阅读列节奏对齐 react thread：顶 Space.X4l 24、底 Space.Md 8（与输入区顶 8 相接）
+        top <- resFloat "Space.X4l" Wanxiang.UI.Spacing.space4xl
         let inset = LayoutPolicy.horizontalInset body.Bounds.Width
-        scroller.Viewer.Padding <- Thickness(inset, top, inset, 0.0)
+        let bottomPad = resFloat "Space.Md" Wanxiang.UI.Spacing.spaceMd
+        scroller.Viewer.Padding <- Thickness(inset, top, inset, bottomPad)
+        // 空态的水平留白归这里（react .starter 的 padding-inline），ChatEmpty 自身不再带侧边距
+        emptyScroller.Padding <- Thickness(inset, 0.0, inset, 0.0)
 
     do
         // 旧主体的子项序：滚动区、空态滚动区、「回到最新」、更早一页失败横幅。ChatScroller 的叠放层拆开放进主体

@@ -114,7 +114,6 @@ type ChatScreen
     let root = ScreenRoot(Background = looks.Canvas)
     let layout = DockPanel()
     let mutable mounted: ScreenKey option[] = [||]
-    let mutable currentInset = 0.0
     let mutable currentCrumb: CrumbVS option = None
     let mutable currentTitle = "新对话"
     let mutable last: ScreenFrame option = None
@@ -259,7 +258,7 @@ type ChatScreen
             {
                 Visible = f.ConversationChrome
                 Compact = f.CompactMode
-                InsetLeft = currentInset
+                InsetLeft = 8.0
                 Title = TitleMode.Viewing(currentTitle, editable)
                 GeneratingStatus =
                     if f.IsGenerating then
@@ -579,10 +578,9 @@ type ChatScreen
         layout.Children.Add header.Host
         layout.Children.Add pane.Host
         root.Child <- layout
-        // 顶栏与滚动区同源取档：一次读自身宽度，同时写两处水平留白
+        // 顶栏留白固定 8px（react .topbar padding: 0 8px）；滚动区留白由 ChatPane 自取
         root.PropertyChanged.Add(fun e ->
             if e.Property = Visual.BoundsProperty then
-                currentInset <- LayoutPolicy.horizontalInset root.Bounds.Width
                 last |> Option.iter renderHeader)
 
         header.Renamed.Add actions.RenameTitle

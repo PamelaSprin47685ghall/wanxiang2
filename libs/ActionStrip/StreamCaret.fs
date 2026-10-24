@@ -26,9 +26,9 @@ type StreamCaret(?breath: unit -> float) =
         Border(
             HorizontalAlignment = HorizontalAlignment.Left,
             Margin = Thickness 0.0,
-            Width = 7.0,
-            Height = 15.0,
-            CornerRadius = CornerRadius 1.5
+            Width = 2.0,
+            Height = 16.0,
+            CornerRadius = CornerRadius 1.0
         )
 
     let mutable attached = false

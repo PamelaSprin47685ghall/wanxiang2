@@ -22,6 +22,123 @@ open Wanxiang2.AppShell.Tests
 let private toasts (rig: Rig) = rig.Fake.Toasts |> List.map fst
 
 [<Fact>]
+let ``主题快捷键从当前偏好推进并回写模型`` () =
+    Headless.run (fun () ->
+        let rig =
+            Rig.createWith
+                { UiPrefsFile.defaults with
+                    theme = AlwaysLight
+                }
+
+        Assert.True(rig.Shell.HandleShortcut ShortcutAction.ToggleTheme)
+        Assert.Equal(AlwaysDark, rig.Shell.Model.Prefs.theme)
+        Assert.Equal(AlwaysDark, (List.last rig.Fake.SavedPrefs).theme)
+        Assert.True(rig.Shell.HandleShortcut ShortcutAction.ToggleTheme)
+        Assert.Equal(FollowSystem, rig.Shell.Model.Prefs.theme)
+        Assert.Equal(FollowSystem, (List.last rig.Fake.SavedPrefs).theme))
+
+[<Fact>]
+let ``打开设置后设置页进入可视树并显示外观开关`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        let window = Window(Content = rig.Root)
+        window.Show()
+
+        try
+            rig.Shell.Dispatch(User(Settings(SettingsUserMsg.OpenSection(Some "appearance"))))
+            Pump.settle ()
+            Assert.True(rig.Views.Settings.View.IsEffectivelyVisible)
+            Assert.NotNull(TopLevel.GetTopLevel rig.Views.Settings.View)
+
+            let focused =
+                TopLevel.GetTopLevel(rig.Root).FocusManager.GetFocusedElement() :?> Control
+
+            Assert.Equal("外观与操作", AutomationProperties.GetName focused)
+        finally
+            window.Close())
+
+[<Fact>]
+let ``外观原生开关修改模型并保存偏好`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        let window = Window(Content = rig.Root)
+        window.Show()
+
+        try
+            rig.Shell.Dispatch(User(Settings(SettingsUserMsg.OpenSection(Some "appearance"))))
+            Pump.settle ()
+
+            let toggle =
+                rig.Views.Settings.View.GetLogicalDescendants()
+                |> Seq.choose (function
+                    | :? ToggleSwitch as control when AutomationProperties.GetName control = "Enter 直接发送" ->
+                        Some control
+                    | _ -> None)
+                |> Seq.exactlyOne
+
+            let before = rig.Shell.Model.Prefs.enterSends
+            toggle.IsChecked <- Nullable(not before)
+            Pump.settle ()
+            Assert.Equal(not before, rig.Shell.Model.Prefs.enterSends)
+            Assert.Equal(not before, (List.last rig.Fake.SavedPrefs).enterSends)
+        finally
+            window.Close())
+
+[<Fact>]
+let ``输入框中的命令快捷键能到达现有冒泡接线`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        let window = Window(Content = rig.Root)
+        window.Show()
+        let mutable reached = false
+
+        rig.Root.KeyDown.Add(fun e ->
+            if KeyShortcut.resolve e = ShortcutAction.OpenCommandPalette then
+                reached <- true)
+
+        let input = rig.Views.Composer.Box.Input
+        input.Focus() |> ignore
+
+        input.RaiseEvent(
+            KeyEventArgs(
+                RoutedEvent = InputElement.KeyDownEvent,
+                Key = Key.K,
+                KeyModifiers = KeyModifiers.Control,
+                Source = input
+            )
+        )
+
+        window.Close()
+        Assert.True(reached, "Ctrl+K 被输入控件消费，根视图的普通冒泡订阅无法收到"))
+
+[<Fact>]
+let ``命令面板真实回车执行主题并登记最近使用`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Shell.Commands.ShowPalette()
+        // 周期性 MsgTick 不得把已打开的命令面板关掉
+        rig.Shell.Dispatch(MsgTick(rig.Fake.Now))
+        Assert.True(rig.Views.Overlay.Layer.IsDialogOpen, "MsgTick 不应关闭已打开的命令面板")
+
+        let search =
+            rig.Root.GetLogicalDescendants()
+            |> Seq.choose (function
+                | :? TextBox as text when text.Name = "CommandPaletteSearch" -> Some text
+                | _ -> None)
+            |> Seq.exactlyOne
+
+        search.Text <- "切换主题"
+        Pump.settle ()
+        search.RaiseEvent(KeyEventArgs(RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, Source = search))
+        Assert.Contains("act:theme", rig.Shell.PaletteRecent())
+        Assert.Equal(AlwaysLight, rig.Shell.Model.Prefs.theme)
+        // 打开设置页后按 Escape 应能关闭设置页，不被空浮层吞掉
+        Assert.True(rig.Shell.HandleShortcut ShortcutAction.OpenSettings)
+        Assert.True(rig.Shell.Model.Settings.Open)
+        Assert.True(rig.Shell.HandleShortcut ShortcutAction.Escape)
+        Assert.False(rig.Shell.Model.Settings.Open))
+
+[<Fact>]
 let ``第五批：启动加载偏好并应用外观，不反写偏好`` () =
     Headless.run (fun () ->
         let prefs =

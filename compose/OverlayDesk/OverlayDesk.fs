@@ -122,6 +122,13 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
 
     /// 单入口：幂等渲染 ToastVS 列表（计时由 WorkspaceState 的 MsgTick / ExpiresAt 管）
     member this.RenderToasts(toasts: ToastVS list) =
+        let activeTexts = toasts |> List.map (fun t -> t.Text) |> Set.ofList
+
+        for msg in List.ofSeq queue.Showing do
+            if not (Set.contains msg activeTexts) then
+                queue.Remove msg
+                actions.RemoveAll(fun (m, _, _) -> m = msg) |> ignore
+
         strip.Render toasts
         fit ()
 

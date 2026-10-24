@@ -49,7 +49,7 @@
 - **基线契约**：基线必须由 DevOps 在实机环境中真实执行生成（`bash tools/gallery-baseline.sh --generate <目录>`），严禁伪造假图进仓库。
 - **像素格式契约**：PNG 解码位图与渲染目标均经 Avalonia 原生 `CopyPixels(ILockedFramebuffer)` 转为 BGRA8888 / Premul 后再比较，不把源格式假定为 BGRA。固定色 PNG 往返必须保持通道值；单像素篡改必须报告准确坐标。新增回归已复现红蓝通道交换；修复后本机 Gallery 38/38 通过，单像素篡改准确定位到 (100,100)。2026-10-23 当前 macOS 双主题 82/82 通过，同条目两次 PNG 字节一致；不等同于 Linux CI 的像素验证。
 - **见红门禁**：`bash tools/gallery-baseline.sh` 执行时，缺少基线文件、位图尺寸不匹配或像素发生任何改变，必须以非零退出码（1）失败并红灯报错；差异时自动在 `<基线目录>/diff/` 输出高亮差异图（相同像素压暗，不同像素品红高亮）。
-- **当前覆盖**：仓库内 `compose/Gallery/baselines/` 有 25 个条目 × 深浅两态 = 50 张基线（DevOps 实机生成）。其余 16 个条目（`ActionStrip.actions`、`ApprovalPanel.approval`、`AttachmentTray.items`、`BatchBar.selection`、`BrandMark.tile`、`ChatHeader.header`、`ConfirmPane.confirm`、`DevicesPane.devices`、`ExportSheet.export`、`FieldCheck.invalid`、`FocusOrigin.programmatic`、`ModelSwitchPanel.models`、`PalettePanel.palette`、`PopupMenu.menu`、`ToastStrip.toast`，以及 `ChatEmpty.empty`）**还没有基线**——按契约缺基线必红，须 DevOps 在实机补齐后门禁才转绿 `[待验证]`。
+- **当前覆盖**：仓库内 `compose/Gallery/baselines/` 已包含全部 41 个条目 × 深浅两态 = 82 张基线（在 Linux 容器 `wx2-linux-gallery-env:local` 实机生成并核验 82/82 逐像素通过）。
 
 ## 真实控件树无障碍遍历与原生 Peer 审查 (G5)
 

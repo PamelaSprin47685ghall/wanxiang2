@@ -209,21 +209,27 @@ type ShellComposer(ports: ShellPorts) =
             ports.SetReducedMotion prefs.reduceMotion
             ports.SetCodeWrap prefs.codeWrap
             ports.ApplyTheme(UiPrefs.isDark prefs (ports.SystemPrefersDark()))
+        | User(Settings(SettingsUserMsg.OpenSection _)) ->
+            views |> Option.iter (fun v -> ports.Post(fun () -> v.SettingsFocusInitial()))
         | _ -> ()
 
-        this.ReprojectInternal effects
+        this.ReprojectInternal msg effects
 
-    member this.Reproject() : unit = this.ReprojectInternal []
+    member this.Reproject() : unit =
+        this.ReprojectInternal (MsgTick(ports.Now())) []
 
-    member private this.ReprojectInternal(effects: Effect list) : unit =
+    member private this.ReprojectInternal (msg: Msg) (effects: Effect list) : unit =
         match views with
         | None -> ports.EffectSink.Run effects
         | Some v ->
             let vs = Workspace.project model
             // 1. Workspace
             v.Workspace.Render vs.Shell
-            // Overlay & Toasts
-            v.Overlay.Render vs.Overlay
+            // Overlay & Toasts：对话框与弹出菜单由各 Desk 直接在 OverlayDesk 上开关，
+            // 状态树只在显式进入非 Closed 阶段时驱动 Layer，避免 250ms MsgTick 把自治打开的命令面板或菜单关掉。
+            if vs.Overlay <> OverlayVS.Closed then
+                v.Overlay.Render vs.Overlay
+
             v.Overlay.RenderToasts vs.Toasts
 
             // 2. Chat / Header
@@ -302,6 +308,10 @@ type ShellComposer(ports: ShellPorts) =
                 v.SettingsHostVisible true
                 v.WorkspaceHostVisible false
                 v.Settings.Render settingsVS
+                // 导航键必须先进入可视树，焦点请求才有效。打开消息里的提前投递会发生在挂载前。
+                match msg with
+                | User(Settings(SettingsUserMsg.OpenSection _)) -> v.SettingsFocusInitial()
+                | _ -> ()
             | None ->
                 v.SettingsHostVisible false
                 v.WorkspaceHostVisible true
@@ -477,8 +487,14 @@ type ShellComposer(ports: ShellPorts) =
                     {
                         OverlayEscape =
                             fun () ->
-                                this.Dispatch(User(Overlay(OverlayUserMsg.Escape)))
-                                true
+                                match views with
+                                | Some v when v.Overlay.HandleEscape() -> true
+                                | _ ->
+                                    match model.Overlay with
+                                    | OverlayPhase.Closed -> false
+                                    | _ ->
+                                        this.Dispatch(User(Overlay(OverlayUserMsg.Escape)))
+                                        true
                         IsDialogOpen =
                             fun () ->
                                 match views with
@@ -510,20 +526,46 @@ type ShellComposer(ports: ShellPorts) =
                                 | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active _)) -> true
                                 | _ -> false
                         VisibleOrder = fun () -> model.Summaries |> List.map (fun s -> string s.id)
-                        HasPreset = fun _ -> false
+                        HasPreset =
+                            fun id ->
+                                match model.Conn with
+                                | ConnPhase.Authed(_, CatalogPhase.Ready(cat, _)) ->
+                                    cat.presets |> List.exists (fun p -> p.id = id)
+                                | _ -> false
                         PaletteInput =
                             fun () ->
+                                let catalog, hasConversation =
+                                    match model.Conn with
+                                    | ConnPhase.Authed(_, CatalogPhase.Ready(cat, workspace)) ->
+                                        let active =
+                                            match workspace with
+                                            | WorkspacePhase.Active _ -> true
+                                            | _ -> false
+
+                                        Some cat, active
+                                    | _ -> None, false
+
                                 {
-                                    hasConversation = false
-                                    presets = []
-                                    supportsPresets = false
-                                    supportsImport = false
-                                    themeLabel = "跟随系统"
-                                    sections = []
-                                    conversations = []
-                                    showArchived = false
+                                    hasConversation = hasConversation
+                                    presets =
+                                        catalog
+                                        |> Option.map (fun cat ->
+                                            cat.presets |> List.map (fun p -> p.id, p.name, Presets.describe cat p))
+                                        |> Option.defaultValue []
+                                    supportsPresets = HostFeatures.supports hostFeatures HostFeatures.Presets
+                                    supportsImport = HostFeatures.supports hostFeatures HostFeatures.ConversationImport
+                                    themeLabel = ThemePreference.label model.Prefs.theme
+                                    sections =
+                                        Wanxiang2.SettingsScreen.SettingsPart.groups
+                                        |> List.collect snd
+                                        |> List.map (fun p ->
+                                            sprintf "%A" p,
+                                            Wanxiang2.SettingsScreen.SettingsPart.label p,
+                                            Wanxiang2.SettingsScreen.SettingsPart.scope p)
+                                    conversations = model.Summaries
+                                    showArchived = model.Prefs.showArchived
                                 }
-                        Theme = fun () -> ThemePreference.FollowSystem
+                        Theme = fun () -> model.Prefs.theme
                         CloseSettings = fun () -> this.Dispatch(User(Settings(SettingsUserMsg.Close)))
                         CloseDrawer = fun () -> this.Dispatch(User(Overlay(OverlayUserMsg.Escape)))
                         StopGeneration = fun () -> this.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
@@ -646,7 +688,7 @@ type ShellComposer(ports: ShellPorts) =
                         SaveTheme =
                             fun theme ->
                                 let next = { model.Prefs with theme = theme }
-                                ports.EffectSink.PrefsSave next
+                                this.Dispatch(User(Settings(SettingsUserMsg.PrefsChanged next)))
                         Toast =
                             fun text tone ->
                                 let t =
@@ -745,6 +787,8 @@ type ShellComposer(ports: ShellPorts) =
 
         // 设置页：关闭与各设备操作都换成模型消息；吊销前须经确认对话框。
         built.Settings.Bind(this.SettingsHooks())
+
+        built.Palette.Run.Add(fun (item, query) -> this.Commands.RunPaletteItem(item, query))
 
         built.Settings.CloseRequested.Add(fun () -> this.Dispatch(User(Settings(SettingsUserMsg.Close))))
         |> ignore

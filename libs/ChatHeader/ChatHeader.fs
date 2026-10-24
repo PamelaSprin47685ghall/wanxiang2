@@ -113,7 +113,7 @@ type ChatHeader() =
             Button(
                 Focusable = false,
                 VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left
             )
 
         b.Classes.Add "ghost"
@@ -141,7 +141,7 @@ type ChatHeader() =
             CornerRadius = CornerRadius 4.0,
             BorderThickness = Thickness 1.0,
             VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalAlignment = HorizontalAlignment.Left,
             IsVisible = false,
             Child = editBox
         )
@@ -294,6 +294,12 @@ type ChatHeader() =
 
         titleHost.Children.Add titleAction
         titleHost.Children.Add editShell
+        // 标题键按内容取宽（react .title-block 收缩到内容宽）：左对齐，并以宿主宽为上限，
+        // 超长标题在键内省略号截断；整条顶栏不再是一个隐形的巨大重命名键。
+        titleHost.SizeChanged.Add(fun _ ->
+            let cap = titleHost.Bounds.Width
+            titleAction.MaxWidth <- cap
+            editShell.MaxWidth <- cap)
 
         titleAction.Click.Add(fun _ ->
             if isEditable then

@@ -10,6 +10,7 @@
     <Compile Include="ExpiryDeletionTests.fs" />
     <Compile Include="A11yTraversalTests.fs" />
     <Compile Include="ShortcutInterceptTests.fs" />
+    <Compile Include="LayoutAudit.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

@@ -4,11 +4,12 @@ open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
+open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.IconSet
 open Wanxiang2.WorkspaceState
 
 /// 动态资源绑定辅助
@@ -43,19 +44,11 @@ type ChatHeader() =
         b.Classes.Add "ghost"
         b.VerticalAlignment <- VerticalAlignment.Center
         b.HorizontalAlignment <- HorizontalAlignment.Center
-        // 侧栏简易图标矢量
-        let icon =
-            Path(
-                Data = Geometry.Parse "M 3 3 L 15 3 L 15 15 L 3 15 Z M 7 3 L 7 15",
-                StrokeThickness = 1.2,
-                Fill = Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Width = 14.0,
-                Height = 14.0
-            )
+        let icon = IconSet.control Glyph.PanelLeft 14.0
 
-        icon.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        icon.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
+
         b.Content <- icon
         ToolTip.SetTip(b, "切换侧边栏（Ctrl / ⌘ + B）")
         AutomationProperties.SetName(b, "切换侧边栏（Ctrl / ⌘ + B）")
@@ -77,19 +70,11 @@ type ChatHeader() =
         b.VerticalAlignment <- VerticalAlignment.Center
         b.HorizontalAlignment <- HorizontalAlignment.Center
 
-        let icon =
-            Path(
-                Data = Geometry.Parse "M 4 8 A 1 1 0 1 1 4 8.01 M 8 8 A 1 1 0 1 1 8 8.01 M 12 8 A 1 1 0 1 1 12 8.01",
-                StrokeThickness = 2.0,
-                StrokeLineCap = PenLineCap.Round,
-                Fill = Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Width = 14.0,
-                Height = 14.0
-            )
+        let icon = IconSet.control Glyph.More 14.0
 
-        icon.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        icon.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
+
         b.Content <- icon
         ToolTip.SetTip(b, "对话操作")
         AutomationProperties.SetName(b, "对话操作")
@@ -327,18 +312,10 @@ type ChatHeader() =
         dock.Children.Add rightGroup
         dock.Children.Add leftGroup
 
-        let crumbIcon =
-            Path(
-                Data = Geometry.Parse "M 4 4 L 4 10 L 10 10 M 4 10 L 12 4",
-                StrokeThickness = 1.2,
-                Fill = Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Width = 12.0,
-                Height = 12.0
-            )
+        let crumbIcon = IconSet.control Glyph.ExternalLink 12.0
 
-        crumbIcon.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        crumbIcon.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
 
         let crumbRow =
             StackPanel(

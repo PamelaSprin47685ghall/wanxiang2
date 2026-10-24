@@ -5,8 +5,11 @@ open System.Collections.Concurrent
 open System.Runtime.CompilerServices
 open Avalonia
 open Avalonia.Controls
+open Avalonia.Controls.Primitives
+open Avalonia.Controls.Templates
 open Avalonia.Layout
 open Avalonia.Media
+open Avalonia.Styling
 open IconPacks.Avalonia.Lucide
 
 /// 万象用到的图标，按用途命名（旧 Design/Icons.fs 的语义映射）。
@@ -62,6 +65,7 @@ type Glyph =
     | Keyboard
     | LogOut
     | Database
+    | Loader
 
 /// Lucide 官方集的语义映射与图标控件（旧 Design/Icons.fs）。
 /// 字形几何全部来自官方 `LucideImageExtension`，不自绘路径。画笔与尺寸都由调用方给：
@@ -121,6 +125,7 @@ module IconSet =
             Glyph.Keyboard
             Glyph.LogOut
             Glyph.Database
+            Glyph.Loader
         ]
 
     /// 语义名对应的 Lucide 字形
@@ -176,6 +181,7 @@ module IconSet =
         | Glyph.Keyboard -> PackIconLucideKind.Keyboard
         | Glyph.LogOut -> PackIconLucideKind.LogOut
         | Glyph.Database -> PackIconLucideKind.Database
+        | Glyph.Loader -> PackIconLucideKind.LoaderCircle
 
     // DrawingImage 每次调用都新建，视图重建时反复请求，因此按 (画笔实例, 字形) 缓存；画笔被回收时缓存跟着回收
     let private cache =
@@ -199,3 +205,50 @@ module IconSet =
         image.HorizontalAlignment <- HorizontalAlignment.Center
         image.VerticalAlignment <- VerticalAlignment.Center
         image :> Control
+
+    /// 固定尺寸的 Lucide 字形。PackIcon 的模板按 Avalonia 11 编译，12 上对不上
+    /// `DynamicResourceExtension.ProvideValue`，挂上没有墨。字形仍来自同一库的
+    /// `LucideImageExtension`。颜色走 Foreground。转圈挂主题的 `anim-spin`，不用控件自带 Spin。
+    type LucideIcon(glyph: Glyph) as this =
+        inherit TemplatedControl()
+
+        let mutable picture: Image = null
+
+        let paint () =
+            if not (isNull picture) then
+                match this.Foreground with
+                | null -> ()
+                | brush -> picture.Source <- drawing glyph brush
+
+        do
+            let theme = ControlTheme(typeof<LucideIcon>)
+
+            let template =
+                FuncControlTemplate<TemplatedControl>(fun _ _ ->
+                    let image =
+                        Image(
+                            Stretch = Stretch.Uniform,
+                            HorizontalAlignment = HorizontalAlignment.Stretch,
+                            VerticalAlignment = VerticalAlignment.Stretch,
+                            IsHitTestVisible = false
+                        )
+
+                    picture <- image
+                    paint ()
+                    image :> Control)
+
+            theme.Setters.Add(Setter(TemplatedControl.TemplateProperty, template))
+            this.Theme <- theme
+            this.Focusable <- false
+
+            this.PropertyChanged.Add(fun e ->
+                if e.Property = TemplatedControl.ForegroundProperty then
+                    paint ())
+
+    let control (glyph: Glyph) (size: float) : TemplatedControl =
+        let icon = LucideIcon glyph
+        icon.Width <- size
+        icon.Height <- size
+        icon.HorizontalAlignment <- HorizontalAlignment.Center
+        icon.VerticalAlignment <- VerticalAlignment.Center
+        icon

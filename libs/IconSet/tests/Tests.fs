@@ -5,7 +5,9 @@ open System.IO
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Media
+open Avalonia.VisualTree
 open Xunit
+open IconPacks.Avalonia.Lucide
 open Wanxiang2.IconSet
 
 [<Fact>]
@@ -43,5 +45,32 @@ let ``the icon keeps the live brush and follows the live size`` () =
                 obj.ReferenceEquals(gd.Brush, brush)
                 || (not (isNull gd.Pen) && obj.ReferenceEquals(gd.Pen.Brush, brush)))
         )
+
+        win.Close())
+
+[<Fact>]
+let ``the lucide control is the official glyph, not a drawn path`` () =
+    Headless.run (fun () ->
+        Assert.Equal(PackIconLucideKind.LoaderCircle, IconSet.kind Glyph.Loader)
+        Assert.Contains(Glyph.Loader, IconSet.all)
+        let brush = SolidColorBrush(Colors.Black)
+        let icon = IconSet.control Glyph.PanelLeft 14.0
+        icon.Tag <- "panel"
+        icon.Foreground <- brush
+        let win = Window(Content = icon, Width = 32.0, Height = 32.0)
+        win.Show()
+        Assert.Equal(14.0, icon.Width)
+        Assert.Equal(14.0, icon.Height)
+        Assert.Equal(box "panel", icon.Tag)
+
+        let image =
+            icon.GetVisualDescendants()
+            |> Seq.tryPick (function
+                | :? Image as i -> Some i
+                | _ -> None)
+
+        match image with
+        | None -> failwith "lucide glyph did not produce an image"
+        | Some i -> Assert.Same(i.Source, IconSet.drawing Glyph.PanelLeft brush)
 
         win.Close())

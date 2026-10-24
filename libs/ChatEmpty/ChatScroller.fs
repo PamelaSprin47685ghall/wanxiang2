@@ -5,11 +5,11 @@ open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
-open Avalonia.Controls.Shapes
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.IconSet
 
 /// 动态资源绑定辅助
 module private Dyn =
@@ -87,18 +87,11 @@ type ChatScroller(ease: ScrollEase) =
         |> ignore
 
     let glyph =
-        let p =
-            Path(
-                Data = Geometry.Parse "M 2 5 L 8 11 L 14 5",
-                StrokeThickness = 1.6,
-                Fill = Brushes.Transparent,
-                Width = 16.0,
-                Height = 16.0,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            )
+        let p = IconSet.control Glyph.ChevronDown 16.0
 
-        p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextOnAccent") |> ignore
+        p.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextOnAccent")
+        |> ignore
+
         p
 
     let latest =

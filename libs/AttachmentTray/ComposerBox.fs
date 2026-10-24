@@ -4,13 +4,14 @@ open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
+open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Interactivity
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
 open Avalonia.Platform.Storage
+open Wanxiang2.IconSet
 open Wanxiang2.WorkspaceState
 
 /// 「发送 / 停止 / 排队」呈现视图：由门控决策（ComposerSendState.ComposerSendView 的派生成员）
@@ -241,56 +242,32 @@ type ComposerBox() =
 
     let setSendIcon isStop =
         if isStop then
-            let p =
-                Path(
-                    Data = Geometry.Parse "M 4 4 L 12 4 L 12 12 L 4 12 Z",
-                    Fill = Brushes.White,
-                    Width = 14.0,
-                    Height = 14.0
-                )
-
+            let p = IconSet.control Glyph.Stop 14.0
+            p.Foreground <- Brushes.White
             send.Content <- p
             AutomationProperties.SetName(send, "停止生成")
         else
-            let p =
-                Path(
-                    Data = Geometry.Parse "M 3 8 L 13 8 M 9 4 L 13 8 L 9 12",
-                    StrokeThickness = 1.6,
-                    Stroke = Brushes.White,
-                    Fill = Brushes.Transparent,
-                    Width = 14.0,
-                    Height = 14.0
-                )
-
+            let p = IconSet.control Glyph.Send 14.0
+            p.Foreground <- Brushes.White
             send.Content <- p
             AutomationProperties.SetName(send, "发送")
 
     let setQueueIcon () =
-        let p =
-            Path(
-                Data = Geometry.Parse "M 3 8 L 13 8 M 9 4 L 13 8 L 9 12",
-                StrokeThickness = 1.6,
-                Fill = Brushes.Transparent,
-                Width = 14.0,
-                Height = 14.0
-            )
+        let p = IconSet.control Glyph.Send 14.0
 
-        p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        p.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
+
         queue.Content <- p
         AutomationProperties.SetName(queue, "排队发送")
         ToolTip.SetTip(queue, "排队发送")
 
     let setAttachIcon () =
-        let p =
-            Path(
-                Data = Geometry.Parse "M 8 3 L 4 7 A 3 3 0 0 0 8 11 L 13 6 A 2 2 0 0 0 10 3 L 5 8 A 1 1 0 0 0 6 9",
-                StrokeThickness = 1.2,
-                Fill = Brushes.Transparent,
-                Width = 14.0,
-                Height = 14.0
-            )
+        let p = IconSet.control Glyph.Paperclip 14.0
 
-        p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        p.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
+
         attach.Content <- p
         AutomationProperties.SetName(attach, "添加附件")
         ToolTip.SetTip(attach, "添加附件，也可以将文件拖入输入区")

@@ -1,6 +1,6 @@
 # IconSet（库）
 
-旧 `Design/Icons.fs` 迁入：语义名 `Glyph`（50 个）、`IconSet.kind`（Lucide 字形）、按（画笔实例，字形）缓存的 `IconSet.drawing`、图标控件 `IconSet.image glyph brush size`。字形全部来自官方 `LucideImageExtension`，不自绘。画笔与尺寸由调用方给：画笔是主题管理者的活实例，尺寸是活的 `IObservable<float>`（旧 small / glyph / large 三档改由调用方传对应的 Space.Glyph* 活值）。依赖 Avalonia 与 IconPacks.Avalonia.Lucide，不引用任何其他库。模块名避开旧宿主的 `Icons`。根规则见项目根目录 AGENTS.md。
+旧 `Design/Icons.fs` 迁入：语义名 `Glyph`（51 个，含转圈 `Loader`）、`IconSet.kind`（Lucide 字形）、按（画笔实例，字形）缓存的 `IconSet.drawing`、图标控件 `IconSet.image glyph brush size` 与 `IconSet.control glyph size`。字形全部来自官方 `LucideImageExtension`，不自绘。`PackIconLucide` 的控件模板是按 Avalonia 11 编译的，在 12 上 `DynamicResourceExtension.ProvideValue` 对不上，所以 `control` 不挂那个模板，只把官方字形画进 `Foreground`。`image` 的画笔是主题管理者的活实例，尺寸是活的 `IObservable<float>`；`control` 用固定尺寸。转圈挂主题的 `anim-spin`，不用控件自带 Spin。依赖 Avalonia 与 IconPacks.Avalonia.Lucide，不引用任何其他库。模块名避开旧宿主的 `Icons`。根规则见项目根目录 AGENTS.md。
 
 ## 外观
 - 无 Look 记录：画笔和尺寸是每次调用的参数。用到的 ControlTheme 样式类：无。

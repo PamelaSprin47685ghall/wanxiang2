@@ -4,11 +4,12 @@ open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
+open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.IconSet
 
 /// 动态资源绑定辅助
 module private Dyn =
@@ -37,18 +38,11 @@ type ModelChip() =
         caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
         |> ignore
 
-    let chevron =
-        Path(
-            Data = Geometry.Parse "M 3 5 L 7 9 L 11 5",
-            StrokeThickness = 1.2,
-            StrokeLineCap = PenLineCap.Round,
-            Fill = Brushes.Transparent,
-            VerticalAlignment = VerticalAlignment.Center,
-            Width = 14.0,
-            Height = 14.0
-        )
+    let chevron = IconSet.control Glyph.ChevronDown 14.0
 
-    do chevron.Bind(Path.StrokeProperty, Dyn.res "Palette.TextFaint") |> ignore
+    do
+        chevron.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextFaint")
+        |> ignore
 
     let host =
         let b =

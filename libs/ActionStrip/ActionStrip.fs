@@ -5,11 +5,12 @@ open Avalonia
 open Avalonia.Animation
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
+open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.IconSet
 open Wanxiang2.WorkspaceState
 
 [<RequireQualifiedAccess>]
@@ -80,32 +81,24 @@ type ActionStrip(rest: StripRest) =
         apply ()
 
     static member GlyphControl(glyph: StripGlyph, ?brush: IBrush) : Control =
-        let data =
+        let kind =
             match glyph with
-            | StripGlyph.Copy ->
-                "M 4 2 L 11 2 A 2 2 0 0 1 13 4 L 13 11 A 2 2 0 0 1 11 13 L 4 13 A 2 2 0 0 1 2 11 L 2 4 A 2 2 0 0 1 4 2 Z M 5 5 L 14 5 L 14 14 L 5 14"
-            | StripGlyph.Check -> "M 3 8 L 6 11 L 13 4"
-            | StripGlyph.Pencil -> "M 11 2 L 14 5 L 5 14 L 2 14 L 2 11 Z"
-            | StripGlyph.Refresh -> "M 2 8 A 6 6 0 1 1 5 13 L 2 10"
-            | StripGlyph.Trash -> "M 3 4 L 13 4 M 5 4 L 5 13 L 11 13 L 11 4 M 6 4 L 6 2 L 10 2 L 10 4"
+            | StripGlyph.Copy -> Glyph.Copy
+            | StripGlyph.Check -> Glyph.Check
+            | StripGlyph.Pencil -> Glyph.Pencil
+            | StripGlyph.Refresh -> Glyph.Refresh
+            | StripGlyph.Trash -> Glyph.Trash
 
-        let p =
-            Path(
-                Data = Geometry.Parse data,
-                StrokeThickness = 1.3,
-                Fill = Brushes.Transparent,
-                Tag = glyph,
-                Width = 16.0,
-                Height = 16.0,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            )
+        let icon = IconSet.control kind 16.0
+        icon.Tag <- glyph
 
         match brush with
-        | Some b -> p.Stroke <- b
-        | None -> p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        | Some b -> icon.Foreground <- b
+        | None ->
+            icon.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+            |> ignore
 
-        p :> Control
+        icon :> Control
 
     /// 换按钮的图标（复制确认时换成对勾）
     member _.ApplyIcon(button: Button, glyph: StripGlyph, ?brush: IBrush) =

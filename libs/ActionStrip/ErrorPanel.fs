@@ -6,11 +6,12 @@ open Avalonia.Animation
 open Avalonia.Animation.Easings
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
+open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.IconSet
 open Wanxiang2.WorkspaceState
 
 module private Dyn =
@@ -61,15 +62,10 @@ type ErrorPanel(parts: ErrorPanelParts) =
     let mutable detailText: string option = None
 
     let icon =
-        Path(
-            Data = Geometry.Parse "M 7 2 L 12 12 L 2 12 Z M 7 5 L 7 8 M 7 10 L 7 10.01",
-            StrokeThickness = 1.3,
-            Fill = Brushes.Transparent,
-            Width = 16.0,
-            Height = 16.0,
-            VerticalAlignment = VerticalAlignment.Top,
-            Margin = Thickness(0.0, 0.0, 12.0, 0.0)
-        )
+        let glyph = IconSet.control Glyph.Alert 16.0
+        glyph.VerticalAlignment <- VerticalAlignment.Top
+        glyph.Margin <- Thickness(0.0, 0.0, 12.0, 0.0)
+        glyph
 
     let titleBlock =
         TextBlock(Text = "", FontWeight = FontWeight.Medium, FontSize = 14.0, TextWrapping = TextWrapping.Wrap)
@@ -177,18 +173,11 @@ type ErrorPanel(parts: ErrorPanelParts) =
                 Height = 14.0
             )
 
-        let chevron =
-            Path(
-                Data = Geometry.Parse "M 4 2 L 9 7 L 4 12",
-                StrokeThickness = 1.3,
-                Fill = Brushes.Transparent,
-                Width = 10.0,
-                Height = 10.0,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            )
+        let chevron = IconSet.control Glyph.ChevronRight 10.0
 
-        chevron.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        chevron.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
+
         chevron.RenderTransform <- rotate
         chevron.RenderTransformOrigin <- RelativePoint.Center
         chevronHost.Child <- chevron
@@ -272,7 +261,9 @@ type ErrorPanel(parts: ErrorPanelParts) =
         onLeft left
 
     do
-        icon.Bind(Path.StrokeProperty, Dyn.res "Palette.Danger") |> ignore
+        icon.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.Danger")
+        |> ignore
+
         titleBlock.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
 
         hintBlock.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")

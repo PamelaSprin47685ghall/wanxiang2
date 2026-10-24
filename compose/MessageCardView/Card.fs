@@ -5,7 +5,6 @@ open System.Diagnostics
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Input
 open Avalonia.Layout
@@ -84,22 +83,15 @@ module private CardUi =
         | true, (:? bool as r) -> r
         | _ -> false
 
-    /// 原生加载转圈（12x12 弧形 Path + 声明式 anim-spin 样式类，无 DispatcherTimer）
+    /// Lucide 转圈（12px LoaderCircle + anim-spin，无 DispatcherTimer）
     let spinner (spin: bool) (tint: IBrush) : Control =
-        let p =
-            Path(
-                Data = Geometry.Parse "M 6 1 A 5 5 0 0 1 11 6",
-                Stroke = tint,
-                StrokeThickness = 1.4,
-                StrokeLineCap = PenLineCap.Round,
-                Width = 12.0,
-                Height = 12.0
-            )
+        let icon = IconSet.control Glyph.Loader 12.0
+        icon.Foreground <- tint
 
         if spin then
-            p.Classes.Add "anim-spin"
+            icon.Classes.Add "anim-spin"
 
-        p :> Control
+        icon :> Control
 
 /// 流式光标的呼吸时钟：一段呼吸运行的原点跨卡片重建持久，流式卡每次重建也接得上同一段呼吸
 /// （旧 MessageCard 模块级 breathOriginTicks / breathRunLive）。时钟可注入，测试不靠墙钟。

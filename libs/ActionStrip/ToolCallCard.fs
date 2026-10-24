@@ -6,11 +6,12 @@ open Avalonia.Animation
 open Avalonia.Animation.Easings
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
+open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.IconSet
 open Wanxiang2.WorkspaceState
 
 /// 卡片的状态色调（由使用方从工具调用状态折算）
@@ -152,34 +153,24 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         p
 
     let createGlyph (glyph: ToolGlyph) (resKey: string) =
-        let pathData =
+        let kind =
             match glyph with
-            | ToolGlyph.Wrench -> "M 14 3 A 3 3 0 0 0 10 7 L 3 14 L 5 16 L 12 9 A 3 3 0 0 0 16 5"
-            | ToolGlyph.Alert -> "M 7 2 L 12 12 L 2 12 Z M 7 5 L 7 8 M 7 10 L 7 10.01"
-            | ToolGlyph.Info -> "M 7 2 A 5 5 0 1 1 7 12 A 5 5 0 1 1 7 2 M 7 5 L 7 5.01 M 7 7 L 7 10"
-            | ToolGlyph.Check -> "M 2 7 L 5 10 L 12 3"
-            | ToolGlyph.Chevron -> "M 4 2 L 9 7 L 4 12"
+            | ToolGlyph.Wrench -> Glyph.Wrench
+            | ToolGlyph.Alert -> Glyph.Alert
+            | ToolGlyph.Info -> Glyph.Info
+            | ToolGlyph.Check -> Glyph.Check
+            | ToolGlyph.Chevron -> Glyph.ChevronRight
             | ToolGlyph.Spinner
-            | ToolGlyph.SpinnerCompact -> "M 7 1 A 6 6 0 0 1 13 7"
+            | ToolGlyph.SpinnerCompact -> Glyph.Loader
 
-        let p =
-            Path(
-                Data = Geometry.Parse pathData,
-                StrokeThickness = 1.2,
-                Fill = Brushes.Transparent,
-                Tag = glyph,
-                Width = 14.0,
-                Height = 14.0,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            )
-
-        p.Bind(Path.StrokeProperty, Dyn.res resKey) |> ignore
+        let icon = IconSet.control kind 14.0
+        icon.Tag <- glyph
+        icon.Bind(TemplatedControl.ForegroundProperty, Dyn.res resKey) |> ignore
 
         if glyph = ToolGlyph.Spinner || glyph = ToolGlyph.SpinnerCompact then
-            p.Classes.Add "anim-spin"
+            icon.Classes.Add "anim-spin"
 
-        p :> Control
+        icon :> Control
 
     let icon =
         createGlyph

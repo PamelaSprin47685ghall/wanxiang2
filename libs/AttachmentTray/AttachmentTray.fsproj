@@ -7,6 +7,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" />
+    <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

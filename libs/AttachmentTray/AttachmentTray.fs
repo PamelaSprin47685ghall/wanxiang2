@@ -5,11 +5,11 @@ open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
-open Avalonia.Controls.Shapes
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.IconSet
 
 /// 一条附件的呈现事实
 type TrayItem =
@@ -76,68 +76,36 @@ type AttachmentTray() =
         b.HorizontalAlignment <- HorizontalAlignment.Center
         b.VerticalAlignment <- VerticalAlignment.Center
 
-        let close =
-            Path(
-                Data = Geometry.Parse "M 3 3 L 9 9 M 9 3 L 3 9",
-                StrokeThickness = 1.2,
-                Fill = Brushes.Transparent,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Width = 12.0,
-                Height = 12.0
-            )
+        let close = IconSet.control Glyph.Close 12.0
 
-        close.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        close.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
+
         b.Content <- close
         b
 
     let buildIcon (item: TrayItem) : Control =
         if item.Failed then
-            let alert =
-                Path(
-                    Data = Geometry.Parse "M 7 2 L 12 12 L 2 12 Z M 7 5 L 7 8 M 7 10 L 7 10.01",
-                    StrokeThickness = 1.2,
-                    Fill = Brushes.Transparent,
-                    Width = 14.0,
-                    Height = 14.0
-                )
+            let alert = IconSet.control Glyph.Alert 14.0
 
-            alert.Bind(Path.StrokeProperty, Dyn.res "Palette.Danger") |> ignore
+            alert.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.Danger")
+            |> ignore
+
             alert :> Control
         elif item.Ready then
-            let p =
-                if item.IsImage then
-                    Path(
-                        Data = Geometry.Parse "M 2 2 L 12 2 L 12 12 L 2 12 Z M 3 10 L 6 6 L 9 9 L 11 7 L 12 8",
-                        StrokeThickness = 1.0,
-                        Fill = Brushes.Transparent,
-                        Width = 14.0,
-                        Height = 14.0
-                    )
-                else
-                    Path(
-                        Data = Geometry.Parse "M 3 2 L 9 2 L 12 5 L 12 13 L 3 13 Z M 9 2 L 9 5 L 12 5",
-                        StrokeThickness = 1.0,
-                        Fill = Brushes.Transparent,
-                        Width = 14.0,
-                        Height = 14.0
-                    )
+            let p = IconSet.control (if item.IsImage then Glyph.Image else Glyph.File) 14.0
 
-            p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+            p.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextMuted")
+            |> ignore
+
             p :> Control
         else
-            // 上传中：小旋转圈，挂 anim-spin
-            let spin =
-                Path(
-                    Data = Geometry.Parse "M 7 1 A 6 6 0 0 1 13 7",
-                    StrokeThickness = 1.6,
-                    StrokeLineCap = PenLineCap.Round,
-                    Fill = Brushes.Transparent,
-                    Width = 14.0,
-                    Height = 14.0
-                )
+            // 上传中：Lucide 转圈，挂 anim-spin
+            let spin = IconSet.control Glyph.Loader 14.0
 
-            spin.Bind(Path.StrokeProperty, Dyn.res "Palette.Accent") |> ignore
+            spin.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.Accent")
+            |> ignore
+
             spin.Classes.Add "anim-spin"
             spin :> Control
 

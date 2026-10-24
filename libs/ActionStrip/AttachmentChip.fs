@@ -4,11 +4,12 @@ open System
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
-open Avalonia.Controls.Shapes
+open Avalonia.Controls.Primitives
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Wanxiang2.IconSet
 open Wanxiang2.WorkspaceState
 
 [<RequireQualifiedAccess>]
@@ -36,28 +37,24 @@ type ChipData = Wanxiang2.WorkspaceState.AttachmentChipVS
 type AttachmentChip(data: ChipData) =
     let invoked = Event<unit>()
 
-    let glyphPath =
-        if data.IsImage then
-            "M 2 2 L 12 2 L 12 12 L 2 12 Z M 3 10 L 6 6 L 9 9 L 11 7 L 12 8"
-        else
-            "M 3 2 L 9 2 L 12 5 L 12 13 L 3 13 Z M 9 2 L 9 5 L 12 5"
-
     let glyph =
-        Path(
-            Data = Geometry.Parse glyphPath,
-            StrokeThickness = 1.0,
-            Fill = Brushes.Transparent,
-            Tag = (if data.IsImage then ChipGlyph.Image else ChipGlyph.File),
-            Width = 14.0,
-            Height = 14.0,
-            VerticalAlignment = VerticalAlignment.Center
-        )
+        let icon = IconSet.control (if data.IsImage then Glyph.Image else Glyph.File) 14.0
+
+        icon.Tag <- if data.IsImage then ChipGlyph.Image else ChipGlyph.File
+        icon.VerticalAlignment <- VerticalAlignment.Center
+        icon
 
     do
-        if data.Missing then
-            glyph.Bind(Path.StrokeProperty, Dyn.res "Palette.TextFaint") |> ignore
-        else
-            glyph.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
+        glyph.Bind(
+            TemplatedControl.ForegroundProperty,
+            Dyn.res (
+                if data.Missing then
+                    "Palette.TextFaint"
+                else
+                    "Palette.TextMuted"
+            )
+        )
+        |> ignore
 
     let name =
         TextBlock(
@@ -116,18 +113,13 @@ type AttachmentChip(data: ChipData) =
         row.Children.Add meta
 
         if not data.Missing then
-            let download =
-                Path(
-                    Data = Geometry.Parse "M 7 2 L 7 10 M 4 7 L 7 10 L 10 7 M 2 12 L 12 12",
-                    StrokeThickness = 1.0,
-                    Fill = Brushes.Transparent,
-                    Tag = ChipGlyph.Download,
-                    Width = 14.0,
-                    Height = 14.0,
-                    VerticalAlignment = VerticalAlignment.Center
-                )
+            let download = IconSet.control Glyph.Download 14.0
+            download.Tag <- ChipGlyph.Download
+            download.VerticalAlignment <- VerticalAlignment.Center
 
-            download.Bind(Path.StrokeProperty, Dyn.res "Palette.TextFaint") |> ignore
+            download.Bind(TemplatedControl.ForegroundProperty, Dyn.res "Palette.TextFaint")
+            |> ignore
+
             row.Children.Add download
 
         match host with

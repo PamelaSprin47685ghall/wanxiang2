@@ -16,12 +16,15 @@ module Wanxiang2.AppShell.Tests.LayoutAuditTests
 // 任何发现都算测试失败，失败信息带阶段 / 控件类型 / 可访问名 / 绝对矩形。
 
 open System
+open System.IO
+open System.Text
 open System.Text.Json.Nodes
 open Avalonia
 open Avalonia.Automation
 open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
 open Avalonia.Controls
+open Avalonia.Controls.Documents
 open Avalonia.Media
 open Avalonia.Threading
 open Avalonia.VisualTree
@@ -31,6 +34,9 @@ open Wanxiang.Protocol
 open Wanxiang.Client
 open Wanxiang.UI
 open Wanxiang2.AppShell.Tests
+open Wanxiang2.ShellLayout
+open Wanxiang2.ThemePalette
+open Wanxiang2.WorkspaceState
 
 // ---------- 树工 ----------
 
@@ -187,7 +193,10 @@ let private audit (stage: string) (root: Control) : string list =
     // A：滚动区横向溢出。
     for c in all do
         match c with
-        | :? ScrollViewer as sv when sv.Extent.Width > sv.Viewport.Width + 0.5 ->
+        | :? ScrollViewer as sv when
+            sv.Extent.Width > sv.Viewport.Width + 0.5
+            && not (sv.Classes.Contains "code-scroll")
+            ->
             findings.Add(
                 sprintf
                     "%s｜A 滚动区横向溢出 extent=%0.0f viewport=%0.0f（差 %0.0f）：%s"
@@ -519,5 +528,533 @@ let ``布局审计：全组合五状态无溢出无交叠且旅程可走通`` ()
                     findings
 
             Assert.True(findings.IsEmpty, String.Join("\n", findings))
+        finally
+            window.Close())
+
+/// 活树上的安排尺寸、画笔和字族。常量对常量不算通过。
+[<Fact>]
+let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套主题`` () =
+    Headless.run (fun () ->
+        let near (actual: float) (expected: float) (what: string) =
+            Assert.True(abs (actual - expected) <= 1.5, sprintf "%s expected %0.1f actual %0.1f" what expected actual)
+
+        let hex (brush: IBrush) =
+            match brush with
+            | :? SolidColorBrush as solid ->
+                let c = solid.Color
+                sprintf "#%02X%02X%02X" c.R c.G c.B
+            | _ -> ""
+
+        let bg (c: Control) =
+            match c with
+            | :? Border as b -> hex b.Background
+            | :? Panel as p -> hex p.Background
+            | :? Button as b -> hex b.Background
+            | _ -> ""
+
+        let family (tb: TextBlock) =
+            if isNull tb.FontFamily then
+                ""
+            else
+                tb.FontFamily.ToString()
+
+        let blocks (root: Control) =
+            root.GetVisualDescendants()
+            |> Seq.choose (fun v ->
+                match v with
+                | :? TextBlock as tb -> Some tb
+                | _ -> None)
+            |> Seq.filter effectivelyVisible
+            |> Seq.toList
+
+        // 会话行标题写在 Run 里，Text 属性是 null。读排出来的文字，不读模型字段。
+        let textOf (tb: TextBlock) =
+            let inlineText =
+                if isNull tb.Inlines || tb.Inlines.Count = 0 then
+                    ""
+                else
+                    tb.Inlines
+                    |> Seq.choose (fun part ->
+                        match part with
+                        | :? Run as run when not (isNull run.Text) -> Some run.Text
+                        | _ -> None)
+                    |> String.concat ""
+
+            if inlineText.Length > 0 then inlineText
+            elif isNull tb.Text then ""
+            else tb.Text
+
+        let findText (root: Control) (needle: string) =
+            match blocks root |> List.tryFind (fun tb -> textOf tb |> fun t -> t.Contains needle) with
+            | Some tb -> tb
+            | None -> failwith (sprintf "找不到「%s」" needle)
+
+        let buttonWith (root: Control) (needle: string) =
+            root.GetVisualDescendants()
+            |> Seq.choose (fun v ->
+                match v with
+                | :? Button as b when effectivelyVisible b -> Some b
+                | _ -> None)
+            |> Seq.tryFind (fun b ->
+                let name = AutomationProperties.GetName b
+
+                (not (isNull name) && name.Contains needle)
+                || (texts b |> List.exists (fun t -> not (isNull t) && t.Contains needle)))
+
+        let rec capped (v: Visual) =
+            match v with
+            | :? Control as lay when lay.MaxWidth > 0.0 && lay.MaxWidth < 4000.0 -> Some lay.MaxWidth
+            | _ ->
+                match v.GetVisualParent() with
+                | null -> None
+                | parent -> capped parent
+
+        let midX (c: Control) =
+            let r = absRect c
+            r.X + r.Width / 2.0
+
+        let rig = Rig.create ()
+        let window = Window(Width = 1280.0, Height = 800.0, Content = rig.Root)
+        window.Show()
+
+        let resize (w: float) (h: float) =
+            window.Width <- w
+            window.Height <- h
+            Dispatcher.UIThread.RunJobs()
+            Pump.settle ()
+            rig.Shell.Reproject()
+            Pump.settle ()
+
+        let composer = rig.Views.Composer.Host :?> Border
+        let rail = rig.Views.Sidebar.View
+        let bar = rig.Views.Chat.Header.Host
+
+        // 留白档看窗口宽度，不看舞台宽度。阅读列的安排宽度必须落在舞台减去两侧留白之内。
+        let assertPads (label: string) (expected: float) =
+            near composer.Padding.Left expected label
+            near composer.Padding.Right expected (label + " 右")
+            near rig.Views.Chat.Pane.Scroller.Viewer.Padding.Left expected (label + " 阅读区")
+
+            let emptyLeft =
+                rig.Views.Chat.Pane.Host.GetVisualChildren()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? ScrollViewer as sv when sv <> rig.Views.Chat.Pane.Scroller.Viewer -> Some sv.Padding.Left
+                    | _ -> None)
+                |> Seq.toList
+
+            Assert.NotEmpty emptyLeft
+
+            for p in emptyLeft do
+                near p expected (label + " 空态")
+
+        let assertColumnWithin (expectedInset: float) =
+            let stage = composer.Bounds.Width
+            let budget = stage - 2.0 * expectedInset
+
+            let cols =
+                rig.Root.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Control as c when
+                        abs (c.MaxWidth - 748.0) < 0.5 && effectivelyVisible c && c.Bounds.Width > 0.5
+                        ->
+                        Some c
+                    | _ -> None)
+                |> Seq.toList
+
+            Assert.NotEmpty cols
+
+            for c in cols do
+                Assert.True(
+                    c.Bounds.Width <= budget + 1.5,
+                    sprintf "阅读列宽 %0.1f 舞台 %0.1f 留白 %0.0f 预算 %0.1f" c.Bounds.Width stage expectedInset budget
+                )
+
+                let r = absRect c
+                let hostR = absRect composer
+
+                Assert.True(
+                    r.X >= hostR.X + expectedInset - 1.5
+                    && r.Right <= hostR.Right - expectedInset + 1.5,
+                    sprintf
+                        "阅读列 [%0.1f,%0.1f] 超出内容区 [%0.1f,%0.1f]"
+                        r.X
+                        r.Right
+                        (hostR.X + expectedInset)
+                        (hostR.Right - expectedInset)
+                )
+
+        let mutable measuredEmpty = 0.0
+        let mutable measuredReading = 0.0
+        let mutable measuredInset16 = 0.0
+        let mutable measuredSettings = 0.0
+        let mutable measuredPalette = 0.0
+        let mutable measuredConfirm = 0.0
+
+        try
+            resize 1280.0 800.0
+            connect rig
+            resize 1280.0 800.0
+
+            near rail.Bounds.Width 284.0 "rail"
+            Assert.True(effectivelyVisible (findText rail "万"))
+            Assert.Contains("万象", (findText rail "万象").Text)
+            Assert.Contains("Noto Serif", family (findText rail "万"))
+            Assert.Contains("Noto Serif", family (findText rail "万象"))
+            Assert.Equal("新对话", AutomationProperties.GetName rig.Views.Sidebar.Brand.NewButton)
+
+            Assert.True(
+                rail.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? TextBox as box -> Some box
+                    | _ -> None)
+                |> Seq.exists (fun box -> box.PlaceholderText = "搜索标题和正文")
+            )
+
+            Assert.True(blocks rail |> List.exists (fun tb -> tb.Text = "已连接" || tb.Text = "选择主机"))
+
+            near bar.Bounds.Height 52.0 "top bar"
+            Assert.True(bar.IsVisible)
+            Assert.Equal("新对话", rig.Views.Chat.Header.Title)
+            Assert.Contains("Noto Serif", family (findText bar "新对话"))
+            Assert.True((absRect bar).Y < 1.5, "顶栏贴在舞台顶部")
+
+            let lead = findText rig.Root "从一句开始"
+            Assert.Contains("Noto Serif", family lead)
+
+            match capped lead with
+            | Some cap ->
+                near cap 480.0 "empty cap"
+                measuredEmpty <- cap
+            | None -> Assert.Fail "空态没有 480 的宽度上限"
+
+            let emptyBlock =
+                let rec up (v: Visual) =
+                    match v with
+                    | :? Control as lay when abs (lay.MaxWidth - 480.0) < 0.5 -> lay
+                    | _ -> up (v.GetVisualParent())
+
+                up lead
+
+            Assert.True(lead.Bounds.Width <= 480.5)
+
+            for starter in [ "用三句话说明这台主机现在能做什么"; "指出一份 TOML 配置里的错误"; "把工具调用说成人话" ] do
+                Assert.True(buttonWith rig.Root starter |> Option.isSome, starter)
+
+            let shellBorder =
+                composer.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Border as b when abs (b.CornerRadius.TopLeft - 16.0) < 0.1 -> Some b
+                    | _ -> None)
+                |> Seq.tryHead
+
+            Assert.True(shellBorder.IsSome, "输入区圆角 16")
+
+            match buttonWith composer "未选择" with
+            | Some chip ->
+                let attachR = absRect rig.Views.Composer.Box.AttachButton
+                let chipR = absRect chip
+                let sendR = absRect rig.Views.Composer.Box.SendButton
+                Assert.True(attachR.X < chipR.X && chipR.X < sendR.X, "附件和模型在左，发送在右")
+            | None -> Assert.Fail "没有模型芯片"
+
+            Assert.Equal("先连接一个模型，草稿会留在这里", rig.Views.Composer.Box.Input.PlaceholderText)
+            near (midX emptyBlock) (midX composer) "empty and composer share a horizontal center"
+            Assert.True((absRect emptyBlock).Y >= (absRect bar).Bottom - 1.0, "空态在顶栏之下")
+
+            let bottomGap () =
+                rig.Root.Bounds.Height - (absRect composer).Bottom
+
+            Assert.True(bottomGap () > 80.0, sprintf "起步时应成组居中，底空距 %0.1f" (bottomGap ()))
+
+            let groupMid = ((absRect emptyBlock).Y + (absRect composer).Bottom) / 2.0
+
+            let areaMid = ((absRect bar).Bottom + rig.Root.Bounds.Height) / 2.0
+
+            Assert.True(abs (groupMid - areaMid) < 48.0, sprintf "组中心 %0.1f 舞台中心 %0.1f" groupMid areaMid)
+
+            Assert.Equal("#F5F4ED", bg rig.Views.Workspace.Host)
+            Assert.Equal("#F0EEE5", bg rail)
+            Assert.Equal("#1B365D", bg rig.Views.Composer.Box.SendButton)
+
+            let bodySample = findText rail "已连接"
+            Assert.Contains("Noto Sans", family bodySample)
+
+            rig.Shell.Dispatch(User(Composer(ComposerUserMsg.ModelPick("p1", "m1"))))
+            Pump.settle ()
+            Assert.Equal("写下一句", rig.Views.Composer.Box.Input.PlaceholderText)
+            Assert.True(bottomGap () > 80.0, "选了模型仍是起步居中")
+
+            resize 1280.0 800.0
+            assertPads "inset at 1280" 48.0
+
+            resize 1400.0 800.0
+            near rail.Bounds.Width 284.0 "rail at 1400"
+            assertPads "inset at 1400" 48.0
+
+            resize 1100.0 800.0
+            assertPads "inset at 1100" 48.0
+            assertColumnWithin 48.0
+            Assert.True(composer.Bounds.Width < 1024.0, sprintf "1100 窗口的舞台应窄于 1024，实际 %0.1f" composer.Bounds.Width)
+
+            resize 800.0 800.0
+            near rail.Bounds.Width 284.0 "rail at 800"
+            Assert.True(effectivelyVisible rail, "800 仍是侧栏列，不是抽屉")
+            assertPads "inset at 800" 32.0
+            assertColumnWithin 32.0
+
+            resize 1280.0 560.0
+            Assert.True(bottomGap () < 48.0, sprintf "高度 560 应贴底，底空距 %0.1f" (bottomGap ()))
+
+            resize 1280.0 800.0
+            Assert.True(bottomGap () > 80.0, "回到 800 后重新居中")
+
+            let longTitle = String.replicate 8 "超长会话标题必须在栏内省略"
+            let codeLine = String.replicate 20 "abcdefghijklmnopqrstuvwxyz0123456789 "
+            let userLine = String.replicate 6 "用户气泡应该停在五百六十的宽度里。"
+
+            let longList =
+                WireEvent.ConversationListSnapshot
+                    {|
+                        items = JsonArray(summaryItem conversationId longTitle "摘要" false false false)
+                        lastCommitId = 2UL
+                    |}
+
+            rig.Fake.Deliver longList
+            Pump.settle ()
+            near rail.Bounds.Width 284.0 "rail after long title"
+
+            let railTitle = findText rail "超长会话标题"
+            Assert.Equal(TextTrimming.CharacterEllipsis, railTitle.TextTrimming)
+            Assert.True(railTitle.Bounds.Width < 270.0, sprintf "栏内标题宽 %0.1f" railTitle.Bounds.Width)
+            Assert.True((absRect railTitle).Right <= (absRect rail).Right + 1.0)
+
+            match findRowButton rail longTitle with
+            | Some row -> click row
+            | None -> Assert.Fail "长标题行不在栏里"
+
+            rig.Fake.Deliver(
+                WireEvent.ConversationSnapshot
+                    {|
+                        conversationId = Guid.Parse conversationId
+                        title = longTitle
+                        lastCommitId = 2UL
+                        runtimeState = "idle"
+                        generationId = None
+                        messages =
+                            JsonArray(
+                                messageItem 1 "user" (textContent userLine),
+                                messageItem 2 "assistant" (textContent ("```\\n" + codeLine + "\\n```"))
+                            )
+                        snapshotEarliestCommitId = 0UL
+                        snapshotHasMore = false
+                        config = SessionConfig.empty
+                    |}
+            )
+
+            Pump.settle ()
+            rig.Shell.Reproject()
+            Pump.settle ()
+
+            Assert.True(bottomGap () < 48.0, sprintf "有消息应贴底，底空距 %0.1f" (bottomGap ()))
+            near bar.Bounds.Height 52.0 "header with conversation"
+            let headerTitle = findText bar "超长会话标题"
+            Assert.Equal(TextTrimming.CharacterEllipsis, headerTitle.TextTrimming)
+            Assert.True(headerTitle.Bounds.Width < rig.Root.Bounds.Width - rail.Bounds.Width)
+
+            let reading =
+                rig.Root.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Control as c when abs (c.MaxWidth - 748.0) < 0.5 && effectivelyVisible c -> Some c
+                    | _ -> None)
+                |> Seq.toList
+
+            Assert.NotEmpty reading
+            Assert.True(reading |> List.forall (fun c -> c.Bounds.Width <= 748.5))
+            measuredReading <- reading |> List.map (fun c -> c.MaxWidth) |> List.max
+            assertPads "inset with messages at 1280" 48.0
+            assertColumnWithin 48.0
+
+            resize 1100.0 800.0
+            assertPads "inset with messages at 1100" 48.0
+            assertColumnWithin 48.0
+
+            resize 1280.0 800.0
+
+            let bubbles =
+                rig.Root.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Control as c when abs (c.MaxWidth - 560.0) < 0.5 && effectivelyVisible c -> Some c
+                    | _ -> None)
+                |> Seq.toList
+
+            Assert.NotEmpty bubbles
+            Assert.True(bubbles |> List.forall (fun c -> c.Bounds.Width <= 560.5))
+
+            let codeScrolls =
+                rig.Root.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? ScrollViewer as sv when sv.Classes.Contains "code-scroll" -> Some sv
+                    | _ -> None)
+                |> Seq.toList
+
+            Assert.NotEmpty codeScrolls
+            Assert.True(codeScrolls |> List.exists (fun sv -> sv.Extent.Width > sv.Viewport.Width + 8.0))
+            Assert.True(rig.Root.Bounds.Width <= 1280.5)
+            let codeFindings = audit "代码行" rig.Root
+            Assert.True(codeFindings.IsEmpty, String.Join("\n", codeFindings))
+
+            rig.Shell.HandleShortcut ShortcutAction.OpenSettings |> ignore
+            Pump.settle ()
+            Assert.True rig.Views.Workspace.Host.IsVisible
+
+            let surface =
+                rig.Root.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Control as c when c.Name = "settings-surface" -> Some c
+                    | _ -> None)
+                |> Seq.head
+
+            near surface.Bounds.Width 720.0 "settings"
+            measuredSettings <- surface.Bounds.Width
+            Assert.Contains("Noto Serif", family (findText rig.Views.Settings.View "设置"))
+            Assert.True(rig.Views.Settings.View.IsVisible)
+
+            rig.Shell.HandleShortcut ShortcutAction.OpenCommandPalette |> ignore
+            Pump.settle ()
+            let dialog = rig.Views.Overlay.Layer.DialogCard
+            Assert.True dialog.IsVisible
+            near dialog.Bounds.Width 560.0 "palette"
+            measuredPalette <- dialog.Bounds.Width
+            Assert.True rig.Views.Settings.View.IsVisible
+
+            Assert.True(rig.Shell.HandleShortcut ShortcutAction.Escape)
+            Pump.settle ()
+            Assert.False dialog.IsVisible
+            Assert.True rig.Views.Settings.View.IsVisible
+
+            Assert.True(rig.Shell.HandleShortcut ShortcutAction.Escape)
+            Pump.settle ()
+            Assert.False rig.Views.Settings.View.IsVisible
+
+            rig.Shell.HandleShortcut ShortcutAction.OpenCommandPalette |> ignore
+            Pump.settle ()
+            Assert.True dialog.IsVisible
+            rig.Shell.HandleShortcut ShortcutAction.OpenCommandPalette |> ignore
+            Pump.settle ()
+            Assert.False dialog.IsVisible
+
+            rig.Views.Dialogs.Confirm("删除对话", "这段会删掉。", "删除", ignore) |> ignore
+            Pump.settle ()
+            near dialog.Bounds.Width 420.0 "confirm"
+            measuredConfirm <- dialog.Bounds.Width
+            rig.Shell.HandleShortcut ShortcutAction.Escape |> ignore
+            Pump.settle ()
+
+            resize 360.0 700.0
+            rig.Views.Dialogs.Confirm("删除对话", "窄窗。", "删除", ignore) |> ignore
+            Pump.settle ()
+
+            Assert.True(
+                dialog.Bounds.Width <= rig.Root.Bounds.Width - 24.0 + 0.5,
+                sprintf "窄确认框 %0.1f 窗 %0.1f" dialog.Bounds.Width rig.Root.Bounds.Width
+            )
+
+            rig.Shell.HandleShortcut ShortcutAction.Escape |> ignore
+            Pump.settle ()
+
+            resize 500.0 800.0
+            Assert.False(effectivelyVisible rail, "窄屏侧栏不是第二列")
+
+            Assert.True(
+                composer.Bounds.Width > rig.Root.Bounds.Width - 24.0,
+                sprintf "舞台宽 %0.1f" composer.Bounds.Width
+            )
+
+            near composer.Padding.Left 24.0 "inset at 500"
+            let collapsedBefore = rig.Shell.Model.Nav.SidebarCollapsed
+            Assert.True(rig.Shell.HandleShortcut ShortcutAction.ToggleSidebar)
+            Pump.settle ()
+            Assert.Equal(collapsedBefore, rig.Shell.Model.Nav.SidebarCollapsed)
+            Assert.True(effectivelyVisible rail, "抽屉打开")
+            Assert.True(composer.Bounds.Width > rig.Root.Bounds.Width - 24.0)
+            Assert.True(rig.Shell.HandleShortcut ShortcutAction.Escape)
+            Pump.settle ()
+            Assert.False(effectivelyVisible rail, "Escape 关掉抽屉")
+
+            resize 400.0 800.0
+            near composer.Padding.Left 16.0 "inset at 400"
+            measuredInset16 <- composer.Padding.Left
+            Assert.True(composer.Bounds.Width > rig.Root.Bounds.Width - 8.0)
+
+            resize 1280.0 800.0
+            rig.Theme.Motion.ApplyReduced true
+            rig.Theme.Apply PaletteMode.Dark
+            Pump.settle ()
+            Assert.Equal("#15151A", bg rig.Views.Workspace.Host)
+            Assert.Equal("#1A1A22", bg rail)
+            Assert.Equal("#8FB4DE", bg rig.Views.Composer.Box.SendButton)
+
+            Assert.True(rig.Shell.HandleShortcut ShortcutAction.NewConversation)
+
+            match rig.Shell.Model.Conn with
+            | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.IdleEmpty)) -> ()
+            | other -> Assert.Fail(sprintf "Ctrl+N 之后应是空对话：%A" other)
+
+            let measuredRail = rail.Bounds.Width
+            let measuredBar = bar.Bounds.Height
+
+            // DPR 把 1100 CSS 除成约 733 的安排宽度。留白和侧栏必须跟 CSS，不能跟这 733。
+            resize 733.0 800.0
+            near rig.Root.Bounds.Width 733.0 "arranged bounds"
+            assertPads "bounds 733" 32.0
+            near rail.Bounds.Width 284.0 "rail at bounds 733"
+            Assert.False rig.Views.Workspace.State.compactMode
+
+            rig.Fake.CssViewport <- 1100.0
+            rig.Fake.FireEvery(TimeSpan.FromMilliseconds 250.0)
+            Pump.settle ()
+            near rig.Root.Bounds.Width 733.0 "bounds stay ~733 under css 1100"
+            assertPads "css 1100" 48.0
+            near rail.Bounds.Width 284.0 "rail column at css 1100"
+            Assert.True(effectivelyVisible rail, "CSS 1100 仍是侧栏列")
+            Assert.False(rig.Views.Workspace.State.compactMode, "CSS 1100 不是抽屉")
+
+            rig.Fake.CssViewport <- 600.0
+            rig.Fake.FireEvery(TimeSpan.FromMilliseconds 250.0)
+            Pump.settle ()
+            near rig.Root.Bounds.Width 733.0 "bounds stay ~733 under css 600"
+            Assert.True(rig.Views.Workspace.State.compactMode, "CSS 600 进入抽屉")
+            Assert.False(effectivelyVisible rail, "CSS 600 侧栏不是第二列")
+            near composer.Padding.Left 24.0 "css 600 inset"
+            near rig.Views.Chat.Pane.Scroller.Viewer.Padding.Left 24.0 "css 600 thread"
+
+            Assert.True(
+                composer.Bounds.Width > rig.Root.Bounds.Width - 24.0,
+                sprintf "抽屉舞台宽 %0.1f" composer.Bounds.Width
+            )
+
+            let measured =
+                sprintf
+                    "MEASURED rail=%0.0f bar=%0.0f empty=%0.0f reading=%0.0f inset16=%0.0f settings=%0.0f palette=%0.0f confirm=%0.0f"
+                    measuredRail
+                    measuredBar
+                    measuredEmpty
+                    measuredReading
+                    measuredInset16
+                    measuredSettings
+                    measuredPalette
+                    measuredConfirm
+
+            // printfn 进进程输出；ITestOutputHelper 进宿主的测试输出。dotnet test 成功时默认不转发后者。
+            printfn "%s" measured
+            TestContext.Current.TestOutputHelper.WriteLine measured
         finally
             window.Close())

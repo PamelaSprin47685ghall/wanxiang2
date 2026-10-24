@@ -32,7 +32,21 @@ let private resolves (family: FontFamily) (expected: string) =
 [<Fact>]
 let ``body mono and katex families resolve to the embedded faces`` () =
     Headless.run (fun () ->
-        resolves (FontFamily ThemeFonts.body) "Sarasa Gothic SC"
+        Assert.Contains("Noto Sans", ThemeFonts.body)
+        Assert.Contains("Sarasa Gothic SC", ThemeFonts.body)
+        Assert.Contains("Noto Serif", ThemeFonts.display)
+
+        let ok, bodyGlyph =
+            FontManager.Current.TryGetGlyphTypeface(Typeface(FontFamily ThemeFonts.body))
+
+        Assert.True(ok, "body")
+
+        Assert.True(
+            bodyGlyph.FamilyName.Contains("Noto") || bodyGlyph.FamilyName.Contains("Sarasa"),
+            bodyGlyph.FamilyName
+        )
+
+        resolves (FontFamily(ThemeFonts.directory + "#Sarasa Gothic SC")) "Sarasa Gothic SC"
         resolves (FontFamily ThemeFonts.mono) "Sarasa Term SC"
         resolves (ThemeFonts.family "KaTeX_Main") "KaTeX_Main"
         resolves (ThemeFonts.family "KaTeX_Size4") "KaTeX_Size4")

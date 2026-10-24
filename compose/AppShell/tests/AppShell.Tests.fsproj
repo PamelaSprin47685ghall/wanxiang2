@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Headless.fs" />
     <Compile Include="Rig.fs" />
@@ -11,6 +13,7 @@
     <Compile Include="A11yTraversalTests.fs" />
     <Compile Include="ShortcutInterceptTests.fs" />
     <Compile Include="LayoutAudit.Tests.fs" />
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

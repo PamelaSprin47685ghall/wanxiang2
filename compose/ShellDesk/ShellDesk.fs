@@ -69,7 +69,9 @@ type ShellDesk
     do compactBreakpoint.Subscribe(fun v -> breakpoint <- v).Dispose()
     let mutable navigation = NavigationController(initialSidebarCollapsed, breakpoint)
     let mutable lastWidth = 0.0
-    let workspace = WorkspaceStack(chat, composer)
+    // 600：空态与输入区只在舞台不低于这个高度时成组居中。默认构造的 560 留给不经过本桌的直接测试。
+    let workspace = WorkspaceStack(chat, composer, 600.0)
+    let stage = DockPanel()
 
     let initSplitterW =
         match splitterWidthOpt with
@@ -80,7 +82,7 @@ type ShellDesk
         | None -> 6.0
 
     let columns =
-        ShellColumns(shellGrid, sidebar, splitter, workspace, 420.0, initSplitterW, sidebarWidth)
+        ShellColumns(shellGrid, sidebar, splitter, stage, 420.0, initSplitterW, sidebarWidth)
 
     let project (s: NavigationSnapshot) =
         columns.Apply
@@ -116,9 +118,9 @@ type ShellDesk
             shellGrid.ColumnDefinitions.Add(ColumnDefinition())
             shellGrid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
 
-        shellGrid.ColumnDefinitions[0].MaxWidth <- 420.0
+        stage.Children.Add workspace
 
-        for c in [ sidebar; splitter; workspace :> Control ] do
+        for c in [ sidebar; splitter; stage :> Control ] do
             if not (shellGrid.Children.Contains c) then
                 shellGrid.Children.Add c
 
@@ -170,9 +172,15 @@ type ShellDesk
         )
 
     member _.State = navigation.State
-    /// 对话区一列（对话视图 + 输入区）
+    /// 对话区一列（对话视图 + 输入区）。顶栏在它外面。
     member _.Workspace = workspace
     member _.Columns = columns
+
+    /// 把顶栏钉在舞台顶部，使起步组的垂直居中发生在顶栏之下。
+    member _.DockChrome(header: Control) =
+        if not (stage.Children.Contains header) then
+            DockPanel.SetDock(header, Dock.Top)
+            stage.Children.Insert(0, header)
 
     /// 起步页（新对话、无消息）与续聊切换（投影）
     member _.RenderStarting(value: bool) = workspace.RenderStarting value

@@ -60,7 +60,9 @@ type OverlayDesk(root: Grid, look: OverlayDeskMetrics) =
         // 提示条层排在覆盖层四层之后，与旧次序一致。
         Grid.SetColumnSpan(strip.View, 8)
         Grid.SetRowSpan(strip.View, 8)
+        strip.View.ZIndex <- 4
         root.Children.Add strip.View
+        layer.WireDismiss()
         layer.InsetChanged.Add(fun () -> fit ())
         strip.Clicked.Add remove
 

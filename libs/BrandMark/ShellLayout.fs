@@ -15,31 +15,78 @@ type ShellState =
     }
 
 /// 同一个输入控件贯穿起步和对话（迁自旧 Views/MainLayout.fs 的 ConversationWorkspace）。
-/// 起步且够高时输入区居中（末行取星号），否则贴底；每次重算都发 `StartModeChanged`，组合者转给对话视图。
+/// 顶栏由舞台钉在本栈之外。起步且舞台够高时，空态与输入区作为一组在顶栏之下垂直居中；
+/// 有消息或舞台不够高时输入区贴底、对话列滚动。门槛看父级高度：顶栏占掉的高度不能把 600 的窗口判成贴底。
 type WorkspaceStack(chat: Control, composer: Control, startMinHeight: float) as this =
     inherit DockPanel()
 
-    let head = RowDefinition(Height = GridLength.Star, MinHeight = 48.0)
-    let tail = RowDefinition(Height = GridLength 0.0)
+    let top = RowDefinition(Height = GridLength 0.0)
+    let thread = RowDefinition(Height = GridLength.Star, MinHeight = 48.0)
+    let bottom = RowDefinition(Height = GridLength 0.0)
     let grid = Grid()
     let mutable starting = false
     let mutable minHeight = startMinHeight
     let startMode = Event<bool>()
+    let mutable parentHook: IDisposable option = None
+
+    let gateHeight () =
+        match this.GetVisualParent() with
+        | null -> this.Bounds.Height
+        | parent ->
+            let parentHeight = parent.Bounds.Height
+            let ownHeight = this.Bounds.Height
+            // 父级比本栈更高，说明顶栏（或其它钉在父级上的条）在本栈之外。门槛用父级。
+            if parentHeight > ownHeight + 1.0 then parentHeight
+            elif ownHeight > 0.0 then ownHeight
+            else parentHeight
+
+    let setLength (row: RowDefinition) (height: GridLength) (min: float) =
+        if row.Height <> height then
+            row.Height <- height
+
+        if row.MinHeight <> min then
+            row.MinHeight <- min
 
     let apply () =
-        let centered = starting && this.Bounds.Height >= minHeight
-        tail.Height <- if centered then GridLength.Star else GridLength 0.0
+        let centered = starting && gateHeight () >= minHeight
+
+        if centered then
+            setLength top (GridLength.Star) 0.0
+            setLength thread (GridLength.Auto) 0.0
+            setLength bottom (GridLength.Star) 0.0
+        else
+            setLength top (GridLength 0.0) 0.0
+            setLength thread (GridLength.Star) 48.0
+            setLength bottom (GridLength 0.0) 0.0
+
         startMode.Trigger centered
 
+    let watchParent () =
+        parentHook |> Option.iter (fun d -> d.Dispose())
+
+        match this.GetVisualParent() with
+        | null -> parentHook <- None
+        | parent ->
+            parentHook <- Some(parent.GetPropertyChangedObservable(Visual.BoundsProperty).Subscribe(fun _ -> apply ()))
+
     do
-        grid.RowDefinitions.Add head
+        grid.RowDefinitions.Add top
+        grid.RowDefinitions.Add thread
         grid.RowDefinitions.Add(RowDefinition(Height = GridLength.Auto))
-        grid.RowDefinitions.Add tail
-        Grid.SetRow(chat, 0)
-        Grid.SetRow(composer, 1)
+        grid.RowDefinitions.Add bottom
+        Grid.SetRow(chat, 1)
+        Grid.SetRow(composer, 2)
         grid.Children.Add chat
         grid.Children.Add composer
         this.Children.Add grid
+
+        this.AttachedToVisualTree.Add(fun _ ->
+            watchParent ()
+            apply ())
+
+        this.DetachedFromVisualTree.Add(fun _ ->
+            parentHook |> Option.iter (fun d -> d.Dispose())
+            parentHook <- None)
 
         this.PropertyChanged.Add(fun e ->
             if e.Property = Visual.BoundsProperty then
@@ -73,8 +120,8 @@ type ShellColumns
     let compactApplied = Event<bool>()
     let scrimPressed = Event<unit>()
     let focusHome = Event<unit>()
-    // 侧栏最小宽写死：列宽只从这里投影，不再有单独的写接口。
-    let minWidth = 220.0
+    // 侧栏最小宽与偏好下限同一数：列宽只从这里投影，不再有单独的写接口。
+    let minWidth = 232.0
     let maxWidth = sidebarMaxWidth
     let splitterW = splitterWidth
 
@@ -86,6 +133,8 @@ type ShellColumns
         let cols = shellGrid.ColumnDefinitions
 
         if state.Compact then
+            // 窄屏第 0 列就是舞台。宽屏留给侧栏的最大宽不能把舞台截在 420。
+            cols[0].MaxWidth <- Double.PositiveInfinity
             cols[0].MinWidth <- 0.0
             cols[0].Width <- GridLength.Star
             cols[1].Width <- GridLength 0.0
@@ -99,6 +148,7 @@ type ShellColumns
             scrim.IsVisible <- state.DrawerOpen
             scrim.Opacity <- if state.DrawerOpen then 1.0 else 0.0
         else
+            cols[0].MaxWidth <- maxWidth
             cols[0].MinWidth <- if state.SidebarCollapsed then 0.0 else minWidth
 
             cols[0].Width <-

@@ -83,9 +83,9 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
             | _ -> fallback
 
     let applyStart () =
-        match startMode with
-        | Some v -> empty.ApplyBottomAligned v
-        | None -> ()
+        // 成组居中由 WorkspaceStack 负责。空态再贴底会把标题挂在输入区上方，组不再居中。
+        if startMode.IsSome then
+            empty.ApplyBottomAligned false
 
     let hideSkeleton () =
         if skeleton.IsShown then
@@ -125,27 +125,44 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
 
         refreshButton ()
 
-    /// 水平留白按自身宽度取档（旧 ChatView.ApplyHorizontalInsets 的滚动区部分）
+    /// 水平留白按窗口视口分档（旧 ChatView.ApplyHorizontalInsets 的滚动区部分）。
+    /// 视口由工作区传入；本列单独放进窗口时，列宽就是视口。
     let mutable top = 0.0
+    /// 在途：工作区最近一次给出的窗口视口宽度。0 表示还没接入，留白退回本列宽度。
+    let mutable viewportWidth = 0.0
 
     let applyInsets () =
         // 阅读列节奏对齐 react thread：顶 Space.X4l 24、底 Space.Md 8（与输入区顶 8 相接）
         top <- resFloat "Space.X4l" Wanxiang.UI.Spacing.space4xl
-        let inset = LayoutPolicy.horizontalInset body.Bounds.Width
+
+        let width =
+            if viewportWidth > 0.0 then
+                viewportWidth
+            else
+                body.Bounds.Width
+
+        let inset = LayoutPolicy.horizontalInset width
         let bottomPad = resFloat "Space.Md" Wanxiang.UI.Spacing.spaceMd
         scroller.Viewer.Padding <- Thickness(inset, top, inset, bottomPad)
         // 空态的水平留白归这里（react .starter 的 padding-inline），ChatEmpty 自身不再带侧边距
         emptyScroller.Padding <- Thickness(inset, 0.0, inset, 0.0)
 
     do
+        // 滚动区与空态占满；「回到最新」单独一行，不盖住消息上的操作。不可见时这一行高度为 0。
+        body.RowDefinitions.Add(RowDefinition(Height = GridLength.Star))
+        body.RowDefinitions.Add(RowDefinition(Height = GridLength.Auto))
         // 旧主体的子项序：滚动区、空态滚动区、「回到最新」、更早一页失败横幅。ChatScroller 的叠放层拆开放进主体
         let layer = scroller.Host :?> Panel
         layer.Children.Clear()
         scroller.Content <- messages
+        Grid.SetRow(scroller.Viewer, 0)
         body.Children.Add scroller.Viewer
 
+        Grid.SetRow(emptyScroller, 0)
         body.Children.Add emptyScroller
+        Grid.SetRow(scroller.LatestButton, 1)
         body.Children.Add scroller.LatestButton
+        Grid.SetRow(nav.FailureBanner, 0)
         body.Children.Add nav.FailureBanner
 
         body.PropertyChanged.Add(fun e ->
@@ -198,7 +215,13 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
     /// 立即写偏移并记为自己写的（旧 tween.Pin）：钉住期间重新对齐不被当成用户上滚
     member _.PinOffset(y: float) = scroller.PinOffset y
 
-    /// 起步模式（插槽/非每帧投影）：空态贴近输入区；只改布局
+    /// 窗口视口宽度。阅读列与空态的水平留白按它分档，不按本列宽度。
+    member _.ApplyViewportWidth(width: float) =
+        if width > 0.0 then
+            viewportWidth <- width
+            applyInsets ()
+
+    /// 起步模式（插槽/非每帧投影）：只记住；空态不再贴底。
     member _.WireStartMode(value: bool) =
         startMode <- Some value
         applyStart ()

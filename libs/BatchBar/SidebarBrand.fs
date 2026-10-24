@@ -5,8 +5,20 @@ open Avalonia
 open Avalonia.Automation
 open Avalonia.Controls
 open Avalonia.Layout
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
 open Wanxiang2.WorkspaceState
+
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
+        ext.ProvideValue sp
 
 /// 侧栏顶栏。一行 52：左边品牌，右边新对话图标键。
 /// 不再在品牌下面叠一条通栏按钮。
@@ -39,7 +51,7 @@ type SidebarBrand() =
 
         b.Classes.Add "icon-button"
         b.Classes.Add "ghost"
-        AutomationProperties.SetName(b, "新建对话（Ctrl / ⌘ + N）")
+        AutomationProperties.SetName(b, "新对话")
         ToolTip.SetTip(b, "新建对话（Ctrl / ⌘ + N）")
         b.Click.Add(fun _ -> create.Trigger())
         b
@@ -55,8 +67,31 @@ type SidebarBrand() =
         b.Click.Add(fun _ -> preset.Trigger(b :> Control))
         b
 
+    let mark =
+        TextBlock(
+            Text = "万",
+            FontSize = 11.0,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false
+        )
+
+    do
+        mark.Classes.Add "serif"
+
+        mark.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextOnAccent")
+        |> ignore
+
     let logoSlot =
-        Border(Width = 26.0, Height = 26.0, VerticalAlignment = VerticalAlignment.Center)
+        Border(
+            Width = 26.0,
+            Height = 26.0,
+            CornerRadius = CornerRadius(26.0 * 0.2895),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = mark
+        )
+
+    do logoSlot.Bind(Border.BackgroundProperty, Dyn.res "Palette.Accent") |> ignore
 
     let wordmark =
         TextBlock(
@@ -65,6 +100,8 @@ type SidebarBrand() =
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center
         )
+
+    do wordmark.Classes.Add "serif"
 
     let view =
         let brandRow =
@@ -115,8 +152,8 @@ type SidebarBrand() =
     member _.PresetButton = presetButton :> Control
     member _.LogoSlot = logoSlot
 
-    /// 宿主挂载品牌图标（插槽：构造期一次性接入，不随每帧投影变）
-    member _.SlotLogo(logo: Control) = logoSlot.Child <- logo
+    /// 品牌标是「万」。旧插槽不再换成图片，避免把标记盖掉。
+    member _.SlotLogo(_logo: Control) = ()
 
     /// 单入口渲染
     member _.Render(vs: SidebarBrandVS) =

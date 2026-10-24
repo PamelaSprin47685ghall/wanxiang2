@@ -10,7 +10,7 @@ open Avalonia.VisualTree
 open Xunit
 open Wanxiang2.ShellLayout
 
-let sidebarMin, sidebarMax, sidebarDefault, splitterW = 220.0, 420.0, 280.0, 6.0
+let sidebarMin, sidebarMax, sidebarDefault, splitterW = 232.0, 420.0, 280.0, 6.0
 
 let fixture () =
     let sidebar = StackPanel()

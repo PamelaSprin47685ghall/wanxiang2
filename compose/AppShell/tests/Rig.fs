@@ -66,6 +66,9 @@ type FakePorts(prefs0: UiPrefs) =
     let mutable dark = false
     let mutable hostHandler: (WireEvent -> unit) option = None
     let mutable closedHandler: (string option -> unit) option = None
+    /// 浏览器 CSS 视口宽。0 表示桌面：组合者继续用窗口 Bounds。
+    let mutable cssViewport = 0.0
+    let timers = ResizeArray<TimeSpan * (unit -> unit)>()
 
     /// 假时钟：组合者的时间来源（`ShellPorts.Now`）。
     /// 到期删除这类按时间推进的行为要能被确定性地测，就不能读系统时钟。
@@ -132,6 +135,17 @@ type FakePorts(prefs0: UiPrefs) =
     member _.SystemDark
         with get () = dark
         and set value = dark <- value
+
+    /// 浏览器报告的 CSS 像素宽度。PWA 对应 `innerWidth`；测试里由活树审计写入。
+    member _.CssViewport
+        with get () = cssViewport
+        and set value = cssViewport <- value
+
+    /// 跑 Build 登记的那一只周期回调。生产里由 `ports.Every` 每拍触发。
+    member _.FireEvery(interval: TimeSpan) =
+        for span, tick in timers do
+            if span = interval then
+                tick ()
 
     /// 入口壳的协议事件回调（Build 里订阅进去的那个）。
     member _.Deliver(ev: WireEvent) =
@@ -239,7 +253,9 @@ type FakePorts(prefs0: UiPrefs) =
                     handle <- wrapper
                     handle
             Every =
-                fun _ _ ->
+                fun interval action ->
+                    timers.Add(interval, action)
+
                     { new IDisposable with
                         member _.Dispose() = ()
                     }
@@ -260,7 +276,7 @@ type FakePorts(prefs0: UiPrefs) =
             TryLoadClientToml = fun () -> None
             TryLoadBrowserConnection = fun () -> async { return browserConnection }
             SaveBrowserConnection = fun _ _ _ _ -> ()
-            BrowserViewportWidth = fun () -> 0.0
+            BrowserViewportWidth = fun () -> cssViewport
             BrowserResumeEpoch = fun () -> 0
             BrowserPageUrl = fun () -> ""
             BrowserConversationSucceeded = fun () -> browserSucceeded.Value <- browserSucceeded.Value + 1
@@ -391,6 +407,13 @@ module Rig =
         let theme = new ThemeManager((fun () -> DateTimeOffset.UnixEpoch), false)
         let styles = new ThemeStyles(theme)
         styles.Install Application.Current.Styles
+        // 入口壳把主题资源字典并进 Application（EntryShells.App.Initialize）。
+        // 对话框留白 Margin.OverlayInset 只在这条路上查得到；只装样式时窄窗确认框不会收进视口。
+        let themeDict = theme.Resources :> IResourceDictionary
+
+        if not (Application.Current.Resources.MergedDictionaries.Contains themeDict) then
+            Application.Current.Resources.MergedDictionaries.Add themeDict
+
         let fake = FakePorts(prefs0)
         let importDesks = ResizeArray<Wanxiang2.TransferDesk.ImportDesk>()
         let exportDesks = ResizeArray<Wanxiang2.TransferDesk.ExportDesk>()
@@ -400,6 +423,10 @@ module Rig =
 
         let buildViews () : ShellViews =
             let root = Grid()
+
+            root.SetValue(Avalonia.Controls.Documents.TextElement.FontFamilyProperty, theme.FontFamily.Value)
+            |> ignore
+
             rootGrid <- Some root
             let overlay = OverlayDesk(root, Look.overlay ())
 

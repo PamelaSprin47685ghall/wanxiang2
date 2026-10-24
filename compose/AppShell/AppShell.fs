@@ -306,7 +306,7 @@ type ShellComposer(ports: ShellPorts) =
             match vs.Settings with
             | Some settingsVS ->
                 v.SettingsHostVisible true
-                v.WorkspaceHostVisible false
+                v.WorkspaceHostVisible true
                 v.Settings.Render settingsVS
                 // 导航键必须先进入可视树，焦点请求才有效。打开消息里的提前投递会发生在挂载前。
                 match msg with
@@ -509,7 +509,11 @@ type ShellComposer(ports: ShellPorts) =
                                     | OverlayPhase.PopupOpen _ -> true
                                     | _ -> false
                         IsSettingsOpen = fun () -> model.Settings.Open
-                        IsDrawerOpen = fun () -> model.Nav.DrawerOpen
+                        IsDrawerOpen =
+                            fun () ->
+                                match views with
+                                | Some v when v.Workspace.State.compactMode -> v.Workspace.State.compactNavigationOpen
+                                | _ -> model.Nav.DrawerOpen
                         IsGenerating =
                             fun () ->
                                 match model.Conn with
@@ -564,9 +568,9 @@ type ShellComposer(ports: ShellPorts) =
                                 }
                         Theme = fun () -> model.Prefs.theme
                         CloseSettings = fun () -> this.Dispatch(User(Settings(SettingsUserMsg.Close)))
-                        CloseDrawer = fun () -> this.Dispatch(User(Overlay(OverlayUserMsg.Escape)))
+                        CloseDrawer = fun () -> this.CloseVisualDrawer()
                         StopGeneration = fun () -> this.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
-                        ToggleSidebar = fun () -> this.Dispatch(User(Header(HeaderUserMsg.ToggleSidebar)))
+                        ToggleSidebar = fun () -> this.ToggleNavigation()
                         CloseWindow = fun () -> ports.CloseWindow()
                         NewConversation = fun () -> this.Dispatch(User(Sidebar(SidebarUserMsg.NewConversation)))
                         FocusSearch = fun _ -> this.Dispatch(User(Sidebar(SidebarUserMsg.SearchActivate)))
@@ -701,6 +705,22 @@ type ShellComposer(ports: ShellPorts) =
             shellCommands <- Some c
             c
 
+    /// 窄屏开合的是抽屉，不改桌面折叠位。宽屏仍走模型上的折叠。
+    member private this.ToggleNavigation() =
+        match views with
+        | Some v when v.Workspace.State.compactMode ->
+            v.Workspace.Shell.ApplyCompactNavigation(not v.Workspace.State.compactNavigationOpen)
+            |> ignore
+        | _ -> this.Dispatch(User(Header(HeaderUserMsg.ToggleSidebar)))
+
+    /// 先收起看得见的抽屉，再让模型上的 Escape 清掉可能残留的 DrawerOpen。
+    member private this.CloseVisualDrawer() =
+        match views with
+        | Some v -> v.Workspace.Shell.ApplyCompactNavigation false |> ignore
+        | None -> ()
+
+        this.Dispatch(User(Overlay(OverlayUserMsg.Escape)))
+
     member this.HandleShortcut(shortcut: ShortcutAction) : bool = this.Commands.HandleShortcut shortcut
 
     member this.ApplyPaletteRecent(recent: string list) =
@@ -815,8 +835,18 @@ type ShellComposer(ports: ShellPorts) =
 
         built.Settings.WirePresets(this.RenamePreset, this.DeletePreset)
 
+        // 浏览器的 CSS 视口（innerWidth）。Avalonia Bounds 在 DPR>1 时被除过一次，
+        // 900 CSS @1.5 会变成约 600，误开抽屉、留白也降档。桌面这个口子恒为 0，仍用窗口宽度。
+        let pollViewport () =
+            let css = ports.BrowserViewportWidth()
+
+            if css > 0.0 then
+                v().Workspace.ObserveViewport css
+
         let ticker =
-            ports.Every (TimeSpan.FromMilliseconds 250.0) (fun () -> this.Dispatch(MsgTick(ports.Now())))
+            ports.Every (TimeSpan.FromMilliseconds 250.0) (fun () ->
+                this.Dispatch(MsgTick(ports.Now()))
+                pollViewport ())
         // 决策 443/444：石沉大海的配置/命令/探活请求统一在计时器里收尾（界面提示归桌面壳订阅）
         let expiry =
             ports.Every (ms Timing.OutboxDeliveryCheckTick) (fun () ->
@@ -1159,7 +1189,7 @@ type ShellComposer(ports: ShellPorts) =
                     OpenLink = fun url -> ports.EffectSink.OpenLink url
                 }
             RenameTitle = fun title -> this.Dispatch(User(Header(HeaderUserMsg.CommitRename title)))
-            ToggleSidebar = fun () -> this.Dispatch(User(Header(HeaderUserMsg.ToggleSidebar)))
+            ToggleSidebar = fun () -> this.ToggleNavigation()
             OpenSessionSettings = fun () -> this.Dispatch(User(Settings(SettingsUserMsg.OpenSection None)))
             ForkFromHere = fun () -> this.ForkFromHere()
             ExportConversation =

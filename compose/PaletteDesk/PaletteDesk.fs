@@ -19,6 +19,7 @@ open Wanxiang2.PalettePanel
 type PaletteDesk(dialogWidth: float, overlay: OverlayDesk, prefersTouch: unit -> bool) =
     do ImeShield.install ()
     let run = Event<PaletteItem * string>()
+    let mutable paletteOpen = false
 
     let fullTextItem (q: string) =
         {
@@ -83,9 +84,11 @@ type PaletteDesk(dialogWidth: float, overlay: OverlayDesk, prefersTouch: unit ->
             | true, item -> execute item q
             | _ -> ())
 
-    /// Ctrl/⌘+K：已有对话框时不开；有浮层先关浮层。
+    /// Ctrl/⌘+K：自己开着就关掉；别的对话框开着时不动它；只有浮层时先关浮层再开。
     member this.Show(items: unit -> PaletteItem list, recent: unit -> string list) =
-        if not overlay.Layer.IsDialogOpen then
+        if paletteOpen then
+            overlay.CloseDialog()
+        elif not overlay.Layer.IsDialogOpen then
             if overlay.Layer.IsPopupOpen then
                 overlay.ClosePopup()
 
@@ -98,7 +101,15 @@ type PaletteDesk(dialogWidth: float, overlay: OverlayDesk, prefersTouch: unit ->
                         run.Trigger(item, q)
                 )
 
-            overlay.Layer.ShowDialog(content, dialogWidth, initialFocus = search, scrollWholeContent = false)
+            paletteOpen <- true
+
+            overlay.Layer.ShowDialog(
+                content,
+                dialogWidth,
+                onClosed = (fun () -> paletteOpen <- false),
+                initialFocus = search,
+                scrollWholeContent = false
+            )
 
     /// 面板关闭后执行所选条目（条目, 当时的输入）；宿主据 ShellPalette.commandOf 分派
     [<CLIEvent>]

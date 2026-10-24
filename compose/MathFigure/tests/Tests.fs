@@ -24,15 +24,19 @@ let private look () =
     let ink = SolidColorBrush(Probe.ink.Color)
     ink, { Ink = ink :> IBrush }
 
+/// 金样按内嵌 Sarasa 记录（figuregold 同一张脸）。
+/// 正文复合字族在有 Noto 的宿主上会换成另一套度量，不拿那套度量改写金样。
+let private embeddedBody = FontFamily(ThemeFonts.directory + "#Sarasa Gothic SC")
+
 /// 主题资源字典的替身：字体与展示式留白走资源键。
 let private seedResources () =
     let r = Application.Current.Resources
     r["FontFamily.Body"] <- box (FontFamily ThemeFonts.body)
     r["Padding.MathBlock"] <- box (Thickness(0.0, 8.0))
 
-let private run tex disp html (l: MathFigureMetrics) =
+let private run font tex disp html (l: MathFigureMetrics) =
     Probe.probe
-        (FontFamily ThemeFonts.body)
+        font
         (fun () -> MathFigures.tryInline l html 14.5 tex)
         (fun () -> MathFigures.tryBlock l html 14.5 tex)
         MathFigures.inlineContainer
@@ -42,7 +46,9 @@ let private run tex disp html (l: MathFigureMetrics) =
 [<Fact>]
 let ``inline and display formulas lay out and paint exactly like the old MathVisual`` () =
     Headless.run (fun () ->
-        seedResources ()
+        let r = Application.Current.Resources
+        r["FontFamily.Body"] <- box embeddedBody
+        r["Padding.MathBlock"] <- box (Thickness(0.0, 8.0))
         let sb = Text.StringBuilder()
 
         Scenario.math
@@ -56,7 +62,7 @@ let ``inline and display formulas lay out and paint exactly like the old MathVis
             sb.Append("html: ").Append(JsonSerializer.Serialize(Option.toObj htmls.[i])).Append('\n')
             |> ignore
 
-            sb.Append(run tex disp htmls.[i] l) |> ignore)
+            sb.Append(run embeddedBody tex disp htmls.[i] l) |> ignore)
 
         Assert.Equal(golden, sb.ToString()))
 
@@ -74,7 +80,7 @@ let ``recoloring the live ink repaints without relayout`` () =
         seedResources ()
         let ink, l = look ()
         let tex, _ = Scenario.math.[1]
-        let before = run tex false htmls.[1] l
+        let before = run (FontFamily ThemeFonts.body) tex false htmls.[1] l
         // 像素只在本进程内前后对比（不进金样）：同一平台、同一字体光栅化，差异只来自颜色
         let figure = (MathFigures.tryInline l htmls.[1] 14.5 tex).Value
         let win = Window(Width = 480.0, Height = 400.0, Content = figure)
@@ -85,7 +91,7 @@ let ``recoloring the live ink repaints without relayout`` () =
         Dispatcher.UIThread.RunJobs()
         let pxAfter = Probe.pixels figure
         win.Close()
-        let after = run tex false htmls.[1] l
+        let after = run (FontFamily ThemeFonts.body) tex false htmls.[1] l
         Assert.Equal(before, after)
         Assert.NotEqual<string>(pxBefore, pxAfter))
 
@@ -106,7 +112,8 @@ let ``body font change relays out glyphs with the new family`` () =
                 | MathMark.Glyph(t, _, tf, _) when t.Contains "中" -> Some tf.FontFamily.Name
                 | _ -> None)
 
-        Assert.Equal("Sarasa Gothic SC", cjk ())
+        let name = cjk ()
+        Assert.True(name.Contains("Noto") || name = "Sarasa Gothic SC", name)
         Application.Current.Resources["FontFamily.Body"] <- box (FontFamily ThemeFonts.mono)
         Dispatcher.UIThread.RunJobs()
         Assert.Equal("Sarasa Term SC", cjk ())

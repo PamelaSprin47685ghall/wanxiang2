@@ -783,6 +783,12 @@ module Program =
                         let styles = SharedTheme.styles
                         let root = Grid()
                         rootGrid <- root
+                        // 整棵树继承设计稿的无衬线栈；标题另挂 serif 类。不设的话桌面会落到默认 Inter。
+                        root.SetValue(
+                            Avalonia.Controls.Documents.TextElement.FontFamilyProperty,
+                            SharedTheme.manager.FontFamily.Value
+                        )
+                        |> ignore
                         // 输入方式（触屏 / 键鼠）挂在根控件上。不挂则 PrefersTouch 永远为假，
                         // 触屏上的菜单快捷键提示和悬停提示不会收起（PWA 已挂同一句）。
                         SharedTheme.input.Track root

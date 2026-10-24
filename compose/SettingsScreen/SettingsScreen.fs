@@ -1,8 +1,24 @@
 namespace Wanxiang2.SettingsScreen
 
 open System
+open Avalonia
 open Avalonia.Controls
+open Avalonia.Layout
+open Avalonia.Markup.Xaml.MarkupExtensions
+open Avalonia.Media
 open Wanxiang.UI
+
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
+        ext.ProvideValue sp
+
 open Wanxiang2.Theme
 open Wanxiang2.OverlayDesk
 open Wanxiang2.SettingsFrame
@@ -105,12 +121,51 @@ type SettingsScreen
         if part = SettingsPart.Devices && changed then
             devices.Refresh()
 
+    let surface =
+        Border(
+            Name = "settings-surface",
+            Child = frame,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            CornerRadius = CornerRadius 16.0,
+            ClipToBounds = true,
+            Width = 720.0
+        )
+
+    let scrim =
+        Border(HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch)
+
+    let layer = Grid()
+
+    let fitSurface () =
+        let width = layer.Bounds.Width
+        let height = layer.Bounds.Height
+
+        if width > 0.0 then
+            surface.Width <- min 720.0 (max 0.0 (width - 32.0))
+
+        if height > 0.0 then
+            surface.MaxHeight <- max 0.0 (height - 32.0)
+
     do
+        scrim.Bind(Border.BackgroundProperty, Dyn.res "Palette.Scrim") |> ignore
+        layer.ZIndex <- 2
+        layer.Children.Add scrim
+        layer.Children.Add surface
+
+        layer.PropertyChanged.Add(fun e ->
+            if e.Property = Visual.BoundsProperty then
+                fitSurface ())
+
+        scrim.PointerPressed.Add(fun e ->
+            e.Handled <- true
+            closeRequested.Trigger())
+
         frame.SelectRequested.Add(fun k -> SettingsPart.ofKey k |> Option.iter select)
         frame.CloseClicked.Add(fun () -> closeRequested.Trigger())
         select memory.Current
 
-    member _.View = frame :> Control
+    member _.View = layer :> Control
     member _.Frame = frame
     member _.Providers = providers
     member _.Tools = tools

@@ -103,10 +103,13 @@ type ChatHeader() =
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.NoWrap,
             HorizontalAlignment = HorizontalAlignment.Stretch
         )
 
-    do titleText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+    do
+        titleText.Classes.Add "serif"
+        titleText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
 
     let titleAction =
         let b =
@@ -134,7 +137,9 @@ type ChatHeader() =
             HorizontalAlignment = HorizontalAlignment.Stretch
         )
 
-    do AutomationProperties.SetName(editBox, "对话标题")
+    do
+        editBox.Classes.Add "serif"
+        AutomationProperties.SetName(editBox, "对话标题")
 
     let editShell =
         Border(
@@ -448,3 +453,6 @@ type ChatHeader() =
     member _.BeginRename() = beginEdit ()
     member _.CommitRename(_refocus: bool) = commit ()
     member _.CancelRename() = cancel ()
+
+    /// 只换紧凑尺寸，不重画标题、面包屑或生成态。
+    member _.ApplyCompact(value: bool) = applyCompact value

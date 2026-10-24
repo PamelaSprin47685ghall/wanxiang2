@@ -307,9 +307,8 @@ let ``同一帧重复渲染幂等`` () =
         Assert.Equal<string list>([], List.ofSeq sent)
         w.Close())
 
-// 输入区留白：主题部分走主题派生资源键（宽屏 Margin.Composer：顶=Space.Md、底=Space.X2l；
-// 窄屏 Margin.ComposerCompact：左右=Space.Xl、底=Space.Md），窄屏档切换时换绑对应键。
-// 水平档随自身宽度取（LayoutPolicy.horizontalInset），落在 Padding 上。
+// 输入区留白：上下走 Margin.Composer（顶=Space.Md、底=Space.X2l）。
+// 还没收到窗口视口时，水平档用本列宽度（本列自己就是窗口）。接到视口后按视口分档。
 [<Fact>]
 let ``输入区留白跟随窄屏档切换`` () =
     Headless.run (fun () ->
@@ -325,8 +324,40 @@ let ``输入区留白跟随窄屏档切换`` () =
             }
 
         Dispatcher.UIThread.RunJobs()
-        Assert.Equal(Spacing.spaceXl, host.Margin.Left)
-        Assert.Equal(Spacing.spaceXl, host.Margin.Top)
-        Assert.Equal(Spacing.spaceMd, host.Margin.Bottom)
-        Assert.Equal(0.0, host.Padding.Left)
+        // 窄屏不再改用紧凑外边距。未传入视口时，本列宽度就是窗口宽度。
+        Assert.Equal(0.0, host.Margin.Left)
+        Assert.Equal(Spacing.spaceMd, host.Margin.Top)
+        Assert.Equal(Spacing.space2xl, host.Margin.Bottom)
+        let width = host.Bounds.Width
+
+        let inset =
+            if width < 440.0 then 16.0
+            elif width < 720.0 then 24.0
+            elif width < 1024.0 then 32.0
+            else 48.0
+
+        Assert.Equal(inset, host.Padding.Left)
+        w.Close())
+
+// 侧栏打开时列比窗口窄。留白必须跟传入的窗口宽度，不能跟列宽。
+[<Fact>]
+let ``水平留白按传入的窗口视口分档`` () =
+    Headless.run (fun () ->
+        let desk, _, _, w = rig ()
+        let host = desk.Host :?> Border
+        let stageWidth = host.Bounds.Width
+        Assert.True(stageWidth > 0.0 && stageWidth < 1024.0, sprintf "本列宽 %0.1f" stageWidth)
+
+        desk.ApplyViewportWidth 1100.0
+        Assert.Equal(48.0, host.Padding.Left)
+        Assert.Equal(48.0, host.Padding.Right)
+        desk.ApplyViewportWidth 1280.0
+        Assert.Equal(48.0, host.Padding.Left)
+        desk.ApplyViewportWidth 800.0
+        Assert.Equal(32.0, host.Padding.Left)
+        desk.ApplyViewportWidth 500.0
+        Assert.Equal(24.0, host.Padding.Left)
+        desk.ApplyViewportWidth 400.0
+        Assert.Equal(16.0, host.Padding.Left)
+        Assert.Equal(16.0, host.Padding.Right)
         w.Close())

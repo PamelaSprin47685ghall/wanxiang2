@@ -10,12 +10,20 @@ open Wanxiang.UI
 module Project =
 
     let project (model: WorkspaceModel) : WorkspaceViewState =
+        // 起步页是「没有消息、也没在生成」。Chrome.StartingPageVisible 只在 init 里写成 true，不能当事实。
+        let starting =
+            match model.Conn with
+            | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(_, RunState.Generating _))) -> false
+            | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(conv, _))) -> List.isEmpty conv.Messages
+            | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.LoadingConversation _)) -> false
+            | _ -> true
+
         let shellVS: ShellVS =
             {
                 Compact = model.Nav.CompactMode
                 SidebarOpen = not model.Nav.SidebarCollapsed || model.Nav.DrawerOpen
                 SidebarWidth = model.Nav.SidebarWidth
-                StartingPageVisible = model.Chrome.StartingPageVisible
+                StartingPageVisible = starting
             }
 
         let isAuthed, currentCatalog, currentWorkspace =
@@ -58,7 +66,7 @@ module Project =
                 }
             | _ ->
                 {
-                    Visible = false
+                    Visible = true
                     Compact = model.Nav.CompactMode
                     InsetLeft = 0.0
                     Title = TitleMode.Viewing("新对话", false)

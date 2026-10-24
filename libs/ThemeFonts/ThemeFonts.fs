@@ -12,11 +12,30 @@ module ThemeFonts =
 
     /// 正文字体（比例宽度；等宽会把中文段落里的拉丁词拉成日志样）
     ///
-    /// 尾部的「符号字族」是**逐字回落**：Sarasa 子集不含 ⌘ ⚙ ✎ ✓ ✕ 📦 🔍 🗑 等符号，
-    /// browser-wasm 又拿不到系统字体，缺字就是豆腐块。Avalonia 的复合字族按**字符**回落
-    /// （FontManager.TryMatchCharacter 逐段尝试，见 Avalonia 12.1.2 源码），
-    /// 所以把符号字族列在后面即可补上这些码位。
-    let body = directory + "#Sarasa Gothic SC, " + directory + "#Wanxiang Symbols"
+    /// 桌面优先用设计稿的 Noto 栈；browser-wasm 没有这些系统字体时，复合字族按字符回落到内嵌 Sarasa。
+    /// 尾部的「符号字族」补 Sarasa 不含的 ⌘ ⚙ ✎ ✓ ✕ 📦 🔍 🗑。Avalonia 按字符回落
+    /// （FontManager.TryMatchCharacter 逐段尝试），所以符号字族列在最后。
+    let sans =
+        "Noto Sans SC, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Noto Sans CJK SC"
+
+    let serif = "Noto Serif SC, Songti SC, STSong, Noto Serif CJK SC"
+
+    let body =
+        sans
+        + ", "
+        + directory
+        + "#Sarasa Gothic SC, "
+        + directory
+        + "#Wanxiang Symbols"
+
+    /// 标题字族：衬线栈在前，内嵌 Sarasa 与符号字族垫后，wasm 上标题仍有汉字。
+    let display =
+        serif
+        + ", "
+        + directory
+        + "#Sarasa Gothic SC, "
+        + directory
+        + "#Wanxiang Symbols"
 
     /// 代码与等宽：等宽子集只含拉丁与符号，正文字体列为回落，否则中文变豆腐块
     let mono =

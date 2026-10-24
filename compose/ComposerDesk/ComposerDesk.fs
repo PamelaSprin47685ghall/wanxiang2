@@ -110,35 +110,30 @@ type ComposerDesk(actions: ComposerDeskActions) =
     let mutable last: Wanxiang2.WorkspaceState.ComposerVS =
         (Wanxiang2.WorkspaceState.Workspace.project (Wanxiang2.WorkspaceState.Workspace.init ())).Composer
 
-    /// 输入区四周留白：主题部分走动态资源键（宽屏 Margin.Composer：顶=Space.Md、底=Space.X2l；
-    /// 窄屏 Margin.ComposerCompact：左右=Space.Xl、底=Space.Md），水平档随自身宽度取
-    /// （LayoutPolicy.horizontalInset，旧 ApplyComposerPadding）。本组合者不再订阅主题活值。
+    /// 输入区上下外边距走主题（Margin.Composer：顶=Space.Md、底=Space.X2l）。
+    /// 左右留白按窗口视口分档（LayoutPolicy.horizontalInset）。视口由工作区传入；
+    /// 本列单独放进窗口时，列宽就是视口，用列宽兜底。
     let host = box.Host :?> Border
     /// 在途（登记 AGENTS.md）：已套用的留白档（None = 还没套）；非业务事实，只是避免重复换绑。
     let mutable paddedCompact: bool option = None
     let mutable marginBinding: IDisposable option = None
+    /// 在途：工作区最近一次给出的窗口视口宽度。0 表示还没接入，留白退回本列宽度。
+    let mutable viewportWidth = 0.0
 
     let applyPadding () =
-        let compact = last.Compact
-
-        if paddedCompact <> Some compact then
-            paddedCompact <- Some compact
+        // 上下外边距固定走宽屏键。左右档不看本列宽度：侧栏打开时列比窗口窄，分档会偏小。
+        if paddedCompact <> Some false then
+            paddedCompact <- Some false
             marginBinding |> Option.iter (fun d -> d.Dispose())
+            marginBinding <- Some(host.Bind(Layoutable.MarginProperty, Dyn.res "Margin.Composer") :> IDisposable)
 
-            let key =
-                if compact then
-                    "Margin.ComposerCompact"
-                else
-                    "Margin.Composer"
-
-            marginBinding <- Some(host.Bind(Layoutable.MarginProperty, Dyn.res key) :> IDisposable)
-        // 宽屏水平留白按自身宽度取档；窄屏的左右留白由 Margin.ComposerCompact 给
-        let inset =
-            if compact then
-                0.0
+        let width =
+            if viewportWidth > 0.0 then
+                viewportWidth
             else
-                LayoutPolicy.horizontalInset host.Bounds.Width
+                host.Bounds.Width
 
+        let inset = LayoutPolicy.horizontalInset width
         host.Padding <- Thickness(inset, 0.0, inset, 0.0)
 
     let facts (a: Wanxiang2.WorkspaceState.AttachmentVS) : ComposerAttachment =
@@ -322,6 +317,13 @@ type ComposerDesk(actions: ComposerDeskActions) =
         refresh ()
 
     member _.Host: Control = box.Host
+
+    /// 窗口视口宽度。水平留白按它分档，不按本列宽度。
+    member _.ApplyViewportWidth(width: float) =
+        if width > 0.0 then
+            viewportWidth <- width
+            applyPadding ()
+
     member _.Box = box
     member _.Tray = tray
     member _.Chip = chip

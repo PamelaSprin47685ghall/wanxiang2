@@ -86,6 +86,7 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             timings[t] <- LiveValue(MotionTimings.initialMs t)
 
     let fontFamily = LiveValue(FontFamily ThemeFonts.body)
+    let serifFamily = LiveValue(FontFamily ThemeFonts.display)
     let monoFontFamily = LiveValue(FontFamily ThemeFonts.mono)
     let mutable frameTimer: Threading.Timer option = None
     let mutable generation = 0
@@ -157,6 +158,11 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
         resources[box "FontFamily.Body"] <- box fontFamily.Value
 
         (fontFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Body"] <- box f)
+        |> ignore
+
+        resources[box "FontFamily.Serif"] <- box serifFamily.Value
+
+        (serifFamily :> IObservable<FontFamily>).Subscribe(fun f -> resources[box "FontFamily.Serif"] <- box f)
         |> ignore
 
         resources[box "FontFamily.Mono"] <- box monoFontFamily.Value
@@ -319,6 +325,7 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
     member _.Space(s: Space) : LiveValue<float> = spaces[s]
     member _.Timing(t: Timing) : LiveValue<float> = timings[t]
     member _.FontFamily = fontFamily
+    member _.SerifFontFamily = serifFamily
     member _.Resources = resources
     member _.MergedDictionary = resources
     member _.MonoFontFamily = monoFontFamily

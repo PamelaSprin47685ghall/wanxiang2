@@ -220,5 +220,12 @@ let ``Workspace.Render(ShellVS) 单入口幂等应用布局与抽屉状态`` () 
         ws.ObserveViewport 480.0
         ws.Render compactVS
         Dispatcher.UIThread.RunJobs()
+        // 紧凑抽屉只由快捷键 / 遮罩 / Escape 开合，重投影不翻面
+        Assert.False ws.State.compactNavigationOpen
+
+        ws.ToggleSidebar() |> ignore
+        Assert.True ws.State.compactNavigationOpen
+        ws.Render compactVS
+        Dispatcher.UIThread.RunJobs()
         Assert.True ws.State.compactNavigationOpen
         w.Close())

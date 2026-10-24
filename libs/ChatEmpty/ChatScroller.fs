@@ -64,7 +64,7 @@ type ScrollEase =
     }
 
 /// 对话滚动区（旧 ChatView 的 scroller、回到最新浮钮、平滑滚动计时器、延迟滚到底 / 顶、分页前置锚点）。
-/// 废除 Look 记录与 Spot 仿制件，回到最新浮钮改原生 Button（样式类 primary）。
+/// 废除 Look 记录与 Spot 仿制件；回到最新浮钮是原生 Button：居中悬浮的 raised 壳（SurfaceRaised 底、Line 描边）。
 type ChatScroller(ease: ScrollEase) =
     let viewer =
         ScrollViewer(
@@ -82,9 +82,7 @@ type ChatScroller(ease: ScrollEase) =
             IsVisible = false
         )
 
-    do
-        label.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextOnAccent")
-        |> ignore
+    do label.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
 
     let glyph =
         let p =
@@ -98,16 +96,16 @@ type ChatScroller(ease: ScrollEase) =
                 VerticalAlignment = VerticalAlignment.Center
             )
 
-        p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextOnAccent") |> ignore
+        p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
         p
 
     let latest =
         Button(
             Cursor = new Cursor(StandardCursorType.Hand),
             Focusable = true,
-            HorizontalAlignment = HorizontalAlignment.Right,
+            HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Bottom,
-            Margin = Thickness(0.0, 0.0, 20.0, 16.0),
+            Margin = Thickness(0.0, 0.0, 0.0, 16.0),
             IsVisible = false
         )
 
@@ -139,8 +137,13 @@ type ChatScroller(ease: ScrollEase) =
             square (if compact then 44.0 else icon)
 
     do
-        latest.Classes.Add "primary"
-        latest.Classes.Add "icon-button-accent"
+        latest.CornerRadius <- CornerRadius 8.0
+        latest.BorderThickness <- Thickness 1.0
+
+        latest.Bind(Button.BackgroundProperty, Dyn.res "Palette.SurfaceRaised")
+        |> ignore
+
+        latest.Bind(Button.BorderBrushProperty, Dyn.res "Palette.Line") |> ignore
         glyph.HorizontalAlignment <- HorizontalAlignment.Center
         glyph.VerticalAlignment <- VerticalAlignment.Center
 

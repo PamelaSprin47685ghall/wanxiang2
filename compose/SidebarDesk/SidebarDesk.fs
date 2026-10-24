@@ -146,34 +146,43 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         | true, group -> ConversationSummary.disambiguator group DateTimeOffset.Now s
         | _ -> None
 
-    /// 预览去掉与标题重复的前缀；分叉加前缀；同名对话加区分时间
-    let previewFor (s: ConversationSummary) =
-        let withoutTitle =
-            let preview = if isNull s.preview then "" else s.preview.Trim()
-            let title = s.title.TrimEnd('…').Trim()
+    /// 第二行是「模型 · 时间」。分叉、归档只做前缀。正文片段仍走搜索命中行。
+    let previewFor (query: string) (s: ConversationSummary) =
+        let t = s.updatedAt.ToLocalTime()
+        let n = DateTimeOffset.Now.ToLocalTime()
 
-            if title.Length >= 4 && preview.StartsWith(title, StringComparison.Ordinal) then
-                preview.Substring(title.Length).TrimStart(' ', '·', '—', '-', '，', '。')
+        let stamp =
+            if t.Date = n.Date then t.ToString "HH:mm"
+            elif t.Date = n.Date.AddDays(-1.0) then "昨天"
+            else t.ToString "M月d日"
+
+        let model =
+            if String.IsNullOrWhiteSpace s.model then
+                "模型"
             else
-                preview
+                s.model.Trim()
 
-        let body =
-            if not (String.IsNullOrWhiteSpace withoutTitle) then
-                withoutTitle
-            elif s.messageCount > 0 then
-                sprintf "%d 条消息" s.messageCount
+        let core = (if s.archived then "归档 · " else "") + model + " · " + stamp
+
+        let meta =
+            if s.isFork || (currentLineage ()).ContainsKey s.id then
+                "分叉 · " + core
             else
-                "还没有消息"
+                core
 
-        let body =
-            match disambiguate s with
-            | Some stamp -> stamp + " · " + body
-            | None -> body
+        let raw = if isNull s.preview then "" else s.preview.Trim()
+        let title = s.title.TrimEnd('…').Trim()
 
-        if s.isFork || (currentLineage ()).ContainsKey s.id then
-            "分叉 · " + body
+        let snippet =
+            if title.Length >= 4 && raw.StartsWith(title, StringComparison.Ordinal) then
+                raw.Substring(title.Length).TrimStart(' ', '·', '—', '-', '，', '。')
+            else
+                raw
+
+        if not (String.IsNullOrWhiteSpace query) && not (String.IsNullOrWhiteSpace snippet) then
+            meta + "\n" + snippet
         else
-            body
+            meta
 
     let accessibleName (s: ConversationSummary) =
         match disambiguate s with
@@ -197,7 +206,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         sprintf "%s\n%d 条消息%s" s.title s.messageCount provenance
 
     let rowModel (query: string) (s: ConversationSummary) : RowModel =
-        let preview = previewFor s
+        let preview = previewFor query s
 
         {
             Id = s.id

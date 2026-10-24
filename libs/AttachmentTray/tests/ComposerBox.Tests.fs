@@ -138,7 +138,7 @@ let ``禁用时说明条可见、附件键不可用；看图受阻挂提示`` ()
         Assert.False b.SendButton.IsEnabled
         b.Render vs
         Assert.True b.AttachButton.IsEnabled
-        Assert.Equal("输入消息…", b.Input.PlaceholderText))
+        Assert.Equal("写下一句", b.Input.PlaceholderText))
 
 [<Fact>]
 let ``Enter 发送档 Ctrl+Enter 不发送；钩子先于发送判定；排队键直达提交；异常照常抛出`` () =

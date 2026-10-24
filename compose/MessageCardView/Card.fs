@@ -642,12 +642,14 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                 match state with
                 | CopyState.Default ->
                     strip.ApplyIcon(button, StripGlyph.Copy, brush PaletteKey.TextMuted)
+                    strip.ApplyCaption(button, "复制")
                     ToolTip.SetTip(button, "复制")
                     AutomationProperties.SetName(button, name)
                     AutomationProperties.SetHelpText(button, "复制消息正文")
                 | CopyState.Confirmed
                 | CopyState.Fading ->
                     strip.ApplyIcon(button, StripGlyph.Check, brush PaletteKey.Success)
+                    strip.ApplyCaption(button, "已复制")
                     ToolTip.SetTip(button, "已复制")
                     AutomationProperties.SetName(button, "已复制")
                     AutomationProperties.SetHelpText(button, "已复制消息正文"))
@@ -763,27 +765,13 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
             if isUser then
                 UserBubble(body).Host
             else
-                let bubble =
-                    Border(
-                        Background = Brushes.Transparent,
-                        Padding = Thickness 0.0,
-                        HorizontalAlignment = HorizontalAlignment.Stretch,
-                        Child = body
-                    )
-
-                let avatar = ctx.BrandAvatar()
-                avatar.VerticalAlignment <- VerticalAlignment.Top
-
-                avatar.Bind(Layoutable.MarginProperty, CardUi.res "Margin.AvatarRight")
-                |> ignore
-                // 助手正文必须铺满阅读列：DockPanel 让头像靠左、正文填满
-                let dock =
-                    DockPanel(LastChildFill = true, HorizontalAlignment = HorizontalAlignment.Stretch)
-
-                DockPanel.SetDock(avatar, Dock.Left)
-                dock.Children.Add avatar
-                dock.Children.Add bubble
-                dock
+                // 助手是正文，不再在左边挂头像
+                Border(
+                    Background = Brushes.Transparent,
+                    Padding = Thickness 0.0,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Child = body
+                )
 
         let strip = this.Actions(message, ctx, actions, index)
 
@@ -797,17 +785,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
             StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
 
         line.Bind(StackPanel.SpacingProperty, CardUi.res "Space.Md") |> ignore
-        // 头像宽 + 间距：脚注缩进同样的量才与正文左缘对齐（主题派生档）
-        line.Bind(
-            Layoutable.MarginProperty,
-            CardUi.res (
-                if isUser then
-                    "Margin.UserIndent"
-                else
-                    "Margin.AssistantIndent"
-            )
-        )
-        |> ignore
+        line.Margin <- Thickness(0.0, 8.0, 0.0, 0.0)
 
         if isUser then
             line.HorizontalAlignment <- HorizontalAlignment.Right
@@ -825,6 +803,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                 HorizontalAlignment = HorizontalAlignment.Stretch
             )
 
+        card.Margin <- Thickness(0.0, 0.0, 0.0, 24.0)
         card.Children.Add row
         card.Children.Add line
         let mutable touched = false

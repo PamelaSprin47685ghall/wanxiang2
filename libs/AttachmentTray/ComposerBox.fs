@@ -49,26 +49,28 @@ module private Dyn =
 type ComposerBox() =
     let input =
         TextBox(
-            PlaceholderText = "输入消息…",
+            PlaceholderText = "写下一句",
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
-            MinHeight = 44.0,
-            MaxHeight = 200.0,
+            MinHeight = 30.0,
+            MaxHeight = 240.0,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center
         )
 
     do input.Classes.Add "text-area"
+    do input.BorderThickness <- Thickness 0.0
+    do input.Background <- Brushes.Transparent
+    do input.Padding <- Thickness(0.0, 8.0, 0.0, 8.0)
     do AutomationProperties.SetName(input, "输入消息")
 
     let shell =
-        Border(CornerRadius = CornerRadius 8.0, BorderThickness = Thickness 1.0, Padding = Thickness(12.0, 8.0))
+        Border(CornerRadius = CornerRadius 16.0, BorderThickness = Thickness 1.0, Padding = Thickness(12.0, 8.0))
 
     do
-        shell.Bind(Border.BackgroundProperty, Dyn.res "Palette.Surface") |> ignore
+        shell.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceRaised") |> ignore
 
-        shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.ControlStroke")
-        |> ignore
+        shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Border") |> ignore
 
     let send =
         let b =
@@ -141,7 +143,7 @@ type ComposerBox() =
     let mutable pendingCtl: Control option = None
 
     let outer =
-        StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0, MaxWidth = 800.0)
+        StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0, MaxWidth = 748.0)
 
     let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 6.0)
 
@@ -304,8 +306,7 @@ type ComposerBox() =
             shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Accent") |> ignore
             dropHint.IsVisible <- false
         else
-            shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.ControlStroke")
-            |> ignore
+            shell.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Border") |> ignore
 
             dropHint.IsVisible <- false
 
@@ -315,10 +316,10 @@ type ComposerBox() =
             elif dragging && enabled then
                 "释放文件以添加到当前对话附件"
             else
-                "输入消息…"
+                "写下一句"
 
     let applySizes () =
-        let size = if compact then 36.0 else 32.0
+        let size = if compact then 44.0 else 30.0
         attach.Width <- size
         attach.Height <- size
         send.Width <- size
@@ -368,10 +369,10 @@ type ComposerBox() =
                 HorizontalAlignment = HorizontalAlignment.Right
             )
 
-        actionRow.Children.Add attach
         actionRow.Children.Add queue
         actionRow.Children.Add send
 
+        request.Children.Add attach
         request.Children.Add context
 
         let toolbar = Grid(ColumnSpacing = 8.0, RowSpacing = 4.0)
@@ -517,7 +518,8 @@ type ComposerBox() =
     /// 模型芯片控件插槽（宿主直注，非每帧投影）
     member _.SlotModel(c: Control) =
         modelCtl |> Option.iter (request.Children.Remove >> ignore)
-        request.Children.Insert(0, c)
+        let at = if request.Children.Contains attach then 1 else 0
+        request.Children.Insert(at, c)
         modelCtl <- Some c
 
     /// 未确认消息面板插槽（宿主直注，非每帧投影）

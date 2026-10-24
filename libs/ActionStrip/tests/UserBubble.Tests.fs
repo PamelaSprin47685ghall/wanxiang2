@@ -9,16 +9,15 @@ open Wanxiang2.UserBubble
 open Wanxiang2.UserBubble.Tests
 
 [<Fact>]
-let ``气泡右下角收小、非交互壳不聚焦、有读屏名，头像在右`` () =
+let ``气泡右下角收小、无边、没有头像、有读屏名`` () =
     Headless.run (fun () ->
         let b = UserBubble(Border())
         Assert.Equal(Avalonia.CornerRadius(12.0, 12.0, 6.0, 12.0), b.Bubble.CornerRadius)
+        Assert.Equal(Avalonia.Thickness 0.0, b.Bubble.BorderThickness)
         Assert.False b.Bubble.Focusable
         Assert.Equal("用户消息", AutomationProperties.GetName b.Bubble)
-        let row = b.Host :?> StackPanel
-        Assert.Same(b.Avatar, row.Children[1])
-        Assert.Equal("你", (b.Avatar.Child :?> TextBlock).Text)
-        Assert.Contains("hover-plain", b.Bubble.Classes))
+        Assert.Same(b.Bubble :> Control, b.Host)
+        Assert.False b.Avatar.IsVisible)
 
 [<Fact>]
 let ``正文用阅读行高与无flyout`` () =

@@ -99,7 +99,8 @@ type ChatHeader() =
     let titleText =
         TextBlock(
             Text = "",
-            FontWeight = FontWeight.Medium,
+            FontSize = 16.0,
+            FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
             HorizontalAlignment = HorizontalAlignment.Stretch
@@ -123,7 +124,8 @@ type ChatHeader() =
     let editBox =
         TextBox(
             PlaceholderText = "对话标题",
-            FontWeight = FontWeight.Medium,
+            FontSize = 16.0,
+            FontWeight = FontWeight.SemiBold,
             Padding = Thickness(4.0, 2.0),
             MinHeight = 24.0,
             Margin = Thickness 0.0,
@@ -353,7 +355,7 @@ type ChatHeader() =
 
         top.Children.Add dock
         top.Children.Add crumbBar
-        bar.Height <- 38.0
+        bar.Height <- 52.0
         bar.BorderThickness <- Thickness(0.0, 0.0, 0.0, 1.0)
 
     /// 布局根节点

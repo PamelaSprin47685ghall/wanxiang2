@@ -378,7 +378,7 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
     let card =
         Border(
             BorderThickness = Thickness 1.0,
-            CornerRadius = CornerRadius 8.0,
+            CornerRadius = CornerRadius 12.0,
             Padding = Thickness(12.0, 12.0),
             Margin = Thickness(0.0, 0.0, 0.0, 12.0)
         )
@@ -440,6 +440,7 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         if hasError then
             headerContent.Children.Add banner
 
+        header.HorizontalAlignment <- HorizontalAlignment.Stretch
         header.Classes.Add "ghost"
         header.Classes.Add "hover-bordered"
         header.Click.Add(fun _ -> toggle ())
@@ -448,12 +449,9 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         stack.Children.Add header
         stack.Children.Add detail
         card.Child <- stack
-        card.Classes.Add "grouping-card"
+        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.Surface") |> ignore
 
-        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer")
-        |> ignore
-
-        card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
+        card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Line") |> ignore
         AutomationProperties.SetName(card, sprintf "工具调用 %s" data.CallName)
         syncNames ()
 

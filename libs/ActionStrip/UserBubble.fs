@@ -40,13 +40,13 @@ module UserBubble =
 
         tb :> Control
 
-/// 用户消息（旧 MessageCard.renderWithStream 的用户分支）：右对齐的深色气泡（右下角收小）+「你」头像。
+/// 用户消息：右对齐的深色气泡，右下角收小。没有头像。
 type UserBubble(body: Control) =
     let bubble =
         Border(
             HorizontalAlignment = HorizontalAlignment.Right,
             Focusable = false,
-            BorderThickness = Thickness 1.0,
+            BorderThickness = Thickness 0.0,
             CornerRadius = CornerRadius(12.0, 12.0, 6.0, 12.0),
             Padding = Thickness(16.0, 12.0),
             MaxWidth = 560.0,
@@ -72,29 +72,13 @@ type UserBubble(body: Control) =
             Child = label
         )
 
-    let row =
-        StackPanel(
-            Orientation = Orientation.Horizontal,
-            Spacing = 12.0,
-            HorizontalAlignment = HorizontalAlignment.Right
-        )
-
     do
         bubble.Bind(Border.BackgroundProperty, Dyn.res "Palette.UserBubble") |> ignore
-
-        bubble.Bind(Border.BorderBrushProperty, Dyn.res "Palette.HairlineStrong")
-        |> ignore
-
-        bubble.Classes.Add "surface"
-        bubble.Classes.Add "hover-plain"
         AutomationProperties.SetName(bubble, "用户消息")
-        avatar.Bind(Border.BackgroundProperty, Dyn.res "Palette.AccentSoft") |> ignore
-        label.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Accent") |> ignore
-        row.Children.Add bubble
-        row.Children.Add avatar
+        avatar.IsVisible <- false
 
-    /// 一行：气泡 + 头像
-    member _.Host: Control = row
+    /// 气泡自己就是一行：右对齐，不再跟一个「你」头像
+    member _.Host: Control = bubble
     member _.Bubble: Border = bubble
     member _.Avatar: Border = avatar
 

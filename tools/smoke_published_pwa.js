@@ -37,16 +37,32 @@ mkdirSync(OUT, { recursive: true });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// 种子对话标题：由 tools/smoke_published.sh 写入台账，脚本按它在界面上定位与验收。
+// 顶栏标题与侧栏会话行显示同一段文字，提示条也显示它，所以只留一处事实。
+const SEED_TITLE = '中文冒烟';
+
 // 截图文字识别：返回**带包围盒**的词，供脚本按文字定位真实控件。
 // macOS 用系统 Vision（tools/smoke-ocr.swift）；Linux 用 CI 安装的 Tesseract 中文模型。
 // 两者的输出都归一到 TSV 的同一批列，Node 侧只有一套解析。
 //
-// 侧栏这类小字号文字，Tesseract 在整张 2400×1600 图上会切成乱码（实测「新建对话」
-// 读成 `EHS`）。所以定位用的识别统一走 `ocrShot`：先把**画布**裁下来放大到固定宽度
-// 再识别。坐标 ×2 还原成 CSS，两个平台用同一套算术。
+// 界面不是连续文字段落：侧栏小字、正文、留白混在一页上。定位用的识别统一走
+// `ocrShot`——先裁出目标区域、放大到固定宽度，再按版面切分（见 OCR_LAYOUT_PSM）。
+// 坐标换算在 CSS 尺度上完成，两个平台用同一套算术。
 const OCR_SCRIPT = require('node:path').resolve(__dirname, 'smoke-ocr.swift');
-const OCR_UPSCALE_WIDTH = 2400;
-const runOcr = (path, pageSegmentation = '6') => {
+// 识别前把裁剪区放大到至少这个宽度：Tesseract 在中文小字上需要足够的像素高度。
+const OCR_UPSCALE_WIDTH = 1200;
+// 界面截图的默认切分模式：psm 4（把图当作若干可变大小的文字块）。
+// psm 6 假设整页是**一个**连续文字块，界面里侧栏小字、正文、留白混在一起，
+// 版面分析会把侧栏标题切碎（实测 CI 整图与裁剪图都在 psm 6 下读不出「中文冒烟」，
+// psm 4 下能读出并给出坐标）。psm 3 自动版面分析同样能读出，但漏掉「中文」两字，
+// 会把「同一段文字在同一行」的判据打散。取实测两个平台、两类输入都命中的 4。
+const OCR_LAYOUT_PSM = '4';
+// 弹出层裁剪图的切分模式：psm 6（整块均匀文字列）。菜单是「标签 + 快捷键」的
+// 规则两列，psm 4 会把列拆散（实测「复制」读成「复骨」），psm 6 能连成整行。
+const POPUP_ITEM_PSM = '6';
+// 整张画布识别时的固定放大倍数（画布 1200 CSS 宽 → 2400 像素，与原口径一致）。
+const OCR_SCALE_BASE = 2;
+const runOcr = (path, pageSegmentation = OCR_LAYOUT_PSM) => {
     let raw;
     if (process.platform === 'darwin' && process.env.WX_SMOKE_OCR !== 'tesseract') {
         raw = execFileSync('swift', [OCR_SCRIPT, path], { encoding: 'utf8', timeout: 60000 });
@@ -66,7 +82,10 @@ const runOcr = (path, pageSegmentation = '6') => {
     }
     return words;
 };
-const ocrText = (path) => runOcr(path).map((w) => w.text).join('').replace(/\s/g, '');
+// 弹出层裁剪放大后的识别统一用 psm 6：菜单是均匀的文字列（标签+快捷键两列）。
+// 整页界面截图用 psm 4（OCR_LAYOUT_PSM）。两者不能混用：psm 4 会把菜单两列拆散
+// （实测「复制」读成「复骨」），psm 6 会把整页侧栏小字并成乱段（「中文冒烟」读丢）。
+const ocrText = (path, psm = '6') => runOcr(path, psm).map((w) => w.text).join('').replace(/\s/g, '');
 // 在识别结果里找含某段文字的词；box 为 CSS 坐标（OCR 来源已在 ocrShot 归一）。
 const findWord = (words, needle) => words.find((w) => w.text.includes(needle)) || null;
 // 两个 OCR 的切词粒度不同：Vision 给整词（「新建对话」一个框），Tesseract 给单字
@@ -108,10 +127,11 @@ const findPhraseInMain = (words, needle, minLeft = 300) => findPhrase(words, nee
 const wordCenterCss = (w) => ({ x: w.left + w.width / 2, y: w.top + w.height / 2 });
 
 const readablePopupText = (name, text) => {
-    // 每个弹出层只对**它自己真有**的标签作验收，不能拿另一类菜单的文案当统一判据：
+    // 每个弹出层只对**它自己真有**的文案作验收，不能拿另一类菜单的文案当统一判据：
+    // 提示条显示的是被悬停控件自己的文字（这里是顶栏对话标题），
     // 消息卡右键菜单是「复制消息 / 编辑并分叉 / …」，输入框 ContextFlyout 才是「剪切 / 复制 / 粘贴」。
     const { labels, need } = name === 'tooltip'
-        ? { labels: ['搜索对话', '新建对话'], need: 1 }
+        ? { labels: [SEED_TITLE], need: 1 }
         : name === 'contextmenu'
             ? { labels: ['复制消息', '编辑并分叉', '重新生成', '删除这条消息'], need: 1 }
             : { labels: ['剪切', '复制', '粘贴'], need: 2 };
@@ -242,11 +262,13 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
         })()`);
         // 输入区在主内容区中下部（左侧栏右边、工具栏上面）。
         // 记下真正聚焦的那个点：弹出层（输入框右键菜单）要右键到**同一个点**上。
-        let composerCoord = { x: 732, y: 400 };
+        // 空态输入区文字行位于 CSS y=372..388（中心 y=380），y=400 已落到底栏工具条，
+        // y>=420 则是下方的起手式芯片（点击会把芯片文案填入输入框，污染草稿）。
+        let composerCoord = { x: 732, y: 380 };
         const focusComposer = async () => {
             if (await bridgeFocused()) return true;
-            for (const y of [400, 380, 420, 360, 440, 340, 460, 320]) {
-                for (const x of [732, 600, 860, 450, 1000]) {
+            for (const y of [380, 375]) {
+                for (const x of [732, 600, 860, 450]) {
                     await page.mouse.click(x, y);
                     await sleep(100);
                     if (await bridgeFocused()) {
@@ -360,22 +382,266 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 `draft=${JSON.stringify(draftRaw.slice(0, 160))} expected=${JSON.stringify(EXPECTED)}`);
             await page.screenshot({ path: `${OUT}/smoke-draft.png` });
 
+            // ---- 弹出层（ToolTip / 上下文菜单 / 输入框右键菜单）的像素检查 ----
+            // avalonia.js 没有可用的 DOM 无障碍树，弹出层也没有 DOM 节点，
+            // 所以判据只能是**像素**：开/关弹出层各截一张合成器画面，求差得到弹出层的
+            // 外接矩形，再在这块矩形里统计字形笔画与识别文字。
+            //
+            // WebGL 画布在未开启 preserveDrawingBuffer 时，drawImage / toDataURL 读到的是
+            // 陈旧帧或清空后的缓冲；统一用 page.screenshot 从浏览器合成器取真实帧。
+            const GRID_W = 240, GRID_H = 160, CELL = 10; // 网格覆盖整张画布，1 格 = 10 设备像素
+            const snapScreenB64 = () => page.screenshot({ encoding: 'base64' });
+            const snapAll = async () => {
+                const b64 = await snapScreenB64();
+                const grid = await page.evaluate(async (pngB64) => {
+                    const img = new Image();
+                    img.src = 'data:image/png;base64,' + pngB64;
+                    await img.decode();
+                    const off = document.createElement('canvas');
+                    off.width = 240; off.height = 160;
+                    const ctx = off.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 240, 160);
+                    return Array.from(ctx.getImageData(0, 0, 240, 160).data);
+                }, b64);
+                return [grid];
+            };
+            // 按连通分量（邻域半径 3 格、颜色差 > 8）找变化像素最多的区域外接矩形：
+            // 浅色主题下主背景 #F5F4ED 与浮层背景 #FFFFFF 差值约 10，阈值 > 8 能把浮层底板
+            // 识别为实心连通块；按连通分量聚类可隔离远处孤立的光标闪烁或旧悬停消退像素，
+            // 避免单一全局 min/max 把两处不相连的小变化拉成全屏矩形。
+            const diffBbox = (a, b) => {
+                if (!a || !b) return null;
+                const total = GRID_W * GRID_H;
+                const changed = new Uint8Array(total);
+                for (let p = 0; p < total; p++) {
+                    const i = p * 4;
+                    if (Math.abs(a[i] - b[i]) > 8 || Math.abs(a[i + 1] - b[i + 1]) > 8 || Math.abs(a[i + 2] - b[i + 2]) > 8) {
+                        changed[p] = 1;
+                    }
+                }
+                const vis = new Uint8Array(total);
+                let best = null;
+                for (let p = 0; p < total; p++) {
+                    if (!changed[p] || vis[p]) continue;
+                    const q = [p];
+                    vis[p] = 1;
+                    let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, mass = 0;
+                    while (q.length > 0) {
+                        const cur = q.pop();
+                        const cx = cur % GRID_W, cy = (cur / GRID_W) | 0;
+                        mass++;
+                        if (cx < x0) x0 = cx; if (cx > x1) x1 = cx;
+                        if (cy < y0) y0 = cy; if (cy > y1) y1 = cy;
+                        for (let dy = -3; dy <= 3; dy++) {
+                            const ny = cy + dy;
+                            if (ny < 0 || ny >= GRID_H) continue;
+                            for (let dx = -3; dx <= 3; dx++) {
+                                const nx = cx + dx;
+                                if (nx < 0 || nx >= GRID_W) continue;
+                                const np = ny * GRID_W + nx;
+                                if (changed[np] && !vis[np]) {
+                                    vis[np] = 1;
+                                    q.push(np);
+                                }
+                            }
+                        }
+                    }
+                    if (mass >= 4 && (!best || mass > best.mass)) {
+                        best = { mass, x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+                    }
+                }
+                return best ? { x: best.x, y: best.y, w: best.w, h: best.h } : null;
+            };
+            const opaqueBbox = (a) => {
+                if (!a) return null;
+                let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+                for (let i = 0; i < a.length; i += 4) {
+                    if (a[i + 3] > 24) {
+                        const p = i / 4, x = p % GRID_W, y = (p / GRID_W) | 0;
+                        if (x < x0) x0 = x; if (x > x1) x1 = x;
+                        if (y < y0) y0 = y; if (y > y1) y1 = y;
+                    }
+                }
+                return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+            };
+            const popupRegion = async (before) => {
+                const after = await snapAll();
+                let best = null;
+                for (let i = 0; i < after.length; i++) {
+                    const bb = i < before.length ? diffBbox(before[i], after[i]) : opaqueBbox(after[i]);
+                    if (!bb) continue;
+                    const area = bb.w * bb.h;
+                    if (!best || area > best.bb.w * best.bb.h) best = { canvas: i, bb };
+                }
+                return best;
+            };
+            // 在弹出层矩形里统计笔画：背景取众数色，其余像素算笔画。
+            const regionStats = async (canvasIdx, bb) => {
+                const b64 = await snapScreenB64();
+                return page.evaluate(async (args) => {
+                    const img = new Image();
+                    img.src = 'data:image/png;base64,' + args.b64;
+                    await img.decode();
+                    const cell = 10;
+                    // 内缩（去掉弹出层描边）不能吃掉小块：按尺寸自适应。
+                    const shrink = Math.max(0, Math.min(2, Math.floor(Math.min(args.bb.w, args.bb.h) / 3)));
+                    const sx = (args.bb.x + shrink) * cell, sy = (args.bb.y + shrink) * cell;
+                    const sw = Math.max(1, (args.bb.w - shrink * 2) * cell), sh = Math.max(1, (args.bb.h - shrink * 2) * cell);
+                    const off = document.createElement('canvas');
+                    off.width = sw; off.height = sh;
+                    const ctx = off.getContext('2d');
+                    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+                    const d = ctx.getImageData(0, 0, sw, sh).data;
+                    const counts = new Map();
+                    for (let i = 0; i < d.length; i += 4) {
+                        const k = ((d[i] >> 3) << 16) | ((d[i + 1] >> 3) << 8) | (d[i + 2] >> 3);
+                        const c = counts.get(k);
+                        if (c) c.n++;
+                        else counts.set(k, { n: 1, r: d[i], g: d[i + 1], b: d[i + 2] });
+                    }
+                    let bg = null;
+                    for (const c of counts.values()) if (!bg || c.n > bg.n) bg = c;
+                    const br = bg.r, bgc = bg.g, bb2 = bg.b;
+                    const rowRuns = [];
+                    const rowShapes = new Set();
+                    let ink = 0;
+                    for (let y = 0; y < sh; y++) {
+                        let runs = 0, prev = false, shape = '';
+                        for (let x = 0; x < sw; x++) {
+                            const i = (y * sw + x) * 4;
+                            const on = (Math.abs(d[i] - br) + Math.abs(d[i + 1] - bgc) + Math.abs(d[i + 2] - bb2)) > 60;
+                            if (on) ink++;
+                            if (on && !prev) runs++;
+                            prev = on;
+                            shape += on ? '1' : '0';
+                        }
+                        if (runs > 0) { rowRuns.push(runs); rowShapes.add(shape); }
+                    }
+                    const meanRuns = rowRuns.length ? rowRuns.reduce((a, b) => a + b, 0) / rowRuns.length : 0;
+                    const glyphRows = rowRuns.filter(runs => runs >= 4);
+                    const glyphMeanRuns = glyphRows.length
+                        ? glyphRows.reduce((a, b) => a + b, 0) / glyphRows.length
+                        : meanRuns;
+                    return { w: sw, h: sh, ink, inkFrac: ink / (sw * sh), rows: rowRuns.length, meanRuns, glyphMeanRuns, distinctShapes: rowShapes.size };
+                }, { b64, bb });
+            };
+            // 弹出层的截图（CSS 坐标裁剪，1 网格格 = 10 设备像素 = 5 CSS 像素）。
+            const shotRegion = async (name, bb) => {
+                const path = `${OUT}/popup-${name}.png`;
+                await page.screenshot({
+                    path,
+                    clip: { x: bb.x * 5, y: bb.y * 5, width: bb.w * 5, height: bb.h * 5 },
+                });
+                return path;
+            };
+            // 弹出层验收：两帧差异证明出现，截图识别证明指定中文确实可读。
+            // 像素统计只作诊断，不以不同长度文字的笔画数比值判定缺字。
+            let bodyRef = null; // 正文中文的笔画基准：{ meanRuns, distinctShapes }
+            const measureBodyChinese = async () => {
+                // 主内容区（已打开的对话正文）左半部分，避开侧栏。
+                const bb = { x: 60, y: 20, w: 90, h: 60 };
+                const s = await regionStats(0, bb);
+                if (!s || s.inkFrac <= 0.005) return null;
+                return { meanRuns: s.glyphMeanRuns, distinctShapes: s.distinctShapes, inkFrac: s.inkFrac };
+            };
+            // 把弹出层区域放大导出成图片（每格 = 10 设备像素，相对设备像素放大 2 倍 = 相对 CSS 放大 4 倍；
+            // 放大 4 倍会让字高超过 100px，超出 Tesseract LSTM 的字符尺度窗口导致把汉字拆成碎笔画）。
+            const popupCrop = async (name, region) => {
+                const ocrPath = `${OUT}/popup-${name}-ocr.png`;
+                const b64 = await snapScreenB64();
+                const image = await page.evaluate(async ({ b64, bb }) => {
+                    const img = new Image();
+                    img.src = 'data:image/png;base64,' + b64;
+                    await img.decode();
+                    const output = document.createElement('canvas');
+                    output.width = bb.w * 20;
+                    output.height = bb.h * 20;
+                    const ctx = output.getContext('2d');
+                    ctx.drawImage(img, bb.x * 10, bb.y * 10, bb.w * 10, bb.h * 10,
+                        0, 0, output.width, output.height);
+                    return output.toDataURL('image/png').split(',')[1];
+                }, { b64, bb: region.bb });
+                writeFileSync(ocrPath, Buffer.from(image, 'base64'));
+                return ocrPath;
+            };
+            // 把一个弹出层区域放大后识别成文字。扫描阶段用它分辨「点到的是哪个菜单」，
+            // 验收阶段用它证明指定中文可读。
+            const popupText = async (name, region) => ocrText(await popupCrop(name, region));
+            // 同一张裁剪图上的词元换算成 CSS 坐标：每格 = 10 设备像素 = 5 CSS 像素，
+            // 裁剪图相对设备像素放大 2 倍（相对 CSS 放大 4 倍），所以 OCR 像素 ÷ 4 = CSS 位移。
+            // 菜单是均匀两列（标签 + 快捷键），用 psm 6；整页界面用 psm 4 会拆列。
+            const popupWords = async (name, region) => {
+                const path = await popupCrop(name, region);
+                const { bb } = region;
+                return runOcr(path, POPUP_ITEM_PSM).map((w) => ({
+                    ...w,
+                    left: bb.x * 5 + w.left / 4,
+                    top: bb.y * 5 + w.top / 4,
+                    width: w.width / 4,
+                    height: w.height / 4,
+                }));
+            };
+            const assertPopup = async (name, region, bb, recognized) => {
+                if (!region) { check(`弹出层 ${name} 出现`, false, '开/关两帧没有差异区域'); return null; }
+                const stats = await regionStats(region.canvas, region.bb);
+                const path = await shotRegion(name, region.bb);
+                check(`弹出层 ${name} 出现`, true, `canvas=${region.canvas} rect=${region.bb.w}x${region.bb.h} 截图=${path}`);
+                if (!stats || stats.inkFrac <= 0.01) {
+                    check(`弹出层 ${name} 中文文字可读`, false, '弹出层区域没有可见文字');
+                    return stats;
+                }
+                const detail = `inkFrac=${stats.inkFrac.toFixed(3)}`;
+                // 短标签与长正文的每行字数不同，不能用笔画总数比值判定缺字。
+                // 直接读取当前截图的中文；空白或重复方框不能满足明确文字契约。
+                const text = typeof recognized === 'string' ? recognized : await popupText(name, region);
+                const readable = readablePopupText(name, text);
+                check(`弹出层 ${name} 中文文字可读`, readable,
+                    `识别=${JSON.stringify(text)} ${detail}`);
+                return stats;
+            };
+            const closePopups = async () => {
+                await page.mouse.click(5, 5);
+                await page.keyboard.press('Escape');
+                await sleep(400);
+            };
+
             // ---- 阶段 4：右键菜单呼出与真实「粘贴」行为 ----
             // 1. 预置剪贴板唯一标记
             const CLIP_TOKEN = '【菜单粘贴验证' + Date.now() + '】';
             await page.evaluate((text) => navigator.clipboard.writeText(text), CLIP_TOKEN);
             await sleep(200);
-            // 2. 右键点击输入框呼出 ContextFlyout
+            // 2. 右键点击输入框呼出 ContextFlyout（先左键落焦稳定边框，再截基准帧并右键同一点）
+            await page.mouse.click(composerCoord.x, composerCoord.y);
+            await sleep(250);
+            const menuBefore = await snapAll();
             await page.mouse.click(composerCoord.x, composerCoord.y, { button: 'right' });
             await sleep(500);
             // 3. 截图供人工核验中文字形
             await page.screenshot({ path: `${OUT}/smoke-menu-font.png` });
-            // 4. 真实物理点击菜单第三项「粘贴」（菜单右键弹出区 x~780, y~475）
-            await page.mouse.click(780, 475);
+            // 4. 真实物理点击菜单里的「粘贴」。
+            //    菜单贴在光标处，位置随窗口与内容变化；写死坐标会点到菜单外的空白，
+            //    把「没点到」误报成「菜单没反应」。这里复用同一套区域识别：
+            //    开/关两帧求差拿到菜单外接矩形，在矩形里读出「粘贴」的包围盒再点它。
+            const pasteRegion = await popupRegion(menuBefore);
+            let pastePoint = null;
+            if (pasteRegion) {
+                const items = await popupWords('menu-items', pasteRegion);
+                const paste = findPhrase(items, '粘贴');
+                if (paste) pastePoint = wordCenterCss(paste);
+            }
+            if (pastePoint) {
+                await page.mouse.click(pastePoint.x, pastePoint.y);
+            } else {
+                check('菜单定位：在弹出菜单里识别到「粘贴」并得到可点坐标', false,
+                    `菜单区=${pasteRegion ? JSON.stringify(pasteRegion.bb) : '两帧无差异'}`);
+                // 没有坐标准确点击；保持后续步骤对空结果的容错。
+                await page.keyboard.press('Escape');
+            }
             await sleep(500);
             // 5. 验证剪贴板标记真实进入草稿
             const pasteOk = await until(async () => (await readDraftRaw()).includes(CLIP_TOKEN), 8000, 300);
-            check('菜单真实行为后果：右键菜单点击「粘贴」后剪贴板标记入库', Boolean(pasteOk));
+            check('菜单真实行为后果：右键菜单点击「粘贴」后剪贴板标记入库', Boolean(pasteOk),
+                pastePoint ? `点=(${pastePoint.x.toFixed(0)},${pastePoint.y.toFixed(0)})` : '未定位到「粘贴」');
             // 6. 再次右键呼出并按 Esc 关闭
             await page.mouse.click(composerCoord.x, composerCoord.y, { button: 'right' });
             await sleep(400);
@@ -386,32 +652,12 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             await page.screenshot({ path: `${OUT}/smoke-esc-focus.png` });
             check('Esc 回焦：Esc 关闭菜单并恢复输入框焦点', Boolean(escRefocused));
 
-            // 记录阶段边界，定位焦点和草稿第一次偏离的位置，不以整段结束状态猜根因。
-            const traceInteraction = async (stage) => {
-                const focus = await page.evaluate(() => {
-                    const e = document.activeElement;
-                    return e ? { tag: e.tagName, id: e.id, cls: e.className } : null;
-                });
-                console.log('TRACE interaction ' + JSON.stringify({
-                    stage, focus, draft: await readDraftRaw(),
-                    keys: await page.evaluate(() => window.__wxSmokeKeys || []),
-                }));
-            };
-            await traceInteraction('before-palette');
-            await page.evaluate(() => {
-                window.__wxSmokeKeys = [];
-                document.addEventListener('keydown', e => {
-                    window.__wxSmokeKeys.push({ key: e.key, code: e.code, ctrl: e.ctrlKey, meta: e.metaKey, target: e.target.id });
-                }, true);
-            });
-
             // ---- 阶段 5：命令面板真实交互（从产品 UI 入口进入）----
             // 使用已声明的快捷键，避免底部固定坐标误点其他操作。
             await page.keyboard.down('Control');
             await page.keyboard.press('k');
             await page.keyboard.up('Control');
             await sleep(600);
-            await traceInteraction('palette-shortcut');
             await cdp.send('Input.insertText', { text: '切换主题' });
             await sleep(400);
             await page.screenshot({ path: `${OUT}/smoke-palette.png` });
@@ -420,8 +666,6 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             await page.keyboard.press('Enter');
             const recentPersisted = await until(async () => { const list = await getRecents(); return Array.isArray(list) && list.includes('act:theme'); }, 8000, 250);
             check('命令面板真实交互后果：过滤并回车执行命令后写入最近使用持久化记录', Boolean(recentPersisted), `recentBefore=${JSON.stringify(recentsBefore)} recentAfter=${recentPersisted ? 'recorded' : 'failed'}`);
-
-            await traceInteraction('after-palette-enter');
 
             // ---- 阶段 6：设置弹窗真实交互（从产品 UI 入口进入）----
             const getStoredPrefs = () => page.evaluate(() => { try { return JSON.parse(localStorage.getItem('wanxiang.local:ui.json') || '{}'); } catch (_) { return {}; } });
@@ -596,166 +840,6 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             check('认证态：重开页面草稿回到输入框并支持追加', restored,
                 `draft=${JSON.stringify((restoredRaw || '').slice(0, 160))} expected=${JSON.stringify(EXPECTED_AFTER)}`);
 
-            // ---- 弹出层（ToolTip / 上下文菜单 / 输入框右键菜单）的像素检查 ----
-            // avalonia.js 没有可用的 DOM 无障碍树，弹出层也没有 DOM 节点，
-            // 所以判据只能是**像素**：开/关弹出层各截一张画布，求差得到弹出层的
-            // 外接矩形，再在这块矩形里统计字形笔画。
-            //
-            // 笔画数和行形状仅用于诊断；可读性由独立 OCR 对指定中文作验收。
-            const GRID_W = 240, GRID_H = 160, CELL = 10; // 网格覆盖整张画布，1 格 = 10 设备像素
-            const canvasCount = () => page.evaluate(() => document.querySelectorAll('canvas').length);
-            const snapAll = async () => {
-                const n = await canvasCount();
-                const out = [];
-                for (let i = 0; i < n; i++) {
-                    out.push(await page.evaluate((idx) => {
-                        const c = document.querySelectorAll('canvas')[idx];
-                        if (!c) return null;
-                        const off = document.createElement('canvas');
-                        off.width = 240; off.height = 160;
-                        const ctx = off.getContext('2d');
-                        ctx.drawImage(c, 0, 0, 240, 160);
-                        return Array.from(ctx.getImageData(0, 0, 240, 160).data);
-                    }, i));
-                }
-                return out;
-            };
-            const diffBbox = (a, b) => {
-                if (!a || !b) return null;
-                let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
-                for (let i = 0; i < a.length; i += 4) {
-                    if (Math.abs(a[i] - b[i]) > 24 || Math.abs(a[i + 1] - b[i + 1]) > 24 || Math.abs(a[i + 2] - b[i + 2]) > 24) {
-                        const p = i / 4, x = p % GRID_W, y = (p / GRID_W) | 0;
-                        if (x < x0) x0 = x; if (x > x1) x1 = x;
-                        if (y < y0) y0 = y; if (y > y1) y1 = y;
-                    }
-                }
-                return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
-            };
-            // 找到「哪块画布、哪块矩形」是这次变化最大的区域。
-            const popupRegion = async (before) => {
-                const after = await snapAll();
-                let best = null;
-                for (let i = 0; i < after.length; i++) {
-                    const bb = diffBbox(before[i], after[i]);
-                    if (!bb) continue;
-                    const area = bb.w * bb.h;
-                    if (!best || area > best.bb.w * best.bb.h) best = { canvas: i, bb };
-                }
-                return best;
-            };
-            // 在弹出层矩形里统计笔画：背景取众数色，其余像素算笔画。
-            const regionStats = (canvasIdx, bb) => page.evaluate((args) => {
-                const c = document.querySelectorAll('canvas')[args.i];
-                if (!c) return null;
-                const cell = 10;
-                // 内缩（去掉弹出层描边）不能吃掉小块：按尺寸自适应。
-                const shrink = Math.max(0, Math.min(2, Math.floor(Math.min(args.bb.w, args.bb.h) / 3)));
-                const sx = (args.bb.x + shrink) * cell, sy = (args.bb.y + shrink) * cell;
-                const sw = Math.max(1, (args.bb.w - shrink * 2) * cell), sh = Math.max(1, (args.bb.h - shrink * 2) * cell);
-                const off = document.createElement('canvas');
-                off.width = sw; off.height = sh;
-                const ctx = off.getContext('2d');
-                ctx.drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh);
-                const d = ctx.getImageData(0, 0, sw, sh).data;
-                // 找背景色：把颜色量化到 5 位（>> 3）后取众数桶。量化只用来**选桶**——
-                // 桶号不是 0-255 的颜色值，直接拿它跟像素比会把背景自己也判成笔画
-                // （240 >> 3 = 30，|240-30| = 210 > 60）。所以要记下桶里第一个像素的原始 RGB，
-                // 用真实颜色作背景基准。
-                const counts = new Map();
-                for (let i = 0; i < d.length; i += 4) {
-                    const k = ((d[i] >> 3) << 16) | ((d[i + 1] >> 3) << 8) | (d[i + 2] >> 3);
-                    const c = counts.get(k);
-                    if (c) c.n++;
-                    else counts.set(k, { n: 1, r: d[i], g: d[i + 1], b: d[i + 2] });
-                }
-                let bg = null;
-                for (const c of counts.values()) if (!bg || c.n > bg.n) bg = c;
-                const br = bg.r, bgc = bg.g, bb2 = bg.b;
-                const rowRuns = [];
-                const rowShapes = new Set();
-                let ink = 0;
-                for (let y = 0; y < sh; y++) {
-                    let runs = 0, prev = false, shape = '';
-                    for (let x = 0; x < sw; x++) {
-                        const i = (y * sw + x) * 4;
-                        const on = (Math.abs(d[i] - br) + Math.abs(d[i + 1] - bgc) + Math.abs(d[i + 2] - bb2)) > 60;
-                        if (on) ink++;
-                        if (on && !prev) runs++;
-                        prev = on;
-                        shape += on ? '1' : '0';
-                    }
-                    if (runs > 0) { rowRuns.push(runs); rowShapes.add(shape); }
-                }
-                const meanRuns = rowRuns.length ? rowRuns.reduce((a, b) => a + b, 0) / rowRuns.length : 0;
-                const glyphRows = rowRuns.filter(runs => runs >= 4);
-                const glyphMeanRuns = glyphRows.length
-                    ? glyphRows.reduce((a, b) => a + b, 0) / glyphRows.length
-                    : meanRuns;
-                // distinctShapes：这一段文字里**不同形状的行**有多少种。
-                // 豆腐块（.notdef 空心方框）所有字一样 → 行形状只有几种；
-                // 真正的中日韩字形各不相同 → 行形状很多。
-                return { w: sw, h: sh, ink, inkFrac: ink / (sw * sh), rows: rowRuns.length, meanRuns, glyphMeanRuns, distinctShapes: rowShapes.size };
-            }, { i: canvasIdx, bb });
-            // 弹出层的截图（CSS 坐标裁剪，1 网格格 = 10 设备像素 = 5 CSS 像素）。
-            const shotRegion = async (name, bb) => {
-                const path = `${OUT}/popup-${name}.png`;
-                await page.screenshot({
-                    path,
-                    clip: { x: bb.x * 5, y: bb.y * 5, width: bb.w * 5, height: bb.h * 5 },
-                });
-                return path;
-            };
-            // 弹出层验收：两帧差异证明出现，截图识别证明指定中文确实可读。
-            // 像素统计只作诊断，不以不同长度文字的笔画数比值判定缺字。
-            let bodyRef = null; // 正文中文的笔画基准：{ meanRuns, distinctShapes }
-            const measureBodyChinese = async () => {
-                // 主内容区（已打开的对话正文）左半部分，避开侧栏。
-                const bb = { x: 60, y: 20, w: 90, h: 60 };
-                const s = await regionStats(0, bb);
-                if (!s || s.inkFrac <= 0.005) return null;
-                return { meanRuns: s.glyphMeanRuns, distinctShapes: s.distinctShapes, inkFrac: s.inkFrac };
-            };
-            // 把一个弹出层区域放大后识别成文字。扫描阶段用它分辨「点到的是哪个菜单」，
-            // 验收阶段用它证明指定中文可读。
-            const popupText = async (name, region) => {
-                const ocrPath = `${OUT}/popup-${name}-ocr.png`;
-                const ocrImage = await page.evaluate(({ canvas, bb }) => {
-                    const source = document.querySelectorAll('canvas')[canvas];
-                    const output = document.createElement('canvas');
-                    output.width = bb.w * 40;
-                    output.height = bb.h * 40;
-                    const ctx = output.getContext('2d');
-                    ctx.drawImage(source, bb.x * 10, bb.y * 10, bb.w * 10, bb.h * 10,
-                        0, 0, output.width, output.height);
-                    return output.toDataURL('image/png').split(',')[1];
-                }, region);
-                writeFileSync(ocrPath, Buffer.from(ocrImage, 'base64'));
-                return ocrText(ocrPath);
-            };
-            const assertPopup = async (name, region, bb, recognized) => {
-                if (!region) { check(`弹出层 ${name} 出现`, false, '开/关两帧没有差异区域'); return null; }
-                const stats = await regionStats(region.canvas, region.bb);
-                const path = await shotRegion(name, region.bb);
-                check(`弹出层 ${name} 出现`, true, `canvas=${region.canvas} rect=${region.bb.w}x${region.bb.h} 截图=${path}`);
-                if (!stats || stats.inkFrac <= 0.01) {
-                    check(`弹出层 ${name} 中文文字可读`, false, '弹出层区域没有可见文字');
-                    return stats;
-                }
-                const detail = `inkFrac=${stats.inkFrac.toFixed(3)}`;
-                // 短标签与长正文的每行字数不同，不能用笔画总数比值判定缺字。
-                // 直接读取当前截图的中文；空白或重复方框不能满足明确文字契约。
-                const text = typeof recognized === 'string' ? recognized : await popupText(name, region);
-                const readable = readablePopupText(name, text);
-                check(`弹出层 ${name} 中文文字可读`, readable,
-                    `识别=${JSON.stringify(text)} ${detail}`);
-                return stats;
-            };
-            const closePopups = async () => {
-                await page.mouse.click(5, 5);
-                await page.keyboard.press('Escape');
-                await sleep(400);
-            };
 
             // (0) 先打开种子对话（主内容区出现中文正文）。
             //     判据不能只看「主内容区有像素变化」：侧栏点击会让选中态高亮变化，
@@ -766,32 +850,49 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                 await page.screenshot({ path: p });
                 return p;
             };
-            // 定位用的识别统一走这里：先把画布按 2 倍放大导出再识别。
-            // 返回的包围盒仍是 CSS 坐标。散落的按钮标签可指定稀疏文字分割模式，
-            // 避免整段模式把「新建对话」误读成 `EHS`。
-            const OCR_SCALE = 2;
-            const ocrShot = async (name, pageSegmentation = '6') => {
+            // 定位用的识别统一走这里：可选裁出目标区域，再放大导出、识别。
+            // 返回的包围盒始终是**整张画布的 CSS 坐标**：裁剪区左上角 + OCR 像素 ÷ 放大倍数。
+            //
+            // 默认不裁剪，用 psm 4（OCR_LAYOUT_PSM）做版面切分。`region` 留给
+            // 确实需要限定搜索范围的场景（例如只在侧栏里找），放大倍数由区域宽度决定，
+            // 保证 OCR 看到的宽度不小于 OCR_UPSCALE_WIDTH。
+            const ocrShot = async (name, pageSegmentation = OCR_LAYOUT_PSM, region = null) => {
                 const p = `${OUT}/${name}-ocr.png`;
-                const b64 = await page.evaluate((scale) => {
+                const area = region || { x: 0, y: 0, w: null, h: null };
+                const upscale = area.w ? Math.max(1, Math.min(4, Math.round(OCR_UPSCALE_WIDTH / area.w)))
+                    : OCR_SCALE_BASE;
+                const fullB64 = await snapScreenB64();
+                const shot = await page.evaluate(async ({ fullB64, area, upscale }) => {
                     const c = document.querySelector('canvas');
-                    if (!c) return '';
+                    if (!c) return null;
+                    const img = new Image();
+                    img.src = 'data:image/png;base64,' + fullB64;
+                    await img.decode();
+                    const cssW = c.clientWidth, cssH = c.clientHeight;
+                    const x = area.w ? area.x : 0;
+                    const y = area.h ? area.y : 0;
+                    const w = area.w || cssW;
+                    const h = area.h || cssH;
                     const out = document.createElement('canvas');
-                    out.width = Math.round(c.clientWidth * scale);
-                    out.height = Math.round(c.clientHeight * scale);
-                    out.getContext('2d').drawImage(c, 0, 0, out.width, out.height);
-                    return out.toDataURL('image/png').split(',')[1];
-                }, OCR_SCALE);
-                if (!b64) return [];
-                writeFileSync(p, Buffer.from(b64, 'base64'));
-                // 画布位图是 CSS × DPR，导出时已缩放到 CSS × OCR_SCALE，
-                // 所以 OCR 像素 ÷ OCR_SCALE 就是 CSS 坐标（DPR 已在这一步消掉）。
+                    out.width = Math.max(1, Math.round(w * upscale));
+                    out.height = Math.max(1, Math.round(h * upscale));
+                    // 合成器截图位图是 CSS × DPR，按 CSS 坐标乘 DPR 取源区域。
+                    const dpr = img.width / cssW;
+                    out.getContext('2d').drawImage(
+                        img, Math.round(x * dpr), Math.round(y * dpr), Math.round(w * dpr), Math.round(h * dpr),
+                        0, 0, out.width, out.height);
+                    return { b64: out.toDataURL('image/png').split(',')[1], x, y, upscale };
+                }, { fullB64, area, upscale });
+                if (!shot || !shot.b64) return [];
+                writeFileSync(p, Buffer.from(shot.b64, 'base64'));
+                // 裁剪区的左上角加上 OCR 像素 ÷ 放大倍数，就是整张图的 CSS 坐标。
                 // 界面包含彼此分离的标签，不是一个连续文字段落。
                 const words = runOcr(p, pageSegmentation).map((w) => ({
                     ...w,
-                    left: w.left / OCR_SCALE,
-                    top: w.top / OCR_SCALE,
-                    width: w.width / OCR_SCALE,
-                    height: w.height / OCR_SCALE,
+                    left: shot.x + w.left / shot.upscale,
+                    top: shot.y + w.top / shot.upscale,
+                    width: w.width / shot.upscale,
+                    height: w.height / shot.upscale,
                 }));
                 // 保存原始识别事实，失败时能区分误点、未加载与切词差异。
                 writeFileSync(`${OUT}/${name}-ocr.json`, JSON.stringify(words, null, 2));
@@ -799,7 +900,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             };
             await shotPath('smoke-before-popups');
             const sidebarWords = await ocrShot('smoke-sidebar');
-            const seedTitle = findPhrase(sidebarWords, '中文冒烟');
+            const seedTitle = findPhrase(sidebarWords, SEED_TITLE);
             let opened = false;
             let openedShot = `${OUT}/smoke-opened.png`;
             if (seedTitle) {
@@ -822,23 +923,37 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             check('界面正文有可测的中文（自校准基准）', !!bodyRef,
                 bodyRef ? `meanRuns=${bodyRef.meanRuns.toFixed(2)} distinctShapes=${bodyRef.distinctShapes} inkFrac=${bodyRef.inkFrac.toFixed(3)}` : '主内容区没有测到文字');
 
-            // (1) ToolTip：悬停侧栏「新建对话」按钮（提示是「新建对话（Ctrl / ⌘ + N）」）。
-            //     位置同样由截图文字给出，不盲扫坐标。
+            // (1) ToolTip：悬停顶栏的对话标题，提示是该标题的全文。
+            //     原先悬停「新建对话」按钮：那个按钮在 react-ui 对齐后只剩图标「+」，
+            //     静态截图里没有「新建对话」四个字，OCR 定位不到（读成「十」且置信度不稳）。
+            //     顶栏标题既有可见中文、又挂了同文案的提示；标题是 TextBlock，
+            //     没有悬停底色，所以开/关两帧的唯一差异就是提示条本身。
+            //     顶栏标题左侧紧挨折叠侧栏图标（x=280..320），整页 psm 4 会把图标与标题混读；
+            //     单独裁出标题区（CSS x=320, y=8, w=100, h=32）按 psm 6 放大识别。
             let tipFound = null;
-            const newChatWord = findPhrase(await ocrShot('smoke-tooltip-anchor', '11'), '新建对话');
-            if (newChatWord) {
-                const pt = wordCenterCss(newChatWord);
-                const before = await snapAll();
+            // 先把鼠标移到主内容区空白处，让侧栏点击残留的悬停态和提示条完全消退。
+            await page.mouse.move(500, 200);
+            await sleep(300);
+            const tipAnchor = findPhrase(
+                await ocrShot('smoke-tooltip-anchor', POPUP_ITEM_PSM, { x: 320, y: 8, w: 100, h: 32 }),
+                SEED_TITLE);
+            if (tipAnchor) {
+                const pt = wordCenterCss(tipAnchor);
+                // titleAction 是 Stretch 宽度的 ghost Button，移上去会立即产生 pointerover 底色，
+                // 约 400ms 后才弹出 ToolTip。先移上去等 120ms 让悬停底色稳定再截 before，
+                // 这样 before 与 after 的唯一差异就是提示条本身。
                 await page.mouse.move(pt.x, pt.y);
-                await sleep(900);
+                await sleep(120);
+                const before = await snapAll();
+                await sleep(1200);
                 const region = await popupRegion(before);
                 // 提示条是扁矩形：比高宽得多，且不占满整屏。具体尺寸随文案与字体变，
                 // 不用写死数字阈值。
                 if (region && region.bb.w > region.bb.h * 1.2 && region.bb.w < 120) tipFound = region;
-                check('悬停「新建对话」出现提示条', true,
-                    `包围盒=${JSON.stringify(newChatWord)} 提示区=${region ? `${region.bb.w}x${region.bb.h}` : '无差异'}`);
+                check('悬停对话标题出现提示条', Boolean(tipFound),
+                    `标题包围盒=${JSON.stringify(tipAnchor)} 提示区=${region ? `canvas=${region.canvas} ${region.bb.w}x${region.bb.h}` : '无差异'}`);
             } else {
-                check('悬停「新建对话」出现提示条', false, '截图里没有识别到「新建对话」');
+                check('悬停对话标题出现提示条', false, '顶栏没识别到对话标题');
             }
             await assertPopup('tooltip', tipFound, tipFound && tipFound.bb);
             await closePopups();
@@ -875,11 +990,13 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             await assertPopup('contextmenu', menuRegion, menuRegion && menuRegion.bb, menuText);
             await closePopups();
 
-            // (3) 输入框右键菜单（MenuFlyoutPresenter）：右键到真正聚焦过的那个点。
+            // (3) 输入框右键菜单（MenuFlyoutPresenter）：先左键落焦稳定边框，再截基准帧并右键同一点。
             await focusComposer();
             let flyoutRegion = null;
-            for (const pt of [composerCoord, { x: 600, y: 400 }]) {
+            for (const pt of [composerCoord, { x: 600, y: 380 }]) {
                 if (!pt) continue;
+                await page.mouse.click(pt.x, pt.y);
+                await sleep(250);
                 const before = await snapAll();
                 await page.mouse.click(pt.x, pt.y, { button: 'right' });
                 await sleep(700);

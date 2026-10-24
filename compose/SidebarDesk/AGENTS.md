@@ -13,6 +13,7 @@ SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、Hos
   `toggleSelectAllVisible : Guid list -> unit`——宿主把它们派发成 `SidebarUserMsg.EnterBatch` / `ToggleBatch` /
   `ExitBatch` / `ToggleBatchAllVisible`。
 - 成员名：`ResetSearch`、`SearchHandler`、`OpenSearchHit`、`BeginMessageSearch`、`ApplySearchResults`、`ApplySearchFailure`、`SearchQueryText`、`MessageHits`、`ConfigureImport`（空实现）、`PaletteButton`、`PresetMenuButton`、`ConnectionText`、`FocusSearch`、`GetVisibleOrder`、`NeighborAfterDelete`、`FocusAfterDelete`、`EnterSelection`、`ToggleSelected`、`ExitSelection`、`ToggleSelectAllVisible`、`SelectedIds`、`IsSelectionMode`。另外暴露 `Rows`、`Search`、`Batch`、`Host`、`Brand`、`EmptyCard`，供宿主和测试读取状态。
+- 相同列表投影不得重建行：宿主 Tick 可在鼠标按下与释放之间重投影，替换按钮会取消本次点击。行、空态、归档可见性、谱系、连接、紧凑态或搜索词变化才重建；活动行与多选标记原位更新。验收用例：`unchanged projection between pointer press and release still opens conversation`（真实 Headless 鼠标按下 → 相同投影 → 释放，必须恰好打开一次）。
 - 渲染入口已收拢为 `Render(vs: SidebarVS)`，实现单入口幂等投影；品牌行与页脚都经各自的 `Render`（`brand.Render(vs.Brand)` / `hostBar.Render(vs.Host)`），组合者不再旁路写这两个控件。
 - 例外插槽/命令（命名避开 Set*，非每帧投影）：`SlotPresets`（预设下拉插槽：改 `lastVS.Brand.PresetsVisible` 后重渲染品牌行）、`SlotPalette`（命令面板入口插槽）、`ApplySearchText`（命令面板全文搜索命令）、`ApplyServerUrl`（服务器 URL 命令：改投影值后重渲染页脚）。
   谱系不再走旁路插槽：分叉谱系随 `SidebarVS.Lineage` 一起进（`Render` 是唯一入口），旧的 `SlotLineage` 已删。

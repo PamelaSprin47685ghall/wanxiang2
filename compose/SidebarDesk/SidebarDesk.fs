@@ -233,6 +233,8 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
     let marks () =
         rows.ApplyMarks(currentActiveId (), isSelected, inSelectionMode ())
 
+    let mutable renderedQuery = ""
+
     let rec rebuild () =
         // 焦点在某行上就记住，重建后仍可见则还回去；在搜索框里打字时不抢焦点
         let restore = rows.FocusedRow
@@ -263,6 +265,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
 
         indexTitles summaries
         let query = search.Text
+        renderedQuery <- query
         let showArchived = currentShowArchived ()
 
         let visible =
@@ -745,16 +748,17 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         let connChanged = prevVS.Host.Connected <> nextVS.Host.Connected
         let compactChanged = prevVS.Compact <> nextVS.Compact
 
-        let onlyActiveChanged =
-            activeChanged
-            && not rowsChanged
-            && not emptyChanged
-            && not showArchivedChanged
-            && not lineageChanged
-            && not connChanged
-            && not compactChanged
+        let listChanged =
+            rowsChanged
+            || emptyChanged
+            || showArchivedChanged
+            || lineageChanged
+            || connChanged
+            || compactChanged
+            || renderedQuery <> search.Text
 
-        if onlyActiveChanged then marks () else rebuild ()
+        // 无变化的 Tick 不能替换按钮，否则按下与释放之间的重建会取消点击。
+        if listChanged then rebuild () else marks ()
 
         if activeChanged then
             nextActive |> Option.iter rows.ScrollTo

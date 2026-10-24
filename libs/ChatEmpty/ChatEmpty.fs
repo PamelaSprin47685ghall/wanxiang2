@@ -49,7 +49,6 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
 
     let mutable primary: unit -> unit = ignore
     let mutable lastKey: (string * string * string option) option = None
-    let mutable bottom = false
 
     /// 起手式芯片（标签、种子、回调）：没有宿主回调就没有可用的芯片
     let starterChips =
@@ -217,10 +216,9 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
         row :> Control
 
     let applyMargin () =
-        // 空态留白只由这里归属：左右取主题 Space.X2l；贴底时底部收紧到同档，否则留宽
-        let side = Res.float "Space.X2l" 16.0
-        let bottomPad = if bottom then side else 40.0
-        panel.Margin <- Thickness(side, 0.0, side, bottomPad)
+        // 空态留白只由这里归属：水平留白归滚动区 inset（ChatPane.emptyScroller），底统一 Space.Xl（react .starter 底 padding）
+        let bottomPad = Res.float "Space.Xl" 12.0
+        panel.Margin <- Thickness(0.0, 0.0, 0.0, bottomPad)
 
     do applyMargin ()
 
@@ -228,15 +226,13 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
     member _.Host: Control = panel
     member _.IsShown = panel.IsVisible
 
-    /// 紧凑起步：空态贴底（旧 SetMode）；垂直对齐与外边距只由这里一处归属
+    /// 起步模式：贴底档空态贴输入区；非贴底 = 顶部（react dock 档 starter 在滚动区顶部）
     member _.ApplyBottomAligned(value: bool) =
-        bottom <- value
-
         panel.VerticalAlignment <-
             if value then
                 VerticalAlignment.Bottom
             else
-                VerticalAlignment.Center
+                VerticalAlignment.Top
 
         applyMargin ()
 

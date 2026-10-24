@@ -90,17 +90,23 @@ type ComposerBox() =
     let queue =
         let b =
             Button(
+                Content = "排队发送",
+                FontSize = 12.5,
                 Focusable = true,
                 Cursor = new Cursor(StandardCursorType.Hand),
                 VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Height = 34.0,
+                MinHeight = 34.0,
+                Padding = Thickness(8.0, 0.0),
+                CornerRadius = CornerRadius 8.0,
+                BorderThickness = Thickness 0.0,
                 IsVisible = false
             )
 
-        b.Classes.Add "icon-button"
-        b.Classes.Add "secondary"
-        b.Width <- 32.0
-        b.Height <- 32.0
-        b.Padding <- Thickness 0.0
+        b.Classes.Add "ghost"
+        b.Classes.Add "button-ghost"
+        b.Bind(Button.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
         b
 
     let attach =
@@ -267,18 +273,8 @@ type ComposerBox() =
             send.Content <- p
             AutomationProperties.SetName(send, "发送")
 
-    let setQueueIcon () =
-        let p =
-            Path(
-                Data = Geometry.Parse "M 3 8 L 13 8 M 9 4 L 13 8 L 9 12",
-                StrokeThickness = 1.6,
-                Fill = Brushes.Transparent,
-                Width = 14.0,
-                Height = 14.0
-            )
-
-        p.Bind(Path.StrokeProperty, Dyn.res "Palette.TextMuted") |> ignore
-        queue.Content <- p
+    /// 排队键是文字钮（react .text-btn「排队发送」）：常名与提示固定挂，内容不再换图标
+    let setQueueCaption () =
         AutomationProperties.SetName(queue, "排队发送")
         ToolTip.SetTip(queue, "排队发送")
 
@@ -324,8 +320,7 @@ type ComposerBox() =
         attach.Height <- size
         send.Width <- size
         send.Height <- size
-        queue.Width <- size
-        queue.Height <- size
+        // 排队键固定 34 高文字钮，不随紧凑档换尺寸（react .text-btn）
         context.IsVisible <- contextShown && not compact
 
     // 以下四个投影动作只在 Render 内部使用（测试改走 Render(vs)），不作为对外入口。
@@ -349,7 +344,7 @@ type ComposerBox() =
 
     do
         setSendIcon false
-        setQueueIcon ()
+        setQueueCaption ()
         setAttachIcon ()
 
         context.Content <- contextLabel

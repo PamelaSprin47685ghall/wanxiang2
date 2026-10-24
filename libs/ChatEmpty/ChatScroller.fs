@@ -105,7 +105,7 @@ type ChatScroller(ease: ScrollEase) =
             Focusable = true,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Bottom,
-            Margin = Thickness(0.0, 0.0, 0.0, 16.0),
+            Margin = Thickness(0.0, 0.0, 0.0, 8.0),
             IsVisible = false
         )
 

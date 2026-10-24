@@ -610,11 +610,8 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
     member this.Actions(message: MessageView, ctx: CardContext, actions: CardActions, index: int option) : ActionStrip =
         let isUser = MessageView.isUser message
 
-        let rest =
-            if ctx.IsLastAssistant && not isUser then
-                StripRest.Subtle
-            else
-                StripRest.Hidden
+        // react 的 msg-actions 恒显：闲置不淡出（Subtle 档全程 1.0）
+        let rest = StripRest.Subtle
 
         let strip = ActionStrip(rest)
         // 复制与编辑 / 重新生成 / 删除同门：流式进行中一律不挂
@@ -785,7 +782,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
             StackPanel(Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center)
 
         line.Bind(StackPanel.SpacingProperty, CardUi.res "Space.Md") |> ignore
-        line.Margin <- Thickness(0.0, 8.0, 0.0, 0.0)
+        line.Margin <- Thickness(0.0, 6.0, 0.0, 0.0)
 
         if isUser then
             line.HorizontalAlignment <- HorizontalAlignment.Right
@@ -803,7 +800,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                 HorizontalAlignment = HorizontalAlignment.Stretch
             )
 
-        card.Margin <- Thickness(0.0, 0.0, 0.0, 24.0)
+        // 消息间距归容器（messages.Spacing = 24），卡片不再自带 margin-bottom
         card.Children.Add row
         card.Children.Add line
         let mutable touched = false

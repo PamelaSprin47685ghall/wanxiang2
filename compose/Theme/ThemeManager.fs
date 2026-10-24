@@ -253,10 +253,10 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             let md = spaces[Space.Md].Value
             resources[box "Margin.AssistantIndent"] <- box (Thickness(gutter, md, 0.0, 0.0))
             resources[box "Margin.UserIndent"] <- box (Thickness(0.0, md, gutter, 0.0))
-            // 输入区留白：宽屏顶=Space.X2l、底=Space.Xl；窄屏固定收紧（左右=Space.Xl、底=Space.Md）。
+            // 输入区留白：宽屏顶=Space.Md、底=Space.X2l（react composer-wrap padding-block 8/16）；窄屏固定收紧（左右=Space.Xl、底=Space.Md）。
             // 水平档（窄屏 16 / 中 24 / 桌面 32 / 宽屏 48）随自身宽度取，不在主题里（见 LayoutPolicy.horizontalInset）。
             resources[box "Margin.Composer"] <-
-                box (Thickness(0.0, spaces[Space.X2l].Value, 0.0, spaces[Space.Xl].Value))
+                box (Thickness(0.0, spaces[Space.Md].Value, 0.0, spaces[Space.X2l].Value))
 
             resources[box "Margin.ComposerCompact"] <-
                 box (Thickness(spaces[Space.Xl].Value, spaces[Space.Xl].Value, 0.0, spaces[Space.Md].Value))

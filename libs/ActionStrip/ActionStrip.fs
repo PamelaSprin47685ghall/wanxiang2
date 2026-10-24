@@ -25,7 +25,7 @@ type StripGlyph =
 type StripRest =
     /// 完全隐去（仍占位、可命中、可聚焦，只改不透明度）
     | Hidden
-    /// 淡显（最新一条助手回复用作可发现锚点）
+    /// 恒显（对齐 react：msg-actions 不随悬停淡出，闲置也全程可见）
     | Subtle
 
 module private Dyn =
@@ -54,7 +54,7 @@ type ActionStrip(rest: StripRest) =
         )
 
     let mutable shown = false
-    let mutable subtle = 0.55
+    let mutable subtle = 1.0
 
     let apply () =
         row.Opacity <-

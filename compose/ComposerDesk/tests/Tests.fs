@@ -307,7 +307,7 @@ let ``同一帧重复渲染幂等`` () =
         Assert.Equal<string list>([], List.ofSeq sent)
         w.Close())
 
-// 输入区留白：主题部分走主题派生资源键（宽屏 Margin.Composer：顶=Space.X2l、底=Space.Xl；
+// 输入区留白：主题部分走主题派生资源键（宽屏 Margin.Composer：顶=Space.Md、底=Space.X2l；
 // 窄屏 Margin.ComposerCompact：左右=Space.Xl、底=Space.Md），窄屏档切换时换绑对应键。
 // 水平档随自身宽度取（LayoutPolicy.horizontalInset），落在 Padding 上。
 [<Fact>]
@@ -315,8 +315,8 @@ let ``输入区留白跟随窄屏档切换`` () =
     Headless.run (fun () ->
         let desk, _, _, w = rig ()
         let host = desk.Host :?> Border
-        Assert.Equal(Spacing.space2xl, host.Margin.Top)
-        Assert.Equal(Spacing.spaceXl, host.Margin.Bottom)
+        Assert.Equal(Spacing.spaceMd, host.Margin.Top)
+        Assert.Equal(Spacing.space2xl, host.Margin.Bottom)
         Assert.Equal(0.0, host.Margin.Left)
 
         desk.Render

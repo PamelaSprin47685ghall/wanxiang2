@@ -49,12 +49,9 @@ type HostSwitcher() =
         Border(Width = 6.0, Height = 6.0, CornerRadius = CornerRadius 3.0, VerticalAlignment = VerticalAlignment.Center)
 
     let statusRow =
-        let statusStack = StackPanel(Orientation = Orientation.Horizontal, Spacing = 6.0)
-        statusStack.Children.Add dot
-        statusStack.Children.Add status
         let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 2.0)
         stack.Children.Add caption
-        stack.Children.Add statusStack
+        stack.Children.Add status
         let b = Button(Content = stack)
         b.Classes.Add "ghost"
         b.Classes.Add "surface"
@@ -125,10 +122,21 @@ type HostSwitcher() =
         dock.Children.Add settingsButton
         DockPanel.SetDock(paletteButton, Dock.Right)
         dock.Children.Add paletteButton
-        dock.Children.Add statusRow
+
+        // 页脚行序对齐 react rail-foot：[状态点][主机两行文字][设置]
+        let row =
+            StackPanel(
+                Orientation = Orientation.Horizontal,
+                Spacing = 8.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
+        row.Children.Add dot
+        row.Children.Add statusRow
+        dock.Children.Add row
         let b = Border(Child = dock)
         b.Classes.Add "hairline"
-        b.Padding <- Thickness(16.0, 8.0)
+        b.Padding <- Thickness(16.0, 8.0, 8.0, 12.0)
         b
 
     member _.View = view :> Control

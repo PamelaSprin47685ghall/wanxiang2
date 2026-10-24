@@ -238,6 +238,7 @@ type ConversationRows() =
                 Margin = Thickness(0.0, 0.0, 8.0, 0.0)
             )
 
+        // react 行首无槽位：只有运行中圆点占位，其余整槽收成 0 宽（置顶由分组头表达）
         if m.Running then
             let dot =
                 Border(
@@ -249,14 +250,10 @@ type ConversationRows() =
 
             dot.Bind(Border.BackgroundProperty, Dyn.res "Palette.Accent") |> ignore
             slot.Child <- dot
-        elif m.Pinned then
-            let mark =
-                Border(Width = 2.0, Height = 12.0, HorizontalAlignment = HorizontalAlignment.Center)
-
-            mark.Bind(Border.BackgroundProperty, Dyn.res "Palette.Accent") |> ignore
-            slot.Child <- mark
         else
-            slot.Child <- null
+            slot.Width <- 0.0
+            slot.Height <- 0.0
+            slot.Margin <- Thickness 0.0
 
         let titleRow =
             DockPanel(LastChildFill = true, VerticalAlignment = VerticalAlignment.Center)

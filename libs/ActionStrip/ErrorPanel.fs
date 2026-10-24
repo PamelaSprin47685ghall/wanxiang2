@@ -93,7 +93,7 @@ type ErrorPanel(parts: ErrorPanelParts) =
         Border(
             BorderThickness = Thickness 1.0,
             CornerRadius = CornerRadius 12.0,
-            Padding = Thickness(16.0, 10.0),
+            Padding = Thickness(16.0, 12.0),
             Margin = Thickness(0.0, 8.0, 0.0, 0.0),
             MaxWidth = 640.0,
             Child = layout

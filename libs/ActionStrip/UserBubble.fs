@@ -48,7 +48,7 @@ type UserBubble(body: Control) =
             Focusable = false,
             BorderThickness = Thickness 0.0,
             CornerRadius = CornerRadius(12.0, 12.0, 6.0, 12.0),
-            Padding = Thickness(16.0, 12.0),
+            Padding = Thickness(12.0, 8.0),
             MaxWidth = 560.0,
             Child = body
         )
@@ -85,7 +85,7 @@ type UserBubble(body: Control) =
     /// 单入口：从 UserBubbleVS 渲染
     static member Render(vs: UserBubbleVS) : Control =
         let content = UserBubble.text vs.Text vs.FontSize
-        let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+        let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0)
         let pane = Wanxiang2.RevealPane.RevealPane(content, 200.0, true)
         stack.Children.Add pane.Host
 

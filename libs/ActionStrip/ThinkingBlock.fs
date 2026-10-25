@@ -45,35 +45,30 @@ module ThinkingBlock =
     let title (streaming: bool) (expanded: bool) =
         (if streaming then "正在思考" else "已深度思考") + (if expanded then "（收起）" else "（展开）")
 
-/// 思考过程卡（旧 MessageCard.reasoningBlock 的外框与正文）：分组卡 + 左缘竖线，
-/// 头部与限高视口由组装者放进来；正文字号比阅读字号小 1.5。
+/// 思考过程：标题和正文直接落在画布上，不再套分组卡。正文字号比阅读字号小 1.5。
 type ThinkingBlock(header: Control, body: Control) =
     let stack = StackPanel(Orientation = Orientation.Vertical, Spacing = 0.0)
 
     let edge =
-        Border(BorderThickness = Thickness(2.0, 0.0, 0.0, 0.0), Padding = Thickness(8.0, 0.0, 0.0, 0.0), Child = stack)
+        Border(
+            BorderThickness = Thickness 0.0,
+            Padding = Thickness 0.0,
+            Background = Brushes.Transparent,
+            Child = stack
+        )
 
     let card =
         Border(
             ClipToBounds = true,
-            Padding = Thickness(4.0, 4.0, 8.0, 4.0),
-            Margin = Thickness(0.0, 0.0, 0.0, 16.0),
-            BorderThickness = Thickness 1.0,
-            CornerRadius = CornerRadius 8.0,
+            Padding = Thickness 0.0,
+            Margin = Thickness(0.0, 0.0, 0.0, 8.0),
+            BorderThickness = Thickness 0.0,
+            Background = Brushes.Transparent,
+            CornerRadius = CornerRadius 0.0,
             Child = edge
         )
 
     do
-        card.Classes.Add "grouping-card"
-
-        card.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceContainer")
-        |> ignore
-
-        card.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
-
-        edge.Bind(Border.BorderBrushProperty, Dyn.res "Palette.HairlineStrong")
-        |> ignore
-
         body.Margin <- Thickness(0.0, 4.0, 0.0, 0.0)
         stack.Children.Add header
         stack.Children.Add body

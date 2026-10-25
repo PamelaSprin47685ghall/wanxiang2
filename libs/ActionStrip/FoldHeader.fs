@@ -38,6 +38,9 @@ type FoldHeader(expanded: bool) as this =
             FontWeight = FontWeight.Medium,
             FontSize = 12.0,
             LineHeight = 16.0,
+            TextWrapping = TextWrapping.NoWrap,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            MaxLines = 1,
             VerticalAlignment = VerticalAlignment.Center
         )
 
@@ -97,8 +100,10 @@ type FoldHeader(expanded: bool) as this =
                     Margin = Thickness 0.0,
                     Padding = Thickness(4.0, 4.0),
                     CornerRadius = CornerRadius 4.0,
-                    BorderThickness = Thickness 1.0,
-                    Content = this
+                    BorderThickness = Thickness 0.0,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                    Content = row
                 )
 
             btn.Classes.Add "ghost"

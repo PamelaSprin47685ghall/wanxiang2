@@ -125,6 +125,57 @@ type MessageOutbox() =
         items <- items.Add(id, item)
         item
 
+    /// 记下一条已经交给主机的用户消息，沿用命令自己的 invocationId。
+    /// 已有同 id 的条目保持原样（重试不得另起一条）。
+    member _.Remember(instanceId: string, command: ClientCommand) =
+        let textOf (node: JsonNode) =
+            match node with
+            | :? JsonObject as o ->
+                let mutable contents: JsonNode = null
+
+                if o.TryGetPropertyValue("contents", &contents) then
+                    match contents with
+                    | :? JsonArray as arr ->
+                        arr
+                        |> Seq.choose (fun item ->
+                            match item with
+                            | :? JsonObject as part ->
+                                let mutable text: JsonNode = null
+
+                                if part.TryGetPropertyValue("text", &text) && not (isNull text) then
+                                    match text with
+                                    | :? JsonValue as value ->
+                                        match value.TryGetValue<string>() with
+                                        | true, s -> Some s
+                                        | _ -> None
+                                    | _ -> None
+                                else
+                                    None
+                            | _ -> None)
+                        |> String.concat ""
+                    | _ -> ""
+                else
+                    ""
+            | _ -> ""
+
+        match command with
+        | SendUserMessage d when not (items.ContainsKey d.invocationId) ->
+            let item =
+                {
+                    instanceId = instanceId
+                    conversationId = d.conversationId
+                    command = command
+                    creation = None
+                    creationConfirmed = true
+                    text = textOf d.messageJson
+                    attachments = []
+                    state = SendingMessage
+                    lastAttemptAt = DateTimeOffset.UtcNow
+                }
+
+            items <- items.Add(d.invocationId, item)
+        | _ -> ()
+
     /// 重新打开后从本地恢复一条未确认的发送（W5，决策 80）：沿用**原 invocationId** 与原附件引用，
     /// 重试时主机按幂等核对，不会重复保存；状态恒为「未确认」，由用户显式点重试——
     /// 主机从不把排队当事实（原则 2），客户端也不自动重发（原则 5）。

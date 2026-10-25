@@ -1,6 +1,7 @@
 module Wanxiang2.ThinkingBlock.Tests.Tests
 
 open System
+open Avalonia
 open Avalonia.Controls
 open Avalonia.Media
 open Xunit
@@ -17,7 +18,9 @@ let ``外框把头部和正文叠起来，边框与边距正确`` () =
         w.Show()
         let card = b.Host :?> Border
         let inner = card.Child :?> Border
-        Assert.Equal(2.0, inner.BorderThickness.Left)
+        Assert.Equal(Thickness 0.0, card.BorderThickness)
+        Assert.Equal(Thickness 0.0, inner.BorderThickness)
+        Assert.False(card.Classes.Contains "grouping-card")
         Assert.Same(header, (inner.Child :?> StackPanel).Children[0])
         Assert.Equal(4.0, body.Margin.Top)
         w.Close())

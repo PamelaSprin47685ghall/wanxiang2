@@ -1,6 +1,7 @@
 namespace Wanxiang.UI
 
 open System
+open System.Text.Json.Nodes
 open System.Threading.Tasks
 open Avalonia.Controls
 open Avalonia.Platform.Storage
@@ -213,6 +214,16 @@ type ShellComposer(ports: ShellPorts) =
             views |> Option.iter (fun v -> ports.Post(fun () -> v.SettingsFocusInitial()))
         | _ -> ()
 
+        let instanceId =
+            match model.Conn with
+            | ConnPhase.Authed(id, _) -> id
+            | _ -> ""
+
+        for effect in effects do
+            match effect with
+            | Effect.SendCommand(ClientCommand.SendUserMessage _ as cmd) -> outbox.Remember(instanceId, cmd)
+            | _ -> ()
+
         this.ReprojectInternal msg effects
 
     member this.Reproject() : unit =
@@ -239,6 +250,57 @@ type ShellComposer(ports: ShellPorts) =
                 | _ -> None
 
             let activeConvId = activeConvInfo |> Option.map (fun (c, _) -> c.ConversationId)
+
+            let instanceId =
+                match model.Conn with
+                | ConnPhase.Authed(id, _) -> id
+                | _ -> ""
+
+            let pending =
+                outbox.ForInstance instanceId
+                |> List.filter (fun item -> PendingMessage.canRetry item || item.state = DeliveryState.QueuedMessage)
+
+            v.Composer.SlotPendingMessages(
+                pending,
+                activeConvId,
+                true,
+                (fun invocationId ->
+                    match outbox.TryFind invocationId with
+                    | Some item when PendingMessage.canRetry item ->
+                        outbox.ApplyState(invocationId, DeliveryState.SendingMessage)
+                        this.Dispatch(Msg.CommandRequested item.command)
+                    | _ -> ()),
+                fun id -> this.Dispatch(User(Sidebar(SidebarUserMsg.SelectConv id)))
+            )
+
+            match activeConvInfo with
+            | None ->
+                v.Chat.SlotPartialReply None
+                v.Chat.SlotSiblingProvider(fun _ _ -> None)
+            | Some(conv, _) ->
+                v.Chat.SlotSiblingProvider(fun commit prev ->
+                    ForkLineage.siblings model.Summaries model.Lineage conv.ConversationId commit prev)
+
+                let shown =
+                    match (Workspace.project model).Chat.Error, (runs.Get(Some conv.ConversationId)).partial with
+                    | Some _, Some part when MessageView.hasVisibleBody part ->
+                        Some(
+                            part,
+                            fun () ->
+                                let cmd =
+                                    ClientCommand.ContinueResponse
+                                        {|
+                                            invocationId = Guid.NewGuid()
+                                            conversationId = conv.ConversationId
+                                            messageJson = ConversationRuns.PartialMessageJson part :> JsonNode
+                                        |}
+
+                                runs.ClearError conv.ConversationId
+                                this.Dispatch(Msg.CommandRequested cmd)
+                        )
+                    | _ -> None
+
+                v.Chat.SlotPartialReply shown
 
             match activeConvInfo with
             | None ->
@@ -273,6 +335,7 @@ type ShellComposer(ports: ShellPorts) =
                     | RunState.Idle _ -> false, None
 
                 let retry () =
+                    runs.ClearError conv.ConversationId
                     this.Dispatch(User(Chat(ChatUserMsg.Regenerate)))
 
                 v.Chat.Render
@@ -742,6 +805,7 @@ type ShellComposer(ports: ShellPorts) =
     member this.Build() : IDisposable =
         let built = ports.BuildViews()
         views <- Some built
+        built.Sidebar.SlotPalette(fun () -> this.Commands.ShowPalette())
         this.Dispatch(PrefsLoaded(ports.PrefsLoad()))
         ports.BrowserAddHidden this.FlushDrafts
         let subs = ResizeArray<IDisposable>()
@@ -1184,7 +1248,18 @@ type ShellComposer(ports: ShellPorts) =
                                 )
                             | _ -> ())
                     Recover = None
-                    DeleteMessage = fun id -> this.Dispatch(User(Chat(ChatUserMsg.DeleteExchange(string id))))
+                    DeleteMessage =
+                        fun id ->
+                            match views with
+                            | Some desk ->
+                                desk.Dialogs.Confirm(
+                                    "删除这条消息",
+                                    "这条消息会从当前对话里去掉。",
+                                    "删除",
+                                    fun () -> this.Dispatch(User(Chat(ChatUserMsg.DeleteExchange(string id))))
+                                )
+                                |> ignore
+                            | None -> ()
                     DownloadAttachment = fun sha -> ports.Send(WireEvent.AttachmentDownloadRequest {| sha256 = sha |})
                     OpenLink = fun url -> ports.EffectSink.OpenLink url
                 }

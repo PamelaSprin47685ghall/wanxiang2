@@ -40,9 +40,9 @@ let ``等审批用警示色和信息图标，不出对勾`` () =
     Headless.run (fun () ->
         let c = ToolCallCard(data ToolTone.Awaiting None, parts)
         let dock = (c.Header.Content :?> StackPanel).Children[0] :?> DockPanel
-        let left = dock.Children[0] :?> StackPanel
+        let left = dock.Children[1] :?> DockPanel
         Assert.Equal(box ToolGlyph.Wrench, left.Children[0].Tag)
-        let pill = left.Children[2] :?> Border
+        let pill = left.Children[1] :?> Border
         let pillRow = pill.Child :?> StackPanel
         Assert.Equal(box ToolGlyph.Info, pillRow.Children[0].Tag)
         Assert.Equal("调用工具 · builtin_echo（等待批准）", AutomationProperties.GetItemStatus c.Header))

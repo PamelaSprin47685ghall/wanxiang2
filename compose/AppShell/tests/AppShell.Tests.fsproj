@@ -13,6 +13,8 @@
     <Compile Include="A11yTraversalTests.fs" />
     <Compile Include="ShortcutInterceptTests.fs" />
     <Compile Include="LayoutAudit.Tests.fs" />
+    <Compile Include="ButtonFlowTests.fs" />
+    <Compile Include="QuietShellTests.fs" />
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

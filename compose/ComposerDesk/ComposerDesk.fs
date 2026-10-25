@@ -156,10 +156,15 @@ type ComposerDesk(actions: ComposerDeskActions) =
         { stage = stage; kind = kind }
 
     let hostOf (vs: Wanxiang2.WorkspaceState.ComposerVS) =
-        if vs.Enabled then
-            HostAvailable
-        else
-            HostDisabled(vs.DisabledReason |> Option.defaultValue "")
+        // 生成中输入区被标成禁用，只是为了挡住「再发一条当普通发送」。
+        // 排队键仍要能用：停止/排队这条路把主机当成可用，不把「正在生成」当成断线。
+        match vs.Send.State with
+        | Wanxiang2.WorkspaceState.SendButtonState.GeneratingStop -> HostAvailable
+        | _ ->
+            if vs.Enabled then
+                HostAvailable
+            else
+                HostDisabled(vs.DisabledReason |> Option.defaultValue "")
 
     let generationOf (vs: Wanxiang2.WorkspaceState.ComposerVS) =
         match vs.Send.State with

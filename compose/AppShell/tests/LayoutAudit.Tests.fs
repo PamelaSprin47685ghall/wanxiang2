@@ -25,6 +25,7 @@ open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
 open Avalonia.Controls
 open Avalonia.Controls.Documents
+open Avalonia.Layout
 open Avalonia.Media
 open Avalonia.Threading
 open Avalonia.VisualTree
@@ -692,6 +693,306 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
         let mutable measuredPalette = 0.0
         let mutable measuredConfirm = 0.0
 
+        let overlaps (a: Rect) (b: Rect) =
+            let i = a.Intersect b
+            i.Width > 2.0 && i.Height > 2.0
+
+        let note (line: string) =
+            printfn "%s" line
+            TestContext.Current.TestOutputHelper.WriteLine line
+
+        let surfaceReport (label: string) (rowTitle: string) =
+            let shellW = rig.Root.Bounds.Width
+            let railW = rail.Bounds.Width
+            let stageW = composer.Bounds.Width
+
+            let bubble =
+                rig.Root.GetVisualDescendants()
+                |> Seq.tryPick (fun v ->
+                    match v with
+                    | :? Border as b when autoName b = "用户消息" && effectivelyVisible b -> Some b
+                    | _ -> None)
+
+            let bubbleText =
+                match bubble with
+                | None -> "bubble=MISSING"
+                | Some b ->
+                    let parentW =
+                        match b.GetVisualParent() with
+                        | :? Control as p -> p.Bounds.Width
+                        | _ -> -1.0
+
+                    let text =
+                        b.GetVisualDescendants()
+                        |> Seq.tryPick (fun v ->
+                            match v with
+                            | :? TextBlock as tb when effectivelyVisible tb && (textOf tb).Length > 0 -> Some tb
+                            | _ -> None)
+
+                    let assistantInside =
+                        b.GetVisualDescendants()
+                        |> Seq.exists (fun v ->
+                            match v with
+                            | :? ScrollViewer as sv when sv.Classes.Contains "code-scroll" -> true
+                            | :? TextBlock as tb -> (textOf tb).Contains "abcdefghijklmnopqrstuvwxyz"
+                            | _ -> false)
+
+                    let br = absRect b
+
+                    sprintf
+                        "bubble w=%0.1f x=%0.1f right=%0.1f parentW=%0.1f align=%A radii=%0.1f/%0.1f/%0.1f/%0.1f fill=%s text=%s inside=%b"
+                        b.Bounds.Width
+                        b.Bounds.X
+                        br.Right
+                        parentW
+                        b.HorizontalAlignment
+                        b.CornerRadius.TopLeft
+                        b.CornerRadius.TopRight
+                        b.CornerRadius.BottomRight
+                        b.CornerRadius.BottomLeft
+                        (bg b)
+                        (text |> Option.map (fun tb -> hex tb.Foreground) |> Option.defaultValue "")
+                        assistantInside
+
+            let hits =
+                rig.Root.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Button as b when effectivelyVisible b -> Some b
+                    | _ -> None)
+                |> Seq.filter (fun b ->
+                    let name = autoName b
+                    let cap = texts b |> String.concat ""
+                    name.Contains "复制" || name.Contains "分叉" || cap.Contains "复制" || cap.Contains "分叉")
+                |> Seq.toList
+
+            let hitText =
+                hits
+                |> List.map (fun b ->
+                    let r = absRect b
+
+                    let onBubble =
+                        match bubble with
+                        | Some bubble -> overlaps r (absRect bubble)
+                        | None -> false
+
+                    sprintf
+                        "%s op=%0.2f hit=%b %0.0fx%0.0f onBubble=%b"
+                        (autoName b)
+                        (opacityOf b)
+                        b.IsHitTestVisible
+                        r.Width
+                        r.Height
+                        onBubble)
+                |> String.concat " ;; "
+
+            let mutual =
+                hits
+                |> List.pairwise
+                |> List.filter (fun (a, b) -> overlaps (absRect a) (absRect b))
+                |> List.map (fun (a, b) -> autoName a + "×" + autoName b)
+                |> String.concat ","
+
+            let code =
+                rig.Root.GetVisualDescendants()
+                |> Seq.tryPick (fun v ->
+                    match v with
+                    | :? ScrollViewer as sv when sv.Classes.Contains "code-scroll" -> Some sv
+                    | _ -> None)
+
+            let codeText =
+                match code with
+                | None -> "code=MISSING"
+                | Some sv -> sprintf "code extent=%0.1f view=%0.1f" sv.Extent.Width sv.Viewport.Width
+
+            let tool =
+                rig.Root.GetVisualDescendants()
+                |> Seq.tryPick (fun v ->
+                    match v with
+                    | :? Border as b when (autoName b).StartsWith "工具调用" && effectivelyVisible b -> Some b
+                    | _ -> None)
+
+            let toolText =
+                match tool with
+                | None -> "tool=MISSING"
+                | Some card ->
+                    let lines =
+                        card.GetVisualDescendants()
+                        |> Seq.choose (fun v ->
+                            match v with
+                            | :? TextBlock as tb when effectivelyVisible tb && (textOf tb).Length > 0 -> Some tb
+                            | _ -> None)
+                        |> Seq.map (fun tb ->
+                            sprintf
+                                "«%s» wrap=%A trim=%A max=%d bw=%0.1f bh=%0.1f dw=%0.1f"
+                                (preview (textOf tb))
+                                tb.TextWrapping
+                                tb.TextTrimming
+                                tb.MaxLines
+                                tb.Bounds.Width
+                                tb.Bounds.Height
+                                tb.DesiredSize.Width)
+                        |> String.concat " ;; "
+
+                    sprintf "tool w=%0.1f h=%0.1f [%s]" card.Bounds.Width card.Bounds.Height lines
+
+            let rowText =
+                match findRowButton rail rowTitle with
+                | None -> "row=MISSING"
+                | Some row ->
+                    let title = findText (row :> Control) "超长会话标题"
+
+                    sprintf
+                        "row h=%0.1f fill=%s edge=%0.1f brush=%s classes=%s title wrap=%A trim=%A bw=%0.1f bh=%0.1f dw=%0.1f"
+                        row.Bounds.Height
+                        (bg row)
+                        row.BorderThickness.Left
+                        (hex row.BorderBrush)
+                        (row.Classes |> Seq.map string |> String.concat ",")
+                        title.TextWrapping
+                        title.TextTrimming
+                        title.Bounds.Width
+                        title.Bounds.Height
+                        title.DesiredSize.Width
+
+            note (
+                sprintf
+                    "PROBE %s shell=%0.1f rail=%0.1f stage=%0.1f | %s | hits=%s mutual=%s | %s | %s | %s"
+                    label
+                    shellW
+                    railW
+                    stageW
+                    bubbleText
+                    hitText
+                    mutual
+                    codeText
+                    toolText
+                    rowText
+            )
+
+        let oneLine (tb: TextBlock) (limit: float) =
+            Assert.Equal(TextWrapping.NoWrap, tb.TextWrapping)
+            Assert.Equal(TextTrimming.CharacterEllipsis, tb.TextTrimming)
+            Assert.Equal(1, tb.MaxLines)
+
+            Assert.True(
+                tb.Bounds.Height <= tb.FontSize * 2.2,
+                sprintf "行高 %0.1f 字号 %0.1f 「%s」" tb.Bounds.Height tb.FontSize (preview (textOf tb))
+            )
+
+            Assert.True(
+                tb.Bounds.Width <= limit + 1.0,
+                sprintf "宽 %0.1f 上限 %0.1f 「%s」" tb.Bounds.Width limit (preview (textOf tb))
+            )
+
+            Assert.True(
+                tb.Bounds.Width < float (textOf tb).Length * 4.0,
+                sprintf "没有收成一行：宽 %0.1f 字数 %d" tb.Bounds.Width (textOf tb).Length
+            )
+
+        let checkChrome (fill: string) (ink: string) (rowFill: string) (edge: string) (rowTitle: string) =
+            let bubble =
+                rig.Root.GetVisualDescendants()
+                |> Seq.pick (fun v ->
+                    match v with
+                    | :? Border as b when autoName b = "用户消息" && effectivelyVisible b -> Some b
+                    | _ -> None)
+
+            Assert.Equal(HorizontalAlignment.Right, bubble.HorizontalAlignment)
+            Assert.True(bubble.Bounds.Width <= 560.5, sprintf "气泡宽 %0.1f" bubble.Bounds.Width)
+            let parent = bubble.GetVisualParent() :?> Control
+
+            Assert.True(
+                abs (bubble.Bounds.Right - parent.Bounds.Width) < 2.0,
+                sprintf "气泡右缘 %0.1f 父宽 %0.1f" bubble.Bounds.Right parent.Bounds.Width
+            )
+
+            Assert.True(bubble.Bounds.X > 1.0, sprintf "气泡没有靠右，x=%0.1f" bubble.Bounds.X)
+            near bubble.CornerRadius.TopLeft 12.0 "bubble tl"
+            near bubble.CornerRadius.TopRight 12.0 "bubble tr"
+            near bubble.CornerRadius.BottomRight 6.0 "bubble br"
+            near bubble.CornerRadius.BottomLeft 12.0 "bubble bl"
+            Assert.Equal(fill, bg bubble)
+
+            let inkBlock =
+                bubble.GetVisualDescendants()
+                |> Seq.pick (fun v ->
+                    match v with
+                    | :? TextBlock as tb when (textOf tb).Length > 0 -> Some tb
+                    | _ -> None)
+
+            Assert.Equal(ink, hex inkBlock.Foreground)
+
+            let assistantInside =
+                bubble.GetVisualDescendants()
+                |> Seq.exists (fun v ->
+                    match v with
+                    | :? ScrollViewer as sv when sv.Classes.Contains "code-scroll" -> true
+                    | _ -> false)
+
+            Assert.False assistantInside
+
+            let named needle =
+                match buttonWith rig.Root needle with
+                | Some b -> b
+                | None -> failwith (sprintf "没有「%s」" needle)
+
+            let copyBtn = named "复制用户"
+            let forkBtn = named "分叉"
+
+            for b in [ copyBtn; forkBtn ] do
+                Assert.True(effectivelyVisible b)
+                Assert.True(opacityOf b > 0.5, autoName b)
+                Assert.True(b.IsHitTestVisible, autoName b)
+                let r = absRect b
+
+                Assert.True(r.Width >= 12.0 && r.Height >= 12.0, sprintf "%s %0.0fx%0.0f" (autoName b) r.Width r.Height)
+                Assert.False(overlaps r (absRect bubble), autoName b)
+
+            Assert.False(overlaps (absRect copyBtn) (absRect forkBtn), "复制和分叉交叠")
+
+            let card =
+                rig.Root.GetVisualDescendants()
+                |> Seq.pick (fun v ->
+                    match v with
+                    | :? Border as b when (autoName b).StartsWith "工具调用" && effectivelyVisible b -> Some b
+                    | _ -> None)
+
+            Assert.True(card.Bounds.Width <= 748.5, sprintf "工具卡宽 %0.1f" card.Bounds.Width)
+
+            let lines =
+                card.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? TextBlock as tb when effectivelyVisible tb && (textOf tb).Length > 0 -> Some tb
+                    | _ -> None)
+                |> Seq.toList
+
+            oneLine (lines |> List.find (fun tb -> (textOf tb).StartsWith "调用 ")) card.Bounds.Width
+            oneLine (lines |> List.find (fun tb -> (textOf tb).StartsWith "long_tool_name")) card.Bounds.Width
+
+            let overview = named "调用 1 个工具"
+            Assert.True(overview.Bounds.Width >= 44.0, sprintf "概览头宽 %0.1f" overview.Bounds.Width)
+            Assert.True(overview.Bounds.Height >= 12.0, sprintf "概览头高 %0.1f" overview.Bounds.Height)
+
+            match findRowButton rail rowTitle with
+            | None -> Assert.Fail "当前行不在栏里"
+            | Some row ->
+                Assert.True(row.Bounds.Height >= 44.0, sprintf "行高 %0.1f" row.Bounds.Height)
+                Assert.Equal(rowFill, bg row)
+                near row.BorderThickness.Left 2.0 "row edge"
+                Assert.Equal(edge, hex row.BorderBrush)
+                let title = findText (row :> Control) "超长会话标题"
+                Assert.Equal(TextWrapping.NoWrap, title.TextWrapping)
+                Assert.Equal(TextTrimming.CharacterEllipsis, title.TextTrimming)
+
+                Assert.True(
+                    title.Bounds.Width < rail.Bounds.Width - 8.0,
+                    sprintf "标题宽 %0.1f 栏宽 %0.1f" title.Bounds.Width rail.Bounds.Width
+                )
+
+                near rail.Bounds.Width 284.0 "rail with long title"
+
         try
             resize 1280.0 800.0
             connect rig
@@ -847,7 +1148,14 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
                         messages =
                             JsonArray(
                                 messageItem 1 "user" (textContent userLine),
-                                messageItem 2 "assistant" (textContent ("```\\n" + codeLine + "\\n```"))
+                                messageItem 2 "assistant" (textContent ("```\\n" + codeLine + "\\n```")),
+                                messageItem
+                                    3
+                                    "assistant"
+                                    (sprintf
+                                        """[{"type":"functionCall","callId":"call-audit","name":"%s","arguments":{"path":"%s"}}]"""
+                                        (String.replicate 14 "long_tool_name_")
+                                        (String.replicate 24 "dir/"))
                             )
                         snapshotEarliestCommitId = 0UL
                         snapshotHasMore = false
@@ -857,6 +1165,27 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
 
             Pump.settle ()
             rig.Shell.Reproject()
+            Pump.settle ()
+            surfaceReport "light" longTitle
+            checkChrome "#1B365D" "#FBFAF7" "#E1DDCC" "#1B365D" longTitle
+
+            let beforeShell = rig.Root.Bounds.Width
+            let beforeRail = rail.Bounds.Width
+            let beforeStage = composer.Bounds.Width
+
+            let header =
+                match buttonWith rig.Root "展开工具调用" with
+                | Some h -> h
+                | None -> failwith "没有工具头"
+
+            click header
+            Pump.settle ()
+            near rig.Root.Bounds.Width beforeShell "shell after tool"
+            near rail.Bounds.Width beforeRail "rail after tool"
+            near composer.Bounds.Width beforeStage "stage after tool"
+            let opened = audit "工具展开" rig.Root
+            Assert.True(opened.IsEmpty, String.concat "\n" opened)
+            click header
             Pump.settle ()
 
             Assert.True(bottomGap () < 48.0, sprintf "有消息应贴底，底空距 %0.1f" (bottomGap ()))
@@ -907,6 +1236,8 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
             Assert.NotEmpty codeScrolls
             Assert.True(codeScrolls |> List.exists (fun sv -> sv.Extent.Width > sv.Viewport.Width + 8.0))
             Assert.True(rig.Root.Bounds.Width <= 1280.5)
+            near rail.Bounds.Width 284.0 "rail beside code"
+            Assert.True(composer.Bounds.Width <= rig.Root.Bounds.Width, sprintf "舞台 %0.1f" composer.Bounds.Width)
             let codeFindings = audit "代码行" rig.Root
             Assert.True(codeFindings.IsEmpty, String.Join("\n", codeFindings))
 
@@ -998,6 +1329,8 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
             rig.Theme.Motion.ApplyReduced true
             rig.Theme.Apply PaletteMode.Dark
             Pump.settle ()
+            surfaceReport "dark" longTitle
+            checkChrome "#2F4864" "#E7EEF7" "#34343E" "#8FB4DE" longTitle
             Assert.Equal("#15151A", bg rig.Views.Workspace.Host)
             Assert.Equal("#1A1A22", bg rail)
             Assert.Equal("#8FB4DE", bg rig.Views.Composer.Box.SendButton)

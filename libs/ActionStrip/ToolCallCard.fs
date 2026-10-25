@@ -118,8 +118,7 @@ type ToolCardParts =
         Reveal: Control -> bool -> Control * (bool -> unit)
     }
 
-/// 工具调用卡（旧 MessageCard.toolCallCard）：头部是唯一展开入口，显示图标、名称、状态药丸、
-/// 人话摘要、参数摘要、失败横幅；展开后在限高视口里列出参数与结果，各带复制。
+/// 工具调用：外框只有一层。头部是展开入口，状态是一行字；展开后的参数与结果不再各自再套边框。
 type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
     let toneResKey =
         match data.Tone with
@@ -128,12 +127,6 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         | ToolTone.Unknown -> "Palette.Warning"
         | ToolTone.Success -> "Palette.Success"
         | ToolTone.Failed -> "Palette.Danger"
-
-    let toneBgKey =
-        if data.Tone = ToolTone.Failed then
-            "Palette.DangerSoft"
-        else
-            "Palette.SurfaceSoft"
 
     let hasError = data.Error.IsSome
     let mutable open' = false
@@ -206,6 +199,10 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
             Text = data.DisplayName,
             FontWeight = FontWeight.Medium,
             FontSize = 13.0,
+            TextWrapping = TextWrapping.NoWrap,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            MaxLines = 1,
+            MinWidth = 0.0,
             VerticalAlignment = VerticalAlignment.Center
         )
 
@@ -220,21 +217,20 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         Border(
             Margin = Thickness 0.0,
             Padding = Thickness(8.0, 2.0),
-            BorderThickness = Thickness 1.0,
-            CornerRadius = CornerRadius 999.0,
+            BorderThickness = Thickness 0.0,
+            Background = Brushes.Transparent,
+            CornerRadius = CornerRadius 0.0,
             VerticalAlignment = VerticalAlignment.Center
         )
-
-    do
-        pill.Bind(Border.BackgroundProperty, Dyn.res toneBgKey) |> ignore
-        pill.Bind(Border.BorderBrushProperty, Dyn.res "Palette.BorderSoft") |> ignore
 
     let summary =
         TextBlock(
             Text = data.Preview,
             FontSize = 11.0,
             Margin = Thickness(0.0, 4.0, 0.0, 0.0),
+            TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
+            MaxLines = 1,
             IsVisible = not (String.IsNullOrWhiteSpace data.Preview)
         )
 
@@ -249,7 +245,9 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
             Text = data.HumanSummary,
             FontSize = 12.0,
             Margin = Thickness(0.0, 4.0, 0.0, 0.0),
-            TextWrapping = TextWrapping.Wrap
+            TextWrapping = TextWrapping.NoWrap,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            MaxLines = 1
         )
 
     do
@@ -272,16 +270,15 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
 
         let b =
             Border(
-                BorderThickness = Thickness 1.0,
-                CornerRadius = CornerRadius 4.0,
-                Padding = Thickness(8.0, 4.0),
+                BorderThickness = Thickness 0.0,
+                CornerRadius = CornerRadius 0.0,
+                Background = Brushes.Transparent,
+                Padding = Thickness(0.0, 4.0),
                 Margin = Thickness(0.0, 4.0, 0.0, 0.0),
                 IsVisible = hasError,
                 Child = hstack 4.0 [ glyph; text ]
             )
 
-        b.Bind(Border.BackgroundProperty, Dyn.res "Palette.DangerSoft") |> ignore
-        b.Bind(Border.BorderBrushProperty, Dyn.res "Palette.Hairline") |> ignore
         b
 
     let section (s: ToolSection) : Control =
@@ -329,8 +326,8 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
 
         let box =
             Border(
-                BorderThickness = Thickness 1.0,
-                CornerRadius = CornerRadius 4.0,
+                BorderThickness = Thickness 0.0,
+                CornerRadius = CornerRadius 8.0,
                 Padding = Thickness(12.0, 8.0),
                 Child = content
             )
@@ -427,12 +424,22 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         copyAll.Margin <- Thickness(0.0, 0.0, 4.0, 0.0)
         copyAll.VerticalAlignment <- VerticalAlignment.Center
         let actions = hstack 4.0 [ copyAll; chevronHost ]
-        let left = hstack 8.0 [ icon; name; pill ]
-        let dock = DockPanel(LastChildFill = false)
-        DockPanel.SetDock(left, Dock.Left)
+        let left =
+            DockPanel(
+                LastChildFill = true,
+                MinWidth = 0.0,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            )
+
+        DockPanel.SetDock(icon, Dock.Left)
+        DockPanel.SetDock(pill, Dock.Right)
+        left.Children.Add icon
+        left.Children.Add pill
+        left.Children.Add name
+        let dock = DockPanel(LastChildFill = true, MinWidth = 0.0)
         DockPanel.SetDock(actions, Dock.Right)
-        dock.Children.Add left
         dock.Children.Add actions
+        dock.Children.Add left
         headerContent.Children.Add dock
         headerContent.Children.Add human
         headerContent.Children.Add summary

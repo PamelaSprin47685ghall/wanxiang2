@@ -175,17 +175,15 @@ type ChatHeader() =
 
     let generatingChip =
         Border(
-            CornerRadius = CornerRadius 10.0,
-            Padding = Thickness(8.0, 2.0),
+            CornerRadius = CornerRadius 0.0,
+            Padding = Thickness 0.0,
+            BorderThickness = Thickness 0.0,
+            Background = Brushes.Transparent,
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = 0.0,
             IsHitTestVisible = false,
             Child = chipRow
         )
-
-    do
-        generatingChip.Bind(Border.BackgroundProperty, Dyn.res "Palette.AccentFaint")
-        |> ignore
 
     let crumbText =
         TextBlock(TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center)
@@ -292,7 +290,7 @@ type ChatHeader() =
         syncChip ()
 
     do
-        chipRow.Children.Add dot
+        dot.IsVisible <- false
         chipRow.Children.Add caption
         ToolTip.SetTip(generatingChip, "正在生成回答")
         AutomationProperties.SetName(generatingChip, "正在生成回答")

@@ -353,6 +353,8 @@ type MarkdownView(look: MarkdownMetrics, host: MarkdownHost, fontSize: float, al
 
         let scroll =
             ScrollViewer(Content = block, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled)
+
+        scroll.Classes.Add "code-scroll"
         // 超长单围栏先限高在 expandedDetailMaxHeight，需要全文再展开（120 行在任何字号下都远超 360px）
         let lineCount = 1 + (code |> Seq.filter ((=) '\n') |> Seq.length)
         let huge = lineCount > 120

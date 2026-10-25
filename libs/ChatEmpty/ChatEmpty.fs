@@ -98,6 +98,7 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
                 HorizontalAlignment = HorizontalAlignment.Stretch
             )
 
+        heading.Classes.Add "serif"
         heading.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
         heading.FontSize <- 25.0
 

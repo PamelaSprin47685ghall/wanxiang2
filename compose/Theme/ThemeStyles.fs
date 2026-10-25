@@ -533,6 +533,22 @@ type ThemeStyles(manager: ThemeManager) =
                     (manager.Derived DerivedBrush.HoverDanger :> IBrush)
                     None
 
+            // 标题用衬线栈。只挂在显式类上，避免盖住等宽绑定。
+            yield
+                style
+                    (fun s -> s.OfType<TextBlock>().Class("serif"))
+                    [ TextBlock.FontFamilyProperty, box manager.SerifFontFamily.Value ]
+
+            yield
+                style
+                    (fun s -> s.OfType<TextBlock>().Class("dialog-title"))
+                    [ TextBlock.FontFamilyProperty, box manager.SerifFontFamily.Value ]
+
+            yield
+                style
+                    (fun s -> s.OfType<TextBox>().Class("serif"))
+                    [ TextBox.FontFamilyProperty, box manager.SerifFontFamily.Value ]
+
             // 3. 原生 Button / ToggleButton 的键盘焦点环覆盖（:focus-visible 去默认蓝框，描边接 ControlStroke / Accent）
             yield
                 style

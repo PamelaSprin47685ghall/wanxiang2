@@ -199,9 +199,9 @@ module Gallery =
 
         let prefLimits: UiPrefLimits =
             {
-                sidebarWidth = 260.0
-                sidebarMinWidth = 200.0
-                sidebarMaxWidth = 400.0
+                sidebarWidth = 284.0
+                sidebarMinWidth = 232.0
+                sidebarMaxWidth = 420.0
                 windowMinWidth = 700.0
             }
 

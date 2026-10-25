@@ -138,6 +138,10 @@ type ShellCommands(surface: ShellSurface, initialRecent: string list) =
             else
                 false
         | ShortcutAction.NoShortcut -> false
+        // 面板自己就是对话框。Ctrl/⌘+K 仍要交到面板，由它关掉自己；别的对话框开着时面板选择不动它。
+        | ShortcutAction.OpenCommandPalette ->
+            this.ShowPalette()
+            true
         | _ when surface.IsDialogOpen() || surface.IsPopupOpen() -> false
         | ShortcutAction.ToggleSidebar ->
             surface.ToggleSidebar()
@@ -169,9 +173,6 @@ type ShellCommands(surface: ShellSurface, initialRecent: string list) =
             true
         | ShortcutAction.ToggleTheme ->
             this.CycleTheme()
-            true
-        | ShortcutAction.OpenCommandPalette ->
-            this.ShowPalette()
             true
         | ShortcutAction.CopyLastReply ->
             surface.CopyLastReply()

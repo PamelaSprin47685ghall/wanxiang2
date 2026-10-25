@@ -110,9 +110,9 @@ let ``386 命令面板：组合中回车不执行、方向键不移动`` () =
         Assert.Equal(1, ran)
         window.Close())
 
-// 旧 AppShell.ShowCommandPalette：进对话层、搜索框初始焦点；执行先关面板，下一拍才跑；已有对话框时不开。
+// 旧 AppShell.ShowCommandPalette：进对话层、搜索框初始焦点；执行先关面板，下一拍才跑；再按一次收起。
 [<Fact>]
-let ``执行先关面板再在下一拍运行，已有对话框时不重复打开`` () =
+let ``执行先关面板再在下一拍运行，再按一次收起`` () =
     Headless.run (fun () ->
         let _, overlay, palette, root = setup ()
         let window = Desk.show root 800.0 600.0
@@ -122,8 +122,18 @@ let ``执行先关面板再在下一拍运行，已有对话框时不重复打�
             ran.Add((i.id, q))
             Assert.False overlay.Layer.IsDialogOpen)
 
-        palette.Show((fun () -> sample), fun () -> [ "act:theme" ])
-        Dispatcher.UIThread.RunJobs()
+        let show () =
+            palette.Show((fun () -> sample), fun () -> [ "act:theme" ])
+            Dispatcher.UIThread.RunJobs()
+
+        let searchBoxes () =
+            root.GetVisualDescendants()
+            |> Seq.choose (function
+                | :? TextBox as t when t.Name = "CommandPaletteSearch" -> Some t
+                | _ -> None)
+            |> List.ofSeq
+
+        show ()
         Assert.True overlay.Layer.IsDialogOpen
 
         let search =
@@ -135,16 +145,17 @@ let ``执行先关面板再在下一拍运行，已有对话框时不重复打�
         Assert.True search.IsFocused
         // 空查询：最近使用在前
         Assert.Contains("最近使用", Desk.texts root)
-        palette.Show((fun () -> sample), fun () -> [])
 
-        Assert.Single(
-            root.GetVisualDescendants()
-            |> Seq.filter (function
-                | :? TextBox as t -> t.Name = "CommandPaletteSearch"
-                | _ -> false)
-        )
-        |> ignore
+        show ()
+        Assert.False overlay.Layer.IsDialogOpen
+        Assert.Empty(searchBoxes ())
+        Assert.Empty ran
 
+        show ()
+        Assert.True overlay.Layer.IsDialogOpen
+        search.Focus() |> ignore
+        Dispatcher.UIThread.RunJobs()
+        Assert.Single(searchBoxes ()) |> ignore
         press search Key.Enter
         Assert.False overlay.Layer.IsDialogOpen
         Assert.Equal<(string * string) list>([ "act:theme", "" ], List.ofSeq ran)

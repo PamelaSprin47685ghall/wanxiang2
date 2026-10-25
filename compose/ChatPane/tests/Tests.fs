@@ -216,6 +216,37 @@ let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
         Assert.True pane.Scroller.Viewer.IsVisible
         w.Close())
 
+// 窗口 800 时本列约 800，自身档是 32。传入 1100 后两侧留白必须是 48。
+[<Fact>]
+let ``水平留白按传入的窗口视口分档`` () =
+    Headless.run (fun () ->
+        let pane, w = rig ()
+        let viewer = pane.Scroller.Viewer
+        Assert.True(viewer.Bounds.Width > 0.0 && viewer.Bounds.Width < 1024.0)
+
+        let pads () =
+            (pane.Host :?> Grid).Children
+            |> Seq.choose (fun c ->
+                match c with
+                | :? ScrollViewer as sv -> Some sv.Padding.Left
+                | _ -> None)
+            |> Seq.toList
+
+        pane.ApplyViewportWidth 1100.0
+        Assert.Equal(48.0, viewer.Padding.Left)
+        Assert.Equal(48.0, viewer.Padding.Right)
+        Assert.Equal<float list>([ 48.0; 48.0 ], pads ())
+        pane.ApplyViewportWidth 1280.0
+        Assert.Equal(48.0, viewer.Padding.Left)
+        pane.ApplyViewportWidth 800.0
+        Assert.Equal(32.0, viewer.Padding.Left)
+        Assert.Equal<float list>([ 32.0; 32.0 ], pads ())
+        pane.ApplyViewportWidth 500.0
+        Assert.Equal(24.0, viewer.Padding.Left)
+        pane.ApplyViewportWidth 400.0
+        Assert.Equal(16.0, viewer.Padding.Left)
+        w.Close())
+
 [<Fact>]
 let ``主体各典型状态结构与可见性状态断言`` () =
     Headless.run (fun () ->

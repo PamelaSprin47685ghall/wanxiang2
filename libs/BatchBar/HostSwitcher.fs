@@ -135,7 +135,10 @@ type HostSwitcher() =
         row.Children.Add statusRow
         dock.Children.Add row
         let b = Border(Child = dock)
-        b.Classes.Add "hairline"
+        // rail-foot 是内容行不是分隔线：hairline 类会把宿主高度压成 1px，把设置/重连键挤出窗外。
+        // 顶发丝线改由 BorderThickness 表达（react .rail-foot border-top: 1px solid hairline）。
+        b.BorderThickness <- Thickness(0.0, 1.0, 0.0, 0.0)
+        b.Bind(Border.BorderBrushProperty, Dyn.res "Palette.BorderSoft") |> ignore
         b.Padding <- Thickness(16.0, 8.0, 8.0, 12.0)
         b
 

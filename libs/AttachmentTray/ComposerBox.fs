@@ -237,6 +237,7 @@ type ComposerBox() =
     let mutable generating = false
     let mutable enabled = true
     let mutable disabledReason = ""
+    let mutable modelReady = false
     let mutable enterSends = true
     let mutable compact = false
     let mutable contextShown = false
@@ -307,12 +308,9 @@ type ComposerBox() =
             dropHint.IsVisible <- false
 
         input.PlaceholderText <-
-            if not enabled && not (String.IsNullOrWhiteSpace disabledReason) then
-                ""
-            elif dragging && enabled then
-                "释放文件以添加到当前对话附件"
-            else
-                "写下一句"
+            if dragging && enabled then "释放文件以添加到当前对话附件"
+            elif modelReady then "写下一句"
+            else "先连接一个模型，草稿会留在这里"
 
     let applySizes () =
         let size = if compact then 44.0 else 30.0
@@ -579,6 +577,7 @@ type ComposerBox() =
 
     /// 单入口幂等渲染：由 ComposerVS 投影全量刷新输入区
     member this.Render(vs: ComposerVS) =
+        modelReady <- vs.ModelChip.IsSome
         setEnabled vs.Enabled (vs.DisabledReason |> Option.defaultValue "")
 
         if input.Text <> vs.Text then

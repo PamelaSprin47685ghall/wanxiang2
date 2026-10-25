@@ -256,7 +256,7 @@ type ChatScreen
 
         let headerVS: ChatHeaderVS =
             {
-                Visible = f.ConversationChrome
+                Visible = true
                 Compact = f.CompactMode
                 InsetLeft = 8.0
                 Title = TitleMode.Viewing(currentTitle, editable)
@@ -627,6 +627,12 @@ type ChatScreen
     /// 放进布局的根
     member _.Host: Control = root
     member _.Header = header
+
+    /// 顶栏离开对话屏，改由舞台钉在滚动组之外。对话屏自己的测试不调用，顶栏仍留在本屏。
+    member _.DetachHeader() =
+        layout.Children.Remove header.Host |> ignore
+        header.Host :> Control
+
     member _.Pane = pane
     member _.Deck = deck
     member _.Mounted = mounted
@@ -669,6 +675,18 @@ type ChatScreen
     member _.BreadcrumbText = breadcrumb.Text
 
     member _.WireStartMode(value: bool) = pane.WireStartMode value
+
+    /// 窗口视口宽度交给阅读列，水平留白按视口分档。
+    member _.ApplyViewportWidth(width: float) = pane.ApplyViewportWidth width
+
+    /// 视口进出紧凑：只换顶栏与阅读列的紧凑尺寸，不重画消息与连接态。
+    member _.ApplyCompactMode(value: bool) =
+        header.ApplyCompact value
+        pane.ApplyCompact value
+
+        match last with
+        | Some f -> last <- Some { f with CompactMode = value }
+        | None -> ()
 
     /// 宿主菜单（快捷键打开）
     member _.ShowMenu() = showMenu (header.MoreButton :> Control)

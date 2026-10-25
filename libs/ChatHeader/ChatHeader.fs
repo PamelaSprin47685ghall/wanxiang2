@@ -103,17 +103,20 @@ type ChatHeader() =
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.NoWrap,
             HorizontalAlignment = HorizontalAlignment.Stretch
         )
 
-    do titleText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
+    do
+        titleText.Classes.Add "serif"
+        titleText.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
 
     let titleAction =
         let b =
             Button(
                 Focusable = false,
                 VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = HorizontalAlignment.Left
             )
 
         b.Classes.Add "ghost"
@@ -134,14 +137,16 @@ type ChatHeader() =
             HorizontalAlignment = HorizontalAlignment.Stretch
         )
 
-    do AutomationProperties.SetName(editBox, "对话标题")
+    do
+        editBox.Classes.Add "serif"
+        AutomationProperties.SetName(editBox, "对话标题")
 
     let editShell =
         Border(
             CornerRadius = CornerRadius 4.0,
             BorderThickness = Thickness 1.0,
             VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalAlignment = HorizontalAlignment.Left,
             IsVisible = false,
             Child = editBox
         )
@@ -294,6 +299,12 @@ type ChatHeader() =
 
         titleHost.Children.Add titleAction
         titleHost.Children.Add editShell
+        // 标题键按内容取宽（react .title-block 收缩到内容宽）：左对齐，并以宿主宽为上限，
+        // 超长标题在键内省略号截断；整条顶栏不再是一个隐形的巨大重命名键。
+        titleHost.SizeChanged.Add(fun _ ->
+            let cap = titleHost.Bounds.Width
+            titleAction.MaxWidth <- cap
+            editShell.MaxWidth <- cap)
 
         titleAction.Click.Add(fun _ ->
             if isEditable then
@@ -442,3 +453,6 @@ type ChatHeader() =
     member _.BeginRename() = beginEdit ()
     member _.CommitRename(_refocus: bool) = commit ()
     member _.CancelRename() = cancel ()
+
+    /// 只换紧凑尺寸，不重画标题、面包屑或生成态。
+    member _.ApplyCompact(value: bool) = applyCompact value

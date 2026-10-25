@@ -92,6 +92,7 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
         )
 
     let mutable onDialogClosed: unit -> unit = id
+    let mutable dismissWired = false
     let dialogStack = ResizeArray<Control * float * (unit -> unit) * (unit -> bool)>()
     let mutable dialogGuard: unit -> bool = fun () -> true
     let mutable previousDialogFocus: IInputElement option = None
@@ -350,6 +351,7 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
             ] do
             Grid.SetColumnSpan(layer, 8)
             Grid.SetRowSpan(layer, 8)
+            layer.ZIndex <- 3
             root.Children.Add layer
         // 层外滚轮与层外点击是同一类「取消浮层」手势：关闭并消费，免得同一脉冲穿透到底层滚动区；
         // 落在浮层卡内的滚轮放行给浮层自己的滚动条。
@@ -607,6 +609,13 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
 
     /// 层外点击关闭、遮罩与 Esc 同守卫、视口变化时重新钳位。
     member this.WireDismiss() =
+        if dismissWired then
+            ()
+        else
+            dismissWired <- true
+            this.WireDismissCore()
+
+    member private this.WireDismissCore() =
         popupCatcher.PointerPressed.Add(fun _ -> this.ClosePopup())
 
         scrim.PointerPressed.Add(fun _ ->

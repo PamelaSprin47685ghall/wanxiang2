@@ -126,7 +126,7 @@ let ``禁用时说明条可见、附件键不可用；看图受阻挂提示`` ()
             }
 
         Assert.False b.AttachButton.IsEnabled
-        Assert.Equal("", b.Input.PlaceholderText)
+        Assert.Equal("先连接一个模型，草稿会留在这里", b.Input.PlaceholderText)
 
         b.ApplySend
             { ready with
@@ -136,7 +136,7 @@ let ``禁用时说明条可见、附件键不可用；看图受阻挂提示`` ()
             }
 
         Assert.False b.SendButton.IsEnabled
-        b.Render vs
+        b.Render { vs with ModelChip = Some "m1" }
         Assert.True b.AttachButton.IsEnabled
         Assert.Equal("写下一句", b.Input.PlaceholderText))
 

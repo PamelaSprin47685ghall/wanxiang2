@@ -242,6 +242,7 @@ type SettingsFrame(groups: (string * SettingsNavItem list) list, ?glyphOf: strin
         let closeButton = Ui.button "ghost" "返回对话" close.Trigger
         AutomationProperties.SetHelpText(closeButton, "返回对话（Esc），未保存的草稿留在当前窗口")
         let title = TextBlock(Text = "设置", FontSize = 28.0)
+        title.Classes.Add "serif"
         title.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.Text") |> ignore
         title.FontWeight <- FontWeight.Medium
         title.VerticalAlignment <- VerticalAlignment.Center

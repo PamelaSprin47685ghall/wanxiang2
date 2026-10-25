@@ -184,6 +184,14 @@ let ``对话框开着时其余快捷键不接管`` () =
     Assert.Empty(rig.Log)
 
 [<Fact>]
+let ``对话框开着时 Ctrl+K 仍交给面板`` () =
+    let rig = Rig(Dialog = true)
+    let shell = ShellCommands(rig.Surface, [ "act:new" ])
+    Assert.True(shell.HandleShortcut ShortcutAction.OpenCommandPalette)
+    Assert.StartsWith("palette ", rig.Log.Head)
+    Assert.False(shell.HandleShortcut ShortcutAction.NewConversation)
+
+[<Fact>]
 let ``232 Ctrl+Z 映射到撤销，并只触发可见提示条上的「撤销」`` () =
     let rig = Rig()
     let shell = ShellCommands(rig.Surface, [])

@@ -43,9 +43,9 @@ module Workspace =
     let init () : WorkspaceModel =
         let limits: UiPrefLimits =
             {
-                sidebarWidth = 260.0
-                sidebarMinWidth = 200.0
-                sidebarMaxWidth = 400.0
+                sidebarWidth = 284.0
+                sidebarMinWidth = 232.0
+                sidebarMaxWidth = 420.0
                 windowMinWidth = 700.0
             }
 
@@ -58,7 +58,7 @@ module Workspace =
                     CompactMode = false
                     DrawerOpen = false
                     SidebarCollapsed = false
-                    SidebarWidth = 260.0
+                    SidebarWidth = 284.0
                 }
             Overlay = OverlayPhase.Closed
             Feedback =
@@ -71,7 +71,7 @@ module Workspace =
             Chrome =
                 {
                     Compact = false
-                    SidebarWidth = 260.0
+                    SidebarWidth = 284.0
                     StartingPageVisible = true
                     HeaderEditingDraft = None
                     SearchQuery = ""
@@ -736,7 +736,17 @@ module Workspace =
         | EveryFired _ -> model, []
 
         | PrefsLoaded prefs ->
-            { model with Prefs = prefs },
+            { model with
+                Prefs = prefs
+                Nav =
+                    { model.Nav with
+                        SidebarWidth = prefs.sidebarWidth
+                    }
+                Chrome =
+                    { model.Chrome with
+                        SidebarWidth = prefs.sidebarWidth
+                    }
+            },
             [
                 Effect.ApplyTheme(
                     match prefs.theme with

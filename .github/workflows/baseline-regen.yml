@@ -1,0 +1,55 @@
+# 画廊像素基线的 Ubuntu 实机重生成（DevOps 工具，非门禁）。
+#
+# 基线契约（compose/Gallery/AGENTS.md《G3》）要求基线在目标环境真实生成。
+# 2026-10-24 排查确认仓库里存在非 Ubuntu 生成的基线：
+# - ActionStrip.actions：恒显改造（提交 8007cd3）改了源码却漏重建基线；
+# - ChatEmpty.empty：两次「重建」都不是在 Ubuntu 环境做的，主仓 CI 同位置红。
+# 门禁在 ubuntu-latest 上逐像素比对，因此基线也必须来自同一环境。
+#
+# 用法：workflow_dispatch 触发 → 取 artifact `gallery-baselines-ubuntu` →
+# 用其中的 PNG 覆盖 compose/Gallery/baselines/ 同名文件 → 提交。
+# 本作业在生成后立刻对同一批文件复跑核查：通过说明渲染确定、基线自洽；
+# 跨作业的一致性由落仓后的 gallery-baseline 门禁给出。
+name: baseline-regen
+on:
+  workflow_dispatch:
+  push:
+    branches: [delivery/ci-failure-evidence-upstream]
+    paths: [.github/workflows/baseline-regen.yml]
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      # Gallery 只从 artifacts/feed 取 Wanxiang2.* 交付包（nuget.config），pack 即可。
+      - run: ./x pack
+      - name: Ubuntu 实机生成全量像素基线
+        run: |
+          set -o pipefail
+          bash tools/gallery-baseline.sh --generate compose/Gallery/baselines-ubuntu > regen.log 2>&1 \
+            || { tail -40 regen.log; exit 1; }
+          tail -3 regen.log
+      - name: 新基线自洽核查（同一批文件立即复跑）
+        run: |
+          set -o pipefail
+          bash tools/gallery-baseline.sh compose/Gallery/baselines-ubuntu > verify.log 2>&1 \
+            || { tail -40 verify.log | sed 's/^/::error::/'; exit 1; }
+          tail -2 verify.log
+      - name: 列出与仓库现有基线的差异
+        run: |
+          changed=0
+          for f in compose/Gallery/baselines-ubuntu/*.png; do
+            name="$(basename "$f")"
+            if ! cmp -s "$f" "compose/Gallery/baselines/$name"; then
+              echo "差异: $name"
+              changed=$((changed + 1))
+            fi
+          done
+          echo "与仓库现有基线不同的文件数: $changed"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: gallery-baselines-ubuntu
+          path: compose/Gallery/baselines-ubuntu/
+          if-no-files-found: error

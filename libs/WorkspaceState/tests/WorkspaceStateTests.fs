@@ -30,7 +30,9 @@ module WorkspaceStateTests =
         | ChatPhase.Messages _ -> Assert.True(false, "Should not project active messages when not authed")
         | _ -> ()
 
-        Assert.False vs.Header.Visible
+        Assert.True vs.Header.Visible
+        Assert.Equal(TitleMode.Viewing("新对话", false), vs.Header.Title)
+        Assert.False vs.Header.ShowMore
 
     [<Fact>]
     let ``Invariant 3: ConnectionDown zeroes pending commands and clears active conversation`` () =

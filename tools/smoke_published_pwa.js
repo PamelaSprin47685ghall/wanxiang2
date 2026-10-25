@@ -57,9 +57,8 @@ const OCR_UPSCALE_WIDTH = 1200;
 // psm 4 下能读出并给出坐标）。psm 3 自动版面分析同样能读出，但漏掉「中文」两字，
 // 会把「同一段文字在同一行」的判据打散。取实测两个平台、两类输入都命中的 4。
 const OCR_LAYOUT_PSM = '4';
-// 弹出层裁剪图的切分模式：psm 6（整块均匀文字列）。菜单是「标签 + 快捷键」的
-// 规则两列，psm 4 会把列拆散（实测「复制」读成「复骨」），psm 6 能连成整行。
-const POPUP_ITEM_PSM = '6';
+// 弹出层使用稀疏文本模式：菜单标签与快捷键分列，强行整行分词会破坏短中文标签。
+const POPUP_ITEM_PSM = '11';
 // 整张画布识别时的固定放大倍数（画布 1200 CSS 宽 → 2400 像素，与原口径一致）。
 const OCR_SCALE_BASE = 2;
 const runOcr = (path, pageSegmentation = OCR_LAYOUT_PSM) => {
@@ -260,24 +259,21 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             const e = document.querySelector('.avalonia-input-element');
             return !!e && document.activeElement === e && getComputedStyle(e).display !== 'none';
         })()`);
-        // 输入区在主内容区中下部（左侧栏右边、工具栏上面）。
-        // 记下真正聚焦的那个点：弹出层（输入框右键菜单）要右键到**同一个点**上。
-        // 空态输入区文字行位于 CSS y=372..388（中心 y=380），y=400 已落到底栏工具条，
-        // y>=420 则是下方的起手式芯片（点击会把芯片文案填入输入框，污染草稿）。
+        // 先用公开快捷键聚焦，再从原生输入桥读取光标位置；不探点起手式。
         let composerCoord = { x: 732, y: 380 };
         const focusComposer = async () => {
-            if (await bridgeFocused()) return true;
-            for (const y of [380, 375]) {
-                for (const x of [732, 600, 860, 450]) {
-                    await page.mouse.click(x, y);
-                    await sleep(100);
-                    if (await bridgeFocused()) {
-                        composerCoord = { x, y };
-                        return true;
-                    }
-                }
-            }
-            return await bridgeFocused();
+            await page.keyboard.down('Control');
+            await page.keyboard.press('l');
+            await page.keyboard.up('Control');
+            await sleep(150);
+            if (!await bridgeFocused()) return false;
+            const caret = await page.evaluate(() => {
+                const e = document.querySelector('.avalonia-input-element');
+                const r = e.getBoundingClientRect();
+                return { x: r.left + Math.max(1, r.width / 2), y: r.top + Math.max(1, r.height / 2) };
+            });
+            composerCoord = caret;
+            return true;
         };
 
         await focusComposer();
@@ -537,9 +533,16 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // 弹出层验收：两帧差异证明出现，截图识别证明指定中文确实可读。
             // 像素统计只作诊断，不以不同长度文字的笔画数比值判定缺字。
             let bodyRef = null; // 正文中文的笔画基准：{ meanRuns, distinctShapes }
+            let measuredBodyWord = null;
             const measureBodyChinese = async () => {
-                // 主内容区（已打开的对话正文）左半部分，避开侧栏。
-                const bb = { x: 60, y: 20, w: 90, h: 60 };
+                if (!measuredBodyWord) return null;
+                // 以已识别的正文为锚点，不假定消息在阅读列左半侧。
+                const bb = {
+                    x: Math.max(0, Math.floor(measuredBodyWord.left / 5) - 1),
+                    y: Math.max(0, Math.floor(measuredBodyWord.top / 5) - 1),
+                    w: Math.ceil(measuredBodyWord.width / 5) + 2,
+                    h: Math.ceil(measuredBodyWord.height / 5) + 2,
+                };
                 const s = await regionStats(0, bb);
                 if (!s || s.inkFrac <= 0.005) return null;
                 return { meanRuns: s.glyphMeanRuns, distinctShapes: s.distinctShapes, inkFrac: s.inkFrac };
@@ -566,10 +569,10 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             };
             // 把一个弹出层区域放大后识别成文字。扫描阶段用它分辨「点到的是哪个菜单」，
             // 验收阶段用它证明指定中文可读。
-            const popupText = async (name, region) => ocrText(await popupCrop(name, region));
+            const popupText = async (name, region) => ocrText(await popupCrop(name, region), POPUP_ITEM_PSM);
             // 同一张裁剪图上的词元换算成 CSS 坐标：每格 = 10 设备像素 = 5 CSS 像素，
             // 裁剪图相对设备像素放大 2 倍（相对 CSS 放大 4 倍），所以 OCR 像素 ÷ 4 = CSS 位移。
-            // 菜单是均匀两列（标签 + 快捷键），用 psm 6；整页界面用 psm 4 会拆列。
+            // 菜单标签与快捷键分列，按稀疏文本识别，避免强行整行分词破坏短中文标签。
             const popupWords = async (name, region) => {
                 const path = await popupCrop(name, region);
                 const { bb } = region;
@@ -623,6 +626,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             //    把「没点到」误报成「菜单没反应」。这里复用同一套区域识别：
             //    开/关两帧求差拿到菜单外接矩形，在矩形里读出「粘贴」的包围盒再点它。
             const pasteRegion = await popupRegion(menuBefore);
+            await assertPopup('flyout', pasteRegion, pasteRegion && pasteRegion.bb);
             let pastePoint = null;
             if (pasteRegion) {
                 const items = await popupWords('menu-items', pasteRegion);
@@ -642,6 +646,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             const pasteOk = await until(async () => (await readDraftRaw()).includes(CLIP_TOKEN), 8000, 300);
             check('菜单真实行为后果：右键菜单点击「粘贴」后剪贴板标记入库', Boolean(pasteOk),
                 pastePoint ? `点=(${pastePoint.x.toFixed(0)},${pastePoint.y.toFixed(0)})` : '未定位到「粘贴」');
+            const draftAfterPaste = await readDraftRaw();
             // 6. 再次右键呼出并按 Esc 关闭
             await page.mouse.click(composerCoord.x, composerCoord.y, { button: 'right' });
             await sleep(400);
@@ -691,14 +696,14 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // 固定 1200×800 视口：点击截图中外观选项的文字行，验收以持久化变更为准。
             let prefToggled = false, toggledKey = '';
             for (const y of [480, 540, 600, 660, 720]) {
-              await page.mouse.click(500, y);
+              await page.mouse.click(520, y);
               await sleep(300);
               const cur = await getStoredPrefs();
               for (const key of ['enterSends', 'autoCollapseReasoning', 'codeWrap', 'reduceMotion', 'showArchived']) {
                 if (cur[key] !== undefined && prefsBefore[key] !== undefined && cur[key] !== prefsBefore[key]) {
                   prefToggled = true;
                   toggledKey = `${key}: ${prefsBefore[key]} -> ${cur[key]}`;
-                  await page.mouse.click(500, y);
+                  await page.mouse.click(520, y);
                   await sleep(300);
                   break;
                 }
@@ -806,7 +811,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // 菜单粘贴已修改草稿；恢复必须保留重开前的完整文本，而非粘贴前的旧值。
             const draftBeforeReload = await readDraftRaw();
             check('面板与设置操作不改写草稿',
-                draftBeforeReload.includes(EXPECTED) && draftBeforeReload.includes(CLIP_TOKEN),
+                Boolean(pasteOk) && draftBeforeReload === draftAfterPaste,
                 `draft=${JSON.stringify(draftBeforeReload.slice(0, 160))}`);
             await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
             await canvasUp();
@@ -816,6 +821,11 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             });
 
             const focusBack = await until(() => focusComposer(), 20000, 300);
+            // 光标位置不能依赖「点空白处=落到文字末尾」：不同平台字体宽度不同，
+            // 点击点可能落在文字中间，后缀就会插进正文。聚焦后先按 End（无修饰键，
+            // 不与 Ctrl+End 的滚动快捷键冲突）把光标显式移到末尾，再做追加。
+            await page.keyboard.press('End');
+            await sleep(200);
             const SUFFIX = '｜恢复验证后缀';
             await cdp.send('Input.insertText', { text: SUFFIX });
             await sleep(1000);
@@ -913,6 +923,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
                     return findPhraseInMain(openedWords, '你好');
                 }, 15000, 500);
                 opened = Boolean(body);
+                measuredBodyWord = body || null;
                 check('侧栏点「中文冒烟」后主内容区出现该对话正文', opened,
                     `标题包围盒=${JSON.stringify(seedTitle)} 正文=${JSON.stringify(body ? body.text : '')}`);
             } else {
@@ -935,7 +946,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             await page.mouse.move(500, 200);
             await sleep(300);
             const tipAnchor = findPhrase(
-                await ocrShot('smoke-tooltip-anchor', POPUP_ITEM_PSM, { x: 320, y: 8, w: 100, h: 32 }),
+                await ocrShot('smoke-tooltip-anchor', '6', { x: 320, y: 8, w: 100, h: 32 }),
                 SEED_TITLE);
             if (tipAnchor) {
                 const pt = wordCenterCss(tipAnchor);
@@ -990,22 +1001,7 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             await assertPopup('contextmenu', menuRegion, menuRegion && menuRegion.bb, menuText);
             await closePopups();
 
-            // (3) 输入框右键菜单（MenuFlyoutPresenter）：先左键落焦稳定边框，再截基准帧并右键同一点。
-            await focusComposer();
-            let flyoutRegion = null;
-            for (const pt of [composerCoord, { x: 600, y: 380 }]) {
-                if (!pt) continue;
-                await page.mouse.click(pt.x, pt.y);
-                await sleep(250);
-                const before = await snapAll();
-                await page.mouse.click(pt.x, pt.y, { button: 'right' });
-                await sleep(700);
-                flyoutRegion = await popupRegion(before);
-                if (flyoutRegion && flyoutRegion.bb.h >= 5) break;
-                await closePopups();
-            }
-            await assertPopup('flyout', flyoutRegion, flyoutRegion && flyoutRegion.bb);
-            await closePopups();
+            // 文本浮层已在真实右键粘贴步骤中验收出现、中文与行为后果。
         }
         if (skipped > 0) console.log(`SKIP 小计 ${skipped} 条（环境限制，不计入失败）`);
         check('无未捕获页面异常', errors.length === 0, errors.slice(0, 3).join(' | '));

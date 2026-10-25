@@ -19,12 +19,17 @@ let ``空行也占一个命中区高`` () =
         Assert.Equal(30.0, s.Host.MinHeight))
 
 [<Fact>]
-let ``闲置档：隐去或淡显，显示时全不透明`` () =
+let ``闲置档：隐去档闲置为 0，恒显档全程可见`` () =
     Headless.run (fun () ->
         let hidden = ActionStrip(StripRest.Hidden)
         let subtle = ActionStrip(StripRest.Subtle)
         Assert.Equal(0.0, opacity hidden.Host)
-        Assert.Equal(0.55, opacity subtle.Host)
+        // react 的 msg-actions 恒显：Subtle 档闲置也是全不透明，不随悬停淡出。
+        Assert.Equal(1.0, opacity subtle.Host)
+        subtle.ApplyShown true
+        Assert.Equal(1.0, opacity subtle.Host)
+        subtle.ApplyShown false
+        Assert.Equal(1.0, opacity subtle.Host)
         hidden.ApplyShown true
         Assert.Equal(1.0, opacity hidden.Host)
         hidden.ApplyShown false

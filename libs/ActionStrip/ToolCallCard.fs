@@ -424,12 +424,9 @@ type ToolCallCard(data: ToolCardData, parts: ToolCardParts) =
         copyAll.Margin <- Thickness(0.0, 0.0, 4.0, 0.0)
         copyAll.VerticalAlignment <- VerticalAlignment.Center
         let actions = hstack 4.0 [ copyAll; chevronHost ]
+
         let left =
-            DockPanel(
-                LastChildFill = true,
-                MinWidth = 0.0,
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            )
+            DockPanel(LastChildFill = true, MinWidth = 0.0, HorizontalAlignment = HorizontalAlignment.Stretch)
 
         DockPanel.SetDock(icon, Dock.Left)
         DockPanel.SetDock(pill, Dock.Right)

@@ -25,7 +25,8 @@ let private convId = "11111111-1111-1111-1111-111111111111"
 
 let private shown (c: Control) =
     let rec up (v: Visual) =
-        if isNull v then true
+        if isNull v then
+            true
         else
             match v with
             | :? Control as ctrl when not ctrl.IsVisible -> false
@@ -48,11 +49,7 @@ let private solid (brush: IBrush) =
 let private hex (brush: IBrush) =
     match solid brush with
     | Some c -> sprintf "#%02X%02X%02X" c.R c.G c.B
-    | None ->
-        if isNull brush then
-            ""
-        else
-            brush.GetType().Name
+    | None -> if isNull brush then "" else brush.GetType().Name
 
 let private paint (c: Control) =
     match c with
@@ -78,7 +75,10 @@ let private absRect (c: Control) =
     Rect(Point(x, y), c.Bounds.Size)
 
 let private family (tb: TextBlock) =
-    if isNull tb.FontFamily then "" else tb.FontFamily.ToString()
+    if isNull tb.FontFamily then
+        ""
+    else
+        tb.FontFamily.ToString()
 
 let private catalogProviders =
     let provider = JsonObject()
@@ -241,14 +241,17 @@ let private shellOf (composer: Control) =
     composer.GetVisualDescendants()
     |> Seq.tryPick (fun v ->
         match v with
-        | :? Border as b when shown b && abs (b.CornerRadius.TopLeft - 16.0) < 0.1 && thick b.BorderThickness ->
-            Some b
+        | :? Border as b when shown b && abs (b.CornerRadius.TopLeft - 16.0) < 0.1 && thick b.BorderThickness -> Some b
         | _ -> None)
 
 let private inside (outer: Control) (inner: Control) =
     let o = absRect outer
     let i = absRect inner
-    i.X >= o.X - 1.0 && i.Right <= o.Right + 1.0 && i.Y >= o.Y - 1.0 && i.Bottom <= o.Bottom + 1.0
+
+    i.X >= o.X - 1.0
+    && i.Right <= o.Right + 1.0
+    && i.Y >= o.Y - 1.0
+    && i.Bottom <= o.Bottom + 1.0
 
 let private ready (rig: Rig) =
     connect rig
@@ -271,7 +274,12 @@ let private assertEmpty (rig: Rig) (canvas: string) =
         buttons bar
         |> Seq.filter (fun b ->
             let n = nameOf b
-            let content = match b.Content with | :? string as s -> s | _ -> ""
+
+            let content =
+                match b.Content with
+                | :? string as s -> s
+                | _ -> ""
+
             forbidden |> List.exists (fun word -> n = word || content = word))
         |> Seq.map nameOf
         |> Seq.toList
@@ -296,12 +304,7 @@ let private assertEmpty (rig: Rig) (canvas: string) =
 
     Assert.Equal(1, hints)
 
-    let starters =
-        [
-            "用三句话说明这台主机现在能做什么"
-            "指出一份 TOML 配置里的错误"
-            "把工具调用说成人话"
-        ]
+    let starters = [ "用三句话说明这台主机现在能做什么"; "指出一份 TOML 配置里的错误"; "把工具调用说成人话" ]
 
     let starterButtons =
         starters
@@ -413,6 +416,7 @@ let private assertNoStack (rig: Rig) =
 
     let describe (c: Control) =
         let kind = if c :? Button then "按钮" else "边框"
+
         let radius =
             match c with
             | :? Border as b -> b.CornerRadius.TopLeft
@@ -439,10 +443,19 @@ let private assertNoStack (rig: Rig) =
         || (nameOf c).Contains needle
 
     let search, rest =
-        fullBorders |> List.partition (fun c -> holds "搜索标题和正文" c && (match c with | :? Border as b -> abs (b.CornerRadius.TopLeft - 8.0) < 0.1 | _ -> false))
+        fullBorders
+        |> List.partition (fun c ->
+            holds "搜索标题和正文" c
+            && (match c with
+                | :? Border as b -> abs (b.CornerRadius.TopLeft - 8.0) < 0.1
+                | _ -> false))
 
     let composer, rest =
-        rest |> List.partition (fun c -> match c with | :? Border as b -> abs (b.CornerRadius.TopLeft - 16.0) < 0.1 | _ -> false)
+        rest
+        |> List.partition (fun c ->
+            match c with
+            | :? Border as b -> abs (b.CornerRadius.TopLeft - 16.0) < 0.1
+            | _ -> false)
 
     let tools, extra = rest |> List.partition (fun c -> (nameOf c).Contains "工具调用")
 
@@ -455,7 +468,10 @@ let private assertNoStack (rig: Rig) =
         buttons (rig.Views.Chat.Pane.Messages :> Control)
         |> Seq.filter (fun b -> (nameOf b).Contains label)
         |> Seq.iter (fun b ->
-            Assert.True(not (fullThickness b.BorderThickness) && b.BorderThickness = Thickness 0.0, sprintf "%s 还有边 %A" (nameOf b) b.BorderThickness))
+            Assert.True(
+                not (fullThickness b.BorderThickness) && b.BorderThickness = Thickness 0.0,
+                sprintf "%s 还有边 %A" (nameOf b) b.BorderThickness
+            ))
 
 let private assertTurn (rig: Rig) =
     let bar = rig.Views.Chat.Header.Host
@@ -467,7 +483,13 @@ let private assertTurn (rig: Rig) =
     let gap = kids.[1].Bounds.Y - (kids.[0].Bounds.Y + kids.[0].Bounds.Height)
     Assert.True(abs (gap - 24.0) <= 1.0, sprintf "消息间距 %0.1f" gap)
 
-    match rig.Root.GetVisualDescendants() |> Seq.tryPick (fun v -> match v with | :? Border as b when nameOf b = "用户消息" && shown b -> Some b | _ -> None) with
+    match
+        rig.Root.GetVisualDescendants()
+        |> Seq.tryPick (fun v ->
+            match v with
+            | :? Border as b when nameOf b = "用户消息" && shown b -> Some b
+            | _ -> None)
+    with
     | None -> Assert.Fail "没有用户气泡"
     | Some bubble ->
         Assert.Equal(Thickness 0.0, bubble.BorderThickness)
@@ -510,7 +532,7 @@ let private assertTurn (rig: Rig) =
 
     for label in [ "复制用户消息"; "复制助手消息"; "编辑并分叉"; "重新生成"; "删除这条消息" ] do
         match buttons column |> Seq.tryFind (fun b -> (nameOf b).StartsWith label) with
-        | None -> Assert.Fail ("没有 " + label)
+        | None -> Assert.Fail("没有 " + label)
         | Some b ->
             Assert.Equal(Thickness 0.0, b.BorderThickness)
 

@@ -258,7 +258,11 @@ let private widths (rig: Rig) =
 let private sameWidths (before: float * float * float) (after: float * float * float) (what: string) =
     let a, b, c = before
     let d, e, f = after
-    Assert.True(abs (a - d) < 1.0 && abs (b - e) < 1.0 && abs (c - f) < 1.0, sprintf "%s 撑宽了壳 %0.1f/%0.1f 栏 %0.1f/%0.1f 舞台 %0.1f/%0.1f" what a d b e c f)
+
+    Assert.True(
+        abs (a - d) < 1.0 && abs (b - e) < 1.0 && abs (c - f) < 1.0,
+        sprintf "%s 撑宽了壳 %0.1f/%0.1f 栏 %0.1f/%0.1f 舞台 %0.1f/%0.1f" what a d b e c f
+    )
 
 let private buttonOnMessage (root: Control) (name: string) (needle: string) (other: string) =
     let blob (c: Control) =
@@ -298,15 +302,11 @@ let ``流程按钮：输入区与未确认消息都从真实控件生效`` () =
         try
             connect rig
 
-            deliverList
-                rig
-                (JsonArray(summaryItem rootId "流程甲" "甲", summaryItem otherId "流程乙" "乙"))
+            deliverList rig (JsonArray(summaryItem rootId "流程甲" "甲", summaryItem otherId "流程乙" "乙"))
 
             openRow rig "流程甲"
 
-            rig.Fake.Deliver(
-                snapshotOf rootId "流程甲" (JsonArray(messageItem 1 "user" (textContents "流程甲的原消息")))
-            )
+            rig.Fake.Deliver(snapshotOf rootId "流程甲" (JsonArray(messageItem 1 "user" (textContents "流程甲的原消息"))))
 
             Pump.settle ()
             Assert.True(seen rig.Root "流程甲的原消息", "打开行后快照没有进消息区")
@@ -319,8 +319,7 @@ let ``流程按钮：输入区与未确认消息都从真实控件生效`` () =
 
             let bytes = [| 1uy; 2uy; 3uy |]
 
-            rig.Fake.OnPickAttachment <-
-                fun () -> rig.Shell.AttachFiles (rig.Shell.UploadOwner()) [ "pic.png", bytes ]
+            rig.Fake.OnPickAttachment <- fun () -> rig.Shell.AttachFiles (rig.Shell.UploadOwner()) [ "pic.png", bytes ]
 
             clickName rig.Root "添加附件"
             Assert.Equal(1, rig.Views.Composer.Tray.Count)
@@ -378,6 +377,7 @@ let ``流程按钮：输入区与未确认消息都从真实控件生效`` () =
                 sends rig
                 |> List.filter (fun d ->
                     d.messageJson["contents"].AsArray().[0].["text"].GetValue<string>() = "排队的第二条")
+
             Assert.Equal(1, queued.Length)
             Assert.NotEqual(invocation, queued.[0].invocationId)
 
@@ -424,9 +424,7 @@ let ``流程按钮：输入区与未确认消息都从真实控件生效`` () =
 
             openRow rig "流程乙"
 
-            rig.Fake.Deliver(
-                snapshotOf otherId "流程乙" (JsonArray(messageItem 1 "user" (textContents "流程乙的原消息")))
-            )
+            rig.Fake.Deliver(snapshotOf otherId "流程乙" (JsonArray(messageItem 1 "user" (textContents "流程乙的原消息"))))
 
             Pump.settle ()
             clickPrefix rig.Root "查看另一个对话的未确认消息" |> ignore
@@ -437,12 +435,13 @@ let ``流程按钮：输入区与未确认消息都从真实控件生效`` () =
             | WorkspacePhase.LoadingConversation id -> Assert.Equal(Guid.Parse rootId, id)
             | other -> failwith (sprintf "查看另一条没有进入该对话：%A" other)
 
-            rig.Fake.Deliver(
-                snapshotOf rootId "流程甲" (JsonArray(messageItem 1 "user" (textContents "流程甲的原消息")))
-            )
+            rig.Fake.Deliver(snapshotOf rootId "流程甲" (JsonArray(messageItem 1 "user" (textContents "流程甲的原消息"))))
 
             Pump.settle ()
-            let before = sends rig |> List.filter (fun d -> d.invocationId = invocation) |> List.length
+
+            let before =
+                sends rig |> List.filter (fun d -> d.invocationId = invocation) |> List.length
+
             clickName rig.Root "重试"
             let after = sends rig |> List.filter (fun d -> d.invocationId = invocation)
             Assert.True(after.Length = before + 1, sprintf "重试没有用原 invocation 再发，之前 %d 之后 %d" before after.Length)
@@ -467,10 +466,7 @@ let ``流程按钮：消息、工具、思考、错误卡与版本都从真实�
             openRow rig "版本根对话"
 
             let rich =
-                JsonArray(
-                    messageItem 1 "user" (textContents "用户原文甲"),
-                    messageItem 2 "assistant" assistantContents
-                )
+                JsonArray(messageItem 1 "user" (textContents "用户原文甲"), messageItem 2 "assistant" assistantContents)
 
             rig.Fake.Deliver(snapshotOf rootId "版本根对话" rich)
             Pump.settle ()
@@ -484,17 +480,13 @@ let ``流程按钮：消息、工具、思考、错误卡与版本都从真实�
             clickName rig.Root "下一个版本"
             Assert.Equal(Guid.Parse forkAId, observes rig |> List.last)
 
-            rig.Fake.Deliver(
-                snapshotOf forkAId "分叉甲" (JsonArray(messageItem 10 "user" (textContents "分叉甲的原文")))
-            )
+            rig.Fake.Deliver(snapshotOf forkAId "分叉甲" (JsonArray(messageItem 10 "user" (textContents "分叉甲的原文"))))
 
             Pump.settle ()
             clickName rig.Root "下一个版本"
             Assert.Equal(Guid.Parse forkBId, observes rig |> List.last)
 
-            rig.Fake.Deliver(
-                snapshotOf forkAId "分叉甲" (JsonArray(messageItem 10 "user" (textContents "分叉甲的原文")))
-            )
+            rig.Fake.Deliver(snapshotOf forkAId "分叉甲" (JsonArray(messageItem 10 "user" (textContents "分叉甲的原文"))))
 
             Pump.settle ()
             clickName rig.Root "上一个版本"
@@ -508,10 +500,7 @@ let ``流程按钮：消息、工具、思考、错误卡与版本都从真实�
             Assert.True(rig.Fake.Copied |> List.exists (fun t -> t.Contains "用户原文甲"), "复制用户消息没有进剪贴板")
             Assert.Equal("已复制", autoName (findName rig.Root "已复制" |> Option.get))
             clickName rig.Root "复制助手消息 2"
-            Assert.True(
-                rig.Fake.Copied |> List.exists (fun t -> t.Contains "助手正文乙"),
-                "复制助手消息没有进剪贴板"
-            )
+            Assert.True(rig.Fake.Copied |> List.exists (fun t -> t.Contains "助手正文乙"), "复制助手消息没有进剪贴板")
             Assert.True(rig.Fake.Copied.Length >= copiesBefore + 2)
 
             let beforeTool = widths rig
@@ -573,9 +562,7 @@ let ``流程按钮：消息、工具、思考、错误卡与版本都从真实�
 
             Assert.Equal<uint64 list>([ 2UL ], removed)
 
-            rig.Fake.Deliver(
-                snapshotOf rootId "版本根对话" (JsonArray(messageItem 1 "user" (textContents "用户原文甲")))
-            )
+            rig.Fake.Deliver(snapshotOf rootId "版本根对话" (JsonArray(messageItem 1 "user" (textContents "用户原文甲"))))
 
             Pump.settle ()
             Assert.False(seen rig.Root "助手正文乙", "确认删除后助手消息还在")
@@ -696,9 +683,7 @@ let ``流程按钮：壳层、确认框与抽屉遮罩都从真实控件生效``
             deliverList rig (JsonArray(summaryItem rootId "壳层对话" "壳"))
             openRow rig "壳层对话"
 
-            rig.Fake.Deliver(
-                snapshotOf rootId "壳层对话" (JsonArray(messageItem 1 "user" (textContents "确认框里的这句话")))
-            )
+            rig.Fake.Deliver(snapshotOf rootId "壳层对话" (JsonArray(messageItem 1 "user" (textContents "确认框里的这句话"))))
 
             Pump.settle ()
             clickName rig.Root "新对话"
@@ -735,9 +720,7 @@ let ``流程按钮：壳层、确认框与抽屉遮罩都从真实控件生效``
 
             openRow rig "壳层对话"
 
-            rig.Fake.Deliver(
-                snapshotOf rootId "壳层对话" (JsonArray(messageItem 7 "user" (textContents "确认框里的这句话")))
-            )
+            rig.Fake.Deliver(snapshotOf rootId "壳层对话" (JsonArray(messageItem 7 "user" (textContents "确认框里的这句话"))))
 
             Pump.settle ()
             clickName rig.Root "删除这条消息"

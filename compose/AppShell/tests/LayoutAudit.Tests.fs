@@ -763,7 +763,11 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
                 |> Seq.filter (fun b ->
                     let name = autoName b
                     let cap = texts b |> String.concat ""
-                    name.Contains "复制" || name.Contains "分叉" || cap.Contains "复制" || cap.Contains "分叉")
+
+                    name.Contains "复制"
+                    || name.Contains "分叉"
+                    || cap.Contains "复制"
+                    || cap.Contains "分叉")
                 |> Seq.toList
 
             let hitText =
@@ -946,7 +950,11 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
                 Assert.True(b.IsHitTestVisible, autoName b)
                 let r = absRect b
 
-                Assert.True(r.Width >= 12.0 && r.Height >= 12.0, sprintf "%s %0.0fx%0.0f" (autoName b) r.Width r.Height)
+                Assert.True(
+                    r.Width >= 12.0 && r.Height >= 12.0,
+                    sprintf "%s %0.0fx%0.0f" (autoName b) r.Width r.Height
+                )
+
                 Assert.False(overlaps r (absRect bubble), autoName b)
 
             Assert.False(overlaps (absRect copyBtn) (absRect forkBtn), "复制和分叉交叠")

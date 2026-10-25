@@ -258,8 +258,7 @@ type ShellComposer(ports: ShellPorts) =
 
             let pending =
                 outbox.ForInstance instanceId
-                |> List.filter (fun item ->
-                    PendingMessage.canRetry item || item.state = DeliveryState.QueuedMessage)
+                |> List.filter (fun item -> PendingMessage.canRetry item || item.state = DeliveryState.QueuedMessage)
 
             v.Composer.SlotPendingMessages(
                 pending,

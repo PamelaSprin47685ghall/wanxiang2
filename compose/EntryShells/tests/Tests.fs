@@ -93,11 +93,12 @@ module EmbeddedFontTests =
     [<Fact>]
     let ``内嵌正文字体族能解析出字形`` () =
         Headless.run (fun () ->
-            let family = FontFamily ThemeFonts.body
+            // 正文栈允许优先使用系统字体；内嵌资源须单独验证，不能靠系统字体通过。
+            let family = ThemeFonts.family "Sarasa Gothic SC"
             let mutable glyph = Unchecked.defaultof<GlyphTypeface>
             Assert.True(FontManager.Current.TryGetGlyphTypeface(Typeface(family), &glyph))
             Assert.Contains("Sarasa Gothic SC", ThemeFonts.body)
-            Assert.True(glyph.FamilyName.Contains("Noto") || glyph.FamilyName.Contains("Sarasa"), glyph.FamilyName))
+            Assert.Contains("Sarasa", glyph.FamilyName))
 
     [<Fact>]
     let ``内嵌正文字体覆盖常用汉字`` () =

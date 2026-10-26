@@ -48,6 +48,7 @@ module SingleInstance =
                 (try
                     File.Delete path
                  with _ ->
+                     // 清理上次遗留的陈旧套接字文件失败时继续尝试 Bind
                      ())
 
             let server =
@@ -58,6 +59,7 @@ module SingleInstance =
             try
                 File.SetUnixFileMode(path, UnixFileMode.UserRead ||| UnixFileMode.UserWrite)
             with _ ->
+                // 不支持 Unix 套接字文件权限收紧的平台忽略即可
                 ()
 
             server.Listen 4
@@ -84,6 +86,7 @@ module SingleInstance =
                                 | l when String.IsNullOrWhiteSpace l -> onActivate ()
                                 | l -> onLink (l.Trim())
                         with _ ->
+                            // 单次唤醒客户端断连或监听关闭时的取消异常不中断单实例监听循环
                             ()
                 }
 
@@ -96,11 +99,13 @@ module SingleInstance =
                     (try
                         server.Dispose()
                      with _ ->
+                         // 退出释放：监听套接字关闭异常忽略即可
                          ())
 
                     (try
                         File.Delete path
                      with _ ->
+                         // 退出清理：套接字文件若已被移除则忽略
                          ())
             }
         with _ ->

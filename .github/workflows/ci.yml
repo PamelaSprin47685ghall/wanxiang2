@@ -51,6 +51,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 确定检查基准
+        id: fmtbase
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          base=""
+          if [ -n "${PR_BASE_SHA:-}" ] && git cat-file -e "${PR_BASE_SHA}^{commit}" 2>/dev/null; then
+            base="$(git merge-base "${PR_BASE_SHA}" HEAD)"
+          elif [ -n "${BEFORE_SHA:-}" ] && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            base="$BEFORE_SHA"
+          elif git rev-parse --verify --quiet HEAD~1 >/dev/null 2>&1; then
+            base="$(git rev-parse HEAD~1)"
+          fi
+          echo "base=${base}" >> "$GITHUB_OUTPUT"
       - name: 测试失败诊断回归
         run: python3 tools/test_ci_diagnostics.py
       - name: 超时工具进程组回归
@@ -73,10 +91,12 @@ jobs:
           fi
           tail -1 lint.log
       # 空白格式：约束客观的源码文本空白不变量（CRLF/Tab/BOM/代码行尾空白/EOF换行），
-      # 避免引入未评审的格式重排与离线边界未定义的外部工具。
+      # 找不到基准提交或任一空白不变量违规即红灯（ISSUE-0010）。
       - name: 空白格式
+        env:
+          WX_FORMAT_BASE: ${{ steps.fmtbase.outputs.base }}
         run: |
-          if ! ./x format > format.log 2>&1; then
+          if ! ./x whitespace-check > format.log 2>&1; then
             tail -40 format.log | sed 's/^/::error::/'
             exit 1
           fi

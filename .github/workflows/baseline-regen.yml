@@ -13,9 +13,6 @@
 name: baseline-regen
 on:
   workflow_dispatch:
-  push:
-    branches: [delivery/ci-failure-evidence-upstream]
-    paths: [.github/workflows/baseline-regen.yml]
 jobs:
   regen:
     runs-on: ubuntu-latest

@@ -76,6 +76,7 @@ type ToolApprovalBroker(getConfig: unit -> AppConfig, broadcast: Guid -> WireEve
                 try
                     do! Task.Delay(100, ct)
                 with _ ->
+                    // 取消令牌触发 TaskCanceledException 时直接跳出等待循环，由外层 while 条件收尾
                     ()
 
                 ok <- this.CapabilityProbe conversationId

@@ -148,6 +148,7 @@ type WsConnection
                 // 与 CloseWith 一致：Abort 解除 recvTask 阻塞，断线清理及时执行（吊销路径）
                 ws.Abort()
         with _ ->
+            // 连接可能已由对端先行关闭或释放，忽略即可
             ()
 
     /// 是否应接收某对话的权威增量（快照模式下跳过）。
@@ -450,6 +451,7 @@ type WsConnection
                     // 使 Task.WhenAll 返回、AbortByConnection 附件清理及时执行（认证超时/协议违规路径）
                     ws.Abort()
             with _ ->
+                // 主动关闭握手期间对端若已断开，忽略底层套接字异常
                 ()
         }
 
@@ -1379,6 +1381,7 @@ type WsConnection
                 if ws.State = WebSocketState.Open then
                     do! ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None)
             with _ ->
+                // 会话循环退出收尾：对端已断开时忽略关闭握手异常
                 ()
         }
 

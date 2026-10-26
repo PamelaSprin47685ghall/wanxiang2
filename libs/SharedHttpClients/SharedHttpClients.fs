@@ -36,6 +36,7 @@ type SharedHttpClients() =
                     try
                         client.DefaultRequestHeaders.TryAddWithoutValidation(name, value) |> ignore
                     with _ ->
+                        // 用户配置中非法的自定义 Header 键名跳过，不阻断 HttpClient 构造
                         ()
 
                 clients[fp] <- client

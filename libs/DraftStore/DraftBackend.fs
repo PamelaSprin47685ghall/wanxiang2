@@ -36,13 +36,15 @@ type FileDraftBackend(path: string) =
                 File.WriteAllText(tmp, text, UTF8Encoding false)
 
                 try
+                    // Windows 或不支持 POSIX 权限的文件系统会抛 PlatformNotSupportedException，忽略即可
                     File.SetUnixFileMode(tmp, UnixFileMode.UserRead ||| UnixFileMode.UserWrite)
                 with _ ->
                     ()
 
                 File.Move(tmp, path, true)
-            with _ ->
-                ()
+            with ex ->
+                // 草稿高频自动保存：落盘失败只记后台诊断，不向 UI 抛异常打断输入
+                eprintfn "[wanxiang] 保存草稿文件失败（%s）：%s" path ex.Message
 
             Task.CompletedTask
 
@@ -50,8 +52,9 @@ type FileDraftBackend(path: string) =
             try
                 if File.Exists path then
                     File.Delete path
-            with _ ->
-                ()
+            with ex ->
+                // 清理草稿文件失败只记后台诊断，不阻断发送或清空流程
+                eprintfn "[wanxiang] 清理草稿文件失败（%s）：%s" path ex.Message
 
             Task.CompletedTask
 

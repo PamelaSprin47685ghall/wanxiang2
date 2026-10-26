@@ -1,5 +1,30 @@
 # 控件库显式清单与画廊覆盖规则 (Widget Library Coverage)
 
+> **历史快照 + 现状对照。** 本文件写于 2026-10-23，原 §2/§4 记载 15 个控件库 / 26 条画廊条目，但早先的 `ccefc35` 已新增覆盖条目，不能将这些旧数字认定为该日准确快照。下方旧表仅供追溯，不作现行清单或历史数量证明。2026-10-26 按当前树实测：**17 个控件库**、**41 条画廊条目**、**71 个组合者**。
+>
+> 权威源与再生成方法：
+>
+> | 事实 | 权威源 | 取法 |
+> | --- | --- | --- |
+> | 什么算控件库、当前有几个 | 根 `AGENTS.md`《控件库交付约定（沿用）》＋`tools/avalonia-controls.txt` | 逐库 `grep` 生产源码（下表给出一行命令）；CI 上 `./x check` 同样输出 `17 control librar(y|ies)` |
+> | 画廊条目清单 | `compose/Gallery/Gallery.fs` 的 `entries` | `bash tools/gallery.sh --list`（一条一行：条目名 / 控件库 / 说明）。**不要用 `Widget` 去重**：那是条目所归属的控件类，多条条目可共用同一个 `Widget`（如 `composerEntry` 生成的条目全挂在 `ComposerBox` 下），去重后只有 22 个，不是条目数。无 `dotnet` 时退用基线文件名：`ls compose/Gallery/baselines/*.png \| sed -E 's#.*/([^/]+)\.(dark\|light)\.png#\1#' \| sort -u \| wc -l`（当前 41） |
+> | 像素基线 | `compose/Gallery/baselines/` | `ls compose/Gallery/baselines/*.png \| sed -E 's#.*/([^/]+)\.(dark\|light)\.png#\1#' \| sort -u \| wc -l` |
+>
+> 控件库逐库重算（不依赖一次把全部路径交给 `find`）：
+>
+> ```bash
+> pattern=$({ grep -v '^#' tools/avalonia-controls.txt; } | grep -v '^[[:space:]]*$' | paste -sd'|' -)
+> for d in libs/*/; do
+>   name=$(basename "$d"); hit=""
+>   while IFS= read -r f; do
+>     grep -qE "(^|[^.[:alnum:]_])($pattern)\(" "$f" 2>/dev/null && { hit=1; break; }
+>   done < <(find "$d" \( -name '*.fs' -o -name '*.cs' \) -not -path '*/tests/*' -not -path '*/obj/*' -not -path '*/bin/*')
+>   [ -n "$hit" ] && echo "$name"
+> done
+> ```
+>
+> 本规范的**规则部分**（§1 判据、§5 覆盖契约）仍然有效；**清单部分**（§2、§4）是快照，与上面的权威源冲突时以权威源为准。
+
 > 审计与生效日期：2026-10-23。承接《展望.md》§3 G3/G5 自动化与画廊覆盖要求。
 > 本规范明确全仓「哪些库算控件库」、显式清单、状态覆盖规则、无障碍（G5）与像素基线（G3）门禁契约。
 
@@ -7,24 +32,23 @@
 
 ## 1. 控件库资格认定规则
 
-不是所有引用 Avalonia 的库都是控件库。为防止形式主义的模糊强制，依据《Kolmogorov 之书》与《根 AGENTS.md》划定以下硬边界：
+依据根 `AGENTS.md`《控件库交付约定》及决策提交 `ccefc35`：引用 Avalonia 本身不足以认定控件库；生产源码构造 Avalonia 控件才触发覆盖要求。画廊提供真实呈现与交互的检查入口，不能用库名或“附加行为”标签豁免实际构造控件的代码。
 
-### 1.1 控件库认定条件（同时满足）
-1. 位于 `libs/<Name>/` 目录下，作为独立职责交付；
-2. 直接声明并向组合者导出具体的 Avalonia `Control` 实体交互/呈现类（如按钮、面板、输入区、浮层片、列表行、骨架屏、状态卡）；
-3. 负责向用户直观呈现 UI 界面或采集交互意图。
+### 1.1 控件库认定条件
 
-### 1.2 非控件库认定（免除画廊条目强制）
-以下类型**不得**被强加画廊条目要求，其行为分别由数据单测、线格式对比或调色板机械回归覆盖：
-1. **纯主题数据/资源库**：`ThemePalette`（调色板键与颜色值）、`ThemeFonts`（嵌入字体 TTF 与字形度量）、`IconSet`（矢量图标几何 Path 字典）。
-2. **纯附加行为/传感器库**：`FocusOrigin`（焦点来源附加属性）、`ImeShield`（输入法防护）、`InputSense`（指针敏感度）、`FieldCheck`（输入校验逻辑）、`KeyChord`（按键解析）。
-3. **纯数据模型/协议/账本/算式库**：`WorkspaceState`、`ChatDomain`、`Wire`、`JsonSeq`、`Canonical`、`PlainText` 等非 UI 库。
+位于 `libs/<Name>/`，且生产源码（不含 `tests/`、`obj/`、`bin/`）构造了至少一个 Avalonia 控件类型，即须有画廊条目。类型清单见 `tools/avalonia-controls.txt`；`./x check` 执行覆盖核对，不另设人工豁免名单。
+
+### 1.2 不构造控件的库
+
+只做数据、资源或行为附加且不构造控件的库，不触发本覆盖要求，例如 `CopyButton`、`ImeShield`、`InputSense`。其自身契约仍需相应测试。
+
+`FieldCheck`、`FocusOrigin`、`IconSet` 构造控件，不能按职责标签豁免，分别由 `FieldCheck.invalid`、`FocusOrigin.programmatic`、`IconSet.glyphs` 提供画廊入口。有条目只证明存在检查入口，不证明全部状态、无障碍行为或像素已验证。
 
 ---
 
-## 2. 全仓 15 个控件库显式清单
+## 2. 全仓控件库显式清单
 
-依据上述判据，全仓 `libs/` 下共有且仅有 **15 个** 实体控件库：
+**采集时点（2026-10-23）：全仓 `libs/` 下共有且仅有 15 个实体控件库。当前（2026-10-26）按同一机械判据重算为 17 个，但名单不只是「下表 15 个 + 2」：下表里的 `CopyButton` 现在只附加行为、不构造 Avalonia 控件，按根 `AGENTS.md`《控件库交付约定》的机械判据已不算控件库；新增的 `FieldCheck`、`FocusOrigin`、`IconSet` 三个都构造了控件。以文首的逐库重算命令为准（当前实际为 `ActionStrip`、`ApprovalPanel`、`AttachmentTray`、`BatchBar`、`BrandMark`、`ChatEmpty`、`ChatHeader`、`ConfirmPane`、`DevicesPane`、`ExportSheet`、`FieldCheck`、`FocusOrigin`、`IconSet`、`ModelSwitchPanel`、`PalettePanel`、`PopupMenu`、`ToastStrip`）。下表保留 2026-10-23 的时段记录。**
 
 | 序号 | 控件库名称 | 导出的核心控件/视图类型 | 职责范围说明 |
 |:---:|:---|:---|:---|
@@ -46,9 +70,9 @@
 
 ---
 
-## 3. 全仓 14 个 UI 组合者 (UI Desks)
+## 3. 全仓 UI 组合者 (UI Desks)
 
-`compose/` 目录下装配上述控件库的大型交互界面：
+**采集时点快照（14 个）。** 当前 `compose/` 共 71 个目录，其中 67 个有测试工程；下面是当时挑出的 14 个万亿级装配面，不代表 `compose/` 的全量。全量以 `ls -d compose/*/` 为准。
 
 1. `ComposerDesk`（输入区工作台）
 2. `SidebarDesk`（侧栏工作台）
@@ -69,7 +93,9 @@
 
 ## 4. 画廊状态矩阵覆盖映射表
 
-组件画廊（`compose/Gallery`，26 个独立条目）对上述 15 个控件库和 14 个组合者建立了完整的显式映射：
+**采集时点快照。** 组件画廊（`compose/Gallery`）当时是 26 个独立条目，对应上述 15 个控件库与 14 个组合者。当前（2026-10-26）是 **41 条条目**（`compose/Gallery/baselines/` 去重后与 `Gallery.fs` 的 `entries` 同为 41）。
+
+下表 26 行里，25 行仍存在，`ApprovalDesk.request` 已被 `ApprovalPanel.approval` 取代。表中未列出的 16 条为后补：`ActionStrip.actions`、`ApprovalPanel.approval`、`AttachmentTray.items`、`BatchBar.selection`、`BrandMark.tile`、`ChatHeader.header`、`ConfirmPane.confirm`、`DevicesPane.devices`、`ExportSheet.export`、`FieldCheck.invalid`、`FocusOrigin.programmatic`、`IconSet.glyphs`、`ModelSwitchPanel.models`、`PalettePanel.palette`、`PopupMenu.menu`、`ToastStrip.toast`。**条目清单以 `compose/Gallery/Gallery.fs` 为准**（取法见文首表），下表保留为历史映射说明。
 
 | 画廊条目名称 | 所属控件库/组合者 | 驱动场景与状态特征 | 覆盖的底层控件库 |
 |:---|:---|:---|:---|
@@ -115,4 +141,4 @@
    - 严禁仅靠只读 `AutomationProperties.GetName` 绕过 peer；
    - 包含明确的无名负例测试集，确保无名控件能敏锐引发红灯。
 4. **覆盖核对命令**：
-   - `bash tools/gallery-coverage.sh` 自动化检查清单与目录完整性。
+   - `./x check` 的 `gallery_coverage` 自动化检查控件库与画廊条目的一致性（缺条目即 `FAIL <库名>: control library has no gallery entry`）；`bash tools/gallery.sh --list` 列出全部条目。仓库里没有独立的 `tools/gallery-coverage.sh`，历史文档提到过它，但它从未存在。

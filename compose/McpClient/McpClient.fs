@@ -277,6 +277,7 @@ type McpClient(config: McpServerConfig, onLog: string -> unit) =
                         (try
                             semaphore.Release() |> ignore
                          with _ ->
+                             // 退出期间信号量若已先行 Dispose，忽略 Release 的 ObjectDisposedException
                              ())
 
                     Interlocked.Decrement(&activeCount) |> ignore
@@ -344,4 +345,5 @@ type McpClient(config: McpServerConfig, onLog: string -> unit) =
         try
             semaphore.Dispose()
         with _ ->
+            // 退出清理：信号量可能已被并发路径释放，忽略即可
             ()

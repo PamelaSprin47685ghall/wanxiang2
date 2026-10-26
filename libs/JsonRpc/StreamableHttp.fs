@@ -92,4 +92,5 @@ type StreamableHttpSession(endpoint: string, extraHeaders: Map<string, string>, 
             try
                 http.Dispose()
             with _ ->
+                // HttpClient 重复释放或清理期异常忽略即可
                 ()

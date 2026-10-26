@@ -118,8 +118,9 @@ module MessageSerde =
 
                         if not (isNull content) then
                             msg.Contents.Add content
-                    with _ ->
-                        ()
+                    with ex ->
+                        // 未知或损坏的 $type 内容块跳过，保留同条消息里的其余有效内容块
+                        eprintfn "[wanxiang] 跳过无法反序列化的消息内容块：%s" ex.Message
                 elif isAttachmentItem o then
                     () // 由 AttachmentResolver 转成 DataContent / TextContent
                 else

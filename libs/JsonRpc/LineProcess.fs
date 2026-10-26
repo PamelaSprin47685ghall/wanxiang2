@@ -99,12 +99,14 @@ type LineProcess
                 (if not (isNull child) && not child.HasExited then
                      child.Kill(entireProcessTree = true))
             with _ ->
+                // 子进程在检查与 Kill 之间刚好自行退出或无权限时忽略
                 ()
 
             try
                 (if not (isNull child) then
                      child.Dispose())
             with _ ->
+                // Process 句柄释放异常忽略即可
                 ()
 
             child <- null

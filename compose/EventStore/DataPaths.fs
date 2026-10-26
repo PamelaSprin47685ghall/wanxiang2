@@ -30,4 +30,5 @@ module DataPaths =
             try
                 File.SetUnixFileMode(dir, UnixFileMode.UserRead ||| UnixFileMode.UserWrite ||| UnixFileMode.UserExecute)
             with _ ->
+                // Windows 或不支持 POSIX 权限的文件系统会抛异常，忽略即可
                 ()

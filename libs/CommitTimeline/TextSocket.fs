@@ -33,6 +33,7 @@ type TextSocket() =
             try
                 previousCts.Cancel()
             with _ ->
+                // 旧代 CancellationTokenSource 若已释放则忽略
                 ()
 
             previousCts.Dispose()
@@ -41,6 +42,7 @@ type TextSocket() =
             try
                 previousSocket.Dispose()
             with _ ->
+                // 旧代套接字释放异常不阻断新连接代切换
                 ()
 
         g

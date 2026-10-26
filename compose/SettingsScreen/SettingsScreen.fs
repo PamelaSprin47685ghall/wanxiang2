@@ -3,6 +3,7 @@ namespace Wanxiang2.SettingsScreen
 open System
 open Avalonia
 open Avalonia.Controls
+open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
@@ -160,6 +161,11 @@ type SettingsScreen
         scrim.PointerPressed.Add(fun e ->
             e.Handled <- true
             closeRequested.Trigger())
+
+        // 模态设置页：Tab / Shift+Tab 仅在设置页 surface 内循环，不穿透到底层工作区
+        layer.KeyDown.Add(fun e ->
+            if e.Key = Key.Tab then
+                overlay.TrapTab(surface :> Control, e))
 
         frame.SelectRequested.Add(fun k -> SettingsPart.ofKey k |> Option.iter select)
         frame.CloseClicked.Add(fun () -> closeRequested.Trigger())

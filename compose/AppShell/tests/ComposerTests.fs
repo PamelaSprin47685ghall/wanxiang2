@@ -58,6 +58,49 @@ let ``打开设置后设置页进入可视树并显示外观开关`` () =
             window.Close())
 
 [<Fact>]
+let ``设置页打开期间禁用底层工作区并将 Tab 焦点圈定在设置页内，关闭后恢复底层工作区可用`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        let window = Window(Content = rig.Root, Width = 1100.0, Height = 800.0)
+        window.Show()
+
+        try
+            Assert.True(rig.Views.Workspace.Host.IsEnabled)
+            rig.Shell.Dispatch(User(Settings(SettingsUserMsg.OpenSection(Some "about"))))
+            Pump.settle ()
+            Assert.True(rig.Views.Settings.View.IsEffectivelyVisible)
+            Assert.False(rig.Views.Workspace.Host.IsEnabled)
+
+            // 连续按 20 次 Tab，焦点始终留在设置页内，绝不穿入底层工作区的「新对话」或「搜索标题和正文」
+            let top = TopLevel.GetTopLevel rig.Root
+
+            for _ in 1..20 do
+                let cur = top.FocusManager.GetFocusedElement() :?> Control
+
+                cur.RaiseEvent(
+                    KeyEventArgs(
+                        RoutedEvent = InputElement.KeyDownEvent,
+                        Key = Key.Tab,
+                        KeyModifiers = KeyModifiers.None,
+                        Source = cur
+                    )
+                )
+
+                Dispatcher.UIThread.RunJobs()
+                let next = top.FocusManager.GetFocusedElement() :?> Control
+                Assert.NotNull next
+                Assert.NotEqual<string>("新对话", AutomationProperties.GetName next)
+                Assert.NotEqual<string>("搜索标题和正文", AutomationProperties.GetName next)
+
+            rig.Shell.Dispatch(User(Settings(SettingsUserMsg.Close)))
+            Pump.settle ()
+            Assert.False(rig.Views.Settings.View.IsEffectivelyVisible)
+            Assert.True(rig.Views.Workspace.Host.IsEnabled)
+        finally
+            window.Close())
+
+
+[<Fact>]
 let ``外观原生开关修改模型并保存偏好`` () =
     Headless.run (fun () ->
         let rig = Rig.create ()

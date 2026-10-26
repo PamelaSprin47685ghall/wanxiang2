@@ -370,6 +370,7 @@ type ShellComposer(ports: ShellPorts) =
             | Some settingsVS ->
                 v.SettingsHostVisible true
                 v.WorkspaceHostVisible true
+                v.Workspace.Host.IsEnabled <- false
                 v.Settings.Render settingsVS
                 // 导航键必须先进入可视树，焦点请求才有效。打开消息里的提前投递会发生在挂载前。
                 match msg with
@@ -378,6 +379,7 @@ type ShellComposer(ports: ShellPorts) =
             | None ->
                 v.SettingsHostVisible false
                 v.WorkspaceHostVisible true
+                v.Workspace.Host.IsEnabled <- true
 
             // 6. Approval
             v.Approval.Render(vs.Approval, activeConvId)

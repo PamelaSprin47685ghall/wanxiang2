@@ -891,7 +891,7 @@ let ``预设插槽接上后，模型重投影不夺走可见性`` () =
         r.desk.SlotPresets([ "writer", "写作助手", (fun () -> ()) ], fun _ _ -> ())
         pump ()
         Assert.True r.desk.Brand.PresetButton.IsVisible
-        // 模型投影里没有预设（空目录），但宿主接了下拉插槽：按钮仍该在
+        //模型投影里没有预设（空目录），但宿主接了下拉插槽：按钮仍该在
         r.desk.Render
             { emptySidebarVS () with
                 Brand =
@@ -902,3 +902,26 @@ let ``预设插槽接上后，模型重投影不夺走可见性`` () =
 
         pump ()
         Assert.True r.desk.Brand.PresetButton.IsVisible)
+
+[<Fact>]
+let ``侧栏视觉树顺序满足从上到下自然 Tab 顺序：搜索框在对话列表之前，对话列表在底栏按钮之前`` () =
+    Headless.run (fun () ->
+        let r = setup ()
+        let a = conv "第一条对话"
+        load r [ a ]
+        let controls = all r.desk.View
+
+        let idx name =
+            controls |> List.findIndex (fun c -> AutomationProperties.GetName c = name)
+
+        let iNew = idx "新对话"
+        let iSearch = idx "搜索标题和正文"
+        let iList = idx "对话列表"
+        let iReconnect = idx "重新连接主机"
+        let iPalette = idx "命令面板"
+        let iSettings = idx "设置（Ctrl / ⌘ + ,）"
+        Assert.True(iNew < iSearch, sprintf "新对话(%d) 应在 搜索标题和正文(%d) 之前" iNew iSearch)
+        Assert.True(iSearch < iList, sprintf "搜索标题和正文(%d) 应在 对话列表(%d) 之前" iSearch iList)
+        Assert.True(iList < iReconnect, sprintf "对话列表(%d) 应在 重新连接主机(%d) 之前" iList iReconnect)
+        Assert.True(iList < iPalette, sprintf "对话列表(%d) 应在 命令面板(%d) 之前" iList iPalette)
+        Assert.True(iList < iSettings, sprintf "对话列表(%d) 应在 设置(%d) 之前" iList iSettings))

@@ -498,20 +498,23 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         body.Children.Add rows.View
         body.Children.Add empty.View
         body.Children.Add search.EmptyHint
-        let layout = DockPanel()
 
-        for c, d in
-            [
-                brand.View, Dock.Top
-                search.View, Dock.Top
-                batch.Header, Dock.Top
-                batch.ActionBar, Dock.Bottom
-                hostBar.View, Dock.Bottom
-            ] do
-            DockPanel.SetDock(c, d)
-            layout.Children.Add c
+        let topStack = StackPanel(Orientation = Orientation.Vertical)
+        topStack.Children.Add brand.View
+        topStack.Children.Add search.View
+        topStack.Children.Add batch.Header
 
+        let bottomStack = StackPanel(Orientation = Orientation.Vertical)
+        bottomStack.Children.Add hostBar.View
+        bottomStack.Children.Add batch.ActionBar
+
+        let layout = Grid(RowDefinitions = RowDefinitions "Auto,*,Auto")
+        Grid.SetRow(topStack, 0)
+        Grid.SetRow(body, 1)
+        Grid.SetRow(bottomStack, 2)
+        layout.Children.Add topStack
         layout.Children.Add body
+        layout.Children.Add bottomStack
         root.Child <- layout
         root
 

@@ -1,6 +1,6 @@
 # 前端开发流程与交付清单
 
-> **快照声明（2026-10-26 补记）**：本文件是 2026-10-21 的盘点快照，正文中的「未建 / 没有」断言均以当日为准。此后 G3（画廊像素基线门禁，41/41 条目 × 深浅双主题共 82 张 PNG，`tools/gallery-baseline.sh`）与浏览器侧真实交互 e2e 冒烟（`tools/smoke_published.sh`，28/28 项断言）均已建成并接入门禁面，现行口径以根 `AGENTS.md` SPEC 7 与 `compose/Gallery/AGENTS.md` 为准。
+> **快照声明**：本文件是 2026-10-21 的盘点快照，正文中的「未建 / 没有」断言均以当日为准。此后 G3（画廊像素基线门禁，41/41 条目 × 深浅双主题共 82 张 PNG，`tools/gallery-baseline.sh`）与浏览器侧真实交互 e2e 冒烟（`tools/smoke_published.sh`，28/28 项断言）均已建成并接入门禁面，现行口径以根 `AGENTS.md` SPEC 7 与 `compose/Gallery/AGENTS.md` 为准。
 >
 > 审计日期：2026-10-21。审计范围：仓库 `/home/kunweiz/Desktop/vibe/wanxiang2` 的界面验证手段（测试、冒烟、性能、a11y、CI、工具链）。
 > 本文件只做盘点与提案，不改任何源码。读者：提出「目前没有遵循前端项目的标准开发流程，导致界面缺陷」的人，以及要动手补流程的人。

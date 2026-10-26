@@ -64,7 +64,7 @@
 2. [LEMMA: 3] 视图事件在 `Build()` 内接线，入口壳构造 Desk 时只调用动作记录工厂（`SidebarActions` / `CardActions` / `ChatActions` / `ComposerActions` / `SettingsHooks` / `OnboardingHooks` / `WorkspaceHooks`）。
 3. [LEMMA: 4] `ShellSurface` 里不再有空操作：`OverlayEscape` / `IsDialogOpen` / `IsPopupOpen` / `IsSettingsOpen` / `IsDrawerOpen` / `CloseDrawer` / `FocusSearch` / `OpenModelPicker` / `JumpExchange` / `ScrollToBeginning` / `ScrollToEnd` / `CopyLastReply` / `RegenerateLast` / `TryUndo` / `FocusToast` / `ShowShortcuts` / `ApplyPreset` / `SavePreset` / `Fork` / `CloseWindow` / `SaveTheme` 全部接真实实现。
 4. [LEMMA: 1] 文案不改：附件、保存、剪贴板、模型选择器、导入导出、重连与配对的用户可见字符串与旧实现逐字相同（来源：`Wanxiang2.ConfigFeedback`、`Wanxiang2.MediaTypes`、`Wanxiang2.ConnectIssueText`、`Wanxiang2.PairingHint`、`compose/TransferDesk`）。
-5. [LEMMA: 1] headless 测试覆盖宿主桥与装配规则：`compose/AppShell/tests/ComposerTests.fs` 用假端口（`tests/Rig.fs`）钉住——未连接时的导入导出提示、`RequireFeature` 拦截与旧主机放行、附件归属过期与上传事件序列（含缩略图端口）、空文件与超大文件校验、`SavePrefs` 扇出、系统深色只在跟随系统时重应用、侧栏搜索与消息链接分派、命令回执的提交与未发出两态、设置焦点归还、配置回执提示、侧栏折叠落盘、断开连接的清理与重连调度；`Tests.fs` 钉住 `KeyShortcut` 换算分派与 `UnansweredReply` 失败卡形状。
+5. [LEMMA: 1] headless 测试覆盖宿主桥与装配规则：`compose/AppShell/tests/ComposerTests.fs` 用假端口（`tests/Rig.fs`）钉住——未连接时的导入导出提示、`RequireFeature` 拦截与旧主机放行、附件归属过期与上传事件序列（含缩略图端口）、空文件与超大文件校验、`SavePrefs` 扇出、系统深色只在跟随系统时重应用、侧栏搜索与消息链接分派、命令回执的提交与未发出两态、设置焦点归还、设置页打开期间禁用底层工作区并圈定 Tab 焦点、配置回执提示、侧栏折叠落盘、断开连接的清理与重连调度；`Tests.fs` 钉住 `KeyShortcut` 换算分派与 `UnansweredReply` 失败卡形状。
 
 # 迁入或覆盖的旧测试
 - 旧 `AppShellTests` 的 `HandleEvent` / `HandleShortcut` 用例已按名迁入 `compose/ProtocolDispatch/tests` 与 `compose/ShellCommands/tests`（见各自 AGENTS.md）。

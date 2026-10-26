@@ -78,7 +78,7 @@
 
 # 证据
 - 构建：`dotnet build compose/AppShell/AppShell.fsproj -c Release -p:RestorePackagesPath="$PWD/artifacts/packages"`（需 `artifacts/feed` 已有依赖包）。
-- 测试：`dotnet test compose/AppShell/tests/AppShell.Tests.fsproj -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages"`；`./x compose` 会跑全部有测试的组合者。`Headless.fs` 声明 `CollectionBehavior(DisableTestParallelization = true)`，防止多测试模块并发调用 `HeadlessUnitTestSession.EnsureIsolatedApplication` 抢占 Avalonia UI 线程。
+- 测试：`dotnet test compose/AppShell/tests/AppShell.Tests.fsproj -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages"`；`./x compose` 会跑全部有测试的组合者。`Headless.fs` 声明 `CollectionBehavior(DisableTestParallelization = true)`，防止多测试模块并发调用 `HeadlessUnitTestSession.EnsureIsolatedApplication` 抢占 Avalonia UI 线程。隔离级别取 `PerAssembly`：`PerTest` 会在每个用例前重建 `Application` 与 `Dispatcher`，Avalonia 12.1.2 的底座重建路径偶发把新 `DefaultRenderLoop.Add` 调度到旧 Dispatcher 线程上，抛「The calling thread cannot access this object because a different thread owns it」（本机 12 次单跑复现 1 次，CI 首轮也撞上）；`PerAssembly` 只建一次 Application，与生产「一次启动」同形，本机连跑 10 次无失败。
 - 交付独立：`./x pack` 产出 `artifacts/feed/Wanxiang2.AppShell.0.0.0-local.nupkg`；`./x compose` 在干净包缓存里消费它。
 - 入口消费：`grep -n Wanxiang2.AppShell app/Desktop/Wanxiang.App.fsproj app/Pwa/Wanxiang.Pwa.fsproj`。
 - 端到端：`tools/smoke_desktop.sh`（构建桌面入口 → 临时 home/data 真机启动 → 断言 `startup.firstFrame` / `startup.listReady`、无异常、存储文件与锁收尾）。

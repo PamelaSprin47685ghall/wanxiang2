@@ -380,10 +380,11 @@ compose() {
   run_tests_parallel "compose（组合者测试）" "$list" "$(test_jobs)" "-p:RestorePackagesPath=$PWD/artifacts/packages"
 }
 
-# 并发数：默认由核数与**内存**共同决定，XJOBS 可覆盖。
+# 并发数：默认由核数与**内存**共同决定，XJOBS 可覆盖。两层上限：
+# - 内存侧：每个并发工程按 2 GiB 计，另给系统与编辑器留 4 GiB；
+# - 核数侧：硬上限 12 路（`j > 12` 处封顶）。
 # 只按核数来会 OOM：每个 `dotnet test`（restore + F# 编译 + 跑用例）峰值近 1 GiB，
-# 12 GiB 无 swap 的机器上开 10 路会把系统打死（2026-10-18 实测）。规则：
-# 每个并发工程按 2 GiB 计，另给系统与编辑器留 4 GiB，再按核数封顶（最多 8）。
+# 12 GiB 无 swap 的机器上开 10 路会把系统打死（2026-10-18 实测）。
 test_jobs() {
   if [[ -n "${XJOBS:-}" ]]; then echo "$XJOBS"; else
     local n; n="$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"

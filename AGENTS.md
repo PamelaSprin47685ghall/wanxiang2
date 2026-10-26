@@ -110,6 +110,12 @@
     一次改动围绕一项可说明的职责或增强，结束时有可运行能力、对应验证和剩余边界；不是只建了目录、接口或尚未接回的另一套实现。先跑最小相关验证，再检查受影响的真实组合；不以全量测试数量代替风险判断。迁移分期时，分别记录“独立能力完成”和“实际接线、旧职责退出完成”，不能混写。
     - 证明：[TODO] 从变更、交付物和测试记录核对本步成立的行为；迁移时确认真实调用方采用新实现，以及被替代职责的退出状态。确认没有遗留无使用方的抽象、过期兼容项或未登记的双重实现。中途停止时仍能使用的成果，才算已经兑现。
 
+7. **界面闭环与不变式证明（本项目补充）。** [AXIOM: 1, 5; SPEC: 3, 4, 6]
+    界面验证以用户的真实操作闭环为准，不再新增与旧仓库死代码比对的金样测试（Golden Test）。
+    - 状态闭环证明：对核心用户旅程（首次配对 → 引导配模型 → 发送含附件消息 → 流式增量与工具审批 → 中途停止或失败重试 → 切换 / 搜索 / 删除恢复对话 → 断线重连），向工作区状态机连续输入真实事件序列，验证每一步的视图状态投影无冲突、无残留在途锁死（Pending Wedge）。
+    - 原生交互证明：在 Headless 窗口中验证焦点流转（Tab 序、Esc 退栈后焦点归位、删除后邻位聚焦）与无障碍角色均由 Avalonia 原生控件及统一焦点调度兑现，无未处理的异步重入竞态。
+    - 证明：**部分证据**（逐条核实到用例体，2026-10-21 起逐轮回填，2026-10-24 终局实测收口）。`compose/AppShell/tests/ComposerTests.fs` 有六条名为「旅程 N」的用例与若干接线用例；**用例名不等于覆盖**，以各轮实测为准：旅程 3 已按主机 `attachment.committed` 的确认门控发送（未就绪时发送被挡住、草稿与附件都留着）并断言真正发出（旅程内 AttachFiles 上传序列、未 ACK 门控拦截、committed ACK 与发件带附件元数据）；旅程 5 的「失败重试」已补真实重试按钮走通重试路径的用例（错误态触发 Regenerate 并经新生成完成清除错误）；旅程 6 的**到期真删**已有证据（`compose/AppShell/tests/ExpiryDeletionTests.fs`：用注入的假时钟（`ShellPorts.Now`）推进过宽限期，断言客户端发出**恰好一条** `conversation.delete` 命令、待删批次清空，且**同一条**命令送进服务端事件存储后该对话从投影里消失）；底层状态机纯逻辑回归用例（3 条）在 `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 同步补齐。「原生交互证明」在顶层无头窗口下验证控件树原生 Tab 焦点迁移、Esc 搜索清空与删除邻位聚焦（名称与角色的**整树遍历断言**由 `compose/AppShell/tests/A11yTraversalTests.fs` 承担，画廊另有 `compose/Gallery/A11yAudit.fs` 审查）。画廊像素基线门禁（G3）已补齐全部 41/41 条目（深浅双主题共 82 张 PNG 基线，Linux 容器 `wx2-linux-gallery-env:local` 实测 82/82 通过，见 `compose/Gallery/AGENTS.md`）；浏览器侧已发布产物真实交互 e2e 冒烟（`tools/smoke_published.sh`）28/28 项断言全部通过（含 ToolTip / 消息卡 ContextMenu / 输入框 MenuFlyout 三类弹出层中文 OCR 字形与业务词条核验、命令面板执行落盘、设置页开关持久化、主题轮转及草稿 IndexedDB 往返）。仍**未**证明：真机屏幕阅读器实测（`docs/ux/a11y-audit.md` §1 的「待实测」项；宿主无 orca/at-spi，adb 无物理设备，见 `docs/evidence/2026-10-23-handoff/initial-state.md`）。
+
 # 适用范围
 
 这些规则约束的是独立职责，不要求每个函数、内部类、目录都拆成库，也不要求每个方法调用都经过 C。纯计算可以使用函数，内部实现可以直接组合；对象是运行时职责和状态的承担者，库是交付与验证边界，不等于一个进程、一个线程或全局单例。
@@ -120,6 +126,91 @@
 
 具体项目只补本项目特有的需要、协议、工具和证据。测试与构建采用能完成验证的最简单手段，不为执行本模板另建通用治理平台。规则与实现共同演进；局部条款与根规则冲突时明确修订，不能靠复制或默默覆盖留下两套要求。
 
-***
+# 例外清单
 
-react-ui 分支是一个设计师的设计稿，比目前好看太多。请你把本仓库 clean-break 成那种 UX。要 Avalonia 原生化，要完全看不出来是 React 做的原型。
+接入项目时盘点。每项记录：事项 / 使用方 / 保留理由 / 可验证的解除条件。完成盘点且无例外时写“无”；未盘点不等于没有例外。长期设计选择写入对应规则，不永久寄存在临时清单。
+
+**本项目盘点（2026-10-13，2026-10-26 按当前树复核）：**
+
+| 事项 | 使用方 | 保留理由 | 可验证的解除条件 |
+| --- | --- | --- | --- |
+| `.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本；包版本固定为 `0.0.0-local` | 107 个工程：`compose/*` 93 个、`libs/` 12 个（`ActionStrip`、`AttachmentTray`、`BatchBar`、`ChatEmpty`、`ChatHeader`、`ConfirmPane`、`CopyButton`、`DevicesPane`、`ToastStrip`、`WorkspaceState`，以及 `DevicesPane`/`ToastStrip` 各自的 `tests` 工程）、`app/` 两个入口 | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
+| WorkspaceState 单一状态树需要多兄弟包依赖（现值 11 个：`BoundedWait`、`ConnectionIssue`、`ConversationSummary`、`DevicesModel`、`DraftStore`、`ForkLineage`、`HostCatalog`、`MessageView`、`NavigationState`、`UiPrefs`、`Wire`） | 21 个生产工程：`compose/AppShell`、`ApprovalDesk`、`ChatPane`、`ChatScreen`、`ComposerDesk`、`EntryShells`、`Gallery`、`MessageCardView`、`OverlayDesk`、`SettingsScreen`、`SidebarDesk`、`Workspace`，以及 `libs/ActionStrip`、`AttachmentTray`、`BatchBar`、`ChatEmpty`、`ChatHeader`、`ConfirmPane`、`CopyButton`、`DevicesPane`、`ToastStrip` | WorkspaceState 是单一状态树，投影直接携带领域事实类型（会话摘要行、设备信息、读取等待、看图判定），不再复制字段 | 事实类型下沉 WorkspaceState 或投影改传原始 Wire 类型后收窄；判定口径：`grep -oE 'Wanxiang2\.[A-Za-z0-9]+' libs/WorkspaceState/WorkspaceState.fsproj` 只剩自身 |
+| `libs/FocusOrigin` 的 `OverlayLayer` 自研图层调度（Canvas/Margin 落点钳位、遮罩栈、滚轮隔离、Esc 级联退栈、跨层焦点恢复），与该库其余附加行为一并交付 | `compose/OverlayDesk`、`compose/Gallery`（生产消费者）；经 OverlayDesk 间接使用的 `compose/ModelSwitchDesk`、`DialogsDesk`、`TransferDesk`、`SettingsScreen`、`ApprovalDesk`、`PaletteDesk`、`ChatScreen`、`SidebarDesk`、`Workspace`、`AppShell` 与 `app/` 两个入口 | 实测（2026-10-20）Avalonia 12.1.2 原生 Popup/FlyoutBase 无同等语义：LightDismiss 不拦 PointerWheelChanged、Popup 不消费 Esc、无法与 dialogGuard 协同、无法注入动态 ViewportInset、浮层销毁后焦点栈溃散（证据：OverlayAdjudicate 探针，`libs/FocusOrigin/tests/OverlayLayer.Tests.fs` 7 项通过） | Avalonia 提供可自定义 positioner+约束回调、可拦截滚轮的 light-dismiss 覆盖层、以及嵌套模态焦点归还契约后改写；判定口径：`compose/OverlayDesk` 不再 `open Wanxiang2.OverlayLayer` |
+
+已解除项的历史记录见 `docs/archive/handoffs/2026-10-20-exceptions-released.md`（只读档案，不再是规则本体）。
+
+# 本项目：wanxiang2
+
+以下只写本项目特有的需要、协议、工具和证据；通用规则以上文为准。
+
+## 需要
+
+1. **逐个抽干旧仓库。** [AXIOM: 1, 4; LEMMA: 6]
+    旧仓库 https://github.com/PamelaSprin47685ghall/wanxiang（F#）难维护、修 Bug 慢；整体重写工作量大且没有保证。当时的做法是每次从旧仓库抽出一项独立职责，做成本仓库的库，接入旧仓库宿主壳并让旧实现退出，再抽下一项。每次抽完都能验证，也都能停下。新旧不必一一对应，规格从 AXIOM 重新推，不沿用旧格式或旧决策。本方法已于 2026-10-17 收束：宿主职责连同程序入口全部外包给本仓库——`app/Desktop` 与 `app/Pwa` 双入口、自有构建/测试/发布闭环（`x`、`run-desktop.sh`、`run-pwa.sh`、`publish.sh`、自有 CI），本仓库为唯一产品本体入口。旧仓库已于同日物理废弃（提交 16904f0 删除 `src/`、`tests/`、`tools/`、CI 与品牌资产，README 与 STATUS 改写为终态退役声明，子模块挂载解除）；其产品文档与迁移史已迁入本仓库 `docs/`（活文档 `contracts/`、`security/`、`ux/`、`adr/`，历史档案 `docs/archive/`）。
+2. **只许旧依赖新。** [LEMMA: 5]
+    本仓库不引用旧仓库的任何源码、包或运行时服务。
+3. **语言。** [AXIOM: 5]
+    交流、注释与规则文档用中文，其余用英语。
+4. **现有代码都是草稿。** [LEMMA: 1, 8]
+    本仓库的实现可以大改，不为保留现有接口而增加兼容层。
+
+## 布局与工具
+
+- `libs/<Name>/`：一项独立职责，一个库：`<Name>.fsproj`、`tests/`、`AGENTS.md`。库之间没有任何依赖边（不只是无环），测试只引用本库。[LEMMA: 4, 5, 8; SPEC: 2]
+- `compose/<Name>/`：组合者 C，只经交付包使用库，不引用库源码。[LEMMA: 4; SPEC: 2, 4]
+- `./x test <lib>`：只凭本库与声明的外部包构建并测试。`./x check`：库项目不引用本库目录以外的东西，除《例外清单》登记的 `WorkspaceState` 特例外不允许任何兄弟包；组合者项目不引用自己目录以外的东西；组合者目录必须有 `AGENTS.md`；每个库必须有生产消费者（否则要在库目录放 `UNWIRED.md` 登记理由与解除条件）；`wanxiang2.slnx` 必须与 `./x sln` 的生成一致；文档与各 AGENTS.md 里点名的 `libs/<名>` / `compose/<名>` 必须存在（`docs/archive` 除外）。`./x pack`：按依赖顺序打出所有交付包（库与组合者都是交付物）。`./x compose`：清掉包缓存里的 `Wanxiang2.*` 后，从 `artifacts/feed` 消费交付包，测试组合者。`./x consume`：在仓库外的临时项目里只从 `artifacts/feed` 取包，构建并运行。`./x app`：从交付包构建 `app/` 下的两个入口（PWA 需 wasm-tools workload）。`./x all` 依次执行 check、hygiene、lint、pack、逐库 test、compose、consume（pack 在逐库 test 之前：少数库引用兄弟包，测试要从 `artifacts/feed` 取）；逐库 test 与组合者测试并发跑（`XJOBS` 可覆盖并发数；默认由核数与**内存**共同决定——每个并发工程按 2 GiB 计并给系统留 4 GiB，再按核数封顶 12 路，只按核数开满会 OOM）。CI（`.github/workflows/ci.yml`）先 pack 出 feed 工件，库测试每个库一个任务（同样消费该工件），另有组合、仓库外消费（consume）、入口构建（app）与发布产物冒烟（published-smoke：`publish.sh linux-x64` + `npm ci` + `tools/smoke_published.sh`，headless Chrome 真跑画布/DPR/上屏桥）四个任务消费该工件；发布流程（`release-publish.yml`）在 linux-x64 上传前跑同一冒烟。
+- **F# 格式规则**：Fantomas，规则写在仓库根 `.editorconfig`（缩进 4、行宽 120、LF、文件末换行、多行括号 `aligned`）；工具版本钉在 `.config/dotnet-tools.json`（`fantomas 8.0.10`，`rollForward: false`），`.fantomasignore` 排除 `bin/` `obj/` `artifacts/` `node_modules/`。**格式检查只跑目标文件，禁止全仓**（所有者规则 2026-10-22）：`dotnet fantomas --check .` 与 `dotnet fantomas .` 一律禁止。改完 F# 跑 `./x format <文件…>` 重排——不带参数时重排的是**本分支改动的 `.fs`**（相对 `origin/main` 的合并基点，外加暂存区/工作区/未跟踪的 `.fs`），不是全仓。`./x check` 里的格式门禁同样只跑目标文件（显式列表 `./x format-check <文件…>`，或没给列表时的改动集合），未格式化即红（退出码 1，逐个列出 `! <路径> needs formatting.`）；改动集合为空就打印「无文件可查」并通过。`.fantomasignore` 里的路径不进目标集合。基准提交可由 `WX_FORMAT_BASE` 指定（CI 用 PR base / push 的上一个提交），否则取 `origin/main` 的合并基点，再退 `HEAD~1`（detached HEAD 或缺 `origin/main` 时）。提交前必须 `./x check` 绿。
+- `./x check` 检查的是项目文件里的引用，不检查运行时调用；运行时独立靠每个库的测试不带任何兄弟库仍能通过（构建上就拿不到兄弟库）。
+
+## 界面与前端组装（UI）
+
+迁移期的「逐字节复刻旧仓库金样」已完成历史使命并退役。自本规则生效起，前端代码以「不造轮子、单一状态投影、真实操作闭环」为准绳，按 Via Negativa 持续做减法。[AXIOM: 1, 2, 4; LEMMA: 1, 8, 10, 11, 12]
+
+1. **只用 Avalonia 原生控件，废除 `Border` 仿制件。** [AXIOM: 2, 5; LEMMA: 10]
+   按钮用 `Button`，开关用 `ToggleSwitch` / `CheckBox`，下拉选择用 `ComboBox`，菜单与气泡用 `ContextMenu` / `MenuFlyout` / `Flyout`，折叠用 `Expander`，长列表用 `ItemsControl` 或 `ListBox` 配合原生 `VirtualizingStackPanel`。
+   不再使用 `Tap`、`Spot`、`InvokeBorder` 等以 `Border` 冒充交互控件的做法，也不再手写 `AutomationPeer`、手算浮层坐标（`PopupPlacement` 已退役，ToastQueue/ToastDwell 迁入 OverlayDesk，原生定位接管）或手搓列表挂载窗口（`MountWindow` 已解除并物理删除，ChatScreen 直呈完整卡片列表；CardReconcile 对账器物理删除，内部缓存直投影）。全仓 Border 仿制件清零、手写 AutomationPeer 全删。
+
+2. **样式与动效归 Avalonia 资源与样式系统，废除 `*Look` 记录与帧定时器。** [AXIOM: 2; LEMMA: 10]
+   颜色、字号、间距、圆角、过渡时长统一登记在主题层的 `ResourceDictionary`（含 Light / Dark `ThemeVariant`）与 `ControlTheme` / `Styles` 中。控件通过 `DynamicResource` 与样式类（`Classes`）获取外观。
+   新建或改写的界面组件不再声明 `<Name>Look` 记录，不再用 `Follow.live` 逐属性订阅 `IObservable<float>`。呼吸、旋转、颜色过渡与平滑滚动优先使用 Avalonia 声明式 `Transitions` 与 `Animation`，不在 F# 代码里开 `DispatcherTimer` 逐帧计算。
+
+3. **单入口幂等渲染，单出口意图事件。** [LEMMA: 3, 4, 12]
+   视图组件只负责呈现与采集用户意图，不持有业务状态副本。
+   - 输入（渲染）：每个视图组件对外只暴露一个幂等的 `Render(viewState)` 方法（或纯声明式视图函数），一次性接收该组件所需的全部展示数据；废除多入口、有调用顺序依赖的 `SetTitle` / `SetGenerating` / `SetEnabled` / `SetCompact` 零散方法。插槽/命令命名 Wire/Slot/Apply 前缀并在各库登记。
+   - 输出（意图）：用户操作通过明确的消息类型（`Msg` 分支或事件）向上汇报，组件内部不自行决定跨组件副作用。
+
+4. **工作区状态收敛与统一副作用执行。** [LEMMA: 3, 4, 12; SPEC: 3, 4, 7]
+   客户端工作区的连接阶段、引导流程、当前对话、流式生成、待删批次与浮层状态，由组合者以单一互斥的状态树建模（让非法状态在类型上不可表示），不再拆成多个布尔入参的判断库（如 `StartReady`、`IdleSurface`、`ConversationSurface`）。
+   焦点转移、滚动定位、网络发送与计时器启停，作为状态演进产出的显式动作（`Effect`），在每次视图树 `Render` 完成后由宿主统一执行一次；禁止在子控件内部散落调用 `Dispatcher.UIThread.Post` 争抢焦点或滚动偏移。
+
+5. **控件库交付约定（沿用）。**
+   - 生成：`./x new-widget <Name>` 由 `tools/widget-template` 生成 `libs/<Name>`（库 + Avalonia headless 行为测试），目录已存在就拒绝。测试不用 `Avalonia.Headless.XUnit`（.NET 10 上会死锁），直接用 `HeadlessUnitTestSession`。
+   - 什么算「控件库」：`libs/<Name>/` 的生产源码（不含 `tests/`、`obj/`、`bin/`）里**构造了至少一个 Avalonia 控件类型**的库，即为控件库。只做行为附加或装饰、自己不构造控件的库（`CopyButton`、`ImeShield`、`InputSense`）不算。每个控件库在 `compose/Gallery` 至少有一条条目。
+     判据由机器执行：Avalonia 控件类型清单是外部 API 的快照（`tools/avalonia-controls.txt`，写明再生成方法），`./x check` 由此判定控件库名单，再核对 `compose/Gallery/Gallery.fs` 里每个条目声明的 `Widget`；缺条目即报 `FAIL <库名>: control library has no gallery entry`。判定与覆盖都不设人工名单。
+   - 行为控件（Menu、Overlay 等）由组合者经插槽和事件接线，控件库之间从不直接依赖；基础库 `UiKit` 已随全仓原生化退役删除（2026-10-20）；控件库现在零跨库依赖，唯一例外是单一状态树 `WorkspaceState`（见《布局与工具》与《例外清单》）。
+   - 模块名：新模块与类型名不得与旧仓库宿主模块同名（F# 会合并同名模块）。
+   - 浏览器端：控件库包可被 `net10.0-browser`（Avalonia.Browser）项目引用。
+
+## 证据现状（对应上文 SPEC）
+
+- SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。机器检查覆盖了一半：`./x check` 拒绝指向不存在组件的文档引用（`libs/<名>` / `compose/<名>`，`docs/archive` 除外），也强制每个库有消费者与登记例外。[TODO] 规则编号（`[LEMMA: n]`）与测试名的对应仍靠评审——今天整理掉的过期接线声明正是这类评审发现的。
+- SPEC 2 职责与交付独立：构建独立、协作独立由 `./x check` 与 `./x test <lib>` 给出，每个库都通过；交付独立由 `./x compose` 给出（干净包缓存、只用 `artifacts/feed` 中的包），通过；仓库外消费已由 `./x consume` 自动化（`mktemp -d` 下的项目只从 `artifacts/feed` 取 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`；消费者源码在 `tools/consume/`，CI 的 consume 任务运行它），2026-10-17 通过。
+- SPEC 3 状态确有主人：Ledger 与 compose/LedgerStore 测了输入、返回值别名、错误后的状态、实例隔离（见各自 AGENTS.md）。JsonSeqFile、SnapshotFile、DirLock 的状态都在文件里，也有实例隔离、非法参数与错误之后的测试（见各自 AGENTS.md）。
+- SPEC 4 协作由真实组合证明：`compose/LedgerStore/tests` 覆盖成功、类型化拒绝、重复、游标分页、在每个字节处崩溃、半写尾与修复、解码失败、过期快照、快照策略与快照写失败、真实未知结果（`/dev/full`）、并发、同目录互斥。「写失败但确知未写」也有真实故障（测试临时收紧 RLIMIT_FSIZE，EFBIG 后截回成功），见 `libs/JsonSeq/AGENTS.md`。
+- SPEC 5 增强经得起拆除：目前没有增强层，不适用。
+- SPEC 6 每步形成真实闭环：见 `docs/archive/handoffs/2026-10-24-delivery-verification.md` 与 `docs/archive/handoffs/2026-10-17-migration-and-extraction.md` 的历史账目；当期闭环证据写在各库 / 组合者的 `AGENTS.md`。
+- SPEC 7 界面验证的机器门禁（2026-10-21 新增；2026-10-23 扩展）：`./x hygiene`（断言卫生——恒真断言 / 恒真谓词 / 空转的事实一律红灯，脚本 `tools/assert-hygiene.sh`，覆盖 `libs/*/tests` 与 `compose/*/tests`）；`./x lint`（界面文案——禁用同义词 / 取消类提示须写明 Esc / 中文省略号 / PWA 壳术语，脚本 `tools/lint-copy.sh`，覆盖 `libs` + `compose` + `app` 的生产 `.fs` 与 PWA 壳交付物）；`./x check` 内的 Fantomas 格式门禁（`./x format-check`，只查目标文件）与控件库画廊覆盖核对（`gallery_coverage`）；`./x gallery-baseline`（画廊深浅双主题像素基线核查，G3，脚本 `tools/gallery-baseline.sh`，缺基线或像素差异即红，见 `compose/Gallery/AGENTS.md`）。`hygiene` 与 `lint` 只需源码、秒级，已接入 `./x all` 与 CI；`gallery-baseline` 单独作为 CI 作业在 `pack` 之后消费 feed。
+- SPEC 7 界面验证的人工工具（2026-10-21；2026-10-24 更新）：组件画廊 `compose/Gallery` + `tools/gallery.sh`（41 条条目 / `--window` 真实桌面窗口 / `--render <条目名> <输出.png> [--theme light|dark]` 出 720×900 的 PNG；用隔离的包缓存 `artifacts/gallery-cache`）。状态由 `Workspace.init ()` + `Workspace.update` 的消息序列跑出、经 `Workspace.project` 投影，不手搓视图状态记录（对话框一条走真实控件入口，因为对话框的「打开」状态是桌内分工、不在状态树里；错误卡走卡片组的真实入口。各条的归属见 `compose/Gallery/AGENTS.md`《已知缺口与各自的归属》）；状态用固定时钟（`Scenes.fixedNow`），同一条目连渲两次 PNG 逐字节相同。像素基线门禁（G3，`tools/gallery-baseline.sh` + `compose/Gallery/Baseline.fs`，全部 41/41 条目 × 深浅两态 = 82 张基线，缺基线或像素差异即红）与画廊控件树无障碍审查（`--a11y-audit`，`compose/Gallery/A11yAudit.fs`；AppShell 各屏幕的整树遍历在 `compose/AppShell/tests/A11yTraversalTests.fs`）已并入门禁面；浏览器侧真实交互 e2e 已由 `tools/smoke_published.sh` 覆盖；真机屏幕阅读器实测仍未做（`docs/ux/a11y-audit.md` §1；环境限制见 `docs/evidence/2026-10-23-handoff/initial-state.md`）。
+- SPEC 7 界面改动的交付契约（2026-10-21 新增）：`docs/frontend-dev-process.md` §5 是一份由**改界面的工程师自己**走完并留证的清单——需求/用户旅程 → 状态与交互设计 → 实现 → 真实界面截图 + 键盘 + 无障碍行为 → 针对性测试 → 包与干净消费 → 两个入口 → 已发布产物冒烟 → 证据与已知边界（所有权原则：SWE = DevOps，交付者自己负责把东西送上线，不把验证外包给下游）。
+- SPEC 7 PWA 中文字体（2026-10-21 修复并回填）：浏览器端没有系统字体，此前没在根上设字体，中文全是豆腐块。根因不是「headless Chrome / SwiftShader 的 WebGL 字体限制」，而是**可视树根上没指定字体族**。修法是在 PWA 入口的根 `Grid` 上设继承型附加属性 `TextElement.FontFamilyProperty`（`app/Pwa/Program.fs` 的 `buildViewsOnce`），整棵树继承内嵌的 Sarasa；桌面入口 `app/Desktop/Program.fs` 不动（用系统字体）。弹出层（ToolTip / ContextMenu / MenuItem / MenuFlyoutPresenter）挂在独立弹出根上、继承不到根字体，另在 `compose/EntryShells/App.fs` 显式指定同一字体族。回归用例是 `compose/EntryShells/tests/Tests.fs` 的 `EmbeddedFontTests`（内嵌正文字体族能解析出字形 / 覆盖常用汉字 / 等宽字体把正文字体列为回落），字体资源为 `libs/ThemeFonts/Assets/Fonts/SarasaGothicSC-Regular.subset.ttf`。
+
+## 历史账目（只读指针）
+
+以下内容是过去某一时点的执行记录，不是现行规则。查阅请到对应档案，不要据它们判断当前规模：
+
+- 抽取路线、迁移状态表、包合并账目、收束后整理：`docs/archive/handoffs/2026-10-17-migration-and-extraction.md`、`docs/archive/handoffs/2026-10-18-cleanup-and-merge.md`。
+- W7 收口与 2026-10-24 交付验证收口证据：`docs/archive/handoffs/2026-10-24-delivery-verification.md`。
+- 《例外清单》已解除项：`docs/archive/handoffs/2026-10-20-exceptions-released.md`。
+
+当前规模以 `./x check` 的输出为准，不以上述档案里的数字为准。

@@ -1,1 +1,0 @@
-- 共享原语 `iconButton` 在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。

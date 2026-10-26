@@ -75,7 +75,8 @@ package() {
   rm -rf "$stage"
   local art
   if [ -f "$OUT_DIR/$name.tar.gz" ]; then art="$name.tar.gz"; else art="$name.zip"; fi
-  (cd "$OUT_DIR" && sha256sum "$art" > "$art.sha256")
+  # sha256：macOS 默认没有 `sha256sum`（GNU coreutils），回退到 `shasum -a 256`。
+  (cd "$OUT_DIR" && { sha256sum "$art" 2>/dev/null || shasum -a 256 "$art"; } > "$art.sha256")
   echo "$OUT_DIR/$art"
 }
 

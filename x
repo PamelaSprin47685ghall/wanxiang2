@@ -206,17 +206,23 @@ FAIL $f: references missing $ref"
 
 # 空白与冲突标记门禁：对基准提交到 HEAD、暂存区与工作区的已跟踪改动跑 git diff --check，
 # 并对本次改动的源码文本检查 CRLF、UTF-8 BOM、.fs Tab 与文件末换行（ISSUE-0010）。
-# 找不到基准提交时直接报错退出 1，禁止因浅克隆而静默通过。
+# 参数 $1 为 "--require-base" 时（独立子命令 ./x whitespace-check，供 CI hygiene 作业调用），
+# 找不到基准提交直接报错退出 1；在 ./x check 内部调用时兼容浅克隆（如 CI widget-template 作业），
+# 无基准提交时仍检查暂存区与工作区。
 whitespace_check() {
-  local base="" out="" bad=0
-  if ! base="$(format_base_ref)" || [[ -z "$base" ]]; then
-    echo "FAIL whitespace_check: no base commit found (ensure fetch-depth: 0 or set WX_FORMAT_BASE)"
-    return 1
-  fi
-  if ! out="$(git diff --check "$base" HEAD 2>&1)"; then
-    echo "FAIL git diff --check ($base..HEAD):"
-    echo "$out"
-    bad=1
+  local require_base="${1:-}" base="" out="" bad=0
+  base="$(format_base_ref || true)"
+  if [[ -z "$base" ]]; then
+    if [[ "$require_base" == "--require-base" ]]; then
+      echo "FAIL whitespace_check: no base commit found (ensure fetch-depth: 0 or set WX_FORMAT_BASE)"
+      return 1
+    fi
+  else
+    if ! out="$(git diff --check "$base" HEAD 2>&1)"; then
+      echo "FAIL git diff --check ($base..HEAD):"
+      echo "$out"
+      bad=1
+    fi
   fi
   if ! out="$(git diff --check --cached 2>&1)"; then
     echo "FAIL git diff --check (--cached):"
@@ -231,7 +237,7 @@ whitespace_check() {
   local changed
   changed="$(
     {
-      git diff --name-only --diff-filter=ACMR "$base" HEAD 2>/dev/null || true
+      [[ -n "$base" ]] && { git diff --name-only --diff-filter=ACMR "$base" HEAD 2>/dev/null || true; }
       git diff --name-only --diff-filter=ACMR --cached 2>/dev/null || true
       git diff --name-only --diff-filter=ACMR 2>/dev/null || true
     } | sort -u
@@ -267,7 +273,7 @@ PY
       bad=1
     fi
   fi
-  [[ $bad -eq 0 ]] && echo "whitespace-check ok"
+  [[ "$require_base" == "--require-base" && $bad -eq 0 ]] && echo "whitespace-check ok"
   return $bad
 }
 
@@ -681,7 +687,7 @@ case "${1:-}" in
     format_check "$@" ;;
   # 空白格式门禁：git diff --check + CRLF/BOM/Tab/EOF 换行检查（找不到基准提交即失败，不静默放行）。
   whitespace-check)
-    whitespace_check ;;
+    whitespace_check --require-base ;;
   # 画廊深浅双主题像素基线核查（G3）：消费 artifacts/feed 的交付包真实渲染，
   # 缺基线或像素差异即红灯；不放进 check，避免日常检查反复构建。
   gallery-baseline) bash tools/gallery-baseline.sh "${2:-}" ;;

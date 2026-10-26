@@ -45,9 +45,11 @@ module UiPrefsFile =
                 try
                     File.SetUnixFileMode(path, UnixFileMode.UserRead ||| UnixFileMode.UserWrite)
                 with _ ->
+                    // Windows 或不支持 POSIX 权限的文件系统忽略即可
                     ()
-        with _ ->
-            ()
+        with ex ->
+            // 路径位于 Git 边界内被拒或磁盘不可写时退化为不落盘，仅记后台诊断（LEMMA 3）
+            eprintfn "[wanxiang] 保存界面偏好 ui.json 失败：%s" ex.Message
 
     /// 偏好 → 是否深色。浏览器与桌面都由调用方给出系统是否深色；
     /// 返回 bool 而非宿主设计层的 ThemeMode（wanxiang2 无 ThemeMode，主题模式归 ThemePalette 的 PaletteMode），

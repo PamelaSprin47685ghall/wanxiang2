@@ -144,6 +144,7 @@ type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: S
                 (try
                     onCommitted c
                  with _ ->
+                     // 落盘已成功提交，外层通知回调异常不得回滚或掩盖 Committed 结果
                      ())
 
                 Committed c

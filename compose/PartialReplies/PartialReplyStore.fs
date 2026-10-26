@@ -30,6 +30,7 @@ type PartialReplyStore(directory: string option) =
                     with ex ->
                         eprintfn "[wanxiang] 跳过无法读取的半截回复 %s：%s" file ex.Message
             with _ ->
+                // 目录尚不可达或枚举中途被清理时忽略，不影响主流程启动
                 ()
         | None -> ()
 

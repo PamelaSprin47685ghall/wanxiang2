@@ -70,6 +70,7 @@ type AttachmentBlobs(root: string, maxBytes: int64, maxChunkBytes: int) =
                 try
                     File.SetUnixFileMode(tempPath, UnixFileMode.UserRead ||| UnixFileMode.UserWrite)
                 with _ ->
+                    // Windows 或不支持 POSIX 权限的文件系统忽略即可
                     ()
 
                 let u =
@@ -169,6 +170,7 @@ type AttachmentBlobs(root: string, maxBytes: int64, maxChunkBytes: int) =
                 s.stream.Dispose()
                 File.Delete s.tempPath
             with _ ->
+                // 中止上传清理临时文件：文件若已移除或句柄已关闭则忽略
                 ()
 
             uploads.TryRemove uploadId |> ignore
@@ -194,4 +196,5 @@ type AttachmentBlobs(root: string, maxBytes: int64, maxChunkBytes: int) =
             try
                 kv.Value.stream.Dispose()
             with _ ->
+                // 退出释放：单个在途上传流释放异常不阻断其余句柄回收
                 ()

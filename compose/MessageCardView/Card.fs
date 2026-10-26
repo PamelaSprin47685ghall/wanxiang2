@@ -598,6 +598,7 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
                     try
                         entry.InputGesture <- KeyGesture.Parse hint
                     with _ ->
+                        // 菜单快捷键提示仅为展示辅助，非标准手势字符串解析失败时跳过即可
                         ()
 
                 entry.Click.Add(fun _ -> action ())

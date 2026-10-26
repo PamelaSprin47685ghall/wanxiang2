@@ -291,6 +291,7 @@ type OverlayLayer(root: Grid, look: OverlayLayerAppearance, place: PopupPlace) =
 
                     popupCard.Margin <- Thickness(x, y, 0.0, 0.0)
             with _ ->
+                // 锚点控件正在脱离可视树时坐标换算可能抛异常，保持上一次位置即可
                 ()
         | _ -> ()
 

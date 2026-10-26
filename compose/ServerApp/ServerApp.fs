@@ -415,6 +415,7 @@ type ServerApp
                 | Some reg -> reg.BroadcastCommit commit
                 | None -> ()
             with _ ->
+                // 单条连接断线或广播竞争不阻断账本提交通知链
                 ()
             // 决策 73：首版不做附件 GC——删对话不断触发任何 blob 清扫，孤儿留待未来压缩处理。
 
@@ -684,6 +685,7 @@ type ServerApp
                         conn.ForceClose()
                 | None -> ()
             with _ ->
+                // 停机清理：单连接关闭异常不阻断后续宿主与存储释放
                 ()
 
             try
@@ -696,6 +698,7 @@ type ServerApp
                         logInfo "主机停止超时（12 秒），强制继续关闭"
                 | None -> ()
             with _ ->
+                // 停机清理：Kestrel 停止超时或取消异常已由上限兜底，继续释放后续组件
                 ()
 
             try
@@ -703,6 +706,7 @@ type ServerApp
                 | Some o -> o.Dispose()
                 | None -> ()
             with _ ->
+                // 停机清理：编排器释放异常不阻断后续协调器写快照与关闭
                 ()
 
             try
@@ -724,6 +728,7 @@ type ServerApp
                         c.Shutdown()
                 | None -> store.Shutdown()
             with _ ->
+                // 停机清理：快照失败已在内层写 stderr，外层兜底保证后续配置与工具表仍被释放
                 ()
 
             try
@@ -731,11 +736,13 @@ type ServerApp
                 | Some cs -> cs.Dispose()
                 | None -> ()
             with _ ->
+                // 停机清理：配置监听释放异常忽略即可
                 ()
 
             try
                 toolRegistry.Dispose()
             with _ ->
+                // 停机清理：工具注册表释放异常忽略即可
                 ()
 
     interface IDisposable with

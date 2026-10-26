@@ -159,6 +159,7 @@ module EffectRunner =
                 if c.Focusable && c.IsEnabled && c.IsEffectivelyVisible then
                     c.Focus() |> ignore
             with _ ->
+                // 控件在布局尚未挂入可视树或正在卸载时 Focus 可能抛异常，忽略即可
                 ())
 
     /// 执行滚动分派（在 UI 线程上运行）

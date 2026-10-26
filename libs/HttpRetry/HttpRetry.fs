@@ -50,6 +50,7 @@ module HttpRetry =
                     if seconds > 0 then
                         ex.Data["RetryAfterSeconds"] <- seconds
             with _ ->
+                // Retry-After 响应头格式异常时忽略附加字段，仍返回基础状态码异常 ex
                 ()
 
             Some ex

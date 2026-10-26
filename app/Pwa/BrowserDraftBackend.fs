@@ -23,8 +23,9 @@ type BrowserDraftBackend() =
             task {
                 try
                     do! BrowserDrafts.Put text
-                with _ ->
-                    ()
+                with ex ->
+                    // 浏览器隐私模式或配额满导致 IndexedDB 写入失败时只记诊断，不打断输入
+                    eprintfn "[wanxiang] 保存浏览器草稿失败：%s" ex.Message
             }
             :> Task
 
@@ -32,7 +33,8 @@ type BrowserDraftBackend() =
             task {
                 try
                     do! BrowserDrafts.Delete()
-                with _ ->
-                    ()
+                with ex ->
+                    // 清理浏览器草稿失败只记诊断，不阻断后续流程
+                    eprintfn "[wanxiang] 清理浏览器草稿失败：%s" ex.Message
             }
             :> Task

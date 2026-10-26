@@ -38,6 +38,7 @@ module UrlSchemeRegistration =
             use p = Diagnostics.Process.Start psi
             p.WaitForExit 3000 |> ignore
         with _ ->
+            // 桌面环境缺少 xdg-mime 等外部工具或无权调用时静默跳过，不阻断应用启动
             ()
 
     let private registerLinux (command: string) =

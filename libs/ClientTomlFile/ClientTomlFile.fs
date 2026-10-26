@@ -43,6 +43,7 @@ type ClientTomlFile(path: string) =
                     try
                         File.SetUnixFileMode(tmp, UnixFileMode.UserRead ||| UnixFileMode.UserWrite)
                     with _ ->
+                        // 不支持 chmod 的挂载卷忽略即可，不影响配置文件内容落盘
                         ()
 
                 let bytes = Encoding.UTF8.GetBytes text

@@ -41,6 +41,7 @@ module ProviderSse =
                 | Some limit -> ex.Data["RateLimit"] <- box limit
                 | None -> ()
             with _ ->
+                // 附加限流元数据属尽力而为，解析异常不掩盖原始 HTTP 错误 ex
                 ()
 
             raise ex

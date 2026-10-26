@@ -42,6 +42,7 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
                 try
                     timer.Change(debounce, Timeout.InfiniteTimeSpan) |> ignore
                 with :? ObjectDisposedException ->
+                    // 并发 Dispose 刚好在锁切换瞬间完成时忽略定时器异常
                     ())
 
     member _.Path = full

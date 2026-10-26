@@ -30,5 +30,6 @@ module PaletteRecentFile =
             let tmp = path + ".tmp"
             IO.File.WriteAllText(tmp, PaletteRecent.encode recent)
             IO.File.Move(tmp, path, true)
-        with _ ->
-            ()
+        with ex ->
+            // 最近使用列表属辅助记忆：落盘失败只记后台诊断，不阻断命令执行
+            eprintfn "[wanxiang] 保存命令面板最近使用记录失败：%s" ex.Message

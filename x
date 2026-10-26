@@ -63,14 +63,22 @@ control_types_pattern() {
 # 报错被 2>/dev/null 吞掉 → 判定恒为空 → 覆盖门禁永远通过（fail-open），门禁形同虚设。
 # 原来的 `(?<![.\w])(TYPE)\(`（负向后顾）改写成 `(^|[^.[:alnum:]_])(TYPE)\(`：
 # 前一个字符要么是行首，要么不是「点 / 字母数字 / 下划线」——语义等价，两平台都支持。
+# 不用 `find -exec ... {} +`：受限环境/沙箱禁调 sysconf(_SC_ARG_MAX) 时 `find -exec` 直接失败退出，
+# 若被 `|| true` 吞掉同样会退化为空名单（2026-10-26 审视 ISSUE-0006 抓到）。改为普通 find 枚举后逐文件 grep。
 control_libs() {
   local pattern; pattern="$(control_types_pattern)"
+  [[ -n "$pattern" ]] || { echo "FAIL control_libs: empty pattern from tools/avalonia-controls.txt" >&2; return 1; }
   for d in libs/*/; do
     local name; name="$(basename "$d")"
-    local hit
-    hit="$(find "$d" \( -name '*.fs' -o -name '*.cs' \) \
-      -not -path '*/tests/*' -not -path '*/obj/*' -not -path '*/bin/*' \
-      -exec grep -lE "(^|[^.[:alnum:]_])($pattern)\(" {} + 2>/dev/null | head -1 || true)"
+    local f hit=""
+    while IFS= read -r f; do
+      [[ -z "$f" ]] && continue
+      if grep -qE "(^|[^.[:alnum:]_])($pattern)\(" "$f"; then
+        hit="$f"
+        break
+      fi
+    done < <(find "$d" \( -name '*.fs' -o -name '*.cs' \) \
+      -not -path '*/tests/*' -not -path '*/obj/*' -not -path '*/bin/*')
     if [[ -n "$hit" ]]; then echo "$name"; fi
   done
 }
@@ -84,16 +92,24 @@ gallery_widgets() {
 
 # 控件库覆盖：每个控件库都要在 compose/Gallery 至少有一条条目。
 # 覆盖数写在全局 GALLERY_COVERED（缺失的库在 stdout 上逐条报错），返回值非零即有缺口。
+# 防呆（Poka-yoke）：若检出 0 个控件库，必为判据或环境故障，绝不静默放行（fail-closed）。
 GALLERY_COVERED=0
 gallery_coverage() {
-  local bad=0 covered=0
+  local bad=0 covered=0 total=0
   local widgets; widgets="$(gallery_widgets)"
-  for lib in $(control_libs); do
+  local c_libs
+  if ! c_libs="$(control_libs)"; then return 1; fi
+  for lib in $c_libs; do
+    total=$((total+1))
     if grep -qx "$lib" <<< "$widgets"; then covered=$((covered+1)); else
       echo "FAIL $lib: control library has no gallery entry"
       bad=1
     fi
   done
+  if [[ $total -eq 0 ]]; then
+    echo "FAIL gallery_coverage: detected 0 control libraries (fail-closed guard against silent find/grep failure)"
+    bad=1
+  fi
   GALLERY_COVERED=$covered
   return $bad
 }
@@ -175,6 +191,8 @@ FAIL $f: references missing $ref"
     echo "$packed"
     bad=1
   fi
+  # 空白与冲突标记门禁（git diff --check）：拦截行尾空白、文件末多余空行与未解冲突标记。
+  if ! whitespace_check; then bad=1; fi
   # F# 格式门禁（Fantomas）：规则在 .editorconfig，工具版本钉在 .config/dotnet-tools.json。
   # 只需源码、不需构建产物，所以放在依赖检查之后、最后汇总之前。
   if ! format_check; then bad=1; fi
@@ -183,6 +201,73 @@ FAIL $f: references missing $ref"
   if ! gallery_coverage; then bad=1; fi
   covered="$GALLERY_COVERED"
   [[ $bad == 0 ]] && echo "check ok: $(libs | wc -l) libs with no sibling references; $(composers | wc -l) composer(s) using packages only; $covered control librar(y|ies) with a gallery entry"
+  return $bad
+}
+
+# 空白与冲突标记门禁：对基准提交到 HEAD、暂存区与工作区的已跟踪改动跑 git diff --check，
+# 并对本次改动的源码文本检查 CRLF、UTF-8 BOM、.fs Tab 与文件末换行（ISSUE-0010）。
+# 找不到基准提交时直接报错退出 1，禁止因浅克隆而静默通过。
+whitespace_check() {
+  local base="" out="" bad=0
+  if ! base="$(format_base_ref)" || [[ -z "$base" ]]; then
+    echo "FAIL whitespace_check: no base commit found (ensure fetch-depth: 0 or set WX_FORMAT_BASE)"
+    return 1
+  fi
+  if ! out="$(git diff --check "$base" HEAD 2>&1)"; then
+    echo "FAIL git diff --check ($base..HEAD):"
+    echo "$out"
+    bad=1
+  fi
+  if ! out="$(git diff --check --cached 2>&1)"; then
+    echo "FAIL git diff --check (--cached):"
+    echo "$out"
+    bad=1
+  fi
+  if ! out="$(git diff --check 2>&1)"; then
+    echo "FAIL git diff --check (working tree):"
+    echo "$out"
+    bad=1
+  fi
+  local changed
+  changed="$(
+    {
+      git diff --name-only --diff-filter=ACMR "$base" HEAD 2>/dev/null || true
+      git diff --name-only --diff-filter=ACMR --cached 2>/dev/null || true
+      git diff --name-only --diff-filter=ACMR 2>/dev/null || true
+    } | sort -u
+  )"
+  if [[ -n "$changed" ]]; then
+    if ! python3 - "$changed" <<'PY'
+import pathlib, sys
+bad = 0
+text_exts = {".fs", ".fsproj", ".csproj", ".props", ".targets", ".sh", ".yml", ".yaml", ".md", ".json", ".js", ".html", ".css"}
+for raw in sys.argv[1].splitlines():
+    f = raw.strip()
+    if not f:
+        continue
+    p = pathlib.Path(f)
+    if not p.is_file() or p.suffix not in text_exts:
+        continue
+    data = p.read_bytes()
+    if data.startswith(b"\xef\xbb\xbf"):
+        print(f"FAIL {f}: contains UTF-8 BOM")
+        bad = 1
+    if b"\r\n" in data:
+        print(f"FAIL {f}: contains CRLF line endings")
+        bad = 1
+    if data and not data.endswith(b"\n"):
+        print(f"FAIL {f}: missing newline at EOF")
+        bad = 1
+    if p.suffix == ".fs" and b"\t" in data:
+        print(f"FAIL {f}: F# source contains Tab character")
+        bad = 1
+sys.exit(bad)
+PY
+    then
+      bad=1
+    fi
+  fi
+  [[ $bad -eq 0 ]] && echo "whitespace-check ok"
   return $bad
 }
 
@@ -594,6 +679,9 @@ case "${1:-}" in
   format-check)
     shift
     format_check "$@" ;;
+  # 空白格式门禁：git diff --check + CRLF/BOM/Tab/EOF 换行检查（找不到基准提交即失败，不静默放行）。
+  whitespace-check)
+    whitespace_check ;;
   # 画廊深浅双主题像素基线核查（G3）：消费 artifacts/feed 的交付包真实渲染，
   # 缺基线或像素差异即红灯；不放进 check，避免日常检查反复构建。
   gallery-baseline) bash tools/gallery-baseline.sh "${2:-}" ;;

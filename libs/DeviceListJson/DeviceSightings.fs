@@ -49,8 +49,9 @@ type DeviceSightings(path: string, throttle: TimeSpan) =
                             | _ -> ()
                     | _ -> ()
                 | _ -> ()
-        with _ ->
-            ()
+        with ex ->
+            // 记账文件损坏或不可读时按 LEMMA 3 当空表继续，仅记后台诊断
+            eprintfn "[wanxiang] 读取设备记账文件失败（%s），按空表处理：%s" path ex.Message
 
     /// 原子写整张表（临时文件 + 改名）。调用方持锁。
     let save () : Result<unit, string> =

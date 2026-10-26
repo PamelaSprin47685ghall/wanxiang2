@@ -3,6 +3,14 @@
 本文档记录 2026-10-24 wanxiang2 交付验证收口的全量实跑原始证据、环境指标与校验边界。
 所有命令均使用独立管道/脚本捕获真实 stdout、stderr 与实际退出码（记录在每份日志尾部 `COMMAND_EXIT_CODE=<int>` 及 `MANIFEST.json`），禁止伪造日志。
 
+> **关于 `artifacts/` 路径的入库边界说明（2026-10-26 审视补注）：**
+> 仓库根 `.gitignore` 声明了 `artifacts/`，因此下文中以 `artifacts/` 开头的路径（以及 `docs/evidence/2026-10-24-verified-release/artifacts/pwa-smoke/`）均属当次实跑时的本机临时输出，**未进入 Git 索引**；已入库的持久化证据为同目录 `MANIFEST.json`、`search-package-smoke.log` 与 `logs/` 下的全部原始日志。若需在本机重现这些未入库产物，按下列命令再生成：
+> - `artifacts/baseline_sha256.txt`：`shasum -a 256 compose/Gallery/baselines/*.png`（82 张 PNG 基线本体已入库于 `compose/Gallery/baselines/`）
+> - `artifacts/baseline_shots/`：`bash tools/gallery.sh --render <条目名> <输出.png> --theme <dark|light>`
+> - `artifacts/publish/linux-x64/`：`bash publish.sh linux-x64`
+> - `artifacts/pwa-smoke/`（冒烟截图）：`SMOKE_SHOT_DIR=/tmp/pwa-smoke bash tools/smoke_published.sh artifacts/publish/linux-x64`
+> - `artifacts/lighthouse/report.report.{json,html}`：启动已发布服务后执行 §五.3 的 `npx lighthouse` 命令
+
 ---
 
 ## 一、验证环境基线（Host Environment）

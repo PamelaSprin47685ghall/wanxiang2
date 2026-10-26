@@ -66,8 +66,9 @@ module CredentialStore =
             if OperatingSystem.IsBrowser() then
                 try
                     do! BrowserCredentials.Put(instanceId, url, token, name)
-                with _ ->
-                    ()
+                with ex ->
+                    // IndexedDB 不可用或配额满时只记诊断，当前内存会话继续可用
+                    eprintfn "[wanxiang] 保存浏览器连接凭据失败（%s）：%s" instanceId ex.Message
         }
 
     /// 浏览器：删除一条连接凭据。
@@ -76,8 +77,9 @@ module CredentialStore =
             if OperatingSystem.IsBrowser() then
                 try
                     do! BrowserCredentials.Delete(instanceId)
-                with _ ->
-                    ()
+                with ex ->
+                    // 删除浏览器连接凭据失败只记诊断，不阻断断开或切换流程
+                    eprintfn "[wanxiang] 删除浏览器连接凭据失败（%s）：%s" instanceId ex.Message
         }
 
     /// 浏览器默认连接地址：与页面同源（https → wss，http → ws）；非浏览器回退桌面默认值。

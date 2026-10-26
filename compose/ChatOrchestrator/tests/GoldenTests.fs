@@ -12,3 +12,18 @@ let ``chat orchestration behaves byte for byte like the old implementation`` () 
         File.ReadAllText(Path.Combine(__SOURCE_DIRECTORY__, "golden", "orchestrator.txt")).TrimEnd()
 
     Assert.Equal(expected, Scenario.all().TrimEnd())
+
+[<Fact>]
+let ``next request waits for the title broadcast`` () =
+    let actual =
+        Scenario.withTitleBroadcastDelay (System.TimeSpan.FromMilliseconds 500.0)
+
+    let titleEvent =
+        actual.IndexOf("event {\"type\":\"conversation.updated\"", System.StringComparison.Ordinal)
+
+    Assert.True(titleEvent >= 0, "标题更新事件必须存在")
+
+    let nextGeneration =
+        actual.IndexOf("event {\"type\":\"generation.started\"", titleEvent, System.StringComparison.Ordinal)
+
+    Assert.True(nextGeneration > titleEvent, "第二次生成必须在标题更新广播之后开始")

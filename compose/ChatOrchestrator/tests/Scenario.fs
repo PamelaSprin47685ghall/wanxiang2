@@ -98,7 +98,7 @@ let private waitUntil (cond: unit -> bool) =
     while not (cond ()) && sw.Elapsed < TimeSpan.FromSeconds 20.0 do
         Thread.Sleep 20
 
-let all () =
+let withTitleBroadcastDelay (delay: TimeSpan) =
     let dir =
         Path.Combine(Path.GetTempPath(), "wx-orch-" + Guid.NewGuid().ToString("N"))
 
@@ -153,7 +153,14 @@ let all () =
         ChatOrchestrator(
             store,
             (fun () -> store.Projection),
-            (fun _ ev -> lock events (fun () -> events.Add(WireCodec.encode ev))),
+            (fun _ ev ->
+                let encoded = WireCodec.encode ev
+
+                // 放大提交已可见、广播尚未记录的间隙，不改变生产对象。
+                if encoded.Contains "conversation.updated" then
+                    Thread.Sleep delay
+
+                lock events (fun () -> events.Add encoded)),
             registry,
             (fun () -> cfg),
             (fun _ -> None),
@@ -200,7 +207,11 @@ let all () =
         (Projection.tryConversation store.Projection convId).Value.title
 
     send "bbbbbbbb-0000-0000-0000-000000000001" "请回声"
-    waitUntil (fun () -> finishedCount () = 1 && title () <> "新对话")
+
+    waitUntil (fun () ->
+        finishedCount () = 1
+        && lock events (fun () -> events |> Seq.exists (fun e -> e.Contains "conversation.updated")))
+
     send "bbbbbbbb-0000-0000-0000-000000000002" "再来"
     waitUntil (fun () -> finishedCount () = 2)
     server.Wait(TimeSpan.FromSeconds 20.0) |> ignore
@@ -226,3 +237,5 @@ let all () =
 
     (store :> IDisposable).Dispose()
     normalize (b.ToString())
+
+let all () = withTitleBroadcastDelay TimeSpan.Zero

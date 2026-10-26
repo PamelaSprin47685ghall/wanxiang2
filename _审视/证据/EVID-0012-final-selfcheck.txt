@@ -24,7 +24,7 @@ D  docs/ux/a11y-audit.md:43
 ?? docs/archive/handoffs/2026-10-24-delivery-verification.md
 
 --- 2 报告自洽：编号连续性 / 引用可解析 / 标题层级 ---
-证据引用 22 处，缺失 0 处 
+证据引用 22 处，缺失 0 处
 ISSUE 15 条，缺口 无
 CASE  15 条，缺口 无
 交叉引用断链： 无

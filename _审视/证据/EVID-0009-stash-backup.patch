@@ -3,7 +3,7 @@ index 5f9f08c..9a43979 100644
 --- a/compose/AppShell/AGENTS.md
 +++ b/compose/AppShell/AGENTS.md
 @@ -56,7 +56,7 @@
- 
+
  # 证据
  - 构建：`dotnet build compose/AppShell/AppShell.fsproj -c Release -p:RestorePackagesPath="$PWD/artifacts/packages"`（需 `artifacts/feed` 已有依赖包）。
 -- 测试：`dotnet test compose/AppShell/tests/AppShell.Tests.fsproj -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages"`；`./x compose` 会跑全部有测试的组合者。
@@ -29,7 +29,7 @@ index 8a0ca4a..7f7aed9 100644
 +++ b/compose/ChatScreen/tests/Headless.fs
 @@ -116,3 +116,7 @@ module Desk =
          )
- 
+
          Dispatcher.UIThread.RunJobs()
 +
 +// Avalonia 平台状态与 HeadlessUnitTestSession 是进程级全局量，多模块并行会并发调用 EnsureIsolatedApplication 互踩。
@@ -41,7 +41,7 @@ index 2bbadaa..5bf79fa 100644
 +++ b/compose/ComposerDesk/tests/Headless.fs
 @@ -27,3 +27,7 @@ module Headless =
          session.Value.Dispatch(Action body, CancellationToken.None).GetAwaiter().GetResult()
- 
+
  /// 测试用的活尺寸：模拟主题管理者改值。
 +
 +// Avalonia 平台状态与 HeadlessUnitTestSession 是进程级全局量，多模块并行会并发调用 EnsureIsolatedApplication 互踩。
@@ -77,11 +77,11 @@ index 2e9acef..1fbd09d 100644
 +++ b/libs/HttpFailureFacts/AGENTS.md
 @@ -7,7 +7,7 @@
      - 推理：这些行为直接决定用户看到的错误、发给 Provider 的请求与落盘消息。
- 
+
  # SPEC
 -1. [LEMMA: 1] `tests/Tests.fs` 通过；端到端字节由 AgentRuntime 金样钉住。
 +1. [LEMMA: 1] `tests/Tests.fs` 通过；远期 `Retry-After` 日期或超大整数秒收敛到 `Int32.MaxValue` 而不因浮点转 `int` 溢出成负数，带小数点的纯数值串不会被 `DateTimeOffset.TryParse` 误当成「月.日」日期；端到端字节由 AgentRuntime 金样钉住。
- 
+
  # 迁入或覆盖的旧测试
  - 旧测试迁在 compose/AgentRuntime/tests（逐条列在 AgentRuntime AGENTS.md）。
 diff --git a/libs/HttpFailureFacts/HttpFailureFacts.fs b/libs/HttpFailureFacts/HttpFailureFacts.fs
@@ -90,7 +90,7 @@ index 0b12623..bd23174 100644
 +++ b/libs/HttpFailureFacts/HttpFailureFacts.fs
 @@ -1,6 +1,7 @@
  namespace Wanxiang.Agent
- 
+
  open System
 +open System.Globalization
  open System.Net.Http
@@ -99,7 +99,7 @@ index 0b12623..bd23174 100644
 @@ -9,16 +10,40 @@ open System.Text.RegularExpressions
  /// 只依赖 BCL；不做归类，归类归调用方。从旧 ProviderFailure 拆出，行为不变。
  module HttpFailureFacts =
- 
+
 +    let private clampPositiveSeconds (totalSeconds: float) : int option =
 +        if Double.IsNaN totalSeconds || totalSeconds <= 0.0 then
 +            None
@@ -142,12 +142,12 @@ index 0b12623..bd23174 100644
 +                    with
 +                    | true, at -> clampPositiveSeconds (at - now).TotalSeconds
 +                    | _ -> None
- 
+
      let retryAfterOfResponse (response: HttpResponseMessage) : int option =
          try
 @@ -28,11 +53,9 @@ module HttpFailureFacts =
                  let ra = response.Headers.RetryAfter
- 
+
                  if ra.Delta.HasValue then
 -                    let s = int ra.Delta.Value.TotalSeconds
 -                    if s > 0 then Some s else None
@@ -188,15 +188,15 @@ index b9baf74..72b09c8 100644
 +++ b/libs/HttpRetry/AGENTS.md
 @@ -21,8 +21,8 @@
      - 推理：限流信号是 Wire 里的 `ProviderRateLimit`，属于线协议；`statusError` 只返回异常，由组合者把限流信息挂上去。所以本库不依赖 Wire。
- 
+
  ## SPEC
 -1. [LEMMA: 2] 2xx 不算错误；非 2xx 的异常带状态码、正文和 Retry-After：`tests/Tests.fs`，通过。
 -2. [LEMMA: 1] 临时性失败重试到上限，然后返回最后一次响应；非临时失败、重试次数为 0 时都不重试：通过。
 +1. [LEMMA: 2] 2xx 不算错误；非 2xx 的异常带状态码、正文和正数秒的 Retry-After（`Delta` 与未来的 `Date` 都认，超出 `Int32.MaxValue` 秒时收敛到 `Int32.MaxValue`；已过期的 `Date` 或非正秒数不记入 `Data["RetryAfterSeconds"]`）：`tests/HttpRetry.Tests.fs`，通过。
 +2. [LEMMA: 1] 临时性失败重试到上限，然后返回最后一次响应；`maxRetries = Int32.MaxValue` 不会因 `+ 1` 溢出退化成不重试；每次尝试创建的 `HttpRequestMessage`（含 `Content`）在本次发送结束后释放；上游给出未来的 `Retry-After` 日期时重试等待也按该日期计算，且超大 `Retry-After` 收敛在 `Task.Delay` 定时器上限内不抛 `ArgumentOutOfRangeException`；非临时失败、重试次数为 0 时都不重试：`tests/HttpRetry.Tests.fs`，通过。
- 
+
  ## 成员 `JsonPick`
- 
+
 diff --git a/libs/HttpRetry/HttpRetry.fs b/libs/HttpRetry/HttpRetry.fs
 index d121a55..4322e3a 100644
 --- a/libs/HttpRetry/HttpRetry.fs
@@ -204,7 +204,7 @@ index d121a55..4322e3a 100644
 @@ -8,6 +8,16 @@ open System.Threading.Tasks
  /// 对模型提供方的 HTTP 请求：首字节之前的退避重试，以及把非 2xx 翻成带状态码的异常。
  module HttpRetry =
- 
+
 +    let private maxTimerDelay = TimeSpan.FromMilliseconds(float Int32.MaxValue)
 +
 +    let private clampRetrySeconds (totalSeconds: float) : int =
@@ -221,7 +221,7 @@ index d121a55..4322e3a 100644
 @@ -29,10 +39,16 @@ module HttpRetry =
                  if not (isNull response.Headers.RetryAfter) then
                      let ra = response.Headers.RetryAfter
- 
+
 -                    if ra.Delta.HasValue then
 -                        ex.Data["RetryAfterSeconds"] <- int ra.Delta.Value.TotalSeconds
 -                    elif ra.Date.HasValue then
@@ -238,11 +238,11 @@ index d121a55..4322e3a 100644
 +                        ex.Data["RetryAfterSeconds"] <- seconds
              with _ ->
                  ()
- 
+
 @@ -42,6 +58,24 @@ module HttpRetry =
          let code = int status
          code = 429 || code = 408 || code >= 500
- 
+
 +    let private retryAfterDelay (response: HttpResponseMessage) : TimeSpan =
 +        let raw =
 +            match response.Headers.RetryAfter with
@@ -274,18 +274,18 @@ index d121a55..4322e3a 100644
              let mutable attempt = 0
              let mutable result = Unchecked.defaultof<HttpResponseMessage>
              let mutable finished = false
- 
+
              while not finished do
                  attempt <- attempt + 1
 -                let last = attempt >= attempts
 +                let last = retriesUsed >= maxRetries
                  let mutable retryAfter = TimeSpan.Zero
- 
+
                  try
 -                    let request = makeRequest ()
 +                    use request = makeRequest ()
                      let! response = http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct)
- 
+
                      if response.IsSuccessStatusCode || last || not (transient response.StatusCode) then
                          result <- response
                          finished <- true
@@ -302,7 +302,7 @@ index d121a55..4322e3a 100644
                  // 交给 ProviderFailure 归类成面向用户的错误。
 @@ -85,12 +115,14 @@ module HttpRetry =
                      ignore ex
- 
+
                  if not finished then
 +                    retriesUsed <- retriesUsed + 1
                      // 指数退避，上限 8 秒；上游给了 Retry-After 就听它的
@@ -313,9 +313,9 @@ index d121a55..4322e3a 100644
 -                            TimeSpan.FromMilliseconds(float (min 8000 (250 * (1 <<< (attempt - 1)))))
 +                            let exponent = min 5 (max 0 (attempt - 1))
 +                            TimeSpan.FromMilliseconds(float (min 8000 (250 * (1 <<< exponent))))
- 
+
                      do! Task.Delay(backoff, ct)
- 
+
 diff --git a/libs/HttpRetry/tests/HttpRetry.Tests.fs b/libs/HttpRetry/tests/HttpRetry.Tests.fs
 index 0db4724..afaf6b6 100644
 --- a/libs/HttpRetry/tests/HttpRetry.Tests.fs

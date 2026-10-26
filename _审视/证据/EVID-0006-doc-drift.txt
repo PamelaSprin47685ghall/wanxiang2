@@ -1,0 +1,37 @@
+== EVID-0006 文档漂移原文（2026-10-25T20:00:00Z）==
+
+--- dead-weight-report.md 采集时点数字 ---
+3:> **历史快照（采集于 2026-10-22 前后，118 库 / 70 组合者时代）。** 本文件之后未按包合并与画廊补齐逐项重算，正文表格里的名单、行数、消费者数都是那个时点的数据，**不代表当前规模**。
+11:> 下文「当前规模」与「所有 118 个库」都是采集时点的事实。结论（哪些包是宽接口薄实现、哪些是真正的大头）仍可参考，具体数字请按上面命令重取。
+20:采集时点规模（见文首历史快照说明）：`libs/` 118 个包，生产源码合计 29896 行；`compose/` 70 个组合者，生产源码合计 19211 行。当前值：`libs/` 109 个包、生产源码 40234 行；`compose/` 71 个组合者、生产源码 30053 行（2026-10-26 实测）。
+143:| 118 | `DevicesPane` | 29 | 2162 | 1 | 否 |
+145:采集时点：118 个库都有生产消费者，没有 `UNWIRED.md` 登记例外。当前值：109 个库都有生产消费者，`./x check` 的消费者门禁通过。
+
+--- widget-coverage.md 采集时点数字 ---
+3:> **历史快照 + 现状对照。** 本文件写于 2026-10-23，正文的 §2/§4 是当时的清单（15 个控件库 / 26 条画廊条目），此后包合并与画廊补齐使数字失效。2026-10-26 按当前树实测：**17 个控件库**、**41 条画廊条目**、**71 个组合者**。
+56:**采集时点（2026-10-23）：全仓 `libs/` 下共有且仅有 15 个实体控件库。当前（2026-10-26）按同一机械判据重算为 17 个：下表 15 个之外还有 `FieldCheck` 与 `FocusOrigin`（两者都构造了 Avalonia 控件），`IconSet` 也已计入；三者在 `compose/Gallery` 均有条目。以文首的逐库重算命令为准。**
+80:**采集时点快照（14 个）。** 当前 `compose/` 共 71 个目录，其中 67 个有测试工程；下面是当时挑出的 14 个万亿级装配面，不代表 `compose/` 的全量。全量以 `ls -d compose/*/` 为准。
+101:**采集时点快照。** 组件画廊（`compose/Gallery`）当时是 26 个独立条目，对应上述 15 个控件库与 14 个组合者。当前（2026-10-26）是 **41 条条目**（`compose/Gallery/baselines/` 去重后与 `Gallery.fs` 的 `entries` 同为 41）。
+
+--- UiKit 引用（修复后带退役限定）---
+44:- 共享原语 `iconButton`：`libs/DevicesPane/Ui.fs` 的 `Ui.iconButton`（设置页各分区共用），以及 `compose/Theme/ThemeStyles.fs` 的 `icon-button` 样式类与 `compose/MessageCardView/Looks.fs` 的装饰函数。这些原语在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。历史上的 `UiKit` 已整库退役删除（2026-10-20），不再是任何原语的落点。
+
+--- libs/UiKit 是否存在 ---
+ls: libs/UiKit: No such file or directory
+cmd: git log --diff-filter=D -- 'libs/UiKit/*'
+ad22bf0 clean-break 大重构：MVU 内核 + 原生控件 + 单入口投影 + 统一 Effect
+
+--- 误命名文件（修复前内容已存 EVID 备份，此处记删除事实）---
+cmd: git ls-tree HEAD docs/ux/
+100644 blob 7106b97197c0f9da35e1f4e3b6cdc9525a6f6db7	docs/ux/a11y-audit.md:31
+100644 blob 6eff88eb8edcd5ab341c8e2db3e1c3f501b16c44	docs/ux/a11y-audit.md:43
+cmd: git status --porcelain docs/ux
+ M docs/ux/a11y-audit.md
+D  docs/ux/a11y-audit.md:31
+D  docs/ux/a11y-audit.md:43
+ M docs/ux/widget-coverage.md
+
+--- 已删片段内容（从 HEAD 取回，供复核是否被正文覆盖）---
+- `border`（浅 1.33、深 1.92）、`line`（浅 1.6、深 2.1~2.5）低于 1.4.11 对“控件边界”的 3:1 要求。它们主要用作装饰性分割，**不再用作输入类控件的边界**� ...
+---
+- 共享原语 `iconButton` 在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。

@@ -1,0 +1,125 @@
+== EVID-0010 A 组修复验收（2026-10-25T19:55:02Z）==
+
+--- CASE-0001/0007 规则本体可解析 ---
+cmd: grep -nE '^# 例外清单|^## 布局与工具|^# 本项目：wanxiang2|^## 控件库交付约定|^7\. \*\*界面闭环' AGENTS.md
+129:# 例外清单
+143:# 本项目：wanxiang2
+158:## 布局与工具
+166:## 界面与前端组装（UI）
+195:## 证据现状（对应上文 SPEC）
+208:## 历史账目（只读指针）
+
+cmd: 逐条引用《例外清单》《布局与工具》的文件
+x                                        引用数=1
+MERGE.md                                 引用数=1
+libs/HostCatalog/AGENTS.md               引用数=1
+docs/W7-CLEANBREAK-AUDIT.md              引用数=1
+compose/Gallery/AGENTS.md                引用数=0
+0
+
+--- CASE-0002 规则文件不含工作指令 ---
+cmd: grep -n 'react-ui' AGENTS.md
+(无命中，退出码 1)
+
+--- CASE-0007 例外清单 11 兄弟包 = fsproj 实际 ---
+cmd: 清单里的 11 个包名 vs fsproj 实际
+ok   BoundedWait
+ok   ConnectionIssue
+ok   ConversationSummary
+ok   DevicesModel
+ok   DraftStore
+ok   ForkLineage
+ok   HostCatalog
+ok   MessageView
+ok   NavigationState
+ok   UiPrefs
+ok   Wire
+cmd: 实际兄弟包总数
+      11
+cmd: 消费者数（非 tests）
+      21
+
+--- CASE-0004 UiKit 引用带退役限定 ---
+cmd: grep -n UiKit docs/ux/a11y-audit.md
+44:- 共享原语 `iconButton`：`libs/DevicesPane/Ui.fs` 的 `Ui.iconButton`（设置页各分区共用），以及 `compose/Theme/ThemeStyles.fs` 的 `icon-button` 样式类与 `compose/MessageCardView/Looks.fs` 的装饰函数。这些原语在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。历史上的 `UiKit` 已整库退役删除（2026-10-20），不再是任何原语的落点。
+
+--- CASE-0005 docs/ux 无异常路径 ---
+cmd: git ls-files docs/ux
+docs/ux/a11y-audit.md
+docs/ux/conversation-first.md
+docs/ux/r18-audit.md
+docs/ux/r28-pwa-parity.md
+docs/ux/r9-audit.md
+docs/ux/redesign-proposal.md
+docs/ux/ux-002-delivery.md
+docs/ux/ux-003-audit.md
+docs/ux/widget-coverage.md
+cmd: 含冒号的路径数
+0
+0（grep 无命中）
+
+--- CASE-0008 并发上限注释与实现一致 ---
+cmd: sed -n '383,392p' x
+# 并发数：默认由核数与**内存**共同决定，XJOBS 可覆盖。两层上限：
+# - 内存侧：每个并发工程按 2 GiB 计，另给系统与编辑器留 4 GiB；
+# - 核数侧：硬上限 12 路（`j > 12` 处封顶）。
+# 只按核数来会 OOM：每个 `dotnet test`（restore + F# 编译 + 跑用例）峰值近 1 GiB，
+# 12 GiB 无 swap 的机器上开 10 路会把系统打死（2026-10-18 实测）。
+test_jobs() {
+  if [[ -n "${XJOBS:-}" ]]; then echo "$XJOBS"; else
+    local n; n="$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
+    local mem_gb=8
+    if [[ -r /proc/meminfo ]]; then
+cmd: grep -n 'j > 12' x
+385:# - 核数侧：硬上限 12 路（`j > 12` 处封顶）。
+403:    if (( j > 12 )); then j=12; fi
+
+--- CASE-0012 工作流触发条件有效 ---
+cmd: sed -n '14,20p' .github/workflows/baseline-regen.yml
+on:
+  workflow_dispatch:
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+--- CASE-0013 哈希命令有跨平台回退 ---
+cmd: grep -n sha256sum publish.sh
+78:  # sha256：macOS 默认没有 `sha256sum`（GNU coreutils），回退到 `shasum -a 256`。
+79:  (cd "$OUT_DIR" && { sha256sum "$art" 2>/dev/null || shasum -a 256 "$art"; } > "$art.sha256")
+cmd: 失效 sha256sum stub 下回退验证
+结果: 5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  a.tar.gz
+期望: 5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  /var/folders/x7/1ggk59gx4qx070j2z770n7p80000gn/T/tmp.uSZWoQxcrL/a.tar.gz
+
+--- CASE-0014 分支与 stash ---
+cmd: git stash list
+(空行即已清)
+cmd: git branch -vv
+* main 81cf961 [origin/main] Merge pull request #9 from lcw918110/delivery/ci-failure-evidence-upstream
+cmd: git ls-remote --heads fork（网络不可达，见下）
+
+--- CASE-0003 活文档数字 vs 实测 ---
+cmd: ls -d libs/*/ | wc -l / ls -d compose/*/ | wc -l
+libs=     109 compose=      71
+cmd: libs/compose 生产 LOC
+find: sysconf(_SC_ARG_MAX): Operation not permitted
+find: no space for arguments
+find: sysconf(_SC_ARG_MAX): Operation not permitted
+find: no space for arguments
+libs=       0 compose=       0
+cmd: 基线条目去重数
+      41
+cmd: grep 文档里的现状标注
+docs/dead-weight-report.md:3:> **历史快照（采集于 2026-10-22 前后，118 库 / 70 组合者时代）。** 本文件之后未按包合并与画廊补齐逐项重算，正文表格里的名单、行数、消费者数都是那个时点的数据，**不代表当前规模**。
+docs/dead-weight-report.md:5:> 当前值以命令为准：
+docs/dead-weight-report.md:20:采集时点规模（见文首历史快照说明）：`libs/` 118 个包，生产源码合计 29896 行；`compose/` 70 个组合者，生产源码合计 19211 行。当前值：`libs/` 109 个包、生产源码 40234 行；`compose/` 71 个组合者、生产源码 30053 行（2026-10-26 实测）。
+docs/dead-weight-report.md:145:采集时点：118 个库都有生产消费者，没有 `UNWIRED.md` 登记例外。当前值：109 个库都有生产消费者，`./x check` 的消费者门禁通过。
+docs/ux/widget-coverage.md:3:> **历史快照 + 现状对照。** 本文件写于 2026-10-23，正文的 §2/§4 是当时的清单（15 个控件库 / 26 条画廊条目），此后包合并与画廊补齐使数字失效。2026-10-26 按当前树实测：**17 个控件库**（`./x check` 的 `gallery_coverage` 输出 `17 control librar(y|ies)`）、**41 条画廊条目**、**71 个组合者**。清单本身以机械判定为准，不由本文维持。
+docs/ux/widget-coverage.md:43:**采集时点（2026-10-23）：全仓 `libs/` 下共有且仅有 15 个实体控件库。当前（2026-10-26）为 17 个：下列 15 个之外还有 `FieldCheck` 与 `FocusOrigin`（两者机械上构造了 Avalonia 控件，见 §1.2），并且 `IconSet` 也已计入——三者在 `compose/Gallery` 均有条目。以 `./x check` 的 `gallery_coverage` 行为准。**
+docs/ux/widget-coverage.md:88:**采集时点快照。** 组件画廊（`compose/Gallery`）当时是 26 个独立条目，对应上述 15 个控件库与 14 个组合者。当前（2026-10-26）是 **41 条条目**（`compose/Gallery/Gallery.fs` 的 `entries`；`compose/Gallery/baselines/` 去重后同为 41），下表未覆盖新增的 `BatchBar.selection`、`BrandMark.tile`、`ChatHeader.header`、`ConfirmPane.confirm`、`DevicesPane.devices`、`ExportSheet.export`、`FieldCheck.invalid`、`FocusOrigin.programmatic`、`IconSet.glyphs`、`ModelSwitchPanel.models`、`PalettePanel.palette`、`PopupMenu.menu`、`ToastStrip.toast`、`SidebarDesk.search` 之外的若干条目。**条目清单以 `compose/Gallery/Gallery.fs` 为准**（取法见文首表）。
+
+--- 静态门禁 ---
+cmd: ./x check
+format: no changed .fs files to check (format check skipped)
+check ok:      109 libs with no sibling references;       71 composer(s) using packages only; 0 control librar(y|ies) with a gallery entry

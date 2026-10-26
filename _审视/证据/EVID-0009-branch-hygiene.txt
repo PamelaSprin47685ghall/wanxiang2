@@ -1,0 +1,18 @@
+== EVID-0009 分支与 stash 卫生 ==
+时间：2026-10-25T20:07:09Z
+
+--- git stash list（修复后）---
+(空 = 已清)
+
+--- git branch -vv ---
+* main 81cf961 [origin/main] Merge pull request #9 from lcw918110/delivery/ci-failure-evidence-upstream
+
+--- git ls-remote --heads fork ---
+fatal: unable to access 'https://github.com/lcw918110/wanxiang2/': Operation too slow. Less than 1000 bytes/sec transferred the last 10 seconds
+(网络不可达，命令退出码 128)
+
+--- stash 备份（内容已并入 main，见 EVID-0009-stash-backup.patch）---
+-rw-r--r--@ 1 Licw  staff  21230 Oct 26 03:54 _审视/证据/EVID-0009-stash-backup.patch
+diff --git a/compose/AppShell/AGENTS.md b/compose/AppShell/AGENTS.md
+index 5f9f08c..9a43979 100644
+--- a/compose/AppShell/AGENTS.md

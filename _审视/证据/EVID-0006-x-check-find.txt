@@ -1,0 +1,11 @@
+== EVID-0006 x check 的控件库计数（首轮记录）==
+时间：2026-10-25T20:06:56Z
+
+首轮沙箱内输出：
+check ok:  109 libs ...;  71 composer(s) ...; 0 control librar(y|ies) with a gallery entry
+
+非沙箱重跑输出（2026-10-26 复测）：
+check ok:  109 libs ...;  71 composer(s) ...; 17 control librar(y|ies) with a gallery entry
+
+差异说明：首轮的 0 是 find -exec 在沙箱内失败造成的，见 EVID-0011。
+控件库的真实数量以 17 为准。

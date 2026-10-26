@@ -1,0 +1,34 @@
+== EVID-0007 控件库覆盖门禁：两种环境对照 ==
+时间：2026-10-25T20:06:56Z  提交：81cf961
+
+--- 沙箱内 ---
+0 control librar(y|ies) with a gallery entry
+
+--- find 失败原文（沙箱内）---
+find: sysconf(_SC_ARG_MAX): Operation not permitted
+find: no space for arguments
+
+--- 非沙箱 ---
+17 control librar(y|ies) with a gallery entry
+
+--- 控件库名单（非沙箱下 control_libs 的实际输出）---
+ActionStrip
+ApprovalPanel
+AttachmentTray
+BatchBar
+BrandMark
+ChatEmpty
+ChatHeader
+ConfirmPane
+DevicesPane
+ExportSheet
+FieldCheck
+FocusOrigin
+IconSet
+ModelSwitchPanel
+PalettePanel
+PopupMenu
+ToastStrip
+
+--- 画廊条目数 ---
+      22

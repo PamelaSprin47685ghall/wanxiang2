@@ -41,7 +41,7 @@
 
 ## 4. 可访问名称与语义
 
-- 共享原语 `iconButton`：`libs/DevicesPane/Ui.fs` 的 `Ui.iconButton`（设置页各分区共用），以及 `compose/Theme/ThemeStyles.fs` 的 `icon-button` 样式类与 `compose/MessageCardView/Looks.fs` 的装饰函数。这些原语在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。历史上的 `UiKit` 已整库退役删除（2026-10-20），不再是任何原语的落点。
+- 共享原语 `iconButton`：`libs/DevicesPane/Ui.fs` 的 `Ui.iconButton`（设置页各分区共用），以及 `compose/Theme/ThemeStyles.fs` 的 `icon-button` 样式类与 `compose/MessageCardView/Looks.fs` 的装饰函数。其中只有 `DevicesPane.Ui.iconButton` 在此入口同时设置 `ToolTip` 与 `AutomationProperties.Name`；`ThemeStyles` 的样式类和 `MessageCardView/Looks.fs` 的装饰函数只负责外观，不能据此证明按钮已有可访问名称，须检查实际调用方及原生 peer；旧仓库当时有 220 余处 `AutomationProperties` 使用（本仓库不再记这个总数，机械检查见 §8）。历史上的 `UiKit` 已整库退役删除（2026-10-20），不再是任何原语的落点。
 - 规则（已测）：图标按钮调用不得传空字符串或 null 作为 tip，否则按钮对辅助技术是无名控件。
 - **整树遍历断言（已测，决策 G5）**：`compose/AppShell/tests/A11yTraversalTests.fs` 对每个主屏幕的控件树（视觉树 ∪ 逻辑树）逐节点判定：
   - 可聚焦 = `Focusable` 且沿祖先链可见且沿祖先链可用（与 `libs/FocusOrigin` 的 `focusables` 同口径）；

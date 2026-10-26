@@ -1,0 +1,9 @@
+== EVID-0010 CASE-0013 验收输出（从 EVID-0010-fix-verification.txt 拆出）==
+
+--- CASE-0013 哈希命令有跨平台回退 ---
+cmd: grep -n sha256sum publish.sh
+78:  # sha256：macOS 默认没有 `sha256sum`（GNU coreutils），回退到 `shasum -a 256`。
+79:  (cd "$OUT_DIR" && { sha256sum "$art" 2>/dev/null || shasum -a 256 "$art"; } > "$art.sha256")
+cmd: 失效 sha256sum stub 下回退验证
+结果: 5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  a.tar.gz
+期望: 5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  /var/folders/x7/1ggk59gx4qx070j2z770n7p80000gn/T/tmp.uSZWoQxcrL/a.tar.gz

@@ -136,7 +136,7 @@
 | --- | --- | --- | --- |
 | `.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本；包版本固定为 `0.0.0-local` | 107 个工程：`compose/*` 93 个、`libs/` 12 个（`ActionStrip`、`AttachmentTray`、`BatchBar`、`ChatEmpty`、`ChatHeader`、`ConfirmPane`、`CopyButton`、`DevicesPane`、`ToastStrip`、`WorkspaceState`，以及 `DevicesPane`/`ToastStrip` 各自的 `tests` 工程）、`app/` 两个入口 | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
 | WorkspaceState 单一状态树需要多兄弟包依赖（现值 11 个：`BoundedWait`、`ConnectionIssue`、`ConversationSummary`、`DevicesModel`、`DraftStore`、`ForkLineage`、`HostCatalog`、`MessageView`、`NavigationState`、`UiPrefs`、`Wire`） | 21 个生产工程：`compose/AppShell`、`ApprovalDesk`、`ChatPane`、`ChatScreen`、`ComposerDesk`、`EntryShells`、`Gallery`、`MessageCardView`、`OverlayDesk`、`SettingsScreen`、`SidebarDesk`、`Workspace`，以及 `libs/ActionStrip`、`AttachmentTray`、`BatchBar`、`ChatEmpty`、`ChatHeader`、`ConfirmPane`、`CopyButton`、`DevicesPane`、`ToastStrip` | WorkspaceState 是单一状态树，投影直接携带领域事实类型（会话摘要行、设备信息、读取等待、看图判定），不再复制字段 | 事实类型下沉 WorkspaceState 或投影改传原始 Wire 类型后收窄；判定口径：`grep -oE 'Wanxiang2\.[A-Za-z0-9]+' libs/WorkspaceState/WorkspaceState.fsproj` 只剩自身 |
-| `libs/FocusOrigin` 的 `OverlayLayer` 自研图层调度（Canvas/Margin 落点钳位、遮罩栈、滚轮隔离、Esc 级联退栈、跨层焦点恢复），与该库其余附加行为一并交付 | `compose/OverlayDesk`、`compose/Gallery`（生产消费者）；经 OverlayDesk 间接使用的 `compose/ModelSwitchDesk`、`DialogsDesk`、`TransferDesk`、`SettingsScreen`、`ApprovalDesk`、`PaletteDesk`、`ChatScreen`、`SidebarDesk`、`Workspace`、`AppShell` 与 `app/` 两个入口 | 实测（2026-10-20）Avalonia 12.1.2 原生 Popup/FlyoutBase 无同等语义：LightDismiss 不拦 PointerWheelChanged、Popup 不消费 Esc、无法与 dialogGuard 协同、无法注入动态 ViewportInset、浮层销毁后焦点栈溃散（证据：OverlayAdjudicate 探针，`libs/FocusOrigin/tests/OverlayLayer.Tests.fs` 7 项通过） | Avalonia 提供可自定义 positioner+约束回调、可拦截滚轮的 light-dismiss 覆盖层、以及嵌套模态焦点归还契约后改写；判定口径：`compose/OverlayDesk` 不再 `open Wanxiang2.OverlayLayer` |
+| `libs/FocusOrigin` 的 `OverlayLayer` 自研图层调度（Canvas/Margin 落点钳位、遮罩栈、滚轮隔离、Esc 级联退栈、跨层焦点恢复），与该库其余附加行为一并交付 | `compose/OverlayDesk`、`compose/Gallery`（生产消费者）；经 OverlayDesk 间接使用的 `compose/ModelSwitchDesk`、`DialogsDesk`、`TransferDesk`、`SettingsScreen`、`ApprovalDesk`、`PaletteDesk`、`ChatScreen`、`SidebarDesk`、`Workspace`、`AppShell` 与 `app/` 两个入口 | 实测（2026-10-20 / 2026-10-24）Avalonia 12.1.2 原生 Popup/FlyoutBase 无同等语义：LightDismiss 不拦 PointerWheelChanged、Popup 不消费 Esc、编程式打开的 ContextMenu.Close() 在 headless 下不翻转 IsOpen、无法与 dialogGuard 协同、无法注入动态 ViewportInset、浮层销毁后焦点栈溃散（证据：`libs/FocusOrigin/AGENTS.md`、`libs/FocusOrigin/tests/OverlayLayer.Tests.fs` 7 项与 `compose/AppShell/tests/ShortcutInterceptTests.fs` 中 3 条原生/自研浮层拦截用例的历史通过记录；该文件另有 1 条对话框用例，本轮未重跑这些行为测试） | Avalonia 提供可自定义 positioner+约束回调、可拦截滚轮的 light-dismiss 覆盖层、以及嵌套模态焦点归还契约后改写；判定口径：`compose/OverlayDesk` 不再 `open Wanxiang2.OverlayLayer` |
 
 已解除项的历史记录见 `docs/archive/handoffs/2026-10-20-exceptions-released.md`（只读档案，不再是规则本体）。
 
@@ -152,7 +152,9 @@
     本仓库不引用旧仓库的任何源码、包或运行时服务。
 3. **语言。** [AXIOM: 5]
     交流、注释与规则文档用中文，其余用英语。
-4. **现有代码都是草稿。** [LEMMA: 1, 8]
+4. **界面设计方向。** [AXIOM: 1, 5; LEMMA: 10]
+ 主仓 `5103af9` 提出以 `react-ui` 设计稿所表达的 UX 为目标，采用 Avalonia 原生实现，不把 React 原型搬入运行时。后续 `06fe53a`、`8007cd3`、`31f1ce5` 是已实施对齐的记录；本次文档整理不得回退这些改动，也不得仅凭提交记录或像素基线通过宣称全部视觉目标已验收。未取得的视觉与交互验收证据保持待验证。
+5. **现有代码都是草稿。** [LEMMA: 1, 8]
     本仓库的实现可以大改，不为保留现有接口而增加兼容层。
 
 ## 布局与工具
@@ -169,7 +171,7 @@
 
 1. **只用 Avalonia 原生控件，废除 `Border` 仿制件。** [AXIOM: 2, 5; LEMMA: 10]
    按钮用 `Button`，开关用 `ToggleSwitch` / `CheckBox`，下拉选择用 `ComboBox`，菜单与气泡用 `ContextMenu` / `MenuFlyout` / `Flyout`，折叠用 `Expander`，长列表用 `ItemsControl` 或 `ListBox` 配合原生 `VirtualizingStackPanel`。
-   不再使用 `Tap`、`Spot`、`InvokeBorder` 等以 `Border` 冒充交互控件的做法，也不再手写 `AutomationPeer`、手算浮层坐标（`PopupPlacement` 已退役，ToastQueue/ToastDwell 迁入 OverlayDesk，原生定位接管）或手搓列表挂载窗口（`MountWindow` 已解除并物理删除，ChatScreen 直呈完整卡片列表；CardReconcile 对账器物理删除，内部缓存直投影）。全仓 Border 仿制件清零、手写 AutomationPeer 全删。
+   不再使用 `Tap`、`Spot`、`InvokeBorder` 等以 `Border` 冒充交互控件的做法（`libs/ExportSheet` 内部保留的 `internal Tap` 已改为 `inherit Button()`，属原生 `Button` 封装而非 `Border` 仿制件），也不再手写 `AutomationPeer`、手算浮层坐标（`PopupPlacement` 已退役，ToastQueue/ToastDwell 迁入 OverlayDesk，原生定位接管）或手搓列表挂载窗口（`MountWindow` 已解除并物理删除，ChatScreen 直呈完整卡片列表；CardReconcile 对账器物理删除，内部缓存直投影）。全仓 Border 仿制件清零、手写 AutomationPeer 全删。
 
 2. **样式与动效归 Avalonia 资源与样式系统，废除 `*Look` 记录与帧定时器。** [AXIOM: 2; LEMMA: 10]
    颜色、字号、间距、圆角、过渡时长统一登记在主题层的 `ResourceDictionary`（含 Light / Dark `ThemeVariant`）与 `ControlTheme` / `Styles` 中。控件通过 `DynamicResource` 与样式类（`Classes`）获取外观。
@@ -202,7 +204,7 @@
 - SPEC 6 每步形成真实闭环：见 `docs/archive/handoffs/2026-10-24-delivery-verification.md` 与 `docs/archive/handoffs/2026-10-17-migration-and-extraction.md` 的历史账目；当期闭环证据写在各库 / 组合者的 `AGENTS.md`。
 - SPEC 7 界面验证的机器门禁（2026-10-21 新增；2026-10-23 扩展）：`./x hygiene`（断言卫生——恒真断言 / 恒真谓词 / 空转的事实一律红灯，脚本 `tools/assert-hygiene.sh`，覆盖 `libs/*/tests` 与 `compose/*/tests`）；`./x lint`（界面文案——禁用同义词 / 取消类提示须写明 Esc / 中文省略号 / PWA 壳术语，脚本 `tools/lint-copy.sh`，覆盖 `libs` + `compose` + `app` 的生产 `.fs` 与 PWA 壳交付物）；`./x check` 内的 Fantomas 格式门禁（`./x format-check`，只查目标文件）与控件库画廊覆盖核对（`gallery_coverage`）；`./x gallery-baseline`（画廊深浅双主题像素基线核查，G3，脚本 `tools/gallery-baseline.sh`，缺基线或像素差异即红，见 `compose/Gallery/AGENTS.md`）。`hygiene` 与 `lint` 只需源码、秒级，已接入 `./x all` 与 CI；`gallery-baseline` 单独作为 CI 作业在 `pack` 之后消费 feed。
 - SPEC 7 界面验证的人工工具（2026-10-21；2026-10-24 更新）：组件画廊 `compose/Gallery` + `tools/gallery.sh`（41 条条目 / `--window` 真实桌面窗口 / `--render <条目名> <输出.png> [--theme light|dark]` 出 720×900 的 PNG；用隔离的包缓存 `artifacts/gallery-cache`）。状态由 `Workspace.init ()` + `Workspace.update` 的消息序列跑出、经 `Workspace.project` 投影，不手搓视图状态记录（对话框一条走真实控件入口，因为对话框的「打开」状态是桌内分工、不在状态树里；错误卡走卡片组的真实入口。各条的归属见 `compose/Gallery/AGENTS.md`《已知缺口与各自的归属》）；状态用固定时钟（`Scenes.fixedNow`），同一条目连渲两次 PNG 逐字节相同。像素基线门禁（G3，`tools/gallery-baseline.sh` + `compose/Gallery/Baseline.fs`，全部 41/41 条目 × 深浅两态 = 82 张基线，缺基线或像素差异即红）与画廊控件树无障碍审查（`--a11y-audit`，`compose/Gallery/A11yAudit.fs`；AppShell 各屏幕的整树遍历在 `compose/AppShell/tests/A11yTraversalTests.fs`）已并入门禁面；浏览器侧真实交互 e2e 已由 `tools/smoke_published.sh` 覆盖；真机屏幕阅读器实测仍未做（`docs/ux/a11y-audit.md` §1；环境限制见 `docs/evidence/2026-10-23-handoff/initial-state.md`）。
-- SPEC 7 界面改动的交付契约（2026-10-21 新增）：`docs/frontend-dev-process.md` §5 是一份由**改界面的工程师自己**走完并留证的清单——需求/用户旅程 → 状态与交互设计 → 实现 → 真实界面截图 + 键盘 + 无障碍行为 → 针对性测试 → 包与干净消费 → 两个入口 → 已发布产物冒烟 → 证据与已知边界（所有权原则：SWE = DevOps，交付者自己负责把东西送上线，不把验证外包给下游）。
+- SPEC 7 界面改动的交付契约（2026-10-21 新增）：`docs/frontend-dev-process.md` §5 是一份由**改界面的工程师自己**走完并留证的清单——需求/用户旅程 → 状态与交互设计 → 实现 → 真实界面截图 + 键盘 + 无障碍行为 → 针对性测试 → 包与干净消费 → 两个入口 → 已发布产物冒烟 → 证据与已知边界（职责分离：Engineer 负责实现与回归用例，另一个 DevOps 执行体负责运行构建、测试、冒烟并留存原始输出；交付者核对证据后收口。写入修改与执行验证必须由不同执行体承担，未执行的验证不得声称通过）。
 - SPEC 7 PWA 中文字体（2026-10-21 修复并回填）：浏览器端没有系统字体，此前没在根上设字体，中文全是豆腐块。根因不是「headless Chrome / SwiftShader 的 WebGL 字体限制」，而是**可视树根上没指定字体族**。修法是在 PWA 入口的根 `Grid` 上设继承型附加属性 `TextElement.FontFamilyProperty`（`app/Pwa/Program.fs` 的 `buildViewsOnce`），整棵树继承内嵌的 Sarasa；桌面入口 `app/Desktop/Program.fs` 不动（用系统字体）。弹出层（ToolTip / ContextMenu / MenuItem / MenuFlyoutPresenter）挂在独立弹出根上、继承不到根字体，另在 `compose/EntryShells/App.fs` 显式指定同一字体族。回归用例是 `compose/EntryShells/tests/Tests.fs` 的 `EmbeddedFontTests`（内嵌正文字体族能解析出字形 / 覆盖常用汉字 / 等宽字体把正文字体列为回落），字体资源为 `libs/ThemeFonts/Assets/Fonts/SarasaGothicSC-Regular.subset.ttf`。
 
 ## 历史账目（只读指针）

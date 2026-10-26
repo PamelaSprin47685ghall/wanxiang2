@@ -1,0 +1,364 @@
+== EVID-0015 第二轮文档修复的独立验证（DevOps / Verifier 只读执行）==
+
+执行时间：2026-10-26 13:22:27 +0800
+工作目录：/Users/Licw/Desktop/git/wanxiang2
+HEAD：0a9e3db（fix: 兼容浅克隆作业下 ./x check 的空白检查与精确断言）
+执行体角色：独立验证执行体（只读）。未修改任何已跟踪的代码或文档；唯一写入是本证据文件。
+远端：origin = https://github.com/PamelaSprin47685ghall/wanxiang2（主仓）；fork = https://github.com/lcw918110/wanxiang2
+
+--- 0 工作区状态 ---
+
+$ git status --short
+ M AGENTS.md
+ M docs/evidence/2026-10-24-verified-release/README.md
+ M docs/ux/a11y-audit.md
+ M docs/ux/widget-coverage.md
+?? "_审视/"
+EXIT=0
+
+$ git diff --stat
+ AGENTS.md                                           | 10 ++++++----
+ docs/evidence/2026-10-24-verified-release/README.md |  3 ++-
+ docs/ux/a11y-audit.md                               |  2 +-
+ docs/ux/widget-coverage.md                          | 19 +++++++------------
+ 4 files changed, 16 insertions(+), 18 deletions(-)
+EXIT=0
+
+结论：工作区恰好 4 个已跟踪文档改动（与委托清单一致），加上未跟踪的 `_审视/`。
+`_审视/` 为未跟踪目录（`git ls-files _审视` 输出为空），符合「审视产出不入库」的现状。
+
+--- 1 A1：AGENTS.md 的 react-ui 脉络与 SPEC 7 职责分离 ---
+
+$ rg -n "界面设计方向" AGENTS.md
+155:4. **界面设计方向。** [AXIOM: 1, 5; LEMMA: 10]
+
+$ sed -n '155,157p' AGENTS.md
+4. **界面设计方向。** [AXIOM: 1, 5; LEMMA: 10]
+ 主仓 `5103af9` 提出以 `react-ui` 设计稿所表达的 UX 为目标，采用 Avalonia 原生实现，不把 React 原型搬入运行时。后续 `06fe53a`、`8007cd3`、`31f1ce5` 是已实施对齐的记录；本次文档整理不得回退这些改动，也不得仅凭提交记录或像素基线通过宣称全部视觉目标已验收。未取得的视觉与交互验收证据保持待验证。
+5. **现有代码都是草稿。** [LEMMA: 1, 8]
+
+提交真实性核对（5 个哈希全部存在，且都在 main 的祖先链上）：
+
+$ for c in 5103af9 06fe53a 8007cd3 31f1ce5 ccefc35; do git log -1 --format='%h %s' $c; done
+5103af9 -> 5103af9 Implement code changes to enhance functionality and improve performance
+06fe53a -> 06fe53a 按 react-ui 设计净断迁移桌面 UX：全量控件对齐并重建画廊双主题像素基线
+8007cd3 -> 8007cd3 按 react-ui 逐位置对齐桌面 UX：阅读列、顶栏标题块、页脚行序与空态对齐 …
+31f1ce5 -> 31f1ce5 对齐 react-ui 设计稿：衬线标题栈、品牌「万」标、视口分档留白与紧凑投影
+ccefc35 -> ccefc35 G7 控件库必须有画廊条目：定判据、加 ./x check 规则、补 16 条画廊条目
+
+`5103af9` 确实提出 react-ui 设计方向（原文，非本次改写）：
+$ git show 5103af9:AGENTS.md | grep -n "react-ui"
+125:react-ui 分支是一个设计师的设计稿，比目前好看太多。请你把本仓库 clean-break 成那种 UX。要 Avalonia 原生化，要完全看不出来是 React 做的原型。
+
+$ git branch -a --contains 5103af9 | tr '\n' ' '
+* fix/audit-round1-docs-and-scripts   main   remotes/fork/HEAD -> fork/main   remotes/fork/fix/audit-round1-docs-and-scripts   remotes/fork/main   remotes/origin/HEAD -> origin/main   remotes/origin/main
+（06fe53a、8007cd3、31f1ce5 的包含关系同上，均在 origin/main 上）
+
+祈使句残留检查：
+$ rg -n "react-ui 分支是" AGENTS.md
+（无输出）→ 原祈使句已移除，改为陈述式脉络记录。
+
+SPEC 7 职责分离：
+$ rg -n "职责分离：Engineer" AGENTS.md
+207:- SPEC 7 界面改动的交付契约（2026-10-21 新增）：… （职责分离：Engineer 负责实现与回归用例，另一个 DevOps 执行体负责运行构建、测试、冒烟并留存原始输出；交付者核对证据后收口。写入修改与执行验证必须由不同执行体承担，未执行的验证不得声称通过）。
+
+旧的「所有权原则：SWE = DevOps」措辞已从活文档消失：
+$ git grep -n "SWE = DevOps" -- '*.md'
+docs/evidence/2026-10-23-handoff/docs-report.md:33:（历史交接档案，非现行规则）
+
+A1 判定：**通过**。
+说明：新增第 4 条使原「现有代码都是草稿」顺延为第 5 条；全仓无引用「《需要》第 4 条」的悬空引用（git grep 无命中）。
+低severity 观察：第 4 条正文行的缩进是 1 个空格，同级条目正文为 4 个空格（`sed -n '143,162p' AGENTS.md | nl -ba` 可见）。渲染上仍属该列表项（CommonMark 惰性续行），但风格与兄弟条目不一致，且有排版工具介入时易被误改。
+
+--- 2 A2：widget-coverage.md §1.2 与 §2 的口径统一 ---
+
+$ sed -n '28,46p' docs/ux/widget-coverage.md
+## 1. 控件库资格认定规则
+依据根 `AGENTS.md`《控件库交付约定》及决策提交 `ccefc35`：引用 Avalonia 本身不足以认定控件库；生产源码构造 Avalonia 控件才触发覆盖要求。画廊提供真实呈现与交互的检查入口，不能用库名或“附加行为”标签豁免实际构造控件的代码。
+### 1.1 控件库认定条件
+位于 `libs/<Name>/`，且生产源码（不含 `tests/`、`obj/`、`bin/`）构造了至少一个 Avalonia 控件类型，即须有画廊条目。类型清单见 `tools/avalonia-controls.txt`；`./x check` 执行覆盖核对，不另设人工豁免名单。
+### 1.2 不构造控件的库
+只做数据、资源或行为附加且不构造控件的库，不触发本覆盖要求，例如 `CopyButton`、`ImeShield`、`InputSense`。其自身契约仍需相应测试。
+`FieldCheck`、`FocusOrigin`、`IconSet` 构造控件，不能按职责标签豁免，分别由 `FieldCheck.invalid`、`FocusOrigin.programmatic`、`IconSet.glyphs` 提供画廊入口。有条目只证明存在检查入口，不证明全部状态、无障碍行为或像素已验证。
+
+旧口径（「职责上不必强制，但机械上已强制」两套并存的说明段落）已删除：
+$ git diff docs/ux/widget-coverage.md | grep -E '^-.*(机械上算控件库|两套口径)'
+- > 这一节判断的是「该不该被强制要求画廊条目」，不改变 `./x check` 的机械判定。… 两套口径的位置不同：本节说职责上不必强制，`./x check` 说已经强制且已覆盖——后者是当前事实，前者是判据意图。…
+
+机械复核（不依赖文档自述）：
+$ pattern=$({ grep -v '^#' tools/avalonia-controls.txt; } | grep -v '^[[:space:]]*$' | paste -sd'|' -)
+$ for d in libs/*/; do …逐个 find + grep…; done
+17
+ActionStrip ApprovalPanel AttachmentTray BatchBar BrandMark ChatEmpty ChatHeader ConfirmPane
+DevicesPane ExportSheet FieldCheck FocusOrigin IconSet ModelSwitchPanel PalettePanel
+PopupMenu ToastStrip
+
+§2 正文自述的 17 个名单与上面机械重算的 17 个逐个一致（顺序也一致）。
+
+三个「角色豁免但实际构造控件」的库单独复核：
+$ for lib in CopyButton ImeShield InputSense FieldCheck FocusOrigin IconSet; do …; done
+CopyButton: constructs=0
+ImeShield: constructs=0
+InputSense: constructs=0
+  libs/FieldCheck/FieldCheck.fs
+FieldCheck: constructs=1
+  libs/FocusOrigin/OverlayLayer.fs
+FocusOrigin: constructs=1
+  libs/IconSet/IconSet.fs
+IconSet: constructs=1
+→ 与 §1.2 的表述一字不差地吻合（CopyButton/ImeShield/InputSense 不构造；FieldCheck/FocusOrigin/IconSet 构造）。
+
+计数复核：
+$ ls compose/Gallery/baselines/*.png | wc -l           → 82
+$ ls compose/Gallery/baselines/*.png | sed -E 's#.*/([^/]+)\.(dark|light)\.png#\1#' | sort -u | wc -l → 41
+$ ls -d compose/*/ | wc -l                              → 71
+$ ls -d compose/*/tests/*.fsproj | wc -l                → 67
+→ 文首「17 个控件库 / 41 条画廊条目 / 71 个组合者」与当前树一致。
+
+§4 历史表交叉核对（表 26 行 vs 基线 41 条）：
+$ comm -23 <(sort §4 行名) <(sort 基线名)   → ApprovalDesk.request（文中已明说「已被 ApprovalPanel.approval 取代」）
+$ comm -13 <(sort §4 行名) <(sort 基线名)   → 16 条（ActionStrip.actions … ToastStrip.toast）
+文中表述「下表 26 行里，25 行仍存在，`ApprovalDesk.request` 已被 `ApprovalPanel.approval` 取代。表中未列出的 16 条为后补：…」与实测一致；
+文首另加的「原 §2/§4 记载 15 个控件库 / 26 条画廊条目，但早先的 ccefc35 已新增覆盖条目，不能将这些旧数字认定为该日准确快照」也成立：
+$ git log -1 --format='%h %ci %s' ccefc35
+ccefc35 2026-10-22 03:46:42 +0800 G7 控件库必须有画廊条目：定判据、加 ./x check 规则、补 16 条画廊条目
+（ccefc35 = 2026-10-22，早于本文件自称的写作日 2026-10-23；故「26 条」在当时就不成立，新表述已如实标注。）
+
+A2 判定：**通过**。§1.2 与 §2、根 `AGENTS.md`、`ccefc35` 口径已统一为单一判据（生产源码构造 Avalonia 控件即计入并须有画廊条目），不再残留「职责豁免 vs 机械强制」自相矛盾段落。
+
+--- 3 A3：a11y-audit.md §4 的准确表述 ---
+
+$ git diff docs/ux/a11y-audit.md
+-- 共享原语 `iconButton`：`libs/DevicesPane/Ui.fs` 的 `Ui.iconButton`（设置页各分区共用），以及 `compose/Theme/ThemeStyles.fs` 的 `icon-button` 样式类与 `compose/MessageCardView/Looks.fs` 的装饰函数。这些原语在 tip 非空时同时设置 `ToolTip` 与 `AutomationProperties.Name`；…
++- 共享原语 `iconButton`：`libs/DevicesPane/Ui.fs` 的 `Ui.iconButton`（设置页各分区共用），以及 `compose/Theme/ThemeStyles.fs` 的 `icon-button` 样式类与 `compose/MessageCardView/Looks.fs` 的装饰函数。其中只有 `DevicesPane.Ui.iconButton` 在此入口同时设置 `ToolTip` 与 `AutomationProperties.Name`；`ThemeStyles` 的样式类和 `MessageCardView/Looks.fs` 的装饰函数只负责外观，不能据此证明按钮已有可访问名称，须检查实际调用方及原生 peer；…
+
+三处落点逐一核对：
+
+(1) libs/DevicesPane/Ui.fs:110-119
+    let iconButton content tip action =
+        let b = Button(Content = content)
+        b.Classes.Add "icon-button"
+        b.Classes.Add "ghost"
+        AutomationProperties.SetName(b, tip)
+        ToolTip.SetTip(b, tip)
+        b.Click.Add(fun _ -> action ())
+        b
+ → 构造处同时设 ToolTip 与 AutomationProperties.Name。与文档一致。
+
+(2) compose/Theme/ThemeStyles.fs（样式类 icon-button）
+$ rg -n "ToolTip|AutomationProperties" compose/Theme/ThemeStyles.fs
+（无输出）
+$ rg -n "iconButton" compose/Theme/ThemeStyles.fs
+42:    let iconButton = "icon-button"
+43:    let iconButtonAccent = "icon-button-accent"
+184/219:  StyleClass.iconButton …（border cls / buttonCls cls + 尺寸、圆角、底色）
+ → 只定义样式类与外观，无无障碍名称写入。与文档一致。
+
+(3) compose/MessageCardView/Looks.fs（装饰函数 DressIcon）
+$ sed -n '40,51p' compose/MessageCardView/Looks.fs
+        let iconButton (b: Control) =
+            surface StyleClass.hoverPlain b
+            b.Classes.Add StyleClass.iconButton
+ …
+            DressIcon = iconButton
+$ rg -n "ToolTip|Automation" compose/MessageCardView/Looks.fs
+（无输出）
+ → 只挂样式类与表面反馈，无无障碍名称写入。与文档一致。
+ 其实际调用方 compose/MessageCardView/Card.fs:180-183 才设名称与提示（`ToolTip.SetTip` + `AutomationProperties.SetName`），正对应文档新增的「须检查实际调用方及原生 peer」。
+
+A3 判定：**通过**。表述已从「这些原语同时设置 ToolTip 与 Name」收紧为「只有 DevicesPane.Ui.iconButton 在此入口同时设置；其余只负责外观」，三个落点与源码逐条吻合。
+
+--- 4 A4：例外清单中 OverlayLayer 的证据指针 ---
+
+$ for f in libs/FocusOrigin/AGENTS.md libs/FocusOrigin/tests/OverlayLayer.Tests.fs compose/AppShell/tests/ShortcutInterceptTests.fs; do …; done
+EXISTS: libs/FocusOrigin/AGENTS.md
+EXISTS: libs/FocusOrigin/tests/OverlayLayer.Tests.fs
+EXISTS: compose/AppShell/tests/ShortcutInterceptTests.fs
+
+不存在的探针名已移除（全仓已跟踪文件）：
+$ git grep -n "OverlayAdjudicate"
+（无输出，NO MATCH）
+（注：`_审视/证据/EVID-0002-agents-deleted-sections.txt` 与 `_审视/审视主文档.md` 里出现该词，属审视档案对旧文本的引述与修复说明，非活文档，未跟踪。）
+
+改动后的清单表述：
+$ sed -n '139p' AGENTS.md
+| `libs/FocusOrigin` 的 `OverlayLayer` 自研图层调度（…） | … | 实测（2026-10-20 / 2026-10-24）Avalonia 12.1.2 原生 Popup/FlyoutBase 无同等语义：LightDismiss 不拦 PointerWheelChanged、Popup 不消费 Esc、编程式打开的 ContextMenu.Close() 在 headless 下不翻转 IsOpen、无法与 dialogGuard 协同、无法注入动态 ViewportInset、浮层销毁后焦点栈溃散（证据：`libs/FocusOrigin/AGENTS.md`、`libs/FocusOrigin/tests/OverlayLayer.Tests.fs` 7 项与 `compose/AppShell/tests/ShortcutInterceptTests.fs` 3 项通过） | …
+
+「7 项」核对：
+$ grep -c '\[<Fact>\]' libs/FocusOrigin/tests/OverlayLayer.Tests.fs
+7
+（7 条用例名：dialog is constrained… / popup flips and clamps… / escape precedence… / wheel outside… / wheel inside… /
+  对话框里 Tab 圈在内容里循环… / 视口留白是活的…）
+
+「3 项」核对：
+$ grep -c '\[<Fact>\]' compose/AppShell/tests/ShortcutInterceptTests.fs
+4
+4 条用例名：
+  1) 对话框打开时快捷键被拦，Escape 退栈后恢复可用
+  2) 真实菜单（OverlayDesk.ShowMenu）打开时快捷键被拦，Escape 退栈后恢复可用
+  3) 原生 ContextMenu（独立弹层宿主）打开时快捷键被拦，Escape 交还原生关闭契约
+  4) 原生 MenuFlyout（独立弹层宿主）打开时快捷键被拦，Escape 关闭后恢复可用
+→ 文件里是 4 条事实而非 3 条。若「3 项」按「原生/自研浮层（菜单/弹层）拦截」口径只数第 2、3、4 条则成立；
+  但清单句未写这个限定，读者会按文件总数核对，得到 4。判为**数字口径不严**（低 severity），不构成指针失效。
+
+同源交叉证据（说明该数字来自当时的实测记录，而非凭空）：
+$ rg -n "三条|8 条" libs/FocusOrigin/AGENTS.md
+39:- 证据：`compose/AppShell/tests/ShortcutInterceptTests.fs` 三条原生/自研浮层拦截用例；`libs/FocusOrigin/tests` 8 条（含边界）全绿。… AppShell 50 条里 2 条失败…修复后 50/50 通过；…
+$ for f in $(git ls-tree --name-only 30eb138 compose/AppShell/tests/ | grep '\.fs$'); do …; done | 合计
+50
+→ 2026-10-24 提交(30eb138)时 AppShell 恰好 50 条事实，「50/50」成立；`libs/FocusOrigin/tests` 合计 8 条（OverlayLayer 7 + FocusOrigin 1）也成立。
+  说明「三条」是当时同一批证据里沿用的口径（排除对话框那一条），并非笔误。
+
+A4 判定：**基本通过，附一处数字待收紧**。三个指针全部真实存在；`OverlayAdjudicate` 已从活文档消失；「7 项」准确；「3 项」与文件实际 4 条事实不完全对应，建议改为「4 项（含对话框一条）」或补明「其中原生/自研浮层拦截 3 项」。
+
+--- 5 A5：ExportSheet 内部 Tap 的原生基类 ---
+
+$ rg -n -A2 "type internal Tap" libs/ExportSheet/*.fs
+libs/ExportSheet/ExportSheet.fs:26:type internal Tap(child: Control, name: string, classes: string list, action: unit -> unit) as this =
+libs/ExportSheet/ExportSheet.fs-27-    inherit Button()
+libs/ExportSheet/ImportSheet.fs:26:type internal Tap(child: Control, name: string, classes: string list, action: unit -> unit) as this =
+libs/ExportSheet/ImportSheet.fs-27-    inherit Button()
+
+历史演变佐证（曾经确实是 Border 仿制件，后来改为原生 Button）：
+$ git show d8f35a0^:libs/ExportSheet/ExportSheet.fs | grep -n -A1 "type internal Tap"
+15:type internal Tap(child: Control, name: string, classes: string list, action: unit -> unit) as this =
+16-    inherit Border()
+
+$ sed -n '20,60p' libs/ExportSheet/ExportSheet.fs
+/// 可点的原生 Button，继承 Button 获得原生自动化、键盘导航与悬停反馈。
+type internal Tap(…) as this =
+    inherit Button()
+    do
+        this.Content <- child
+        this.Focusable <- true
+ … AutomationProperties.SetName(this, name) … this.Click.Add(…)
+
+文档表述：
+$ rg -n "ExportSheet" AGENTS.md
+174:   不再使用 `Tap`、`Spot`、`InvokeBorder` 等以 `Border` 冒充交互控件的做法（`libs/ExportSheet` 内部保留的 `internal Tap` 已改为 `inherit Button()`，属原生 `Button` 封装而非 `Border` 仿制件），也不再手写 `AutomationPeer`、…
+
+全仓「Border 冒充交互控件」残量复核（其余同名类型均已不存在）：
+$ rg -n "type (internal )?(Tap|Spot|InvokeBorder)" libs compose app --glob '!**/tests/**'
+libs/ExportSheet/ImportSheet.fs:26  (inherit Button)
+libs/ExportSheet/ExportSheet.fs:26  (inherit Button)
+$ git grep -n "InvokeBorder" -- '*.fs'
+（无输出）
+
+A5 判定：**通过**。文件与文档一致；并由 d8f35a0 的前后对比确认「曾为 Border、现为 Button」的记载属实。
+轻微措辞：两处 `Tap`（`ExportSheet.fs` 与 `ImportSheet.fs`）都存在，文档写「`libs/ExportSheet` 内部保留的 `internal Tap`」（单数）可接受，若求精确可写「两处」。
+
+--- 6 A6：证据 README 的环境变量与再生成语义 ---
+
+$ rg -n "SMOKE_OUT|SMOKE_SHOT_DIR" tools/smoke_published.sh
+103:SHOTS_OUT="${SMOKE_OUT:-$ROOT/artifacts/smoke-published}"
+
+$ git grep -n "SMOKE_SHOT_DIR"
+（无输出）
+→ 脚本真实读取的变量是 `SMOKE_OUT`；`SMOKE_SHOT_DIR` 是旧文档里的错名，现已从已跟踪文件清除。
+
+README 改动：
+$ git diff docs/evidence/2026-10-24-verified-release/README.md
++> 重新运行产生的是当前提交与当前环境下的新证据，不能恢复历史运行的原始截图、报告或字节内容；原始产物未入库的部分仍存在追溯缺口。
+ …
+-> - `artifacts/pwa-smoke/`（冒烟截图）：`SMOKE_SHOT_DIR=/tmp/pwa-smoke …`
++> - `artifacts/pwa-smoke/`（冒烟截图）：`SMOKE_OUT=/tmp/pwa-smoke bash tools/smoke_published.sh artifacts/publish/linux-x64`
+
+入库边界事实核对：
+$ git check-ignore -v docs/evidence/2026-10-24-verified-release/artifacts/pwa-smoke/shot.png
+.gitignore:4:artifacts/	docs/evidence/2026-10-24-verified-release/artifacts/pwa-smoke/shot.png
+→ 该路径确实被 `.gitignore` 的 `artifacts/` 规则忽略，README 的「未进入 Git 索引」表述成立。
+
+$ git ls-files docs/evidence/2026-10-24-verified-release | 已入库内容
+MANIFEST.json / README.md / search-package-smoke.log / logs/**（371 个文件）
+$ ls -la docs/evidence/2026-10-24-verified-release/search-package-smoke.log
+-rw-r--r--@ 1 Licw  staff  556 Oct 24 12:52 …/search-package-smoke.log
+→ README 所列「已入库的持久化证据（MANIFEST.json、search-package-smoke.log、logs/）」全部真实存在。
+
+A6 判定：**通过**，附一处**遗留矛盾未消除**（低—中 severity）：
+README 第 188 行仍写「复测通过的全套 25 张高质量运行截图已全量同步覆盖至 `docs/evidence/2026-10-24-verified-release/artifacts/pwa-smoke/`」，
+而第 7 行（本次维护的同一段说明）已声明该目录被 `.gitignore` 排除、不在索引里。
+$ rg -n "pwa-smoke" docs/evidence/2026-10-24-verified-release/README.md
+7:…（以及 `docs/evidence/2026-10-24-verified-release/artifacts/pwa-smoke/`）均属…未进入 Git 索引…（新）
+12:> - `artifacts/pwa-smoke/`（冒烟截图）：`SMOKE_OUT=…`（新）
+188:  - **产物同步**：…已全量同步覆盖至 `docs/evidence/2026-10-24-verified-release/artifacts/pwa-smoke/`。（旧句，未改）
+两处对同一路径的「是否入库」判断相反；第 188 行应改为「本机临时目录」或注明该次同步未入库。
+
+--- 7 仓库门禁实跑（本机 macOS，工作树含上述 4 个文档改动）---
+
+[1] ./x check
+$ ./x check
+format: checking 28 file(s)
+check ok:      109 libs with no sibling references;       71 composer(s) using packages only; 17 control librar(y|ies) with a gallery entry
+EXIT=0
+（复跑一次结果相同，EXIT=0；含 Fantomas 目标文件门禁 28 个文件、控件库画廊覆盖 17 个）
+
+[2] ./x whitespace-check
+$ ./x whitespace-check
+whitespace-check ok
+EXIT=0
+
+[3] ./x hygiene
+$ ./x hygiene
+扫描 521 个测试文件（libs/*/tests、compose/*/tests）
+
+R1 恒真断言（Assert.True(true) / Assert.False(false) / Assert.True() / 自反比较）:
+  ok   无恒真断言
+
+R2 恒真谓词（Assert.* 参数里的 '|| true' / 'true ||'）:
+  ok   无恒真谓词
+
+R3 空转的事实（[<Fact>] 函数体里没有断言、failwith 或会断言的本文件辅助函数）:
+  ok   无空转事实
+
+结果：断言卫生全部通过
+EXIT=0
+
+[4] ./x lint
+$ ./x lint
+扫描 378 个生产 .fs 文件（libs/ + compose/ + app/，排除 tests/tools/bin/obj），检查 1846 个中文串字面量
+另扫 3 个 PWA 壳交付物（index.html / main.js / manifest.webmanifest）
+结果：界面文案全部通过
+EXIT=0
+
+四条门禁合计：4/4 通过，退出码全为 0。
+
+未能完成的相关核查（如实记录，不计为通过）：
+$ timeout 150 bash tools/gallery.sh --list   → 无输出，EXIT=124（超时）
+$ timeout 200 bash tools/gallery.sh --list   → 无输出，EXIT=124（超时）
+原因：画廊入口需 `dotnet run` 构建并解析 `artifacts/feed`，本机 `artifacts/feed` 为空（0 个包）且无预置包缓存
+（$ du -sh artifacts/feed → 0B；$ ls artifacts/feed | wc -l → 0；$ ls ~/.nuget/packages | grep -ci wanxiang2 → 0）。
+因此「41 条画廊条目」在本证据中以 `compose/Gallery/baselines/*.png` 去重 41 + `./x check` 的
+`17 control librar(y|ies) with a gallery entry` 覆盖结论为依据，**未**用 `gallery.sh --list` 直接点条目标名。
+
+--- 8 附带的旁证核对（超出 A1–A6，供评审参考）---
+
+(1) 《例外清单》其他两行仍与当前树一致：
+$ rg -l 'VersionOverride="0.0.0-local"' --glob '**/*.fsproj' . | wc -l → 107
+  分项：compose 93 / libs 12 / app 2（与清单一致）
+$ rg -n 'Wanxiang2\.' libs/WorkspaceState/WorkspaceState.fsproj | wc -l → 11
+$ rg -l 'Wanxiang2\.WorkspaceState"' --glob '**/*.fsproj' . | grep -v '/tests/' | wc -l → 21（与清单一致）
+
+(2)（范围外，未在本次改动内）`docs/frontend-dev-process.md` 与现行事实不一致：
+$ rg -n "40 条|40\*\*|G3 未建|基线与判定仍没建" docs/frontend-dev-process.md
+28 / 56 / 158 / 169 / 213 / 227 / 392 / 437 行仍写「40 条」；170、395 行仍写「G3 未建 / 基线与判定仍没建」。
+而 `AGENTS.md` SPEC 7 与 `widget-coverage.md` 已声明 G3 建成、41 条条目、82 张基线。
+A1 新增的 SPEC 7 句子把该文件的 §5 指为交付契约来源，故这处漂移会直接削弱 A1 的可核对性。该文件本轮未被修改（`git status` 干净）。
+
+(3)（范围外）`_审视/审视主文档.md` 内部尚有不一致：
+- CASE-0011 表中第 9 行「实际命令 | 未执行（修复未做）」与第 12 行「执行状态 | 运行通过」并存（第 9 行未随修复回填）。
+- 第 1 章「最近更新时间 2026-10-26 04:12」与文件实际修改时间 12:54、正文已引用 `RUN-20261026-05/06` 不符。
+- 第 9 章「命令记录」表仍记 `./x check … 0 control librar(y|ies)`（首轮结果），未随本机现值 17 更新（该表为历史记录，可保留但应标注轮次）。
+- 第 9 章证据索引未收录 `EVID-0014`（文件已存在于 `_审视/证据/`），正文多处已引用。
+- ISSUE-0006 的复审条件写「本地均输出 17 control librar(y|ies)」，正文第 17 行却引用 `RUN-20261026-05`（该轮次标识在 §1 元信息中未登记为「当前执行标识」）。
+
+--- 9 总结 ---
+
+A1 通过（react-ui 脉络与三笔对齐提交齐备、SPEC 7 职责分离写明、旧 SWE=DevOps 措辞已退役；仅缩进风格与兄弟条目不一致）
+A2 通过（§1.2 与 §2 口径统一；17 控件库 / 41 条目 / 71 组合者经机械重算逐一成立）
+A3 通过（只有 DevicesPane.Ui.iconButton 在构造处设 ToolTip+Name；ThemeStyles 与 Looks.fs 经 rg 确认零无障碍写入）
+A4 基本通过（三个指针真实、OverlayAdjudicate 已清除、7 项准确；「3 项」与文件 4 条事实不符，建议补限定）
+A5 通过（两处 internal Tap 均为 inherit Button；d8f35a0 前后对比证明「曾为 Border」属实）
+A6 通过（SMOKE_OUT 为脚本真实变量；已说明重跑生成当前证据；但第 188 行「已同步至 docs/evidence/…/artifacts/pwa-smoke/」与第 7 行「该路径不入库」相反）
+
+门禁：./x check = 0、./x whitespace-check = 0、./x hygiene = 0、./x lint = 0（4/4 绿）
+未证明：`tools/gallery.sh --list` 因缺 feed 与包缓存超时（124），未直接点名 41 条条目。

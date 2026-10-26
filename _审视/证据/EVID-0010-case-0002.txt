@@ -1,0 +1,5 @@
+== EVID-0010 CASE-0002 验收输出（从 EVID-0010-fix-verification.txt 拆出）==
+
+--- CASE-0002 规则文件不含工作指令 ---
+cmd: grep -n 'react-ui' AGENTS.md
+(无命中，退出码 1)

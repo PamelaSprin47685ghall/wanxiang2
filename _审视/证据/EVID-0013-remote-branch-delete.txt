@@ -1,0 +1,46 @@
+== EVID-0013 fork 远端分支删除尝试（2026-10-26T00:54:42Z）==
+
+--- 1 远程可达后的 refs（删除前）---
+$ git ls-remote --heads fork
+b22728496f97b48d8533021a0d79f36bb61c2c3f	refs/heads/delivery/ci-failure-evidence-upstream
+bedb1430e5f4c4edf459f1fe6b5dbc6908e66b83	refs/heads/fix/ci-failure-evidence
+81cf96100dd0c6f3bf79fca7a116aeda8f472b89	refs/heads/main
+
+--- 2 内容安全性复核 ---
+$ git merge-base --is-ancestor b227284 origin/main
+  → 通过：b227284 是 origin/main 的祖先
+$ git merge-base --is-ancestor bedb143 origin/main
+  → 未通过（非祖先，squash 合并所致）
+$ git cherry origin/main bedb143
+- bedb1430e5f4c4edf459f1fe6b5dbc6908e66b83
+  → 前缀 - 表示该提交的改动已等价存在于 origin/main
+
+--- 3 bedb143 新增文件在 main 上是否一致 ---
+$ git diff --stat bedb143:tools/test_ci_diagnostics.py origin/main:tools/test_ci_diagnostics.py
+  → 无输出 = 逐字节一致
+
+--- 4 删除尝试（未放行）---
+$ git push fork --delete delivery/ci-failure-evidence-upstream fix/ci-failure-evidence
+❌ [Pre-Push Gate 物理阻断] 非快进推送被拒绝！
+------------------------------------------------------------------
+原因：本次推送会覆盖远端已有提交。基线检查无法替你判断这是否安全。
+------------------------------------------------------------------
+👉 确认无误后可显式放行：
+   ALLOW_FORCE_PUSH=1 git push --force-with-lease
+------------------------------------------------------------------
+error: failed to push some refs to 'https://github.com/lcw918110/wanxiang2'
+
+--- 5 删除后 refs（未变）---
+b22728496f97b48d8533021a0d79f36bb61c2c3f	refs/heads/delivery/ci-failure-evidence-upstream
+bedb1430e5f4c4edf459f1fe6b5dbc6908e66b83	refs/heads/fix/ci-failure-evidence
+81cf96100dd0c6f3bf79fca7a116aeda8f472b89	refs/heads/main
+
+--- 6 所有者授权后执行删除（RUN-20261026-04）---
+$ ALLOW_FORCE_PUSH=1 git push fork --delete delivery/ci-failure-evidence-upstream fix/ci-failure-evidence
+To https://github.com/lcw918110/wanxiang2
+ - [deleted]         delivery/ci-failure-evidence-upstream
+ - [deleted]         fix/ci-failure-evidence
+
+$ git ls-remote --heads fork
+68fbe62f843def28be9d4eadddad451754dc9b83	refs/heads/fix/audit-round1-docs-and-scripts
+81cf96100dd0c6f3bf79fca7a116aeda8f472b89	refs/heads/main

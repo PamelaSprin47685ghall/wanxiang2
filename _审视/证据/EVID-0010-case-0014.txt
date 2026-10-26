@@ -1,0 +1,8 @@
+== EVID-0010 CASE-0014 验收输出（从 EVID-0010-fix-verification.txt 拆出）==
+
+--- CASE-0014 分支与 stash ---
+cmd: git stash list
+(空行即已清)
+cmd: git branch -vv
+* main 81cf961 [origin/main] Merge pull request #9 from lcw918110/delivery/ci-failure-evidence-upstream
+cmd: git ls-remote --heads fork（网络不可达，见下）

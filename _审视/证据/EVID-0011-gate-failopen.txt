@@ -1,0 +1,71 @@
+== EVID-0011 控件库覆盖门禁的失败模式（2026-10-25T20:06:15Z）==
+
+结论：门禁在沙箱/受限环境下会退化为「0 个控件库」，但仍报 check ok 并返回 0。
+      这不是本次改动引入，是 control_libs 的 find -exec 失败被 2>/dev/null 吞掉所致。
+
+--- 1 沙箱内 ./x check 尾部 ---
+check ok:      109 libs with no sibling references;       71 composer(s) using packages only; 0 control librar(y|ies) with a gallery entry
+退出码 0（上面这行本身就是 fail-open 证据：0 个控件库也算 ok）
+
+--- 2 同一命令在非沙箱下 ---
+check ok:      109 libs with no sibling references;       71 composer(s) using packages only; 17 control librar(y|ies) with a gallery entry
+退出码 0，覆盖数 17
+
+--- 3 失败根因最小复现（沙箱内）---
+$ find libs/ConfirmPane -name "*.fs" -exec echo {} + 2>/dev/null
+find: sysconf(_SC_ARG_MAX): Operation not permitted
+find: no space for arguments
+rc=1
+
+--- 4 代码位置 ---
+66:control_libs() {
+67-  local pattern; pattern="$(control_types_pattern)"
+68-  for d in libs/*/; do
+69-    local name; name="$(basename "$d")"
+70-    local hit
+71-    hit="$(find "$d" \( -name '*.fs' -o -name '*.cs' \) \
+72-      -not -path '*/tests/*' -not -path '*/obj/*' -not -path '*/bin/*' \
+73-      -exec grep -lE "(^|[^.[:alnum:]_])($pattern)\(" {} + 2>/dev/null | head -1 || true)"
+74-    if [[ -n "$hit" ]]; then echo "$name"; fi
+75-  done
+76-}
+77-
+78-# 画廊条目覆盖的控件库（从 compose/Gallery/Gallery.fs 的 Widget = "..." 读，不另设名单）。
+
+--- 5 gallery_coverage 的计分方式（只累加覆盖数，不校验覆盖数是否大于 0）---
+84-
+85-# 控件库覆盖：每个控件库都要在 compose/Gallery 至少有一条条目。
+86:# 覆盖数写在全局 GALLERY_COVERED（缺失的库在 stdout 上逐条报错），返回值非零即有缺口。
+87:GALLERY_COVERED=0
+88-gallery_coverage() {
+89-  local bad=0 covered=0
+90-  local widgets; widgets="$(gallery_widgets)"
+91-  for lib in $(control_libs); do
+92-    if grep -qx "$lib" <<< "$widgets"; then covered=$((covered+1)); else
+93-      echo "FAIL $lib: control library has no gallery entry"
+--
+95-    fi
+96-  done
+97:  GALLERY_COVERED=$covered
+98-  return $bad
+99-}
+100-
+101-check() {
+102-  local bad=0
+103-  for lib in $(libs); do
+--
+182-  local covered=0
+183-  if ! gallery_coverage; then bad=1; fi
+184:  covered="$GALLERY_COVERED"
+185-  [[ $bad == 0 ]] && echo "check ok: $(libs | wc -l) libs with no sibling references; $(composers | wc -l) composer(s) using packages only; $covered control librar(y|ies) with a gallery entry"
+186-  return $bad
+187-}
+188-
+189-# F# 格式门禁：**只对目标文件**跑 Fantomas --check。
+190-# 目标文件集合 = 调用方给的显式列表；没给时 = 本分支相对 origin/main 的合并基点改动的 .fs
+
+--- 6 影响 ---
+在 find -exec 不可用的环境（受限沙箱、部分容器、ARG_MAX 极小的系统），
+控件库清单恒为空 → gallery_coverage 的 for 循环体一次不执行 → bad=0 → 门禁通过。
+本仓自己的注释（x:62-65）已警告过同类 fail-open（grep -P 导致判定恒为空），
+但只修了 grep 的方言问题，没修 find -exec 的可用性问题。

@@ -1,0 +1,17 @@
+== EVID-0010 CASE-0015 门禁复测（修复后工作树）==
+时间：2026-10-25T20:08:55Z
+
+--- ./x check ---
+format: no changed .fs files to check (format check skipped)
+check ok:      109 libs with no sibling references;       71 composer(s) using packages only; 17 control librar(y|ies) with a gallery entry
+
+--- assert-hygiene.sh ---
+R3 空转的事实（[<Fact>] 函数体里没有断言、failwith 或会断言的本文件辅助函数）:
+  ok   无空转事实
+
+结果：断言卫生全部通过
+
+--- lint-copy.sh ---
+扫描 378 个生产 .fs 文件（libs/ + compose/ + app/，排除 tests/tools/bin/obj），检查 1836 个中文串字面量
+另扫 3 个 PWA 壳交付物（index.html / main.js / manifest.webmanifest）
+结果：界面文案全部通过

@@ -693,24 +693,56 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
               await sleep(200);
             }
             await page.screenshot({ path: `${OUT}/smoke-settings-appearance.png` });
-            // 固定 1200×800 视口：点击截图中外观选项的文字行，验收以持久化变更为准。
-            let prefToggled = false, toggledKey = '';
-            for (const y of [480, 540, 600, 660, 720]) {
-              await page.mouse.click(520, y);
-              await sleep(300);
+            const settingsShot = `${OUT}/smoke-settings-appearance.png`;
+            // 开关行按识别到的**行标题**定位，不写死 y：
+            // 行高与字体度量随平台字体而变（macOS 系统字体与 Linux Noto 不同），
+            // 固定坐标会点进两行之间的空隙，把「没点到」误判成「开关无反应」。
+            // 截图是 CSS × DPR，识别坐标除以 DPR 换回 CSS。
+            const shotDpr = await page.evaluate(() => window.devicePixelRatio || 1);
+            const settingsWords = runOcr(settingsShot, OCR_LAYOUT_PSM).map((w) => ({
+              ...w,
+              text: w.text.replace(/\s+/g, ''),
+              left: w.left / shotDpr,
+              top: w.top / shotDpr,
+              width: w.width / shotDpr,
+              height: w.height / shotDpr,
+            }));
+            const switchRows = ['Enter直接发送', '完成后收起思考过程', '代码块长行折行', '在侧栏显示已归档对话', '减少动态效果'];
+            const prefsChanged = async () => {
               const cur = await getStoredPrefs();
               for (const key of ['enterSends', 'autoCollapseReasoning', 'codeWrap', 'reduceMotion', 'showArchived']) {
                 if (cur[key] !== undefined && prefsBefore[key] !== undefined && cur[key] !== prefsBefore[key]) {
+                  return `${key}: ${prefsBefore[key]} -> ${cur[key]}`;
+                }
+              }
+              return false;
+            };
+            let prefToggled = false, toggledKey = '';
+            const prefMissed = [];
+            for (const label of switchRows) {
+              const hit = findPhrase(settingsWords, label);
+              if (!hit) { prefMissed.push(`${label}:未识别`); continue; }
+              // 点标题文字本身：标题在开关行的 Border 内，指针释放冒泡到行上完成切换。
+              const at = { x: hit.left + Math.min(hit.width / 2, 60), y: hit.top + hit.height / 2 };
+              // 一次点击不稳：整页 Render 会重排开关行，按下与释放若跨在被替换的实例上，
+              // 行收不到成对的指针事件（旧口径只点一次、只等一次，抖一次就整条判失败）。
+              // 同一点连点两次，每次各自等待持久化结果。
+              for (let attempt = 0; attempt < 2 && !prefToggled; attempt++) {
+                await page.mouse.click(at.x, at.y);
+                const changed = await until(() => prefsChanged(), 5000, 200);
+                if (changed) {
                   prefToggled = true;
-                  toggledKey = `${key}: ${prefsBefore[key]} -> ${cur[key]}`;
-                  await page.mouse.click(520, y);
-                  await sleep(300);
-                  break;
+                  toggledKey = changed;
+                  // 复原刚切的那一项：后续阶段拿到的偏好与本轮开始时一致。
+                  await page.mouse.click(at.x, at.y);
+                  await until(async () => !(await prefsChanged()), 5000, 200);
                 }
               }
               if (prefToggled) break;
+              prefMissed.push(`${label}:@(${at.x.toFixed(0)},${at.y.toFixed(0)})点了未变`);
             }
-            check('设置弹窗真实交互后果：操作外观开关并观察到 localStorage 持久化变更', Boolean(prefToggled), `toggled=${toggledKey}`);
+            check('设置弹窗真实交互后果：操作外观开关并观察到 localStorage 持久化变更', Boolean(prefToggled),
+              prefToggled ? `toggled=${toggledKey}` : `未切换；${prefMissed.join('; ')}`);
             await page.keyboard.press('Escape');
             await sleep(400);
             const composerBack = await until(() => focusComposer(), 5000, 200);

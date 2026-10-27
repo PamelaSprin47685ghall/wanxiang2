@@ -307,11 +307,29 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
         with open(md, "r", encoding="utf-8") as f:
             text = f.read()
         if md != "AGENTS.md":
+            if md.startswith("libs/"):
+                lib_name = os.path.basename(base_dir)
+                fs_stems = [os.path.splitext(os.path.basename(p))[0] for p in glob.glob(os.path.join(base_dir, "*.fs"))]
+                seen_members = set()
+                for m in re.finditer(r"^##\s+成员\s+`?([A-Za-z0-9_]+)`?", text, re.M):
+                    mem = m.group(1)
+                    if mem in seen_members:
+                        print(f"FAIL {md}: duplicate member heading `## 成员 {mem}`")
+                        bad = 1
+                    seen_members.add(mem)
+                    if mem != lib_name and not any(s == mem or s.startswith(mem) for s in fs_stems):
+                        print(f"FAIL {md}: declared member `{mem}` has no matching .fs source in {base_dir}")
+                        bad = 1
             test_src = load_test_text(base_dir)
             if os.path.isdir(os.path.join(base_dir, "tests")) and not re.search(r"\[<(?:Fact|Theory)\b", test_src):
                 print(f"FAIL {md}: tests/ directory has no [<Fact>] or [<Theory>] across its .fs files")
                 bad = 1
+            in_test_list = False
             for lineno, line in enumerate(text.splitlines(), 1):
+                if re.match(r"^#{1,3}\s+(迁入|证据|测试)", line):
+                    in_test_list = True
+                elif re.match(r"^#{1,3}\s+", line):
+                    in_test_list = False
                 if "<原文件名>" in line or "tests/Wanxiang.Tests/" in line:
                     continue
                 for m in re.finditer(r"(?<![A-Za-z0-9_/])(tests/[A-Za-z0-9_.-]+\.(?:fsproj|fs))(?![A-Za-z])", line):
@@ -338,6 +356,10 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                     if re.match(r"^\s*\d+\.\s+\[[^\]]+\]", clean_line) and "compose/" not in clean_line and "libs/" not in clean_line and "./x " not in clean_line and "：" in clean_line:
                         after = clean_line.split("：", 1)[1]
                         candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", after))
+                    if in_test_list and not any(k in line for k in ["留在旧仓库", "compose/", "libs/", "删除", "退役", "部分覆盖", "同上", "在 ConversationRuns", "测试名改为", "并入", "在 ApprovalCardText", "已随", "组合者", "入口消费", "留在宿主"]):
+                        bm = re.match(r"^\s*-\s+(?:[^：`]*：|本包新增用例\s*)?((?:`[^`]+`(?:\s*(?:、|与|，|,|（[^`）]*）)\s*)?)+)[。；]?$", clean_line)
+                        if bm:
+                            candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", bm.group(1)))
                     for raw_tname in dict.fromkeys(candidates):
                         tname = raw_tname.rstrip(".…")
                         if tname.startswith("tests/") or tname.startswith("./") or (" " not in tname and tname.isascii()):

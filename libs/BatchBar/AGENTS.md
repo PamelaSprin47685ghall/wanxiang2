@@ -108,8 +108,6 @@
 
 ## 成员 `SidebarSearch`
 
-## 成员 `SidebarSearch`
-
 ## SidebarSearch
 
 侧栏搜索框与「未找到」提示（迁自旧 `Views/Sidebar.fs` 的 searchShell、clearSearchButton、searchEmptyHint、searchDebounce 与搜索框 KeyDown）。`SearchSession` / `SearchRequery` / `RowFocus` 与列表重建归组合者。根规则见项目根目录 AGENTS.md。

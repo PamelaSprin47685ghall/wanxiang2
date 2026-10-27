@@ -80,13 +80,12 @@
 
 ### 外观
 
-- `OnboardingPaneLook`：公共字段加 `Space3xl`（卡片内边距）、`CardMaxWidth`、`PendingMinWidth`。全部是主题管理者的活实例。
-- 样式类：按钮 `surface button-* hover-*`、卡 `grouping-card`、输入壳 `surface hover-raised focus-soft`。
+- 样式类：按钮 `surface button-* hover-*`、卡 `grouping-card`、输入壳 `surface hover-raised focus-soft`。废除 `OnboardingPaneLook` 与逐属性活值订阅。
 
 ### 证据与旧测试
 
 - OnboardingUiTests：`密钥为空时不发起任何请求并就地说明`（呈现与焦点部分）、`路径错时改用兼容端点后重试，载荷换成兼容传输`（切换键部分）、`发现本机 Ollama 时给出一键使用，点击后用发现的模型保存且不要密钥`（呈现部分）、`没有 Ollama 时不显示一键使用`
-- 新增：`连接中按钮保持几何只换文字并禁用，选择键与更多不再响应`、`服务商键选中为主色，点击发出预设 key`、`引导卡内连续按 Tab 依次走过服务商键与更多并进入 API Key 输入框，且重复渲染保留焦点`、`look values stay live after the card is shown`
+- 新增：`连接中按钮保持几何只换文字并禁用，选择键与更多不再响应`、`服务商键选中为主色，点击发出预设 key`、`引导卡内连续按 Tab 依次走过服务商键与更多并进入 API Key 输入框，且重复渲染保留焦点`
 - 写回、探测、撤销半成品、外壳旅程（`外壳里走完整条旅程…` 等）在组合者与宿主。
 
 ### 与旧实现的差异
@@ -116,15 +115,14 @@
 
 ### 外观
 
-- `ProvidersPaneLook`：公共字段加 `SpaceXXs`、`TextAreaMinHeight`、`EmptyLogoSize`、`PendingMinWidth`、`StatusDotSize`、`SelectCaptionMaxWidth`、`SelectPaddingY`。`Glyph` 用到：`pencil`、`more`、`chevron-down`、`logo`。
-- 样式类：按钮 `surface button-* hover-*`、图标按钮 `icon-button`、选择器 `surface select-button hover-bordered`、卡 `grouping-card`、标签 `tag` / `tag-warning`、分隔 `hairline`、开关、输入壳 `surface hover-raised focus-soft`。
+- 样式类：按钮 `surface button-* hover-*`、图标按钮 `icon-button`、选择器 `surface select-button hover-bordered`、卡 `grouping-card`、标签 `tag` / `tag-warning`、分隔 `hairline`、开关、输入壳 `surface hover-raised focus-soft`。废除 `ProvidersPaneLook` 与逐属性活值订阅。
 
 ### 证据与旧测试
 
 - SettingsSurfaceTests：`missing key reads as warning tag and disabled provider dims its text`
 - SettingsViewTests：`SettingsProviders two-tier form defaults to quick access and preserves drafts when toggling advanced settings`、`SettingsProviders ShowEditor validates required fields and default model existence`（界面与键盘部分；校验在组合者）、`SettingsProviders applyPreset updates endpoint, models and tracks divergence to custom`（选择器与说明部分；套用与分歧在组合者）
 - 组合者 SettingsScreen 覆盖：`SettingsProviders saveCore with invalid advanced field automatically expands advanced layer and focuses error`、`SettingsProviders ApplyProbe updates draft models in open editor and caches without auto-upserting`
-- 新增：`empty provider list hands the add action to the empty state`、`new provider cannot probe until saved and explains why`、`look values stay live in the editor`
+- 新增：`empty provider list hands the add action to the empty state`、`new provider cannot probe until saved and explains why`、`预设选择器按 Down 或 Up 展开`
 
 ### 与旧实现的差异
 

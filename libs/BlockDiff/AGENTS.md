@@ -33,6 +33,6 @@
 
 ## 迁入或覆盖的旧测试
 旧 CraftsmanshipPolishTests（去掉 Headless 包装）：
-- `MarkdownRenderer.SafeChunk does not slice surrogate pairs into separate chunks`
+- `LinkChunks.safeChunk does not slice surrogate pairs into separate chunks`
 
 本库新增：空输入与非正长度、代理对、拼接还原、收标点前移、开标点后移、孤立标点不动。

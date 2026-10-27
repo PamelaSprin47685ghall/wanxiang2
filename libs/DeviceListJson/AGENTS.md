@@ -52,7 +52,7 @@
 公开面：`DeviceSightings(path, ?throttle)`：`Seen(hash, now) : Result<unit,string>`、`LastSeen(hash) : DateTimeOffset option`、`Seed(entries) : Result<unit,string>`、`Path`。
 
 ## LEMMA
-1. **用户拥有配置文件；主机只在用户明确改配置时写它。** [根 AXIOM: 用户拥有配置；不要求兼容]
+1. **用户拥有配置文件；主机只在用户明确改配置时写它。** [根 AXIOM: 5, 6]
     - 推理：旧实现每次认证都对用户编辑的 TOML 做读-改-写记 lastSeen，与用户/测试的外部编辑竞争（WriteIfUnchanged 只缩小窗口）。记账挪到主机自有状态，竞争从根上消失。
 2. **节流行为与旧实现一致**：同一设备 1 分钟内不重复落盘。 [根 AXIOM: 5]
 3. **记账丢失只影响「最近连接」显示**：文件缺失或损坏当空表，落盘失败返回 Error 由调用方记日志。

@@ -219,7 +219,7 @@
 旧 `Views/SettingsGeneral.fs` 里「生成」分组的 `floatText` 与 `SaveGenerationCore` 的校验和载荷迁入：`validate`（5 个输入框文本 → 数值或按字段的错误文案）、`instructions`、`payload`。字段联合类型 `GenerationField` 用例名是泛名，加了 RequireQualifiedAccess。错误怎么挂到控件、提交与回复仍归 UI。不引用任何其他库。根规则见项目根目录 AGENTS.md。
 
 ### LEMMA
-1. **同一组输入，错误与载荷 JSON 和旧实现逐字节相同。** [根 AXIOM: 5，线上字节不变]
+1. **同一组输入，错误与载荷 JSON 和旧实现逐字节相同（线上字节不变）。** [根 AXIOM: 5]
 
 ### SPEC
 1. [LEMMA: 1] `tests/GenerationDraft.GenerationForm.Tests.fs` 通过：`blank optional fields mean unset and required fields must parse`、`ranges are inclusive at the documented bounds`、`decimal separator is always a dot`、`payload writes every key with null for unset values in a fixed order`、`instructions are trimmed and blank means none`。载荷键序 temperature、topP、maxTokens、instructions、maxContextMessages、maxToolRounds、autoTitle，未设项写 null。

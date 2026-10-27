@@ -12,17 +12,17 @@
 
 设置 → 设备分区的界面（迁自旧 `Views/SettingsDevices.fs` 的界面部分与 `QrCodeView`）。根规则见项目根目录 AGENTS.md。
 
-- `DevicesPane(look)`；`View` 是整块；`Render state` 整块重建一帧（与旧实现每次 render 相同）。
+- `DevicesPane()`；`View` 是整块；`Render state` 整块重建一帧（与旧实现每次 render 相同）。
 - `DevicesPaneState`：`Invite`（`Unavailable 文字` / `Offer 被拒说明` / `Code(分组码, 逐字读法, 倒计时文字, 是否过期, 地址)`）、`List`（`Note 文字` / `Rows 已排序的行`）、`Editing`（正在重命名的设备 id）。
 - `DevicesPaneAddress`：`Reachable(url, 二维码矩阵)` / `LoopbackOnly(首个局域网地址与矩阵, 其余地址)` / `NoAddress`。
-- `QrPlate(text, matrix, moduleSize)`：白底黑模块、4 模块静区（与主题无关，扫码要对比度）；模块边长是活值。
+- `QrPlate(text, matrix, ?moduleSize)`：白底黑模块、4 模块静区（与主题无关，扫码要对比度）；模块边长走主题资源。
 - 事件：`AddClicked`、`RegenerateClicked`、`CloseInviteClicked`、`RefreshClicked`、`RenameClicked id`、`RenameSaved(id, 去空白的新名)`（空名也发，由组合者提示）、`RenameCancelled id`、`RevokeClicked id`。编辑时 `NameBox` 是名称输入框，打开编辑器后焦点自动进入它。
 - 读取设备列表、有界等待（BoundedWait）、倒计时时钟、地址推断（DevicesModel.inviteTarget）、二维码矩阵（DevicesModel.qrMatrix）、排序与行文字都由组合者接。
 - 自动化 id 与读屏名与旧实现逐字相同（`devices-add`、`devices-code`、`devices-countdown`、`devices-address`、`devices-qr`、`devices-regenerate`、`devices-close-invite`、`devices-list`、`devices-row-<id>`、`devices-rename-<id>`、`devices-revoke-<id>`、`devices-name-<id>`、`devices-name-save-<id>`、`devices-name-cancel-<id>`、`devices-refresh`、`devices-invite-unavailable`）。
 
 ### 外观
 
-- `DevicesPaneLook`：公共字段（画笔、字号、间距、圆角、输入壳度量、等宽字体、`Glyph` 图标槽）加 `CodeTracking`（配对码字距）、`QrModuleSize`。全部是主题管理者的活实例。
+- 废除 `DevicesPaneLook`，画笔、字号、间距、圆角、配对码字距与二维码模块边长均由主题 `DynamicResource` 提供。
 - 用到的样式类（compose/Theme）：按钮 `surface button-* hover-*`（吊销为 `button-danger hover-danger`）、卡 `grouping-card`、分节标签 `section-label`、输入壳 `surface hover-raised focus-soft`（出错时组合者的 FieldCheck 挂 `invalid`，聚焦描边让位）。
 
 ### 证据与旧测试
@@ -41,24 +41,24 @@
 
 设置里的三块通用分区（迁自旧 `Views/SettingsGeneral.fs` 的界面部分）：对话默认值、外观与交互（含本机草稿）、关于与系统诊断（含主机状态）。根规则见项目根目录 AGENTS.md。
 
-- `GenerationSection(look, validationFor)`：五个数值框（两列表单，窄于 `FormSingleColumnBreakpoint` 退化为单列）、多行系统指令、「自动生成对话标题」开关、错误摘要（`Summary`）、保存状态行（polite）、保存 / 放弃、对话预设列表、导入入口。
+- `GenerationSection(validationFor)`：五个数值框（两列表单，窄于 `FormSingleColumnBreakpoint` 退化为单列）、多行系统指令、「自动生成对话标题」开关、错误摘要（`Summary`）、保存状态行（polite）、保存 / 放弃、对话预设列表、导入入口。
   - `Read()` / `Fill GenerationText`；单入口 `Render(vs: GeneralSectionVS)`（状态行、保存往返 `Pending` + `CanSave`、对话预设 `Presets`）；插槽 `WireImportHandler(handler)`（注入即显示「导入对话…」，可见性归这里独占）。
   - 事件：`Edited`（任一字段或开关变化，填表时也发）、`SaveRequested`（保存键、任意处 Ctrl/⌘+Enter、数值框回车；指令框回车是换行）、`DiscardRequested`、`PresetRenameClicked id`、`PresetDeleteClicked id`。「导入对话…」的回调走插槽 `WireImportHandler`，没有单独事件。
-- `AppearanceSection(look)`：主题选择器（读屏 ComboBox，`ThemeClicked anchor`）、字号 −/+（`FontStepped ±0.5`；到边界由 `Render` 禁用）、五个交互开关与「保存未发送的草稿」（`Toggled(AppearanceSwitch, 值)`，只在用户拨动时发）、本机草稿概况与「清除本地草稿」（`ClearDraftsClicked`）。`Render AppearanceState`。
-- `AboutSection(look)`：单入口 `Render(vs: GeneralSectionVS)`（信息行 `AboutRows`（等宽、可选中）、主机状态 `Health(ConfigIssue, Doctor)`；检查中按钮禁用，`CheckHostClicked`）、复制诊断报告（`CopyDiagnosticsClicked`）、设计与致谢卡。
+- `AppearanceSection()`：主题选择器（读屏 ComboBox，`ThemeClicked anchor`）、字号 −/+（`FontStepped ±0.5`；到边界由 `Render` 禁用）、五个交互开关与「保存未发送的草稿」（`Toggled(AppearanceSwitch, 值)`，只在用户拨动时发）、本机草稿概况与「清除本地草稿」（`ClearDraftsClicked`）。`Render AppearanceState`。
+- `AboutSection()`：单入口 `Render(vs: GeneralSectionVS)`（信息行 `AboutRows`（等宽、可选中）、主机状态 `Health(ConfigIssue, Doctor)`；检查中按钮禁用，`CheckHostClicked`）、复制诊断报告（`CopyDiagnosticsClicked`）、设计与致谢卡。
 - 草稿状态（GenerationDraft）、校验（GenerationForm + FieldCheck）、写回、偏好（UiPrefs）、主题菜单、剪贴板、确认框、HostHealth 订阅都由组合者接。
 - 自动化：`settings-presets`、`preset-row`、`settings-import`、`local-drafts-summary`、`clear-local-drafts`、`host-config-issue`、`host-config-issue-detail`、`host-config-ok`、`check-host`、`doctor-headline`、`doctor-check-<name>`，与旧实现相同。
 
 ### 外观
 
-- `GeneralPaneLook`：公共字段加 `SpaceXXs`、`TextAreaMinHeight`、`FormSingleColumnBreakpoint`、`AboutKeyMinWidth`、`FontSizeValueMinWidth`、`PendingMinWidth`、`SelectCaptionMaxWidth`、`SelectPaddingY`、`Selection`。`Glyph` 用到：`minus`、`plus`、`chevron-down`、`check-circle`、`alert`。
+- 废除 `GeneralPaneLook`，间距、字号、两列表单断点与配色均走主题 `DynamicResource`。
 - 样式类：按钮 `surface button-* hover-*`、图标按钮 `icon-button`、选择器 `surface select-button hover-bordered`、卡 `grouping-card`、分隔 `hairline`、开关 `toggle-track` / `toggle-knob` / `on`、输入壳 `surface hover-raised focus-soft`。
 
 ### 证据与旧测试
 
 - SettingsSurfaceTests：`editing a generation number stays local until explicitly saved`、`generation save button advertises the ctrl enter shortcut`、`generation form fields sit inside a grouping card`、`generation form consumes shared column spacing and text metrics`、`about section drops the misplaced spacer`
 - SettingsViewTests：`SettingsGeneral BuildAppearance adjusts fontScale within bounds and updates prefs`（界面部分；夹值在组合者）、`SettingsGeneral BuildAbout formats system diagnostics with version and platform`（界面部分；报告文字在组合者）
-- 组合者 SettingsScreen 覆盖：`SettingsGeneral SaveGenerationCore validates numeric ranges and generates payload`、`generation save failure surfaces a failure toast instead of silence`
+- 组合者 SettingsScreen 覆盖：`SettingsGeneral SaveGenerationCore validates numeric ranges and generates payload`（含旧 `generation save failure surfaces a failure toast instead of silence` 的保存失败提示条断言）
 - 新增：`validation rows sit in each field group and hide the hint`、`presets list offers rename and delete per preset and an empty explanation`、`theme selector reads as a combo box and opens the menu at itself`、`host status shows config issues and doctor results`
 
 ### 与旧实现的差异
@@ -72,7 +72,7 @@
 
 聊天主界面上的「添加一个模型服务」卡片（迁自旧 `Views/OnboardingCard.fs` 的界面部分）。根规则见项目根目录 AGENTS.md。
 
-- `OnboardingPane(look)`；`View` 是卡片；`Render state` 同步一帧 `OnboardingPaneState`（服务商键、「更多」文字、说明、密钥 / 地址框是否可见、连接中、状态行、兼容端点切换键、本机发现说明）。
+- `OnboardingPane()`；`View` 是卡片；`Render state` 同步一帧 `OnboardingPaneState`（服务商键、「更多」文字、说明、密钥 / 地址框是否可见、连接中、状态行、兼容端点切换键、本机发现说明）。
 - 输入：`KeyBox`（密码字符 ●，回车即连接）、`CustomUrlBox`、`KeyText` / `CustomUrlText`（已去空白）、`ClearKey()`；`FocusInitial needsKey`（要密钥进密钥框，否则落在「连接」）。
 - 事件：`ChipClicked key`、`MoreClicked anchor`（连接中不发；组合者在锚点弹菜单）、`ConnectClicked`、`SwitchClicked`、`AdvancedClicked`、`UseLocalClicked`。
 - 连接中：「连接」保持最小宽，只换成「正在连接…」并禁用（读屏帮助文字同步），两个输入框禁用。
@@ -98,9 +98,9 @@
 
 设置 → 模型服务分区的列表，以及「添加 / 编辑模型服务」对话框的内容（迁自旧 `Views/SettingsProviders.fs` 的界面部分）。根规则见项目根目录 AGENTS.md。
 
-- `ProvidersPane(look)`：`View`；`Render ProviderRow list`（状态点 + 名称 + 状态标签「已配置 / 缺少密钥（警示）/ 已停用」+「默认」标签 + 地址行；停用时名称弱化，编辑与更多仍可点）。列表为空时显示空态卡，「添加模型服务」由空态里的主按钮接管、顶部同名键隐藏。
+- `ProvidersPane()`：`View`；`Render ProviderRow list`（状态点 + 名称 + 状态标签「已配置 / 缺少密钥（警示）/ 已停用」+「默认」标签 + 地址行；停用时名称弱化，编辑与更多仍可点）。列表为空时显示空态卡，「添加模型服务」由空态里的主按钮接管、顶部同名键隐藏。
   - 事件：`AddClicked`、`EditClicked id`、`MoreClicked(id, 键)`。
-- `ProviderEditor(look, isNew, validationFor)`：预设选择器（读屏 ComboBox，`PresetClicked anchor`）、错误摘要（`Summary`）、快速区（名称、密钥 ●、地址）、「高级设置 ▼ / 收起高级设置 ▲」（`IsAdvanced`；展开/收起由控件自己在途态持有，外部强制展开走命令 `ApplyAdvanced`）、高级区（标识、模型列表、默认模型、获取模型列表 `ProbeClicked`、看图能力、超时、重试、启用开关 `Enabled`）、取消 / 添加（或保存）。
+- `ProviderEditor(isNew, validationFor)`：预设选择器（读屏 ComboBox，`PresetClicked anchor`）、错误摘要（`Summary`）、快速区（名称、密钥 ●、地址）、「高级设置 ▼ / 收起高级设置 ▲」（`IsAdvanced`；展开/收起由控件自己在途态持有，外部强制展开走命令 `ApplyAdvanced`）、高级区（标识、模型列表、默认模型、获取模型列表 `ProbeClicked`、看图能力、超时、重试、启用开关 `Enabled`）、取消 / 添加（或保存）。
   - 命令类操作登记（一次性写投影，无先后依赖）：
     - `ApplyPresetCaption(label, hint, kind, transport)`：预设标题、预设说明（空则隐藏）、传输说明与传输切换键（`transport` 为 `None` 时隐藏）。
     - `ApplyVisionCurrent(text, inheritOverride, customOverride)`：看图能力的当前判断与手动指定的两框。
@@ -134,7 +134,7 @@
 
 设置页外框（迁自旧 `Views/SettingsView.fs` 的界面部分）：头部「设置」与「返回对话」、分组的分区导航、范围说明、内容区与窄屏布局。根规则见项目根目录 AGENTS.md。
 
-- `SettingsFrame(look, groups)`：本身是 Border。`groups` 是 `(分组名, SettingsNavItem list)`，项为 `{ Key; Label; Glyph }`。
+- `SettingsFrame(groups)`：本身是 Border。`groups` 是 `(分组名, SettingsNavItem list)`，项为 `{ Key; Label; Glyph }`。
 - `Select key`：标出选中分区（选中底、左缘强调条、标题加粗、图标不透明度、读屏 ItemStatus「当前分区」与帮助文字「<名>，当前分区」）并把键滚进视野。
 - 命令类操作登记：`ApplyCaptions(范围, 说明)`、`ApplyContent(control, restoreY)`（换内容；`restoreY` 有值时滚到该位置）。其余：`ContentOffset`、`ScrollTo`、`FocusNav key`、`Current`、`IsCompact`。
 - 事件：`SelectRequested key`（点击，或在导航键上按上 / 左 / 下 / 右循环移动、Home / End 跳首尾；键盘移动后焦点跟到目标键）、`CloseClicked`。组合者收到后切内容并回调 `Select`。
@@ -144,7 +144,7 @@
 
 ### 外观
 
-- `SettingsFrameLook`：公共字段加 `Space6xl`、`Space8xl`、画笔 `Canvas` / `Rail` / `Chrome` / `Selected`、`BarHeight`、`NavWidth`、`NavMinHeight`、`SelectedEdgeWidth`、`ContentMaxWidth`、`SubtleOpacity`、`CompactBreakpoint`。`Glyph` 用到各分区的图标名（组合者给：`server`、`wrench`、`sliders`、`devices`、`sun`、`info`）。
+- 废除 `SettingsFrameLook`，画笔、间距、导航栏宽高与紧凑断点均由主题 `DynamicResource` 驱动。
 - 样式类：导航键 `surface menu-item hover-plain`（未选中时清掉本地底，悬停样式才生效）、「返回对话」`surface button-ghost hover-plain`、分组名 `section-label`。
 
 ### 证据与旧测试
@@ -163,20 +163,20 @@
 
 设置 → 工具分区的界面，以及「添加 / 编辑 MCP 服务」「授权文件夹」两个对话框的内容（迁自旧 `Views/SettingsTools.fs` 的界面部分）。根规则见项目根目录 AGENTS.md。
 
-- `ToolsPane(look)`：`View`；`Render ToolsPaneState`（工具、授权文件夹、沙箱说明、调试开关值、MCP 服务）。空清单时显示空态卡。
+- `ToolsPane()`：`View`；`Render ToolsPaneState`（工具、授权文件夹、沙箱说明、调试开关值、MCP 服务）。空清单时显示空态卡。
   - 事件：`PolicyClicked(toolId, 键)`、`RemoveFolderClicked path`、`DebugToggled 新值`（只在用户拨动时发；`Render` 写值不发）、`AddFolderClicked`、`AddServerClicked`、`EditServerClicked id`、`ServerMoreClicked(id, 键)`。
   - 自动化：`tool-policy-<id>`（读屏名「<名> 的审批方式：<方式>」）、`tools-add-folder`、「移除文件夹授权 <路径>」。
-- `McpEditor(look, existing, validationFor)`：六个输入框（`IdBox` … `TimeoutBox`、`Boxes`）、启用开关（`Enabled`）、错误摘要（`Summary`，assertive、可聚焦）、取消 / 添加（或保存）键。
+- `McpEditor(existing, validationFor)`：六个输入框（`IdBox` … `TimeoutBox`、`Boxes`）、启用开关（`Enabled`）、错误摘要（`Summary`，assertive、可聚焦）、取消 / 添加（或保存）键。
   - 单行框回车、任意处 Ctrl/⌘+Enter 发 `SaveRequested`；参数框回车是换行。
   - 命令类操作登记：`ApplyPending(value)`（保存往返：换「正在保存…」并禁用、取消也禁用、不再发 `SaveRequested`）、`ApplyMaxHeight(h)`（给对话框内容的上限）。
   - 页脚左右方向键在两键间移动。`InitialFocus`：新建是标识，编辑是名称（标识只读）。
   - `validationFor` 是每个框的校验行（组合者的 FieldCheck.MessageFor），放进对应字段组，可见时说明让位。
-- `FolderEditor(look, validationFor)`：路径框（`PathBox`）、取消 / 授权；回车或「授权」发 `SaveRequested 去空白的路径`。
+- `FolderEditor(validationFor)`：路径框（`PathBox`）、取消 / 授权；回车或「授权」发 `SaveRequested 去空白的路径`。
 - 校验（McpForm、路径规则）、写回（ToolsPolicy.payload、McpForm.payload）、审批与服务菜单、对话框开关、Esc 守卫都由组合者接。
 
 ### 外观
 
-- `ToolsPaneLook`：公共字段加 `SpaceXXs`、`TextAreaMinHeight`、`EmptyLogoSize`、`PendingMinWidth`。`Glyph` 用到的名字：`server`、`wrench`、`pencil`、`more`、`trash`、`logo`。
+- 废除 `ToolsPaneLook`，间距、字号、多行框最小高与配色均走主题 `DynamicResource`。
 - 样式类：按钮 `surface button-* hover-*`、图标按钮 `surface icon-button hover-plain`、卡 `grouping-card`、标签 `tag`、分隔 `hairline`、开关 `toggle-track` / `toggle-knob` / `on`、分节标签 `section-label`、输入壳 `surface hover-raised focus-soft`。
 
 ### 证据与旧测试

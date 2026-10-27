@@ -332,6 +332,32 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                     in_test_list = False
                 if "<原文件名>" in line or "tests/Wanxiang.Tests/" in line:
                     continue
+                m_look = re.match(r"^\s*-\s*`([A-Z][A-Za-z0-9_]*Look)`\s*[：:]", line)
+                if m_look and m_look.group(1) != "ReadingLook":
+                    print(f"FAIL {md}:{lineno}: documents obsolete *Look record `{m_look.group(1)}` as active contract")
+                    bad = 1
+                if md.startswith("libs/") and re.search(r"`[A-Za-z0-9_.]+\s*(?:\([^`)]*\blook\b|\blook\b\s+[A-Za-z0-9_]+)", line):
+                    print(f"FAIL {md}:{lineno}: documents obsolete `look` parameter in library signature")
+                    bad = 1
+                clean_xline = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or "", line)
+                m_xcomp = re.match(r"^\s*-\s*(?:组合者\s+([A-Za-z0-9_]+)|经\s+compose/([A-Za-z0-9_]+)[^：]*)\s*覆盖：(.+)$", clean_xline)
+                if m_xcomp:
+                    comp_name = m_xcomp.group(1) or m_xcomp.group(2)
+                    target_comp = os.path.join("compose", comp_name)
+                    target_tsrc = load_test_text(target_comp)
+                    for bm in re.finditer(r"`([^`]+)`", m_xcomp.group(3)):
+                        xt = bm.group(1).rstrip(".…")
+                        if xt not in target_tsrc:
+                            print(f"FAIL {md}:{lineno}: cross-cited test `{xt}` not found in {target_comp}/tests")
+                            bad = 1
+                m_xparen = re.match(r"^\s*-\s*`([^`]+)`\s*（((?:compose|libs)/[A-Za-z0-9_]+)/tests/[A-Za-z0-9_.-]+\.fs[^）]*）", line)
+                if m_xparen:
+                    xt = m_xparen.group(1).rstrip(".…")
+                    target_comp = m_xparen.group(2)
+                    target_tsrc = load_test_text(target_comp)
+                    if xt not in target_tsrc:
+                        print(f"FAIL {md}:{lineno}: cross-cited test `{xt}` not found in {target_comp}/tests")
+                        bad = 1
                 for m in re.finditer(r"(?<![A-Za-z0-9_/])(tests/[A-Za-z0-9_.-]+\.(?:fsproj|fs))(?![A-Za-z])", line):
                     rel_path = m.group(1)
                     full_tpath = os.path.join(base_dir, rel_path)
@@ -344,7 +370,7 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                                 print(f"FAIL {md}:{lineno}: cited test file {rel_path} has no [<Fact>] or [<Theory>]")
                                 bad = 1
                 if test_src:
-                    clean_line = re.sub(r"（[^`）]*`[^`]+`[^）]*）", "", line)
+                    clean_line = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or "", line)
                     candidates = []
                     if re.search(r"`tests/[A-Za-z0-9_.-]+\.fs`\s*(?:(?:通过|的)?[:：]|\s+`)", clean_line):
                         after = re.split(r"`tests/[A-Za-z0-9_.-]+\.fs`\s*(?:(?:通过|的)?[:：])?", clean_line, maxsplit=1)[1]

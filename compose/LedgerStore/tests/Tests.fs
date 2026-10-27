@@ -315,9 +315,10 @@ for _ in 1..20 do
 Console.Out.WriteLine(s.LastId)
 Console.Out.WriteLine("ready")
 Console.Out.Flush()
-// 后台线程在 20ms 后对本进程发 SIGKILL，主线程立即进入紧凑写入死循环，使强杀发生在持续写入途中。
+// 后台线程等主线程在 ready 之后至少再推进到 25 条提交时立即发 SIGKILL，确保强杀发生在紧凑写入循环途中。
 let killer = Thread(ThreadStart(fun () ->
-    Thread.Sleep 20
+    while s.LastId < 25UL do
+        Thread.SpinWait 100
     Diagnostics.Process.GetCurrentProcess().Kill()))
 killer.IsBackground <- true
 killer.Start()
@@ -359,6 +360,8 @@ while true do
                 with _ ->
                     ()
 
+        Assert.True(child.HasExited, "child process must have exited")
+
         // 句柄在进程退出时由内核关闭；给系统一点时间回收，再重开。
         let mutable reopened: S option = None
 
@@ -380,7 +383,7 @@ while true do
         | other -> failwithf "unexpected health after killed writer: %A" other
 
         let lastId = reopened.LastId
-        Assert.True(lastId >= 20UL, sprintf "replayed %d commits" lastId)
+        Assert.True(lastId >= 25UL, sprintf "replayed %d commits (expected >= 25 after ready)" lastId)
 
         match reopened.CommitsAfter(0UL, 10000) with
         | Ok cs ->
@@ -390,6 +393,7 @@ while true do
 
         // 重开后还能继续提交，且 id 接在重放出来的末尾。
         Assert.Equal(lastId + 1UL, (committed (reopened.Submit([ 1 ], t0))).id)
+        Assert.Equal(int lastId + 1, reopened.State)
     finally
         (try
             if File.Exists script then
@@ -733,3 +737,94 @@ let ``a record written by a newer version is read-only and never repaired`` () =
     | r -> failwithf "%A" r
 
     Assert.Equal(size, FileInfo(logOf d).Length)
+
+/// 幂等索引有界保留（maxStamps）：淘汰旧戳后重发同 commandId 作为新提交落盘，
+/// 带同上限的无快照重放、带快照重放与 Inspect 均一致 Healthy，窗口内篡改重复仍检出 RepeatedStamp。
+[<Fact>]
+let ``bounded stamp retention evicts old stamps and replays cleanly with and without snapshot`` () =
+    let d = tempDir ()
+
+    let stamp n =
+        {
+            commandId = sprintf "c%d" n
+            hash = "h"
+        }
+
+    do
+        use s = new S(d, apply, 0, codec, SnapshotPolicy.Manual, maxStamps = 2)
+        Assert.Equal(Some 2, s.MaxStamps)
+        Assert.Equal(1UL, (committed (s.Submit([ 10 ], t0, stamp 1))).id)
+        Assert.Equal(2UL, (committed (s.Submit([ 20 ], t0, stamp 2))).id)
+
+        // 窗口内重发 c1 命中幂等 Duplicate
+        match s.Submit([ 10 ], t0, stamp 1) with
+        | Duplicate orig -> Assert.Equal(1UL, orig.id)
+        | r -> failwithf "expected Duplicate, got %A" r
+
+        // 提交 c3 后，最老的 c1 被淘汰，窗口内保留 c2、c3
+        Assert.Equal(3UL, (committed (s.Submit([ 30 ], t0, stamp 3))).id)
+        Assert.Equal(2, Map.count s.Stamps)
+        Assert.False(Map.containsKey "c1" s.Stamps)
+
+        // 被淘汰的 c1 再次提交，作为新提交 id = 4 落盘
+        Assert.Equal(4UL, (committed (s.Submit([ 40 ], t0, stamp 1))).id)
+        Assert.Equal(100, s.State)
+
+    // 1) 无快照下 Inspect 与重开（带 maxStamps = 2）：重放过程中同步淘汰旧 c1，不会误判 RepeatedStamp
+    let i1 = S.Inspect(d, codec, apply, 0, maxStamps = 2)
+    Assert.Equal(Healthy, i1.health)
+    Assert.Equal(4UL, i1.lastId)
+
+    do
+        use s2 = new S(d, apply, 0, codec, SnapshotPolicy.Manual, maxStamps = 2)
+        Assert.Equal(Healthy, s2.Health)
+
+        Assert.Equal(
+            {
+                snapshot = Absent
+                replayedCommits = 4
+            },
+            s2.Startup
+        )
+
+        Assert.Equal(100, s2.State)
+        Assert.True((s2.SaveSnapshot()).IsOk)
+
+    // 2) 有快照下 Inspect（不传 maxStamps 也自动从快照继承 maxStamps = 2）与重开
+    let i2 = S.Inspect(d, codec, apply, 0)
+    Assert.Equal(Healthy, i2.health)
+
+    Assert.Equal(
+        {
+            snapshot = Used 4UL
+            replayedCommits = 0
+        },
+        i2.startup
+    )
+
+    do
+        use s3 = new S(d, apply, 0, codec, SnapshotPolicy.Manual)
+        Assert.Equal(Some 2, s3.MaxStamps)
+        Assert.Equal(Healthy, s3.Health)
+
+        Assert.Equal(
+            {
+                snapshot = Used 4UL
+                replayedCommits = 0
+            },
+            s3.Startup
+        )
+
+        Assert.Equal(100, s3.State)
+
+    // 3) 窗口内（c1 刚在 id = 4 提交过，仍在窗口内）若日志被篡改追加重复 c1，重开必检出 RepeatedStamp
+    File.AppendAllText(
+        logOf d,
+        "\u001e{\"v\":1,\"id\":\"5\",\"at\":\"2026-01-01T00:00:00Z\",\"stamp\":{\"id\":\"c1\",\"hash\":\"h\"},\"events\":[50]}\n"
+    )
+
+    use s4 = new S(d, apply, 0, codec, SnapshotPolicy.Manual, maxStamps = 2)
+
+    match s4.Health with
+    | Damaged(_, why) -> Assert.Contains("c1", why)
+    | h -> failwithf "expected Damaged for in-window repeated stamp, got %A" h

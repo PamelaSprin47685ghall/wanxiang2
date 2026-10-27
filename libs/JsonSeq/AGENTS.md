@@ -119,8 +119,9 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
     - 证明：`checkpoint json round-trips with caller-encoded state`，通过。
 13. [LEMMA: 2, 5] 与真实文件组合时成功、重复、拒绝、半写尾、未知结果都按上面的规则落地。
     - 证明：`compose/LedgerStore/tests/Tests.fs`（见该目录 AGENTS.md）。
-14. [TODO] 幂等索引有界保留已在 `Ledger` 与 `CheckpointJson` 提供可选 `maxStamps`（`stamps index evicts the oldest entries beyond the retention bound`、`stamp retention bound survives checkpoint round-trip`、`checkpoint json round-trips with caller-encoded state` 通过）；但单纯淘汰旧戳会使淘汰后重发的同 `commandId` 再次写入日志，与无界重放/`Inspect` 的 `RepeatedStamp` 损坏判据冲突，故尚未接入 `compose/LedgerStore`。
-15. [TODO] `Checkpoint` 随提交数线性增长（每条 8 字节）。
+14. [LEMMA: 6, 7] 幂等索引有界保留已在 `Ledger`、`CheckpointJson` 与 `compose/LedgerStore`（含 `Opening.load` 与 `Inspect`）完整接通：超出 `maxStamps` 上限时按 `commitId` 从最旧一侧淘汰，被淘汰的旧 `commandId` 重发作为新提交编号落盘；带同上限的无快照从头重放、带快照重放与 `Inspect`（含从快照自动继承 `maxStamps`）在重放过程中同步淘汰旧戳，不误触发 `RepeatedStamp`；窗口内被篡改写入重复 `commandId` 仍由 `Record` 检出 `RepeatedStamp`。
+    - 证明：`tests/Ledger.Tests.fs` 的 `stamps index evicts the oldest entries beyond the retention bound`、`stamp retention bound survives checkpoint round-trip`、`checkpoint json round-trips with caller-encoded state` 通过（组合层重放与 `Inspect` 证明见 `compose/LedgerStore/AGENTS.md` SPEC 17）。
+    - 剩余边界：`Checkpoint.ends` 每条提交存 8 字节末尾偏移（不存正文，见 LEMMA 7），随总提交数线性增长。
 
 ## 成员 `Snapshot`
 

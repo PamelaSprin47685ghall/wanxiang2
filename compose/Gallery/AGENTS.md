@@ -113,7 +113,7 @@ bash tools/gallery-baseline.sh [基线目录]                                   
 ## SPEC
 
 1. [LEMMA: 1] `tests/Tests.fs`（18 条，全是**状态差异**断言，不是「没抛异常 / 不是空板 / 清单对得上」那类烟雾）。
-   **当前 18 条全过**（实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 18, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
+   **当前 18 条全过**（连同 `BaselineTests.fs` 6 条与 `A11yAuditTests.fs` 19 条，实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 43, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
    - `输入区：空闲、输入中、带附件、生成中是四个不同的状态`（读投影：草稿文本、托盘、发送键状态、禁用位）；
    - `输入区：未连接时禁用并给出原因`（`DisabledReason` 与侧栏空态）；
    - `对话列：空态、有消息、流式是三个不同的状态`（流式那条走**真的** `generation.delta`，
@@ -184,20 +184,20 @@ bash tools/gallery-baseline.sh [基线目录]                                   
    `InternalMsg.UploadProgress` / `.UploadFinished` / `.UploadFailed` 分支；
    画廊条目 `ComposerBox.attachments` 走真实消息序列（`Scenes.composerAttach`），
    发送时附件元数据随发件出去（`Send` 丢附件的 bug 已修并有用例钉住）。
-5. **像素基线覆盖 25/41 条目 —— 待 DevOps 实机补齐。**
-   见《深浅双主题渲染与像素基线门禁 (G3)》的当前覆盖一节。缺基线期间门禁按契约红灯，
+5. **像素基线覆盖 41/41 条目（深浅双主题共 82 张 PNG）—— 已补齐。**
+   见《深浅双主题渲染与像素基线门禁 (G3)》与下方《合并后实测更正》。缺基线或像素变化时门禁按契约红灯，
    不伪造基线图。
 
 ## 与旧实现的差异
 
 无（旧仓库没有画廊这一物）。
 
-## 合并后实测更正（2026-10-23）
+## 合并后实测更正（2026-10-23；2026-10-27 复核）
 
-上述「25/41 条目有基线，其余待补齐」是合并中间状态，已由本节取代。合并远端后从源码重新 `./x pack`，清理画廊旧包缓存，再实际生成全部 41 个条目的深浅主题基线，共 82 张；独立进程逐像素复核 82 项全部通过。这证明本机渲染可重复，不代表人工视觉审查或跨平台像素一致。
+早期「25/41 条目有基线，其余待补齐」是合并中间状态，已由本节取代。合并远端后从源码重新 `./x pack`，清理画廊旧包缓存，再实际生成全部 41 个条目的深浅主题基线，共 82 张；独立进程逐像素复核 82 项全部通过。这证明本机渲染可重复，不代表人工视觉审查或跨平台像素一致。
 
 - `bash tools/gallery.sh --list`：41 条，实际运行成功。
-- `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/gallery-cache"`：37 条通过、0 失败。
+- `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/gallery-cache"`：43 条通过、0 失败（含 `Tests.fs` 18 条、`BaselineTests.fs` 6 条、`A11yAuditTests.fs` 19 条）。
 - AppShell 原生 Tab/Esc/删除邻位交互用例：1 条通过、0 失败。
 - `./x check`：109 个库、71 个组合者、17 个控件库覆盖检查通过。
 - 实际渲染暴露并修正两个重复挂载：ChatHeader 条目改用独立真实控件；审批条目呈现所属 OverlayRoot，不再把已有父节点的审批视图重复挂入画布。

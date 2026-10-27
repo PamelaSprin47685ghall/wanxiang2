@@ -37,7 +37,7 @@ type ShellBrand(image: IImage option) =
     /// 边长为 size 的品牌标（侧栏、空状态、头像都用它）
     member _.Logo(size: float) : Control = BrandMark.tile image size
 
-/// 宿主里还没迁出的控件（侧栏、对话视图、输入区）由组合者经这些插槽驱动。
+/// 侧栏、对话视图、输入区与本组合者保持解耦，由外层宿主经这些插槽同步状态与焦点。
 type ShellHooks =
     {
         /// 紧凑模式同步给输入区、侧栏、对话视图

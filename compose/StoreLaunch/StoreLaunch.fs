@@ -9,21 +9,22 @@ open Wanxiang.Store
 module StoreLaunch =
 
     /// 打开存储；数据目录被占用与读不了分开报（文字与旧实现相同）。
-    let private openStore (dataDir: string) (manual: bool) : Result<EventStore, string> =
+    let private openStore (dataDir: string) (manual: bool) (maxStamps: int option) : Result<EventStore, string> =
         try
             Ok(
-                if manual then
-                    new EventStore(dataDir, policy = LedgerStore.SnapshotPolicy.Manual)
-                else
-                    new EventStore(dataDir)
+                match manual, maxStamps with
+                | true, Some m -> new EventStore(dataDir, policy = LedgerStore.SnapshotPolicy.Manual, maxStamps = m)
+                | true, None -> new EventStore(dataDir, policy = LedgerStore.SnapshotPolicy.Manual)
+                | false, Some m -> new EventStore(dataDir, maxStamps = m)
+                | false, None -> new EventStore(dataDir)
             )
         with
         | :? InvalidOperationException as e -> Error(sprintf "data directory locked: %s" e.Message)
         | e -> Error(sprintf "event log not readable: %s" e.Message)
 
-    /// `doctor --fix`（决策 51、105/Q110）：持锁后检查，有损坏先建证据包再截断。
-    let fix (dataDir: string) (logInfo: string -> unit) : Result<unit, string> =
-        match openStore dataDir true with
+    /// `doctor --fix`（决策 51、105/Q110）：持锁后检查，有损坏先建证据包再截断（可指定有界幂等保留上限）。
+    let fixWithMaxStamps (maxStamps: int option) (dataDir: string) (logInfo: string -> unit) : Result<unit, string> =
+        match openStore dataDir true maxStamps with
         | Error e -> Error e
         | Ok store ->
             let result =
@@ -58,10 +59,17 @@ module StoreLaunch =
             store.Shutdown()
             result |> Result.map ignore |> Result.mapError (sprintf "fix failed: %s")
 
-    /// 正常启动（S-001/S-003）：只读检查，损坏时以最长有效前缀进入只读降级模式，不自动截断；
+    /// `doctor --fix`（决策 51、105/Q110）：持锁后检查，有损坏先建证据包再截断。
+    let fix (dataDir: string) (logInfo: string -> unit) : Result<unit, string> = fixWithMaxStamps None dataDir logInfo
+
+    /// 正常启动（S-001/S-003，可指定有界幂等保留上限）：只读检查，损坏时以最长有效前缀进入只读降级模式，不自动截断；
     /// 只有格式不支持、读不了才拒绝启动。打开的存储直接交给主机，不再重放第二次。
-    let openForStartup (dataDir: string) (logInfo: string -> unit) : Result<EventStore, string> =
-        match openStore dataDir false with
+    let openForStartupWithMaxStamps
+        (maxStamps: int option)
+        (dataDir: string)
+        (logInfo: string -> unit)
+        : Result<EventStore, string> =
+        match openStore dataDir false maxStamps with
         | Error e -> Error e
         | Ok store ->
             let r = Inspect.ofStore store
@@ -103,3 +111,8 @@ module StoreLaunch =
                 Ok store
             | UnsupportedFormat msg -> Error(sprintf "unsupported event log format: %s" msg)
             | Unreadable msg -> Error(sprintf "event log not readable: %s" msg)
+
+    /// 正常启动（S-001/S-003）：只读检查，损坏时以最长有效前缀进入只读降级模式，不自动截断；
+    /// 只有格式不支持、读不了才拒绝启动。打开的存储直接交给主机，不再重放第二次。
+    let openForStartup (dataDir: string) (logInfo: string -> unit) : Result<EventStore, string> =
+        openForStartupWithMaxStamps None dataDir logInfo

@@ -161,7 +161,7 @@
 
 1. **Avalonia 12.1.2 `Avalonia.Native` (macOS) 底座桥接边界（上游框架层，已提报 [AvaloniaUI/Avalonia#22614](https://github.com/AvaloniaUI/Avalonia/issues/22614)）**：
    - **子角色（`AXSubrole`）未映射**：217 个节点中有 210 个节点的 `AXSubrole` 为 `AXUnknown`（主角色 `AXRole` 正常为 `AXButton` / `AXTextField` / `AXRadioButton` 等），根因为 `native/Avalonia.Native/src/OSX/automation.mm` 的 `accessibilitySubrole` 默认返回 `NSAccessibilityUnknownSubrole` 而非 `nil`；
-   - **应用内控件未向原生层暴露 `AXPress`**：仅系统标题栏的 3 个窗口按钮与 `AXWindow` 暴露了 `AXPress` / `AXRaise`，应用内 `AXButton` 的 `AXUIElementCopyActionNames` 仅返回 `["AXScrollToVisible"]`（根因为 `AvnAccessibilityElement` 重写了已弃用的 `accessibilityActionNames` 仅追加 `AXScrollToVisible`，覆盖了 AppKit 基于 `isAccessibilitySelectorAllowed:` 自动合成的 `AXPress`；键盘 `Tab` + `Space`/`Enter` 走 Avalonia 内部路由正常触发，但依赖原生 `AXPress` 的 `VO+Space` 无法直接触发）。
+   - **应用内控件的 `AXPress` 待核实**：当次记录称，系统标题栏的 3 个窗口按钮与 `AXWindow` 暴露了 `AXPress` / `AXRaise`，应用内 `AXButton` 的 `AXUIElementCopyActionNames` 仅返回 `["AXScrollToVisible"]`；键盘 `Tab` + `Space`/`Enter` 走 Avalonia 内部路由正常触发。此前将原因归结为重写 `accessibilityActionNames` 阻止 AppKit 合成 `AXPress`，但后续独立 AppKit 实验未支持这一推断。该实验不是实际 Avalonia 控件，且其旧写法返回的错误与上述记录不一致；真实应用的动作列表、执行结果及 `VO+Space` 行为须重新对照验证，根因尚未确定。
 2. **首次引导卡（`OnboardingPane`）内的 `Tab` / `Shift+Tab` 焦点跳出（已修复）**：
    - **根因**：① Avalonia 12.1.2 的 `WrapPanel` 实现 `INavigableContainer.GetControl` 时仅处理四向方向键，对 `NavigationDirection.Next` / `Previous`（`Tab` / `Shift+Tab`）直接返回 `null`；② `OnboardingPane.Render` 每次调用都会 `chipRow.Children.Clear()` 重建按钮实例，导致刚获得焦点的芯片在重绘时从视觉树摘除、焦点丢失为 `null`。
    - **修复与验证**：`libs/DevicesPane/OnboardingPane.fs` 改为按芯片键集合复用按钮实例（仅在键列表变化时重建），并在 `chipRow` 上拦截 `Key.Tab` 沿内部可聚焦芯片顺序流转、首尾越界时交还外层容器；由 `libs/DevicesPane/tests/OnboardingPane.Tests.fs`「`引导卡内连续按 Tab 依次走过服务商键与更多并进入 API Key 输入框，且重复渲染保留焦点`」回归守卫。

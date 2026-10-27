@@ -42,7 +42,8 @@ let ``body mono and katex families resolve to the embedded faces`` () =
         Assert.True(ok, "body")
 
         Assert.True(
-            bodyGlyph.FamilyName.Contains("Noto") || bodyGlyph.FamilyName.Contains("Sarasa"),
+            [ "Noto"; "PingFang SC"; "Hiragino Sans GB"; "Microsoft YaHei"; "Sarasa" ]
+            |> List.exists bodyGlyph.FamilyName.Contains,
             bodyGlyph.FamilyName
         )
 

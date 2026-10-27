@@ -15,16 +15,46 @@ module AtomicTextFileInterop =
     extern int openPath(string path, int flags)
 
     [<DllImport("libc", SetLastError = true)>]
-    extern int fsync(IntPtr fd)
+    extern int fsync(int fd)
 
     [<DllImport("libc", SetLastError = true)>]
-    extern int close(IntPtr fd)
+    extern int close(int fd)
 
+    /// POSIX 标准中 O_RDONLY 在所有 Unix/Linux/macOS 平台恒为 0。
     [<Literal>]
     let oRdonly = 0
 
-    [<Literal>]
-    let oDirectory = 0x100000
+    /// 按平台与架构选择 POSIX O_DIRECTORY，使内核在 open 单一系统调用内拒绝非目录路径。
+    let oDirectoryFlag () =
+        if OperatingSystem.IsMacOS() then
+            0x100000
+        elif OperatingSystem.IsLinux() then
+            match RuntimeInformation.OSArchitecture with
+            | Architecture.Arm
+            | Architecture.Arm64 -> 0x4000
+            | _ -> 0x10000
+        else
+            0
+
+    let syncDir (directory: string) : bool =
+        if String.IsNullOrEmpty directory then
+            false
+        elif not (OperatingSystem.IsWindows()) then
+            let flags = oRdonly ||| oDirectoryFlag ()
+
+            if flags = oRdonly && not (Directory.Exists directory) then
+                false
+            else
+                let fd = openPath (directory, flags)
+
+                if fd < 0 then
+                    false
+                else
+                    let ok = fsync fd = 0
+                    close fd |> ignore
+                    ok
+        else
+            Directory.Exists directory
 
 /// 一个由人和程序共同编辑的文本文件。私有状态：路径、最后一次本对象读到或写出的原文、监视器与去抖计时器。
 /// - Write：临时文件 + flush(true) + 原子改名，权限仅当前用户可读写；
@@ -137,16 +167,7 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
                 File.Move(tmp, full, true)
                 // 改名本身也要落盘：POSIX 上目录项不在文件页缓存里，不对目录 fsync，断电可能丢掉改名。
                 // 失败不抛出——写出的字节完好，最坏情况是断电后回到旧文件内容，按「外部改动」处理。
-                if not (OperatingSystem.IsWindows()) then
-                    let fd =
-                        AtomicTextFileInterop.openPath (
-                            dir,
-                            AtomicTextFileInterop.oRdonly ||| AtomicTextFileInterop.oDirectory
-                        )
-
-                    if fd >= 0 then
-                        AtomicTextFileInterop.fsync fd |> ignore
-                        AtomicTextFileInterop.close fd |> ignore
+                AtomicTextFileInterop.syncDir dir |> ignore
 
                 lastKnown <- Some text
                 Ok()

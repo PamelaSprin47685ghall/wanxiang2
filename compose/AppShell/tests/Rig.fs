@@ -51,6 +51,8 @@ type FakePorts(prefs0: UiPrefs) =
     let connects = ResizeArray<string>()
     let recordedEffects = ResizeArray<Wanxiang2.WorkspaceState.Effect>()
     let browserSucceeded = ref 0
+    let hiddenHandlers = ResizeArray<unit -> unit>()
+    let disposedAfterTimers = ref 0
     let restoreCalls = ref 0
     let posts = ref 0
     let mutable generation = 7
@@ -94,6 +96,13 @@ type FakePorts(prefs0: UiPrefs) =
     member _.Connects = connects |> List.ofSeq
     member _.RecordedEffects = recordedEffects |> List.ofSeq
     member _.BrowserSucceeded = browserSucceeded.Value
+    member _.HiddenHandlersCount = hiddenHandlers.Count
+
+    member _.TriggerBrowserHidden() =
+        for h in hiddenHandlers do
+            h ()
+
+    member _.DisposedAfterTimers = disposedAfterTimers.Value
     member _.RestoreFocusCalls = restoreCalls.Value
     /// 已执行的 UI 线程投递次数（等后台续体落地用）。
     member _.Posts = posts.Value
@@ -245,9 +254,15 @@ type FakePorts(prefs0: UiPrefs) =
 
                     timer.Start()
                     // `DispatcherTimer` 本身不是 IDisposable，用一个壳把 `Stop` 暴露成 `Dispose`。
+                    let mutable stopped = false
+
                     let wrapper =
                         { new IDisposable with
-                            member _.Dispose() = timer.Stop()
+                            member _.Dispose() =
+                                if not stopped then
+                                    stopped <- true
+                                    disposedAfterTimers.Value <- disposedAfterTimers.Value + 1
+                                    timer.Stop()
                         }
 
                     handle <- wrapper
@@ -280,7 +295,7 @@ type FakePorts(prefs0: UiPrefs) =
             BrowserResumeEpoch = fun () -> 0
             BrowserPageUrl = fun () -> ""
             BrowserConversationSucceeded = fun () -> browserSucceeded.Value <- browserSucceeded.Value + 1
-            BrowserAddHidden = fun _ -> ()
+            BrowserAddHidden = fun handler -> hiddenHandlers.Add handler
             SystemPrefersDark = fun () -> dark
             DefaultServerUrl = fun () -> "ws://127.0.0.1:1/ws"
             ApplyTheme = fun value -> themes.Add value

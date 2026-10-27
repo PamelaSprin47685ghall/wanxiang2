@@ -234,6 +234,147 @@ let ``第五批：退出取当前模型，不把发送前的延时草稿写回``
         rig.Shell.FlushDrafts()
         Assert.Equal(DraftWrite.Write "", List.last rig.Fake.DraftWrites))
 
+[<Fact>]
+let ``第五批：隐藏事件接线取消在途草稿计时器并立即保存，重复刷新保持最新模型文本`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        Assert.Equal(1, rig.Fake.HiddenHandlersCount)
+        let actions = rig.Shell.ComposerActions(ignore, ignore, fun () -> false)
+        // 首次变字立即写入，随后窗口内变字排上 800ms 计时器；触发浏览器隐藏回调时必须取消该在途计时器并立即写入最新文本
+        actions.TextChanged "首版"
+        actions.TextChanged "终版"
+        let beforeHidden = rig.Fake.DisposedAfterTimers
+        rig.Fake.TriggerBrowserHidden()
+        Assert.Equal(beforeHidden + 1, rig.Fake.DisposedAfterTimers)
+        Assert.Equal(DraftWrite.Write "终版", List.last rig.Fake.DraftWrites)
+        // 紧接着再次调用 FlushDrafts（如隐藏后随即关窗）：无在途计时器再被取消，且写的仍是当前模型文本
+        rig.Shell.FlushDrafts()
+        Assert.Equal(beforeHidden + 1, rig.Fake.DisposedAfterTimers)
+        Assert.Equal(DraftWrite.Write "终版", List.last rig.Fake.DraftWrites))
+
+[<Fact>]
+let ``命令面板候选投影随预设、对话、归档偏好与主机能力变化`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Fake.Deliver(AuthAccepted {| instanceId = "inst-palette" |})
+
+        let provider = JsonObject()
+        provider["id"] <- JsonValue.Create "p1"
+        provider["label"] <- JsonValue.Create "P1"
+        provider["models"] <- JsonArray([| JsonValue.Create "m1" :> JsonNode |])
+
+        let preset = JsonObject()
+        preset["id"] <- JsonValue.Create "writer"
+        preset["name"] <- JsonValue.Create "写作助手"
+        preset["provider"] <- JsonValue.Create "p1"
+        preset["model"] <- JsonValue.Create "m1"
+
+        let gen = JsonObject()
+        gen["presets"] <- JsonArray([| preset :> JsonNode |])
+
+        rig.Fake.Deliver(
+            CatalogSnapshot
+                {|
+                    providers = JsonArray([| provider :> JsonNode |])
+                    tools = JsonArray()
+                    generation = gen
+                |}
+        )
+
+        let activeId = Guid "22222222-2222-2222-2222-222222222222"
+        let archivedId = Guid "33333333-3333-3333-3333-333333333333"
+
+        let mkSummary (id: Guid) (title: string) (archived: bool) =
+            let o = JsonObject()
+            o["conversationId"] <- JsonValue.Create(string id)
+            o["title"] <- JsonValue.Create title
+            o["archived"] <- JsonValue.Create archived
+            o["pinned"] <- JsonValue.Create false
+            o["running"] <- JsonValue.Create false
+            o["createdAt"] <- JsonValue.Create "2026-10-21T08:00:00Z"
+            o["updatedAt"] <- JsonValue.Create "2026-10-21T08:00:00Z"
+            o["messageCount"] <- JsonValue.Create 1
+            o["providerId"] <- JsonValue.Create "p1"
+            o["model"] <- JsonValue.Create "m1"
+            o :> JsonNode
+
+        rig.Fake.Deliver(
+            ConversationListSnapshot
+                {|
+                    lastCommitId = 1UL
+                    items = JsonArray([| mkSummary activeId "进行中的工作流" false; mkSummary archivedId "去年归档的复盘" true |])
+                |}
+        )
+
+        // 打开活动对话，使 hasConversation = true
+        rig.Fake.Deliver(
+            ConversationSnapshot
+                {|
+                    conversationId = activeId
+                    title = "进行中的工作流"
+                    lastCommitId = 1UL
+                    runtimeState = "idle"
+                    generationId = None
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+        )
+
+        let paletteTitles (query: string) =
+            let search =
+                rig.Root.GetLogicalDescendants()
+                |> Seq.choose (function
+                    | :? TextBox as text when text.Name = "CommandPaletteSearch" -> Some text
+                    | _ -> None)
+                |> Seq.exactlyOne
+
+            search.Text <- query
+            Pump.settle ()
+
+            rig.Root.GetLogicalDescendants()
+            |> Seq.choose (function
+                | :? TextBlock as tb when not (String.IsNullOrWhiteSpace tb.Text) -> Some tb.Text
+                | _ -> None)
+            |> Set.ofSeq
+
+        rig.Shell.Commands.ShowPalette()
+        Assert.Contains("用预设新建：写作助手", paletteTitles "写作助手")
+        Assert.Contains("存为预设", paletteTitles "存为预设")
+        Assert.Contains("导出当前对话", paletteTitles "导出当前对话")
+        Assert.Contains("从导出的 JSON 文件", paletteTitles "导入对话")
+        Assert.Contains("进行中的工作流", paletteTitles "进行中的工作流")
+        // 默认不显示归档对话
+        Assert.DoesNotContain("去年归档的复盘", paletteTitles "去年归档的复盘")
+        rig.Shell.HandleShortcut ShortcutAction.Escape |> ignore
+
+        // 开启归档可见性 + 主机声明不支持 presets 与 conversation.import
+        rig.Shell.Dispatch(
+            User(
+                Settings(
+                    SettingsUserMsg.PrefsChanged
+                        { rig.Shell.Model.Prefs with
+                            showArchived = true
+                        }
+                )
+            )
+        )
+
+        rig.Fake.Deliver(
+            HostCapabilities
+                {|
+                    hostVersion = "1.0.0"
+                    features = [ "search" ]
+                |}
+        )
+
+        rig.Shell.Commands.ShowPalette()
+        Assert.Contains("去年归档的复盘", paletteTitles "去年归档的复盘")
+        Assert.DoesNotContain("存为预设", paletteTitles "存为预设")
+        Assert.DoesNotContain("从导出的 JSON 文件", paletteTitles "导入对话")
+        rig.Shell.HandleShortcut ShortcutAction.Escape |> ignore)
+
 let private authenticate (rig: Rig) =
     rig.Fake.Deliver(AuthAccepted {| instanceId = "inst-1" |})
 

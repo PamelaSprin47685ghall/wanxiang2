@@ -20,6 +20,6 @@
 3. [LEMMA: 4] 连续 5 次外部写，去抖后只发出一次 `Changed`：`external changes raise Changed once after debounce`，通过。
 4. [LEMMA: 1] 写失败（真实故障：目标被占成非空目录）时原文件不变、临时文件被删：`failed write leaves the original intact`，通过。
 5. [LEMMA: 3] 文件不存在时读返回 Error，`ExternalEdit` 为 None：`missing file reads as error`，通过。
-6. [TODO] Windows 上不设权限；改名之后没有对所在目录 fsync。
+6. [LEMMA: 1, 2] 改名后对所在目录执行 POSIX `fsync`（`AtomicTextFileInterop.syncDir` 按平台与架构取 `O_DIRECTORY`，在真实目录上返回 `true`、缺失或普通文件路径返回 `false` 且不抛异常）：`repeated writes keep the latest content on disk` 在 macOS ARM64 与 Linux x64 容器验证通过。剩余边界：物理断电与 Windows 行为未实测；Windows 上不设 POSIX `0600` 权限。
 
 - `WriteIfUnchanged`：临时文件落盘后、改名前检查磁盘原文仍是最后已知原文，否则放弃，不覆盖别人的改动：`write-if-unchanged refuses to clobber...`，通过。

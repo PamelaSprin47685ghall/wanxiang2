@@ -278,9 +278,9 @@ let ``crash at every byte of an append leaves the longest valid prefix`` () =
 
 [<Fact>]
 let ``a real killed writer process leaves a log the next process replays`` () =
-    // 与「在每个字节处截断」不同：这里真的杀掉一个正在写的进程，让操作系统在写到一半时关掉句柄。
+    // 与「在每个字节处截断」不同：这里真的杀掉一个正在持续写入的进程，让操作系统在写途中直接回收句柄。
     // 崩溃对磁盘的影响只有一种（追加在某个字节处中断），所以断言的是崩溃矩阵已经证明的性质；
-    // 这条用例补的是「进程被真的杀掉」这一路径本身有没有被走通。
+    // 子进程在连续提交期间自杀；无法确定终止时是否正处于写系统调用中。
     let d = tempDir ()
     Directory.CreateDirectory d |> ignore
 
@@ -291,13 +291,15 @@ let ``a real killed writer process leaves a log the next process replays`` () =
     let seqAsm = Path.Combine(Path.GetDirectoryName asm, "JsonSeq.dll")
     let lockAsm = Path.Combine(Path.GetDirectoryName asm, "DirLock.dll")
 
-    File.WriteAllText(
-        script,
-        sprintf
-            """#r "%s"
+    try
+        File.WriteAllText(
+            script,
+            sprintf
+                """#r "%s"
 #r "%s"
 #r "%s"
 open System
+open System.Threading
 open System.Text.Json.Nodes
 open Ledger
 open LedgerStore
@@ -308,72 +310,98 @@ let codec: Codec<int, int> =
       encodeState = fun n -> JsonValue.Create n :> JsonNode
       decodeState = fun j -> Ok(j.GetValue<int>()) }
 let s = new LedgerStore<int, int, string>("%s", apply, 0, codec, SnapshotPolicy.Manual)
-for n in 1..200 do
+for _ in 1..20 do
     s.Submit([ 1 ], DateTimeOffset.UnixEpoch) |> ignore
-    Console.Out.WriteLine(s.LastId)
-    Console.Out.Flush()
+Console.Out.WriteLine(s.LastId)
 Console.Out.WriteLine("ready")
 Console.Out.Flush()
-// 真的被杀：SIGKILL 自己，句柄由操作系统关闭，没有机会写收尾字节、也没有机会保存快照。
-Diagnostics.Process.GetCurrentProcess().Kill()
+// 后台线程在 20ms 后对本进程发 SIGKILL，主线程立即进入紧凑写入死循环，使强杀发生在持续写入途中。
+let killer = Thread(ThreadStart(fun () ->
+    Thread.Sleep 20
+    Diagnostics.Process.GetCurrentProcess().Kill()))
+killer.IsBackground <- true
+killer.Start()
+while true do
+    s.Submit([ 1 ], DateTimeOffset.UnixEpoch) |> ignore
 """
-            asm
-            seqAsm
-            lockAsm
-            d
-    )
+                asm
+                seqAsm
+                lockAsm
+                d
+        )
 
-    let psi = Diagnostics.ProcessStartInfo("dotnet", sprintf "fsi \"%s\"" script)
-    psi.RedirectStandardOutput <- true
-    psi.UseShellExecute <- false
-    use child = Diagnostics.Process.Start psi
+        let psi = Diagnostics.ProcessStartInfo("dotnet", sprintf "fsi \"%s\"" script)
+        psi.RedirectStandardOutput <- true
+        psi.UseShellExecute <- false
+        use child = Diagnostics.Process.Start psi
 
-    // 等到它写出若干条提交并喊「ready」，说明日志里已经有内容且它马上自杀。
-    let mutable line = ""
-    let mutable committedCount = 0
+        try
+            let mutable line = ""
+            let mutable committedCount = 0
 
-    while line <> "ready" && not (isNull line) do
-        line <- child.StandardOutput.ReadLine()
+            let readTask =
+                Threading.Tasks.Task.Run(fun () ->
+                    while line <> "ready" && not (isNull line) do
+                        line <- child.StandardOutput.ReadLine()
 
-        match Int32.TryParse line with
-        | true, n -> committedCount <- n
-        | _ -> ()
+                        match Int32.TryParse line with
+                        | true, n -> committedCount <- n
+                        | _ -> ())
 
-    Assert.Equal("ready", line)
-    child.WaitForExit()
-    Assert.True(committedCount >= 20, sprintf "child committed only %d" committedCount)
+            Assert.True(readTask.Wait(TimeSpan.FromSeconds 20.0), "timed out waiting for child writer to become ready")
+            Assert.Equal("ready", line)
+            Assert.True(child.WaitForExit 15000, "timed out waiting for killed child writer to exit")
+            Assert.True(committedCount >= 20, sprintf "child committed only %d" committedCount)
+        finally
+            if not child.HasExited then
+                try
+                    child.Kill true
+                with _ ->
+                    ()
 
-    // 句柄在进程退出时由内核关闭；给系统一点时间回收，再重开。
-    let mutable reopened = None
+        // 句柄在进程退出时由内核关闭；给系统一点时间回收，再重开。
+        let mutable reopened: S option = None
 
-    for _ in 1..100 do
-        if reopened.IsNone then
-            try
-                reopened <- Some(openAt d)
-            with :? InvalidOperationException ->
-                Threading.Thread.Sleep 20
+        for _ in 1..100 do
+            if reopened.IsNone then
+                try
+                    reopened <- Some(openAt d)
+                with :? InvalidOperationException ->
+                    Threading.Thread.Sleep 20
 
-    let reopened = Option.get reopened
+        use reopened = Option.get reopened
 
-    // 被杀时的写入可能落在任意字节，所以只能断言「重放出来的是一条连续前缀」。
-    let healthy = reopened.Health
-    Assert.True((healthy = Healthy), sprintf "reopened after a killed writer: %A" healthy)
-    let lastId = reopened.LastId
-    Assert.True(lastId >= 20UL, sprintf "replayed %d commits" lastId)
+        // 被杀时的写入可能落在记录边界（Healthy）或记录半途（Damaged，Repair 截掉半写尾后恢复 Healthy）。
+        match reopened.Health with
+        | Healthy -> ()
+        | Damaged _ ->
+            Assert.True((reopened.Repair()).IsOk, "repair after mid-write kill should succeed")
+            Assert.Equal(Healthy, reopened.Health)
+        | other -> failwithf "unexpected health after killed writer: %A" other
 
-    match reopened.CommitsAfter(0UL, 1000) with
-    | Ok cs ->
-        Assert.Equal<uint64 list>([ 1UL .. lastId ], cs |> List.map _.id)
-        Assert.Equal(int lastId, cs |> List.sumBy (fun c -> List.length c.events))
-    | Error e -> failwith e
+        let lastId = reopened.LastId
+        Assert.True(lastId >= 20UL, sprintf "replayed %d commits" lastId)
 
-    // 重开后还能继续提交，且 id 接在重放出来的末尾。
-    Assert.Equal(lastId + 1UL, (committed (reopened.Submit([ 1 ], t0))).id)
+        match reopened.CommitsAfter(0UL, 10000) with
+        | Ok cs ->
+            Assert.Equal<uint64 list>([ 1UL .. lastId ], cs |> List.map _.id)
+            Assert.Equal(int lastId, cs |> List.sumBy (fun c -> List.length c.events))
+        | Error e -> failwith e
 
-    (try
-        File.Delete script
-     with _ ->
-         ())
+        // 重开后还能继续提交，且 id 接在重放出来的末尾。
+        Assert.Equal(lastId + 1UL, (committed (reopened.Submit([ 1 ], t0))).id)
+    finally
+        (try
+            if File.Exists script then
+                File.Delete script
+         with _ ->
+             ())
+
+        (try
+            if Directory.Exists d then
+                Directory.Delete(d, true)
+         with _ ->
+             ())
 
 [<Fact>]
 let ``torn tail makes the store read-only and opening changes no bytes`` () =

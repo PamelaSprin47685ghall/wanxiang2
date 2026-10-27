@@ -89,3 +89,14 @@ let ``instances are isolated and a corrupt file is replaced by the next save`` (
     let got = a.Load()
     a.Save "A3"
     Assert.Equal(Loaded "A2", got)
+
+// SPEC 6：目录 fsync 在真实存在的目录上成功返回 true，在不存在的路径或普通文件上返回 false 且不抛出
+[<Fact>]
+let ``directory fsync succeeds on existing directory and returns false on missing or file path`` () =
+    let p = tempPath ()
+    SnapshotFile(p).Save "ok"
+    let dir = Path.GetDirectoryName p
+    Assert.True(DirFsync.sync dir)
+    Assert.False(DirFsync.sync p)
+    Assert.False(DirFsync.sync (Path.Combine(dir, "no-such-dir")))
+    Assert.False(DirFsync.sync "")

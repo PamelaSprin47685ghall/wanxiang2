@@ -151,7 +151,9 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
     - 证明：`invalid utf8 in header is Corrupt`，通过。
 5. [LEMMA: 1] 真实组合中，删掉快照或快照与日志对不上时，组合者从日志重建，结果相同。
     - 证明：`compose/LedgerStore/tests/Tests.fs` 中的 `commits survive reopen with and without snapshot, startup says which`、`stale snapshot from a truncated log is discarded`；测试名称与当前源码核对一致，本次未重新运行。
-6. [TODO] 目录 fsync 试验实现尚未验证平台标志、系统调用结果及失败语义；不能宣称断电持久性已解决。Windows 行为也未验证。
+6. [LEMMA: 2] 改名后对所在目录执行 POSIX `fsync`（`DirFsync.sync` 按平台与架构取 `O_DIRECTORY`：macOS `0x100000`、Linux x64 `0x10000`、Linux ARM `0x4000`，由内核在 `open` 单一系统调用内拒绝非目录路径；失败静默返回 `false`，按 LEMMA 1 最坏退回旧快照重建）。
+    - 证明：`tests/Snapshot.Tests.fs` `directory fsync succeeds on existing directory and returns false on missing or file path` 在 macOS ARM64 与 Linux x64 容器（`mcr.microsoft.com/dotnet/sdk:10.0`）实测通过（旧硬编码 `0x100000` 在 Linux x64 上误打开普通文件 `fd=111`，修复后返回 `false`）。
+    - 剩余边界：真实物理断电与 Windows 行为未在此环境内实测。
 
 7. [根 SPEC 3] 实例隔离；文件被外部弄坏后 `Load` 如实报 `Corrupt`，下一次 `Save` 覆盖它；`Load` 交出的文本是副本，不是内部状态的活视图。
     - 证明：`instances are isolated and a corrupt file is replaced by the next save`，通过。

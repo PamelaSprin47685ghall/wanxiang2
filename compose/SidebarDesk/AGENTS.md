@@ -1,6 +1,6 @@
 # SidebarDesk（组合者）
 
-SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、HostSwitcher 这些控件，加上 SearchSession、SearchRequery、RowFocus、SidebarSelection、SidebarEmpty、ConversationSummary、ForkLineage（ConversationList）、SearchSegments、SearchHit 这些协作库，一起构成旧 `Views/Sidebar.fs`。根规则见项目根目录 AGENTS.md。
+SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、HostSwitcher 这些控件，加上 SearchSession、RowFocus、SidebarSelection、ConversationSummary、ForkLineage（ConversationList）、SearchSegments、SearchHit 这些协作库，一起构成旧 `Views/Sidebar.fs`。根规则见项目根目录 AGENTS.md。
 
 **多选只有一个事实来源**：多选模式与选中集合在 `libs/WorkspaceState`（`Chrome.BatchMode` / `Chrome.SelectedRowIds`），
 经 `SidebarVS.BatchMode` / `SidebarVS.SelectedRowIds` 投影进来。本组合者**不再自己记一份选择集合**，
@@ -26,7 +26,7 @@ SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、Hos
   - 行菜单按 id 取最新快照，多选时不打开。
   - Esc 按顺序处理：行在多选中时退出多选；否则先清空搜索词，再退出多选，最后聚焦当前对话。
   - 搜索框的 Down 和 Enter 出口与旧实现相同。
-  - 防抖到期时用 SearchRequery 判断词是否变了，没变就不重发。
+  - 防抖到期时比较 `text <> messageSearch.Query` 判断词是否变了，没变就不重发。
   - 断线时清掉在途的搜索。
   - 根容器采用三行 `Grid`（`Auto,*,Auto`：顶栏/搜索/批量头 → 对话列表主体 → 底栏/批量操作），使视觉树顺序与自上而下的自然 `Tab` 焦点顺序严格一致。
   - 紧凑抽屉中按 Tab 只在侧栏内循环（OverlayDesk.TrapTab）。

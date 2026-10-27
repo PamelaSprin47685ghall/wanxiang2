@@ -150,21 +150,6 @@
 ### 与旧实现的差异
 无。意图行不在了时，旧 Rebuild 仍会还原重建前正聚焦且仍可见的行，本库相同（第四个用例末段）。
 
-## 成员 `SearchRequery`
-
-### SearchRequery（库）
-
-旧 `Views/Sidebar.fs` 搜索防抖到点时的判定迁入：词没变就不重发查询，否则迟到的 Tick 会清空刚到的命中（旧 LibraryTests 偶发失败的根因）。计时器仍归 Sidebar。不引用任何其他库。根规则见项目根目录 AGENTS.md。
-
-### LEMMA
-1. **同一组输入，判定与旧实现相同。** [根 AXIOM: 5]
-
-### SPEC
-1. [LEMMA: 1] [TODO] 原引用的搜索命中解析测试位于 `libs/WorkspaceState/tests/SearchHitTests.fs`，并不验证本节所述防抖重发判定；当前尚无对应证据，不能据此宣称通过。
-
-### 迁入或覆盖的旧测试
-旧 LibraryTests 搜索用例要起窗口，留在旧仓库。本包新增 3 条规则用例。
-
 ## 成员 `SearchSegments`
 
 ### SearchSegments（库）
@@ -210,22 +195,6 @@
 
 ### 迁入或覆盖的旧测试
 - LibraryTests：`sidebar shows hit snippets under message content and clicking opens the hit`（状态部分；片段着色、点击打开要起窗口，留旧仓库）
-
-## 成员 `SidebarEmpty`
-
-### SidebarEmpty（库）
-
-旧 `Views/Sidebar.fs` 的 Rebuild 末段迁入：搜索无结果提示、空态卡可见，以及三种空态（未连接、加载中、无对话，`SidebarEmptyKind` 加了 RequireQualifiedAccess）各自的按钮、骨架、标题与说明。卡的建法与种类翻转才重建仍归 Sidebar：调用方记住上次的 kind 自己比较。不引用任何其他库。根规则见项目根目录 AGENTS.md。
-
-### LEMMA
-1. **同一组状态，决定与旧分支相同。** [根 AXIOM: 5]
-
-### SPEC
-1. [LEMMA: 1] 旧 Sidebar 空态用例要起窗口，留在旧仓库；本包新增 4 条规则用例。
-2. 未连接优先于加载中，加载中优先于无对话；「连接主机」按钮只在窄屏出现。
-
-### 迁入或覆盖的旧测试
-旧 Sidebar 空态用例要起窗口，留在旧仓库。本包新增 4 条规则用例。
 
 ## 成员 `SidebarSelection`
 

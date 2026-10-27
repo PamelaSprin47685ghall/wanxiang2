@@ -142,7 +142,7 @@
 2. **删除意图只用一次**：重建后优先聚焦意图行；意图行不在了就作废，不落到别处。
 
 ### SPEC
-1. [LEMMA: 1, 2] `tests/Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/RowFocus.RowFocus.Tests.fs` 通过。
 
 ### 迁入或覆盖的旧测试
 - KeyConvergenceTests：`neighbor after delete matches the row focus falls to`、`no neighbor when the list becomes empty`（行序直接给出；原用例经真实侧栏排序）
@@ -160,7 +160,7 @@
 1. **分词和分段结果与旧实现相同。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/SearchSegments.Tests.fs` 通过：`empty query yields one plain segment covering the whole text`、`whitespace-only query is treated as no query`、`single term highlights only the matched substring, keeping original casing`、`segments always reassemble the original text exactly`、`every term that matched the row is highlighted`、`adjacent matches cover the whole text without gaps`、`overlapping occurrences of one term are not double counted`、`overlapping hits of different terms do not duplicate characters`、`a hit contained in another is absorbed`、`separated hits stay separate`、`a term that does not occur leaves the text unstyled`、`terms helper splits on spaces and tabs and drops duplicates`、`null text is one empty plain segment`。
+1. [LEMMA: 1] `tests/RowFocus.SearchSegments.Tests.fs` 通过：`empty query yields one plain segment covering the whole text`、`whitespace-only query is treated as no query`、`single term highlights only the matched substring, keeping original casing`、`segments always reassemble the original text exactly`、`every term that matched the row is highlighted`、`adjacent matches cover the whole text without gaps`、`overlapping occurrences of one term are not double counted`、`overlapping hits of different terms do not duplicate characters`、`a hit contained in another is absorbed`、`separated hits stay separate`、`a term that does not occur leaves the text unstyled`、`terms helper splits on spaces and tabs and drops duplicates`、`null text is one empty plain segment`。
 2. 有意改动（只影响屏幕显示，不涉及磁盘和网络字节）：旧实现的合并 fold 写成 `(sorted, []) ||> List.fold`，状态和列表位置颠倒，从不合并，不同词的命中互相重叠时还会重复取字。现在命中区间排序后，重叠或紧邻的合并为一段命中；拼回的文本恒等于原文，每个字只出现一次。
 
 ### 迁入或覆盖的旧测试
@@ -191,7 +191,7 @@
 3. **状态行文字与旧 Rebuild 逐字相同。**
 
 ### SPEC
-1. [LEMMA: 1, 2, 3] `tests/Tests.fs` 通过。
+1. [LEMMA: 1, 2, 3] `tests/RowFocus.SearchSession.Tests.fs` 通过。
 
 ### 迁入或覆盖的旧测试
 - LibraryTests：`sidebar shows hit snippets under message content and clicking opens the hit`（状态部分；片段着色、点击打开要起窗口，留旧仓库）

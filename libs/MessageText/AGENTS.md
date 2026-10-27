@@ -19,7 +19,7 @@
     - 推理：超长消息不能拖慢整次扫描。
 
 ## SPEC
-1. [LEMMA: 1, 2] `tests/Tests.fs`，通过。
+1. [LEMMA: 1, 2] `tests/MessageText.Tests.fs`，通过。
 
 ## 成员 `TextMatch`
 

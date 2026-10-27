@@ -17,7 +17,7 @@ hljs 语言目录：解析目录 JSON、把语言标注解析成规范名、判�
 2. **目录文本由调用方给出；本库不读资源。** [根 AXIOM: 3]
 
 ## SPEC
-1. [LEMMA: 1, 2] tests/Tests.fs 通过。
+1. [LEMMA: 1, 2] `tests/HljsCatalog.Tests.fs` 通过。
 
 ## 迁入或覆盖的旧测试
 本库测试（新写，边界与失败路径）：
@@ -43,7 +43,7 @@ hljs 语言目录：解析目录 JSON、把语言标注解析成规范名、判�
 2. **资源逐字节复制自旧仓库，清单逻辑名相同（js/…）；重新装配仍用旧仓库 tools/build_webassets.js。** [根 AXIOM: 3]
 
 ## SPEC
-1. [LEMMA: 1, 2] tests/Tests.fs 通过。
+1. [LEMMA: 1, 2] `tests/RichScripts.Tests.fs` 通过。
 
 ## 迁入或覆盖的旧测试
 本库测试（新写，边界与失败路径）：

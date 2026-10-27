@@ -26,7 +26,7 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 
 ## SPEC
 1. [LEMMA: 1] `encode` 与 `split` 往返保持文本与偏移。
-    - 证明：`tests/Tests.fs` `encode then split round-trips text and offsets`，通过。
+    - 证明：`tests/JsonSeq.Tests.fs` `encode then split round-trips text and offsets`，通过。
 2. [LEMMA: 1] 在任意字节处截断，切分结果是原记录的完整前缀，加至多一条 `TornTail` 尾记录。
     - 证明：`truncation at every byte yields complete prefix plus at most one incomplete tail`，逐字节穷举，通过。
 3. [根 AXIOM: 6; LEMMA: 1] 文本含 RS 时 `encode` 抛出 `ArgumentException`（防呆：边界一旦破坏不可撤销）。
@@ -93,7 +93,7 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 
 ## SPEC
 1. [LEMMA: 1, 3] id 从 1 起连续；把同样的事实按序记入新实例，得到相同 `Checkpoint`。
-    - 证明：`tests/Tests.fs` `ids are contiguous and recording the same facts reproduces checkpoint`，通过。
+    - 证明：`tests/Ledger.Tests.fs` `ids are contiguous and recording the same facts reproduces checkpoint`，通过。
 2. [LEMMA: 3, 4] 提议在 `Record` 前不改状态；未落定时再 `Propose` 抛出且账本不变。
     - 证明：`a proposal changes nothing until recorded and blocks a second proposal`，通过。
 3. [LEMMA: 3, 5] `Abandon` 后状态不变，id 复用。
@@ -142,7 +142,7 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 
 ## SPEC
 1. [LEMMA: 2] 保存后读出等于原值；再次保存覆盖旧值；不留 `.tmp`。
-    - 证明：`tests/Tests.fs` `save then load round-trips and overwrites`，通过。
+    - 证明：`tests/Snapshot.Tests.fs` `save then load round-trips and overwrites`，通过。
 2. [LEMMA: 3] 文件任一字节翻转、任一位置截断，`Load` 返回 `Corrupt`。
     - 证明：`any flipped or truncated byte is Corrupt`，逐字节穷举，通过。
 3. [LEMMA: 2] 崩溃遗留的 `.tmp` 不影响读取，下次保存覆盖它。

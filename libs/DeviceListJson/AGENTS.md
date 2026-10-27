@@ -25,7 +25,7 @@
 - `revoking a device disconnects it immediately and marks revoked in toml and list`（同上）
 - `rename persists to toml and rejects empty reserved and desktop targets`（同上，列表中的名字）
 
-本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。
+本库自己的行为测试（边界与失败路径）见 `tests/DeviceListJson.Tests.fs`。
 
 ## 成员 `DeviceRules`
 

@@ -25,7 +25,7 @@
 - `损坏日志：log-replay FAIL 且附件检查跳过`（同上；跳过由组合者决定）
 - `doctor reports and recovery bundle equal the old implementation`（compose/Doctor/tests/GoldenTests.fs，金样由旧代码生成）
 
-本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。
+本库自己的行为测试（边界与失败路径）见 `tests/AttachmentAudit.Tests.fs`。
 
 ## 成员 `HostProbe`
 
@@ -61,7 +61,7 @@
 - `健康数据目录：全部检查通过`（同上）
 - `doctor reports and recovery bundle equal the old implementation`（compose/Doctor/tests/GoldenTests.fs，金样由旧代码生成）
 
-本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。
+本库自己的行为测试（边界与失败路径）见 `tests/McpCheck.Tests.fs`。
 
 ## 成员 `ProviderCheck`
 
@@ -84,7 +84,7 @@
 - `健康数据目录：全部检查通过`（同上）
 - `doctor reports and recovery bundle equal the old implementation`（compose/Doctor/tests/GoldenTests.fs，金样由旧代码生成）
 
-本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。
+本库自己的行为测试（边界与失败路径）见 `tests/ProviderCheck.Tests.fs`。
 
 ## 成员 `SecretText`
 
@@ -106,7 +106,7 @@
 - `bundle 生成全部必需文件且不含密钥`（compose/ServerApp/tests/SupportBundleTests.fs）
 - `doctor reports and recovery bundle equal the old implementation`（compose/Doctor/tests/GoldenTests.fs，金样由旧代码生成）
 
-本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。
+本库自己的行为测试（边界与失败路径）见 `tests/SecretText.Tests.fs`。
 
 ## 成员 `SnapshotCheck`
 
@@ -128,4 +128,4 @@
 - `健康数据目录：全部检查通过`（compose/ServerApp/tests/DoctorTests.fs）
 - `doctor reports and recovery bundle equal the old implementation`（compose/Doctor/tests/GoldenTests.fs，金样由旧代码生成）
 
-本库自己的行为测试（边界与失败路径）见 tests/Tests.fs。
+本库自己的行为测试（边界与失败路径）见 `tests/SnapshotCheck.Tests.fs`。

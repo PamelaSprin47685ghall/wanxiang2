@@ -38,7 +38,7 @@
     - 推理：提供方会改字段、给 null、给字符串数字。取不到就得 None，由调用方决定默认值。
 
 ## SPEC
-1. [LEMMA: 1] 各种类型取得到；缺失、null、类型不对、节点不是对象时都是 None：`tests/Tests.fs`，通过。
+1. [LEMMA: 1] 各种类型取得到；缺失、null、类型不对、节点不是对象时都是 None：`tests/JsonPick.Tests.fs`，通过。
 
 说明：Anthropic、Gemini 两个库各有一份私有的同类取值函数，这是有意的：库与库之间不互相依赖（根 AGENTS.md）。三份都只有几十行；第四个使用者出现时再考虑别的办法。
 
@@ -57,5 +57,5 @@ Server-Sent Events 分帧（W3C）：把字节流切成（事件名, data）。�
     - 推理：模型回答里的代码缩进就在 data 正文里。多去一个空格，用户看到的代码就错位了。
 
 ## SPEC
-1. [LEMMA: 1] 空行分帧，多行 data 用换行拼接，末尾没有换行的帧也算，注释跳过，事件名在每帧之后重置：`tests/Tests.fs`，通过。
+1. [LEMMA: 1] 空行分帧，多行 data 用换行拼接，末尾没有换行的帧也算，注释跳过，事件名在每帧之后重置：`tests/Sse.Tests.fs`，通过。
 2. [LEMMA: 2] 缩进保留：`only the single space after the colon is stripped...`，通过。

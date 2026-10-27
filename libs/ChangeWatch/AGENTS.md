@@ -14,7 +14,7 @@
 1. **与上次不同才算变化**，并记下新值。初值可给（恢复代号从 0 起）或不给（视口宽度起初未知）。
 
 ## SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过。
+1. [LEMMA: 1] `tests/ChangeWatch.Tests.fs` 通过。
 
 ## 迁入或覆盖的旧测试
 旧仓库没有直接测这段的用例。本库新增 2 条行为用例。
@@ -46,7 +46,7 @@
 2. **过期的计时不做事。** 解除或换键之后，旧键到点返回 false。
 
 ## SPEC
-1. [LEMMA: 1, 2] `tests/Tests.fs` 通过。延迟 300ms 与旧 `MotionLedger.conversationSkeletonDelay` 相同。
+1. [LEMMA: 1, 2] `tests/DeferredReveal.Tests.fs` 通过。延迟 300ms 与旧 `MotionLedger.conversationSkeletonDelay` 相同。
 
 ## 迁入或覆盖的旧测试
 旧仓库没有直接测这段的用例（骨架相关用例测的是 Tokens 与 ChatView 控件）。本库新增 3 条行为用例。
@@ -67,7 +67,7 @@
 旧仓库没有直接测它的用例。本包新增：文案分支、关闭保存优先。
 
 ## 真实行为测试
-金样来自照抄的旧分支，证据较弱；`tests/Tests.fs` 末节另按上面写明的规则直接断言新实现（不经金样），规则改了要同时改这里。
+已随 `DraftSummaryText` / `IdleSurface` / `StartReady` 迁入或由 `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 覆盖，规则改了要同时改对应测试。
 
 ## 成员 `ForkAnchor`
 
@@ -79,7 +79,7 @@
 1. **分叉点与上线字节与旧代码一致。** [根 AXIOM: 1]
 
 ## SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 覆盖分叉点选择与上线 JSON：新分叉点与已编辑的用户消息拼成的上线字节一致。
+1. [LEMMA: 1] `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 覆盖分叉点选择与上线 JSON：新分叉点与已编辑的用户消息拼成的上线字节一致。
 2. 没有可分叉对话时给出提示。
 
 ## 迁入或覆盖的旧测试
@@ -101,7 +101,7 @@
 旧仓库的空态与输入框用例都要起窗口，留在旧仓库。本包新增：连接失败入口、首次与重连、首次运行卡片、可输入。
 
 ## 真实行为测试
-金样来自照抄的旧分支，证据较弱；`tests/Tests.fs` 末节另按上面写明的规则直接断言新实现（不经金样），规则改了要同时改这里。
+已随 `DraftSummaryText` / `IdleSurface` / `StartReady` 迁入或由 `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 覆盖，规则改了要同时改对应测试。
 
 ## 成员 `MessageLink`
 
@@ -113,7 +113,7 @@
 1. **链接文本不变。** [根 AXIOM: 1] 用户已复制、分享出去的链接必须还能打开。
 
 ## SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 按字节钉住桌面写法，并覆盖拒绝情况。
+1. [LEMMA: 1] `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 按字节钉住桌面写法，并覆盖拒绝情况。
 
 ## 迁入或覆盖的旧测试
 - ContinueLinkUndoTests：`231 消息链接两种写法往返，普通搜索词不误认`
@@ -185,7 +185,7 @@
 1. **目标不在已加载窗口时返回 None，由调用方决定是否加载更多。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过。
+1. [LEMMA: 1] `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 通过。
 
 ## 迁入或覆盖的旧测试
 - LibraryTests：`reveal targets resolve against the loaded window`
@@ -206,7 +206,7 @@
 旧 ConversationWorkspaceTests 的用例要起窗口，留在旧仓库。本包新增：新对话或空对话才就绪。
 
 ## 真实行为测试
-金样来自照抄的旧分支，证据较弱；`tests/Tests.fs` 末节另按上面写明的规则直接断言新实现（不经金样），规则改了要同时改这里。
+已随 `DraftSummaryText` / `IdleSurface` / `StartReady` 迁入或由 `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 覆盖，规则改了要同时改对应测试。
 
 ## 成员 `StartupTrace`
 

@@ -34,5 +34,5 @@
 2. **原生客户端（没有 Origin）放行；令牌和配对码仍是唯一凭据。** [根 AXIOM: 6]
 
 ## SPEC
-1. [LEMMA: 1, 2] 10 个 Origin 情形：`tests/Tests.fs` `origin must be same-origin http(s)`，通过。
+1. [LEMMA: 1, 2] 10 个 Origin 情形：`tests/WsHandshake.Tests.fs` `origin must be same-origin http(s)`，通过。
 2. [LEMMA: 1] 7 个 Host 情形（含 IPv6 方括号写法、登记名不分大小写）：`host must be an ip, localhost or listed`，通过。

@@ -4,7 +4,6 @@ open System
 open System.Text.Json.Nodes
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 
 type ActiveConvState =
@@ -31,7 +30,7 @@ type SettingsPhase =
         CanInvite: bool
         Invite: PairingInviteView option
         InviteRejected: string option
-        /// 设备列表有界等待的到点时间（None = 不在等待）。与 BoundedWaits.devicesLimit 同值。
+        /// 设备列表有界等待的到点时间（None = 不在等待，上限 8 秒）。
         DeviceLoadDue: DateTimeOffset option
         DeviceLoadNote: string option
     }

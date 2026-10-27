@@ -47,7 +47,6 @@ module EffectSinkTests =
                 CloseWindow = fun () -> executionLog.Add "CloseWindow"
                 PrefsSave = fun _ -> executionLog.Add "PrefsSave"
                 PrefsLoad = fun () -> executionLog.Add "PrefsLoad"
-                DraftWrite = fun _ -> executionLog.Add "DraftWrite"
                 BrowserHook = fun h -> executionLog.Add $"BrowserHook:{h}"
             }
 

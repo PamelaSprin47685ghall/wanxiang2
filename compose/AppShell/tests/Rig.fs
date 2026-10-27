@@ -207,10 +207,6 @@ type FakePorts(prefs0: UiPrefs) =
                     recordedEffects.Add(Effect.PrefsSave p)
                     savedPrefs.Add p
             PrefsLoad = fun () -> recordedEffects.Add(Effect.PrefsLoad)
-            DraftWrite =
-                fun dw ->
-                    recordedEffects.Add(Effect.DraftWrite dw)
-                    draftWrites.Add dw
             BrowserHook = fun h -> recordedEffects.Add(Effect.BrowserHook h)
         }
 

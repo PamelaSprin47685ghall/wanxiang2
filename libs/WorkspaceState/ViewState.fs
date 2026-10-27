@@ -3,7 +3,6 @@ namespace Wanxiang2.WorkspaceState
 open System
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 
 type TitleMode =

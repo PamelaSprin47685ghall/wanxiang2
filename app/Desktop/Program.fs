@@ -1078,7 +1078,6 @@ module Program =
                             CloseWindow = fun () -> closeWindow () |> ignore
                             PrefsSave = Wanxiang.UI.UiPrefsFile.save
                             PrefsLoad = fun () -> Wanxiang.UI.UiPrefsFile.load () |> ignore
-                            DraftWrite = applyDraftWrite
                             BrowserHook = fun _ -> ()
                         }
 

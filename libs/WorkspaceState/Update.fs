@@ -4,12 +4,14 @@ open System
 open System.Text.Json.Nodes
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 
 module Workspace =
 
     let project = Project.project
+
+    let private devicesLoadLimit = TimeSpan.FromSeconds 8.0
+    let private devicesTimeoutText = "主机没有返回设备列表。如果主机版本较旧，可能还不支持设备管理，请先升级主机。"
 
     /// 用户消息的 JSON 形状：`{"role":"user","contents":[文本项, 附件项…]}`。
     ///
@@ -226,7 +228,7 @@ module Workspace =
                         Settings =
                             { finalModel.Settings with
                                 DeviceLoadDue = None
-                                DeviceLoadNote = Some BoundedWaits.devicesTimeoutText
+                                DeviceLoadNote = Some devicesTimeoutText
                             }
                     }
                 | _ -> finalModel
@@ -1307,7 +1309,7 @@ module Workspace =
                 | DeviceUserMsg.LoadDevices ->
                     let next =
                         { model.Settings with
-                            DeviceLoadDue = Some(now + BoundedWaits.devicesLimit)
+                            DeviceLoadDue = Some(now + devicesLoadLimit)
                             DeviceLoadNote = None
                         }
 

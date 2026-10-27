@@ -44,7 +44,6 @@
     <PackageReference Include="Wanxiang2.CommandFeedback" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChangeWatch" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ConnectionIssue" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PairingHint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConnectIssueText" VersionOverride="0.0.0-local" />

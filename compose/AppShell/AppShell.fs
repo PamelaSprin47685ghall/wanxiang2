@@ -527,7 +527,6 @@ type ShellComposer(ports: ShellPorts) =
         this.Dispatch(Msg.WireRecv ev)
 
     member this.HandleConnectionClosed(reason: string option) : unit =
-        let issue = reason |> Option.map (fun r -> ConnectionIssue.Disconnected r)
         // 在途请求随连接作废：编辑器退出 pending，设备分区说明「读取时连接断开」
         commandFeedback.RejectAll()
         configFeedback.RejectAll()
@@ -541,7 +540,7 @@ type ShellComposer(ports: ShellPorts) =
             vs'.Settings.Health.Disconnected()
         | None -> ()
 
-        this.Dispatch(Msg.ConnectionDown issue)
+        this.Dispatch(Msg.ConnectionDown reason)
 
     member this.Commands: ShellCommands =
         match shellCommands with

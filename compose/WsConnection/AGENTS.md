@@ -16,7 +16,6 @@ ClientToken、DesktopClient、DeviceSightings、DeviceRules。命名空间沿用
    配置文件原文与 mtime 不变，无临时文件，device-sightings.json 有记录且重开可读回。连跑三次通过。同一测试顺带钉住 `HostVersion` 注入：认证后的 host.capabilities 带宿主给的版本。
 2. 有意改动：未用的 `PairingRequested d` 改为 `_`（警告即错误，见 `auth produces zero config writes`）。
 3. `hostVersion` 由宿主注入（`HostVersion` 属性，ServerApp 设置，见 `auth produces zero config writes`）；不再取本程序集版本。
-4. 待拆（路线图，[TODO]）：设备列表 JSON 形状、目录快照 JSON 可再拆；追赶/快照游标状态机与发送队列绑在一起，暂留。
 
 # 迁入或覆盖的旧测试
 - 旧仓库的 WsConnection 测试都经 ServerApp 起整台主机（TestServer），随 8.8 ServerApp 迁入并在那里逐条列名。
@@ -25,3 +24,4 @@ ClientToken、DesktopClient、DeviceSightings、DeviceRules。命名空间沿用
 # 拆分（待拆项完成）
 - 设备条目的 JSON 形状拆成库 DeviceListJson；查配置、在线表、当前设备、能否邀请留在组合者。
 - 目录快照没有可再拆的：它已经只调用 ProviderCatalog.providers / generation 加工具目录，形状归 ProviderCatalog 与 Wire。
+- 追赶/快照游标状态机与发送队列同属单条连接的协作状态机，按根 `AGENTS.md` LEMMA 11（完整个体粒度下限）保留在本组合者。

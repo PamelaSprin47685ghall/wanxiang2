@@ -18,12 +18,8 @@
     <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ConnectionIssue" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.NavigationState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ForkLineage" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DevicesModel" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.BoundedWait" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

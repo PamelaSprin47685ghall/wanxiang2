@@ -5,7 +5,6 @@ open System.Text.Json.Nodes
 open Xunit
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 open Wanxiang2.WorkspaceState
 
@@ -67,7 +66,7 @@ module WorkspaceStateTests =
         Assert.Equal(1, modelWithPending.Feedback.PendingCommands.Count)
 
         let nextModel, _ =
-            Workspace.update now0 (Msg.ConnectionDown(Some(ConnectionIssue.Disconnected "net down"))) modelWithPending
+            Workspace.update now0 (Msg.ConnectionDown(Some "net down")) modelWithPending
 
         Assert.Equal(0, nextModel.Feedback.PendingCommands.Count)
         Assert.Equal(0, nextModel.Feedback.PendingDeletions.Count)
@@ -276,8 +275,7 @@ module WorkspaceStateTests =
         Assert.Contains(Effect.Focus FocusTarget.ComposerInput, effsEsc)
 
         // 10. Connection Down & Reconnect
-        let m10, _ =
-            Workspace.update now0 (Msg.ConnectionDown(Some(ConnectionIssue.Disconnected "net lost"))) m9
+        let m10, _ = Workspace.update now0 (Msg.ConnectionDown(Some "net lost")) m9
 
         let vs10 = Workspace.project m10
         Assert.Equal(ChatPhase.Empty IdleEmptyKind.NotConnected, vs10.Chat.Phase)

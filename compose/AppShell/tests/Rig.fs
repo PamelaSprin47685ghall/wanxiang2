@@ -406,13 +406,18 @@ module Rig =
     let createWith (prefs0: UiPrefs) : Rig =
         let theme = new ThemeManager((fun () -> DateTimeOffset.UnixEpoch), false)
         let styles = new ThemeStyles(theme)
+        // `PerAssembly` 下整个程序集共享一个 Application：每次先清掉上一个用例装进去的
+        // ThemeStyles 与主题资源字典，只保留 `TestApp.Initialize` 装的第 0 项 `FluentTheme`，
+        // 防止 50 多个用例把 Styles 叠到 50 份拖慢样式匹配。
+        while Application.Current.Styles.Count > 1 do
+            Application.Current.Styles.RemoveAt(Application.Current.Styles.Count - 1)
+
+        Application.Current.Resources.MergedDictionaries.Clear()
         styles.Install Application.Current.Styles
         // 入口壳把主题资源字典并进 Application（EntryShells.App.Initialize）。
         // 对话框留白 Margin.OverlayInset 只在这条路上查得到；只装样式时窄窗确认框不会收进视口。
         let themeDict = theme.Resources :> IResourceDictionary
-
-        if not (Application.Current.Resources.MergedDictionaries.Contains themeDict) then
-            Application.Current.Resources.MergedDictionaries.Add themeDict
+        Application.Current.Resources.MergedDictionaries.Add themeDict
 
         let fake = FakePorts(prefs0)
         let importDesks = ResizeArray<Wanxiang2.TransferDesk.ImportDesk>()

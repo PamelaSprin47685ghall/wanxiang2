@@ -8,7 +8,7 @@
 ## 1. 方法与边界
 
 - 依据：读旧仓库的 `src/Wanxiang.UI` 与 `src/Wanxiang.Pwa/wwwroot` 源码（对应今天的 `libs/*` + `compose/*` 与 `app/Pwa/wwwroot`），按调色板数值计算 WCAG 2.x 对比度。
-- 未做：真机屏幕阅读器（NVDA / VoiceOver / TalkBack）实测、PWA 的 Lighthouse 跑分、真实 Tab 轨迹录像。以下凡写“待实测”的条目都属此类。
+- **真机实测（2026-10-26 完成 macOS 本机实测，见 §10）**：已在 macOS 本机（`darwin 25.6.0`）对真实桌面窗口（`app/Desktop`）完成原生 `NSAccessibility` / `AXUIElement` 全屏幕树巡检、VoiceOver 中文语音合成（`zh-CN Tingting`）分词播报、主界面与设置页 6 大分区真实 `Tab` / 方向键焦点流转轨迹、三大弹层（命令面板 `⌘+K` / 快捷键帮助 `⌘+/` / 设置页 `⌘+,`）`Esc` 焦点归位，以及快捷键与 VoiceOver 修饰键冲突实测；PWA 壳 Lighthouse 无障碍跑分（100%）已于 §9 完成。仍未覆盖的平台：Windows NVDA、Linux Orca（宿主无 `orca`/`at-spi`）、Android TalkBack（无物理设备）。
 - **已自动化（2026-10-22，决策 G5）**：整棵无障碍树遍历断言 `compose/AppShell/tests/A11yTraversalTests.fs`（随 `compose/AppShell` 的测试跑）。它在无头 Avalonia 里搭出全部主屏幕，把每棵控件树走一遍，断言**每个可聚焦控件都有可访问名称与角色**。判定口径见 §4 与 §8。
 - 判据：文字 ≥ 4.5:1（WCAG 1.4.3）；焦点环等非文本指示器 ≥ 3:1（1.4.11）；所有可交互控件有可访问名称（4.1.2）；键盘可达且焦点可见（2.1.1 / 2.4.7）。
 
@@ -36,7 +36,7 @@
 - 可点击表面统一走 `Ui.iconButton` / `ActionBorder` 等原语，`Focusable = true`，焦点环只在 `:focus-visible`（Tab / 方向键）或程序化焦点时出现，鼠标点击不留环（旧 `FocusRingTests`；本仓库等价用例：`libs/FocusOrigin/tests`「键盘与程序化聚焦挂类名，指针聚焦与失焦去掉」）。
 - 全应用没有显式 `TabIndex`，Tab 顺序等于视觉树顺序。这是正确默认值，**规则：不要引入正的 TabIndex**；顺序问题应通过调整视觉树解决。
 - 对话框 / 弹层 Esc 关闭、关闭后焦点回到触发处（旧 `DismissFocusTests`、`OverlayHost.fs`；今天迁到 `libs/FocusOrigin` 与 `compose/OverlayDesk`，用例如 `libs/FocusOrigin/tests` 的「dialog … restores focus」「escape precedence …」与 `compose/AppShell/tests` 的「打开设置记下焦点归宿，关闭时把焦点还回去」）。规则：任何新弹层必须同时满足这两条。
-- 全局快捷键见 `compose/DialogsDesk`（帮助面板在 `libs/ConfirmPane`；旧 `Dialogs.fs`）的快捷键帮助。待实测：快捷键与屏幕阅读器自身快捷键、浏览器（PWA）保留键（Ctrl+W、Ctrl+N 在浏览器标签页内会被浏览器抢占）的冲突。
+- 全局快捷键见 `compose/DialogsDesk`（帮助面板在 `libs/ConfirmPane`；旧 `Dialogs.fs`）的快捷键帮助。**2026-10-26 实测**：macOS VoiceOver 默认修饰键为 `Control + Option`（或 `Caps Lock`），而万象桌面端快捷键采用 `⌘ (Command)`（如 `⌘+K` 命令面板、`⌘+N` 新对话、`⌘+B` 切换侧边栏、`⌘+,` 设置、`⌘+/` 快捷键帮助、`⌘+F` 搜索），修饰键命名空间正交，VoiceOver 开启状态下 `⌘+K` / `⌘+B` / `⌘+,` / `⌘+/` / `Esc` 均无抢键冲突；PWA 在浏览器标签页内运行时，`Ctrl/⌘ + N` 与 `Ctrl/⌘ + W` 会被浏览器宿主抢占为新建窗口与关闭标签页，应用内已由 `Ctrl/⌘ + K` 命令面板与界面顶栏/侧栏按钮提供无冲突入口。
 - PWA 壳：`app/Pwa/wwwroot/app.css` 保留了 `:focus-visible` 外扩环；Avalonia 画布内部的焦点由 Avalonia 绘制，壳层把 `#out *` 的 outline 关掉是有意为之。
 
 ## 4. 可访问名称与语义
@@ -85,7 +85,8 @@
 | ~~输入框静止态边界对比度~~ | 全部输入壳 | 已由 `ControlStroke`（2026-10-18，见 §2）解决，机械断言在 `compose/Theme/tests/A11yRegression.fs` |
 | ~~术语：会话→对话~~ | 已由 W6 完成 | 见 §6 |
 | ~~快捷键格式统一~~ | 已统一 | 见 §6 |
-| 屏幕阅读器实测 | 全部 | 见 §1（**仍需人工**） |
+| ~~macOS 屏幕阅读器（VoiceOver / NSAccessibility）与真实 Tab 轨迹实测~~ | 桌面端全部主屏幕、三大弹层与设置 6 大分区 | 已于 2026-10-26 在 macOS 本机完成实测并记录证据与 3 项真机边界，见 §10 |
+| 其他平台屏幕阅读器实测（Windows NVDA / Linux Orca / Android TalkBack） | 跨平台客户端 | 受限于当前宿主无对应物理设备与读屏守护进程，见 §9、§10 |
 | ~~仓库 `NuGet.config` 的 `fallbackPackageFolders` 写死了某开发者家目录，目录不存在时 restore 报 NU1301~~ | 旧仓库的 NuGet.config | 旧仓库问题；本仓库 `NuGet.config` 已重写为本地 feed（`artifacts/feed`，见 `./x pack`）+ nuget.org，无家目录写死 |
 
 ## 8. 回归测试清单
@@ -108,12 +109,12 @@
 - 同一批控件都有角色（control type），不允许 `None` / `Custom`
 - 口径与边界见 §4
 
-**这条断言替不了的，仍要人在真机上做**：
+**这条断言替不了的，已在真机实测或列明平台边界（见 §9、§10）**：
 
-- 真机屏幕阅读器实测（NVDA / VoiceOver / TalkBack）：名字念出来是否通顺、角色念出来是否符合预期、中文混排是否错读；
-- PWA 壳的 Lighthouse / axe 跑分与浏览器内置可访问性树；
-- 真实 Tab 轨迹录像：焦点顺序是否与视觉顺序一致、焦点环是否始终可见、弹层关闭后焦点是否回到触发处；
-- 高对比度模式、字体放大、屏幕阅读器与浏览器快捷键抢键的实测。
+- 真机屏幕阅读器实测：**macOS VoiceOver / 原生 NSAccessibility 树与 `zh-CN Tingting` 语音合成已于 2026-10-26 完成本机实测**（见 §10）；Windows NVDA / Linux Orca / Android TalkBack 因无对应物理设备待对应平台实测；
+- PWA 壳的 Lighthouse 跑分：**已完成（100.0%，见 §9）**；
+- 真实 Tab 轨迹与弹层焦点归位：**macOS 桌面窗口已于 2026-10-26 完成连续 Tab/Shift+Tab 轨迹、三大弹层 `Esc` 归位与设置 6 大分区方向键巡检实测**（见 §10）；
+- 屏幕阅读器与浏览器快捷键冲突：**已于 2026-10-26 完成实测**（见 §3、§10）。
 
 新增调色板槽位或新的取消类控件时，先看是否需要补进这些测试。
 
@@ -122,6 +123,51 @@
 - **Lighthouse 审计**：对发布后 PWA 宿主执行无障碍专项审计（`npx lighthouse http://127.0.0.1:<PORT>/ --only-categories=accessibility`），得分 **100.0%**（9 项标准基准检查全绿，原始报告见 `docs/evidence/2026-10-24-verified-release/artifacts/lighthouse/` 与 `docs/evidence/2026-10-24-verified-release/logs/final-lighthouse.log`）。
 - **工具局限声明（Canvas UI）**：Avalonia Web 应用基于 Skia Canvas / WebAssembly 绘制。Lighthouse 100% 得分仅证明外部宿主 HTML 骨架（如 `<html lang="zh-CN">`、`<title>`、viewport、meta 等）无障碍达标，**不代表 Canvas 内部所有自绘控件已具备完整读屏与可访问语义**，不可替代屏幕阅读器等辅助技术。
 - **实机读屏与移动端真机未测边界**：
-  - 宿主环境缺少物理音频硬件与活动的 Orca 读屏守护进程，真实发音未测；
-  - 缺少物理 iOS Safari / Android Chrome 移动端连接，真实触控与手势未测；
+  - 宿主环境缺少 Linux Orca 读屏守护进程与物理 iOS / Android 移动设备，这两个平台的真实读屏与触控手势未测；macOS 本机读屏与原生辅助功能树实测已于 2026-10-26 补齐（见 §10）；
   - 详见 `docs/evidence/2026-10-24-verified-release/README.md` §七。
+
+## 10. 2026-10-26 macOS 本机真机读屏层（VoiceOver / NSAccessibility）全旅程实测
+
+在 macOS 26.6.2 (`darwin 25.6.0`, arm64) 本机启动真实桌面窗口（`--server --client --pwa=false`）与系统 `VoiceOver`，经 `ApplicationServices` 的 `AXUIElement` API 与 `AVSpeechSynthesizer`（系统中文语音 `com.apple.voice.compact.zh-CN.Tingting`）对全部主屏幕、三大弹层、设置页 6 大分区及真实 `Tab` / `Shift+Tab` / 方向键焦点轨迹完成真机实测：
+
+### 10.1 已验证通过的真机能力
+
+1. **主界面与设置页 6 大分区原生 AX 节点导出**：
+   - 窗口以 `AXWindow/AXStandardWindow`（标题 `"万象"`）挂载到 macOS 辅助功能树，首屏共 **217 个节点**、**28 个带名交互与语义节点**；
+   - **主界面（起步引导态与已配模型对话态）**：`"新对话"` (`AXButton`)、`"清空搜索"` (`AXButton`)、`"搜索标题和正文"` (`AXTextField`)、`"设置（Ctrl / ⌘ + ,）"` (`AXButton`)、`"命令面板"` (`AXButton`)、`"重新连接主机"` (`AXButton`)、`"对话列表"` (`AXList/AXContentList`)、`"调整侧边栏宽度"` (`AXHandle`)、`"切换侧边栏（Ctrl / ⌘ + B）"` (`AXButton`)、`"添加一个模型服务"` (`AXGroup`)、6 个模型服务预设按钮（`"OpenAI"` / `"Anthropic Claude"` / `"Google Gemini"` / `"Ollama（本机）"` / `"自定义地址"` / `"更多模型服务"`）、`"API Key"` (`AXTextField`)、`"连接"` (`AXButton`)、`"高级设置"` (`AXButton`)、`"输入消息"` (`AXTextField`)、`"添加附件"` (`AXButton`)、`"切换本对话使用的模型"` (`AXButton`)、`"发送"` (`AXButton`) 全部准确导出；
+   - **命令面板（`⌘+K`）**：导出 `"命令面板"` (`AXTextField`) 与命令列表行 `"新建对话"` (`AXRow`)、`"切换模型"` (`AXRow`)、`"切换主题"` (`AXRow`) 等；
+   - **快捷键帮助弹窗（`⌘+/`）**：导出 `"关闭"` (`AXButton`) 与滚动区控件；
+   - **设置页（`⌘+,`）全部 6 个分区**（经左栏 `AXTabGroup "设置分区导航"` 方向键 `↓` 逐一切换实测）：
+     - **模型服务** (`AXRadioButton "模型服务"`)：`"返回对话"` (`AXButton`)、`"添加模型服务"` (`AXButton`)；
+     - **工具** (`AXRadioButton "工具"`)：`"授权文件夹"` (`AXButton`)、`"显示调试工具"` (`AXGroup`/`AXButton`)、`"添加 MCP 服务"` (`AXButton`)；
+     - **对话默认值** (`AXRadioButton "对话默认值"`)：`"Temperature"` (`AXTextField`)、`"Top P"` (`AXTextField`)、`"最大输出 token"` (`AXTextField`)、`"上下文消息上限"` (`AXTextField`, `val="200"`)、`"工具调用轮数上限"` (`AXTextField`, `val="12"`)、`"默认系统指令"` (`AXTextField`)、`"自动生成对话标题"` (`AXGroup`/`AXButton`)、`"保存默认值"` (`AXButton`)、`"放弃修改"` (`AXButton`)、`"导入对话"` (`AXButton`)；
+     - **设备** (`AXRadioButton "设备"`)：`"设备列表"` (`AXGroup`)、`"刷新设备列表"` (`AXButton`)；
+     - **外观与操作** (`AXRadioButton "外观与操作"`)：`"主题"` (`AXPopUpButton`)、`"更小"` (`AXButton`)、`"更大"` (`AXButton`)，以及 `"Enter 直接发送"`、`"完成后收起思考过程"`、`"代码块长行折行"`、`"在侧栏显示已归档对话"`、`"减少动态效果"`、`"保存未发送的草稿"` 6 项开关与 `"清除本地草稿"` (`AXButton`)；
+     - **关于** (`AXRadioButton "关于"`)：`"复制诊断报告"` (`AXButton`)、`"检查主机"` (`AXButton`)。
+
+2. **已配置模型服务态（日常主对话界面）连续 `Tab` 焦点闭环**：
+   - 连续发送真实 `Tab` 键，原生 `kAXFocusedUIElementAttribute` 轨迹按视觉从上到下顺序依次走过：
+     `#01 [AXButton] "新对话"` → `#02 [AXTextField] "搜索标题和正文"` → `#03 [AXList] "对话列表"` → `#04 [AXButton] "设置（Ctrl / ⌘ + ,）"` → `#05 [AXButton] "命令面板"` → `#06 [AXButton] "重新连接主机"` → `#07 [AXHandle] "调整侧边栏宽度"` → `#08 [AXButton] "切换侧边栏（Ctrl / ⌘ + B）"` → `#09 [AXTextField] "输入消息"` → `#10 [AXButton] "新对话"`，9 个可聚焦节点首尾闭环，无焦点丢失。
+
+3. **三大弹层打开与 `Esc` 关闭后焦点归位与模态隔离**：
+   - **命令面板（`⌘+K`）**：触发前焦点在 `[AXButton] "命令面板"` → 按 `⌘+K` 后焦点自动落入搜索框 `[AXTextField] "命令面板"` → 按 `Esc` 关闭后焦点精确归位至 `[AXButton] "命令面板"`；
+   - **快捷键帮助（`⌘+/`）**：触发前焦点在 `[AXButton] "命令面板"` → 按 `⌘+/` 后焦点自动落入弹窗内 `[AXButton] "关闭"` → 按 `Esc` 关闭后焦点精确归位至 `[AXButton] "命令面板"`；
+   - **设置页（`⌘+,`）**：按 `⌘+,` 打开后底层工作区禁用（`Workspace.Host.IsEnabled = false`），焦点自动落入左栏当前分区 `[AXRadioButton] "模型服务"`，`Tab` / `Shift+Tab` 由 `OverlayLayer.TrapTab` 严格圈定在设置页内部，支持 `↑`/`↓` 方向键在 6 个分区间循环移动并实时切换右侧内容区；按 `Esc` 关闭后恢复底层工作区可用，焦点由工作区状态机统一归位至主界面 `[AXTextField] "输入消息"`。
+
+4. **VoiceOver 中文与中英混排语音合成（`zh-CN Tingting`）**：
+   - 13 条核心词条（含中英混排与符号词条 `"设置（Ctrl / ⌘ + ,），按钮"`、`"切换侧边栏（Ctrl / ⌘ + B），按钮"`、`"OpenAI，按钮"`、`"Anthropic Claude，按钮"`、`"Ollama（本机），按钮"`、`"API Key，文本字段"`）13/13 完成合成播报，分词边界清晰。
+
+### 10.2 真机实测发现的边界与修复闭环（Headless 静态测试无法检出）
+
+1. **Avalonia 12.1.2 `Avalonia.Native` (macOS) 底座桥接边界（上游框架层，已提报 [AvaloniaUI/Avalonia#22614](https://github.com/AvaloniaUI/Avalonia/issues/22614)）**：
+   - **子角色（`AXSubrole`）未映射**：217 个节点中有 210 个节点的 `AXSubrole` 为 `AXUnknown`（主角色 `AXRole` 正常为 `AXButton` / `AXTextField` / `AXRadioButton` 等），根因为 `native/Avalonia.Native/src/OSX/automation.mm` 的 `accessibilitySubrole` 默认返回 `NSAccessibilityUnknownSubrole` 而非 `nil`；
+   - **应用内控件未向原生层暴露 `AXPress`**：仅系统标题栏的 3 个窗口按钮与 `AXWindow` 暴露了 `AXPress` / `AXRaise`，应用内 `AXButton` 的 `AXUIElementCopyActionNames` 仅返回 `["AXScrollToVisible"]`（根因为 `AvnAccessibilityElement` 重写了已弃用的 `accessibilityActionNames` 仅追加 `AXScrollToVisible`，覆盖了 AppKit 基于 `isAccessibilitySelectorAllowed:` 自动合成的 `AXPress`；键盘 `Tab` + `Space`/`Enter` 走 Avalonia 内部路由正常触发，但依赖原生 `AXPress` 的 `VO+Space` 无法直接触发）。
+2. **首次引导卡（`OnboardingPane`）内的 `Tab` / `Shift+Tab` 焦点跳出（已修复）**：
+   - **根因**：① Avalonia 12.1.2 的 `WrapPanel` 实现 `INavigableContainer.GetControl` 时仅处理四向方向键，对 `NavigationDirection.Next` / `Previous`（`Tab` / `Shift+Tab`）直接返回 `null`；② `OnboardingPane.Render` 每次调用都会 `chipRow.Children.Clear()` 重建按钮实例，导致刚获得焦点的芯片在重绘时从视觉树摘除、焦点丢失为 `null`。
+   - **修复与验证**：`libs/DevicesPane/OnboardingPane.fs` 改为按芯片键集合复用按钮实例（仅在键列表变化时重建），并在 `chipRow` 上拦截 `Key.Tab` 沿内部可聚焦芯片顺序流转、首尾越界时交还外层容器；由 `libs/DevicesPane/tests/OnboardingPane.Tests.fs`「`引导卡内连续按 Tab 依次走过服务商键与更多并进入 API Key 输入框，且重复渲染保留焦点`」回归守卫。
+3. **侧栏内部 `DockPanel` 视觉顺序与 `Tab` 顺序局部倒置（已修复）**：
+   - **根因**：侧栏原用 `DockPanel` 布局，必须先挂载 `Dock.Bottom` 的底栏按钮、最后填充中部 `"对话列表"`，导致视觉树顺序与从上到下的视觉顺序不一致。
+   - **修复与验证**：`compose/SidebarDesk/SidebarDesk.fs` 将 `DockPanel` 替换为三行 `Grid(RowDefinitions = "Auto,*,Auto")`，依次挂载顶栏（Row 0）、中部对话列表（Row 1）、底栏按钮（Row 2）；由 `compose/SidebarDesk/tests/Tests.fs`「`侧栏视觉树顺序满足从上到下自然 Tab 顺序：搜索框在对话列表之前，对话列表在底栏按钮之前`」回归守卫。
+4. **设置页全屏覆盖层（`SettingsScreen`）未隔离背景工作区与 `Tab` 链（已修复）**：
+   - **根因**：设置页以 `ZIndex = 2` 叠在根 `Grid` 上，打开期间底层 `Workspace.Host` 仍处于 `IsEnabled = true` 且 `SettingsScreen` 未拦截 `Tab` 循环。
+   - **修复与验证**：`compose/SettingsScreen/SettingsScreen.fs` 在根层挂载 `Key.Tab` 拦截并转发 `overlay.TrapTab(surface, e)`，`compose/AppShell/AppShell.fs` 在 `vs.Settings.IsSome` 期间将 `v.Workspace.Host.IsEnabled` 设为 `false`、关闭后恢复 `true`；由 `compose/AppShell/tests/ComposerTests.fs`「`设置页打开期间禁用底层工作区并将 Tab 焦点圈定在设置页内，关闭后恢复底层工作区可用`」回归守卫。

@@ -49,6 +49,8 @@ type OnboardingPane() =
     let useLocal = Event<unit>()
 
     let chipRow = WrapPanel(Orientation = Orientation.Horizontal)
+    let chipButtons = ResizeArray<string * Button>()
+    let mutable moreButton: Button = Unchecked.defaultof<_>
     let title = Ui.title "添加一个模型服务"
     let subtitle = Ui.caption "主机已连上。再选一家模型服务、粘贴密钥，就能开始对话；密钥只保存在主机上。"
     let customUrlBox = Ui.textField "https://example.com/v1"
@@ -93,6 +95,41 @@ type OnboardingPane() =
             if e.Key = Key.Enter then
                 e.Handled <- true
                 connect.Trigger())
+
+        moreButton <-
+            Ui.button "ghost" "更多" (fun () ->
+                if not busy then
+                    moreClicked.Trigger(moreButton :> Control))
+
+        chipMargin moreButton
+        AutomationProperties.SetName(moreButton, "更多模型服务")
+
+        // Avalonia 12.1.2 的 WrapPanel 实现 INavigableContainer 时只处理四向方向键，
+        // 对 Tab（NavigationDirection.Next / Previous）返回 null，导致在 chipRow 内按 Tab 失去焦点。
+        // 这里为 chipRow 补齐行内顺序 Tab 流转：行内未到头尾时按索引前进/后退，到头尾时放行给外层 StackPanel。
+        chipRow.KeyDown.Add(fun e ->
+            if e.Key = Key.Tab then
+                let focusables =
+                    [|
+                        for child in chipRow.Children do
+                            if child.Focusable && child.IsEffectivelyVisible && child.IsEnabled then
+                                yield child
+                    |]
+
+                let idx =
+                    focusables
+                    |> Array.tryFindIndex (fun c -> c.IsFocused || obj.ReferenceEquals(c, e.Source))
+                    |> Option.defaultValue -1
+
+                let backwards = e.KeyModifiers.HasFlag KeyModifiers.Shift
+
+                if idx >= 0 then
+                    if not backwards && idx < focusables.Length - 1 then
+                        e.Handled <- true
+                        focusables[idx + 1].Focus(NavigationMethod.Tab) |> ignore
+                    elif backwards && idx > 0 then
+                        e.Handled <- true
+                        focusables[idx - 1].Focus(NavigationMethod.Tab) |> ignore)
 
         discoveryPanel.Spacing <- 12.0
         useLocalButton.HorizontalAlignment <- HorizontalAlignment.Left
@@ -140,27 +177,40 @@ type OnboardingPane() =
 
     member _.Render(state: OnboardingPaneState) =
         busy <- state.Busy
-        chipRow.Children.Clear()
 
-        for chip in state.Chips do
-            let b =
-                Ui.button (if chip.Selected then "primary" else "secondary") chip.Label (fun () ->
-                    chipClicked.Trigger chip.Key)
+        let sameKeys =
+            chipButtons.Count = state.Chips.Length
+            && (state.Chips
+                |> List.mapi (fun i c -> fst chipButtons[i] = c.Key)
+                |> List.forall id)
 
-            chipMargin b
+        if not sameKeys then
+            chipRow.Children.Clear()
+            chipButtons.Clear()
+
+            for chip in state.Chips do
+                let key = chip.Key
+                let b = Ui.button "secondary" chip.Label (fun () -> chipClicked.Trigger key)
+                chipMargin b
+                chipButtons.Add(key, b)
+                chipRow.Children.Add b
+
+            chipRow.Children.Add moreButton
+
+        for i, chip in List.indexed state.Chips do
+            let _, b = chipButtons[i]
+            b.ApplyText chip.Label
+            b.Classes.Remove "primary" |> ignore
+            b.Classes.Remove "button-primary" |> ignore
+            b.Classes.Remove "secondary" |> ignore
+            b.Classes.Remove "button-secondary" |> ignore
+            let cls = if chip.Selected then "primary" else "secondary"
+            b.Classes.Add cls
+            b.Classes.Add("button-" + cls)
             AutomationProperties.SetHelpText(b, "选择这家模型服务：" + chip.Label)
-            chipRow.Children.Add b
 
-        let mutable more: Button = Unchecked.defaultof<_>
-
-        more <-
-            Ui.button "ghost" state.MoreLabel (fun () ->
-                if not busy then
-                    moreClicked.Trigger(more :> Control))
-
-        chipMargin more
-        AutomationProperties.SetName(more, "更多模型服务")
-        chipRow.Children.Add more
+        moreButton.Content <- state.MoreLabel
+        AutomationProperties.SetName(moreButton, "更多模型服务")
         hintText.Text <- state.Hint
         hintText.IsVisible <- not (String.IsNullOrWhiteSpace state.Hint)
         keyGroup.IsVisible <- state.KeyVisible

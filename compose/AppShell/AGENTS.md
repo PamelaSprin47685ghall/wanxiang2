@@ -64,7 +64,7 @@
 2. [LEMMA: 3] 视图事件在 `Build()` 内接线，入口壳构造 Desk 时只调用动作记录工厂（`SidebarActions` / `CardActions` / `ChatActions` / `ComposerActions` / `SettingsHooks` / `OnboardingHooks` / `WorkspaceHooks`）。
 3. [LEMMA: 4] `ShellSurface` 里不再有空操作：`OverlayEscape` / `IsDialogOpen` / `IsPopupOpen` / `IsSettingsOpen` / `IsDrawerOpen` / `CloseDrawer` / `FocusSearch` / `OpenModelPicker` / `JumpExchange` / `ScrollToBeginning` / `ScrollToEnd` / `CopyLastReply` / `RegenerateLast` / `TryUndo` / `FocusToast` / `ShowShortcuts` / `ApplyPreset` / `SavePreset` / `Fork` / `CloseWindow` / `SaveTheme` 全部接真实实现。
 4. [LEMMA: 1] 文案不改：附件、保存、剪贴板、模型选择器、导入导出、重连与配对的用户可见字符串与旧实现逐字相同（来源：`Wanxiang2.ConfigFeedback`、`Wanxiang2.MediaTypes`、`Wanxiang2.ConnectIssueText`、`Wanxiang2.PairingHint`、`compose/TransferDesk`）。
-5. [LEMMA: 1] headless 测试覆盖宿主桥与装配规则：`compose/AppShell/tests/ComposerTests.fs` 用假端口（`tests/Rig.fs`）钉住——未连接时的导入导出提示、`RequireFeature` 拦截与旧主机放行、附件归属过期与上传事件序列（含缩略图端口）、空文件与超大文件校验、`SavePrefs` 扇出、系统深色只在跟随系统时重应用、侧栏搜索与消息链接分派、命令回执的提交与未发出两态、设置焦点归还、配置回执提示、侧栏折叠落盘、断开连接的清理与重连调度；`Tests.fs` 钉住 `KeyShortcut` 换算分派与 `UnansweredReply` 失败卡形状。
+5. [LEMMA: 1] headless 测试覆盖宿主桥与装配规则：`compose/AppShell/tests/ComposerTests.fs` 用假端口（`tests/Rig.fs`）钉住——未连接时的导入导出提示、`RequireFeature` 拦截与旧主机放行、附件归属过期与上传事件序列（含缩略图端口）、空文件与超大文件校验、`SavePrefs` 扇出、系统深色只在跟随系统时重应用、侧栏搜索与消息链接分派、命令回执的提交与未发出两态、设置焦点归还、设置页打开期间禁用底层工作区并圈定 Tab 焦点、配置回执提示、侧栏折叠落盘、断开连接的清理与重连调度；`Tests.fs` 钉住 `KeyShortcut` 换算分派与 `UnansweredReply` 失败卡形状。
 
 # 迁入或覆盖的旧测试
 - 旧 `AppShellTests` 的 `HandleEvent` / `HandleShortcut` 用例已按名迁入 `compose/ProtocolDispatch/tests` 与 `compose/ShellCommands/tests`（见各自 AGENTS.md）。
@@ -78,7 +78,7 @@
 
 # 证据
 - 构建：`dotnet build compose/AppShell/AppShell.fsproj -c Release -p:RestorePackagesPath="$PWD/artifacts/packages"`（需 `artifacts/feed` 已有依赖包）。
-- 测试：`dotnet test compose/AppShell/tests/AppShell.Tests.fsproj -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages"`；`./x compose` 会跑全部有测试的组合者。`Headless.fs` 声明 `CollectionBehavior(DisableTestParallelization = true)`，防止多测试模块并发调用 `HeadlessUnitTestSession.EnsureIsolatedApplication` 抢占 Avalonia UI 线程。
+- 测试：`dotnet test compose/AppShell/tests/AppShell.Tests.fsproj -c Debug -p:RestorePackagesPath="$PWD/artifacts/packages"`；`./x compose` 会跑全部有测试的组合者。`Headless.fs` 声明 `CollectionBehavior(DisableTestParallelization = true)`，防止多测试模块并发调用 `HeadlessUnitTestSession.EnsureIsolatedApplication` 抢占 Avalonia UI 线程。隔离级别取 `PerAssembly`：`PerTest` 会在每个用例前重建 `Application` 与 `Dispatcher`，Avalonia 12.1.2 的底座重建路径偶发把新 `DefaultRenderLoop.Add` 调度到旧 Dispatcher 线程上，抛「The calling thread cannot access this object because a different thread owns it」（本机 12 次单跑复现 1 次，CI 首轮也撞上）；`PerAssembly` 只建一次 Application，与生产「一次启动」同形，本机连跑 10 次无失败。
 - 交付独立：`./x pack` 产出 `artifacts/feed/Wanxiang2.AppShell.0.0.0-local.nupkg`；`./x compose` 在干净包缓存里消费它。
 - 入口消费：`grep -n Wanxiang2.AppShell app/Desktop/Wanxiang.App.fsproj app/Pwa/Wanxiang.Pwa.fsproj`。
 - 端到端：`tools/smoke_desktop.sh`（构建桌面入口 → 临时 home/data 真机启动 → 断言 `startup.firstFrame` / `startup.listReady`、无异常、存储文件与锁收尾）。

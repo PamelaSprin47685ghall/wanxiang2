@@ -26,7 +26,7 @@ SettingsFrame + ProvidersPane + ToolsPane + GeneralPane + DevicesPane + Onboardi
 - DevicesUiTests：`settings has a devices section in the host group`、`selecting the devices section requests the list once`、`device list read without a reply times out with the older host hint`、`device list marks current desktop online and revoked and sorts revoked last`、`rename edits inline trims and sends the new name`、`a disconnect while loading explains the host may be too old`、`invite card shows grouped code address qr and countdown`
 - SettingsViewTests：`SettingsView navigates sections, remembers scroll positions and invalidates cache`、`SettingsProviders saveCore with invalid advanced field automatically expands advanced layer and focuses error`、`SettingsProviders ApplyProbe updates draft models in open editor and caches without auto-upserting`、`SettingsGeneral SaveGenerationCore validates numeric ranges and generates payload`、`SettingsTools ShowEditor validates id, command/url, timeout and saves valid config`
 - OnboardingUiTests：`密钥为空时不发起任何请求并就地说明`
-- 新增：`changing a theme metric updates shown settings controls`。
+- 新增：`changing a theme metric updates shown settings controls`；模态设置页层拦截 `Key.Tab` 并委托 `overlay.TrapTab(surface, e)` 在设置页卡片内循环。
 
 ## 与旧实现的差异
 - 提示条走 OverlayDesk，出口里不再有 toast；设备出口由函数记录改成事件；DevicesDesk 构造即建好界面（旧 Build 惰性）。

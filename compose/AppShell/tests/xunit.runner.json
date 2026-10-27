@@ -1,3 +1,4 @@
 {
-  "showLiveOutput": true
+  "showLiveOutput": true,
+  "parallelizeTestCollections": false
 }

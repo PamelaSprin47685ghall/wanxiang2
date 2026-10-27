@@ -153,3 +153,39 @@ let ``服务商键选中为主色，点击发出预设 key`` () =
         Assert.Contains("button-primary", (named p.View "OpenAI").Value.Classes)
         click claude
         Assert.Equal<string list>([ "anthropic" ], List.ofSeq keys))
+
+[<Fact>]
+let ``引导卡内连续按 Tab 依次走过服务商键与更多并进入 API Key 输入框，且重复渲染保留焦点`` () =
+    Headless.run (fun () ->
+        let p = OnboardingPane()
+        let window = host p.View
+        p.Render idle
+        let openai = (named p.View "OpenAI").Value
+        Assert.True(openai.Focus())
+        Dispatcher.UIThread.RunJobs()
+
+        // 同一套服务商键重复 Render 时不销毁已有按钮，持焦按钮不丢焦点
+        p.Render idle
+        Dispatcher.UIThread.RunJobs()
+        let focusedAfterRender = window.FocusManager.GetFocusedElement() :?> Control
+        Assert.Equal("OpenAI", AutomationProperties.GetName focusedAfterRender)
+
+        let pressTab () =
+            let cur = window.FocusManager.GetFocusedElement() :?> Control
+
+            let ev =
+                KeyEventArgs(
+                    RoutedEvent = InputElement.KeyDownEvent,
+                    Key = Key.Tab,
+                    KeyModifiers = KeyModifiers.None,
+                    Source = cur
+                )
+
+            cur.RaiseEvent ev
+            Dispatcher.UIThread.RunJobs()
+            window.FocusManager.GetFocusedElement() :?> Control
+
+        Assert.Equal("Claude", AutomationProperties.GetName(pressTab ()))
+        Assert.Equal("更多模型服务", AutomationProperties.GetName(pressTab ()))
+        Assert.Equal("API Key", AutomationProperties.GetName(pressTab ()))
+        window.Close())

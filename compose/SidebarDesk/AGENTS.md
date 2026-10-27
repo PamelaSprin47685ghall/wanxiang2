@@ -28,6 +28,7 @@ SidebarBrand、SidebarSearch、ConversationRows、ListEmptyCard、BatchBar、Hos
   - 搜索框的 Down 和 Enter 出口与旧实现相同。
   - 防抖到期时用 SearchRequery 判断词是否变了，没变就不重发。
   - 断线时清掉在途的搜索。
+  - 根容器采用三行 `Grid`（`Auto,*,Auto`：顶栏/搜索/批量头 → 对话列表主体 → 底栏/批量操作），使视觉树顺序与自上而下的自然 `Tab` 焦点顺序严格一致。
   - 紧凑抽屉中按 Tab 只在侧栏内循环（OverlayDesk.TrapTab）。
 - 主题条目：新增 `Space.TrackingDisplay`、`DerivedBrush.HoverSelected`、`Metric.SidebarSkeletonBarHeight`。
 

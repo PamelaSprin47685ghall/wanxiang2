@@ -91,7 +91,7 @@ jobs:
           fi
           tail -1 lint.log
       # 空白格式：约束客观的源码文本空白不变量（CRLF/Tab/BOM/代码行尾空白/EOF换行），
-      # 找不到基准提交或任一空白不变量违规即红灯（ISSUE-0010）。
+      # 找不到基准提交或任一空白不变量违规即红灯。
       - name: 空白格式
         env:
           WX_FORMAT_BASE: ${{ steps.fmtbase.outputs.base }}

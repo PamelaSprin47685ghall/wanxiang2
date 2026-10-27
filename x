@@ -64,7 +64,7 @@ control_types_pattern() {
 # 原来的 `(?<![.\w])(TYPE)\(`（负向后顾）改写成 `(^|[^.[:alnum:]_])(TYPE)\(`：
 # 前一个字符要么是行首，要么不是「点 / 字母数字 / 下划线」——语义等价，两平台都支持。
 # 不用 `find -exec ... {} +`：受限环境/沙箱禁调 sysconf(_SC_ARG_MAX) 时 `find -exec` 直接失败退出，
-# 若被 `|| true` 吞掉同样会退化为空名单（2026-10-26 审视 ISSUE-0006 抓到）。改为普通 find 枚举后逐文件 grep。
+# 若被 `|| true` 吞掉同样会退化为空名单。改为普通 find 枚举后逐文件 grep。
 control_libs() {
   local pattern; pattern="$(control_types_pattern)"
   [[ -n "$pattern" ]] || { echo "FAIL control_libs: empty pattern from tools/avalonia-controls.txt" >&2; return 1; }
@@ -205,7 +205,7 @@ FAIL $f: references missing $ref"
 }
 
 # 空白与冲突标记门禁：对基准提交到 HEAD、暂存区与工作区的已跟踪改动跑 git diff --check，
-# 并对本次改动的源码文本检查 CRLF、UTF-8 BOM、.fs Tab 与文件末换行（ISSUE-0010）。
+# 并对本次改动的源码文本检查 CRLF、UTF-8 BOM、.fs Tab 与文件末换行。
 # 参数 $1 为 "--require-base" 时（独立子命令 ./x whitespace-check，供 CI hygiene 作业调用），
 # 找不到基准提交直接报错退出 1；在 ./x check 内部调用时兼容浅克隆（如 CI widget-template 作业），
 # 无基准提交时仍检查暂存区与工作区。

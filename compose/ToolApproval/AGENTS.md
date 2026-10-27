@@ -10,5 +10,5 @@
 3. **线上字节、拒绝原因的文字和「首次询问」的语义都与旧实现一致。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1, 2, 3] `golden/approval.txt` 由旧 ToolApproval.fs 跑同一 Scenario 生成，覆盖批准、拒绝、已处理、已失效、取消、清空对话、无人可批、超时，通过。
-2. 迁自旧仓库 W3ToolPolicyTests 的审批代理部分，9 项通过。端到端部分依赖主机，留在旧仓库。
+1. [LEMMA: 1, 2, 3] `golden/approval.txt` 由旧 ToolApproval.fs 跑同一 Scenario 生成（`tests/GoldenTests.fs` 的 `approval events and outcomes equal the old implementation`），覆盖批准、拒绝、已处理、已失效、取消、清空对话、无人可批、超时，通过。
+2. 迁自旧仓库 W3ToolPolicyTests 的审批代理部分（`tests/ToolApprovalTests.fs` 的 `[AC-2] 每次询问：挂起等待，期间没有任何人决定就一直不返回；批准后继续`、`[AC-3] 两个客户端同时决定：恰有一个被接受，另一个收到「已处理」` 等），9 项通过。端到端部分依赖主机，留在旧仓库。

@@ -202,7 +202,7 @@
 
 ### SPEC
 1. [LEMMA: 1] `tests/GenerationDraft.GenerationDraft.Tests.fs` 通过：`catalog refills a clean form and edits during the refill do not count`、`catalog never overwrites an unsaved draft`、`a draft cannot be saved to another host but can after coming back`、`an earlier confirmation does not mark later edits as saved`、`switching hosts voids the pending confirmation`、`a failed save keeps the draft and asks for a toast`、`discard is refused while saving and otherwise refills from the given value`。
-2. 目录更新不覆盖未保存的草稿；草稿只能保存到开始编辑时的主机；切换主机作废在途保存的确认；较早的保存确认不把之后的编辑标成已保存；保存失败返回 true，调用方弹「保存失败，请重试。」。
+2. 目录更新不覆盖未保存的草稿（`catalog never overwrites an unsaved draft`）；草稿只能保存到开始编辑时的主机（`a draft cannot be saved to another host but can after coming back`）；切换主机作废在途保存的确认（`switching hosts voids the pending confirmation`）；较早的保存确认不把之后的编辑标成已保存（`an earlier confirmation does not mark later edits as saved`）；保存失败返回 true，调用方弹「保存失败，请重试。」（`a failed save keeps the draft and asks for a toast`）。
 
 ### 迁入或覆盖的旧测试
 旧 SettingsSurfaceTests 里的生成设置用例要操作设置页，留在旧仓库。本包新增 7 条规则用例。
@@ -221,7 +221,7 @@
 
 ### SPEC
 1. [LEMMA: 1] `tests/GenerationDraft.GenerationForm.Tests.fs` 通过：`blank optional fields mean unset and required fields must parse`、`ranges are inclusive at the documented bounds`、`decimal separator is always a dot`、`payload writes every key with null for unset values in a fixed order`、`instructions are trimmed and blank means none`。载荷键序 temperature、topP、maxTokens、instructions、maxContextMessages、maxToolRounds、autoTitle，未设项写 null。
-2. 数字一律按不变文化解析，小数点只认点号。
+2. 数字一律按不变文化解析，小数点只认点号（`decimal separator is always a dot`）。
 
 ### 迁入或覆盖的旧测试
 旧 SettingsSurfaceTests 的 `generation save failure surfaces a failure toast instead of silence` 等要操作设置页，留在旧仓库。本包新增：空值与必填、边界、小数点、载荷形状、指令去空白。
@@ -255,7 +255,7 @@
 
 ### SPEC
 1. [LEMMA: 1] `tests/GenerationDraft.McpForm.Tests.fs` 通过：`exactly one of command and url, both fields flagged`、`timeout must be 1 to 3600`、`a taken id only blocks new entries`、`payload omits empty command, args and url`。
-2. 本地命令与远程端点必须且只能填一个，出错时两栏都标；超时为 1 到 3600 秒；已占用的标识只挡新增。
+2. 本地命令与远程端点必须且只能填一个，出错时两栏都标（`exactly one of command and url, both fields flagged`）；超时为 1 到 3600 秒（`timeout must be 1 to 3600`）；已占用的标识只挡新增（`a taken id only blocks new entries`）。
 
 ### 迁入或覆盖的旧测试
 旧 SettingsTools 的用例要起窗口，留在旧仓库。本包新增 4 条规则用例。
@@ -336,8 +336,8 @@ W7-B3：`discovered`（本机发现的模型清单）已从本对象移除——
 
 ### SPEC
 1. [LEMMA: 1] `tests/GenerationDraft.ProviderForm.Tests.fs` 通过：`empty default picks the first model and reports it`、`blank timeout and retries keep the existing values, else 120 and 2`、`models split on newline and comma and dedupe`、`vision lists must name listed models and not both`。
-2. 默认模型留空时自动选第一个；超时与重试留空时沿用原值，否则用 120 和 2；看图两栏只能写已列出的模型，且同一模型不能两栏都写。
-3. 已知旧行为，原样保留：即使有错误，`autoPicked` 也照样给出（旧代码有错时也会回填并提示）。
+2. 默认模型留空时自动选第一个（`empty default picks the first model and reports it`）；超时与重试留空时沿用原值，否则用 120 和 2（`blank timeout and retries keep the existing values, else 120 and 2`）；看图两栏只能写已列出的模型，且同一模型不能两栏都写（`vision lists must name listed models and not both`）。
+3. 已知旧行为，原样保留：即使有错误，`autoPicked` 也照样给出（旧代码有错时也会回填并提示，见 `empty default picks the first model and reports it`）。
 
 ### 迁入或覆盖的旧测试
 旧 SettingsProviders 的用例要起窗口，留在旧仓库。本包新增 5 条规则用例。
@@ -353,7 +353,7 @@ W7-B3：`discovered`（本机发现的模型清单）已从本对象移除——
 
 ### SPEC
 1. [LEMMA: 1] `tests/GenerationDraft.ProviderProbeText.Tests.fs` 通过：`open editor fills models, closed editor caches them`、`failure shows the parsed message as a failure`、`vision summary lists at most twelve`。
-2. 编辑器打开时把模型填进草稿；没打开时只缓存，绝不自动保存；看图说明最多列 12 个模型。
+2. 编辑器打开时把模型填进草稿；没打开时只缓存，绝不自动保存（`open editor fills models, closed editor caches them`）；看图说明最多列 12 个模型（`vision summary lists at most twelve`）。
 
 ### 迁入或覆盖的旧测试
 旧探活用例要起窗口，留在旧仓库。本包新增 3 条规则用例。

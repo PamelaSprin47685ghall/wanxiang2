@@ -6,7 +6,7 @@
 1. **同一错误，文案与按钮文案与旧实现相同。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] 错误文案与按钮文案由行为断言覆盖全部 13 种错误变体（SPEC 7：退役纯界面金样复刻测试，转为直接行为断言）。
+1. [LEMMA: 1] 错误文案与按钮文案由行为断言覆盖全部 13 种错误变体：`tests/Tests.fs` 的 `describe produces informative non-empty messages for all connection issue variants`、`each typed connection error maps to its retry action regardless of wording`、`typed error text carries none of the old retry keywords`、`frozen pairing names the minutes` 通过（SPEC 7：退役纯界面金样复刻测试，转为直接行为断言）。
 
 # 迁入或覆盖的旧测试
 旧 DevicesUiTests 的下列用例要打开对话框点按钮，**旧用例不删**，这里只迁入其中不需要窗口的断言：

@@ -9,6 +9,6 @@
     - 推理：一个坏文件不能拖垮启动；写盘静默失败会让「继续生成」在重启后悄悄消失。
 
 # SPEC
-1. [LEMMA: 1] `file holds exactly the wire bytes...`，通过。
-2. [LEMMA: 2] `broken files and other events are skipped...`，通过。
-3. 迁自旧仓库决策 250 的持久化测试，通过。
+1. [LEMMA: 1] `file holds exactly the wire bytes of the event, one per conversation`，通过。
+2. [LEMMA: 2] `broken files and other events are skipped; memory-only mode works`，通过。
+3. 迁自旧仓库决策 250 的持久化测试：`saved partial survives restart and clear deletes the file`，通过。

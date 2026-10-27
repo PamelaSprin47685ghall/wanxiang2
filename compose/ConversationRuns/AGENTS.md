@@ -3,7 +3,7 @@
 按对话保存的临时生成状态（ConversationRun、ConversationRuns：开始、流式、结束、半截回复、退休台账）与错误卡重试倒计时（RetryCountdown），迁自旧 `Model/UiControllers.fs`。协作者：MessageView（流式消息）、Wire（GenerationError、GenerationUsage、ProviderRateLimit）、ConversationSummary（运行态）。命名空间沿用 `Wanxiang.UI`。根规则见项目根目录 AGENTS.md。
 
 # SPEC
-1. 旧用例原样迁入，经三个库的交付包编译运行（`tests/Tests.fs`）。
+1. 旧用例原样迁入，经三个库的交付包编译运行（`tests/Tests.fs` 的 `ConversationRuns initial state is empty and idle`、`ConversationRuns start transitions to generating and resets message`、`D2 无错误详情的失败与未知状态都落成可重试的通用失败` 等）。
 
 # 迁入或覆盖的旧测试
 - UiControllersTests：`ConversationRuns initial state is empty and idle`、`ConversationRuns start transitions to generating and resets message`、`ConversationRuns delta updates streaming message`、`ConversationRuns finish without error archives entry to retired ledger with capacity limit`、`ConversationRuns finish with error records error in state`、`ConversationRuns disconnect clears in-flight run but preserves retired ledger`

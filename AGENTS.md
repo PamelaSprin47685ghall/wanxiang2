@@ -87,7 +87,7 @@
 
 1. **规则可追溯。** [LEMMA: 1, 8, 9]
     每条 AXIOM 有理由，每条 LEMMA 有有效前提和推理，每条 SPEC 对应可检查的行为及证明范围；显式推导不得循环自证。实现和测试承接规则，但不要求逐行注释规则编号。证据能检验真实行为，不只检查名称、类型形状或文件存在。
-    - 证明：**部分证据**（见下文《证据现状》SPEC 1）。`./x check` 自动核验各 `AGENTS.md` 及文档引用的 `libs/<名>` / `compose/<名>` 均存在、每个库有生产消费者、例外统一登记于《例外清单》，并由 `spec_trace_check` 校验根规则推导图无环、各 `AGENTS.md` 的 `[AXIOM/LEMMA/SPEC]`（含跨组件 `LEMMA`）规则编号存在性、`## 成员` 声明与 `.fs` 源码对应且无重复、`tests/*.fs(.fsproj)` 路径与 `[<Fact>]/[<Theory>]` 存在性、每条引用 `tests/*.fs` 的 SPEC 条目均以反引号显式点名测试函数且本组件与跨组件测试函数引用均在对应 `tests/` 源码中真实存在；`./x hygiene` 自动拒绝恒真断言、恒真谓词与空转测试；规则条款语义与测试断言是否完整覆盖全部业务边界，仍需结合人工与独立审查复核。
+    - 证明：**部分证据**（见下文《证据现状》SPEC 1）。`./x check` 自动核验各 `AGENTS.md` 及文档引用的 `libs/<名>` / `compose/<名>` 均存在、每个库有生产消费者、例外统一登记于《例外清单》，并由 `spec_trace_check` 校验根规则推导图无环、各 `AGENTS.md` 的 `[AXIOM/LEMMA/SPEC]`（含跨组件 `LEMMA`）规则编号存在性、`## 成员` 声明与 `.fs` 源码对应且无重复、`tests/*.fs(.fsproj)` 路径与 `[<Fact>]/[<Theory>]` 存在性、含 `tests/` 的组件每一条 SPEC 编号项（除显式 `[TODO]` 或 CLI 冒烟脚本验收项外）均以反引号显式点名测试函数且本组件与跨组件测试函数引用均在对应 `tests/` 源码中真实存在；`./x hygiene` 自动拒绝恒真断言、恒真谓词与空转测试；规则条款语义与测试断言是否完整覆盖全部业务边界，仍需结合人工与独立审查复核。
 
 2. **职责与交付独立。** [LEMMA: 4, 5]
     移除兄弟职责和组合者的源码、实例及服务回调后，只凭本库、工具链与声明依赖，仍能构建并验证本库公开行为；不塞入模拟对方调用流程的替身补洞。声明独立的 A、B 不相互依赖，整体依赖图无环。交付物能按声明的使用方式脱离开发工作区运行，不回退读取未交付文件。
@@ -196,7 +196,7 @@
 
 ## 证据现状（对应上文 SPEC）
 
-- SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。`./x check` 拒绝指向不存在组件的文档引用（`libs/<名>` / `compose/<名>`，`docs/archive` 除外）、强制每个库有消费者与登记例外，并经 `spec_trace_check` 自动核验根规则推导无环、各 `AGENTS.md` 的 `[AXIOM/LEMMA/SPEC]`（含跨组件 `LEMMA`）编号在对应作用域真实存在、`## 成员` 声明与 `.fs` 源码对应、`tests/*.fs(.fsproj)` 路径与 `[<Fact>]/[<Theory>]` 存在、每条引用 `tests/*.fs` 的 SPEC 条目均显式点名测试函数且本组件与跨组件测试函数名均存在于对应 `tests/` 源码。深层业务语义覆盖仍需结合人工与独立审查复核。
+- SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。`./x check` 拒绝指向不存在组件的文档引用（`libs/<名>` / `compose/<名>`，`docs/archive` 除外）、强制每个库有消费者与登记例外，并经 `spec_trace_check` 自动核验根规则推导无环、各 `AGENTS.md` 的 `[AXIOM/LEMMA/SPEC]`（含跨组件 `LEMMA`）编号在对应作用域真实存在、`## 成员` 声明与 `.fs` 源码对应、`tests/*.fs(.fsproj)` 路径与 `[<Fact>]/[<Theory>]` 存在、含 `tests/` 的组件每一条 SPEC 编号项（除显式 `[TODO]` 或 CLI 冒烟脚本验收项外）均以反引号显式点名测试函数且本组件与跨组件测试函数名均存在于对应 `tests/` 源码。深层业务语义覆盖仍需结合人工与独立审查复核。
 - SPEC 2 职责与交付独立：构建独立、协作独立由 `./x check` 与 `./x test <lib>` 给出，每个库都通过；交付独立由 `./x compose` 给出（干净包缓存、只用 `artifacts/feed` 中的包），通过；仓库外消费已由 `./x consume` 自动化（`mktemp -d` 下的项目只从 `artifacts/feed` 取 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`；消费者源码在 `tools/consume/`，CI 的 consume 任务运行它），2026-10-17 通过。
 - SPEC 3 状态确有主人：Ledger 与 compose/LedgerStore 测了输入、返回值别名、错误后的状态、实例隔离（见各自 AGENTS.md）。JsonSeqFile、SnapshotFile、DirLock 的状态都在文件里，也有实例隔离、非法参数与错误之后的测试（见各自 AGENTS.md）。客户端 UI 状态统一归属 `libs/WorkspaceState` 单一状态树，`./x check` 自动拦截 `libs/` 与 `compose/` 生产源码中的非私有 `Set[A-Z]*` 成员、`*Look` 类型、`DispatcherTimer` 与 `OnCreateAutomationPeer`。
 - SPEC 4 协作由真实组合证明：`compose/LedgerStore/tests` 覆盖成功、类型化拒绝、重复、游标分页、在每个字节处崩溃、半写尾与修复、解码失败、过期快照、快照策略与快照写失败、真实未知结果（`/dev/full`）、并发、同目录互斥。「写失败但确知未写」也有真实故障（测试临时收紧 RLIMIT_FSIZE，EFBIG 后截回成功），见 `libs/JsonSeq/AGENTS.md`。

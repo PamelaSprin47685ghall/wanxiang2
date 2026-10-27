@@ -14,8 +14,8 @@
 
 # SPEC
 1. [LEMMA: 1] `tests/Tests.fs` 通过：`the anchor follows jumps, not the viewport`、`older history: request, then jump again once the first commit changes`、`losing older history or a failure drops the pending jump`、`nav state: no next at the bottom, previous while more exists`、`a vanished anchor card is dropped`、`scrolling to the beginning drops the anchor but keeps the pending previous`。
-2. 跳过一次后跟着锚点走；贴底时没有下一轮；窗口外或主机上还有更早的，上一轮总可用；挂起的上一轮在首条提交变化时兑现，主机没有更早页或取页失败时撤掉。
-3. 已知旧行为，原样保留：挂起期间再按上一轮会重新请求，并改写挂起时记下的首条提交。
+2. 跳过一次后跟着锚点走（`the anchor follows jumps, not the viewport`）；贴底时没有下一轮；窗口外或主机上还有更早的，上一轮总可用（`nav state: no next at the bottom, previous while more exists`）；挂起的上一轮在首条提交变化时兑现，主机没有更早页或取页失败时撤掉（`losing older history or a failure drops the pending jump`）。
+3. 已知旧行为，原样保留：挂起期间再按上一轮会重新请求，并改写挂起时记下的首条提交（`older history: request, then jump again once the first commit changes`）。
 
 # 迁入或覆盖的旧测试
 旧 ChatView 跳转用例（决策 300）要起窗口，留在旧仓库。本库新增 6 条规则用例。

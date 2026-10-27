@@ -52,7 +52,7 @@
 
 ## SPEC
 1. [LEMMA: 1] `tests/ReconnectLoop.Tests.fs` 通过：`backoff grows across failed reconnects and only resets on success or manual`、`at most one pending reconnect, none without a token`、`a new connect voids the pending timer and stale callbacks`、`resume runs the pending reconnect now and resets backoff`。
-2. 主机一直不在时等待时长逐次翻倍到上限，只在连接成功或用户手动连接时归零；没有令牌不排重连；新的连接让挂起的计时作废；ResumeNow 只在有挂起时才动作。
+2. 主机一直不在时等待时长逐次翻倍到上限，只在连接成功或用户手动连接时归零（`backoff grows across failed reconnects and only resets on success or manual`）；没有令牌不排重连（`at most one pending reconnect, none without a token`）；新的连接让挂起的计时作废（`a new connect voids the pending timer and stale callbacks`）；ResumeNow 只在有挂起时才动作（`resume runs the pending reconnect now and resets backoff`）。
 
 ## 迁入或覆盖的旧测试
 旧 ClientStateAndWsClientTests 的退避用例已在 `libs/WorkspaceState`；AppShell 的重连用例要起窗口，留在旧仓库。本包新增 4 条规则用例。

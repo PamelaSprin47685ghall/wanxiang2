@@ -18,7 +18,7 @@
 3. **唯一改动：列表里的 JSON null 项会原样保留，旧实现在这里抛 NullReferenceException。** [根 AXIOM: 2]
 
 ## SPEC
-1. [LEMMA: 1, 2, 3] 本库测试通过（含非整数 commitId 抛出，与旧实现一致）。
+1. [LEMMA: 1, 2, 3] 本库测试通过（含非整数 commitId 抛出，与旧实现一致）：`tests/CommitTimeline.Tests.fs` 的 `commitIdOf 只认对象里的 commitId`、`contains 按 commitId 判断，跳过非对象项`、`without 删除匹配项，保留非对象项与顺序，不改原数组`、`prependOlder 去重、丢弃无 commitId 的项并报告最早一条` 通过。
 
 ## 迁入或覆盖的旧测试
 - 经 compose/WsClient 覆盖：`ClientState HistoryPage prepends older messages and deduplicates`、`ClientState MessageCommitted appends message, updates watermark, deduplicates and raises event`、`ClientState ConversationUpdated updates title and removes deleted messages`、`ClientState HistoryPage handles non-JsonObject items and updates pagination`、`ClientState MessageCommitted handles messages collection with non-JsonObject items`、`ClientState ConversationUpdated deletedMessage preserves non-JsonObject items`、`ClientState AuthorityCatchUp decodes string commit lines and handles AgentMessageRecorded and MessageDeleted`。
@@ -39,8 +39,8 @@
 3. **行为与旧实现一致**：发送失败返回 false 不抛；二进制帧带 `binary frame received` 错误关闭；接收循环用 async（browser-wasm 单线程运行时）。[根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1, 3] 本机真实 WebSocket 服务上的测试通过：分片拼接与往返、代号不符拒发、二进制帧、对端干净关闭只通知一次、主动断开后旧代静默、连不上时抛原异常。
-2. 端到端由 compose/WsClient 迁入的旧测试覆盖。
+1. [LEMMA: 1, 3] 本机真实 WebSocket 服务上的测试通过：`tests/TextSocket.Tests.fs` 的 `未连接时发送返回 false，断开让代号加一`、`分片文本拼成一条消息，回显往返`、`代号不符的发送被拒绝`、`二进制帧带错误关闭` 通过。
+2. 端到端由 compose/WsClient 迁入的旧测试（如 `WsClient live connection lifecycle, generation, and clean disconnect`）覆盖。
 
 ## 迁入或覆盖的旧测试
 - 经 compose/WsClient 的 WsClient 外壳覆盖（见该组合者 AGENTS.md）：`WsClient live connection lifecycle, generation, and clean disconnect`、`WsClient connection superseded during connect raises OperationCanceledException`、`WsClient sendGate concurrency and serialization under parallel load`、`WsClient ReceiveLoop handles text frames, multi-chunk fragmentation, and ignores unknown or broken JSON`、`WsClient ReceiveLoop stale generation drops events from previous connection`、`WsClient ReceiveLoop handles binary frame and closes with error`、`WsClient ReceiveLoop handles clean close frame from server`、`WsClient ReceiveLoop handles abrupt socket abort`、`WsClient reconnect lifecycle across server restarts with incremented generation`、`WsClient binary frame receives error and closes connection cleanly`。

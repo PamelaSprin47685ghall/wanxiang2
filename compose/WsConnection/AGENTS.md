@@ -14,9 +14,9 @@ ClientToken、DesktopClient、DeviceSightings、DeviceRules。命名空间沿用
 1. [LEMMA: 2] `AuthNoConfigWriteTests.fs`：`auth produces zero config writes` —— 真实组合（真实 TOML + ConfigStore、EventStore、ToolRegistry、
    ChatOrchestrator、AttachmentStore、PairingDesk、DeviceSightings），经本机 WebSocket 认证 3 次（3 个连接）：updateConfig 调用 0 次，
    配置文件原文与 mtime 不变，无临时文件，device-sightings.json 有记录且重开可读回。连跑三次通过。同一测试顺带钉住 `HostVersion` 注入：认证后的 host.capabilities 带宿主给的版本。
-2. 有意改动：未用的 `PairingRequested d` 改为 `_`（警告即错误）。
-3. `hostVersion` 由宿主注入（`HostVersion` 属性，ServerApp 设置）；不再取本程序集版本。
-4. 待拆（路线图）：设备列表 JSON 形状、目录快照 JSON 可再拆；追赶/快照游标状态机与发送队列绑在一起，暂留。
+2. 有意改动：未用的 `PairingRequested d` 改为 `_`（警告即错误，见 `auth produces zero config writes`）。
+3. `hostVersion` 由宿主注入（`HostVersion` 属性，ServerApp 设置，见 `auth produces zero config writes`）；不再取本程序集版本。
+4. 待拆（路线图，[TODO]）：设备列表 JSON 形状、目录快照 JSON 可再拆；追赶/快照游标状态机与发送队列绑在一起，暂留。
 
 # 迁入或覆盖的旧测试
 - 旧仓库的 WsConnection 测试都经 ServerApp 起整台主机（TestServer），随 8.8 ServerApp 迁入并在那里逐条列名。

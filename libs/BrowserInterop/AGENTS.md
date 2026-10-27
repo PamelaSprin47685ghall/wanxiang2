@@ -8,7 +8,7 @@
 3. **JSExport 换了程序集与类名：main.js 要改为 `getAssemblyExports("BrowserInterop.dll")` 后调用 `Wanxiang.Interop.BrowserInterop.NotifyHidden`（旧为 Wanxiang.Interop.dll 的 BrowserBridge.NotifyPageHidden）；事件 `PageHidden` 改名 `Hidden`。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1] 测试只读元数据比对绑定名（浏览器之外不能实例化 JSImport 特性，更不能调用）：通过。
+1. [LEMMA: 1] 测试只读元数据比对绑定名（浏览器之外不能实例化 JSImport 特性，更不能调用）：`tests/BrowserPage.Tests.fs` 的 `JS 绑定名与旧 BrowserBridge 一致`、`NotifyHidden 是导出给 main.js 的入口，触发 Hidden`、`没有订阅者时 NotifyHidden 不抛` 通过。
 
 # 迁入或覆盖的旧测试
 - 旧仓库没有针对 BrowserBridge 的测试。本库测试：

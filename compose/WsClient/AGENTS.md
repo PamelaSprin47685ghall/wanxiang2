@@ -11,7 +11,7 @@
 3. **行为与旧实现一致。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1, 2, 3] 旧 ClientStateAndWsClientTests 原文迁入（去掉移到 libs/ChangeWatch 的 6 个），含本机真实 WebSocket 服务上的连接、代号、并发发送、分片、二进制帧、断线重连用例，通过。
+1. [LEMMA: 1, 2, 3] 旧 ClientStateAndWsClientTests 原文迁入（`tests/ClientStateAndWsClientTests.fs` 的 `WsClient initial state is disconnected with generation zero`、`WsClient live connection lifecycle, generation, and clean disconnect` 等，去掉移到 libs/ChangeWatch 的 6 个），含本机真实 WebSocket 服务上的连接、代号、并发发送、分片、二进制帧、断线重连用例，通过。
 
 # 迁入或覆盖的旧测试
 旧 ClientStateAndWsClientTests（tests/ClientStateAndWsClientTests.fs）：

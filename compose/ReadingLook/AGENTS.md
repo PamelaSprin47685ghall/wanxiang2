@@ -11,7 +11,7 @@
 2. **切主题、改度量，已显示的正文跟着变。**
 
 # SPEC
-1. [LEMMA: 1] 旧仓库的整树逐行金样复刻已退役（金样文件已删除）。生成器 `tools/mdgold` 仍留在仓库里，可以引用旧仓库检出重新生成那份对照文件（16 段样例各渲染两遍，用共用的 `tests/Dump.fs` 在内嵌正文字体的窗口里转写），但当前没有用例比对它——LEMMA 1 现在由 SPEC 2 的行为断言与旧代码逐行比对人工复核承担。
+1. [LEMMA: 1] 旧仓库的整树逐行金样复刻已退役（金样文件已删除）。生成器 `tools/mdgold` 仍留在仓库里，可以引用旧仓库检出重新生成那份对照文件（16 段样例各渲染两遍，用共用的 `tests/Dump.fs` 在内嵌正文字体的窗口里转写），但当前没有用例比对它——LEMMA 1 现在由 `markdown interactive links produce accessible actionable buttons` 与 SPEC 2 的行为断言及旧代码逐行比对人工复核承担。
 2. [LEMMA: 2] `theme switch recolors shown code in place and metric edits reach shown blocks`、`code header buttons wear the shared icon button classes from the theme`。
 
 # 与旧代码的差异

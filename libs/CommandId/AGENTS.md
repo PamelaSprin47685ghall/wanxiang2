@@ -12,4 +12,4 @@
 
 # SPEC
 1. [LEMMA: 1] commandId 和 sha256Hex 与用 Python hashlib 单独算出的金样一致：`tests/Tests.fs` 的 `command id matches the golden vector computed independently with Python hashlib`、`sha256Hex matches the golden vector for UTF-8 text`、`retry with the same invocation gives the same id; any changed part gives another` ，通过。
-2. [LEMMA: 1] 同一 invocationId 重试得到同一个 id，改动任何一项 id 都会变；输出是 43 位无填充 base64url，通过。
+2. [LEMMA: 1] 同一 invocationId 重试得到同一个 id，改动任何一项 id 都会变；输出是 43 位无填充 base64url：`tests/Tests.fs` 的 `retry with the same invocation gives the same id; any changed part gives another`、`command id is unpadded base64url of 43 chars` 通过。

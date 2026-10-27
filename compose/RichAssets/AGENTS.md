@@ -7,7 +7,7 @@
 2. **加载次序、按需语言、失败一律退化为 None 的规则归本组合者。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1, 2] tests 通过。
+1. [LEMMA: 1, 2] `tests/Tests.fs` 的 `language annotations resolve through hljs aliases`、`an unknown language annotation resolves to nothing`、`按需语言经别名解析后都能取到脚本`、`基座语言不需要额外加载` 通过。
 
 # 迁入或覆盖的旧测试
 迁自旧 PolishTests 与本组合补充：

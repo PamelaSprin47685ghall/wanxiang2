@@ -15,6 +15,6 @@
     - 推理：长时间运行的主机不能无限增长。
 
 # SPEC
-1. [LEMMA: 1, 2] `first decision wins...`，通过。
-2. [LEMMA: 3] `beforeComplete runs before...`，通过。
+1. [LEMMA: 1, 2] `first decision wins; later ones see the memo`，通过。
+2. [LEMMA: 3] `beforeComplete runs before the waiter sees the result`，通过。
 3. [LEMMA: 4] `recent memory is bounded`，通过。

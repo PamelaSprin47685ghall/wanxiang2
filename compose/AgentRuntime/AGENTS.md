@@ -7,8 +7,8 @@
 2. **连接池抽成 SharedHttpClients。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1] `golden/runtime.txt` 由旧 AgentRuntime.fs、HistoryProvider.fs 对着本机假 OpenAI 兼容服务跑同一 Scenario 生成（流式成功含工具调用、429、500、补全、上下文过长、取消，以及异常归类矩阵），通过。
-2. 观察（未改，保持旧行为）：对话 `extraJson` 进入 ChatOptions.AdditionalProperties，但 OpenAI SDK 不把它写进请求体（金样里看不到 `reasoning_effort`）。是否修复留给用户决定。
+1. [LEMMA: 1] `golden/runtime.txt` 由旧 AgentRuntime.fs、HistoryProvider.fs 对着本机假 OpenAI 兼容服务跑同一 Scenario 生成（`tests/GoldenTests.fs` 的 `agent runtime behaves byte for byte like the old implementation`，流式成功含工具调用、429、500、补全、上下文过长、取消，以及异常归类矩阵），通过。
+2. 观察（未改，保持旧行为）：对话 `extraJson` 进入 ChatOptions.AdditionalProperties，但 OpenAI SDK 不把它写进请求体（金样 `agent runtime behaves byte for byte like the old implementation` 里看不到 `reasoning_effort`）。是否修复留给用户决定。
 
 # 迁入或覆盖的旧测试（旧仓库 d9651ed，可在旧仓库删除）
 - AgentCoverageTests.fs（ProviderFailure、WanxiangHistoryProvider、AgentRuntime 各节）：

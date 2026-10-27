@@ -13,5 +13,5 @@
     - 推理：这样测试能逐字节比较。
 
 # SPEC
-1. [LEMMA: 1, 2, 3] `error lines carry the envelope...`，通过。
-2. 异常带堆栈字段；info 不进最近错误；缓冲有上限：`exceptions get a stack field...`，通过。
+1. [LEMMA: 1, 2, 3] `error lines carry the envelope, typed fields and redacted text`，通过。
+2. 异常带堆栈字段；info 不进最近错误；缓冲有上限：`exceptions get a stack field; info is not kept as a recent error; recent is bounded`，通过。

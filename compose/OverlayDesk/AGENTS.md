@@ -21,5 +21,5 @@ OverlayLayer + ToastStrip + PopupMenu + FocusOrigin + 内部模块（ToastQueue�
 ## 证据与旧测试
 
 - OverlayMenuTests：`toast_stays_non_focusable_and_escape_dismisses_it`、`toast_removes_immediately_under_reduced_motion`
-- UiStabilityTests：`toast stays inside narrow viewport and is keyboard dismissible live content`、`forty item menu keeps long labels bounded and supports directional focus`、`escape precedence closes topmost overlay first and guards pending dialog`（提示条那一层）
+- UiStabilityTests：`toast stays inside narrow viewport and is keyboard dismissible live content`、`forty item menu keeps long labels bounded and supports directional focus`、`escape closes popup then dialog then newest toast`（提示条那一层，迁自旧 `escape precedence closes topmost overlay first and guards pending dialog`）
 - 新增：菜单激活先关浮层、选择器 Down 打开分组菜单、撤销动作只跑最新的同文条、上限挤掉最旧、带焦点动作关条后焦点回归宿。

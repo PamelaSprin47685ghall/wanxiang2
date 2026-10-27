@@ -12,7 +12,7 @@
     - 推理：已有数据目录必须继续可读；原样迁移最容易对照。
 
 # SPEC
-1. [LEMMA: 1] 旧仓库的 EventLogTests、StoreConsistencyTests、ReplayTests 原样迁入，测试通过。
+1. [LEMMA: 1] 旧仓库的 EventLogTests（`three intact commits round trip through CommitCodec` 等）、StoreConsistencyTests（`单写者内部幂等：同 commandId 再次 Submit 返回原提交且不追加` 等）、ReplayTests（`doctor 只读模式不修改损坏日志` 等）原样迁入，测试通过。
 2. [LEMMA: 1; Ledger LEMMA 6, 7] `EventStore` 透传可选 `maxStamps` 有界幂等保留上限，窗口内重发返回 `IdempotentReplay`、超出上限淘汰最旧幂等戳、淘汰后重发作为新提交落盘，保存快照后 `Inspect.run` 与 `Inspect.peek` 均保持 `Healthy`：`tests/ReplayTests.fs` 的 `有界 maxStamps 淘汰旧幂等戳后重发与 Inspect 均保持健康` 通过。
 
 # 迁入或覆盖的旧测试

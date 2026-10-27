@@ -301,6 +301,20 @@ def load_test_text(base_dir):
             buf.append(tf.read())
     return "\n".join(buf)
 
+def extract_test_fns(src):
+    fns = set()
+    for m in re.finditer(r"\blet\s+``([^`]+)``", src):
+        fns.add(m.group(1))
+    for m in re.finditer(r"\[<(?:Fact|Theory)[^\]]*>\]\s*(?:\[<[^\]]+>\]\s*)*let\s+(?:rec\s+)?([A-Za-z0-9_]+)\b", src):
+        fns.add(m.group(1))
+    return fns
+
+all_test_fns = set()
+for pat in ("libs/*", "compose/*"):
+    for d in glob.glob(pat):
+        if os.path.isdir(d):
+            all_test_fns.update(extract_test_fns(load_test_text(d)))
+
 for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
     for md in sorted(glob.glob(pattern)):
         base_dir = os.path.dirname(md)
@@ -321,6 +335,7 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                         print(f"FAIL {md}: declared member `{mem}` has no matching .fs source in {base_dir}")
                         bad = 1
             test_src = load_test_text(base_dir)
+            local_test_fns = extract_test_fns(test_src)
             if os.path.isdir(os.path.join(base_dir, "tests")) and not re.search(r"\[<(?:Fact|Theory)\b", test_src):
                 print(f"FAIL {md}: tests/ directory has no [<Fact>] or [<Theory>] across its .fs files")
                 bad = 1
@@ -339,23 +354,23 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                 if md.startswith("libs/") and re.search(r"`[A-Za-z0-9_.]+\s*(?:\([^`)]*\blook\b|\blook\b\s+[A-Za-z0-9_]+)", line):
                     print(f"FAIL {md}:{lineno}: documents obsolete `look` parameter in library signature")
                     bad = 1
-                clean_xline = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or "", line)
+                clean_xline = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or " ", line)
                 m_xcomp = re.match(r"^\s*-\s*(?:组合者\s+([A-Za-z0-9_]+)|经\s+compose/([A-Za-z0-9_]+)[^：]*)\s*覆盖：(.+)$", clean_xline)
                 if m_xcomp:
                     comp_name = m_xcomp.group(1) or m_xcomp.group(2)
                     target_comp = os.path.join("compose", comp_name)
-                    target_tsrc = load_test_text(target_comp)
+                    target_tfns = extract_test_fns(load_test_text(target_comp))
                     for bm in re.finditer(r"`([^`]+)`", m_xcomp.group(3)):
-                        xt = bm.group(1).rstrip(".…")
-                        if xt not in target_tsrc:
+                        xt = bm.group(1)
+                        if xt not in target_tfns:
                             print(f"FAIL {md}:{lineno}: cross-cited test `{xt}` not found in {target_comp}/tests")
                             bad = 1
                 m_xparen = re.match(r"^\s*-\s*`([^`]+)`\s*（((?:compose|libs)/[A-Za-z0-9_]+)/tests/[A-Za-z0-9_.-]+\.fs[^）]*）", line)
                 if m_xparen:
-                    xt = m_xparen.group(1).rstrip(".…")
+                    xt = m_xparen.group(1)
                     target_comp = m_xparen.group(2)
-                    target_tsrc = load_test_text(target_comp)
-                    if xt not in target_tsrc:
+                    target_tfns = extract_test_fns(load_test_text(target_comp))
+                    if xt not in target_tfns:
                         print(f"FAIL {md}:{lineno}: cross-cited test `{xt}` not found in {target_comp}/tests")
                         bad = 1
                 for m in re.finditer(r"(?<![A-Za-z0-9_/])(tests/[A-Za-z0-9_.-]+\.(?:fsproj|fs))(?![A-Za-z])", line):
@@ -370,27 +385,27 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                                 print(f"FAIL {md}:{lineno}: cited test file {rel_path} has no [<Fact>] or [<Theory>]")
                                 bad = 1
                 if test_src:
-                    clean_line = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or "", line)
+                    clean_line = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or " ", line)
                     candidates = []
-                    if re.search(r"`tests/[A-Za-z0-9_.-]+\.fs`\s*(?:(?:通过|的)?[:：]|\s*(?:的\s+)?`)", clean_line):
-                        after = re.split(r"`tests/[A-Za-z0-9_.-]+\.fs`\s*(?:(?:通过|的)?[:：]|\s*的\s*)?", clean_line, maxsplit=1)[1]
+                    if re.search(r"`tests/[A-Za-z0-9_.-]+\.fs`(?:\s*(?:通过|的)?\s*[:：]|\s+的\s+|\s+`)", clean_line):
+                        after = re.split(r"`tests/[A-Za-z0-9_.-]+\.fs`(?:\s*(?:通过|的)?\s*[:：]|\s+的\s+|\s+)", clean_line, maxsplit=1)[1].split("——")[0].split("。")[0]
                         candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", after))
                     candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`\s*通过", clean_line))
                     if re.match(r"^\s*-\s*证明：", clean_line) and "compose/" not in clean_line and "libs/" not in clean_line and "./x " not in clean_line:
-                        after = re.split(r"证明：", clean_line, maxsplit=1)[1]
+                        after = re.split(r"证明：", clean_line, maxsplit=1)[1].split("——")[0].split("。")[0]
                         candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", after))
-                    if re.match(r"^\s*\d+\.\s+\[[^\]]+\]", clean_line) and "compose/" not in clean_line and "libs/" not in clean_line and "./x " not in clean_line and "：" in clean_line:
-                        after = clean_line.split("：", 1)[1]
+                    if re.match(r"^\s*\d+\.\s+\[[^\]]+\]", clean_line) and "compose/" not in clean_line and "libs/" not in clean_line and "./x " not in clean_line and "：" in clean_line.split("`")[0]:
+                        after = clean_line.split("：", 1)[1].split("——")[0].split("。")[0]
                         candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", after))
                     if in_test_list and not any(k in line for k in ["留在旧仓库", "compose/", "libs/", "删除", "退役", "部分覆盖", "同上", "在 ConversationRuns", "测试名改为", "并入", "在 ApprovalCardText", "已随", "组合者", "入口消费", "留在宿主"]):
                         bm = re.match(r"^\s*-\s+(?:[^：`]*：|本包新增用例\s*)?((?:`[^`]+`(?:\s*(?:、|与|，|,|（[^`）]*）)\s*)?)+)[。；]?$", clean_line)
                         if bm:
                             candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", bm.group(1)))
                     for raw_tname in dict.fromkeys(candidates):
-                        tname = raw_tname.rstrip(".…")
+                        tname = raw_tname
                         if tname.startswith("tests/") or tname.startswith("./") or (" " not in tname and tname.isascii()):
                             continue
-                        if tname not in test_src:
+                        if tname not in local_test_fns:
                             print(f"FAIL {md}:{lineno}: cited test `{tname}` not found in {base_dir}/tests")
                             bad = 1
             if test_src:
@@ -420,19 +435,18 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                 if cur_spec:
                     spec_items.append(cur_spec)
                 for s_lineno, s_lines in spec_items:
-                    s_joined = "".join(s_lines)
-                    s_clean = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or "", s_joined)
-                    s_ticks = re.findall(r"`([^`]+)`", s_clean)
-                    s_tfiles = [b for b in s_ticks if b.startswith("tests/") and b.endswith(".fs") and "<" not in b and "Wanxiang.Tests" not in b]
-                    if s_tfiles:
-                        has_fn = any(
-                            (f"``{b}``" in test_src or re.search(r"\blet\s+" + re.escape(b) + r"\b", test_src))
-                            for b in s_ticks
-                            if not b.startswith("tests/")
-                        )
-                        if not has_fn:
-                            print(f"FAIL {md}:{s_lineno}: SPEC item references `{s_tfiles[0]}` without naming any explicit test function in backticks")
-                            bad = 1
+                    s_joined = "\n".join(s_lines)
+                    if "[TODO]" in s_joined or "bash tools/gallery.sh" in s_joined or "`./x consume`" in s_joined:
+                        continue
+                    s_ticks = re.findall(r"`([^`]+)`", s_joined)
+                    has_fn = any(
+                        (b in local_test_fns or b in all_test_fns)
+                        for b in s_ticks
+                        if not b.startswith("tests/")
+                    )
+                    if not has_fn:
+                        print(f"FAIL {md}:{s_lineno}: SPEC item does not name any explicit test function in backticks")
+                        bad = 1
         parts = re.split(r"(?m)(?=^##\s+成员\s+)", text)
         for part in parts:
             local_axioms = get_sec_nums(part, "AXIOM") if md != "AGENTS.md" else root_axioms

@@ -7,7 +7,7 @@
     - 推理：模型读到的错误文字不变。
 
 # SPEC
-1. [LEMMA: 1] 测试覆盖读、列、越界、未配置、空路径。
+1. [LEMMA: 1] 测试覆盖读、列、越界、未配置、空路径：`tests/Tests.fs` 的 `files inside the roots are read and listed`、`paths outside the roots, empty roots and empty paths are refused` 通过。
 
 # 迁入或覆盖的旧测试
 - 旧测试迁在 compose/ToolRegistry/tests（逐条列在 ToolRegistry AGENTS.md）。

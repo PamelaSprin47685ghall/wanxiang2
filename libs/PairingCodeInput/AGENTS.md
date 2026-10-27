@@ -7,7 +7,7 @@
 
 # SPEC
 1. [LEMMA: 1] `tests/Tests.fs` 通过：`any unicode digits become six ascii digits`、`the same full code submits once until it changes`。
-2. 同一串 6 位码只自动提交一次；不足 6 位时清零记录，之后再输入同一串码会再次提交。
+2. 同一串 6 位码只自动提交一次；不足 6 位时清零记录，之后再输入同一串码会再次提交（`the same full code submits once until it changes`）。
 
 # 迁入或覆盖的旧测试
 旧配对对话框用例要起窗口，留在旧仓库。本库新增 2 条规则用例。

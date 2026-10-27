@@ -13,4 +13,4 @@
 
 # SPEC
 1. [LEMMA: 2] Anthropic 和 Gemini 的请求（方法、地址、头、正文）与解码后的增量（文本、思维链、工具调用、用量、结束原因、响应 id）与旧实现逐字节相同：`tests/GoldenTests.fs` 的 `requests and decoded updates equal the old implementation byte for byte` ，通过。
-2. [LEMMA: 1, 2] 旧仓库 `AnthropicTransportTests.fs` 原样搬来；`NativeTransportTests.fs` 去掉属于 Server、UI、MessageSerde 的 7 个测试后搬来；连同金样共 39 个，通过。
+2. [LEMMA: 1, 2] 旧仓库 `AnthropicTransportTests.fs`（`GetStreamingResponseAsync parses message_start text_delta and message_stop properly` 等）原样搬来；`NativeTransportTests.fs`（`anthropic 把分片的文本增量拼回完整回答`、`gemini 把多帧文本拼回完整回答` 等）去掉属于 Server、UI、MessageSerde 的 7 个测试后搬来；连同金样共 39 个，通过。

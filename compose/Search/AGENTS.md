@@ -9,5 +9,5 @@
     - 推理：输入是不可变的投影，不写任何文件（旧决策 201）。
 
 # SPEC
-1. [LEMMA: 1] `golden/search.txt` 由旧 SearchService.fs 跑同一 Scenario 生成，覆盖排序、大小写、删除、归档、翻页、钳制、空查询、超长查询、正文提取、片段，通过。
-2. 预算触顶时明说截断，翻页不丢命中（迁自旧 LibraryTests），通过。
+1. [LEMMA: 1] `golden/search.txt` 由旧 SearchService.fs 跑同一 Scenario 生成（`tests/GoldenTests.fs` 的 `search result bytes equal the old implementation`），覆盖排序、大小写、删除、归档、翻页、钳制、空查询、超长查询、正文提取、片段，通过。
+2. 预算触顶时明说截断，翻页不丢命中（迁自旧 LibraryTests：`tests/BudgetTests.fs` 的 `results beyond the hit budget are flagged truncated and pages never silently lose hits`），通过。

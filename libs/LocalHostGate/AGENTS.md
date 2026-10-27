@@ -14,10 +14,10 @@
 1. **门默认是开的。** [根 AXIOM: 3] 不设 `ready` 的调用方（纯客户端、PWA、测试）不会被这个门挡住。
 
 ## SPEC
-1. [LEMMA: 1] 桌面入口（`app/Desktop/Program.fs`）在后台起主机后把任务赋给 `LocalHostGate.ready`，客户端首次连接前 `await` 它；本包没有独立用例，行为由桌面冒烟（`tools/smoke_desktop.sh`）覆盖。
+1. [LEMMA: 1] 桌面入口（`app/Desktop/Program.fs`）在后台起主机后把任务赋给 `LocalHostGate.ready`，客户端首次连接前 `await` 它：`tests/PwaAssets.Tests.fs` 的 `默认就绪门已完成，替换为后台任务后等待其完成` 通过，端到端由桌面冒烟（`tools/smoke_desktop.sh`）覆盖。
 
 ## 迁入或覆盖的旧测试
-- 旧仓库没有这个门的单元测试（旧仓库宿主是同步起主机的）；本包无对应用例。
+- 旧仓库没有这个门的单元测试（旧仓库宿主是同步起主机的）；本包新增 `默认就绪门已完成，替换为后台任务后等待其完成`。
 
 ## 成员 `PwaAssets`
 

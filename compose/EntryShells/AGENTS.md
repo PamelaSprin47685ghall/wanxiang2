@@ -24,10 +24,10 @@
     - 推理：图标几何与缓存归 `IconSet`、控件与载荷归 `ComposerDesk`、主题活画笔归 `Theme`、品牌标归 `ShellDesk`；本壳只留旧签名与语义映射。
 
 # SPEC
-1. [LEMMA: 1, 3] 五个文件与旧实现逐段对照：逻辑差异只有设计层转调（`Tokens` → 活画笔 / `IconSet` / `ComposerDesk`）与注入端口，其余是注释（对照命令见「证据」）。
-2. [LEMMA: 2] 两个入口只经包消费本壳：`app/Desktop/Wanxiang.App.fsproj` 与 `app/Pwa/Wanxiang.Pwa.fsproj` 各有一条 `Wanxiang2.EntryShells` 的 `PackageReference`；`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（真实界面验收要人看，仓库内未自动化）。
-3. 本组合者有独立测试工程 `compose/EntryShells/tests/EntryShells.Tests.fsproj`（`./x compose` 自动发现并运行）：覆盖弹出层字体契约（`PopupFontTests`：应用样式命中 / 窗口内实际生效 / 复合回落覆盖界面符号）与内嵌正文字体的基本可用性（`EmbeddedFontTests`）。
-4. [LEMMA: 1] 源级回归：`compose/Theme/tests/A11yRegression.fs`（迁自旧 `A11yRegressionTests`）的 `模型选择不再保留隐藏顶栏入口` 读 `compose/EntryShells/Composer.fs`，验证旧入口符号（`HeaderModelAnchor` / `SetHeaderModel`）不存在、新入口（`ModelAnchor()`）在；`./x compose` 运行。
+1. [LEMMA: 1, 3] 五个文件（`SharedTheme.fs`、`Effects.fs`、`Icons.fs`、`MainWindow.fs`、`App.fs`）只做设计层转调与宿主端口装配（行为由 `tests/Tests.fs` 的 `ScrollAnchorMath correctly computes restored prepend offset`、`EffectSink RunSync executes effects in strict sequence` 覆盖）。
+2. [LEMMA: 2] 两个入口只经包消费本壳：`app/Desktop/Wanxiang.App.fsproj` 与 `app/Pwa/Wanxiang.Pwa.fsproj` 各有一条 `Wanxiang2.EntryShells` 的 `PackageReference`；`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（字体与启动契约由 `tests/Tests.fs` 的 `内嵌正文字体族能解析出字形`、`内嵌正文字体覆盖常用汉字`、`等宽字体把正文字体列为回落（否则中文变豆腐块）` 覆盖）。
+3. 本组合者有独立测试工程 `compose/EntryShells/tests/EntryShells.Tests.fsproj`（`./x compose` 自动发现并运行）：覆盖弹出层字体契约（`tests/Tests.fs` 的 `弹出层三类都被指定了内嵌正文字体`、`弹出层控件在窗口里真的用上了内嵌正文字体`、`弹出层字体的复合回落覆盖界面符号`）与内嵌正文字体的基本可用性（`内嵌正文字体族能解析出字形`、`内嵌正文字体覆盖常用汉字`）。
+4. [LEMMA: 1, 3] 模型选择锚点已随输入区收束至 `compose/ComposerDesk`（由 `compose/ComposerDesk/tests/Tests.fs` 的 `模型芯片名称固定为切换模型` 覆盖）。
 
 # 迁入或覆盖的旧测试
 - 旧入口壳没有独立单元测试；驱动这些文件的用例挂在旧整套 UI 测试上（如 `IconCenteringTests` 读 `src/Wanxiang.UI/Design/Icons.fs` 的墨迹断言、`FocusRingTests` 经 `Icons.*`、`CloseWindowTests` 走 `MainWindow.Closing` 的几何持久化），随旧壳退役（旧仓库 16904f0 删 `src/` 与 `tests/`）。

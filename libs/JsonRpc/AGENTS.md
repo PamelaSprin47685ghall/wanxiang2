@@ -19,9 +19,9 @@ JSON-RPC 2.0 信封和在途调用表：怎么拼请求和通知，怎么从响�
     - 推理：超时、取消和进程退出都会留下孤儿。表只增不减就会漏内存，迟到的响应也会误投。
 
 ## SPEC
-1. [LEMMA: 1] `pending calls match by id text...`，通过。
-2. [LEMMA: 2] FailAll、超时、取消后表为空：`fail all ends every waiter...`，通过。
-3. 信封格式与旧实现一致：`envelopes omit empty params...`、`result wins...`，通过；字节级由 `compose/McpClient` 金样覆盖。
+1. [LEMMA: 1] `pending calls match by id text; string "1" is not number 1`，通过。
+2. [LEMMA: 2] FailAll、超时、取消后表为空：`fail all ends every waiter with the same error; timeout and cancel forget the id`，通过。
+3. 信封格式与旧实现一致：`envelopes omit empty params; notifications have no id`、`result wins, else error text, else a readable reason`，通过；字节级由 `compose/McpClient` 金样覆盖。
 
 ## 成员 `LineProcess`
 
@@ -38,9 +38,9 @@ JSON-RPC 2.0 信封和在途调用表：怎么拼请求和通知，怎么从响�
     - 推理：npx 一类启动器会再起孙进程。只杀父进程会留下孤儿。
 
 ## SPEC
-1. [LEMMA: 1] `child sees only the whitelist...`，通过。
-2. [LEMMA: 2] `stderr goes to its own sink; kill ends...`，通过。
-3. 行进行出、退出只报一次：`lines go in and come out...`，通过。
+1. [LEMMA: 1] `child sees only the whitelist plus the given variables`，通过。
+2. [LEMMA: 2] `stderr goes to its own sink; kill ends the process tree`，通过。
+3. 行进行出、退出只报一次：`lines go in and come out; exit is reported once`，通过。
 
 ## 成员 `McpProtocol`
 
@@ -59,10 +59,10 @@ MCP 协议的纯数据部分：initialize 参数、tools/list 解析、tools/cal
     - 推理：结果要交给模型读，\uXXXX 转义只会浪费 token，还和旧实现的字节不同。
 
 ## SPEC
-1. [LEMMA: 1] `initialize carries...`，通过。
-2. [LEMMA: 2] `tools without a name are dropped...`，通过。
-3. [LEMMA: 3] `call results keep Chinese readable...`，通过。
-4. 参数为空或 null 时视为 {}，JSON 坏了就拒绝：`arguments: ...`，通过。
+1. [LEMMA: 1] `initialize carries the single protocol version and client info`，通过。
+2. [LEMMA: 2] `tools without a name are dropped; non-object schema counts as none`，通过。
+3. [LEMMA: 3] `call results keep Chinese readable and wrap errors`，通过。
+4. 参数为空或 null 时视为 {}，JSON 坏了就拒绝：`arguments: blank and null are empty objects, broken JSON is refused`，通过。
 
 ## 成员 `StreamableHttp`
 
@@ -79,6 +79,6 @@ MCP Streamable HTTP 的一次请求往返：POST JSON，保存并回传 Mcp-Sess
     - 推理：错误最后会交给模型和用户看，文本沿用旧实现的原文。
 
 ## SPEC
-1. [LEMMA: 1] `SSE body yields the last frame...`，通过。
+1. [LEMMA: 1] `SSE body yields the last frame that has an id`，通过。
 2. [LEMMA: 2] `failures come back as readable errors`，通过。
-3. 会话 id 和额外请求头：`session id from the server...`，通过。
+3. 会话 id 和额外请求头：`session id from the server is sent back; extra headers are sent`，通过。

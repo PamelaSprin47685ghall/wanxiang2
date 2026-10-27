@@ -11,5 +11,5 @@
     - 推理：匿名记录不能跨程序集写类型标注（FS0001）。改用具名记录后，customDelta 照旧按记录传参，线上字节不变，金样可以证明。
 
 # SPEC
-1. [LEMMA: 1, 2, 3] `golden/agui.txt` 由旧 WireAgui.fs、Agui/*.fs 跑同一 Scenario 生成，覆盖出站事件、命令、往返和 20 种入站文本，通过。
-2. 迁自旧仓库 WireAguiTests（去掉对客户端工程的引用）：通过，共 35 项。
+1. [LEMMA: 1, 2, 3] `golden/agui.txt` 由旧 WireAgui.fs、Agui/*.fs 跑同一 Scenario 生成（`tests/GoldenTests.fs` 的 `AG-UI bytes and decode results equal the old implementation`），覆盖出站事件、命令、往返和 20 种入站文本，通过。
+2. 迁自旧仓库 WireAguiTests（去掉对客户端工程的引用）：`tests/WireAguiTests.fs` 的 `generation started maps to RUN_STARTED`、`text delta maps to TEXT_MESSAGE_CHUNK`、`non text delta maps to CUSTOM`、`completed generation maps to RUN_FINISHED` 等通过，共 35 项。

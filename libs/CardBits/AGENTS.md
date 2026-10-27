@@ -60,7 +60,7 @@
 
 ## SPEC
 1. [LEMMA: 1] `tests/MessageMenu.Tests.fs` 通过：`streaming hides the whole menu`、`user gets edit, last assistant gets regenerate with hints`、`blank text has no copy; link needs a sink; delete is danger`、`tool and system are reply-side, regenerate only for the last one`、`roleOfText maps the wire roles`。
-2. 生成中整个菜单为空；复制要有非空文本；编辑并分叉只给用户消息；重新生成只给最新回复；复制链接要有提交号和链接出口；删除只要有提交号。
+2. 生成中整个菜单为空（`streaming hides the whole menu`）；复制要有非空文本（`blank text has no copy; link needs a sink; delete is danger`）；编辑并分叉只给用户消息（`user gets edit, last assistant gets regenerate with hints`）；重新生成只给最新回复（`tool and system are reply-side, regenerate only for the last one`）；复制链接要有提交号和链接出口；删除只要有提交号。
 
 ## 迁入或覆盖的旧测试
 旧右键菜单用例要起窗口，留在旧仓库。本库新增 5 条规则用例。
@@ -121,7 +121,7 @@
 
 ## SPEC
 1. [LEMMA: 1] `tests/ToolErrorSummary.Tests.fs` 通过：`no result means no error`、`json error object yields its message`、`traceback summary is the last non blank line`。
-2. 已知旧行为，原样保留：非首行的 HTTP 状态行只认整行精确匹配（`404 Not Found extra` 不算失败）；`{"error":5}` 摘要为 `5`。
+2. 已知旧行为，原样保留：非首行的 HTTP 状态行只认整行精确匹配（`404 Not Found extra` 不算失败，见 `no error pattern yields no summary`）；`{"error":5}` 摘要为 `5`（见 `error patterns yield their summary`）。
 
 ## 迁入或覆盖的旧测试
 旧 ToolCallStatusTests 的两个 Theory 只迁入错误摘要部分（改名为 `no error pattern yields no summary`、`error patterns yield their summary`，数据行原样）。原用例同时断言 ToolCallStatus 的状态与角标（MessageModel），**旧用例不删**：
@@ -142,7 +142,7 @@
 
 ## SPEC
 1. [LEMMA: 1] `tests/ToolOverview.Tests.fs` 通过：`single call names its state; several list counts in fixed order`、`awaiting outranks running; never a check while anything is pending`。
-2. 等待批准优先于执行中；有待定的就绝不显示完成。
+2. 等待批准优先于执行中；有待定的就绝不显示完成（`awaiting outranks running; never a check while anything is pending`）。
 
 ## 迁入或覆盖的旧测试
 旧工具概览用例（第 206 节）要起窗口，留在旧仓库。本库新增 2 条规则用例。

@@ -11,4 +11,4 @@
     - 推理：上传的运行时状态归 AttachmentBlobs 内部；UI 有自己的同名类型，删掉后不再有歧义。
 
 # SPEC
-1. [LEMMA: 1] `golden/attachments.txt` 由旧 AttachmentStore.fs、Stderr.fs、DataPaths.fs 跑同一 Scenario 生成，覆盖上传、乱序、嗅探、元数据、下载、各种错误、断线清理，以及 stderr 行格式，通过。
+1. [LEMMA: 1] `golden/attachments.txt` 由旧 AttachmentStore.fs、Stderr.fs、DataPaths.fs 跑同一 Scenario 生成（`tests/GoldenTests.fs` 的 `attachment store and stderr behave byte for byte like the old implementation`），覆盖上传、乱序、嗅探、元数据、下载、各种错误、断线清理，以及 stderr 行格式，通过。

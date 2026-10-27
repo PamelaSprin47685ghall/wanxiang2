@@ -38,7 +38,7 @@
     - 推理：doctor 的判断文字是组合者的格式，探测本身与业务无关。
 
 ## SPEC
-1. [LEMMA: 1] 测试覆盖占用端口、存在目录的剩余空间、0700 与 0755 权限，通过。
+1. [LEMMA: 1] 测试覆盖占用端口、存在目录的剩余空间、0700 与 0755 权限：`tests/HostProbe.Tests.fs` 的 `a listening port is in use; a closed one or bad text is not`、`free bytes are reported for an existing path`、`only directories open to group or others are listed` 通过。
 
 ## 成员 `McpCheck`
 

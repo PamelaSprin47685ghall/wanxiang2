@@ -61,9 +61,9 @@
 1. **非法组合在类型系统不可表示；决定与既有门控逻辑一致。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] 上传中、失败残留、看图受阻都挡住发送；只有就绪附件也能发；生成中发送键变成停止键，排队键出现。
-2. 已知旧行为，原样保留：`canSubmit` 把失败残留算作未就绪；排队提示不提看图受阻。
-3. Enter 发送按键矩阵：`not shift && (enterSends <> ctrl)` 的全部 8 种排列经 `shouldSend` 行为测试锁定。
+1. [LEMMA: 1] 上传中、失败残留、看图受阻都挡住发送；只有就绪附件也能发；生成中发送键变成停止键，排队键出现：`tests/ComposerSendState.Tests.fs` 的 `uploading or failed attachments block sending`、`an image on a non-vision model blocks send with the given message`、`a ready attachment alone is enough; nothing at all is not`、`while generating the send key is stop and the queue key appears` 通过。
+2. 已知旧行为，原样保留：`canSubmit` 把失败残留算作未就绪（`submit treats a failed attachment as not ready`）；排队提示不提看图受阻（`while generating the send key is stop and the queue key appears`）。
+3. Enter 发送按键矩阵：`not shift && (enterSends <> ctrl)` 的全部 8 种排列经 `tests/ComposerSendState.Tests.fs` 的 `Enter sending key matrix: not shift && (enterSends <> ctrl) covers all 8 combinations` 行为测试锁定。
 
 ### 迁入或覆盖的旧测试
 旧 Composer 与附件相关的用例都要起窗口，留在旧仓库。本包新增 7 条规则用例。

@@ -8,7 +8,7 @@
     - 推理：与 MCP 无关的通用语义。差别：读取配置不再在锁内，指纹相同的结果不变。
 
 # SPEC
-1. [LEMMA: 1] `golden/tools.txt` 由旧 BuiltinTools.fs、ToolRegistry.fs 跑同一 Scenario（真实 /bin/sh MCP 服务）生成，覆盖目录、工具 schema、调用结果、配置热更新、Prune，通过。
+1. [LEMMA: 1] `golden/tools.txt` 由旧 BuiltinTools.fs、ToolRegistry.fs 跑同一 Scenario（真实 /bin/sh MCP 服务）生成（`tests/GoldenTests.fs` 的 `builtin tools and registry behave byte for byte like the old implementation`），覆盖目录、工具 schema、调用结果、配置热更新、Prune，通过。
 
 # 迁入或覆盖的旧测试（旧仓库 d9651ed，可在旧仓库删除）
 - ProductizationTests.fs「内建工具沙箱」：

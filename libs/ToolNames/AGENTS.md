@@ -7,7 +7,7 @@
     - 推理：对话配置里存的标识不能变。
 
 # SPEC
-1. [LEMMA: 1] 测试覆盖往返与解析边界。
+1. [LEMMA: 1] 测试覆盖往返与解析边界：`tests/Tests.fs` 的 `builtin ids and function names round trip`、`mcp ids split at the first slash` 通过。
 
 # 迁入或覆盖的旧测试
 - 旧测试迁在 compose/ToolRegistry/tests（逐条列在 ToolRegistry AGENTS.md）。

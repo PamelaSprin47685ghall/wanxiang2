@@ -9,7 +9,7 @@
 2. **布局（MathLayout）与绘制（MathVisual）依赖 Avalonia，留在界面。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1, 2] tests/Tests.fs 通过。
+1. [LEMMA: 1, 2] `tests/Tests.fs` 的 `KatexHtml fontScaleOf computes ratio of size classes`、`KatexHtml emOf parses em and px correctly`、`KatexHtml parse and visualSubtree filters katex-html`、`KatexHtml isDisplay detects display formulas` 通过。
 
 # 迁入或覆盖的旧测试
 迁自旧 UiPureLogicTests（RichBackendAndKatexHtmlTests）（原文，只改名字）与本库补充的测试：

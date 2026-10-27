@@ -58,4 +58,4 @@ Server-Sent Events 分帧（W3C）：把字节流切成（事件名, data）。�
 
 ## SPEC
 1. [LEMMA: 1] 空行分帧，多行 data 用换行拼接，末尾没有换行的帧也算，注释跳过，事件名在每帧之后重置：`tests/Sse.Tests.fs` 的 `frames split on blank lines, multi-line data joins with newline, tail without newline still counts`、`comments are skipped and the event name resets after each frame`、`only the single space after the colon is stripped, indentation survives` ，通过。
-2. [LEMMA: 2] 缩进保留：`only the single space after the colon is stripped...`，通过。
+2. [LEMMA: 2] 缩进保留：`only the single space after the colon is stripped, indentation survives`，通过。

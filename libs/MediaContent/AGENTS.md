@@ -15,7 +15,7 @@
     - 推理：模型看到的文字是行为的一部分。
 
 ## SPEC
-1. [LEMMA: 1] 测试覆盖能力拒收、丢失、文本内联；完整输出由 AgentContent 金样钉住。
+1. [LEMMA: 1] 测试覆盖能力拒收、丢失、文本内联：`tests/MediaContent.Tests.fs` 的 `images go as data when the transport accepts them, otherwise a note explains why`、`missing blobs and text files`、`ofProviderKind maps each transport to its capabilities` 通过；完整输出由 AgentContent 金样钉住。
 
 ## 迁入或覆盖的旧测试
 - 旧测试迁在 compose/AgentContent/tests（逐条列在 AgentContent AGENTS.md）。
@@ -31,7 +31,7 @@ ChatMessage 与 JSON 互转（Microsoft.Extensions.AI 的 JSON 配置），宽�
     - 推理：落盘消息要继续能读，送给 Provider 的 JSON 不能变。
 
 ## SPEC
-1. [LEMMA: 1] 测试覆盖宽松解析、附件引用、往返；完整字节由 AgentContent 金样钉住。
+1. [LEMMA: 1] 测试覆盖宽松解析、附件引用、往返：`tests/MessageSerde.Tests.fs` 的 `loose client json keeps text and skips attachments, refs are extracted`、`tagged messages round trip` 通过；完整字节由 AgentContent 金样钉住。
 
 ## 迁入或覆盖的旧测试
 - 旧测试迁在 compose/AgentContent/tests（逐条列在 AgentContent AGENTS.md）。

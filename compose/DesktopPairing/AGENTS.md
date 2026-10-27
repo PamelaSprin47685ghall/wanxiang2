@@ -9,7 +9,7 @@
 2. **这是协作：各协作者只做自己的事，串联次序归本组合者。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1, 2] 真实组件（真实磁盘、真实 EventStore / ConfigStore）上的组合测试通过。
+1. [LEMMA: 1, 2] 真实组件（真实磁盘、真实 EventStore / ConfigStore）上的组合测试通过：`tests/Tests.fs` 的 `首次启动：生成默认配置、登记桌面令牌哈希、写 client.toml`、`令牌仍有效时不改写任何文件`、`client.toml 丢失时发新令牌，旧记录保留`、`令牌被吊销时发新令牌`、`配置无效时返回错误且不写 client.toml`。
 
 # 迁入或覆盖的旧测试
 - 旧仓库没有覆盖 Wanxiang.App 的测试。本组合者的测试是新写的真实组合测试：

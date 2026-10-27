@@ -28,15 +28,18 @@ type JsonSeqFile(path: string) =
     member _.Length = stream.Length
 
     /// 读出 [from, until) 区间内的记录。两端须位于记录边界（通常来自之前返回的偏移）。
+    /// 流式分块读入：内存峰值受限于单块大小，不随区间长度增长；切分语义与一次性读入相同。
     member _.Read(from: int64, until: int64) : Record list =
         if from < 0L || until < from || until > stream.Length then
             invalidArg (nameof from) "range out of bounds"
 
-        let len = int (until - from)
-        let buf = Array.zeroCreate<byte> len
-        stream.Position <- from
-        stream.ReadExactly(buf, 0, len)
-        Frame.split from (ReadOnlySpan buf)
+        StreamSplit.readAll
+            StreamSplit.DefaultChunkBytes
+            (fun (pos, count, buf) ->
+                stream.Position <- pos
+                stream.ReadAtLeast(buf, count))
+            from
+            until
 
     /// 从 offset 读到文件末尾。
     member this.ReadFrom(offset: int64) : Record list = this.Read(offset, stream.Length)

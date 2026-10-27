@@ -277,6 +277,105 @@ let ``crash at every byte of an append leaves the longest valid prefix`` () =
         | Error e -> failwith e
 
 [<Fact>]
+let ``a real killed writer process leaves a log the next process replays`` () =
+    // 与「在每个字节处截断」不同：这里真的杀掉一个正在写的进程，让操作系统在写到一半时关掉句柄。
+    // 崩溃对磁盘的影响只有一种（追加在某个字节处中断），所以断言的是崩溃矩阵已经证明的性质；
+    // 这条用例补的是「进程被真的杀掉」这一路径本身有没有被走通。
+    let d = tempDir ()
+    Directory.CreateDirectory d |> ignore
+
+    let script =
+        Path.Combine(Path.GetTempPath(), "wx-kill-writer-" + Guid.NewGuid().ToString("N") + ".fsx")
+
+    let asm = typeof<S>.Assembly.Location
+    let seqAsm = Path.Combine(Path.GetDirectoryName asm, "JsonSeq.dll")
+    let lockAsm = Path.Combine(Path.GetDirectoryName asm, "DirLock.dll")
+
+    File.WriteAllText(
+        script,
+        sprintf
+            """#r "%s"
+#r "%s"
+#r "%s"
+open System
+open System.Text.Json.Nodes
+open Ledger
+open LedgerStore
+let apply (s: int) (c: Commit<int>) = Ok(s + List.sum c.events)
+let codec: Codec<int, int> =
+    { encodeEvent = fun n -> JsonValue.Create n :> JsonNode
+      decodeEvent = fun j -> Ok(j.GetValue<int>())
+      encodeState = fun n -> JsonValue.Create n :> JsonNode
+      decodeState = fun j -> Ok(j.GetValue<int>()) }
+let s = new LedgerStore<int, int, string>("%s", apply, 0, codec, SnapshotPolicy.Manual)
+for n in 1..200 do
+    s.Submit([ 1 ], DateTimeOffset.UnixEpoch) |> ignore
+    Console.Out.WriteLine(s.LastId)
+    Console.Out.Flush()
+Console.Out.WriteLine("ready")
+Console.Out.Flush()
+// 真的被杀：SIGKILL 自己，句柄由操作系统关闭，没有机会写收尾字节、也没有机会保存快照。
+Diagnostics.Process.GetCurrentProcess().Kill()
+"""
+            asm
+            seqAsm
+            lockAsm
+            d
+    )
+
+    let psi = Diagnostics.ProcessStartInfo("dotnet", sprintf "fsi \"%s\"" script)
+    psi.RedirectStandardOutput <- true
+    psi.UseShellExecute <- false
+    use child = Diagnostics.Process.Start psi
+
+    // 等到它写出若干条提交并喊「ready」，说明日志里已经有内容且它马上自杀。
+    let mutable line = ""
+    let mutable committedCount = 0
+
+    while line <> "ready" && not (isNull line) do
+        line <- child.StandardOutput.ReadLine()
+
+        match Int32.TryParse line with
+        | true, n -> committedCount <- n
+        | _ -> ()
+
+    Assert.Equal("ready", line)
+    child.WaitForExit()
+    Assert.True(committedCount >= 20, sprintf "child committed only %d" committedCount)
+
+    // 句柄在进程退出时由内核关闭；给系统一点时间回收，再重开。
+    let mutable reopened = None
+
+    for _ in 1..100 do
+        if reopened.IsNone then
+            try
+                reopened <- Some(openAt d)
+            with :? InvalidOperationException ->
+                Threading.Thread.Sleep 20
+
+    let reopened = Option.get reopened
+
+    // 被杀时的写入可能落在任意字节，所以只能断言「重放出来的是一条连续前缀」。
+    let healthy = reopened.Health
+    Assert.True((healthy = Healthy), sprintf "reopened after a killed writer: %A" healthy)
+    let lastId = reopened.LastId
+    Assert.True(lastId >= 20UL, sprintf "replayed %d commits" lastId)
+
+    match reopened.CommitsAfter(0UL, 1000) with
+    | Ok cs ->
+        Assert.Equal<uint64 list>([ 1UL .. lastId ], cs |> List.map _.id)
+        Assert.Equal(int lastId, cs |> List.sumBy (fun c -> List.length c.events))
+    | Error e -> failwith e
+
+    // 重开后还能继续提交，且 id 接在重放出来的末尾。
+    Assert.Equal(lastId + 1UL, (committed (reopened.Submit([ 1 ], t0))).id)
+
+    (try
+        File.Delete script
+     with _ ->
+         ())
+
+[<Fact>]
 let ``torn tail makes the store read-only and opening changes no bytes`` () =
     let d = tempDir ()
 

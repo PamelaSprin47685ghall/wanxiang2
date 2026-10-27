@@ -19,8 +19,9 @@
 
 # SPEC
 1. [LEMMA: 1] 金样 `tests/golden/figure.txt` 由 `tools/figuregold`（编译旧 MathLayout.fs、MathVisual.fs、RichBackend.fs，HTML 由 RichJint 包现场产出）在 headless + Skia 下生成：11 条公式，记下段落与公式的 Bounds、基线、留白和读屏名（原金样里的整块像素 SHA-256 前缀已删，见 LEMMA 1）。`inline and display formulas lay out and paint exactly like the old MathVisual` 逐字节相同，Linux 与 macOS 都通过。
-2. [LEMMA: 2] `recoloring the live ink repaints without relayout`（布局前后相同；像素只在本进程内前后对比，改色后不同）、`body font change relays out glyphs with the new family`、`live values are followed only while attached`。
+2. [LEMMA: 2] `recoloring the live ink repaints without relayout`（布局前后相同；像素只在本进程内前后对比，改色后不同）、`body font change relays out glyphs with the new family`、`display padding follows the theme resource`。
 3. `no html means no figure so the caller falls back to source text`、`inline container aligns to bottom and figures announce their source`、`katex glyph families come from the embedded fonts`。
+4. [LEMMA: 1] 公式的墨迹不越出它自己声明的尺寸：`formula ink stays inside the size the control declares`（11 条公式逐条放进四周留白的画布，按 `DesiredSize` 划出矩形，矩形外的非透明像素必须为 0；同时断言挂树后 `Bounds` 与 `DesiredSize` 一致，防止「裁到 Bounds」掩盖布局错位）。这条是从旧的像素金样接过来的：金样里的整块像素哈希删掉后，越界不再有间接证据。
 
 # 与旧代码的差异
 - 旧 MathVisual 自己去问全局 `RichBackend.current ()`；这里由调用方传 HTML。
@@ -29,4 +30,5 @@
 
 # 迁入或覆盖的旧测试
 - 旧 MathBaselineTests 的控件部分（行内公式基线对齐到正文基线）由 SPEC 1 的金样覆盖（基线同旧）。
-- 旧 MathRenderTests 的字族选择用例已在 MathTypeset；`公式的墨迹不越出它自己声明的尺寸` 原由 SPEC 1 的像素金样间接覆盖，删去像素哈希后不再覆盖。[TODO] 改为直接断言：渲染位图在声明 Bounds 之外没有非透明像素。
+- 旧 MathRenderTests 的字族选择用例已在 MathTypeset；`公式的墨迹不越出它自己声明的尺寸` 由 `formula ink stays inside the size the control declares` 直接断言：把每条公式放进四周留白的画布，按控件自己的 `DesiredSize` 划出矩形，逐像素数矩形外的非透明像素必须为 0（亚像素边界向外取整）。删掉像素金样后，这是那一条规则的直接证据；布局与基线的金样 `inline and display formulas lay out and paint exactly like the old MathVisual` 仍然逐字节通过。
+- 有意的行为改动：`MathFigure.Render` 现在先裁到自身的 `Bounds` 再画。此前 `x^2` 的上标有 1–2 个抗锯齿像素落到声明尺寸之外（实测坐标见断言消息），展示式底部也有同类溢出。裁切不改变排版、基线与金样，只是不再让一个公式的墨迹侵入相邻行。

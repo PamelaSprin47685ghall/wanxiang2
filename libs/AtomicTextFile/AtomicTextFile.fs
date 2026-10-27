@@ -2,8 +2,29 @@ namespace AtomicTextFile
 
 open System
 open System.IO
+open System.Runtime.InteropServices
 open System.Text
 open System.Threading
+
+/// libc 的目录句柄：改名后对所在目录 fsync（POSIX 上目录项不在文件页缓存里）。
+/// 仅 Unix 有实际动作；Windows 上 NTFS 日志保障元数据，不需要。
+/// `open` 是 F# 关键字，用 EntryPoint 指到 libc 的真实名字。
+module AtomicTextFileInterop =
+
+    [<DllImport("libc", SetLastError = true, EntryPoint = "open")>]
+    extern int openPath(string path, int flags)
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern int fsync(IntPtr fd)
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern int close(IntPtr fd)
+
+    [<Literal>]
+    let oRdonly = 0
+
+    [<Literal>]
+    let oDirectory = 0x100000
 
 /// 一个由人和程序共同编辑的文本文件。私有状态：路径、最后一次本对象读到或写出的原文、监视器与去抖计时器。
 /// - Write：临时文件 + flush(true) + 原子改名，权限仅当前用户可读写；
@@ -114,6 +135,19 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
                     failwith "file changed on disk since it was last read; not overwriting"
 
                 File.Move(tmp, full, true)
+                // 改名本身也要落盘：POSIX 上目录项不在文件页缓存里，不对目录 fsync，断电可能丢掉改名。
+                // 失败不抛出——写出的字节完好，最坏情况是断电后回到旧文件内容，按「外部改动」处理。
+                if not (OperatingSystem.IsWindows()) then
+                    let fd =
+                        AtomicTextFileInterop.openPath (
+                            dir,
+                            AtomicTextFileInterop.oRdonly ||| AtomicTextFileInterop.oDirectory
+                        )
+
+                    if fd >= 0 then
+                        AtomicTextFileInterop.fsync fd |> ignore
+                        AtomicTextFileInterop.close fd |> ignore
+
                 lastKnown <- Some text
                 Ok()
             with e ->

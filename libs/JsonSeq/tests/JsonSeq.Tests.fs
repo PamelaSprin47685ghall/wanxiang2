@@ -236,3 +236,50 @@ let ``instances are isolated; errors and illegal arguments leave state legal`` (
     // 错误之后状态合法：继续追加、读出正常
     Assert.Equal(a1 + 9L, appended (a.Append """{"a":3}"""))
     Assert.Equal<string list>([ """{"a":1}"""; """{"a":3}""" ], a.ReadFrom 0L |> List.map _.payload)
+
+[<Fact>]
+let ``streaming keeps records whole across chunk boundaries`` () =
+    // 包含内嵌换行符的合法 RFC 7464 记录（RS + "a\nb" + LF）跨块时不能在中间 LF 处被切碎
+    let bytes = Array.concat [ Frame.encode "a\nb"; Frame.encode "c" ]
+
+    let reader (pos, count, buffer: byte[]) =
+        Array.blit bytes (int pos) buffer 0 count
+        count
+
+    let expected = Frame.split 0L (ReadOnlySpan bytes)
+
+    for chunk in 1 .. bytes.Length + 1 do
+        let actual = StreamSplit.readAll chunk reader 0L (int64 bytes.Length)
+        Assert.Equal<Record list>(expected, actual)
+
+// SPEC 10（流式）：分块读取与一次性读入在任意字节切点下逐字节等价
+[<Fact>]
+let ``streaming read equals one-shot read for every cut`` () =
+    // 覆盖 StrayBytes、TornTail、多字节 UTF-8 正文与多条完整记录
+    let bytes =
+        Array.concat
+            [
+                Text.Encoding.UTF8.GetBytes "garbage"
+                Frame.encode """{"n":1}"""
+                Frame.encode """{"b":"汉字"}"""
+                [| Frame.RS |] // 无正文 RS：中间是 EmptyRecord
+                Frame.encode """{"n":2}"""
+                [| Frame.RS; Frame.RS |] // 末尾 TornTail
+            ]
+
+    // 基准：一次性切分
+    let reference = Frame.split 0L (ReadOnlySpan bytes)
+
+    let readerFor =
+        fun (pos, count, buf) ->
+            let room = (int64 bytes.Length - pos) |> max 0L |> int
+
+            let c = min count room
+
+            Array.blit bytes (int pos) buf 0 c
+            c
+
+    // 流式对照：块大小取 1..len+2 的每个值，覆盖所有块边界相对记录边界的位置
+    for chunk in 1 .. bytes.Length + 2 do
+        let streamed = StreamSplit.readAll chunk readerFor 0L (int64 bytes.Length)
+        Assert.Equal<Record list>(reference, streamed)

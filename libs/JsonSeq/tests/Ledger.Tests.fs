@@ -349,7 +349,7 @@ let ``record problems describe themselves`` () =
 // SPEC 13：Checkpoint JSON 往返（只有状态由调用方编码）；坏输入报错
 [<Fact>]
 let ``checkpoint json round-trips with caller-encoded state`` () =
-    let l = L(apply, 0)
+    let l = L(apply, 0, maxStamps = 5)
 
     for n in 1..3 do
         commit
@@ -373,6 +373,7 @@ let ``checkpoint json round-trips with caller-encoded state`` () =
         let back = j |> Checkpoint.map _.GetValue<int>()
         Assert.Equal(cp, back)
         Assert.Equal(cp, (L(apply, back)).Checkpoint)
+        Assert.Equal(Some 5, back.maxStamps)
     | Error e -> failwith e
 
     for bad in
@@ -382,3 +383,74 @@ let ``checkpoint json round-trips with caller-encoded state`` () =
             """{"v":1,"throughId":"0","origin":-1,"ends":[],"stamps":{},"state":0}"""
         ] do
         Assert.True((CheckpointJson.read bad).IsError, bad)
+
+// SPEC 14：幂等索引有界保留：超出上限时按 commitId 从最旧一侧淘汰
+[<Fact>]
+let ``stamps index evicts the oldest entries beyond the retention bound`` () =
+    let l = L(apply, 0, maxStamps = 3)
+
+    for n in 1..5 do
+        commit
+            l
+            4L
+            [ Add n ]
+            (Some
+                {
+                    commandId = sprintf "c%d" n
+                    hash = "h"
+                })
+        |> ignore
+
+    Assert.Equal(3, Map.count l.Stamps)
+    // 最早的两条已被淘汰；最新的三条保留
+    Assert.False(Map.containsKey "c1" l.Stamps)
+    Assert.False(Map.containsKey "c2" l.Stamps)
+    Assert.Equal(Some("h", 3UL), l.Stamps |> Map.tryFind "c3")
+    Assert.Equal(Some("h", 5UL), l.Stamps |> Map.tryFind "c5")
+
+    // 被淘汰的 commandId 重发会被当成新提交重新编号（有界保留的已知代价）
+    let nc = commit l 4L [ Add 1 ] (Some { commandId = "c1"; hash = "h" })
+    Assert.Equal(6UL, nc.id)
+
+    // 无上限时索引保留全部
+    let u = L(apply, 0)
+
+    for n in 1..5 do
+        commit
+            u
+            4L
+            [ Add n ]
+            (Some
+                {
+                    commandId = sprintf "c%d" n
+                    hash = "h"
+                })
+        |> ignore
+
+    Assert.Equal(5, Map.count u.Stamps)
+
+// SPEC 14：上限随 Checkpoint 保存并在恢复后仍然生效
+[<Fact>]
+let ``stamp retention bound survives checkpoint round-trip`` () =
+    let l = L(apply, 0, maxStamps = 2)
+
+    for n in 1..4 do
+        commit
+            l
+            4L
+            [ Add n ]
+            (Some
+                {
+                    commandId = sprintf "c%d" n
+                    hash = "h"
+                })
+        |> ignore
+
+    let cp = l.Checkpoint
+    Assert.Equal(Some 2, cp.maxStamps)
+    Assert.Equal(2, Map.count cp.stamps)
+    let r = L(apply, cp)
+    Assert.Equal(Some 2, r.MaxStamps)
+    commit r 4L [ Add 1 ] (Some { commandId = "c5"; hash = "h" }) |> ignore
+    Assert.Equal(2, Map.count r.Stamps)
+    Assert.False(Map.containsKey "c3" r.Stamps)

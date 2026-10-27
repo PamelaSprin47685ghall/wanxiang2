@@ -51,7 +51,7 @@
 14b. [LEMMA: 9] 未知结果带 commitId，只读提示说明事实：`unknown outcome names the commit that may exist`（`/dev/full`）。
 14. [根 SPEC 2] 交付包可以在仓库外消费：`./x consume` 在 /tmp 下新建项目，只从 `artifacts/feed` 引用 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`（消费者源码在 `tools/consume/`）。2026-10-13 手动跑过；2026-10-17 起自动化，通过。
 15. [LEMMA: 2, 7] 写失败但截回成功 → `NotWritten`：日志逐字节不变、`Abandon` 撤销提议、id 复用、存储仍 `Healthy`，所以可以重试：`not written is known and retryable; the log stays byte-identical and the id is reused`（真实故障：测试临时收紧本进程 `RLIMIT_FSIZE` 上限并忽略 SIGXFSZ，超过上限的写按 EFBIG 失败、截回成功；仅 Linux）。
-16. [TODO] 进程被真正杀掉（而不是由测试写出截断文件）的测试没有；按 LEMMA 7，二者对磁盘的效果相同。
+16. [TODO] `a real killed writer process leaves a log the next process replays` 在 macOS 上验证了提交完成后进程自杀、重开及继续提交；尚未证明写入过程中被杀。测试的超时、子进程和临时文件收尾也需完善。
 
 ## 旧仓库测试的去留（供接入时参考）
 旧 `CrashMatrixTests` 的故障点对应如下：

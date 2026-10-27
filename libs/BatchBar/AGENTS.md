@@ -160,7 +160,7 @@
 1. **同一组输入，判定与旧实现相同。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/SearchHit.Tests.fs` 覆盖：`search hit parsing clamps bad highlight ranges and drops rows without ids`、`消息命中片段去掉 Markdown 记号，命中词保持原样`、`truncated page says so`。
+1. [LEMMA: 1] [TODO] 原引用的搜索命中解析测试位于 `libs/WorkspaceState/tests/SearchHitTests.fs`，并不验证本节所述防抖重发判定；当前尚无对应证据，不能据此宣称通过。
 
 ### 迁入或覆盖的旧测试
 旧 LibraryTests 搜索用例要起窗口，留在旧仓库。本包新增 3 条规则用例。

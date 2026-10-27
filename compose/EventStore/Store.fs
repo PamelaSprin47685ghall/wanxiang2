@@ -68,16 +68,31 @@ module Assembly =
     /// 一条提交在日志里的完整一帧。
     let frame (c: Events.Commit) : byte[] = envelope c |> JsonSeq.Frame.encode
 
-    let openStore (dataDir: string) (policy: SnapshotPolicy) : LedgerStore<Projection, EventData, WanxiangError> =
+    let openStore
+        (dataDir: string)
+        (policy: SnapshotPolicy)
+        (maxStamps: int option)
+        : LedgerStore<Projection, EventData, WanxiangError> =
         DataPaths.ensureDataDirs dataDir
 
-        new LedgerStore<Projection, EventData, WanxiangError>(
-            DataPaths.eventsDir dataDir,
-            fold,
-            Projection.empty,
-            codec,
-            policy
-        )
+        match maxStamps with
+        | Some m ->
+            new LedgerStore<Projection, EventData, WanxiangError>(
+                DataPaths.eventsDir dataDir,
+                fold,
+                Projection.empty,
+                codec,
+                policy,
+                maxStamps = m
+            )
+        | None ->
+            new LedgerStore<Projection, EventData, WanxiangError>(
+                DataPaths.eventsDir dataDir,
+                fold,
+                Projection.empty,
+                codec,
+                policy
+            )
 
 /// 提交请求（由 Server 层规划后送入存储）。
 type CommitSubmit =
@@ -99,7 +114,7 @@ type SubmitResult =
     | CommandIdRejected of WanxiangError
 
 /// 旧领域面向 LedgerStore 的薄壳：只做类型映射。onCommitted 在提交成功后同步调用。
-type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: SnapshotPolicy) =
+type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: SnapshotPolicy, ?maxStamps: int) =
     // 默认：每 1000 条存快照；关闭时由调用方决定（只读降级时不存，免得固化损坏前的投影）。
     let store =
         Assembly.openStore
@@ -110,6 +125,7 @@ type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: S
                     everyCommits = Some 1000
                     onClose = false
                 })
+            maxStamps
 
     let mutable stopped = false
     let mutable onCommitted = defaultArg onCommitted ignore
@@ -124,6 +140,7 @@ type EventStore(dataDir: string, ?onCommitted: Events.Commit -> unit, ?policy: S
     member _.Projection: Projection = store.State
     member _.LastCommitId: CommitId = store.LastId
     member _.Stamps: Map<string, string * CommitId> = store.Stamps
+    member _.MaxStamps: int option = store.MaxStamps
     member _.Checkpoint: Checkpoint = store.Checkpoint
 
     member _.Submit(submit: CommitSubmit) : SubmitResult =

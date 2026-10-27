@@ -965,6 +965,8 @@ case "${1:-}" in
       [[ -d artifacts/feed ]] || pack
       rm -rf artifacts/packages/wanxiang2.* "libs/$2/obj" "libs/$2/tests/obj"
       dotnet test --project "libs/$2/tests/$2.Tests.fsproj" -p:RestorePackagesPath="$PWD/artifacts/packages"
+    elif [[ -d artifacts/packages ]]; then
+      dotnet test --project "libs/$2/tests/$2.Tests.fsproj" -p:RestorePackagesPath="$PWD/artifacts/packages"
     else
       dotnet test --project "libs/$2/tests/$2.Tests.fsproj"
     fi ;;

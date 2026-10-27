@@ -699,3 +699,70 @@ let ``recovery bundle 建立后修复才执行（算法 B）`` () =
         Assert.Equal(2UL, outcome.lastCommitId)
     finally
         cleanup dir
+
+[<Fact>]
+let ``有界 maxStamps 淘汰旧幂等戳后重发与 Inspect 均保持健康`` () =
+    let dir = tempDir ()
+
+    try
+        let submitCmd (s: EventStore) (cid: string) (title: string) =
+            s.Submit
+                {
+                    events =
+                        [
+                            ConversationCreated
+                                {
+                                    conversationId = newConversationId ()
+                                    title = title
+                                    config = testConfig ()
+                                }
+                        ]
+                    commandId = Some cid
+                    commandType = Some "conversation.create"
+                    commandHash = Some("hash-" + cid)
+                    nowUtc = None
+                }
+
+        do
+            use s =
+                new EventStore(dir, policy = LedgerStore.SnapshotPolicy.Manual, maxStamps = 2)
+
+            Assert.Equal(Some 2, s.MaxStamps)
+
+            match submitCmd s "cmd-1" "A" with
+            | Committed c -> Assert.Equal(1UL, c.id)
+            | r -> failwithf "unexpected %A" r
+
+            match submitCmd s "cmd-2" "B" with
+            | Committed c -> Assert.Equal(2UL, c.id)
+            | r -> failwithf "unexpected %A" r
+
+            // 窗口内重发 cmd-1 命中幂等回放
+            match submitCmd s "cmd-1" "A" with
+            | IdempotentReplay c -> Assert.Equal(1UL, c.id)
+            | r -> failwithf "expected IdempotentReplay, got %A" r
+
+            // 提交 cmd-3 后淘汰 cmd-1
+            match submitCmd s "cmd-3" "C" with
+            | Committed c -> Assert.Equal(3UL, c.id)
+            | r -> failwithf "unexpected %A" r
+
+            Assert.Equal(2, Map.count s.Stamps)
+            Assert.False(Map.containsKey "cmd-1" s.Stamps)
+
+            // 淘汰后的 cmd-1 重发作为新提交 id = 4 落盘，随后存快照
+            match submitCmd s "cmd-1" "A2" with
+            | Committed c -> Assert.Equal(4UL, c.id)
+            | r -> failwithf "expected Committed 4UL, got %A" r
+
+            Assert.True(s.SaveSnapshot().IsOk)
+
+        // Inspect.run 与 Inspect.peek 自动从快照继承 maxStamps = 2，均保持健康
+        let outcome = healthy dir
+        Assert.Equal(4UL, outcome.lastCommitId)
+        Assert.Equal(Some 2, outcome.checkpoint.maxStamps)
+        let peeked = Inspect.peek dir
+        Assert.Equal(LedgerStore.Health.Healthy, peeked.health)
+        Assert.Equal(4UL, peeked.lastId)
+    finally
+        cleanup dir

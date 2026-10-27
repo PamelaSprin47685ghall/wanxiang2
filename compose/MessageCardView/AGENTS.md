@@ -19,8 +19,8 @@
 3. **改度量，已显示的卡跟着变。**
 
 # SPEC
-1. [LEMMA: 1] 旧仓库的整卡控件树金样复刻已退役（金样文件与生成器一并删除，理由见根 AGENTS.md《界面与前端组装》规则 3：单入口幂等渲染、单出口意图事件）。改为行为断言：`tests/BehaviorTests.fs` 覆盖工具卡头开合、错误卡倒计时与重试、消息菜单、右键复制、卡片堆按身份复用、外观来自主题活值、读屏 Invoke 与报按钮。
-2. [LEMMA: 2] `tests/BehaviorTests.fs` 的各用例（见下）。
+1. [LEMMA: 1] 旧仓库的整卡控件树金样复刻已退役（金样文件与生成器一并删除，理由见根 AGENTS.md《界面与前端组装》规则 3：单入口幂等渲染、单出口意图事件）。改为行为断言：`tests/BehaviorTests.fs` 的 `MessageCard toolCallCard header toggles argument and result details`、`工具概览在等待批准时用警示色，不显示「完成」对勾配色`、`230 错误卡有半截回复时先给「继续生成」，没有时不给`  覆盖工具卡头开合、错误卡倒计时与重试、消息菜单、右键复制、卡片堆按身份复用、外观来自主题活值、读屏 Invoke 与报按钮。
+2. [LEMMA: 2] `tests/BehaviorTests.fs` 的 `MessageCard toolCallCard header toggles argument and result details`、`工具概览在等待批准时用警示色，不显示「完成」对勾配色`、`230 错误卡有半截回复时先给「继续生成」，没有时不给`  的各用例（见下）。
 3. [LEMMA: 3] `外观来自主题管理者的活值`。
 
 # 与旧代码的差异

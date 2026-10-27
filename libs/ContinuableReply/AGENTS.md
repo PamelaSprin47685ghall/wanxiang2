@@ -17,7 +17,7 @@
 2. **这是独立的判定规则；保存与否、何时保存归组合者 ChatOrchestrator 与 PartialReplies。** [根 AXIOM: 3]
 
 ## SPEC
-1. [LEMMA: 1, 2] `tests/ContinuableReply.Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/ContinuableReply.Tests.fs` 的 `助手且有正文才算可续写`、`任一段有正文即可，其他段可以是工具调用`、`形状不对一律为否且不抛`  通过。
 
 ## 迁入或覆盖的旧测试
 - compose/ChatOrchestrator/tests/ProductizationOrchestrationTests.fs 中断言 `ChatOrchestrator.PartialText` 的用例（该静态成员转发到本库）；本库 `助手且有正文才算可续写` 是同一组断言。
@@ -33,7 +33,7 @@
     - 推理：模型看到的上下文与用户看到的标题是外部可见行为。
 
 ## SPEC
-1. [LEMMA: 1] `tests/TitleText.Tests.fs` 通过；端到端由 ChatOrchestrator 金样与迁入的旧测试钉住。
+1. [LEMMA: 1] `tests/TitleText.Tests.fs` 的 `clip, first line, quotes and first sentence`、`placeholder titles`  通过；端到端由 ChatOrchestrator 金样与迁入的旧测试钉住。
 
 ## 迁入或覆盖的旧测试
 - 旧测试迁在 compose/ChatOrchestrator/tests（逐条列在 ChatOrchestrator AGENTS.md）。

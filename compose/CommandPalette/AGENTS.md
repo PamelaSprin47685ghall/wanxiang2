@@ -12,7 +12,7 @@
 
 - 浏览器发布禁用 JSON 反射时，最近使用记录仍可编码、解码并落盘。`tests/CommandPalette.Tests.fsproj` 显式关闭 `System.Text.Json.JsonSerializer.IsReflectionEnabledByDefault`，沿用字节格式与文件往返断言。2026-10-24 本机对照：原编码实现 2 条失败（包含禁反射异常），改用 `JsonArray` 后 16 条通过；同日在 macOS ARM64 干净发布产物的 PWA 冒烟里实测通过（`Ctrl+K` → 输入「切换主题」→ 回车，`wanxiang.local:palette-recent.json` 记下 `act:theme`）。Linux 宿主实跑仍待验证。
 
-1. 真实组合（两个交付包）下 `tests/Tests.fs` 通过，排序结果与旧实现一致。
+1. 真实组合（两个交付包）下 `tests/Tests.fs` 的 `373 拼音首字母与子序列都能命中`、`375 空查询先列最近使用，再列操作，不铺全部对话`、`375 最近使用去重、新的在前、有上限`  通过，排序结果与旧实现一致。
 
 # 迁入或覆盖的旧测试
 - R20PaletteTests：`373 拼音首字母与子序列都能命中`、`375 空查询先列最近使用，再列操作，不铺全部对话`、`375 最近使用去重、新的在前、有上限`

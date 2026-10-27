@@ -19,7 +19,7 @@
     - 推理：超长消息不能拖慢整次扫描。
 
 ## SPEC
-1. [LEMMA: 1, 2] `tests/MessageText.Tests.fs`，通过。
+1. [LEMMA: 1, 2] `tests/MessageText.Tests.fs` 的 `text items are joined by newline; reasoning and tool parts are skipped`、`top level text and arrays are read; output is capped` ，通过。
 
 ## 成员 `TextMatch`
 

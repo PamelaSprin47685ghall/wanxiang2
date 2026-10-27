@@ -10,8 +10,8 @@
 2. **符号字族 `Wanxiang Symbols` 逐字回落：** 正文与等宽的复合字族尾部都带它，缺字（如 ⌘ ⚙ ✎ ✓ ✕ 📦 🔍 🗑）在浏览器端也落到真实轮廓字形而不是豆腐块。
 
 # SPEC
-1. [LEMMA: 1] `tests/Tests.fs`：资源存在且与提交的 SHA-256 一致（`tests/golden/fonts.sha256`，由旧仓库文件生成）；headless + Skia 下三类字族都解析到真实字形（字形名不是回落字体）。
-2. [LEMMA: 2] `tests/Tests.fs`：`Wanxiang Symbols` 自身可解析，且 `ThemeFonts.body` / `ThemeFonts.mono` 对每个符号码位都能匹配到非 `.notdef` 的字形。
+1. [LEMMA: 1] `tests/Tests.fs`：`every old font file ships byte for byte`、`body mono and katex families resolve to the embedded faces`、`katex main carries the minus and plus minus glyphs`——资源存在且与提交的 SHA-256 一致（`tests/golden/fonts.sha256`，由旧仓库文件生成）；headless + Skia 下三类字族都解析到真实字形（字形名不是回落字体）。
+2. [LEMMA: 2] `tests/Tests.fs`：`the symbol family resolves to the embedded face`、`body and mono fall back to real glyphs for the symbol codepoints`——`Wanxiang Symbols` 自身可解析，且 `ThemeFonts.body` / `ThemeFonts.mono` 对每个符号码位都能匹配到非 `.notdef` 的字形。
 
 ## 新增字体文件（不属于「旧文件逐字节相同」的范围）
 - `Assets/Fonts/WanxiangSymbols-Regular.subset.ttf`：Noto Sans Symbols / Noto Sans Symbols 2 的合并子集（OFL 1.1，许可证见 `Assets/Fonts/LICENSE-Noto-Symbols.txt`），字族名改为 `Wanxiang Symbols`（不沿用 Noto 的保留字体名）。码位：U+2315 ⌕、U+2318 ⌘、U+2699 ⚙、U+270E ✎、U+2713 ✓、U+2715 ✕、U+1F4E6 📦、U+1F50D 🔍、U+1F5D1 🗑。

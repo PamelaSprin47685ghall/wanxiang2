@@ -372,8 +372,8 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                 if test_src:
                     clean_line = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or "", line)
                     candidates = []
-                    if re.search(r"`tests/[A-Za-z0-9_.-]+\.fs`\s*(?:(?:通过|的)?[:：]|\s+`)", clean_line):
-                        after = re.split(r"`tests/[A-Za-z0-9_.-]+\.fs`\s*(?:(?:通过|的)?[:：])?", clean_line, maxsplit=1)[1]
+                    if re.search(r"`tests/[A-Za-z0-9_.-]+\.fs`\s*(?:(?:通过|的)?[:：]|\s*(?:的\s+)?`)", clean_line):
+                        after = re.split(r"`tests/[A-Za-z0-9_.-]+\.fs`\s*(?:(?:通过|的)?[:：]|\s*的\s*)?", clean_line, maxsplit=1)[1]
                         candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", after))
                     candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`\s*通过", clean_line))
                     if re.match(r"^\s*-\s*证明：", clean_line) and "compose/" not in clean_line and "libs/" not in clean_line and "./x " not in clean_line:
@@ -392,6 +392,46 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                             continue
                         if tname not in test_src:
                             print(f"FAIL {md}:{lineno}: cited test `{tname}` not found in {base_dir}/tests")
+                            bad = 1
+            if test_src:
+                in_spec_sec = False
+                spec_items = []
+                cur_spec = None
+                for idx, sline in enumerate(text.splitlines()):
+                    if re.match(r"^#{1,4}\s+SPEC\b", sline):
+                        in_spec_sec = True
+                        if cur_spec:
+                            spec_items.append(cur_spec)
+                            cur_spec = None
+                        continue
+                    elif re.match(r"^#{1,4}\s+", sline):
+                        in_spec_sec = False
+                        if cur_spec:
+                            spec_items.append(cur_spec)
+                            cur_spec = None
+                    if not in_spec_sec:
+                        continue
+                    if re.match(r"^\d+\.\s+", sline):
+                        if cur_spec:
+                            spec_items.append(cur_spec)
+                        cur_spec = (idx + 1, [sline])
+                    elif cur_spec is not None:
+                        cur_spec[1].append(sline)
+                if cur_spec:
+                    spec_items.append(cur_spec)
+                for s_lineno, s_lines in spec_items:
+                    s_joined = "".join(s_lines)
+                    s_clean = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or "", s_joined)
+                    s_ticks = re.findall(r"`([^`]+)`", s_clean)
+                    s_tfiles = [b for b in s_ticks if b.startswith("tests/") and b.endswith(".fs") and "<" not in b and "Wanxiang.Tests" not in b]
+                    if s_tfiles:
+                        has_fn = any(
+                            (f"``{b}``" in test_src or re.search(r"\blet\s+" + re.escape(b) + r"\b", test_src))
+                            for b in s_ticks
+                            if not b.startswith("tests/")
+                        )
+                        if not has_fn:
+                            print(f"FAIL {md}:{s_lineno}: SPEC item references `{s_tfiles[0]}` without naming any explicit test function in backticks")
                             bad = 1
         parts = re.split(r"(?m)(?=^##\s+成员\s+)", text)
         for part in parts:

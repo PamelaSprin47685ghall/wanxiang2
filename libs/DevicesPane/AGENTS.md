@@ -239,7 +239,7 @@
 1. **只在概况真的变化时通知。** [根 AXIOM: 2]
 
 ### SPEC
-1. [LEMMA: 1] `tests/GenerationDraft.LocalDraftControls.Tests.fs` 通过。
+1. [LEMMA: 1] `tests/GenerationDraft.LocalDraftControls.Tests.fs` 的 `summary change fires once per distinct value`  通过。
 
 ### 迁入或覆盖的旧测试
 - 无旧测试。
@@ -278,7 +278,7 @@ W7-B3：`discovered`（本机发现的模型清单）已从本对象移除——
 4. **发现本机 Ollama 每次显示只探一次**，复位后可再探。
 
 ### SPEC
-1. [LEMMA: 1–4] `tests/GenerationDraft.OnboardingFlow.Tests.fs` 通过，状态文字逐字断言。
+1. [LEMMA: 1–4] `tests/GenerationDraft.OnboardingFlow.Tests.fs` 的 `mock 服务上：选预设、填密钥、点连接后模型列表自动填充且默认模型被选中`、`密钥为空时不发起任何请求并就地说明`、`密钥无效、路径错、不通各自给出不同的人话原因，并撤销半成品`  通过，状态文字逐字断言。
 
 ### 迁入或覆盖的旧测试（OnboardingUiTests，步骤与文字部分）
 - `mock 服务上：选预设、填密钥、点连接后模型列表自动填充且默认模型被选中`
@@ -304,7 +304,7 @@ W7-B3：`discovered`（本机发现的模型清单）已从本对象移除——
 1. **没有前缀或认不出的码一律归为 ProbeUnclassified，说明原样保留。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/GenerationDraft.ProbeFailureKind.Tests.fs` 通过。
+1. [LEMMA: 1] `tests/GenerationDraft.ProbeFailureKind.Tests.fs` 的 `codes parse to kinds and legacy text stays unclassified`  通过。
 
 ### 迁入或覆盖的旧测试
 - OnboardingConfigTests：`错误码编码解码往返，客户端类型与主机错误码一一对应` 的旧主机部分（其余在组合者 Catalog）
@@ -320,7 +320,7 @@ W7-B3：`discovered`（本机发现的模型清单）已从本对象移除——
 2. **非空缓存优先于配置**；默认模型不在清单里时取第一项。
 
 ### SPEC
-1. [LEMMA: 1, 2] `tests/GenerationDraft.ProbeSlot.Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/GenerationDraft.ProbeSlot.Tests.fs` 的 `SettingsProviders ApplyProbe updates draft models in open editor and caches without auto-upserting`、`别家的结果不夺归属；关闭编辑器后归属清空`、`空缓存不覆盖配置；默认模型不在清单里时取第一项`  通过。
 
 ### 迁入或覆盖的旧测试
 - SettingsViewTests：`SettingsProviders ApplyProbe updates draft models in open editor and caches without auto-upserting`（归属与缓存部分；输入框回填留旧仓库）
@@ -369,7 +369,7 @@ W7-B3：`discovered`（本机发现的模型清单）已从本对象移除——
 2. **切换才记位与恢复**：离开时位置大于 0 或该分区还没记过才记下；切到的分区没记过就回到顶部。
 
 ### SPEC
-1. [LEMMA: 1, 2] `tests/GenerationDraft.SectionMemory.Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/GenerationDraft.SectionMemory.Tests.fs` 的 `切走记位置，切回恢复；没变不动`、`位置为 0 不覆盖已记下的位置（内容还没布局好时读到的 0）`、`每个分区只构建一次，失效后重建` 通过。
 
 ### 迁入或覆盖的旧测试
 旧 SettingsViewTests 的滚动位置用例要起窗口，留旧仓库。本库新增 3 条行为用例。

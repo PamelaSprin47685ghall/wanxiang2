@@ -6,7 +6,7 @@
 1. **宽容读线上行。** [根 AXIOM: 5] 坏日期退回 UnixEpoch、无效 id 丢弃，旧主机发来的行不让侧栏崩溃。
 
 # SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过。
+1. [LEMMA: 1] `tests/Tests.fs` 的 `ConversationSummary matching, sorting and grouping`、`ConversationSummary parseList handles valid, empty and invalid records`、`ConversationSummary matches searches single and multi-word keywords`  通过。
 
 # 迁入或覆盖的旧测试
 - UiPureLogicTests：`ConversationSummary matching, sorting and grouping`

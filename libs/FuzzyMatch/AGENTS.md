@@ -14,7 +14,7 @@
 1. **分值与旧实现一致。** [根 AXIOM: 5] 面板排序依赖分值；测试钉住了旧实现的具体数值。
 
 ## SPEC
-1. [LEMMA: 1] `tests/FuzzyMatch.Tests.fs` 通过。
+1. [LEMMA: 1] `tests/FuzzyMatch.Tests.fs` 的 `empty query matches with zero`、`substring beats subsequence and prefix beats inner substring`、`missing character yields None and spaces in query are skipped`  通过。
 
 ## 迁入或覆盖的旧测试
 - 无单独旧测试；经 compose/CommandPalette 迁入的 R20 用例间接覆盖。
@@ -29,7 +29,7 @@
 1. **行为与旧实现一致。** [根 AXIOM: 5] 用户凭首字母找对话，结果不能随迁移改变。
 
 ## SPEC
-1. [LEMMA: 1] `tests/PinyinInitials.Tests.fs` 通过。
+1. [LEMMA: 1] `tests/PinyinInitials.Tests.fs` 的 `373 拼音首字母覆盖常用字`、`non-ascii non-han characters are dropped and ascii is lowered`  通过。
 
 ## 迁入或覆盖的旧测试
 - R20PaletteTests：`373 拼音首字母覆盖常用字`

@@ -6,7 +6,7 @@
 1. **不可超时的命令不会被 Expire 取出。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过。
+1. [LEMMA: 1] `tests/Tests.fs` 的 `command tracker expires newer commands but leaves message delivery to outbox`、`commit and reject hand back the feedback once and reject all completes with false`  通过。
 
 # 迁入或覆盖的旧测试
 - R27HostCapabilitiesTests：`command tracker expires newer commands but leaves message delivery to outbox`（这里用 id；组合者 Outbox 用真实命令再核对）

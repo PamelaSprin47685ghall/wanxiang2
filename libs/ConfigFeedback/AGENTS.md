@@ -14,7 +14,7 @@
 1. **每个请求只结束一次：确认、超时、断连三者先到者生效。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] `tests/ConfigFeedback.Tests.fs` 通过。
+1. [LEMMA: 1] `tests/ConfigFeedback.Tests.fs` 的 `config tracker expires silent requests and resolves only once`、`首次运行卡片登记空文案：成功时不叠 toast 但仍拉目录`、`config issue notices fire only on transitions`  通过。
 
 ## 迁入或覆盖的旧测试
 - R27HostCapabilitiesTests：`config tracker expires silent requests and resolves only once`
@@ -31,7 +31,7 @@
 1. **内存不随异常流增长：触顶整体丢弃，断连清零。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] `tests/DownloadBuffers.Tests.fs` 通过。
+1. [LEMMA: 1] `tests/DownloadBuffers.Tests.fs` 的 `buffers reset on retry, drop at the cap and hand over bytes once`、`capped notice once per begin, bad base64 ignored, like old AppShell`  通过。
 
 ## 迁入或覆盖的旧测试
 - 无旧纯逻辑用例。

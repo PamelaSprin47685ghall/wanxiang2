@@ -13,6 +13,6 @@
     - 推理：两个同名 case 现在来自不同程序集，不加限定时解析结果取决于引用顺序。旧仓库本来就写成限定形式，这里沿用。
 
 # SPEC
-1. [LEMMA: 2] 提交行、快照正文、commandId 与旧仓库 `extract-ledger@1a1a4d7` 生成的金样逐字节相同：`tests/CompositionTests.fs` 中的三个金样测试，通过。
+1. [LEMMA: 2] 提交行、快照正文、commandId 与旧仓库 `extract-ledger@1a1a4d7` 生成的金样逐字节相同：`tests/CompositionTests.fs` 的 `a conversation lives through create, send, retry, fork, regenerate and replays to the same state`、`same command id with a different payload is a conflict, not a replay`、`stale client cursor is rejected with the required watermark`  中的三个金样测试，通过。
 2. [LEMMA: 1] 真实组合：命令经规划、编码成提交行、解码、折叠；重试得到原提交；从文本重放与在线折叠逐字节相同；游标陈旧时被拒绝：`CompositionTests`，通过。
 3. [LEMMA: 1, 2] 旧仓库 `CoreTests`、`CodecTests`、`ForkTests` 原样搬来；`ProjectionInvariantsTests` 搬来不涉及存储的部分，并加了每一步快照往返的测试；全部通过，共 45 个。

@@ -6,7 +6,7 @@
 1. **变窄时先看到输入区，只有显式导航动作才打开抽屉。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过。
+1. [LEMMA: 1] `tests/Tests.fs` 的 `navigation controller owns compact and collapsed state transitions`、`drawer autofocus matches old ApplyResponsiveLayout`  通过。
 
 # 接口
 - `NavigationController(initialSidebarCollapsed, compactBreakpoint)`：成员 `State`、`ApplyViewport(width) : bool * NavigationSnapshot`、`ToggleSidebar()`、`ApplyCompactNavigation(opened) : NavigationSnapshot`（抽屉单槽投影，返回快照）、`EnsureSearchVisible()`。

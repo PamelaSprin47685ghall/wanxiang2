@@ -11,7 +11,7 @@
 
 ## 领域事实与协议事实（SearchHit 及内聚纯模块）
 - `SearchHit` / `SearchPageState`（`libs/WorkspaceState/SearchHit.fs`）：全文搜索命中的协议事实、片段切分与去 Markdown、截断说明。只依赖 BCL，归属工作区领域事实。
-- 对应测试：`tests/SearchHitTests.fs`（`search hit parsing clamps bad highlight ranges and drops rows without ids`、`消息命中片段去掉 Markdown 记号，命中词保持原样`、`truncated page says so`）。
+- 对应测试：`tests/SearchHitTests.fs` 的 `search hit parsing clamps bad highlight ranges and drops rows without ids`、`消息命中片段去掉 Markdown 记号，命中词保持原样`、`truncated page says so` 。
 - 内聚纯模块（自 `libs/ChangeWatch` 迁入）：`ReconnectBackoff`（`ReconnectBackoff.fs`，1s 起翻倍封顶 30s 退避）、`MessageLink`（`MessageLink.fs`，`wanxiang://open?c=…&m=…` 与 PWA `#open?…` 链接生成与识别）、`DraftSummaryText`（`DraftSummaryText.fs`，草稿与未确认消息摘要文案）、`ForkAnchor`（`ForkAnchor.fs`，分叉点 `forkAfter` 选择与已编辑用户消息 JSON 拼装）、`RevealTarget`（`RevealTarget.fs`，已加载窗口内的定位目标解析）、`OlderPageLoad`（`OlderPageLoad.fs`，加载更早消息的在途与超时判断）。
 - 对应测试：`tests/WorkspaceStateTests.fs`：`Pure modules in WorkspaceState: ReconnectBackoff, MessageLink, DraftSummaryText, ForkAnchor, RevealTarget, OlderPageLoad`。
 

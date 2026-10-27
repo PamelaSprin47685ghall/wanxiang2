@@ -14,7 +14,7 @@
 
 # SPEC
 1. [LEMMA: 1, 2] 各节解析、往返、未知字段、版本 1 升级、不支持的版本、各节边界校验、TLS 配对规则、providers/mcp/auth 校验、复杂 extra 往返，以及辅助函数。
-    - 证明：`tests/Tests.fs` 从旧仓库 `tests/Wanxiang.Tests/ConfigTests.fs` 中不涉及 ConfigStore 和 Auth 的部分原样搬来，全部通过。搬迁时删掉了两处从未被使用的变量（`bad`、`topPLow`），是旧测试里的死代码。
+    - 证明：`tests/Tests.fs` 的 `TOML parses every section and survives a serialize roundtrip`、`unknown TOML field rejects the whole config`、`configVersion 1 配置能够成功解析并显式升级到当前模型` 等从旧仓库 `tests/Wanxiang.Tests/ConfigTests.fs` 中不涉及 ConfigStore 和 Auth 的部分原样搬来，全部通过。搬迁时删掉了两处从未被使用的变量（`bad`、`topPLow`），是旧测试里的死代码。
 2. [LEMMA: 1, 2, 3] `TomlCodec.fs` 中 `tryParseV1` 与 `tryParseV2` 按配置节拆成小私有函数，入参统一带 `errors: ResizeArray<string>`，顶层只保留按顺序调用节函数、顺序校验与组装 `AppConfig`，错误追加顺序与文字不变。
     - 节函数清单：共用 `parseRuntime`、`parsePairing`、`parseAuthClients`、`parseToolPolicy`、`validateAuth`；v1 专有 `parseNetworkV1`、`parseProvidersV1`、`parseMcpV1`、`validateV1`；v2 专有 `parseNetwork`、`parseGeneration`、`parseTools`、`parseProviderEntry` / `parseProviders`、`parseMcp`、`parsePresets`、`validateNetwork`、`validateGeneration`、`validateTools`、`validateProvidersAndMcp`。
     - 证明：`./x test AppConfig` 原样通过；重新打包后 `ConfigStore.Tests`（11 个测试）与 `ConfigMutation.Tests`（1 个测试）全部通过。另做了独立对照（2026-10-18）：同一份「一次踩 18 条错」的 TOML 分别喂给重构前的 `TomlCodec.fs`（`git worktree` 里 HEAD 的版本）与重构后的版本，错误清单逐条、逐序相同（18 条一致）。

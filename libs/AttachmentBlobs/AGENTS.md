@@ -42,4 +42,4 @@
 3. **文件名只用于显示，绝不用作路径。** [根 AXIOM: 4]
 
 ## SPEC
-1. [LEMMA: 1, 2, 3] `tests/MediaSniff.Tests.fs`，通过。
+1. [LEMMA: 1, 2, 3] `tests/MediaSniff.Tests.fs` 的 `magic numbers win; printable bytes are text; control bytes are unknown`、`declared type is kept unless empty or octet-stream`、`file names lose control characters, are capped and trimmed` ，通过。

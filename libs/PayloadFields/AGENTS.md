@@ -7,7 +7,7 @@
 2. **「类型不对就当没给」是独立的读取规则，与配置合并无关。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过；端到端由 ConfigMutation 金样钉住。
+1. [LEMMA: 1] `tests/Tests.fs` 的 `字段读取宽容`  通过；端到端由 ConfigMutation 金样钉住。
 
 # 迁入或覆盖的旧测试
 - 无单独旧测试；由 compose/ConfigMutation 金样覆盖。

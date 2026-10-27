@@ -32,7 +32,7 @@ PWA 静态资源目录的查找顺序（从旧 Program.fs 拆出）。只依赖 
 2. **查找顺序与旧实现相同：发布包 pwa → Debug AppBundle → Release AppBundle → wwwroot。** [根 AXIOM: 3]
 
 ## SPEC
-1. [LEMMA: 1, 2] `tests/PwaAssets.Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/PwaAssets.Tests.fs` 的 `什么都没有时为 None`、`发布包内的 pwa 目录最优先`、`开发模式：Debug 产物先于 Release，先于 wwwroot`  通过。
 
 ## 迁入或覆盖的旧测试
 - 旧仓库没有覆盖 Wanxiang.App 的测试（测试工程不引用 App）。本库测试是新写的行为测试：
@@ -53,7 +53,7 @@ PWA 静态资源目录的查找顺序（从旧 Program.fs 拆出）。只依赖 
 2. **对象自己拥有计数并在锁内推进；排空、退出由入口按返回的步骤去做（不注入回调）。** [根 AXIOM: 3]
 
 ## SPEC
-1. [LEMMA: 1, 2] `tests/ShutdownSignals.Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/ShutdownSignals.Tests.fs` 的 `第一次优雅，之后都强制`、`并发到达的信号恰好一次优雅`  通过。
 
 ## 迁入或覆盖的旧测试
 - 旧仓库没有覆盖 Wanxiang.App 的测试（测试工程不引用 App）。本库测试是新写的行为测试：
@@ -71,7 +71,7 @@ PWA 静态资源目录的查找顺序（从旧 Program.fs 拆出）。只依赖 
 2. **套接字路径固定。** `socketPath configDir = Path.Combine(configDir, "ui.sock")`。
 
 ## SPEC
-1. [LEMMA: 2] `tests/SingleInstance.Tests.fs` 覆盖 `socketPath` 的路径拼接。
+1. [LEMMA: 2] `tests/SingleInstance.Tests.fs` 的 `socketPath 拼接配置目录与固定文件名`、`socketPath 空目录得到相对文件名`、`socketPath 带尾分隔符的目录不重复`  覆盖 `socketPath` 的路径拼接。
 2. [LEMMA: 1] `tests/SingleInstance.Tests.fs` 的 `tryForward 等待分段到达的完整确认行` 用真实 Unix 套接字覆盖分段确认；同文件用真实监听循环覆盖：`listen 收到转发的链接并回 ok；空行只当唤起；Dispose 后不再有人接`（转发链接逐字、空行只唤起不产生链接、换行被剥掉、Dispose 清掉套接字文件后 tryForward 一律 false）、`没有监听者时 tryForward 一律 false`（文件不存在与陈旧残留两种）。
 
 ## 迁入或覆盖的旧测试

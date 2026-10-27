@@ -6,7 +6,7 @@
 1. **拒绝时说清问题与出路。** [根 AXIOM: 5] 错误文字与旧实现一致。
 
 # SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过。
+1. [LEMMA: 1] `tests/Tests.fs` 的 `validate rejects unsupported image formats and oversize images with guidance`、`file name maps to media type, unknown is octet-stream`、`picker lists all files first then model images then text`  通过。
 
 # 迁入或覆盖的旧测试
 - AttachmentVisionTests：`validate rejects unsupported image formats and oversize images with guidance`

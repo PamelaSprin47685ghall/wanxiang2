@@ -140,7 +140,7 @@
 2. **删除意图只用一次**：重建后优先聚焦意图行；意图行不在了就作废，不落到别处。
 
 ### SPEC
-1. [LEMMA: 1, 2] `tests/RowFocus.RowFocus.Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/RowFocus.RowFocus.Tests.fs` 的 `neighbor after delete matches the row focus falls to`、`no neighbor when the list becomes empty`、`删除后才问（id 已不在）：按上次行焦点钳制` 通过。
 
 ### 迁入或覆盖的旧测试
 - KeyConvergenceTests：`neighbor after delete matches the row focus falls to`、`no neighbor when the list becomes empty`（行序直接给出；原用例经真实侧栏排序）
@@ -189,7 +189,7 @@
 3. **状态行文字与旧 Rebuild 逐字相同。**
 
 ### SPEC
-1. [LEMMA: 1, 2, 3] `tests/RowFocus.SearchSession.Tests.fs` 通过。
+1. [LEMMA: 1, 2, 3] `tests/RowFocus.SearchSession.Tests.fs` 的 `sidebar shows hit snippets under message content and clicking opens the hit`、`显示更多追加，在途时不重复请求；失败可重试`、`不能发时不显示「搜索中」；词一变旧命中作废；断线不挂着`  通过。
 
 ### 迁入或覆盖的旧测试
 - LibraryTests：`sidebar shows hit snippets under message content and clicking opens the hit`（状态部分；片段着色、点击打开要起窗口，留旧仓库）

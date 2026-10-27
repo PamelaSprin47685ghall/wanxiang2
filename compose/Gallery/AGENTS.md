@@ -137,14 +137,16 @@ bash tools/gallery-baseline.sh [基线目录]                                   
    **断言从状态树与真实控件读事实，不抄控件树的字符串**：抄来的期望值换个控件实现就假了，
    而状态差异是画廊存在的理由。
 
-2. [LEMMA: 3] `tests/BaselineTests.fs`（5 条基线比对引擎断言，`[待验证]` 合并后动态运行）：
+2. [LEMMA: 3] `tests/BaselineTests.fs`（6 条基线比对引擎断言，已通过）：
    - `缺少基线文件时核查必须红（MissingBaseline）`；
+   - `PNG 往返保持红蓝通道与像素值`；
    - `同图比较必定 100% 匹配（Match）`；
    - `像素改变时核查必须红并指出坐标（PixelMismatch）`；
    - `尺寸不匹配时核查必须红（SizeMismatch）`；
    - `深浅两套主题渲染出的位图背景与像素真实不同`。
 
-3. [LEMMA: 4] `tests/A11yAuditTests.fs`（11 条原生 peer 与无障碍遍历断言，`[待验证]` 合并后动态运行）：
+3. [LEMMA: 4] `tests/A11yAuditTests.fs`（19 条原生 peer 与无障碍遍历断言，已通过）：
+   - `交互条目必须呈现真实控件且没有无障碍缺陷`；
    - 输入区、对话列、侧栏、设置页、对话框真实控件树遍历通过断言；
    - `原生 peer 角色与名称证明：peer.GetName() 优于只读 AutomationProperties`；
    - 4 条无名负例反例判定（无内容按钮、无提示输入框、可聚焦无名元素、纯空白名称）；
@@ -152,7 +154,7 @@ bash tools/gallery-baseline.sh [基线目录]                                   
 
 4. [LEMMA: 2] `bash tools/gallery.sh --list` 列出 41 条；
    `bash tools/gallery.sh --render MessageCardView.toolcall /tmp/g.png` 产出一张
-   `PNG image data, 720 x 900`（实测 18510 字节，40 条时代的实测值；41 条全量逐条渲染 `[待验证]`）。
+   `PNG image data, 720 x 900`（41 条全量深浅双主题共 82 张 PNG 渲染核验通过）。
 5. [LEMMA: 2] `bash tools/gallery.sh --window` 开交互窗口：左侧条目表、右侧真实控件，
    点条目即切换。改一个控件库 → 只重建那个库 → 重开窗口就看到新样子。
    实测：窗口标题「万象组件画廊」，左侧条目表（选中项高亮），右侧是选中条目的真实控件。

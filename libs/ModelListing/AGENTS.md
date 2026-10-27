@@ -7,7 +7,7 @@
 2. **解析响应是纯函数，独立于缓存与探活。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过；旧 ProviderCatalogTests 经 compose/ProviderCatalog 覆盖。
+1. [LEMMA: 1] `tests/Tests.fs` 的 `模型清单解析`  通过；旧 ProviderCatalogTests 经 compose/ProviderCatalog 覆盖。
 
 # 迁入或覆盖的旧测试
 - 见 compose/ProviderCatalog AGENTS.md（modelIdsFromProbe 三条）。

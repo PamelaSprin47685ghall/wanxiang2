@@ -20,7 +20,7 @@ Anthropic Messages API 协议：请求正文（`AnthropicRequest.build`）、端
 
 ## SPEC
 1. [LEMMA: 1] 请求正文、端点、请求头与旧实现逐字节相同：组合者 ProviderTransports 的 `GoldenTests`，通过。
-2. [LEMMA: 2, 3] 工具入参分片拼接、坏入参丢弃、按事件名兜底、error 和 stop、收尾用量与结束原因映射：`tests/Anthropic.Tests.fs`，通过。
+2. [LEMMA: 2, 3] 工具入参分片拼接、坏入参丢弃、按事件名兜底、error 和 stop、收尾用量与结束原因映射：`tests/Anthropic.Tests.fs` 的 `endpoint accepts base urls with or without v1, headers follow key and thinking`、`tool input split across deltas becomes one call when its block stops`、`broken tool input drops the call instead of running the tool with partial arguments` ，通过。
 
 ## 变更记录
 - 流事件结果联合类型加 `[<RequireQualifiedAccess>]`：它们与 AgentRuntime 的 `AgentCallResult`（Completed/Failed/Cancelled）同在命名空间 Wanxiang.Agent，作为包被引用时 `Failed` 会被解析错。调用方原本都已限定写法，无需改动。
@@ -43,7 +43,7 @@ Gemini generateContent 协议：请求正文（`GeminiRequest.build`）、调用
 
 ## SPEC
 1. [LEMMA: 1, 2] 请求正文、端点、请求头、解码后的增量与旧实现逐字节相同：组合者 ProviderTransports 的 `GoldenTests`，通过。
-2. [LEMMA: 2, 3] 调用 id 往返、思考片段、调用按到达顺序编号、error 对象、坏 data、用量兜底：`tests/Gemini.Tests.fs`，通过。
+2. [LEMMA: 2, 3] 调用 id 往返、思考片段、调用按到达顺序编号、error 对象、坏 data、用量兜底：`tests/Gemini.Tests.fs` 的 `endpoint adds v1beta only when no version is given; key goes in a header`、`call ids are made from name and index and give the name back`、`functionResponse takes the name from the call in the same request when the id has none` ，通过。
 3. `tests/Gemini.Tests.fs` 的 `functionResponse takes the name from the call in the same request when the id has none`：外来 id 取同一请求里的名字、自家 `名字@序号` 若两者一致、孤立结果退回解析 id。
 
 ## 变更记录

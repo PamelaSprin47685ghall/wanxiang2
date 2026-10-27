@@ -15,7 +15,7 @@
     - 推理：子分支只继承父会话 fork 那一刻、forkAfterId 之前的消息，父会话后来的删改不影响子分支。同一个父会话分出多个分支时，标题依次是「（分叉）」「（分叉 2）」……
 
 # SPEC
-1. [LEMMA: 1, 4] fork 原样复制配置，按 fork 点继承消息，标题编号正确：`tests/Tests.fs` `fork copies the parent config untouched...`，通过。
+1. [LEMMA: 1, 4] fork 原样复制配置，按 fork 点继承消息，标题编号正确：`tests/Tests.fs` `fork copies the parent config untouched and inherits messages up to the fork point`，通过。
 2. [LEMMA: 4] 父会话后来的删除不影响子分支：`later changes in the parent do not leak into a fork`，通过。
-3. [LEMMA: 2] 提交号不连续、目标不存在都会被拒绝；失败的提交不改变投影：`commit ids must be contiguous...`、`a failing event leaves the projection unchanged`，通过。
-4. [LEMMA: 3] 换任意配置编码，事件和投影 JSON 往返后都不变；不认识的版本被拒绝，通过。和旧实现字节一致的证据在组合者 ChatDomain 的金样里，因为金样必须带上真实的 SessionConfig 形状。
+3. [LEMMA: 2] 提交号不连续、目标不存在都会被拒绝；失败的提交不改变投影：`commit ids must be contiguous and targets must exist`、`a failing event leaves the projection unchanged`，通过。
+4. [LEMMA: 3] 换任意配置编码，事件和投影 JSON 往返后都不变；不认识的版本被拒绝：`events and projection round trip through JSON with any config codec`、`unknown event version is refused instead of guessed`，通过。和旧实现字节一致的证据在组合者 ChatDomain 的金样里，因为金样必须带上真实的 SessionConfig 形状。

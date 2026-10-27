@@ -10,4 +10,4 @@
 
 # SPEC
 1. [LEMMA: 1] `golden/mcp.txt` 由旧 McpTransport/McpClient 源码生成，`GoldenTests.fs` 逐字节比对，通过。
-2. [LEMMA: 1, 2] 旧 McpTests 中传输、客户端和 McpJson 部分的测试已迁入 `tests/McpTests.fs`，通过。
+2. [LEMMA: 1, 2] 旧 McpTests 中传输、客户端和 McpJson 部分的测试已迁入 `tests/McpTests.fs` 的 `McpJson errorNode 格式正确`、`McpJson initializeParams 包含协议版本与客户端信息`、`McpStdioTransport 未配置 command 时返回明确错误` ，通过。

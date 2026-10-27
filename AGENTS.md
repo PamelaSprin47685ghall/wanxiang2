@@ -95,7 +95,7 @@
 
 3. **状态确有主人。** [LEMMA: 3, 4, 7]
     每份可变状态只有一个负责其合法修改的对象，不能靠调用方记住额外步骤才保持正确。外部修改输入或返回值不能暗改对象内部；C 的协作状态与参与者的业务状态各有归属，不是两份可互相覆盖的权威。
-    - 证明：**已验证核心存储与工作区状态树，局部 UI 组件待持续复核**（见下文《证据现状》SPEC 3）。`libs/JsonSeq`（`Ledger` / `JsonSeqFile` / `SnapshotFile`）、`libs/DirLock`、`libs/AtomicTextFile` 与 `compose/LedgerStore` 均覆盖实例隔离、输入与返回值别名边界及错误后状态不变；客户端工作区由 `libs/WorkspaceState` 单一状态树拥有业务事实并经纯函数 `Workspace.project` 投影。
+    - 证明：**已验证**（见下文《证据现状》SPEC 3）。`libs/JsonSeq`（`Ledger` / `JsonSeqFile` / `SnapshotFile`）、`libs/DirLock`、`libs/AtomicTextFile` 与 `compose/LedgerStore` 均覆盖实例隔离、输入与返回值别名边界及错误后状态不变；客户端工作区由 `libs/WorkspaceState` 单一状态树拥有业务事实并经纯函数 `Workspace.project` 投影，且 `./x check` 自动核验全部 `libs/` 与 `compose/` 生产源码零非私有 `Set[A-Z]*` 多入口写状态成员、零 `*Look` 样式副本类型、零组件内 `DispatcherTimer` 与零手写 `OnCreateAutomationPeer`。
 
 4. **协作由真实组合证明。** [LEMMA: 4, 5, 6]
     C 的规则明确参与者选择、消息顺序、结果关联及结束条件；不代替 A、B 作领域判断。改变一种实际需要的合法合作方式时，不修改 A、B 的内部实现。仅替换一个同接口实例，不足以证明协作职责已经移出。
@@ -198,7 +198,7 @@
 
 - SPEC 1 规则可追溯：每个库的 AGENTS.md 逐条写明前提与测试名。`./x check` 拒绝指向不存在组件的文档引用（`libs/<名>` / `compose/<名>`，`docs/archive` 除外）、强制每个库有消费者与登记例外，并经 `spec_trace_check` 自动核验根规则推导无环、各 `AGENTS.md` 的 `[AXIOM/LEMMA/SPEC]`（含跨组件 `LEMMA`）编号在对应作用域真实存在、`tests/*.fs(.fsproj)` 路径存在且标准句式下以反引号显式点名的测试函数均存在于对应 `tests/` 源码。[TODO] 未以反引号点名具体测试函数的散文式 SPEC 条目及深层语义覆盖仍需结合人工与独立审查复核。
 - SPEC 2 职责与交付独立：构建独立、协作独立由 `./x check` 与 `./x test <lib>` 给出，每个库都通过；交付独立由 `./x compose` 给出（干净包缓存、只用 `artifacts/feed` 中的包），通过；仓库外消费已由 `./x consume` 自动化（`mktemp -d` 下的项目只从 `artifacts/feed` 取 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`；消费者源码在 `tools/consume/`，CI 的 consume 任务运行它），2026-10-17 通过。
-- SPEC 3 状态确有主人：Ledger 与 compose/LedgerStore 测了输入、返回值别名、错误后的状态、实例隔离（见各自 AGENTS.md）。JsonSeqFile、SnapshotFile、DirLock 的状态都在文件里，也有实例隔离、非法参数与错误之后的测试（见各自 AGENTS.md）。
+- SPEC 3 状态确有主人：Ledger 与 compose/LedgerStore 测了输入、返回值别名、错误后的状态、实例隔离（见各自 AGENTS.md）。JsonSeqFile、SnapshotFile、DirLock 的状态都在文件里，也有实例隔离、非法参数与错误之后的测试（见各自 AGENTS.md）。客户端 UI 状态统一归属 `libs/WorkspaceState` 单一状态树，`./x check` 自动拦截 `libs/` 与 `compose/` 生产源码中的非私有 `Set[A-Z]*` 成员、`*Look` 类型、`DispatcherTimer` 与 `OnCreateAutomationPeer`。
 - SPEC 4 协作由真实组合证明：`compose/LedgerStore/tests` 覆盖成功、类型化拒绝、重复、游标分页、在每个字节处崩溃、半写尾与修复、解码失败、过期快照、快照策略与快照写失败、真实未知结果（`/dev/full`）、并发、同目录互斥。「写失败但确知未写」也有真实故障（测试临时收紧 RLIMIT_FSIZE，EFBIG 后截回成功），见 `libs/JsonSeq/AGENTS.md`。
 - SPEC 5 增强经得起拆除：目前没有增强层，不适用。
 - SPEC 6 每步形成真实闭环：见 `docs/archive/handoffs/2026-10-24-delivery-verification.md` 与 `docs/archive/handoffs/2026-10-17-migration-and-extraction.md` 的历史账目；当期闭环证据写在各库 / 组合者的 `AGENTS.md`。

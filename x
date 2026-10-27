@@ -308,14 +308,23 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
             text = f.read()
         if md != "AGENTS.md":
             test_src = load_test_text(base_dir)
+            if os.path.isdir(os.path.join(base_dir, "tests")) and not re.search(r"\[<(?:Fact|Theory)\b", test_src):
+                print(f"FAIL {md}: tests/ directory has no [<Fact>] or [<Theory>] across its .fs files")
+                bad = 1
             for lineno, line in enumerate(text.splitlines(), 1):
                 if "<原文件名>" in line or "tests/Wanxiang.Tests/" in line:
                     continue
                 for m in re.finditer(r"(?<![A-Za-z0-9_/])(tests/[A-Za-z0-9_.-]+\.(?:fsproj|fs))(?![A-Za-z])", line):
                     rel_path = m.group(1)
-                    if not os.path.exists(os.path.join(base_dir, rel_path)):
+                    full_tpath = os.path.join(base_dir, rel_path)
+                    if not os.path.exists(full_tpath):
                         print(f"FAIL {md}:{lineno}: references missing test file {rel_path}")
                         bad = 1
+                    elif rel_path.endswith(("Tests.fs", "Regression.fs")):
+                        with open(full_tpath, "r", encoding="utf-8") as tf:
+                            if not re.search(r"\[<(?:Fact|Theory)\b", tf.read()):
+                                print(f"FAIL {md}:{lineno}: cited test file {rel_path} has no [<Fact>] or [<Theory>]")
+                                bad = 1
                 if test_src:
                     clean_line = re.sub(r"（[^`）]*`[^`]+`[^）]*）", "", line)
                     candidates = []
@@ -375,6 +384,31 @@ for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
                             if num not in target:
                                 print(f"FAIL {md}: invalid citation [{clause}] (number {num} not in {sorted(target)})")
                                 bad = 1
+
+fsharp_strip_re = re.compile(
+    r"\(\*[\s\S]*?\*\)"
+    r"|\"\"\"[\s\S]*?\"\"\""
+    r"|@\"(?:\"\"|[^\"])*\""
+    r"|\"(?:\\.|[^\"\\])*\""
+    r"|//[^\n]*"
+)
+
+for p in sorted(glob.glob("libs/*/*.fs") + glob.glob("compose/*/*.fs")):
+    with open(p, "r", encoding="utf-8") as pf:
+        cleaned = fsharp_strip_re.sub(lambda m: "\n" * m.group(0).count("\n"), pf.read())
+    for lineno, clean in enumerate(cleaned.splitlines(), 1):
+        if re.search(r"\b(?:static\s+|abstract\s+)?member\s+(?:(?:public|internal)\s+)?(?:\w+\.)?Set[A-Z]\w*", clean):
+            print(f"FAIL {p}:{lineno}: forbidden non-private Set* mutation member (use Render/Apply/Slot/Wire per SPEC 3)")
+            bad = 1
+        if re.search(r"\b(?:type|and)\s+(?:\[<[^>]+>\]\s*)*(?:(?:public|internal|private)\s+)?\w+Look\b", clean):
+            print(f"FAIL {p}:{lineno}: forbidden *Look record type")
+            bad = 1
+        if re.search(r"\bDispatcherTimer\b", clean):
+            print(f"FAIL {p}:{lineno}: forbidden DispatcherTimer in library/composer production source")
+            bad = 1
+        if re.search(r"\bOnCreateAutomationPeer\b", clean):
+            print(f"FAIL {p}:{lineno}: forbidden custom OnCreateAutomationPeer")
+            bad = 1
 
 sys.exit(bad)
 PY

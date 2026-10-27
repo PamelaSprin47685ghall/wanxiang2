@@ -7,7 +7,7 @@ open System.Text
 open System.Threading
 
 /// libc 的目录句柄：改名后对所在目录 fsync（POSIX 上目录项不在文件页缓存里）。
-/// 仅 Unix 有实际动作；Windows 上 NTFS 日志保障元数据，不需要。
+/// 仅非 Windows 平台尝试目录同步；Windows 目录项持久性未在此处验证。
 /// `open` 是 F# 关键字，用 EntryPoint 指到 libc 的真实名字。
 module AtomicTextFileInterop =
 

@@ -195,7 +195,7 @@ type WorkspaceModel =
         Prefs: UiPrefs
         Chrome: ChromeState
         Composer: ComposerState
-        /// 侧栏一行一个摘要；行数据 = Wanxiang2.ConversationSummary 的解析结果（单一事实类型）。
+        /// 侧栏一行一个摘要；行数据 = 本库 ConversationSummary 模块的解析结果（单一事实类型）。
         Summaries: ConversationSummary list
         /// 分叉谱系：对话 id → 父对话与分叉点（来自同一份对话列表快照，非伪造）
         Lineage: Map<Guid, ForkLineage>

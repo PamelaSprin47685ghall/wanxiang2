@@ -229,6 +229,16 @@ function setupShellStatus() {
         hideTimer = setTimeout(() => { offlineBar.hidden = true; }, 3500);
     };
     if (offlineBar && text) {
+        const dismiss = document.getElementById("shell-status-dismiss");
+        // 提示条隐藏时，若焦点还停在它的关闭按钮上，把焦点还给应用容器（决策 454 的键盘入口是 #out）。
+        // MutationObserver 同时覆盖点击关闭与网络恢复后的自动隐藏两条路径。
+        new MutationObserver(() => {
+            const out = document.getElementById("out");
+            if (out && document.activeElement === dismiss) out.focus({ preventScroll: true });
+        }).observe(offlineBar, { attributeFilter: ["hidden"], attributes: true });
+        if (dismiss) dismiss.onclick = () => {
+            offlineBar.hidden = true;
+        };
         if (!navigator.onLine) showOffline();
         addEventListener("offline", showOffline);
         addEventListener("online", showBack);

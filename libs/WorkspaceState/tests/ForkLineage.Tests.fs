@@ -1,4 +1,4 @@
-module Tests
+module ForkLineageTests
 
 open System
 open System.Text.Json.Nodes

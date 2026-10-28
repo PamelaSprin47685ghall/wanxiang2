@@ -201,6 +201,7 @@ type ShellComposer(ports: ShellPorts) =
 
     member this.Dispatch(msg: Msg) : unit =
         let now = ports.Now()
+        let wasSearchDebouncing = model.Chrome.SearchDebouncingUntil.IsSome
         let next, effects = Workspace.update now msg model
         model <- next
 
@@ -212,6 +213,9 @@ type ShellComposer(ports: ShellPorts) =
             ports.ApplyTheme(UiPrefs.isDark prefs (ports.SystemPrefersDark()))
         | User(Settings(SettingsUserMsg.OpenSection _)) ->
             views |> Option.iter (fun v -> ports.Post(fun () -> v.SettingsFocusInitial()))
+        | MsgTick _ when wasSearchDebouncing && model.Chrome.SearchDebouncingUntil.IsNone ->
+            views
+            |> Option.iter (fun v -> v.Sidebar.Search.TriggerDebounced model.Chrome.SearchQuery)
         | _ -> ()
 
         let instanceId =
@@ -839,7 +843,11 @@ type ShellComposer(ports: ShellPorts) =
         if model.Prefs.persistDrafts then
             restoreDraft ()
 
-        // 侧栏：正文搜索的出口（查询词 → 线协议）与命中打开（打开对话 + 定位消息）。
+        // 侧栏：搜索框输入进状态树（启动 300 ms 防抖），防抖由 MsgTick 到期触发 Search.TriggerDebounced；
+        // 正文搜索出口（查询词 → 线协议）与命中打开（打开对话 + 定位消息）在此接线。
+        built.Sidebar.Search.Changed.Add(fun text ->
+            this.Dispatch(User(Sidebar(SidebarUserMsg.SearchTextChanged text))))
+
         built.Sidebar.SearchHandler <-
             Some(fun query includeArchived offset ->
                 match MessageLink.tryParse query with

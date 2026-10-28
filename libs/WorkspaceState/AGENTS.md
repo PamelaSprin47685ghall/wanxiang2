@@ -14,6 +14,13 @@
 - 对应测试：`tests/SearchHitTests.fs` 的 `search hit parsing clamps bad highlight ranges and drops rows without ids`、`消息命中片段去掉 Markdown 记号，命中词保持原样`、`truncated page says so` 。
 - 内聚纯模块（自 `libs/ChangeWatch` 迁入）：`ReconnectBackoff`（`ReconnectBackoff.fs`，1s 起翻倍封顶 30s 退避）、`MessageLink`（`MessageLink.fs`，`wanxiang://open?c=…&m=…` 与 PWA `#open?…` 链接生成与识别）、`DraftSummaryText`（`DraftSummaryText.fs`，草稿与未确认消息摘要文案）、`ForkAnchor`（`ForkAnchor.fs`，分叉点 `forkAfter` 选择与已编辑用户消息 JSON 拼装）、`RevealTarget`（`RevealTarget.fs`，已加载窗口内的定位目标解析）、`OlderPageLoad`（`OlderPageLoad.fs`，加载更早消息的在途与超时判断）。
 - 对应测试：`tests/WorkspaceStateTests.fs`：`Pure modules in WorkspaceState: ReconnectBackoff, MessageLink, DraftSummaryText, ForkAnchor, RevealTarget, OlderPageLoad`。
+- 下沉的客户端领域事实（2026-10-28 并入，消除 6 项兄弟包依赖，仅留 `Wanxiang2.Wire`）：
+  - `ForkLineage`（`ForkLineage.fs`）：分叉谱系解析与兄弟版本定位（`tests/ForkLineage.Tests.fs`）。
+  - `ConversationSummary`（`ConversationSummary.fs`）：对话摘要解析、日期分组、筛选与快捷键编号（`tests/ConversationSummary.Tests.fs`）。
+  - `UiPrefs`（`UiPrefs.fs`）：界面偏好与主题轮转纯逻辑（`tests/UiPrefs.Tests.fs`）。
+  - `ModelVision` / `HostCatalog`（`ModelVision.fs`、`HostCatalog.fs`）：模型看图判断与主机目录解析（`tests/ModelVision.Tests.fs`、`tests/HostCatalog.Tests.fs`）。
+  - `MessageView`（`MessageView.fs`）：消息与工具调用视图、附件引用与重发门控（`tests/MessageView.Tests.fs`）。
+  - `DevicesModel` 事实部分（`DevicesModel.fs`）：`DeviceInfo`、`PairingInviteView` 及解析、倒计时、分组码与在线文案（`tests/DevicesModel.Tests.fs`；二维码与局域网地址推断仍留 `libs/DevicesModel`，同名模块按名合并）。
 
 ## 事实归属（W7-B3 补全）
 - `Chrome.RevealTarget : (Guid * string) option`：定位目标（对话 + 消息），来自搜索命中与消息链接。

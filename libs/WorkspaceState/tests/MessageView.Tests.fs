@@ -1,7 +1,6 @@
-module Tests
+module MessageViewTests
 
 open System
-open System.IO
 open System.Text.Json.Nodes
 open Xunit
 open Wanxiang.UI
@@ -280,7 +279,6 @@ module R9 =
         Assert.False(ReplyTail.isUnanswered now [ msg "user" "q" old; msg "assistant" "a" old ])
         Assert.False(ReplyTail.isUnanswered now [ msg "user" "流式" None ])
         Assert.False(ReplyTail.isUnanswered now [])
-
 
 // 迁自旧 AppShell.RegenerateLatest / CopyLatestReply：与原样摘录（Regenerate/toast/复制换成记录）逐例比对。
 module ReplyGateTests =

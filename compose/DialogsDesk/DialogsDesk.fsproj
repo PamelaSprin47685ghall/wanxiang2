@@ -15,7 +15,7 @@
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PopupMenu" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConnectionIssue" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConnectIssueText" VersionOverride="0.0.0-local" />

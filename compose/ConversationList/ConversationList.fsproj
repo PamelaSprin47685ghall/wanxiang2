@@ -4,8 +4,7 @@
     <Compile Include="ConversationList.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ForkLineage" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PendingDeletion" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationTransfer" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />

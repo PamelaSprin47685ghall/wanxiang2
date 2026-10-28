@@ -1,7 +1,5 @@
-module Tests
+module UiPrefsTests
 
-open System
-open System.IO
 open Xunit
 open Wanxiang.UI
 

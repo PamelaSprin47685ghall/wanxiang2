@@ -4,7 +4,7 @@
 >
 > 当前值以命令为准：
 >
-> - 库数 / 组合者数 / 控件库数：`./x check` 的输出（当前为 `109 libs with no sibling references; 71 composer(s) using packages only`，控件库 17 个）。
+> - 库数 / 组合者数 / 控件库数：`./x check` 的输出（2026-10-28 领域事实下沉后为 `104 libs with no sibling references; 71 composer(s) using packages only`，控件库 17 个）。
 > - 库与组合者的生产 LOC：`find libs -name '*.fs' -not -path '*/tests/*' -not -path '*/obj/*' -not -path '*/bin/*' -exec cat {} + | wc -l`（`compose/` 同理）。
 > - 生产消费者数：`grep -rl 'Wanxiang2\.<Name>' --include='*.fsproj' libs compose app | grep -v /tests/`。
 >
@@ -17,7 +17,7 @@
 - **生产消费者**：`libs/`、`compose/`、`app/` 下非 `tests/`、非 `tools/` 的工程文件里，引用 `Wanxiang2.<Name>` 的工程个数。
 - **UNWIRED.md**：包目录里存在该文件即为「是」（登记为无消费者的例外）。
 
-采集时点规模（见文首历史快照说明）：`libs/` 118 个包，生产源码合计 29896 行；`compose/` 70 个组合者，生产源码合计 19211 行。当前值：`libs/` 109 个包、生产源码 40234 行；`compose/` 71 个组合者、生产源码 30053 行（2026-10-26 实测）。
+采集时点规模（见文首历史快照说明）：`libs/` 118 个包，生产源码合计 29896 行；`compose/` 70 个组合者，生产源码合计 19211 行。当前值：`libs/` 104 个包（2026-10-28 将 `ForkLineage`、`ConversationSummary`、`UiPrefs`、`HostCatalog`、`MessageView` 五个库下沉并入 `libs/WorkspaceState` 后由 109 减至 104）；`compose/` 71 个组合者。
 
 ## 一、`libs/*` 包清单（按生产 LOC 升序）
 

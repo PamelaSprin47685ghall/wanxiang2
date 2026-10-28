@@ -4,7 +4,7 @@
     <Compile Include="UiPrefsFile.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.LocalState" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

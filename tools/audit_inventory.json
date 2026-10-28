@@ -6,7 +6,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 10,
-  "loc": 1611,
+  "loc": 1626,
   "members": [
    "ActionStrip.fs",
    "AttachmentChip.fs",
@@ -20,6 +20,7 @@
    "UserBubble.fs"
   ],
   "consumers": [
+   "compose/Gallery/Gallery.fsproj",
    "compose/MessageCardView/MessageCardView.fsproj"
   ],
   "external": [
@@ -100,7 +101,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 1475,
+  "loc": 1504,
   "members": [
    "ConfigModel.fs",
    "TomlCodec.fs"
@@ -140,7 +141,8 @@
    "ApprovalPanel.fs"
   ],
   "consumers": [
-   "compose/ApprovalDesk/ApprovalDesk.fsproj"
+   "compose/ApprovalDesk/ApprovalDesk.fsproj",
+   "compose/Gallery/Gallery.fsproj"
   ],
   "external": [
    "Avalonia"
@@ -171,7 +173,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 119,
+  "loc": 157,
   "members": [
    "AtomicTextFile.fs"
   ],
@@ -246,7 +248,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 4,
-  "loc": 1085,
+  "loc": 1081,
   "members": [
    "AttachmentTray.fs",
    "ComposerBox.fs",
@@ -254,7 +256,8 @@
    "ModelChip.fs"
   ],
   "consumers": [
-   "compose/ComposerDesk/ComposerDesk.fsproj"
+   "compose/ComposerDesk/ComposerDesk.fsproj",
+   "compose/Gallery/Gallery.fsproj"
   ],
   "external": [
    "Avalonia"
@@ -269,15 +272,14 @@
   "has_agents": true,
   "has_tests": true,
   "unwired": false,
-  "files": 11,
-  "loc": 1398,
+  "files": 10,
+  "loc": 1480,
   "members": [
    "BatchBar.fs",
    "ConversationRows.fs",
    "HostSwitcher.fs",
    "ListEmptyCard.fs",
    "RowFocus.fs",
-   "SearchHit.fs",
    "SearchSegments.fs",
    "SearchSession.fs",
    "SidebarBrand.fs",
@@ -285,7 +287,7 @@
    "SidebarSelection.fs"
   ],
   "consumers": [
-   "compose/AppShell/AppShell.fsproj",
+   "compose/Gallery/Gallery.fsproj",
    "compose/SidebarDesk/SidebarDesk.fsproj"
   ],
   "external": [
@@ -348,8 +350,7 @@
   ],
   "consumers": [
    "compose/AppShell/AppShell.fsproj",
-   "compose/SettingsScreen/SettingsScreen.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
+   "compose/SettingsScreen/SettingsScreen.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -361,12 +362,13 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 185,
+  "loc": 223,
   "members": [
    "BrandMark.fs",
    "ShellLayout.fs"
   ],
   "consumers": [
+   "compose/Gallery/Gallery.fsproj",
    "compose/ShellDesk/ShellDesk.fsproj"
   ],
   "external": [
@@ -424,7 +426,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 9,
-  "loc": 529,
+  "loc": 531,
   "members": [
    "CountdownTicker.fs",
    "DurationText.fs",
@@ -471,7 +473,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 6,
-  "loc": 758,
+  "loc": 777,
   "members": [
    "ChatEmpty.fs",
    "ChatEmptyText.fs",
@@ -498,14 +500,15 @@
   "has_tests": true,
   "unwired": false,
   "files": 3,
-  "loc": 413,
+  "loc": 412,
   "members": [
    "BreadcrumbAction.fs",
    "ChatHeader.fs",
    "RevealFlash.fs"
   ],
   "consumers": [
-   "compose/ChatScreen/ChatScreen.fsproj"
+   "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/Gallery/Gallery.fsproj"
   ],
   "external": [
    "Avalonia"
@@ -710,7 +713,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 6,
-  "loc": 1103,
+  "loc": 1107,
   "members": [
    "ConfirmPane.fs",
    "ConnectPane.fs",
@@ -720,7 +723,8 @@
    "TextEditPane.fs"
   ],
   "consumers": [
-   "compose/DialogsDesk/DialogsDesk.fsproj"
+   "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/Gallery/Gallery.fsproj"
   ],
   "external": [
    "Avalonia"
@@ -741,10 +745,8 @@
    "ConnectionIssue.fs"
   ],
   "consumers": [
-   "compose/AppShell/AppShell.fsproj",
    "compose/ConnectIssueText/ConnectIssueText.fsproj",
-   "compose/DialogsDesk/DialogsDesk.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
+   "compose/DialogsDesk/DialogsDesk.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -783,27 +785,6 @@
   ],
   "consumers": [
    "compose/ChatOrchestrator/ChatOrchestrator.fsproj"
-  ],
-  "external": [],
-  "wanxiang": []
- },
- {
-  "name": "ConversationSummary",
-  "stale": false,
-  "has_agents": true,
-  "has_tests": true,
-  "unwired": false,
-  "files": 1,
-  "loc": 205,
-  "members": [
-   "ConversationSummary.fs"
-  ],
-  "consumers": [
-   "compose/CommandPalette/CommandPalette.fsproj",
-   "compose/ConversationList/ConversationList.fsproj",
-   "compose/ConversationRuns/ConversationRuns.fsproj",
-   "compose/SidebarDesk/SidebarDesk.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -903,14 +884,12 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 150,
+  "loc": 54,
   "members": [
    "DevicesModel.fs"
   ],
   "consumers": [
-   "compose/AppShell/AppShell.fsproj",
-   "compose/SettingsScreen/SettingsScreen.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
+   "compose/SettingsScreen/SettingsScreen.fsproj"
   ],
   "external": [
    "QRCoder"
@@ -924,7 +903,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 18,
-  "loc": 3043,
+  "loc": 3091,
   "members": [
    "DevicesPane.fs",
    "GeneralPane.fs",
@@ -946,6 +925,7 @@
    "Ui.fs"
   ],
   "consumers": [
+   "compose/Gallery/Gallery.fsproj",
    "compose/SettingsScreen/SettingsScreen.fsproj"
   ],
   "external": [
@@ -989,9 +969,7 @@
    "app/Desktop/Wanxiang.App.fsproj",
    "app/Pwa/Wanxiang.Pwa.fsproj",
    "compose/AppShell/AppShell.fsproj",
-   "compose/EntryShells/EntryShells.fsproj",
-   "compose/Outbox/Outbox.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
+   "compose/Outbox/Outbox.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -1051,6 +1029,7 @@
    "TranscriptMarkdown.fs"
   ],
   "consumers": [
+   "compose/Gallery/Gallery.fsproj",
    "compose/TransferDesk/TransferDesk.fsproj"
   ],
   "external": [
@@ -1065,7 +1044,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 133,
+  "loc": 142,
   "members": [
    "FailureLimiter.fs",
    "PairingCode.fs"
@@ -1089,6 +1068,7 @@
   ],
   "consumers": [
    "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/Gallery/Gallery.fsproj",
    "compose/SettingsScreen/SettingsScreen.fsproj"
   ],
   "external": [
@@ -1103,37 +1083,18 @@
   "has_tests": true,
   "unwired": false,
   "files": 2,
-  "loc": 404,
+  "loc": 487,
   "members": [
    "FocusOrigin.fs",
    "OverlayLayer.fs"
   ],
   "consumers": [
+   "compose/Gallery/Gallery.fsproj",
    "compose/OverlayDesk/OverlayDesk.fsproj"
   ],
   "external": [
    "Avalonia"
   ],
-  "wanxiang": []
- },
- {
-  "name": "ForkLineage",
-  "stale": false,
-  "has_agents": true,
-  "has_tests": true,
-  "unwired": false,
-  "files": 1,
-  "loc": 98,
-  "members": [
-   "ForkLineage.fs"
-  ],
-  "consumers": [
-   "compose/ChatScreen/ChatScreen.fsproj",
-   "compose/ConversationList/ConversationList.fsproj",
-   "compose/SidebarDesk/SidebarDesk.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
-  ],
-  "external": [],
   "wanxiang": []
  },
  {
@@ -1173,36 +1134,13 @@
   "wanxiang": []
  },
  {
-  "name": "HostCatalog",
-  "stale": false,
-  "has_agents": true,
-  "has_tests": true,
-  "unwired": false,
-  "files": 2,
-  "loc": 431,
-  "members": [
-   "HostCatalog.fs",
-   "ModelVision.fs"
-  ],
-  "consumers": [
-   "compose/AppShell/AppShell.fsproj",
-   "compose/Catalog/Catalog.fsproj",
-   "compose/ComposerDesk/ComposerDesk.fsproj",
-   "compose/DialogsDesk/DialogsDesk.fsproj",
-   "compose/SettingsScreen/SettingsScreen.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
-  ],
-  "external": [],
-  "wanxiang": []
- },
- {
   "name": "HttpFailureFacts",
   "stale": false,
   "has_agents": true,
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 92,
+  "loc": 112,
   "members": [
    "HttpFailureFacts.fs"
   ],
@@ -1219,7 +1157,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 3,
-  "loc": 178,
+  "loc": 208,
   "members": [
    "HttpRetry.fs",
    "JsonPick.fs",
@@ -1381,15 +1319,17 @@
   "has_agents": true,
   "has_tests": true,
   "unwired": false,
-  "files": 7,
-  "loc": 483,
+  "files": 9,
+  "loc": 599,
   "members": [
    "CheckpointJson.fs",
+   "DirFsync.fs",
    "Envelope.fs",
    "Frame.fs",
    "JsonSeqFile.fs",
    "Ledger.fs",
    "Snapshot.fs",
+   "StreamSplit.fs",
    "Types.fs"
   ],
   "consumers": [
@@ -1609,33 +1549,6 @@
   "wanxiang": []
  },
  {
-  "name": "MessageView",
-  "stale": false,
-  "has_agents": true,
-  "has_tests": true,
-  "unwired": false,
-  "files": 1,
-  "loc": 303,
-  "members": [
-   "MessageView.fs"
-  ],
-  "consumers": [
-   "compose/AppShell/AppShell.fsproj",
-   "compose/ChatScreen/ChatScreen.fsproj",
-   "compose/ComposerDesk/ComposerDesk.fsproj",
-   "compose/ConversationExport/ConversationExport.fsproj",
-   "compose/ConversationRuns/ConversationRuns.fsproj",
-   "compose/ImageShrink/ImageShrink.fsproj",
-   "compose/ImageShrink/ImageShrinkIo.fsproj",
-   "compose/MessageCardView/MessageCardView.fsproj",
-   "compose/ProtocolDispatch/ProtocolDispatch.fsproj",
-   "compose/TransferDesk/TransferDesk.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
-  ],
-  "external": [],
-  "wanxiang": []
- },
- {
   "name": "ModelListing",
   "stale": false,
   "has_agents": true,
@@ -1665,6 +1578,7 @@
    "ModelSwitchPanel.fs"
   ],
   "consumers": [
+   "compose/Gallery/Gallery.fsproj",
    "compose/ModelSwitchDesk/ModelSwitchDesk.fsproj"
   ],
   "external": [
@@ -1729,8 +1643,7 @@
   ],
   "consumers": [
    "compose/AppShell/AppShell.fsproj",
-   "compose/ShellDesk/ShellDesk.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
+   "compose/ShellDesk/ShellDesk.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -1782,6 +1695,7 @@
    "PalettePanel.fs"
   ],
   "consumers": [
+   "compose/Gallery/Gallery.fsproj",
    "compose/PaletteDesk/PaletteDesk.fsproj"
   ],
   "external": [
@@ -1856,6 +1770,7 @@
   "consumers": [
    "compose/ChatScreen/ChatScreen.fsproj",
    "compose/DialogsDesk/DialogsDesk.fsproj",
+   "compose/Gallery/Gallery.fsproj",
    "compose/OverlayDesk/OverlayDesk.fsproj",
    "compose/SettingsScreen/SettingsScreen.fsproj",
    "compose/SidebarDesk/SidebarDesk.fsproj"
@@ -2016,7 +1931,7 @@
   "has_tests": true,
   "unwired": false,
   "files": 1,
-  "loc": 7,
+  "loc": 30,
   "members": [
    "ThemeFonts.fs"
   ],
@@ -2114,6 +2029,7 @@
    "compose/ApprovalDesk/ApprovalDesk.fsproj",
    "compose/DialogsDesk/DialogsDesk.fsproj",
    "compose/EntryShells/EntryShells.fsproj",
+   "compose/Gallery/Gallery.fsproj",
    "compose/OverlayDesk/OverlayDesk.fsproj",
    "compose/SettingsScreen/SettingsScreen.fsproj"
   ],
@@ -2158,31 +2074,6 @@
    "compose/DialogsDesk/DialogsDesk.fsproj",
    "compose/MessageCardView/MessageCardView.fsproj",
    "compose/ToolApproval/ToolApproval.fsproj"
-  ],
-  "external": [],
-  "wanxiang": []
- },
- {
-  "name": "UiPrefs",
-  "stale": false,
-  "has_agents": true,
-  "has_tests": true,
-  "unwired": false,
-  "files": 1,
-  "loc": 182,
-  "members": [
-   "UiPrefs.fs"
-  ],
-  "consumers": [
-   "app/Desktop/Wanxiang.App.fsproj",
-   "app/Pwa/Wanxiang.Pwa.fsproj",
-   "compose/AppShell/AppShell.fsproj",
-   "compose/EntryShells/EntryShells.fsproj",
-   "compose/Gallery/Gallery.fsproj",
-   "compose/SettingsScreen/SettingsScreen.fsproj",
-   "compose/ShellCommands/ShellCommands.fsproj",
-   "compose/UiPrefsFile/UiPrefsFile.fsproj",
-   "libs/WorkspaceState/WorkspaceState.fsproj"
   ],
   "external": [],
   "wanxiang": []
@@ -2280,33 +2171,55 @@
   "has_agents": true,
   "has_tests": true,
   "unwired": false,
-  "files": 11,
-  "loc": 2676,
+  "files": 19,
+  "loc": 4139,
   "members": [
+   "ConversationSummary.fs",
+   "DevicesModel.fs",
    "DraftSummaryText.fs",
    "ForkAnchor.fs",
+   "ForkLineage.fs",
+   "HostCatalog.fs",
    "MessageLink.fs",
+   "MessageView.fs",
    "Model.fs",
+   "ModelVision.fs",
    "OlderPageLoad.fs",
    "Project.fs",
    "ReconnectBackoff.fs",
    "RevealTarget.fs",
+   "SearchHit.fs",
    "Types.fs",
+   "UiPrefs.fs",
    "Update.fs",
    "ViewState.fs"
   ],
   "consumers": [
+   "app/Desktop/Wanxiang.App.fsproj",
+   "app/Pwa/Wanxiang.Pwa.fsproj",
    "compose/AppShell/AppShell.fsproj",
    "compose/ApprovalDesk/ApprovalDesk.fsproj",
+   "compose/Catalog/Catalog.fsproj",
    "compose/ChatPane/ChatPane.fsproj",
    "compose/ChatScreen/ChatScreen.fsproj",
+   "compose/CommandPalette/CommandPalette.fsproj",
    "compose/ComposerDesk/ComposerDesk.fsproj",
+   "compose/ConversationExport/ConversationExport.fsproj",
+   "compose/ConversationList/ConversationList.fsproj",
+   "compose/ConversationRuns/ConversationRuns.fsproj",
+   "compose/DialogsDesk/DialogsDesk.fsproj",
    "compose/EntryShells/EntryShells.fsproj",
    "compose/Gallery/Gallery.fsproj",
+   "compose/ImageShrink/ImageShrink.fsproj",
+   "compose/ImageShrink/ImageShrinkIo.fsproj",
    "compose/MessageCardView/MessageCardView.fsproj",
    "compose/OverlayDesk/OverlayDesk.fsproj",
+   "compose/ProtocolDispatch/ProtocolDispatch.fsproj",
    "compose/SettingsScreen/SettingsScreen.fsproj",
+   "compose/ShellCommands/ShellCommands.fsproj",
    "compose/SidebarDesk/SidebarDesk.fsproj",
+   "compose/TransferDesk/TransferDesk.fsproj",
+   "compose/UiPrefsFile/UiPrefsFile.fsproj",
    "compose/Workspace/Workspace.fsproj",
    "libs/ActionStrip/ActionStrip.fsproj",
    "libs/AttachmentTray/AttachmentTray.fsproj",
@@ -2320,16 +2233,6 @@
   ],
   "external": [],
   "wanxiang": [
-   "Wanxiang2.BoundedWait",
-   "Wanxiang2.ConnectionIssue",
-   "Wanxiang2.ConversationSummary",
-   "Wanxiang2.DevicesModel",
-   "Wanxiang2.DraftStore",
-   "Wanxiang2.ForkLineage",
-   "Wanxiang2.HostCatalog",
-   "Wanxiang2.MessageView",
-   "Wanxiang2.NavigationState",
-   "Wanxiang2.UiPrefs",
    "Wanxiang2.Wire"
   ]
  }

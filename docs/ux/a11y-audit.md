@@ -55,7 +55,7 @@
 ## 5. 动效
 
 - 几何动画被禁止（旧 `DesignConvergenceTests`，未随迁；本仓库的动效机械检查是 `libs/ColorBlend` 的颜色补间金样与 `compose/Theme/tests` 的「reduced motion …」用例，**没有**等价于「禁止几何动画」的断言），状态只补间颜色与不透明度。
-- PWA 样式含 `prefers-reduced-motion`（本仓库仍由 `compose/Theme/tests/A11yRegression.fs` 静态断言存在）。已查（2026-10-18）：Avalonia 12.1.2 的 `IPlatformSettings` 只有点击尺寸、热键和 `GetColorValues`。`PlatformColorValues.ContrastPreference` 是系统高对比，不是减弱动效。画布内补间因此读不到系统“减少动态”；`libs/MotionSwitch` 只由 `libs/UiPrefs.reduceMotion`（默认 false）经 `compose/AppShell` 的 `SetReducedMotion` 驱动。PWA 壳的 `prefers-reduced-motion` 只作用于壳层 CSS，不进入 Avalonia 画布。
+- PWA 样式含 `prefers-reduced-motion`（本仓库仍由 `compose/Theme/tests/A11yRegression.fs` 静态断言存在）。已查（2026-10-18）：Avalonia 12.1.2 的 `IPlatformSettings` 只有点击尺寸、热键和 `GetColorValues`。`PlatformColorValues.ContrastPreference` 是系统高对比，不是减弱动效。画布内补间因此读不到系统“减少动态”；`libs/MotionSwitch` 只由 `libs/WorkspaceState`（`UiPrefs.reduceMotion`，默认 false）经 `compose/AppShell` 的 `SetReducedMotion` 驱动。PWA 壳的 `prefers-reduced-motion` 只作用于壳层 CSS，不进入 Avalonia 画布。
 
 ## 6. 文案一致性与术语表
 

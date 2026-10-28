@@ -23,7 +23,6 @@
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ShellDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ToastStrip" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />

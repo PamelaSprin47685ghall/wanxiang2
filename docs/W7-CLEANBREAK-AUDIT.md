@@ -509,7 +509,7 @@
 
 **已修**：按 `compose/Outbox` 的 `MessageOutbox.BuildMessage` **同一份形状**构造
 `{"role":"user","contents":[{"text":…},{"type":"attachment","sha256":…,"size":…,"mediaType":…,"fileName":…}]}`。
-解析侧是 `libs/MediaContent/MessageSerde.fs` 的 `attachmentRefs` 与 `libs/MessageView` 的同名分支。
+解析侧是 `libs/MediaContent/MessageSerde.fs` 的 `attachmentRefs` 与 `libs/WorkspaceState/MessageView.fs` 的同名分支。
 **只有就绪的附件（`Ready && not Failed`）随消息发出**；上传中/失败的留在托盘里等宿主处理
 （与 `libs/ComposerDrafts` 的 `PendingAttachment.failed` 既有约定一致）。
 
@@ -908,15 +908,8 @@ PASS 无未捕获页面异常
 WebGL 坏掉的话拉丁字母也会没了；实测拉丁正常、CJK 缺字，是**字体族**问题。
 本轮一开始就是靠这条把方向带偏的，现已纠正（§9 末尾那段说明也已改写）。
 
-### 10.5 仍未覆盖
+### 10.5 弹出层渲染与后续收口（2026-10-24 / 2026-10-28 更新）
 
-- **弹出层**（ToolTip / ContextMenu / MenuFlyoutPresenter）的渲染**没有**单独截图验证，
-  靠 §10.2 的显式字体样式兜底（回归用例只覆盖字族解析、常用汉字覆盖与等宽回落，不覆盖弹出层渲染）；
-- 真实手机浏览器与系统字体差异环境下的表现，未验。
-
----
-
-## 10. 2026-10-23 交付状态准备（本轮状态）
-- **Git 工作树基线**：HEAD 为 `14e4625`，Git status 与 diff 均完全干净，与 `origin/main` 保持一致，旧文档中记录的「未提交」事实已过期解除。
-- **环境事实与真机限制**：DevOps 初始盘点确认（见 `docs/evidence/2026-10-23-handoff/initial-state.md`），宿主无 orca/speech-dispatcher/at-spi-bus-launcher，adb 无连接设备，本机不具备原生屏幕阅读器发声与真实手机实测条件，相关断言严格保持 `[待验证]`，不伪造测试结果。/tmp 历史失败日志已脱敏备份至 `docs/evidence/2026-10-23-handoff/pwa_smoke.log.bak`。
-- **团队协作与验证状态**：团队其他分工正在推进旅程闭环、画廊像素基线与无障碍遍历断言、PWA e2e 交互、格式工具与包异质性治理；本轮所有构建、测试与端到端运行结果当前处于 **`[待验证]`** 状态，待 DevOps 在 `docs/evidence/2026-10-23-handoff/` 留证后收口。
+- **弹出层**（ToolTip / ContextMenu / MenuFlyoutPresenter）的浏览器端真实渲染与中文 OCR 核验已于 2026-10-24 并入 `tools/smoke_published.sh`（28/28 项断言通过，见 `docs/evidence/2026-10-24-verified-release/README.md`）。
+- **客户端领域事实下沉（2026-10-28）**：`ForkLineage`、`ConversationSummary`、`UiPrefs`、`HostCatalog`、`MessageView` 五个纯事实库及 `DevicesModel` 事实部分已下沉并入 `libs/WorkspaceState`，全仓收敛为 **104 个库 + 71 个组合者**，`WorkspaceState` 兄弟包依赖从 7 项收窄至仅 `Wanxiang2.Wire` 1 项。
+- **剩余客观环境边界**：Linux Orca 读屏会话与物理移动设备（iOS / Android TalkBack）真机浏览器表现因宿主无对应物理设备仍未验。

@@ -5,7 +5,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.WsClient" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationRuns" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />

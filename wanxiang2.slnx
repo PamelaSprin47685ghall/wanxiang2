@@ -147,10 +147,6 @@
     <Project Path="libs/ContinuableReply/ContinuableReply.fsproj" />
     <Project Path="libs/ContinuableReply/tests/ContinuableReply.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ConversationSummary/">
-    <Project Path="libs/ConversationSummary/ConversationSummary.fsproj" />
-    <Project Path="libs/ConversationSummary/tests/ConversationSummary.Tests.fsproj" />
-  </Folder>
   <Folder Name="/ConversationTransfer/">
     <Project Path="libs/ConversationTransfer/ConversationTransfer.fsproj" />
     <Project Path="libs/ConversationTransfer/tests/ConversationTransfer.Tests.fsproj" />
@@ -207,10 +203,6 @@
     <Project Path="libs/FocusOrigin/FocusOrigin.fsproj" />
     <Project Path="libs/FocusOrigin/tests/FocusOrigin.Tests.fsproj" />
   </Folder>
-  <Folder Name="/ForkLineage/">
-    <Project Path="libs/ForkLineage/ForkLineage.fsproj" />
-    <Project Path="libs/ForkLineage/tests/ForkLineage.Tests.fsproj" />
-  </Folder>
   <Folder Name="/FuzzyMatch/">
     <Project Path="libs/FuzzyMatch/FuzzyMatch.fsproj" />
     <Project Path="libs/FuzzyMatch/tests/FuzzyMatch.Tests.fsproj" />
@@ -218,10 +210,6 @@
   <Folder Name="/HljsCatalog/">
     <Project Path="libs/HljsCatalog/HljsCatalog.fsproj" />
     <Project Path="libs/HljsCatalog/tests/HljsCatalog.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/HostCatalog/">
-    <Project Path="libs/HostCatalog/HostCatalog.fsproj" />
-    <Project Path="libs/HostCatalog/tests/HostCatalog.Tests.fsproj" />
   </Folder>
   <Folder Name="/HttpFailureFacts/">
     <Project Path="libs/HttpFailureFacts/HttpFailureFacts.fsproj" />
@@ -306,10 +294,6 @@
   <Folder Name="/MessageText/">
     <Project Path="libs/MessageText/MessageText.fsproj" />
     <Project Path="libs/MessageText/tests/MessageText.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/MessageView/">
-    <Project Path="libs/MessageView/MessageView.fsproj" />
-    <Project Path="libs/MessageView/tests/MessageView.Tests.fsproj" />
   </Folder>
   <Folder Name="/ModelListing/">
     <Project Path="libs/ModelListing/ModelListing.fsproj" />
@@ -414,10 +398,6 @@
   <Folder Name="/ToolSummary/">
     <Project Path="libs/ToolSummary/ToolSummary.fsproj" />
     <Project Path="libs/ToolSummary/tests/ToolSummary.Tests.fsproj" />
-  </Folder>
-  <Folder Name="/UiPrefs/">
-    <Project Path="libs/UiPrefs/UiPrefs.fsproj" />
-    <Project Path="libs/UiPrefs/tests/UiPrefs.Tests.fsproj" />
   </Folder>
   <Folder Name="/UrlSchemeRegistration/">
     <Project Path="libs/UrlSchemeRegistration/UrlSchemeRegistration.fsproj" />

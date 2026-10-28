@@ -9,13 +9,11 @@
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Wanxiang2.AttachmentTray" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerDrafts" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PromptHistory" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.SpacingRamp" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DesignRhythm" VersionOverride="0.0.0-local" />
   </ItemGroup>

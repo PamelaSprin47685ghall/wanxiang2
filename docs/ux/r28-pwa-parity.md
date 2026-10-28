@@ -1,7 +1,7 @@
 # 第 28 轮：桌面 / PWA 生命周期一致性审计
 
 > 基准变更（2026-10-18）：下表是旧仓库 wanxiang（2026-10-17 退役，活文档迁入本仓库）的运行时实测记录，打点靠旧 `ParityProbe`（决策 450）。探针链已于 2026-10-18 退役删除（无接线、无消费者），本表按历史记录读；今天的行为证据是 `compose/AppShell/tests`、`tools/smoke_desktop.sh`、`tools/smoke_published.sh`。
-> 今天的证据基础：`compose/AppShell/tests`（18 个 headless 用例，假端口 rig）、`tools/smoke_desktop.sh`（真实启动断言）、`tools/smoke_published.sh` + `tools/smoke_published_pwa.js`（发布产物 + headless Chrome 壳冒烟；先 `npm ci` 装 `puppeteer-core`，CI 的 `published-smoke` 任务与发布流程的 linux-x64 都跑它；2026-10-18 本机通过：画布渲染、DPR 2、文本上屏桥、**认证态下草稿落进 IndexedDB 且重开页面恢复**、无页面异常——最后一项由脚本预置客户端凭据把浏览器接进已认证状态后真跑）。表中浏览器运行时行为里，**落草稿一条已有运行时实测**；剪贴板、文件选择/保存、右键菜单、拖放、焦点在 body 时快捷键、localStorage 持久化仍只有编译与 JS 绑定契约级证据。
+> 今天的证据基础：`compose/AppShell/tests`（59 个 headless 用例，假端口 rig，覆盖旅程 1–6、原生 Tab 焦点流转、快捷键拦截、草稿节流闸、到期真删，以及剪贴板复制 `CopyLastReply`/`CopyText`、下载保存 `SaveDownload`、限流倒计时 `RetryCountdown`、侧栏搜索 300ms 防抖合并 `Search.Changed` → `MsgTick` → `SearchQuery`）、`tools/smoke_desktop.sh`（真实启动断言）、`tools/smoke_published.sh` + `tools/smoke_published_pwa.js`（发布产物 + headless Chrome 壳 28 项端到端冒烟：画布渲染、DPR 2、文本上屏桥、ToolTip / 消息卡 ContextMenu / 输入框 MenuFlyout 三类弹出层中文 OCR 识别、命令面板执行落盘、设置页开关持久化、主题轮转、认证态下草稿落进 IndexedDB 且重开页面恢复、无页面异常）。表中除系统原生文件对话框与跨应用系统拖放受限于 headless 浏览器无法合成外，其余组合者接线与 PWA 壳交互均已有自动化断言。
 
 方法（旧仓库，2026-10 执行）：`ParityProbe`（决策 450，默认关闭）在每条依赖生命周期的路径上打点。PWA 用发布产物 + headless Chrome（查询参数开关，`tools/parity_pwa.js`）实测；桌面用发布产物 + Xvfb（`WANXIANG_PARITY_PROBE=1`）实测。
 
@@ -21,13 +21,15 @@
 | 网络恢复 / 回到前台 → 立即重连 | 不适用（桌面走退避） | ✅ | ✅ | `reconnect.resume` |
 | 深链 | ✅ `wanxiang://`（决策 251） | ✅ `#open?…` | ✅ | `deeplink.open` |
 | 输入框聚焦 | ✅ | ✅ | ✅ | `focus.composer`（脚本外实测） |
-| 剪贴板复制 / 粘贴 | ✅ | ✅（第 22 轮实测） | ✅ | 已打点 `clipboard.*`，CI 未断言（需会话） |
-| 文件选择 / 保存（附件、导入、导出） | ✅ | ✅（第 14/15 轮实测） | ✅ | 已打点 `file.*`，CI 未断言 |
+| 剪贴板复制 / 粘贴 | ✅ | ✅（第 22 轮实测） | ✅ | `AppShell.Tests` 断言 `CopyLastReply` 与卡片 `CopyText` 写入剪贴板端口 |
+| 文件选择 / 保存（附件、导入、导出） | ✅ | ✅（第 14/15 轮实测） | ✅ | `AppShell.Tests` 断言附件上传序列与下载完成触发 `SaveDownload` 端口 |
 | 拖放附件 | ✅ | 未实测（headless 无法合成系统拖放） | — | 已打点 `dragdrop.drop` |
-| 消息右键菜单 | ✅ | ✅（第 8 轮修复） | ✅ | 已打点 `contextmenu.message`，CI 未断言 |
-| 限流倒计时 / 搜索防抖 | ✅ | 控件构造时挂事件，挂载顺序无风险 | ✅ | 已打点 |
+| 消息右键菜单 | ✅ | ✅（第 8 轮修复） | ✅ | `ShortcutInterceptTests` + `smoke_published.sh` 菜单弹出与中文 OCR 断言 |
+| 限流倒计时 / 搜索防抖 | ✅ | 控件构造时挂事件，挂载顺序无风险 | ✅ | `AppShell.Tests` 断言 `RetryCountdown` 固定截止时刻与搜索框 300ms 防抖合并 |
 | 系统通知 | 无此功能 | 无此功能 | — | — |
+
+PWA 浏览器离线时，壳层显示网络状态提示；用户可以关闭提示以操作被其覆盖的界面。再次发生网络状态变化时应重新显示相应提示，关闭提示不改变连接状态。
 
 今天代码落点（供对照，不由本表断言）：决策 449 的计时器在 `compose/AppShell/AppShell.fs` 装配段（`ports.Every`：投递确认、草稿 800 ms、视口轮询、更早一页看门狗）；决策 451 的页面隐藏钩子在 `app/Pwa/wwwroot/main.js`（`visibilitychange`/`pagehide` → `libs/BrowserInterop.NotifyHidden`）；决策 452 的 PWA 持久化在入口本地模块 `LocalText`（`app/Pwa/Program.fs`，键 `wanxiang.local:<文件名>`，经 `libs/BrowserInterop`），桌面落 `ui.json`（`compose/UiPrefsFile`）；决策 454 的顶层按键钩子在 `app/Pwa/Program.fs`（`top.KeyDown`）与 `app/Desktop/Program.fs`（根视图 `AddHandler`），换算与分派在 `compose/AppShell/KeyShortcut.fs`。决策 290 的 `firstFrame` 桌面打在窗口 `Opened` 后第一帧，PWA 打在根视图挂上后的渲染优先级；`exit` 模式两边都由入口安装 `StartupTrace.requestExit`（`Environment.Exit 0`），时机仍在组合者的 `listReady` / `chatReady`。
 
-结论（旧仓库，2026-10）：第 27 轮那类「挂载早于订阅」的问题只出现在 MainView（顶层），子控件都是先挂事件再加入可视树，已逐个核对。另外发现 3 个与挂载无关、但同样「桌面正常、PWA 静默失效」的缺口（离开时落草稿、偏好持久化、首屏键盘），均已修复；当时「进 CI 冒烟」指 ParityProbe 打点 + `tools/parity_pwa.js` 链路，该链路未随迁，在本仓库不成立——今天能自动跑的只有 `compose/AppShell/tests`（18 个 headless 用例）与 `tools/smoke_desktop.sh` 的启动断言。
+结论（旧仓库，2026-10；2026-10-28 复核）：第 27 轮那类「挂载早于订阅」的问题只出现在 MainView（顶层），子控件都是先挂事件再加入可视树，已逐个核对。另外发现 3 个与挂载无关、但同样「桌面正常、PWA 静默失效」的缺口（离开时落草稿、偏好持久化、首屏键盘），均已修复；旧 `ParityProbe` 打点链路已退役，本仓库由 `compose/AppShell/tests`（59 个 headless 用例）、`tools/smoke_desktop.sh` 与 `tools/smoke_published.sh`（28 项端到端断言）承担自动化回归守护。

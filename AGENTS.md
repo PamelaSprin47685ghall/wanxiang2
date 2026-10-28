@@ -91,7 +91,7 @@
 
 2. **职责与交付独立。** [LEMMA: 4, 5]
     移除兄弟职责和组合者的源码、实例及服务回调后，只凭本库、工具链与声明依赖，仍能构建并验证本库公开行为；不塞入模拟对方调用流程的替身补洞。声明独立的 A、B 不相互依赖，整体依赖图无环。交付物能按声明的使用方式脱离开发工作区运行，不回退读取未交付文件。
-    - 证明：**已验证**（见下文《证据现状》SPEC 2）。构建与协作独立由 `./x check`（109 个库除登记特例 `WorkspaceState` 外零兄弟依赖）与 `./x test <lib>` 给出；交付独立由 `./x compose`（清空 `Wanxiang2.*` 缓存后只从 `artifacts/feed` 消费交付包）与 `./x consume`（仓库外临时目录独立工程消费 `Wanxiang2.LedgerStore` 提交并重开验证）给出。
+    - 证明：**已验证**（见下文《证据现状》SPEC 2）。构建与协作独立由 `./x check`（104 个库除登记特例 `WorkspaceState` 外零兄弟依赖）与 `./x test <lib>` 给出；交付独立由 `./x compose`（清空 `Wanxiang2.*` 缓存后只从 `artifacts/feed` 消费交付包）与 `./x consume`（仓库外临时目录独立工程消费 `Wanxiang2.LedgerStore` 提交并重开验证）给出。
 
 3. **状态确有主人。** [LEMMA: 3, 4, 7]
     每份可变状态只有一个负责其合法修改的对象，不能靠调用方记住额外步骤才保持正确。外部修改输入或返回值不能暗改对象内部；C 的协作状态与参与者的业务状态各有归属，不是两份可互相覆盖的权威。
@@ -130,12 +130,12 @@
 
 接入项目时盘点。每项记录：事项 / 使用方 / 保留理由 / 可验证的解除条件。完成盘点且无例外时写“无”；未盘点不等于没有例外。长期设计选择写入对应规则，不永久寄存在临时清单。
 
-**本项目盘点（2026-10-13，2026-10-26 按当前树复核）：**
+**本项目盘点（2026-10-13，2026-10-28 按当前树复核）：**
 
 | 事项 | 使用方 | 保留理由 | 可验证的解除条件 |
 | --- | --- | --- | --- |
 | `.fsproj` 用 `VersionOverride="0.0.0-local"` 绕过中央包版本；包版本固定为 `0.0.0-local` | 107 个工程：`compose/*` 93 个、`libs/` 12 个（`ActionStrip`、`AttachmentTray`、`BatchBar`、`ChatEmpty`、`ChatHeader`、`ConfirmPane`、`CopyButton`、`DevicesPane`、`ToastStrip`、`WorkspaceState`，以及 `DevicesPane`/`ToastStrip` 各自的 `tests` 工程）、`app/` 两个入口 | 库没有发布版本号，只在本地 feed 里存在 | 库开始按版本号发布，版本登记进 `Directory.Packages.props` |
-| WorkspaceState 单一状态树需要多兄弟包依赖（现值 7 个：`ConversationSummary`、`DevicesModel`、`ForkLineage`、`HostCatalog`、`MessageView`、`UiPrefs`、`Wire`） | 21 个生产工程：`compose/AppShell`、`ApprovalDesk`、`ChatPane`、`ChatScreen`、`ComposerDesk`、`EntryShells`、`Gallery`、`MessageCardView`、`OverlayDesk`、`SettingsScreen`、`SidebarDesk`、`Workspace`，以及 `libs/ActionStrip`、`AttachmentTray`、`BatchBar`、`ChatEmpty`、`ChatHeader`、`ConfirmPane`、`CopyButton`、`DevicesPane`、`ToastStrip` | WorkspaceState 是单一状态树，投影直接携带领域事实类型（会话摘要行、设备信息、分叉谱系、主机目录、消息视图、界面偏好、线协议），不再复制字段 | 事实类型下沉 WorkspaceState 或投影改传原始 Wire 类型后收窄；判定口径：`grep -oE 'Wanxiang2\.[A-Za-z0-9]+' libs/WorkspaceState/WorkspaceState.fsproj` 只剩自身 |
+| WorkspaceState 单一状态树引用兄弟包 `Wanxiang2.Wire`（现值 1 个；原 6 项客户端领域事实 `ConversationSummary`、`DevicesModel` 事实部分、`ForkLineage`、`HostCatalog`、`MessageView`、`UiPrefs` 已于 2026-10-28 下沉并入 `libs/WorkspaceState`） | 30 个生产工程：`compose/*` 20 个、`libs/` 10 个（`ActionStrip`、`AttachmentTray`、`BatchBar`、`ChatEmpty`、`ChatHeader`、`ConfirmPane`、`CopyButton`、`DevicesPane`、`ToastStrip`）及 `app/` 两个入口 | WorkspaceState 是单一状态树，直接处理与投影线协议类型（`SessionConfig`、`TranscriptPage`、`WireEvent` 等）与客户端领域事实，不再复制字段 | 投影改传原始值或将 Wire 客户端侧协议与状态树合包后收窄；判定口径：`grep -oE 'Wanxiang2\.[A-Za-z0-9]+' libs/WorkspaceState/WorkspaceState.fsproj` 只剩自身 |
 | `libs/FocusOrigin` 的 `OverlayLayer` 自研图层调度（Canvas/Margin 落点钳位、遮罩栈、滚轮隔离、Esc 级联退栈、跨层焦点恢复），与该库其余附加行为一并交付 | `compose/OverlayDesk`、`compose/Gallery`（生产消费者）；经 OverlayDesk 间接使用的 `compose/ModelSwitchDesk`、`DialogsDesk`、`TransferDesk`、`SettingsScreen`、`ApprovalDesk`、`PaletteDesk`、`ChatScreen`、`SidebarDesk`、`Workspace`、`AppShell` 与 `app/` 两个入口 | 实测（2026-10-20 / 2026-10-24）Avalonia 12.1.2 原生 Popup/FlyoutBase 无同等语义：LightDismiss 不拦 PointerWheelChanged、Popup 不消费 Esc、编程式打开的 ContextMenu.Close() 在 headless 下不翻转 IsOpen、无法与 dialogGuard 协同、无法注入动态 ViewportInset、浮层销毁后焦点栈溃散（证据：`libs/FocusOrigin/AGENTS.md`、`libs/FocusOrigin/tests/OverlayLayer.Tests.fs` 7 项与 `compose/AppShell/tests/ShortcutInterceptTests.fs` 中 3 条原生/自研浮层拦截用例的历史通过记录；该文件另有 1 条对话框用例，本轮未重跑这些行为测试） | Avalonia 提供可自定义 positioner+约束回调、可拦截滚轮的 light-dismiss 覆盖层、以及嵌套模态焦点归还契约后改写；判定口径：`compose/OverlayDesk` 不再 `open Wanxiang2.OverlayLayer` |
 
 已解除项的历史记录见 `docs/archive/handoffs/2026-10-20-exceptions-released.md`（只读档案，不再是规则本体）。

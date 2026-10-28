@@ -4,9 +4,8 @@
     <Compile Include="ConversationRuns.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ConversationSummary" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ErrorRecovery" VersionOverride="0.0.0-local" />
   </ItemGroup>
 </Project>

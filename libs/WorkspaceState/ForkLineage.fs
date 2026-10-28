@@ -37,23 +37,6 @@ type SiblingVersions =
         targets: Guid list
     }
 
-/// 一条全文搜索命中（`search.results.items` 的一项）。
-/// 数字节点的宽容读取：线上解析出的节点与进程内用 int / int64 构造的节点都能读（后者 `TryGetValue<uint64>` 会失败）。
-module internal JsonNumbers =
-    let tryUInt64 (n: JsonNode) : uint64 option =
-        match n with
-        | :? JsonValue as v ->
-            match v.TryGetValue<uint64>() with
-            | true, value -> Some value
-            | _ ->
-                match v.TryGetValue<int64>() with
-                | true, value when value >= 0L -> Some(uint64 value)
-                | _ ->
-                    match v.TryGetValue<int>() with
-                    | true, value when value >= 0 -> Some(uint64 value)
-                    | _ -> None
-        | _ -> None
-
 module ForkLineage =
 
     let private tryStr (o: JsonObject) key =

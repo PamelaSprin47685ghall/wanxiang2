@@ -385,6 +385,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         if not (String.IsNullOrEmpty search.Text) then
             search.Text <- ""
 
+        messageSearch.Begin("", false) |> ignore
         search.StopDebounce()
         rebuild ()
 
@@ -541,6 +542,12 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         batch.ArchiveClicked.Add(fun () -> actions.setArchivedMany (selectedIds ()) true)
         batch.DeleteClicked.Add(fun () -> deleteSelected ())
         search.ClearRequested.Add(fun () -> resetSearch true)
+
+        search.Changed.Add(fun text ->
+            if String.IsNullOrWhiteSpace text then
+                messageSearch.Begin("", false) |> ignore
+
+            rebuild ())
 
         search.Debounced.Add(fun text ->
             // 词没变（已为它发过查询）就不重发

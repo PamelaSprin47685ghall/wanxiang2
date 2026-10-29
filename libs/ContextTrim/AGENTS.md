@@ -15,7 +15,7 @@
     - 推理：模型看到的上下文与用户看到的标题是外部可见行为。
 
 ## SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过；端到端由 ChatOrchestrator 金样与迁入的旧测试钉住。
+1. [LEMMA: 1] `tests/ContextTrim.Tests.fs` 的 `count limit keeps the tail and drops a leading orphan tool result`、`token budget keeps at least eight recent messages`  通过；端到端由 ChatOrchestrator 金样与迁入的旧测试钉住。
 
 ## 迁入或覆盖的旧测试
 - 旧测试迁在 compose/ChatOrchestrator/tests（逐条列在 ChatOrchestrator AGENTS.md）。
@@ -33,7 +33,7 @@
 2. **对象自己拥有累加状态；耗时、何时计入、怎么拼成线上 GenerationUsage 归组合者 ChatOrchestrator。** [根 AXIOM: 3]
 
 ## SPEC
-1. [LEMMA: 1, 2] tests/Tests.fs 通过（空、多轮、缺项、0 与 None 的区别）。
+1. [LEMMA: 1, 2] `tests/UsageTally.Tests.fs` 的 `没有任何一轮时全部为 None`、`多轮逐项相加`、`某轮缺项时保留已有值，从没报告过的项保持 None`  通过（空、多轮、缺项、0 与 None 的区别）。
 
 ## 迁入或覆盖的旧测试
 - 经 compose/ChatOrchestrator 的金样（逐字节，含工具循环多轮 usage）与迁入的 ChatOrchestratorTests 覆盖。

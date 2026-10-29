@@ -26,7 +26,7 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 
 ## SPEC
 1. [LEMMA: 1] `encode` 与 `split` 往返保持文本与偏移。
-    - 证明：`tests/Tests.fs` `encode then split round-trips text and offsets`，通过。
+    - 证明：`tests/JsonSeq.Tests.fs` `encode then split round-trips text and offsets`，通过。
 2. [LEMMA: 1] 在任意字节处截断，切分结果是原记录的完整前缀，加至多一条 `TornTail` 尾记录。
     - 证明：`truncation at every byte yields complete prefix plus at most one incomplete tail`，逐字节穷举，通过。
 3. [根 AXIOM: 6; LEMMA: 1] 文本含 RS 时 `encode` 抛出 `ArgumentException`（防呆：边界一旦破坏不可撤销）。
@@ -44,7 +44,9 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
     - 剩余边界：`RLIMIT_FSIZE` 在测试进程内是全局的，测试在 `finally` 里恢复原上限与原信号处置；期间只运行本用例。
 9. [LEMMA: 1, 3] 没有正文的 RS 不被忽略：在末尾算 `TornTail`，在中间算 `EmptyRecord`；记录的偏移首尾相接，覆盖全部字节。
     - 证明：`bare RS is a faulted record, never skipped`，通过。缺陷由 compose 的逐字节崩溃测试发现。
-10. [TODO] `ReadFrom` 一次读入到末尾的全部字节；超大日志需要流式读取。
+10. [LEMMA: 1, 3] `StreamSplit.readAll` 以 `RS`（`0x1E`）哨兵分块流式读取，不一次把整段区间读入单个缓冲区；含内嵌换行符的跨块记录、前导 `StrayBytes`、中间 `EmptyRecord` 与末尾 `TornTail` 在任意切点下与 `Frame.split` 一次性读入逐字节等价。
+    - 证明：`streaming keeps records whole across chunk boundaries`、`streaming read equals one-shot read for every cut`，通过。
+    - 剩余边界：`Read` 仍把切分出的 `Record list` 组装返回，且单条跨块记录在遇到下一个 `RS` 前暂存在 `pending` 中。
 
 11. [根 SPEC 3] 实例隔离；同一路径上的第二个实例读同一个文件（写者唯一归 `DirLock`，本库不假装独占）；非法参数与错误之后状态合法；`Read` 交出的记录不是内部状态的活视图。
     - 证明：`instances are isolated; errors and illegal arguments leave state legal`（其中同一路径第二个实例一段仅 Linux），通过。
@@ -57,12 +59,12 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 事件账本对象。拥有领域判断：下一条提交的编号、幂等、折叠，以及每条提交在介质上的区间。私有状态：领域状态、id 序列、幂等索引、区间索引、至多一条未落定的提议。普通同步对象：不碰磁盘、不读时钟、不知道谁来持久化，非线程安全。不依赖任何兄弟库。根规则见项目根目录 AGENTS.md。
 
 公开面：
-- 构造：`Ledger<'S,'E,'Err>(apply : 'S -> Commit<'E> -> Result<'S,'Err>, initial, ?origin)` 或 `Ledger(apply, checkpoint)`。
+- 构造：`Ledger<'S,'E,'Err>(apply : 'S -> Commit<'E> -> Result<'S,'Err>, initial, ?origin, ?maxStamps)` 或 `Ledger(apply, checkpoint)`。
 - 消息：
   - `Propose(events, at, ?stamp) : Decision`（`Proposed commit | Duplicate(id, span) | StampConflict id | Rejected 'Err`）。
   - `Record(commit, span) : Result<unit, RecordProblem>`：事实「这条提交已持久化在 span」。刚才的提议和重放读出的提交走同一个入口。问题：`IdGap | SpanGap | RepeatedStamp | FoldRejected 'Err | Unsettled id`，各有 `Describe()`。
   - `Abandon()`：使用方确知提议没有写入。
-- 查询：`State`、`LastId`、`Stamps`（不可变 Map）、`Tail`（下一条的起点）、`Checkpoint`（数组为副本）、`SpanOf id`、`SpansAfter(cursor, ?limit)`。
+- 查询：`State`、`LastId`、`Stamps`（不可变 Map）、`MaxStamps`、`Tail`（下一条的起点）、`Checkpoint`（数组为副本）、`SpanOf id`、`SpansAfter(cursor, ?limit)`。
 - 值与编解码：`Commit`、`Stamp`、`Span`、`Commit.map`、`Checkpoint.map`、`Envelope.write/read`（`Commit<JsonNode>`）、`CheckpointJson.write/read`（`Checkpoint<JsonNode>`）。
 
 合作方式：由组合者 C 决定何时写、写到哪、失败怎么办（见 `compose/LedgerStore`）。本库的返回值只说自己的裁决和事实，不含「请某个对象做什么」。
@@ -91,7 +93,7 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 
 ## SPEC
 1. [LEMMA: 1, 3] id 从 1 起连续；把同样的事实按序记入新实例，得到相同 `Checkpoint`。
-    - 证明：`tests/Tests.fs` `ids are contiguous and recording the same facts reproduces checkpoint`，通过。
+    - 证明：`tests/Ledger.Tests.fs` `ids are contiguous and recording the same facts reproduces checkpoint`，通过。
 2. [LEMMA: 3, 4] 提议在 `Record` 前不改状态；未落定时再 `Propose` 抛出且账本不变。
     - 证明：`a proposal changes nothing until recorded and blocks a second proposal`，通过。
 3. [LEMMA: 3, 5] `Abandon` 后状态不变，id 复用。
@@ -116,9 +118,10 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 12. [LEMMA: 10] `CheckpointJson` 往返保持 `Checkpoint`，恢复的账本等价；版本不符、偏移越界、坏输入报错。
     - 证明：`checkpoint json round-trips with caller-encoded state`，通过。
 13. [LEMMA: 2, 5] 与真实文件组合时成功、重复、拒绝、半写尾、未知结果都按上面的规则落地。
-    - 证明：`compose/LedgerStore/tests/Tests.fs`（见该目录 AGENTS.md）。
-14. [TODO] 幂等索引无界增长，需要保留策略。
-15. [TODO] `Checkpoint` 随提交数线性增长（每条 8 字节）。
+    - 证明：`compose/LedgerStore/tests/Tests.fs`（如 `commits survive reopen with and without snapshot, startup says which`、`domain rejection carries the typed error and writes nothing`，见该目录 AGENTS.md）。
+14. [LEMMA: 6, 7] 幂等索引有界保留已在 `Ledger`、`CheckpointJson` 与 `compose/LedgerStore`（含 `Opening.load` 与 `Inspect`）完整接通：超出 `maxStamps` 上限时按 `commitId` 从最旧一侧淘汰，被淘汰的旧 `commandId` 重发作为新提交编号落盘；带同上限的无快照从头重放、带快照重放与 `Inspect`（含从快照自动继承 `maxStamps`）在重放过程中同步淘汰旧戳，不误触发 `RepeatedStamp`；窗口内被篡改写入重复 `commandId` 仍由 `Record` 检出 `RepeatedStamp`。
+    - 证明：`tests/Ledger.Tests.fs` 的 `stamps index evicts the oldest entries beyond the retention bound`、`stamp retention bound survives checkpoint round-trip`、`checkpoint json round-trips with caller-encoded state` 通过（组合层重放与 `Inspect` 证明见 `compose/LedgerStore/AGENTS.md` SPEC 17）。
+    - 剩余边界：`Checkpoint.ends` 每条提交存 8 字节末尾偏移（不存正文，见 LEMMA 7），随总提交数线性增长。
 
 ## 成员 `Snapshot`
 
@@ -140,7 +143,7 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 
 ## SPEC
 1. [LEMMA: 2] 保存后读出等于原值；再次保存覆盖旧值；不留 `.tmp`。
-    - 证明：`tests/Tests.fs` `save then load round-trips and overwrites`，通过。
+    - 证明：`tests/Snapshot.Tests.fs` `save then load round-trips and overwrites`，通过。
 2. [LEMMA: 3] 文件任一字节翻转、任一位置截断，`Load` 返回 `Corrupt`。
     - 证明：`any flipped or truncated byte is Corrupt`，逐字节穷举，通过。
 3. [LEMMA: 2] 崩溃遗留的 `.tmp` 不影响读取，下次保存覆盖它。
@@ -148,8 +151,10 @@ RFC 7464 分帧（纯函数 `Frame`）与单文件追加日志对象 `JsonSeqFil
 4. [LEMMA: 3] 头与正文都严格按 UTF-8 解码；头里有非法字节判 `Corrupt`，原因指明是头。
     - 证明：`invalid utf8 in header is Corrupt`，通过。
 5. [LEMMA: 1] 真实组合中，删掉快照或快照与日志对不上时，组合者从日志重建，结果相同。
-    - 证明：`compose/LedgerStore/tests/Tests.fs` `commits survive reopen with and without snapshot`、`stale snapshot from a truncated log is ignored`。
-6. [TODO] 改名后没有对所在目录 fsync，断电时改名本身可能丢失（读到旧快照，按 LEMMA 1 仍安全，只是慢）。
+    - 证明：`compose/LedgerStore/tests/Tests.fs` 中的 `commits survive reopen with and without snapshot, startup says which`、`stale snapshot from a truncated log is discarded`；测试名称与当前源码核对一致，本次未重新运行。
+6. [LEMMA: 2] 改名后对所在目录执行 POSIX `fsync`（`DirFsync.sync` 按平台与架构取 `O_DIRECTORY`：macOS `0x100000`、Linux x64 `0x10000`、Linux ARM `0x4000`，由内核在 `open` 单一系统调用内拒绝非目录路径；失败静默返回 `false`，按 LEMMA 1 最坏退回旧快照重建）。
+    - 证明：`tests/Snapshot.Tests.fs` `directory fsync succeeds on existing directory and returns false on missing or file path` 在 macOS ARM64 通过；Linux x64 与 ARM64 容器分别直接调用 `DirFsync.sync`，目录、普通文件和不存在路径的结果为 true、false、false。旧硬编码 `0x100000` 在 Linux x64 上可打开普通文件；ARM64 容器的 `O_DIRECTORY` 为 `0x4000`。容器直接调用不是该测试工程在 Linux 上通过的证据。
+    - 剩余边界：真实物理断电与 Windows 行为未在此环境内实测。
 
 7. [根 SPEC 3] 实例隔离；文件被外部弄坏后 `Load` 如实报 `Corrupt`，下一次 `Save` 覆盖它；`Load` 交出的文本是副本，不是内部状态的活视图。
     - 证明：`instances are isolated and a corrupt file is replaced by the next save`，通过。

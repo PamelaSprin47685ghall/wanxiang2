@@ -11,9 +11,9 @@
 4. 其余都是组装与生命周期，没有可再拆的独立语义；配对失败限流在 PairingDesk 里，设备记账在 DeviceSightings 里（启动时 Seed 一次性迁移旧配置里的 lastSeen）。
 
 # SPEC
-1. [LEMMA: 1] 迁入的旧测试 158 条全部通过（下列），连跑三次一致。
-2. 有意改动：未读的构造参数 `fix` 与 `replayOutcome` 用 `do ignore (...)` 消掉警告（警告即错误），求值次序不变。
-3. 迁入时对测试脚手架的改动：Helpers.fs 去掉 UI 用的 `isIcon`；ServerE2eTests.fs 去掉依赖 Wanxiang.Client/UI 的三条（留在旧仓库）：
+1. [LEMMA: 1] 迁入的旧测试 158 条全部通过（下列，如 `ServerApp 正常启动与停止生命周期（Start 与 Stop 幂等释放）`、`e2e write command succeeds after snapshot cursor advance`），连跑三次一致。
+2. 有意改动：未读的构造参数 `fix` 与 `replayOutcome` 用 `do ignore (...)` 消掉警告（警告即错误），求值次序不变（由 `ServerApp 正常启动与停止生命周期（Start 与 Stop 幂等释放）`、`损坏日志：log-replay FAIL 且附件检查跳过` 覆盖）。
+3. 迁入时对测试脚手架的改动：Helpers.fs 去掉 UI 用的 `isIcon`；ServerE2eTests.fs（保留 `e2e write command succeeds after snapshot cursor advance` 等）去掉依赖 Wanxiang.Client/UI 的三条（留在旧仓库）：
    - `e2e full export is read-only and stable while another client deletes and renames`
    - `e2e reobserve restores cancel identity and retrying the original send is idempotent`
    - `e2e wsclient sends command through agui custom carrier and server commits`

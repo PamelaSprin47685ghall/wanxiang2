@@ -19,7 +19,7 @@
     - 推理：配置文件泄露时，攻击者拿不到能用的令牌；比较时间不随前缀匹配长度变化。
 
 ## SPEC
-1. [LEMMA: 1] 前缀加 43 个 base64url 字符（256 bit），每次不同：`tests/Tests.fs` `tokens have the fixed prefix, base64url body and 256 bits`，通过。
+1. [LEMMA: 1] 前缀加 43 个 base64url 字符（256 bit），每次不同：`tests/ClientToken.Tests.fs` `tokens have the fixed prefix, base64url body and 256 bits`，通过。
 2. [LEMMA: 1] 哈希等于用 Python hashlib 独立算出的金标准值：`hash matches the golden vector stored in existing configs`，通过。
 3. [LEMMA: 2] `matches` 只认对应的哈希，null 不认：`matches accepts only the right token`，通过。
 4. [LEMMA: 1] 设备标识是哈希前 16 位：`device id is the first 16 hex chars of the hash`，通过。
@@ -38,5 +38,5 @@
     - 推理：保留名只由本机自动配对写入。配对设备自报保留名时一律换掉；再加上回环限制，反向代理之外的远端即使拿到这个名字也冒充不了。
 
 ## SPEC
-1. [LEMMA: 1, 2] 保留名不分大小写、忽略首尾空白，配对设备取不到它：`tests/Tests.fs` `reserved name cannot be taken by a paired device`，通过。
+1. [LEMMA: 1, 2] 保留名不分大小写、忽略首尾空白，配对设备取不到它：`tests/DesktopClient.Tests.fs` `reserved name cannot be taken by a paired device`，通过。
 2. [LEMMA: 2] 桌面身份要同时满足保留名、未吊销、回环（含 IPv4 映射到 IPv6）：`desktop identity needs reserved name, not revoked, loopback`，通过。

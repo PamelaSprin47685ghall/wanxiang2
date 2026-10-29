@@ -4,7 +4,6 @@ open System
 open System.Text.Json.Nodes
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 
 type ActiveConvState =
@@ -31,7 +30,7 @@ type SettingsPhase =
         CanInvite: bool
         Invite: PairingInviteView option
         InviteRejected: string option
-        /// 设备列表有界等待的到点时间（None = 不在等待）。与 BoundedWaits.devicesLimit 同值。
+        /// 设备列表有界等待的到点时间（None = 不在等待，上限 8 秒）。
         DeviceLoadDue: DateTimeOffset option
         DeviceLoadNote: string option
     }
@@ -196,7 +195,7 @@ type WorkspaceModel =
         Prefs: UiPrefs
         Chrome: ChromeState
         Composer: ComposerState
-        /// 侧栏一行一个摘要；行数据 = Wanxiang2.ConversationSummary 的解析结果（单一事实类型）。
+        /// 侧栏一行一个摘要；行数据 = 本库 ConversationSummary 模块的解析结果（单一事实类型）。
         Summaries: ConversationSummary list
         /// 分叉谱系：对话 id → 父对话与分叉点（来自同一份对话列表快照，非伪造）
         Lineage: Map<Guid, ForkLineage>

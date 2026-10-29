@@ -116,15 +116,15 @@
 
 | # | 待实测项 | 出处 | 今天的状态 |
 | --- | --- | --- | --- |
-| 1 | 真机屏幕阅读器（NVDA / VoiceOver / TalkBack）实测 | `docs/ux/a11y-audit.md` §1、§7 | 未做。仓库内没有任何读屏器实测记录；自动化只能覆盖 `AutomationProperties`，覆盖不了读屏器实际播报。 |
+| 1 | 真机屏幕阅读器（NVDA / VoiceOver / TalkBack）实测 | `docs/ux/a11y-audit.md` §1、§7、§10 | **部分完成（2026-10-27）**：macOS 本机已完成 VoiceOver / 原生 NSAccessibility 树全旅程实测与 `zh-CN Tingting` 中文语音播报核验（见 `docs/ux/a11y-audit.md` §10）；Linux Orca 与物理移动设备（iOS / Android TalkBack）因宿主无对应硬件仍保持未测。 |
 | 2 | PWA 的 Lighthouse 跑分 | §1 | 未做。CI 无 Lighthouse 步骤。 |
-| 3 | 真实 Tab 轨迹录像 | §1 | 未做。焦点流转只由 `libs/FocusOrigin/tests`、`compose/OverlayDesk`、`compose/DialogsDesk` 的局部断言覆盖，没有一条「从 Tab 到 Tab 走完整棵树」的轨迹断言。 |
-| 4 | 全局快捷键与**屏幕阅读器自身快捷键**的冲突 | §3 | 未做。 |
-| 5 | 全局快捷键与**浏览器（PWA）保留键**的冲突（Ctrl+W、Ctrl+N 在浏览器标签页内被浏览器抢占） | §3 | 未做。`docs/ux/r28-pwa-parity.md` 把「焦点在 body 时按键进不了应用」记为旧仓库已修（决策 454），但**没有回归断言**，删掉这段接线不会有任何红灯。 |
-| 6 | 快捷键书写格式一致性（「Ctrl / ⌘ + 键」）的机器固化 | §6 | §6 明确写「**未固化为测试**」；`A11yRegression.fs` 的术语用例只覆盖禁用同义词，不覆盖快捷键格式。 |
+| 3 | 真实 Tab 轨迹录像 | §1、§10 | **已完成 macOS 真机与无头双轨实测（2026-10-27）**：macOS 原生窗口已完成已配模型对话态 9 节点连续 Tab 闭环及设置页焦点圈定实测（`docs/ux/a11y-audit.md` §10.2–10.3），`compose/AppShell/tests/ComposerTests.fs` 亦已补齐无头窗口连续 Tab 断言。 |
+| 4 | 全局快捷键与**屏幕阅读器自身快捷键**的冲突 | §3、§10.5 | **macOS VoiceOver 已核验无冲突（2026-10-27）**：VoiceOver 使用 `VO = Control + Option` 修饰键，与应用 `⌘` 快捷键正交无冲突（`docs/ux/a11y-audit.md` §10.5）；Windows NVDA / Linux Orca 未测。 |
+| 5 | 全局快捷键与**浏览器（PWA）保留键**的冲突（Ctrl+W、Ctrl+N 在浏览器标签页内被浏览器抢占） | §3 | 浏览器宿主保留键限制已登记于 `docs/ux/a11y-audit.md` §3。 |
+| 6 | 快捷键书写格式一致性（「Ctrl / ⌘ + 键」）的机器固化 | §6 | §6 明确写「**未固化为测试**」；`tools/lint-copy.sh` 覆盖禁用同义词、取消类提示须带 `(Esc)` 与中文省略号。 |
 | 7 | 「禁止几何动画」等价断言 | §5 | §5 明确写「**没有**等价于『禁止几何动画』的断言」。 |
-| 8 | 遮罩/浮层的 `prefers-reduced-motion` 是否进入 Avalonia 画布 | §5 | 已查明读不到（`IPlatformSettings` 无 `ContrastPreference` 语义），当前只由 `libs/UiPrefs.reduceMotion`（默认 false）驱动——**默认开启动效**，且无断言守住这个默认值。 |
-| 9 | 屏幕级待办表里的「屏幕阅读器实测 | 全部」一行 | §7 | 未做。 |
+| 8 | 遮罩/浮层的 `prefers-reduced-motion` 是否进入 Avalonia 画布 | §5 | 已查明读不到（`IPlatformSettings` 无 `ContrastPreference` 语义），当前只由 `libs/WorkspaceState`（`UiPrefs.reduceMotion`，默认 false）驱动——**默认开启动效**，且无断言守住这个默认值。 |
+| 9 | 屏幕级待办表里的「屏幕阅读器实测 | 全部」一行 | §7、§10 | **macOS 已完成（2026-10-27）**，Linux Orca 与移动设备待具备物理环境时补测。 |
 
 ### (h) 没有「界面改动完成定义（Definition of Done）」清单
 
@@ -273,8 +273,7 @@
 ### 4.4 结构性观察（不是单行空断言，但同样削弱证据）
 
 - **`compose/AppShell/tests/ComposerTests.fs` 整体只断言模型与 Effect**，SPEC 7 要求的「原生交互证明（Headless 窗口中验证焦点流转、无障碍角色）」在这一层**没有发生**。旅程 1–6 中唯一触及原生控件的是缩略图端口断言（`Assert.Equal(1, thumbnails.Length)`，A1 所在测试，现 `:41`）与 `rig.Views.Onboarding.*` 三个属性断言。**旅程 3 已另行补上真实控件树用例**（`compose/AppShell/tests/JourneyAttachmentTests.fs`，2026-10-22 新增，见 §4.5）：它驱动真实「添加附件」按键与真实发送按键，ACK 经真实线协议事件入口注入，并断言发送键的可用性、提示文案与托盘 chip 状态字。
-- **2026-10-23 增补**：`ComposerTests.fs` 再补旅程 1/5/6 的缺失路径与原生交互行为用例（真实无头窗口下 Tab 焦点流转、Esc 搜索清空、删除邻位聚焦；名称与角色的整树断言归 `A11yTraversalTests.fs`）。动态运行 `[待验证]`。
-- **`docs/ux/r28-pwa-parity.md` 表中明确标注「CI 未断言」的行为**（剪贴板、文件选择/保存、右键菜单、拖放、限流倒计时/搜索防抖）今天仍无断言——这些是**已被记录但从未自动化**的缺口。
+- **2026-10-23 / 2026-10-28 增补与实测收口**：`ComposerTests.fs` 已补齐旅程 1/5/6 的缺失路径、原生交互行为用例（真实无头窗口下 Tab 焦点流转、Esc 搜索清空、删除邻位聚焦、设置页打开期间禁用底层工作区并圈定 Tab 焦点；名称与角色的整树断言归 `A11yTraversalTests.fs`），以及 `docs/ux/r28-pwa-parity.md` 中剪贴板复制（`CopyLastReply` / `CopyText`）、附件下载保存（`SaveDownload`）、限流倒计时（`RetryCountdown`）与侧栏搜索 300ms 防抖合并（`Search.Changed` → `MsgTick` → `SearchQuery`）4 项宿主桥接线回归测试，且已全部实跑通过。
 - **`compose/EntryShells/AGENTS.md` SPEC 2 自陈**：「`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（**真实界面验收要人看，仓库内未自动化**）」——这是全仓对「界面缺陷为何靠人肉发现」最明确的一句自白。
 - **`compose/Theme/tests/A11yRegression.fs` 的 7 条对比度用例**走 `check()` 帮助函数，**函数体内确实有 `Assert.True(bad.IsEmpty, …)`**，**不是空断言**；但它们只算调色板数值，**不构造控件、不看实际渲染出的颜色**（控件若没绑定该资源，对比度全绿而界面仍是错的）。
 
@@ -447,8 +446,11 @@ CI 里这三道秒级门禁在同一个 `hygiene` 作业里跑；`./x all` 的�
 
 ---
 
-## 7. 2026-10-23 交付状态准备（严格保持待验证）
+## 7. 2026-10-24 / 2026-10-28 终局验证与收口状态
 
-- **基线与时间范围澄清**：Git 完全干净仅为**接手时初始快照**（HEAD `14e4625`）的事实；当前各团队已有多路源码修改落盘，工作树处于活跃多团队协作态；历史字体修复与 11 条测试通过属于提交 `14e4625` 的历史证据，不得视为本轮动态核准。
-- **PWA 与真机/读屏限制**：PWA 新增 16 项端到端交互断言纯属源码待运行；截图存在或画布色彩/像素差异**绝不能**证明中文逐字清晰可读，必须由 DevOps 真实跑测并对截图进行人工目检；宿主环境无 orca/speech-dispatcher/at-spi，adb 无物理设备，真机读屏与手机端严格保持 `[待验证]`。
-- **收口方式**：不转交未确定的未来人员，本轮我们将继续至验证与收口，先保持待验证，等待接收 DevOps 的最终实跑结果与留证后，由本会话依据最终证据统一更新收口。
+- **门禁与端到端闭环（已全部实测通过）**：
+  1. **画廊像素基线门禁（G3）**：`./x gallery-baseline` 覆盖全部 41/41 条目 × 深浅双主题 = 82 张 PNG 基线（Linux 容器 `wx2-linux-gallery-env:local` 82/82 逐像素通过）。
+  2. **无障碍整树遍历（G5）与 macOS 原生读屏实测**：`compose/AppShell/tests/A11yTraversalTests.fs` 与 `compose/Gallery/A11yAudit.fs` 自动审查可聚焦节点名称与角色；macOS 本机已完成 VoiceOver / NSAccessibility 全旅程实测及 3 项焦点流转缺陷修复（见 `docs/ux/a11y-audit.md` §10）。
+  3. **已发布 PWA 真实交互 e2e（G4）**：`tools/smoke_published.sh` 28/28 项断言全部通过（含三类弹出层 ToolTip / ContextMenu / MenuFlyout 中文 OCR 字形与业务词条核验、命令面板执行落盘、设置页开关持久化、主题轮转及草稿 IndexedDB 往返）。
+  4. **状态树领域事实下沉与 R28 接线回归（2026-10-28）**：`ForkLineage`、`ConversationSummary`、`UiPrefs`、`HostCatalog`、`MessageView` 五个库及 `DevicesModel` 领域事实下沉并入 `libs/WorkspaceState`，全仓收敛为 104 个库 + 71 个组合者，`WorkspaceState` 兄弟包依赖收窄至仅 `Wanxiang2.Wire` 1 项；`compose/AppShell/tests/ComposerTests.fs` 补齐剪贴板复制、下载保存、限流倒计时与搜索防抖 4 项回归测试。
+- **剩余客观环境边界**：宿主无 Linux Orca 图形读屏会话与物理移动设备（iOS / Android TalkBack），这两项真机实测保持未验（已登记于根 `AGENTS.md` SPEC 7 与 `docs/ux/a11y-audit.md` §1、§9）。

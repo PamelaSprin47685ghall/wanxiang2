@@ -1,7 +1,5 @@
-module Tests
+module HostCatalogTests
 
-open System
-open System.IO
 open System.Text.Json.Nodes
 open Xunit
 open Wanxiang.UI
@@ -103,7 +101,6 @@ let ``parse and query catalog properties`` () =
     Assert.Equal(Some "You are a helpful assistant.", catalog.generation.instructions)
     Assert.Equal(50, catalog.generation.maxContextMessages)
     Assert.Equal<string list>([ "/home/user/workspace" ], catalog.generation.fileReadRoots)
-
 
 // 迁自旧 AppShell 的 ProviderProbeResult 分支：与原样摘录比对。
 [<Fact>]

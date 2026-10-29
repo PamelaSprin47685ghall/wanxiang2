@@ -11,10 +11,10 @@ PartialReplies、HostLog、CommandId、PlainText、ContextTrim、TitleText。命
 3. **生成循环、排队、工具执行、记账是对话这段合作本身，留在组合者。** [根 LEMMA: 4]
 
 # SPEC
-1. [LEMMA: 1] `golden/orchestrator.txt` 由旧 GenerationContext.fs、TitleGenerator.fs、ChatOrchestrator.fs（其余协作者用已验证等价的包）跑同一真实组合场景生成：
+1. [LEMMA: 1] `golden/orchestrator.txt` 由旧 GenerationContext.fs、TitleGenerator.fs、ChatOrchestrator.fs（其余协作者用已验证等价的包）跑同一真实组合场景生成（`tests/GoldenTests.fs` 的 `chat orchestration behaves byte for byte like the old implementation`、`next request waits for the title broadcast`）：
    真实 EventStore、ToolRegistry、本机假 OpenAI 服务；工具调用 → 工具结果 → 回答 → 自动标题，然后 429 失败。通过；连跑三次一致。
-2. [LEMMA: 1] 迁入的旧测试全部通过（下列）。
-3. 待拆（记入路线图）：用量累加（usageFromDetails/addUsage，类型属 Wire）与 `PartialText` 判定可再拆；目前与 Wire 类型绑在一起，暂留。
+2. [LEMMA: 1] 迁入的旧测试全部通过（下列，如 `SubmitOutcome ofSubmitResult correctly maps all commit outcomes`、`auto title keeps only the first sentence and strips markdown`）。
+3. 用量累加与半截回复判定已拆出（见下节《细拆》）：`UsageTally` 在 `libs/ContextTrim`，`ContinuableReply.hasText` 在 `libs/ContinuableReply`；`compose/ChatOrchestrator` 只剩组装与线上字节，金样 `chat orchestration behaves byte for byte like the old implementation` 与 `GenerationUsage 累加规则：各轮 token 无损合并，duration 取最新` 照旧逐字节通过。
 
 # 迁入或覆盖的旧测试（旧仓库 d9651ed，可在旧仓库删除）
 - ChatOrchestratorTests.fs 整个文件：

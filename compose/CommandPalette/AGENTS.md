@@ -12,11 +12,11 @@
 
 - 浏览器发布禁用 JSON 反射时，最近使用记录仍可编码、解码并落盘。`tests/CommandPalette.Tests.fsproj` 显式关闭 `System.Text.Json.JsonSerializer.IsReflectionEnabledByDefault`，沿用字节格式与文件往返断言。2026-10-24 本机对照：原编码实现 2 条失败（包含禁反射异常），改用 `JsonArray` 后 16 条通过；同日在 macOS ARM64 干净发布产物的 PWA 冒烟里实测通过（`Ctrl+K` → 输入「切换主题」→ 回车，`wanxiang.local:palette-recent.json` 记下 `act:theme`）。Linux 宿主实跑仍待验证。
 
-1. 真实组合（两个交付包）下 `tests/Tests.fs` 通过，排序结果与旧实现一致。
+1. 真实组合（两个交付包）下 `tests/Tests.fs` 的 `373 拼音首字母与子序列都能命中`、`375 空查询先列最近使用，再列操作，不铺全部对话`、`375 最近使用去重、新的在前、有上限`  通过，排序结果与旧实现一致。
 
 # 迁入或覆盖的旧测试
-- R20PaletteTests：`373 拼音首字母与子序列都能命中`、`375 空查询先列最近使用，再列操作，不铺全部对话`、`375 最近使用去重、新的在前、有上限`
-- 留在旧仓库（需要 Avalonia）：`372 …`、`376 …`、`374 …`
+- R20PaletteTests：`373 拼音首字母与子序列都能命中`、`375 空查询先列最近使用，再列操作，不铺全部对话`、`375 最近使用去重、新的在前、有上限`、`374 没打开对话时不给导出、分叉、存为预设；主机不支持导入时不给导入`
+- 留在旧仓库（需要 Avalonia）：372、376
 
 - 新增 `PaletteRecent.decode` / `encode` / `fileName`（旧 PaletteRecent 的落盘格式；文件读写归宿主）：用例 `palette recent file bytes match old load and save` 的期望值由旧程序集实际读写得到。
 - 新增壳层面板 `ShellPalette.items`（输入 `ShellPaletteInput`：是否有当前对话、预设、主机能力、主题说法、设置分区、对话列表、是否显示归档）、`commandOf`（条目 id → `PaletteCommand`）、`closesDrawer`，迁自旧 AppShell.PaletteItems / RunPaletteItem。与旧分派的两处差别由宿主补齐：`set:<未知分区>` 旧代码只打开设置页，新代码给 `OpenSettings key`，宿主找不到分区时同样只打开设置页；`preset:<id>` 旧代码先查预设，不存在则 toast「这个预设已经不存在。」且不收抽屉，宿主执行 `ApplyPreset` 时先查。

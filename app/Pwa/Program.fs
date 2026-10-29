@@ -831,7 +831,6 @@ module Program =
             CloseWindow = fun () -> ()
             PrefsSave = prefsSave
             PrefsLoad = fun () -> prefsLoad () |> ignore
-            DraftWrite = applyDraftWrite
             BrowserHook = fun _ -> ()
         }
 

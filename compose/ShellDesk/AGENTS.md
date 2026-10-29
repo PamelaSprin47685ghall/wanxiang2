@@ -2,7 +2,7 @@
 
 ShellLayout + BrandMark + NavigationState + Theme = 旧 `Views/MainLayout.fs`（ConversationWorkspace、MainLayoutController）在 AppShell 里的接线，以及 `Views/Brand.fs` 的品牌标。根规则见项目根目录 AGENTS.md。
 
-- 宿主入口：`ShellDesk(theme, shellGrid: Grid, sidebar, splitter, chat, composer, hooks: ShellHooks, initialSidebarCollapsed, sidebarWidth: unit -> float)`。`ShellHooks = { ApplyCompactMode; ApplyStartMode; FocusComposer; FocusSidebarSearch; PrefersTouch }`（侧栏、对话视图、输入区尚未迁出，经插槽驱动）。
+- 宿主入口：`ShellDesk(theme, shellGrid: Grid, sidebar, splitter, chat, composer, hooks: ShellHooks, initialSidebarCollapsed, sidebarWidth: unit -> float)`。`ShellHooks = { ApplyCompactMode; ApplyStartMode; FocusComposer; FocusSidebarSearch; PrefersTouch }`（侧栏、对话视图、输入区不与本组合者直接耦合，由外层宿主经插槽驱动）。
 - 方法：`ApplyViewport(width)`、`ToggleSidebar()`、`ApplyCompactNavigation(opened)`、`EnsureSearchVisible()`、`RenderStarting(bool)`、`NoteSidebarDragged() : float option`（桌面未折叠才写回，返回值存偏好）、`State`、`Workspace`、`Columns`。都返回或更新 NavigationSnapshot，宿主据此存偏好、做 Escape 链。
 - 焦点归宿（D3/D4）在这里：窄屏抽屉打开进搜索框（ApplyCompactNavigation 与视口自动打开在触屏下不聚焦）、收起回输入区；桌面折叠时焦点原在侧栏回输入区；遮罩按下与 Escape 同一路径收起抽屉。
 - 品牌标：`ShellBrand(theme)`，`Logo(size)`；找图顺序同旧代码（内嵌资源、程序目录、pwa、WANXIANG_HOME）。

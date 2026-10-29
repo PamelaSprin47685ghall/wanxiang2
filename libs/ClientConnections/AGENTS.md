@@ -7,7 +7,7 @@
 
 # SPEC
 1. [LEMMA: 1] `tests/Tests.fs` 通过：`Q191 浏览器连接记录：缺 url 或 token 的跳过，坏 JSON 当作没有`、`浏览器默认地址与页面同源：https 用 wss，http 用 ws`。
-2. 浏览器专用的 `parseConnections`、`serverUrlOfPage` 是旧代码逐字移植，旧代码在桌面跑不到，由新用例覆盖。
+2. 浏览器专用的 `parseConnections`、`serverUrlOfPage` 是旧代码逐字移植，旧代码在桌面跑不到，由新用例 `Q191 浏览器连接记录：缺 url 或 token 的跳过，坏 JSON 当作没有`、`浏览器默认地址与页面同源：https 用 wss，http 用 ws` 覆盖。
 
 # 迁入或覆盖的旧测试
 - 旧仓库没有 CredentialStore 的单元测试；新增用例：`Q191 浏览器连接记录：缺 url 或 token 的跳过，坏 JSON 当作没有`、`浏览器默认地址与页面同源：https 用 wss，http 用 ws`。

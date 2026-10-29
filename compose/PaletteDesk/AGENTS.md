@@ -9,7 +9,7 @@ PalettePanel + CommandPalette + ImeShield + OverlayDesk + Theme = 旧 `Views/Com
 ## 证据与旧测试
 - R20PaletteTests：`376 面板键盘：方向键选择、回车执行所选项、全文交接在末尾`
 - R21ImeTests：`386 命令面板：组合中回车不执行、方向键不移动`
-- 新增：`执行先关面板再在下一拍运行，已有对话框时不重复打开`（旧 ShowCommandPalette）。
+- 新增：`执行先关面板再在下一拍运行，再按一次收起`（旧 ShowCommandPalette）。
 
 ## 与旧实现的差异
 - 旧 `run` 回调改为 `Run` 事件；关面板与投递下一拍由本组合者做。

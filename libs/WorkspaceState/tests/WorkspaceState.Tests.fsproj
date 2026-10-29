@@ -5,6 +5,13 @@
   <ItemGroup>
     <Compile Include="WorkspaceStateTests.fs" />
     <Compile Include="SearchHitTests.fs" />
+    <Compile Include="ForkLineage.Tests.fs" />
+    <Compile Include="ConversationSummary.Tests.fs" />
+    <Compile Include="UiPrefs.Tests.fs" />
+    <Compile Include="HostCatalog.Tests.fs" />
+    <Compile Include="ModelVision.Tests.fs" />
+    <Compile Include="MessageView.Tests.fs" />
+    <Compile Include="DevicesModel.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />

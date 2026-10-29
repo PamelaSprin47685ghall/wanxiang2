@@ -3,7 +3,7 @@ namespace Wanxiang.UI
 open System
 open System.IO
 
-/// 本机界面偏好的落点（ui.json）。解析、渲染与主题判断在 Wanxiang2.UiPrefs；
+/// 本机界面偏好的落点（ui.json）。解析、渲染与主题判断在 Wanxiang2.WorkspaceState 的 UiPrefs 模块；
 /// 这里只给出取值边界、读写文件并收紧权限（IO 壳迁入 wanxiang2）。
 module UiPrefsFile =
 

@@ -7,4 +7,4 @@
     - 推理：doctor 的缺失/孤立附件判断依赖它，旧 ServerModel 将转发到这里。
 
 # SPEC
-1. [LEMMA: 1] 测试覆盖含附件与不含附件的 payload，通过。
+1. [LEMMA: 1] 测试覆盖含附件与不含附件的 payload：`tests/Tests.fs` 的 `attachment objects are found at any depth with defaults for missing fields`、`nothing is found in plain messages or null` 通过。

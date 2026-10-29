@@ -82,8 +82,8 @@ W7-G1 收尾（Set* 写入成员清零）：
 1. **同一空态，标题、提示与起手式与旧实现相同。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/ChatEmptyText.Tests.fs` 通过：`brand shows only before a conversation can start`、`connection failure hint carries the reason`。
-2. 空态的用例名是具体业务名，不是泛名，联合类型不加 RequireQualifiedAccess，旧调用点不用改。
+1. [LEMMA: 1] `tests/BreathPhase.ChatEmptyText.Tests.fs` 通过：`brand shows only before a conversation can start`、`connection failure hint carries the reason`。
+2. 空态的用例名是具体业务名（如 `brand shows only before a conversation can start`），不是泛名，联合类型不加 RequireQualifiedAccess，旧调用点不用改。
 
 #### 迁入或覆盖的旧测试
 旧仓库的空态用例都要渲染 ChatView，留在旧仓库。本库新增：品牌标分支、失败原因写进提示。
@@ -104,9 +104,9 @@ W7-G1 收尾（Set* 写入成员清零）：
 1. **同一串事件，状态与决定和旧实现相同。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/ScrollFollow.Tests.fs` 通过：`at the bottom a render follows; scrolled up it counts unread`、`older pages and streaming refreshes are not unread; a finished stream is`、`returning to latest stays at bottom through mid-animation frames`、`pin holds until wheel or reset`。
-2. 贴底时渲染跟到末尾；不贴底时累计未读，但分页旧消息和流式刷新不算，流式落定记一次；「回到最新」的动画途中仍算贴底，直到用户向上滚。
-3. 已知旧行为，原样保留：`Button` 在贴底时顺带把未读清零。
+1. [LEMMA: 1] `tests/BreathPhase.ScrollFollow.Tests.fs` 通过：`at the bottom a render follows; scrolled up it counts unread`、`older pages and streaming refreshes are not unread; a finished stream is`、`returning to latest stays at bottom through mid-animation frames`、`pin holds until wheel or reset`。
+2. 贴底时渲染跟到末尾（`at the bottom a render follows; scrolled up it counts unread`）；不贴底时累计未读，但分页旧消息和流式刷新不算，流式落定记一次（`older pages and streaming refreshes are not unread; a finished stream is`）；「回到最新」的动画途中仍算贴底，直到用户向上滚（`returning to latest stays at bottom through mid-animation frames`）。
+3. 已知旧行为，原样保留：`Button` 在贴底时顺带把未读清零（`at the bottom a render follows; scrolled up it counts unread`）。
 
 #### 迁入或覆盖的旧测试
 旧滚动、未读用例要起窗口，留在旧仓库。本库新增 4 条规则用例。

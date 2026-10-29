@@ -4,7 +4,6 @@ open System
 open System.Text.Json.Nodes
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 
 module Project =

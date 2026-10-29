@@ -17,4 +17,4 @@
 ## 证据与旧测试（`tests/Tests.fs`，真实参与者 + 记录界面面）
 - AppShellTests：`HandleEvent CommandCommitted resolves feedback and commits outbox`、`HandleEvent CommandRejected marks outbox as rejected and informs feedback`、`HandleEvent GenerationStarted, GenerationDelta, and GenerationFinished flow`、`HandleEvent GenerationFinished with error preserves error in runs`
 - 留在宿主：`HandleEvent AuthAccepted …`、`HandleEvent AuthRejected …`、`HandleEvent CatalogSnapshot …`
-- 新增：`Hello 与审批能力回声不改变任何状态，也不交给宿主`、`认证成功整段交给宿主，组合者不碰模型`、`配置回执：…`、`迟到的旧搜索结果丢掉`、`主机错误：…`、`下载超限提示一次，拼好后交给宿主保存`、`对话快照到达后发出等着它的发件箱消息`
+- 新增：`Hello 与审批能力回声不改变任何状态，也不交给宿主`、`认证成功整段交给宿主，组合者不碰模型`、`配置回执：登记过的空文案不叠提示但仍重新拉目录，失败只报错误`、`迟到的旧搜索结果丢掉`、`主机错误：附件缺失标记，记账失败进当前对话错误卡，其余提示`、`下载超限提示一次，拼好后交给宿主保存`、`对话快照到达后发出等着它的发件箱消息`

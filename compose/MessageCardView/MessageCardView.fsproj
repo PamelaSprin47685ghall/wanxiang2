@@ -13,7 +13,6 @@
     <PackageReference Include="Wanxiang2.CodeTint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CopyButton" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CardBits" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ToolSummary" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ErrorRecovery" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationRuns" VersionOverride="0.0.0-local" />

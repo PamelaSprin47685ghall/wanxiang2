@@ -7,3 +7,4 @@ dist/
 __pycache__/
 *.py[cod]
 _审视/
+compose/Gallery/baselines/diff/

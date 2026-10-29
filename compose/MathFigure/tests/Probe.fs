@@ -35,6 +35,45 @@ let pixels (control: Control) =
 
     Convert.ToHexString(SHA256.HashData buffer).Substring(0, 16).ToLowerInvariant()
 
+/// 画整块画布，找出 target 之外的**非透明**像素。
+/// 用于「公式墨迹不越出自己声明的尺寸」：控件画到声明范围外的任何一笔，都会在这里留下 alpha ≠ 0 的像素。
+/// 返回越界像素数与其中几个坐标（便于定位是上方、下方还是右侧溢出）。
+let inkOutside (canvas: Control) (target: Rect) : int * (int * int) list =
+    let w = max 1 (int (Math.Ceiling canvas.Bounds.Width))
+    let h = max 1 (int (Math.Ceiling canvas.Bounds.Height))
+    use bmp = new RenderTargetBitmap(PixelSize(w, h), Vector(96.0, 96.0))
+    bmp.Render canvas
+    let stride = w * 4
+    let buffer = Array.zeroCreate<byte>(stride * h)
+
+    let handle =
+        Runtime.InteropServices.GCHandle.Alloc(buffer, Runtime.InteropServices.GCHandleType.Pinned)
+
+    try
+        bmp.CopyPixels(PixelRect(0, 0, w, h), handle.AddrOfPinnedObject(), buffer.Length, stride)
+    finally
+        handle.Free()
+
+    // 像素边界向外取整：亚像素抗锯齿落在声明范围内仍算范围里，半个像素以上的溢出才算越界。
+    let x0 = int (Math.Floor target.X)
+    let y0 = int (Math.Floor target.Y)
+    let x1 = int (Math.Ceiling(target.X + target.Width))
+    let y1 = int (Math.Ceiling(target.Y + target.Height))
+    let mutable count = 0
+    let samples = ResizeArray<int * int>()
+
+    for y in 0 .. h - 1 do
+        for x in 0 .. w - 1 do
+            let inside = x >= x0 && x < x1 && y >= y0 && y < y1
+
+            if not inside && buffer[(y * w + x) * 4 + 3] <> 0uy then
+                count <- count + 1
+
+                if samples.Count < 8 then
+                    samples.Add(x, y)
+
+    count, List.ofSeq samples
+
 let private show (content: Control) =
     let win = Window(Width = 480.0, Height = 400.0, Content = content)
     win.Show()

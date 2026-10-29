@@ -89,7 +89,7 @@
     <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
     <!-- 附件入口（选文件 / 拖入 / 粘贴）读字节后交给组合者：分块、校验与文案归这两个包。 -->
     <PackageReference Include="Wanxiang2.ConfigFeedback" VersionOverride="0.0.0-local" />

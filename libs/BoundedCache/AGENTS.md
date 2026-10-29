@@ -17,7 +17,7 @@
 2. **类型从 `RichBackend.Cache` 改名为 `BoundedCache`：`RichBackend` 模块（后端注册）留在界面。** [根 AXIOM: 3]
 
 ## SPEC
-1. [LEMMA: 1, 2] tests/Tests.fs 通过。
+1. [LEMMA: 1, 2] `tests/BoundedCache.Tests.fs` 的 `RichBackend Cache stores and evicts by capacity`、`GetOrAdd 命中时不再计算`、`Clear 清空全部`  通过。
 
 ## 迁入或覆盖的旧测试
 迁自旧 UiPureLogicTests（RichBackendAndKatexHtmlTests）（原文，只改名字）与本库补充的测试：
@@ -54,7 +54,7 @@
 2. **模块从 `Highlight` 改名为 `HljsHtml`：旧 UI 还留着 `Highlight.tokenize`（后台排队、缓存、重画通知），同名模块跨程序集会互相遮蔽。** [根 AXIOM: 3]
 
 ## SPEC
-1. [LEMMA: 1, 2] tests/Tests.fs 通过。
+1. [LEMMA: 1, 2] `tests/HljsHtml.Tests.fs` 的 `span parser restores the source text exactly`、`html entities are decoded back to source characters`、`the innermost scope wins over the enclosing one`  通过。
 
 ## 迁入或覆盖的旧测试
 迁自旧 PolishTests（原文，只改名字）与本库补充的测试：

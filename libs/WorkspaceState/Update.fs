@@ -4,12 +4,14 @@ open System
 open System.Text.Json.Nodes
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 
 module Workspace =
 
     let project = Project.project
+
+    let private devicesLoadLimit = TimeSpan.FromSeconds 8.0
+    let private devicesTimeoutText = "主机没有返回设备列表。如果主机版本较旧，可能还不支持设备管理，请先升级主机。"
 
     /// 用户消息的 JSON 形状：`{"role":"user","contents":[文本项, 附件项…]}`。
     ///
@@ -17,7 +19,7 @@ module Workspace =
     /// （同一仓库里两条发送路径必须给出同样的 payload，否则服务端与客户端解析会分叉）。
     /// 附件项是 `{"type":"attachment","sha256":…,"size":…,"mediaType":…,"fileName":…}`，
     /// 解析侧是 `libs/MediaContent/MessageSerde.fs` 的 `attachmentRefs`
-    /// 与 `libs/MessageView` 的同名分支。
+    /// 与本库 `MessageView.fs` 的同名分支。
     let private buildMessageJson (text: string) (attachments: ComposerAttachmentDraft list) : JsonNode =
         let contents = JsonArray()
 
@@ -150,28 +152,17 @@ module Workspace =
     let rec update (now: DateTimeOffset) (msg: Msg) (model: WorkspaceModel) : WorkspaceModel * Effect list =
         match msg with
         | MsgTick tickNow ->
-            // 2. 检查搜索防抖
-            let modelAfterSearch, searchEffects =
+            // 2. 检查搜索防抖（到期清零；实际查询由宿主经 SidebarDesk.SearchHandler 发出，以联动 SearchSession 与 SearchInFlight）
+            let modelAfterSearch =
                 match model.Chrome.SearchDebouncingUntil with
                 | Some due when tickNow >= due ->
-                    let q = model.Chrome.SearchQuery
-
-                    let nextChrome =
-                        { model.Chrome with
-                            SearchDebouncingUntil = None
-                        }
-
-                    let queryData: SearchQueryData =
-                        {
-                            queryId = Guid.NewGuid()
-                            query = q
-                            includeArchived = false
-                            offset = 0
-                            limit = 50
-                        }
-
-                    { model with Chrome = nextChrome }, [ Effect.SendWire(WireEvent.SearchQuery queryData) ]
-                | _ -> model, []
+                    { model with
+                        Chrome =
+                            { model.Chrome with
+                                SearchDebouncingUntil = None
+                            }
+                    }
+                | _ -> model
             // 3. 检查 PendingDeletions 到期提交
             let dueBatches =
                 modelAfterSearch.Feedback.PendingDeletions
@@ -226,7 +217,7 @@ module Workspace =
                         Settings =
                             { finalModel.Settings with
                                 DeviceLoadDue = None
-                                DeviceLoadNote = Some BoundedWaits.devicesTimeoutText
+                                DeviceLoadNote = Some devicesTimeoutText
                             }
                     }
                 | _ -> finalModel
@@ -234,7 +225,7 @@ module Workspace =
             { modelAfterDeviceWait with
                 Now = tickNow
             },
-            searchEffects @ deleteEffects
+            deleteEffects
 
         | CommandRequested cmd ->
             match model.Conn with
@@ -913,10 +904,16 @@ module Workspace =
 
                     { model with Chrome = nextChrome }, []
                 | SidebarUserMsg.SearchTextChanged q ->
+                    let clean = if isNull q then "" else q
+
                     let nextChrome =
                         { model.Chrome with
-                            SearchQuery = q
-                            SearchDebouncingUntil = Some(now.AddMilliseconds 300.0)
+                            SearchQuery = clean
+                            SearchDebouncingUntil =
+                                if String.IsNullOrWhiteSpace clean then
+                                    None
+                                else
+                                    Some(now.AddMilliseconds 300.0)
                         }
 
                     { model with Chrome = nextChrome }, []
@@ -1307,7 +1304,7 @@ module Workspace =
                 | DeviceUserMsg.LoadDevices ->
                     let next =
                         { model.Settings with
-                            DeviceLoadDue = Some(now + BoundedWaits.devicesLimit)
+                            DeviceLoadDue = Some(now + devicesLoadLimit)
                             DeviceLoadNote = None
                         }
 

@@ -31,20 +31,15 @@
     <PackageReference Include="Wanxiang2.ConversationRuns" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Outbox" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConversationList" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.MessageView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MessageCardView" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerDrafts" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConfigFeedback" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.BoundedWait" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.DevicesModel" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CommandFeedback" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.HostCatalog" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChangeWatch" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.ConnectionIssue" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MediaTypes" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.PairingHint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ConnectIssueText" VersionOverride="0.0.0-local" />

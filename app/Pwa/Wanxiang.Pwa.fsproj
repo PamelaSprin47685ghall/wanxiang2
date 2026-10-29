@@ -54,7 +54,7 @@
     <PackageReference Include="Wanxiang2.ThemeMetrics" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.MotionSwitch" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.IconSet" VersionOverride="0.0.0-local" />
-    <PackageReference Include="Wanxiang2.UiPrefs" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.WorkspaceState" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.DraftStore" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ComposerDesk" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatScreen" VersionOverride="0.0.0-local" />

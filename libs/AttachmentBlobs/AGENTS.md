@@ -21,8 +21,8 @@
 
 ## SPEC
 1. [LEMMA: 1, 3] `bad input is refused with the old texts`，通过。
-2. [LEMMA: 2] `wrong content or wrong declared hash...`、`abort by owner...`，通过。
-3. 内容寻址、只存一份：`chunks in order complete...`，通过。
+2. [LEMMA: 2] `wrong content or wrong declared hash fails and leaves nothing`、`abort by owner removes only that owner's uploads`，通过。
+3. 内容寻址、只存一份：`chunks in order complete to a content-addressed file stored once`，通过。
 
 ## 变更记录
 - `BlobError` 加 `[<RequireQualifiedAccess>]`：`Failed`、`Invalid` 等通用名不再泄漏进同时打开 Wanxiang.Server 与 Wanxiang.Agent 的组合者。
@@ -42,4 +42,4 @@
 3. **文件名只用于显示，绝不用作路径。** [根 AXIOM: 4]
 
 ## SPEC
-1. [LEMMA: 1, 2, 3] `tests/Tests.fs`，通过。
+1. [LEMMA: 1, 2, 3] `tests/MediaSniff.Tests.fs` 的 `magic numbers win; printable bytes are text; control bytes are unknown`、`declared type is kept unless empty or octet-stream`、`file names lose control characters, are capped and trimmed` ，通过。

@@ -21,8 +21,8 @@
     - 推理：限流信号是 Wire 里的 `ProviderRateLimit`，属于线协议；`statusError` 只返回异常，由组合者把限流信息挂上去。所以本库不依赖 Wire。
 
 ## SPEC
-1. [LEMMA: 2] 2xx 不算错误；非 2xx 的异常带状态码、正文和正数秒的 Retry-After（`Delta` 与未来的 `Date` 都认，超出 `Int32.MaxValue` 秒时收敛到 `Int32.MaxValue`；已过期的 `Date` 或非正秒数不记入 `Data["RetryAfterSeconds"]`）：`tests/HttpRetry.Tests.fs`，通过。
-2. [LEMMA: 1] 临时性失败重试到上限，然后返回最后一次响应；`maxRetries = Int32.MaxValue` 不会因 `+ 1` 溢出退化成不重试；每次尝试创建的 `HttpRequestMessage`（含 `Content`）在本次发送结束后释放；上游给出未来的 `Retry-After` 日期时重试等待也按该日期计算，且超大 `Retry-After` 收敛在 `Task.Delay` 定时器上限内不抛 `ArgumentOutOfRangeException`；非临时失败、重试次数为 0 时都不重试：`tests/HttpRetry.Tests.fs`，通过。
+1. [LEMMA: 2] 2xx 不算错误；非 2xx 的异常带状态码、正文和正数秒的 Retry-After（`Delta` 与未来的 `Date` 都认，超出 `Int32.MaxValue` 秒时收敛到 `Int32.MaxValue`；已过期的 `Date` 或非正秒数不记入 `Data["RetryAfterSeconds"]`）：`tests/HttpRetry.Tests.fs` 的 `2xx is not an error; non-2xx carries status, body and Retry-After`、`transient failures are retried up to the limit, then the last response is returned`、`non-transient failures and zero retries are not retried` ，通过。
+2. [LEMMA: 1] 临时性失败重试到上限，然后返回最后一次响应；`maxRetries = Int32.MaxValue` 不会因 `+ 1` 溢出退化成不重试；每次尝试创建的 `HttpRequestMessage`（含 `Content`）在本次发送结束后释放；上游给出未来的 `Retry-After` 日期时重试等待也按该日期计算，且超大 `Retry-After` 收敛在 `Task.Delay` 定时器上限内不抛 `ArgumentOutOfRangeException`；非临时失败、重试次数为 0 时都不重试：`tests/HttpRetry.Tests.fs` 的 `2xx is not an error; non-2xx carries status, body and Retry-After`、`transient failures are retried up to the limit, then the last response is returned`、`non-transient failures and zero retries are not retried` ，通过。
 3. [LEMMA: 1] 退避时长从 250 ms 翻倍到 8 秒上限，任何尝试次数下都非负。`backoffDelay` 保留主仓的浮点幂与上限收敛实现，位移不参与计算：`tests/HttpRetry.Tests.fs` 的 `退避时长翻倍并收敛到八秒上限，位移不再溢出` 与 `退避时长在所有尝试次数上都非负`。合并后验证：2026-10-23 `./x all`（109 个库、67 个组合者测试工程及仓库外消费）与 `./x app` 双入口通过。
 
 ## 成员 `JsonPick`
@@ -38,7 +38,7 @@
     - 推理：提供方会改字段、给 null、给字符串数字。取不到就得 None，由调用方决定默认值。
 
 ## SPEC
-1. [LEMMA: 1] 各种类型取得到；缺失、null、类型不对、节点不是对象时都是 None：`tests/Tests.fs`，通过。
+1. [LEMMA: 1] 各种类型取得到；缺失、null、类型不对、节点不是对象时都是 None：`tests/JsonPick.Tests.fs` 的 `values of the right kind are returned, anything else is None` ，通过。
 
 说明：Anthropic、Gemini 两个库各有一份私有的同类取值函数，这是有意的：库与库之间不互相依赖（根 AGENTS.md）。三份都只有几十行；第四个使用者出现时再考虑别的办法。
 
@@ -57,5 +57,5 @@ Server-Sent Events 分帧（W3C）：把字节流切成（事件名, data）。�
     - 推理：模型回答里的代码缩进就在 data 正文里。多去一个空格，用户看到的代码就错位了。
 
 ## SPEC
-1. [LEMMA: 1] 空行分帧，多行 data 用换行拼接，末尾没有换行的帧也算，注释跳过，事件名在每帧之后重置：`tests/Tests.fs`，通过。
-2. [LEMMA: 2] 缩进保留：`only the single space after the colon is stripped...`，通过。
+1. [LEMMA: 1] 空行分帧，多行 data 用换行拼接，末尾没有换行的帧也算，注释跳过，事件名在每帧之后重置：`tests/Sse.Tests.fs` 的 `frames split on blank lines, multi-line data joins with newline, tail without newline still counts`、`comments are skipped and the event name resets after each frame`、`only the single space after the colon is stripped, indentation survives` ，通过。
+2. [LEMMA: 2] 缩进保留：`only the single space after the colon is stripped, indentation survives`，通过。

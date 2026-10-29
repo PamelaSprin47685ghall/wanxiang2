@@ -12,7 +12,7 @@
 
 ### 外观
 
-- `ActionStripLook`：`Gauge`（`StripGauge` 间距、命中区边长、淡显不透明度、显隐补间毫秒）、`Glyph`（复制 / 对勾 / 编辑 / 重新生成 / 删除）、`Muted`（图标默认笔刷）、`Dress`（图标按钮样式类）、`Reduced`。
+- 废除 `ActionStripLook`，间距、命中区边长、淡显不透明度、显隐过渡与图标按钮样式类（`surface icon-button hover-plain`）均由 Avalonia 主题资源与样式系统提供。
 
 ### 证据与旧测试
 
@@ -33,7 +33,7 @@
 
 ### 外观
 
-- `AttachmentChipLook`：`Ink`（`ChipInk` 底色、描边、三档文字）、`Gauge`（`ChipGauge` 描边、圆角、内外边距、行间距、两档字号、文件名最大宽）、`Glyph`（图片 / 文件 / 下载图标）、`Dress`（可点时挂抬起面的状态反馈，旧 `Interaction.surface raised`）。
+- 废除 `AttachmentChipLook`，底色、描边、圆角、内外边距与字号走主题 `DynamicResource`，可点态挂 `surface hover-raised` 样式类。
 - 数据 `ChipData`：文件名、已格式化的大小、是否图片、是否丢失（由使用方用 MessageView 的 AttachmentRef 规则算好）。
 
 ### 证据与旧测试
@@ -52,7 +52,7 @@
 
 ### 外观与件
 
-- `ErrorPanelLook`：`Ink`（`ErrorInk`）、`Gauge`（`ErrorGauge` 间距、圆角、字号、按钮内边距与重试最小宽、箭头、阅读宽、倒计时间隔毫秒）、`BodyFont` / `MonoFont`、`Glyph`（警示、箭头）、`Dress secondary`（次要 / 幽灵按钮样式类）、`DressFold`（披露头状态反馈）、`TechLineHeight`、`HelperLineHeight`、`Reduced`。
+- 废除 `ErrorPanelLook`，颜色、间距、圆角、字号与次要/幽灵按钮样式类（`surface button-secondary hover-bordered` / `surface button-ghost hover-plain`）均走主题资源与样式系统。
 - `ErrorPanelParts`：复制按钮、限高视口、倒计时文案（旧 `ProviderRateLimit.countdownText`）。
 - 单入口：`ErrorPanel(parts)` + `Render(vs: ErrorPanelVS)`。VS（WorkspaceState）带全部输入：`Title` / `Hint` / `Detail` / `CountdownSeconds`（-1 = 无倒计时）/ `Ticking` / `Announce` / `Actions: ErrorPanelAction list`（`Continue` / `Retry` / `Recovery of label`）/ `OnRetry` / `OnContinue` / `OnRecovery`。没有 `Set*` / `Add*` 公开面。
 - 幂等：重复 `Render` 不重建按钮（控件身份稳定，回调随 Render 更新），动作形状变了（有无「继续生成」决定重试是幽灵档还是次要档）才重建重试按钮；技术细节文本不变时沿用旧披露头（展开状态不丢）。
@@ -74,7 +74,7 @@
 
 ### 外观
 
-- `FoldHeaderLook`：`Muted`（箭头与标题的笔刷实例）、`Gauge`（`FoldGauge` 各档：箭头槽、行间距、内边距、圆角、描边、标题字号与行高、箭头转动毫秒，都是活值）、`Chevron`（按笔刷给箭头图形）、`Dress`（挂表面状态反馈样式类，旧 `Interaction.surface bordered`）、`Reduced`（减弱动效时箭头瞬转）。
+- 废除 `FoldHeaderLook`，箭头与标题笔刷、内边距、圆角、字号及箭头旋转过渡均由主题 `DynamicResource` 与样式类（`surface hover-bordered`）驱动。
 
 ### 证据与旧测试
 
@@ -92,7 +92,7 @@
 
 ### 外观
 
-- `RevealPaneLook`：`Gauge`（`RevealGauge.Gap` 视口与按钮间距、`Gutter` 右侧滚动条槽，都是活值），`Dress`（给按钮挂幽灵按钮样式类）。
+- 废除 `RevealPaneLook`，视口与按钮间距、右侧滚动条留白及幽灵按钮样式类（`surface button-ghost hover-plain`）走主题资源与样式系统。
 - 限高值由使用方按布局规则传入（旧 `LayoutPolicy.expandedDetailMaxHeight`）。
 
 ### 证据与旧测试
@@ -113,7 +113,7 @@
 
 ### 外观
 
-- `StreamCaretLook`：`Ink`（光标笔刷实例）、`Gauge`（`CaretGauge` 宽、高、圆角、呼吸上限）、`Frame`（帧间隔）、`Reduced`。
+- 废除 `StreamCaretLook`，光标尺寸、圆角与笔刷走主题资源，呼吸动效由声明式 `anim-breathe` 样式类驱动。
 
 ### 证据与旧测试
 
@@ -131,7 +131,7 @@
 
 ### 外观
 
-- `ThinkingBlockLook`：`Ink`（`ThinkingInk` 底色、描边、竖线、正文、选区）、`Gauge`（`ThinkingGauge` 描边、竖线宽、内外边距、圆角）、`LineHeight`（正文行高随字号，旧 `ReadingRhythm.secondaryLineHeight`）。
+- 废除 `ThinkingBlockLook`，底色、描边、左缘竖线、内外边距、圆角与次要行高均由主题 `DynamicResource` 绑定。
 
 ### 证据与旧测试
 
@@ -145,7 +145,7 @@
 
 ### 外观与件
 
-- `ToolCallCardLook`：`Ink`（`ToolInk` 各色）、`Gauge`（`ToolGauge` 间距、圆角、字号、箭头槽、箭头转动毫秒）、`BodyFont` / `MonoFont`、`Glyph`（扳手、警示、信息、对勾、箭头、两档转圈）、`Dress`（头部表面状态反馈）、`TechLineHeight`、`Reduced`。
+- 废除 `ToolCallCardLook`，各状态色、间距、圆角、字号与头部表面样式类均由主题资源与样式系统提供，加载旋转使用声明式 `anim-spin`。
 - `ToolCardParts`：使用方给复制按钮（`Copy tip name getText`）与限高视口（`Reveal content visible`），本库不引用别的库。
 - 数据 `ToolCardData`：文案都由使用方用 ToolCallState、ToolSummary、ToolArgsPreview、MessageView 算好；`ToolCallCard.sections`、`ToolCallCard.rawPayload` 给出旧的取舍与整段复制格式。
 
@@ -165,7 +165,7 @@
 
 ### 外观与数据
 
-- `UsageFootLook`：`Ink`（`FootInk` 三档文字）、`Gauge`（`FootGauge` 字号、间距）、`MonoFont`。
+- 废除 `UsageFootLook`，三档文字笔刷、字号、间距与等宽字体均由主题 `DynamicResource` 提供。
 - `UsageFigures`：字段对应旧 GenerationUsage（缓存数由 `GenerationUsage.cachedCount` 算好，明细由 `formatDetail` 算好）；`StampText`：简短时刻（旧 `MessageTimestamp.format`）与完整时间。时刻由组合者用注入的时钟算，本库不读系统时间。
 
 ### 证据与旧测试
@@ -180,7 +180,7 @@
 
 ### 外观
 
-- `UserBubbleLook`：`Ink`（`BubbleInk` 气泡底、描边、文字、选区、头像底与字）、`Gauge`（`BubbleGauge` 描边、三档圆角、内边距、最大宽、头像边长与字号、间距）、`Dress`（可聚焦表面的焦点环，只走外阴影不改几何）、`LineHeight`（正文行高随字号）。
+- 废除 `UserBubbleLook`，气泡底色、描边、三档圆角、内边距、最大宽、头像尺寸与焦点环样式类均走主题 `DynamicResource` 与样式系统。
 
 ### 证据与旧测试
 

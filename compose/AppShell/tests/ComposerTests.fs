@@ -234,6 +234,147 @@ let ``第五批：退出取当前模型，不把发送前的延时草稿写回``
         rig.Shell.FlushDrafts()
         Assert.Equal(DraftWrite.Write "", List.last rig.Fake.DraftWrites))
 
+[<Fact>]
+let ``第五批：隐藏事件接线取消在途草稿计时器并立即保存，重复刷新保持最新模型文本`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        Assert.Equal(1, rig.Fake.HiddenHandlersCount)
+        let actions = rig.Shell.ComposerActions(ignore, ignore, fun () -> false)
+        // 首次变字立即写入，随后窗口内变字排上 800ms 计时器；触发浏览器隐藏回调时必须取消该在途计时器并立即写入最新文本
+        actions.TextChanged "首版"
+        actions.TextChanged "终版"
+        let beforeHidden = rig.Fake.DisposedAfterTimers
+        rig.Fake.TriggerBrowserHidden()
+        Assert.Equal(beforeHidden + 1, rig.Fake.DisposedAfterTimers)
+        Assert.Equal(DraftWrite.Write "终版", List.last rig.Fake.DraftWrites)
+        // 紧接着再次调用 FlushDrafts（如隐藏后随即关窗）：无在途计时器再被取消，且写的仍是当前模型文本
+        rig.Shell.FlushDrafts()
+        Assert.Equal(beforeHidden + 1, rig.Fake.DisposedAfterTimers)
+        Assert.Equal(DraftWrite.Write "终版", List.last rig.Fake.DraftWrites))
+
+[<Fact>]
+let ``命令面板候选投影随预设、对话、归档偏好与主机能力变化`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        rig.Fake.Deliver(AuthAccepted {| instanceId = "inst-palette" |})
+
+        let provider = JsonObject()
+        provider["id"] <- JsonValue.Create "p1"
+        provider["label"] <- JsonValue.Create "P1"
+        provider["models"] <- JsonArray([| JsonValue.Create "m1" :> JsonNode |])
+
+        let preset = JsonObject()
+        preset["id"] <- JsonValue.Create "writer"
+        preset["name"] <- JsonValue.Create "写作助手"
+        preset["provider"] <- JsonValue.Create "p1"
+        preset["model"] <- JsonValue.Create "m1"
+
+        let gen = JsonObject()
+        gen["presets"] <- JsonArray([| preset :> JsonNode |])
+
+        rig.Fake.Deliver(
+            CatalogSnapshot
+                {|
+                    providers = JsonArray([| provider :> JsonNode |])
+                    tools = JsonArray()
+                    generation = gen
+                |}
+        )
+
+        let activeId = Guid "22222222-2222-2222-2222-222222222222"
+        let archivedId = Guid "33333333-3333-3333-3333-333333333333"
+
+        let mkSummary (id: Guid) (title: string) (archived: bool) =
+            let o = JsonObject()
+            o["conversationId"] <- JsonValue.Create(string id)
+            o["title"] <- JsonValue.Create title
+            o["archived"] <- JsonValue.Create archived
+            o["pinned"] <- JsonValue.Create false
+            o["running"] <- JsonValue.Create false
+            o["createdAt"] <- JsonValue.Create "2026-10-21T08:00:00Z"
+            o["updatedAt"] <- JsonValue.Create "2026-10-21T08:00:00Z"
+            o["messageCount"] <- JsonValue.Create 1
+            o["providerId"] <- JsonValue.Create "p1"
+            o["model"] <- JsonValue.Create "m1"
+            o :> JsonNode
+
+        rig.Fake.Deliver(
+            ConversationListSnapshot
+                {|
+                    lastCommitId = 1UL
+                    items = JsonArray([| mkSummary activeId "进行中的工作流" false; mkSummary archivedId "去年归档的复盘" true |])
+                |}
+        )
+
+        // 打开活动对话，使 hasConversation = true
+        rig.Fake.Deliver(
+            ConversationSnapshot
+                {|
+                    conversationId = activeId
+                    title = "进行中的工作流"
+                    lastCommitId = 1UL
+                    runtimeState = "idle"
+                    generationId = None
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+        )
+
+        let paletteTitles (query: string) =
+            let search =
+                rig.Root.GetLogicalDescendants()
+                |> Seq.choose (function
+                    | :? TextBox as text when text.Name = "CommandPaletteSearch" -> Some text
+                    | _ -> None)
+                |> Seq.exactlyOne
+
+            search.Text <- query
+            Pump.settle ()
+
+            rig.Root.GetLogicalDescendants()
+            |> Seq.choose (function
+                | :? TextBlock as tb when not (String.IsNullOrWhiteSpace tb.Text) -> Some tb.Text
+                | _ -> None)
+            |> Set.ofSeq
+
+        rig.Shell.Commands.ShowPalette()
+        Assert.Contains("用预设新建：写作助手", paletteTitles "写作助手")
+        Assert.Contains("存为预设", paletteTitles "存为预设")
+        Assert.Contains("导出当前对话", paletteTitles "导出当前对话")
+        Assert.Contains("从导出的 JSON 文件", paletteTitles "导入对话")
+        Assert.Contains("进行中的工作流", paletteTitles "进行中的工作流")
+        // 默认不显示归档对话
+        Assert.DoesNotContain("去年归档的复盘", paletteTitles "去年归档的复盘")
+        rig.Shell.HandleShortcut ShortcutAction.Escape |> ignore
+
+        // 开启归档可见性 + 主机声明不支持 presets 与 conversation.import
+        rig.Shell.Dispatch(
+            User(
+                Settings(
+                    SettingsUserMsg.PrefsChanged
+                        { rig.Shell.Model.Prefs with
+                            showArchived = true
+                        }
+                )
+            )
+        )
+
+        rig.Fake.Deliver(
+            HostCapabilities
+                {|
+                    hostVersion = "1.0.0"
+                    features = [ "search" ]
+                |}
+        )
+
+        rig.Shell.Commands.ShowPalette()
+        Assert.Contains("去年归档的复盘", paletteTitles "去年归档的复盘")
+        Assert.DoesNotContain("存为预设", paletteTitles "存为预设")
+        Assert.DoesNotContain("从导出的 JSON 文件", paletteTitles "导入对话")
+        rig.Shell.HandleShortcut ShortcutAction.Escape |> ignore)
+
 let private authenticate (rig: Rig) =
     rig.Fake.Deliver(AuthAccepted {| instanceId = "inst-1" |})
 
@@ -1533,3 +1674,269 @@ let ``真实控件树下：Tab 焦点前移、Esc 清空搜索、删除邻位聚
         rig.Views.Sidebar.FocusAfterDelete(string id1)
 
         window.Close())
+
+// ---- R28 桌面 / PWA 宿主桥接线回归（剪贴板复制、下载保存、限流倒计时、搜索防抖）----
+
+[<Fact>]
+let ``剪贴板复制接线：CopyLastReply 快捷键复制最新回复正文，卡片 CopyText 写剪贴板`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        authenticate rig
+
+        rig.Fake.Deliver(
+            CatalogSnapshot
+                {|
+                    providers = JsonArray([| JsonObject() :> JsonNode |])
+                    tools = JsonArray()
+                    generation = JsonObject()
+                |}
+        )
+
+        let convId = Guid.NewGuid()
+
+        let userMsg =
+            JsonNode.Parse """{"commitId":1,"payload":{"role":"user","contents":[{"type":"text","text":"请总结"}]}}"""
+
+        let assistantMsg =
+            JsonNode.Parse
+                """{"commitId":2,"payload":{"role":"assistant","contents":[{"type":"text","text":"这是最终总结正文"}]}}"""
+
+        rig.Fake.Deliver(
+            ConversationSnapshot
+                {|
+                    conversationId = convId
+                    title = "总结对话"
+                    lastCommitId = 2UL
+                    runtimeState = "idle"
+                    generationId = None
+                    messages = JsonArray([| userMsg; assistantMsg |])
+                    snapshotEarliestCommitId = 1UL
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+        )
+
+        Assert.True(rig.Shell.HandleShortcut ShortcutAction.CopyLastReply)
+        Assert.Equal<string list>([ "这是最终总结正文" ], rig.Fake.Copied)
+        Assert.Contains(Effect.Clipboard "这是最终总结正文", rig.Fake.RecordedEffects)
+        rig.Shell.ChatActions().Card.CopyText "代码块内容"
+        Assert.Equal<string list>([ "这是最终总结正文"; "代码块内容" ], rig.Fake.Copied))
+
+[<Fact>]
+let ``文件保存接线：附件下载完成经 ProtocolDispatch 触发 SaveDownload 端口写出文件名与字节`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        authenticate rig
+        let rawBytes = System.Text.Encoding.UTF8.GetBytes "exported-markdown-body"
+        let sha = Wanxiang.UI.UploadFacts.sha256Hex rawBytes
+
+        rig.Fake.Deliver(
+            AttachmentDownloadBegin
+                {|
+                    sha256 = sha
+                    fileName = "notes.md"
+                    mediaType = "text/markdown"
+                    size = int64 rawBytes.Length
+                |}
+        )
+
+        rig.Fake.Deliver(
+            AttachmentDownloadChunk
+                {|
+                    sha256 = sha
+                    index = 0
+                    dataBase64 = Convert.ToBase64String rawBytes
+                |}
+        )
+
+        Assert.Empty rig.Fake.Downloads
+        rig.Fake.Deliver(AttachmentDownloadComplete {| sha256 = sha |})
+        let saved = Assert.Single rig.Fake.Downloads
+        Assert.Equal("notes.md", fst saved)
+        Assert.Equal<byte[]>(rawBytes, snd saved))
+
+[<Fact>]
+let ``限流倒计时接线：ProviderRateLimitNotice 与 GenerationFinished 组装固定截止时刻并投影限流错误卡`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        authenticate rig
+
+        rig.Fake.Deliver(
+            CatalogSnapshot
+                {|
+                    providers = JsonArray([| JsonObject() :> JsonNode |])
+                    tools = JsonArray()
+                    generation = JsonObject()
+                |}
+        )
+
+        let convId = Guid.NewGuid()
+        let genId = Guid.NewGuid()
+
+        rig.Fake.Deliver(
+            ConversationSnapshot
+                {|
+                    conversationId = convId
+                    title = "限流测试"
+                    lastCommitId = 0UL
+                    runtimeState = "idle"
+                    generationId = None
+                    messages = JsonArray()
+                    snapshotEarliestCommitId = 0UL
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+        )
+
+        rig.Fake.Deliver(
+            GenerationStarted
+                {|
+                    conversationId = convId
+                    generationId = genId
+                    providerId = "p1"
+                    model = "m1"
+                |}
+        )
+
+        let limit =
+            { ProviderRateLimit.empty with
+                retryAfterSeconds = Some 15
+                remainingRequests = Some 0
+            }
+
+        let beforeNotice = DateTimeOffset.UtcNow
+
+        rig.Fake.Deliver(
+            ProviderRateLimitNotice
+                {|
+                    conversationId = convId
+                    generationId = genId
+                    providerId = "p1"
+                    limit = limit
+                |}
+        )
+
+        let rateErr =
+            { GenerationError.create GenerationErrorKind.ProviderRateLimited "请求过于频繁" with
+                retryAfterSeconds = Some 15
+            }
+
+        rig.Fake.Deliver(
+            GenerationFinished
+                {|
+                    conversationId = convId
+                    generationId = genId
+                    status = "failed"
+                    error = Some rateErr
+                    usage = None
+                |}
+        )
+
+        let afterFinished = DateTimeOffset.UtcNow
+        let vs0 = Workspace.project rig.Shell.Model
+        let shown = vs0.Chat.Error |> Option.get
+        // 读宿主投影出的同一错误实例：截止时刻须由 notice + finished 接线登记，
+        // 读取时刻晚 1 小时也不得重新起算；未接线时 limit 为 None、截止时刻随读取漂移。
+        let info = RetryCountdown.tryGet shown (afterFinished.AddHours 1.0) |> Option.get
+        Assert.Equal(Some limit, info.limit)
+        Assert.True(info.limit |> Option.exists ProviderRateLimit.isExhausted)
+        Assert.InRange(info.retryAt, beforeNotice.AddSeconds 15.0, afterFinished.AddSeconds 15.0)
+        let deadline = info.retryAt
+
+        Assert.Equal(
+            "10 秒后可重试。",
+            ProviderRateLimit.countdownText (RetryCountdown.remainingSeconds info (deadline.AddSeconds -10.0))
+        )
+
+        Assert.Equal(
+            "现在可以重试了。",
+            ProviderRateLimit.countdownText (RetryCountdown.remainingSeconds info (deadline.AddSeconds 1.0))
+        )
+
+        let vs = Workspace.project rig.Shell.Model
+        Assert.True(vs.Chat.Error.IsSome)
+        Assert.Equal(GenerationErrorKind.ProviderRateLimited, vs.Chat.Error.Value.kind))
+
+[<Fact>]
+let ``搜索防抖接线：搜索框连续打字在 300ms 窗口内合并，到期经 MsgTick 发出唯一一次 SearchQuery 并接收命中`` () =
+    Headless.run (fun () ->
+        let rig = Rig.create ()
+        authenticate rig
+
+        let provider = JsonObject()
+        provider["id"] <- JsonValue.Create "p1"
+        provider["label"] <- JsonValue.Create "P1"
+        provider["models"] <- JsonArray([| JsonValue.Create "m1" :> JsonNode |])
+
+        rig.Fake.Deliver(
+            CatalogSnapshot
+                {|
+                    providers = JsonArray([| provider :> JsonNode |])
+                    tools = JsonArray()
+                    generation = JsonObject()
+                |}
+        )
+
+        // 第 1 次输入「初稿」：进状态树并排上 300ms 防抖，尚未发出 SearchQuery
+        rig.Views.Sidebar.Search.Box.Text <- "初稿"
+        Pump.settle ()
+        Assert.Equal("初稿", rig.Shell.Model.Chrome.SearchQuery)
+        Assert.True(rig.Shell.Model.Chrome.SearchDebouncingUntil.IsSome)
+
+        // 100ms 后改输入「终稿」：重置 300ms 防抖窗口，此时 250ms Tick 到来仍未满 300ms，不发请求
+        rig.Fake.AdvanceSeconds 0.1
+        rig.Views.Sidebar.Search.Box.Text <- "终稿"
+        Pump.settle ()
+        rig.Fake.AdvanceSeconds 0.15
+        rig.Fake.FireEvery(TimeSpan.FromMilliseconds 250.0)
+
+        let queriesBeforeDue =
+            rig.Fake.Events
+            |> List.choose (function
+                | WireEvent.SearchQuery q -> Some q
+                | _ -> None)
+
+        Assert.Empty queriesBeforeDue
+        Assert.True(rig.Shell.Model.Chrome.SearchDebouncingUntil.IsSome)
+
+        // 再推进 0.2s（距「终稿」输入已满 350ms ≥ 300ms）：Tick 触发防抖到期，只发一次「终稿」查询
+        rig.Fake.AdvanceSeconds 0.2
+        rig.Fake.FireEvery(TimeSpan.FromMilliseconds 250.0)
+        Assert.True(rig.Shell.Model.Chrome.SearchDebouncingUntil.IsNone)
+
+        let queriesAfterDue =
+            rig.Fake.Events
+            |> List.choose (function
+                | WireEvent.SearchQuery q -> Some q
+                | _ -> None)
+
+        let sentQuery = Assert.Single queriesAfterDue
+        Assert.Equal("终稿", sentQuery.query)
+
+        // 主机返回该 queryId 的搜索命中：SearchInFlight 校验通过并交由 SidebarDesk 呈现
+        let hitConvId = Guid.NewGuid()
+        let hitJson = JsonObject()
+        hitJson["conversationId"] <- JsonValue.Create(string hitConvId)
+        hitJson["title"] <- JsonValue.Create "终稿讨论"
+        hitJson["messageId"] <- JsonValue.Create 9UL
+        hitJson["role"] <- JsonValue.Create "assistant"
+        hitJson["snippet"] <- JsonValue.Create "这里是终稿内容"
+        hitJson["matchStart"] <- JsonValue.Create 3
+        hitJson["matchLength"] <- JsonValue.Create 2
+
+        rig.Fake.Deliver(
+            SearchResults
+                {
+                    queryId = sentQuery.queryId
+                    query = "终稿"
+                    items = JsonArray([| hitJson :> JsonNode |])
+                    hasMore = false
+                    truncated = false
+                    offset = 0
+                    atCommitId = 0UL
+                }
+        )
+
+        let hit = Assert.Single rig.Views.Sidebar.MessageHits
+        Assert.Equal(hitConvId, hit.conversationId)
+        Assert.Equal("这里是终稿内容", hit.snippet))

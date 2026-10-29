@@ -144,6 +144,59 @@ let ``inline container aligns to bottom and figures announce their source`` () =
         Assert.Equal(box "x^2", ToolTip.GetTip f))
 
 [<Fact>]
+let ``formula ink stays inside the size the control declares`` () =
+    Headless.run (fun () ->
+        seedResources ()
+
+        Scenario.math
+        |> List.iteri (fun i (tex, disp) ->
+            match htmls.[i] with
+            | None -> ()
+            | Some html ->
+                let _, l = look ()
+                // 只量公式控件本身：展示式的上下留白属于宿主 Border，不在公式声明的尺寸内。
+                let figure = new MathFigure(Some html, disp, 14.5, l)
+
+                // 排不出来的公式没有声明尺寸（调用方退回原文），没有「越界」可言。
+                if figure.HasLayout then
+                    figure.Measure(Size(infinity, infinity))
+                    let declared = figure.DesiredSize
+                    Assert.True(declared.Width > 0.0 && declared.Height > 0.0, tex)
+
+                    // 画布四周留一圈空白：越界的笔画才画得出来，否则会被画布边缘截掉。
+                    let pad = 24.0
+
+                    let canvas =
+                        Canvas(Width = declared.Width + pad * 2.0, Height = declared.Height + pad * 2.0)
+
+                    Canvas.SetLeft(figure, pad)
+                    Canvas.SetTop(figure, pad)
+                    canvas.Children.Add figure
+                    let win = Window(Content = canvas)
+                    win.Show()
+                    win.UpdateLayout()
+                    // 挂树后 Bounds 必须与声明尺寸一致，否则「裁到 Bounds」就掩盖了布局错位。
+                    Assert.Equal(declared.Width, figure.Bounds.Width, 3)
+                    Assert.Equal(declared.Height, figure.Bounds.Height, 3)
+
+                    let declaredRect = Rect(pad, pad, declared.Width, declared.Height)
+                    let outside, samples = Probe.inkOutside canvas declaredRect
+
+                    win.Close()
+
+                    Assert.True(
+                        (outside = 0),
+                        sprintf
+                            "%s: %d ink pixel(s) outside %A at %A (bounds=%A desired=%A)"
+                            tex
+                            outside
+                            declaredRect
+                            samples
+                            figure.Bounds
+                            declared
+                    )))
+
+[<Fact>]
 let ``katex glyph families come from the embedded fonts`` () =
     Headless.run (fun () ->
         let tf = Typeface(ThemeFonts.family "KaTeX_Main")

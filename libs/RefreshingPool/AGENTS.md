@@ -7,7 +7,7 @@
     - 推理：配置热更新后新调用立即用新配置，旧对象不留孤儿（旧决策 98）。
 
 # SPEC
-1. [LEMMA: 1] 测试覆盖复用、替换、移除、Prune、StopAll。
+1. [LEMMA: 1] 测试覆盖复用、替换、移除、Prune、StopAll：`tests/Tests.fs` 的 `same fingerprint reuses, a new one replaces and stops the old`、`prune stops keys that are no longer live and stopAll stops the rest` 通过。
 
 # 迁入或覆盖的旧测试
 - 旧测试迁在 compose/ToolRegistry/tests（逐条列在 ToolRegistry AGENTS.md）。

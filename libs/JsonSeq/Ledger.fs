@@ -16,6 +16,24 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
     let mutable stamps = from.stamps
     let ends = ResizeArray<int64>(from.ends)
     let mutable pending: (Commit<'E> * 'S) option = None
+    let maxStamps: int option = from.maxStamps
+
+    /// 幂等索引超出上限时，从最旧一侧（commitId 最小）逐条淘汰。
+    /// 被淘汰的老命令重发会被当成新提交重新编号——这是有界保留的已知代价，由组合者设置上限时权衡。
+    let pruneStamps () =
+        match maxStamps with
+        | Some cap when Map.count stamps > cap ->
+            let excess = Map.count stamps - cap
+
+            let evict =
+                stamps
+                |> Map.toList
+                |> List.sortBy (fun (_, (_, id)) -> id)
+                |> List.take excess
+                |> List.map fst
+
+            stamps <- stamps |> Map.filter (fun k _ -> not (List.contains k evict))
+        | _ -> ()
 
     do
         if uint64 ends.Count <> from.throughId then
@@ -26,6 +44,8 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
 
             if ends[i] <= prev then
                 invalidArg (nameof from) "checkpoint ends must be strictly increasing from origin"
+
+        pruneStamps ()
 
     let tail () =
         if ends.Count = 0 then from.origin else ends[ends.Count - 1]
@@ -38,8 +58,8 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
             ``end`` = ends[i]
         }
 
-    /// 空账本，介质从偏移 origin 开始（通常为 0）。
-    new(apply, initial: 'S, ?origin: int64) =
+    /// 空账本，介质从偏移 origin 开始（通常为 0）；可设置幂等索引保留上限。
+    new(apply, initial: 'S, ?origin: int64, ?maxStamps: int) =
         Ledger<'S, 'E, 'Err>(
             apply,
             {
@@ -48,6 +68,7 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
                 stamps = Map.empty
                 origin = defaultArg origin 0L
                 ends = [||]
+                maxStamps = maxStamps
             }
         )
 
@@ -110,7 +131,9 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
             ends.Add span.``end``
 
             match c.stamp with
-            | Some st -> stamps <- stamps |> Map.add st.commandId (st.hash, c.id)
+            | Some st ->
+                stamps <- stamps |> Map.add st.commandId (st.hash, c.id)
+                pruneStamps ()
             | None -> ())
 
     // —— 查询 ——
@@ -118,6 +141,8 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
     member _.LastId: uint64 = lastId
     /// 幂等索引：commandId -> (hash, commitId)。不可变值，调用方拿到的就是快照。
     member _.Stamps: Map<string, string * uint64> = stamps
+    /// 幂等索引的保留上限（None = 无界）。超出时按 commitId 从最旧一侧逐条淘汰。
+    member _.MaxStamps: int option = maxStamps
     /// 下一条提交的起点（上一条的末尾）。
     member _.Tail: int64 = tail ()
 
@@ -129,6 +154,7 @@ type Ledger<'S, 'E, 'Err>(apply: 'S -> Commit<'E> -> Result<'S, 'Err>, from: Che
             stamps = stamps
             origin = from.origin
             ends = ends.ToArray()
+            maxStamps = maxStamps
         }
 
     member _.SpanOf(id: uint64) : Span option =

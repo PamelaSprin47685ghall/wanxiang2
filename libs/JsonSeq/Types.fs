@@ -74,6 +74,8 @@ type Checkpoint<'S> =
         /// 第一条提交的起点
         origin: int64
         ends: int64[]
+        /// 幂等索引保留上限（None = 无界）；超出时从最旧一侧淘汰
+        maxStamps: int option
     }
 
 module Checkpoint =
@@ -85,4 +87,5 @@ module Checkpoint =
             stamps = cp.stamps
             origin = cp.origin
             ends = cp.ends
+            maxStamps = cp.maxStamps
         }

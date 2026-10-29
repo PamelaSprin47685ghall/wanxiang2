@@ -70,6 +70,20 @@ let ``failed write leaves the original intact`` () =
     Assert.False(File.Exists(Path.Combine(Path.GetDirectoryName p, sprintf ".dir.toml.tmp.%d" Environment.ProcessId)))
     Assert.Equal(Ok "keep", f.Read())
 
+// SPEC 6：多次写入仍留下正确内容，目录 fsync 在真实目录成功、在缺失或文件路径返回 false 且不抛异常
+[<Fact>]
+let ``repeated writes keep the latest content on disk`` () =
+    let p = tempPath ()
+    use f = new AtomicTextFile(p)
+    f.Write "first" |> ignore
+    f.Write "second" |> ignore
+    Assert.Equal(Ok "second", f.Read())
+    let dir = Path.GetDirectoryName p
+    Assert.Equal<string[]>([| p |], Directory.GetFiles dir)
+    Assert.True(AtomicTextFileInterop.syncDir dir)
+    Assert.False(AtomicTextFileInterop.syncDir p)
+    Assert.False(AtomicTextFileInterop.syncDir (Path.Combine(dir, "missing-dir")))
+
 // SPEC 5：读不存在的文件返回 Error；ExternalEdit 为 None
 [<Fact>]
 let ``missing file reads as error`` () =

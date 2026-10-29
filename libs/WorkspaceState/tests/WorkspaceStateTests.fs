@@ -5,7 +5,6 @@ open System.Text.Json.Nodes
 open Xunit
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 open Wanxiang2.WorkspaceState
 
@@ -67,7 +66,7 @@ module WorkspaceStateTests =
         Assert.Equal(1, modelWithPending.Feedback.PendingCommands.Count)
 
         let nextModel, _ =
-            Workspace.update now0 (Msg.ConnectionDown(Some(ConnectionIssue.Disconnected "net down"))) modelWithPending
+            Workspace.update now0 (Msg.ConnectionDown(Some "net down")) modelWithPending
 
         Assert.Equal(0, nextModel.Feedback.PendingCommands.Count)
         Assert.Equal(0, nextModel.Feedback.PendingDeletions.Count)
@@ -276,8 +275,7 @@ module WorkspaceStateTests =
         Assert.Contains(Effect.Focus FocusTarget.ComposerInput, effsEsc)
 
         // 10. Connection Down & Reconnect
-        let m10, _ =
-            Workspace.update now0 (Msg.ConnectionDown(Some(ConnectionIssue.Disconnected "net lost"))) m9
+        let m10, _ = Workspace.update now0 (Msg.ConnectionDown(Some "net lost")) m9
 
         let vs10 = Workspace.project m10
         Assert.Equal(ChatPhase.Empty IdleEmptyKind.NotConnected, vs10.Chat.Phase)
@@ -302,9 +300,17 @@ module WorkspaceStateTests =
         Assert.Equal<int list>([ 1000; 2000; 4000 ], ReconnectBackoff.schedule 3)
 
         // 2. MessageLink
-        let convId = Guid.NewGuid()
+        let convId = Guid.Parse "11111111-2222-3333-4444-555555555555"
         let link = MessageLink.format None convId 42UL
+        Assert.Equal("wanxiang://open?c=11111111-2222-3333-4444-555555555555&m=42", link)
         Assert.Equal(Some(convId, 42UL), MessageLink.tryParse link)
+        let pwaLink = MessageLink.format (Some "https://example.com/chat#old") convId 42UL
+        Assert.Equal("https://example.com/chat#open?c=11111111-2222-3333-4444-555555555555&m=42", pwaLink)
+        Assert.Equal(Some(convId, 42UL), MessageLink.tryParse pwaLink)
+        Assert.Equal(None, MessageLink.tryParse "")
+        Assert.Equal(None, MessageLink.tryParse "普通搜索关键词")
+        Assert.Equal(None, MessageLink.tryParse "wanxiang://open?c=00000000-0000-0000-0000-000000000000&m=42")
+        Assert.Equal(None, MessageLink.tryParse "wanxiang://open?c=not-a-guid&m=42")
 
         // 3. DraftSummaryText
         Assert.Equal("已关闭：不会在本机保存草稿。", DraftSummaryText.text false 2 1)
@@ -313,6 +319,19 @@ module WorkspaceStateTests =
 
         // 4. ForkAnchor
         Assert.Equal(Some 2UL, ForkAnchor.forkAfter [ 1UL; 2UL; 3UL ] (Some 3UL))
+        Assert.Equal(Some 3UL, ForkAnchor.forkAfter [ 1UL; 2UL; 3UL ] None)
+        Assert.Equal(None, ForkAnchor.forkAfter [ 1UL; 2UL; 3UL ] (Some 1UL))
+
+        Assert.Equal(
+            """{"role":"user","contents":[{"text":"edited prompt"}]}""",
+            (ForkAnchor.editedMessage "edited prompt").ToJsonString()
+        )
+
+        let editedNode = ForkAnchor.editedMessage "改写后的消息"
+        let firstContent = (editedNode["contents"].AsArray()).[0]
+        Assert.Equal("改写后的消息", firstContent["text"].GetValue<string>())
+
+        Assert.Equal("当前没有可分叉的对话。", ForkAnchor.noConversationText)
 
         // 5. RevealTarget
         Assert.Equal(Some 2UL, RevealTarget.resolve (RevealTarget.RevealMessage 2UL) [ 1UL; 2UL; 3UL ])

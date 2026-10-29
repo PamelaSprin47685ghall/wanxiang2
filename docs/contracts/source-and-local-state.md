@@ -46,11 +46,9 @@ PWA 继续使用浏览器存储，不虚构浏览器中的项目磁盘目录。�
 
 ## 验证入口与范围
 
-- `tools/tests/test_wanxiang2_feed.py`：保留原故障回归，新增根路径接线、两仓二进制禁入、
-  远端快进及未发布提交保护。全部是隔离 Git 夹具，不接触真实远端。
-- `tests/Wanxiang.Tests/LocalStateTests.fs`：主/linked worktree、独立工作区、只读解析、
-  旧目录隔离、Git 路径及符号链接拒绝。测试中的 `.git` 假数据只在隔离夹具中创建。
-- 本轮只检查文本、Python/Bash 语法和 XML 显式源码入口，未编译、运行测试或启动应用。
-  以上行为尚待真实执行验证，不引用之前的全量测试成绩。
+- **历史背景说明（2026-10-17 收束更新）**：旧宿主仓已于 2026-10-17 物理退役，子模块挂载解除，本仓库（`wanxiang2`）成为唯一产品本体入口（`app/Desktop` 与 `app/Pwa`）。上文关于旧仓 submodule 与 `tools/wanxiang2-feed.sh` 的条款保留作历史架构对照。
+- **当前持续门禁证据**：
+  - Git 索引二进制禁入：由 `./x check` 自动检查 `.nupkg`、`.snupkg`、`.tgz`，任一大小进入索引即失败。
+  - 本机状态路径与 Git 元数据拒绝：由 `libs/LocalState/tests/Tests.fs`（主/linked worktree、独立工作区、只读解析、旧目录隔离、`.git` 路径及符号链接拒绝）与 `compose/UiPrefsFile` 持续覆盖，并随 `./x all` 实跑验证通过。
 
 路径预检防止误配，不宣称抵抗另一个恶意进程在检查后替换目录的文件系统竞态。

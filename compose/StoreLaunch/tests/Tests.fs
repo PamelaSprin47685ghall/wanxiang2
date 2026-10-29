@@ -121,3 +121,67 @@ let ``数据目录被占用时两条路径都报 locked`` () =
         | Ok _ -> failwith "expected locked"
 
         held.Shutdown())
+
+[<Fact>]
+let ``有界 maxStamps 启动：淘汰旧幂等戳后重启与 doctor --fix 均保持健康`` () =
+    withDir (fun d ->
+        let _, log = logs ()
+
+        let submitCmd (s: EventStore) (cid: string) =
+            s.Submit
+                {
+                    events =
+                        [
+                            ConversationCreated
+                                {
+                                    conversationId = Guid.NewGuid()
+                                    title = "t-" + cid
+                                    config = SessionConfig.empty
+                                }
+                        ]
+                    commandId = Some cid
+                    commandType = Some "conversation.create"
+                    commandHash = Some("h-" + cid)
+                    nowUtc = None
+                }
+
+        match StoreLaunch.openForStartupWithMaxStamps (Some 2) d log with
+        | Error e -> failwith e
+        | Ok s ->
+            Assert.Equal(Some 2, s.MaxStamps)
+
+            match submitCmd s "c1" with
+            | Committed c -> Assert.Equal(1UL, c.id)
+            | r -> failwithf "unexpected %A" r
+
+            match submitCmd s "c2" with
+            | Committed c -> Assert.Equal(2UL, c.id)
+            | r -> failwithf "unexpected %A" r
+
+            // c3 淘汰 c1，随后重发 c1 作为新提交 id = 4 落盘（尚未写快照，全靠日志重放）
+            match submitCmd s "c3" with
+            | Committed c -> Assert.Equal(3UL, c.id)
+            | r -> failwithf "unexpected %A" r
+
+            match submitCmd s "c1" with
+            | Committed c -> Assert.Equal(4UL, c.id)
+            | r -> failwithf "unexpected %A" r
+
+            s.Shutdown()
+
+        // 无快照下用相同 maxStamps = Some 2 重新启动与执行 doctor --fix 均保持健康
+        let fixLogs, fixLog = logs ()
+        Assert.Equal(Ok(), StoreLaunch.fixWithMaxStamps (Some 2) d fixLog)
+        Assert.Empty fixLogs
+
+        let startLogs, startLog = logs ()
+
+        match StoreLaunch.openForStartupWithMaxStamps (Some 2) d startLog with
+        | Error e -> failwith e
+        | Ok s2 ->
+            Assert.False s2.IsReadOnly
+            Assert.Equal(4UL, s2.LastCommitId)
+            Assert.Equal(2, Map.count s2.Stamps)
+            s2.Shutdown()
+
+        Assert.Equal<string list>([ "no snapshot; full replay" ], List.ofSeq startLogs))

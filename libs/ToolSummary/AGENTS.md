@@ -9,4 +9,4 @@
     - 推理：审批卡片只写函数名，用户等于盲批。内置工具各有专门的句子；MCP 和不认识的工具退回「调用 X（展开看参数）」，不会编造含义。
 
 # SPEC
-1. [LEMMA: 1] 内置工具、缺参数、MCP、未知工具的句子都与旧仓库一致：`tests/Tests.fs`，通过。
+1. [LEMMA: 1] 内置工具、缺参数、MCP、未知工具的句子都与旧仓库一致：`tests/Tests.fs` 的 `builtin and MCP tools get a plain sentence` ，通过。

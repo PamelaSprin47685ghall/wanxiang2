@@ -19,8 +19,8 @@ Anthropic Messages API 协议：请求正文（`AnthropicRequest.build`）、端
     - 推理：前者是旧行为，下游界面和已经落盘的消息依赖它。后者是因为用残缺参数执行工具，比不执行更糟。
 
 ## SPEC
-1. [LEMMA: 1] 请求正文、端点、请求头与旧实现逐字节相同：组合者 ProviderTransports 的 `GoldenTests`，通过。
-2. [LEMMA: 2, 3] 工具入参分片拼接、坏入参丢弃、按事件名兜底、error 和 stop、收尾用量与结束原因映射：`tests/Tests.fs`，通过。
+1. [LEMMA: 1] 请求正文、端点、请求头与旧实现逐字节相同：组合者 ProviderTransports 的 `GoldenTests`（`requests and decoded updates equal the old implementation byte for byte`），通过。
+2. [LEMMA: 2, 3] 工具入参分片拼接、坏入参丢弃、按事件名兜底、error 和 stop、收尾用量与结束原因映射：`tests/Anthropic.Tests.fs` 的 `endpoint accepts base urls with or without v1, headers follow key and thinking`、`tool input split across deltas becomes one call when its block stops`、`broken tool input drops the call instead of running the tool with partial arguments` ，通过。
 
 ## 变更记录
 - 流事件结果联合类型加 `[<RequireQualifiedAccess>]`：它们与 AgentRuntime 的 `AgentCallResult`（Completed/Failed/Cancelled）同在命名空间 Wanxiang.Agent，作为包被引用时 `Failed` 会被解析错。调用方原本都已限定写法，无需改动。
@@ -42,9 +42,9 @@ Gemini generateContent 协议：请求正文（`GeminiRequest.build`）、调用
 已修的旧缺陷（2026-10-18）：一个会话从别的提供方切到 Gemini 后，旧工具结果的 callId 不是「名字@序号」格式（如 `call1`），旧实现把 `functionResponse.name` 填成原始 callId——发出去的名字不是任何一个已声明的函数。现在先在同一份请求里找那次 `functionCall` 的名字（跨提供方历史也带着它），找不到才退回解析 id。金样 `compose/ProviderTransports/tests/golden/transports.txt` 的 Gemini 请求因此有一处偏离旧字节：`"name":"call1"` → `"name":"search"`。
 
 ## SPEC
-1. [LEMMA: 1, 2] 请求正文、端点、请求头、解码后的增量与旧实现逐字节相同：组合者 ProviderTransports 的 `GoldenTests`，通过。
-2. [LEMMA: 2, 3] 调用 id 往返、思考片段、调用按到达顺序编号、error 对象、坏 data、用量兜底：`tests/Tests.fs`，通过。
-3. `tests/Tests.fs` 的 `functionResponse takes the name from the call in the same request when the id has none`：外来 id 取同一请求里的名字、自家 `名字@序号` 若两者一致、孤立结果退回解析 id。
+1. [LEMMA: 1, 2] 请求正文、端点、请求头、解码后的增量与旧实现逐字节相同：组合者 ProviderTransports 的 `GoldenTests`（`requests and decoded updates equal the old implementation byte for byte`），通过。
+2. [LEMMA: 2, 3] 调用 id 往返、思考片段、调用按到达顺序编号、error 对象、坏 data、用量兜底：`tests/Gemini.Tests.fs` 的 `endpoint adds v1beta only when no version is given; key goes in a header`、`call ids are made from name and index and give the name back`、`functionResponse takes the name from the call in the same request when the id has none` ，通过。
+3. `tests/Gemini.Tests.fs` 的 `functionResponse takes the name from the call in the same request when the id has none`：外来 id 取同一请求里的名字、自家「名字@序号」若两者一致、孤立结果退回解析 id。
 
 ## 变更记录
 - 流事件结果联合类型加 `[<RequireQualifiedAccess>]`：它们与 AgentRuntime 的 `AgentCallResult`（Completed/Failed/Cancelled）同在命名空间 Wanxiang.Agent，作为包被引用时 `Failed` 会被解析错。调用方原本都已限定写法，无需改动。

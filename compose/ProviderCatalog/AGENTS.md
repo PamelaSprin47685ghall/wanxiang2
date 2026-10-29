@@ -7,7 +7,7 @@
 2. **响应解析是纯函数，抽成库 ModelListing；缓存、落盘、联网探活是协作，留下。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1] 迁入的旧测试全部通过（下列，含本机 HttpListener 探活）。
+1. [LEMMA: 1] 迁入的旧测试全部通过（下列，含本机 HttpListener 探活，如 `modelIdsFromProbe extracts openai and anthropic data arrays with sorting and deduplication`、`probeModels returns models when endpoint responds 200 OK`）。
 
 # 迁入或覆盖的旧测试（旧仓库 d9651ed，可在旧仓库删除）
 - ProviderCatalogTests.fs 整个文件：

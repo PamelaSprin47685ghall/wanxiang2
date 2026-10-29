@@ -191,6 +191,11 @@ FAIL $f: references missing $ref"
     echo "$packed"
     bad=1
   fi
+  # 规则与证据可追溯性门禁（SPEC 1）：
+  # 1) 根 AGENTS.md 的 LEMMA 推导图不得有环；
+  # 2) 各 AGENTS.md 中的 [AXIOM/根 AXIOM/LEMMA/根 LEMMA/SPEC/根 SPEC] 编号必须在对应作用域真实存在；
+  # 3) 各 libs/*/AGENTS.md 与 compose/*/AGENTS.md 引用的 tests/<文件>.fs(.fsproj) 必须存在，显式点名的测试函数必须存在于对应 tests 源码。
+  if ! spec_trace_check; then bad=1; fi
   # 空白与冲突标记门禁（git diff --check）：拦截行尾空白、文件末多余空行与未解冲突标记。
   if ! whitespace_check; then bad=1; fi
   # F# 格式门禁（Fantomas）：规则在 .editorconfig，工具版本钉在 .config/dotnet-tools.json。
@@ -202,6 +207,313 @@ FAIL $f: references missing $ref"
   covered="$GALLERY_COVERED"
   [[ $bad == 0 ]] && echo "check ok: $(libs | wc -l) libs with no sibling references; $(composers | wc -l) composer(s) using packages only; $covered control librar(y|ies) with a gallery entry"
   return $bad
+}
+
+# 规则与证据可追溯性门禁（SPEC 1）
+spec_trace_check() {
+  python3 - <<'PY'
+import glob, os, re, sys
+
+bad = 0
+with open("AGENTS.md", "r", encoding="utf-8") as f:
+    root_text = f.read()
+
+def get_sec_nums(text, header):
+    nums = set()
+    for m in re.finditer(rf"(?ms)^#{{1,3}}\s+{header}[^\n]*\n(.*?)(?=^#{{1,3}}\s+|\Z)", text):
+        for n in re.findall(r"(?m)^\s*(\d+)\.\s+", m.group(1)):
+            nums.add(int(n))
+    return nums
+
+def parse_nums(rest):
+    out = []
+    for tok in re.split(r"[,，\s]+", rest.strip()):
+        if not tok:
+            continue
+        m = re.match(r"^(\d+)(?:[–\-](\d+))?$", tok)
+        if not m:
+            return None
+        if m.group(2):
+            out.extend(range(int(m.group(1)), int(m.group(2)) + 1))
+        else:
+            out.append(int(m.group(1)))
+    return out if out else None
+
+root_axioms = get_sec_nums(root_text, "AXIOM")
+root_lemmas = get_sec_nums(root_text, "LEMMA")
+root_specs = get_sec_nums(root_text, "SPEC")
+
+root_deps = {}
+for sec_kind in ("AXIOM", "LEMMA", "SPEC"):
+    for m in re.finditer(rf"(?ms)^#{{1,3}}\s+{sec_kind}[^\n]*\n(.*?)(?=^#{{1,3}}\s+|\Z)", root_text):
+        for item_m in re.finditer(r"(?ms)^\s*(\d+)\.\s+(.*?)(?=^\s*\d+\.\s+|\Z)", m.group(1)):
+            src = (sec_kind, int(item_m.group(1)))
+            root_deps.setdefault(src, set())
+            first_line = re.sub(r"`[^`]*`", "", item_m.group(2).splitlines()[0])
+            for bm in re.finditer(r"\[([^\]]+)\]", first_line):
+                if not re.search(r"\b(AXIOM|LEMMA|SPEC)\b", bm.group(1)):
+                    continue
+                for clause in re.split(r"[;；]", bm.group(1)):
+                    cm = re.match(r"^(?:根\s*)?(AXIOM|LEMMA|SPEC)\s*[:：]?\s*(.+)$", clause.strip())
+                    if cm:
+                        ns = parse_nums(cm.group(2)) or []
+                        for n in ns:
+                            root_deps[src].add((cm.group(1), n))
+
+visiting, visited = set(), set()
+def dfs(u):
+    if u in visiting:
+        return True
+    if u in visited:
+        return False
+    visiting.add(u)
+    for v in root_deps.get(u, ()):
+        if dfs(v):
+            return True
+    visiting.remove(u)
+    visited.add(u)
+    return False
+
+for u in list(root_deps):
+    if dfs(u):
+        print(f"FAIL AGENTS.md: cycle detected in rule derivation at {u[0]} {u[1]}")
+        bad = 1
+
+comp_rules = {}
+for pattern in ["libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
+    for md in sorted(glob.glob(pattern)):
+        comp_name = os.path.basename(os.path.dirname(md))
+        with open(md, "r", encoding="utf-8") as f:
+            text = f.read()
+        for part in re.split(r"(?m)(?=^##\s+成员\s+)", text):
+            mm = re.match(r"^##\s+成员\s+`?([A-Za-z0-9_]+)`?", part)
+            target_name = mm.group(1) if mm else comp_name
+            for k in ("AXIOM", "LEMMA", "SPEC"):
+                comp_rules.setdefault((target_name, k), set()).update(get_sec_nums(part, k))
+
+def load_test_text(base_dir):
+    tdir = os.path.join(base_dir, "tests")
+    if not os.path.isdir(tdir):
+        return ""
+    buf = []
+    for p in glob.glob(os.path.join(tdir, "*.fs")):
+        with open(p, "r", encoding="utf-8") as tf:
+            buf.append(tf.read())
+    return "\n".join(buf)
+
+def extract_test_fns(src):
+    fns = set()
+    for m in re.finditer(r"\blet\s+``([^`]+)``", src):
+        fns.add(m.group(1))
+    for m in re.finditer(r"\[<(?:Fact|Theory)[^\]]*>\]\s*(?:\[<[^\]]+>\]\s*)*let\s+(?:rec\s+)?([A-Za-z0-9_]+)\b", src):
+        fns.add(m.group(1))
+    return fns
+
+all_test_fns = set()
+for pat in ("libs/*", "compose/*"):
+    for d in glob.glob(pat):
+        if os.path.isdir(d):
+            all_test_fns.update(extract_test_fns(load_test_text(d)))
+
+for pattern in ["AGENTS.md", "libs/*/AGENTS.md", "compose/*/AGENTS.md"]:
+    for md in sorted(glob.glob(pattern)):
+        base_dir = os.path.dirname(md)
+        with open(md, "r", encoding="utf-8") as f:
+            text = f.read()
+        if md != "AGENTS.md":
+            if md.startswith("libs/"):
+                lib_name = os.path.basename(base_dir)
+                fs_stems = [os.path.splitext(os.path.basename(p))[0] for p in glob.glob(os.path.join(base_dir, "*.fs"))]
+                seen_members = set()
+                for m in re.finditer(r"^##\s+成员\s+`?([A-Za-z0-9_]+)`?", text, re.M):
+                    mem = m.group(1)
+                    if mem in seen_members:
+                        print(f"FAIL {md}: duplicate member heading `## 成员 {mem}`")
+                        bad = 1
+                    seen_members.add(mem)
+                    if mem != lib_name and not any(s == mem or s.startswith(mem) for s in fs_stems):
+                        print(f"FAIL {md}: declared member `{mem}` has no matching .fs source in {base_dir}")
+                        bad = 1
+            test_src = load_test_text(base_dir)
+            local_test_fns = extract_test_fns(test_src)
+            if os.path.isdir(os.path.join(base_dir, "tests")) and not re.search(r"\[<(?:Fact|Theory)\b", test_src):
+                print(f"FAIL {md}: tests/ directory has no [<Fact>] or [<Theory>] across its .fs files")
+                bad = 1
+            in_test_list = False
+            for lineno, line in enumerate(text.splitlines(), 1):
+                if re.match(r"^#{1,3}\s+(迁入|证据|测试)", line):
+                    in_test_list = True
+                elif re.match(r"^#{1,3}\s+", line):
+                    in_test_list = False
+                if "<原文件名>" in line or "tests/Wanxiang.Tests/" in line:
+                    continue
+                m_look = re.match(r"^\s*-\s*`([A-Z][A-Za-z0-9_]*Look)`\s*[：:]", line)
+                if m_look and m_look.group(1) != "ReadingLook":
+                    print(f"FAIL {md}:{lineno}: documents obsolete *Look record `{m_look.group(1)}` as active contract")
+                    bad = 1
+                if md.startswith("libs/") and re.search(r"`[A-Za-z0-9_.]+\s*(?:\([^`)]*\blook\b|\blook\b\s+[A-Za-z0-9_]+)", line):
+                    print(f"FAIL {md}:{lineno}: documents obsolete `look` parameter in library signature")
+                    bad = 1
+                clean_xline = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or " ", line)
+                m_xcomp = re.match(r"^\s*-\s*(?:组合者\s+([A-Za-z0-9_]+)|经\s+compose/([A-Za-z0-9_]+)[^：]*)\s*覆盖：(.+)$", clean_xline)
+                if m_xcomp:
+                    comp_name = m_xcomp.group(1) or m_xcomp.group(2)
+                    target_comp = os.path.join("compose", comp_name)
+                    target_tfns = extract_test_fns(load_test_text(target_comp))
+                    for bm in re.finditer(r"`([^`]+)`", m_xcomp.group(3)):
+                        xt = bm.group(1)
+                        if xt not in target_tfns:
+                            print(f"FAIL {md}:{lineno}: cross-cited test `{xt}` not found in {target_comp}/tests")
+                            bad = 1
+                m_xparen = re.match(r"^\s*-\s*`([^`]+)`\s*（((?:compose|libs)/[A-Za-z0-9_]+)/tests/[A-Za-z0-9_.-]+\.fs[^）]*）", line)
+                if m_xparen:
+                    xt = m_xparen.group(1)
+                    target_comp = m_xparen.group(2)
+                    target_tfns = extract_test_fns(load_test_text(target_comp))
+                    if xt not in target_tfns:
+                        print(f"FAIL {md}:{lineno}: cross-cited test `{xt}` not found in {target_comp}/tests")
+                        bad = 1
+                for m in re.finditer(r"(?<![A-Za-z0-9_/])(tests/[A-Za-z0-9_.-]+\.(?:fsproj|fs))(?![A-Za-z])", line):
+                    rel_path = m.group(1)
+                    full_tpath = os.path.join(base_dir, rel_path)
+                    if not os.path.exists(full_tpath):
+                        print(f"FAIL {md}:{lineno}: references missing test file {rel_path}")
+                        bad = 1
+                    elif rel_path.endswith(("Tests.fs", "Regression.fs")):
+                        with open(full_tpath, "r", encoding="utf-8") as tf:
+                            if not re.search(r"\[<(?:Fact|Theory)\b", tf.read()):
+                                print(f"FAIL {md}:{lineno}: cited test file {rel_path} has no [<Fact>] or [<Theory>]")
+                                bad = 1
+                if test_src:
+                    clean_line = re.sub(r"(`[^`]+`)|（[^）]*）", lambda m: m.group(1) or " ", line)
+                    candidates = []
+                    if re.search(r"`tests/[A-Za-z0-9_.-]+\.fs`(?:\s*(?:通过|的)?\s*[:：]|\s+的\s+|\s+`)", clean_line):
+                        after = re.split(r"`tests/[A-Za-z0-9_.-]+\.fs`(?:\s*(?:通过|的)?\s*[:：]|\s+的\s+|\s+)", clean_line, maxsplit=1)[1].split("——")[0].split("。")[0]
+                        candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", after))
+                    candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`\s*通过", clean_line))
+                    if re.match(r"^\s*-\s*证明：", clean_line) and "compose/" not in clean_line and "libs/" not in clean_line and "./x " not in clean_line:
+                        after = re.split(r"证明：", clean_line, maxsplit=1)[1].split("——")[0].split("。")[0]
+                        candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", after))
+                    if re.match(r"^\s*\d+\.\s+\[[^\]]+\]", clean_line) and "compose/" not in clean_line and "libs/" not in clean_line and "./x " not in clean_line and "：" in clean_line.split("`")[0]:
+                        after = clean_line.split("：", 1)[1].split("——")[0].split("。")[0]
+                        candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", after))
+                    if in_test_list and not any(k in line for k in ["留在旧仓库", "compose/", "libs/", "删除", "退役", "部分覆盖", "同上", "在 ConversationRuns", "测试名改为", "并入", "在 ApprovalCardText", "已随", "组合者", "入口消费", "留在宿主"]):
+                        bm = re.match(r"^\s*-\s+(?:[^：`]*：|本包新增用例\s*)?((?:`[^`]+`(?:\s*(?:、|与|，|,|（[^`）]*）)\s*)?)+)[。；]?$", clean_line)
+                        if bm:
+                            candidates.extend(m.group(1) for m in re.finditer(r"`([^`]+)`", bm.group(1)))
+                    for raw_tname in dict.fromkeys(candidates):
+                        tname = raw_tname
+                        if tname.startswith("tests/") or tname.startswith("./") or (" " not in tname and tname.isascii()):
+                            continue
+                        if tname not in local_test_fns:
+                            print(f"FAIL {md}:{lineno}: cited test `{tname}` not found in {base_dir}/tests")
+                            bad = 1
+            if test_src:
+                in_spec_sec = False
+                spec_items = []
+                cur_spec = None
+                for idx, sline in enumerate(text.splitlines()):
+                    if re.match(r"^#{1,4}\s+SPEC\b", sline):
+                        in_spec_sec = True
+                        if cur_spec:
+                            spec_items.append(cur_spec)
+                            cur_spec = None
+                        continue
+                    elif re.match(r"^#{1,4}\s+", sline):
+                        in_spec_sec = False
+                        if cur_spec:
+                            spec_items.append(cur_spec)
+                            cur_spec = None
+                    if not in_spec_sec:
+                        continue
+                    if re.match(r"^\d+\.\s+", sline):
+                        if cur_spec:
+                            spec_items.append(cur_spec)
+                        cur_spec = (idx + 1, [sline])
+                    elif cur_spec is not None:
+                        cur_spec[1].append(sline)
+                if cur_spec:
+                    spec_items.append(cur_spec)
+                for s_lineno, s_lines in spec_items:
+                    s_joined = "\n".join(s_lines)
+                    if "[TODO]" in s_joined or "bash tools/gallery.sh" in s_joined or "`./x consume`" in s_joined:
+                        continue
+                    s_ticks = re.findall(r"`([^`]+)`", s_joined)
+                    has_fn = any(
+                        (b in local_test_fns or b in all_test_fns)
+                        for b in s_ticks
+                        if not b.startswith("tests/")
+                    )
+                    if not has_fn:
+                        print(f"FAIL {md}:{s_lineno}: SPEC item does not name any explicit test function in backticks")
+                        bad = 1
+        parts = re.split(r"(?m)(?=^##\s+成员\s+)", text)
+        for part in parts:
+            local_axioms = get_sec_nums(part, "AXIOM") if md != "AGENTS.md" else root_axioms
+            local_lemmas = get_sec_nums(part, "LEMMA") if md != "AGENTS.md" else root_lemmas
+            local_specs = get_sec_nums(part, "SPEC") if md != "AGENTS.md" else root_specs
+            for line in part.splitlines():
+                line_no_code = re.sub(r"`[^`]*`", "", line)
+                for m in re.finditer(r"\[([^\]]+)\]", line_no_code):
+                    content = m.group(1)
+                    if not re.search(r"\b(AXIOM|LEMMA|SPEC)\b", content):
+                        continue
+                    for clause in re.split(r"[;；]", content):
+                        clause = clause.strip()
+                        if not clause:
+                            continue
+                        cm = re.match(r"^(?:(根|[A-Za-z0-9_]+)\s*)?(AXIOM|LEMMA|SPEC)\s*[:：]?\s*(.+)$", clause)
+                        if not cm:
+                            print(f"FAIL {md}: unparseable rule citation clause [{clause}]")
+                            bad = 1
+                            continue
+                        scope, kind, rest = cm.group(1), cm.group(2), cm.group(3)
+                        nums = parse_nums(rest)
+                        if nums is None:
+                            print(f"FAIL {md}: non-numeric rule citation [{clause}]")
+                            bad = 1
+                            continue
+                        is_root = (scope == "根") or (scope is None and md == "AGENTS.md")
+                        if scope and scope != "根":
+                            target = comp_rules.get((scope, kind), set())
+                        elif kind == "AXIOM":
+                            target = root_axioms if (is_root or not local_axioms) else local_axioms
+                        elif kind == "LEMMA":
+                            target = root_lemmas if is_root else local_lemmas
+                        else:
+                            target = root_specs if (is_root or not local_specs) else local_specs
+                        for num in nums:
+                            if num not in target:
+                                print(f"FAIL {md}: invalid citation [{clause}] (number {num} not in {sorted(target)})")
+                                bad = 1
+
+fsharp_strip_re = re.compile(
+    r"\(\*[\s\S]*?\*\)"
+    r"|\"\"\"[\s\S]*?\"\"\""
+    r"|@\"(?:\"\"|[^\"])*\""
+    r"|\"(?:\\.|[^\"\\])*\""
+    r"|//[^\n]*"
+)
+
+for p in sorted(glob.glob("libs/*/*.fs") + glob.glob("compose/*/*.fs")):
+    with open(p, "r", encoding="utf-8") as pf:
+        cleaned = fsharp_strip_re.sub(lambda m: "\n" * m.group(0).count("\n"), pf.read())
+    for lineno, clean in enumerate(cleaned.splitlines(), 1):
+        if re.search(r"\b(?:static\s+|abstract\s+)?member\s+(?:(?:public|internal)\s+)?(?:\w+\.)?Set[A-Z]\w*", clean):
+            print(f"FAIL {p}:{lineno}: forbidden non-private Set* mutation member (use Render/Apply/Slot/Wire per SPEC 3)")
+            bad = 1
+        if re.search(r"\b(?:type|and)\s+(?:\[<[^>]+>\]\s*)*(?:(?:public|internal|private)\s+)?\w+Look\b", clean):
+            print(f"FAIL {p}:{lineno}: forbidden *Look record type")
+            bad = 1
+        if re.search(r"\bDispatcherTimer\b", clean):
+            print(f"FAIL {p}:{lineno}: forbidden DispatcherTimer in library/composer production source")
+            bad = 1
+        if re.search(r"\bOnCreateAutomationPeer\b", clean):
+            print(f"FAIL {p}:{lineno}: forbidden custom OnCreateAutomationPeer")
+            bad = 1
+
+sys.exit(bad)
+PY
 }
 
 # 空白与冲突标记门禁：对基准提交到 HEAD、暂存区与工作区的已跟踪改动跑 git diff --check，
@@ -666,6 +978,8 @@ case "${1:-}" in
     if grep -qE 'Include="Wanxiang2\.[A-Za-z0-9]+"' "$(libproj "$2")" "libs/$2/tests/$2.Tests.fsproj" 2>/dev/null; then
       [[ -d artifacts/feed ]] || pack
       rm -rf artifacts/packages/wanxiang2.* "libs/$2/obj" "libs/$2/tests/obj"
+      dotnet test --project "libs/$2/tests/$2.Tests.fsproj" -p:RestorePackagesPath="$PWD/artifacts/packages"
+    elif [[ -d artifacts/packages ]]; then
       dotnet test --project "libs/$2/tests/$2.Tests.fsproj" -p:RestorePackagesPath="$PWD/artifacts/packages"
     else
       dotnet test --project "libs/$2/tests/$2.Tests.fsproj"

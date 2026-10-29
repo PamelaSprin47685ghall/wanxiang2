@@ -42,3 +42,15 @@ let ``开发模式：Debug 产物先于 Release，先于 wwwroot`` () =
         Assert.Equal(Some(bundle "Release"), PwaAssets.locate app)
         mk (bundle "Debug")
         Assert.Equal(Some(bundle "Debug"), PwaAssets.locate app))
+
+[<Fact>]
+let ``默认就绪门已完成，替换为后台任务后等待其完成`` () =
+    try
+        Assert.True(Wanxiang.UI.LocalHostGate.ready.IsCompletedSuccessfully)
+        let tcs = System.Threading.Tasks.TaskCompletionSource()
+        Wanxiang.UI.LocalHostGate.ready <- tcs.Task
+        Assert.False(Wanxiang.UI.LocalHostGate.ready.IsCompleted)
+        tcs.SetResult()
+        Assert.True(Wanxiang.UI.LocalHostGate.ready.IsCompletedSuccessfully)
+    finally
+        Wanxiang.UI.LocalHostGate.ready <- System.Threading.Tasks.Task.CompletedTask

@@ -35,7 +35,7 @@
 1. **同一组输入，结果与旧实现相同。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/ModelPickerList.Tests.fs` 通过：`headers only without a query and with several providers`、`enter picks the first hit`、`the current model is not picked again`、`move stops at the search box`、`move walks the list`、`the search help text is stable`。
+1. [LEMMA: 1] `tests/ModelPickerList.Tests.fs` 中 `headers only without a query and with several providers` 覆盖组头条件，`up from the top returns to search; down stops at the end` 覆盖方向键边界。`tests/Tests.fs` 中 `typing filters rows and enter picks the first hit`、`picking the current model is a no-op` 覆盖组合后的回车选择与当前项行为。本次已核对用例内容，未重新运行测试。
 
 ### 迁入或覆盖的旧测试
 旧模型切换浮层用例（决策 304）要起窗口，留在旧仓库。本库新增：2 条规则用例与文案断言。

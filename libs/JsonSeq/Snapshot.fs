@@ -47,6 +47,9 @@ type SnapshotFile(path: string) =
             fs.Flush true
 
         File.Move(tmp, full, true)
+        // 改名本身也要落盘：POSIX 上目录项不在文件页缓存里，不对目录 fsync，断电可能回到旧快照。
+        // 失败不抛出——那只意味着按 LEMMA 1 回到旧快照重建，慢一点，不是数据损坏。
+        DirFsync.sync (Path.GetDirectoryName full) |> ignore
 
     /// 读取并校验。
     member _.Load() : Loaded =

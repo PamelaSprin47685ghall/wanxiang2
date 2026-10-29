@@ -19,7 +19,7 @@
     - 推理：超长消息不能拖慢整次扫描。
 
 ## SPEC
-1. [LEMMA: 1, 2] `tests/Tests.fs`，通过。
+1. [LEMMA: 1, 2] `tests/MessageText.Tests.fs` 的 `text items are joined by newline; reasoning and tool parts are skipped`、`top level text and arrays are read; output is capped` ，通过。
 
 ## 成员 `TextMatch`
 
@@ -36,5 +36,5 @@
     - 推理：切开代理对会显示乱码；一对一替换保证高亮下标仍然准确。
 
 ## SPEC
-1. [LEMMA: 1] `terms ...`、`every word must appear...`，通过。
-2. [LEMMA: 2] `snippet keeps 30 chars...`、`snippet never splits a surrogate pair`，通过。
+1. [LEMMA: 1] `terms split on whitespace and drop duplicates`、`every word must appear; the earliest one is reported`，通过。
+2. [LEMMA: 2] `snippet keeps 30 chars before the hit, marks cuts and flattens newlines`、`snippet never splits a surrogate pair`，通过。

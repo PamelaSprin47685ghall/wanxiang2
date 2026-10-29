@@ -7,11 +7,11 @@
 - `SharedTheme`：全应用唯一的 `ThemeManager` / `ThemeStyles` / `InputSense` 与品牌标 `logo`（`Wanxiang2.Theme`、`Wanxiang2.ShellDesk`）。必须最先编译。
 - `App`（Avalonia `Application`）：把 Fluent 的强调色 / 选中色 / 输入框描边压成万象的活画笔，并给弹出层（ToolTip / ContextMenu / MenuFlyoutPresenter）套万象字体与底色；静态注入端口 `Root` / `Build` / `FlushDrafts` / `LoadPrefs` / `SavePrefs` / `MarkFirstFrame`。桌面分支组装 `MainWindow`，PWA 分支直接挂 `SingleView`。
 - `MainWindow(MainWindowPort)`：窗口尺寸 / 位置与几何持久化（Q195）；`Root` / `Build` / `FlushDrafts` / `LoadPrefs` / `SavePrefs` / `MarkFirstFrame` 全部由入口注入。
-- 输入区适配器（缩略图、上下文摘要）；控件本体与载荷在 `Wanxiang2.ComposerDesk`，看图徽标经 `Wanxiang2.ComposerDesk` / `Wanxiang2.MediaTypes`（看图判断 `ModelVision` 已并入 `Wanxiang2.HostCatalog`，本壳不直接引用）。
+- 输入区适配器（缩略图、上下文摘要）；控件本体与载荷在 `Wanxiang2.ComposerDesk`，看图徽标经 `Wanxiang2.ComposerDesk` / `Wanxiang2.MediaTypes`（看图判断 `ModelVision` 与 `HostCatalog` 已下沉 `Wanxiang2.WorkspaceState`，本壳不直接引用）。
 - **发送历史召回（`PromptHistory`）不在本壳**：2026-10-21 起由输入区的真正所有者 `compose/ComposerDesk` 接线（`Up`/`Down`/`Escape` 挂 `ComposerBox` 的 `WireKeyHook`），本壳既不引用该包也不持有该对象。
 - `Icons`：宿主语义名 → `Wanxiang2.IconSet`（Lucide 官方集）的映射，三档尺寸 14 / 16 / 20。
 
-引用的包：组合者 `Wanxiang2.Theme`、`Wanxiang2.ShellDesk`、`Wanxiang2.ComposerDesk`、`Wanxiang2.DesignRhythm`、`Wanxiang2.Outbox`；库 `Wanxiang2.ThemePalette`、`Wanxiang2.ThemeMetrics`、`Wanxiang2.InputSense`、`Wanxiang2.ImeShield`、`Wanxiang2.IconSet`、`Wanxiang2.UiPrefs`、`Wanxiang2.ComposerDrafts`、`Wanxiang2.MediaTypes`、`Wanxiang2.Wire`；外加 `Avalonia` / `Avalonia.Themes.Fluent`（见 `EntryShells.fsproj`）。
+引用的包：组合者 `Wanxiang2.Theme`、`Wanxiang2.ShellDesk`、`Wanxiang2.ComposerDesk`、`Wanxiang2.DesignRhythm`、`Wanxiang2.Outbox`；库 `Wanxiang2.ThemePalette`、`Wanxiang2.ThemeMetrics`、`Wanxiang2.InputSense`、`Wanxiang2.ImeShield`、`Wanxiang2.IconSet`、`Wanxiang2.WorkspaceState`、`Wanxiang2.ComposerDrafts`、`Wanxiang2.MediaTypes`、`Wanxiang2.Wire`；外加 `Avalonia` / `Avalonia.Themes.Fluent`（见 `EntryShells.fsproj`）。
 
 本壳不持 DispatcherTimer、不做文件 IO、不执行进程退出：计时器（`After` / `Every`）、偏好与草稿落盘、剪贴板、链接打开、`StartupTrace.requestExit` 都由入口注入（`app/Desktop/Program.fs`、`app/Pwa/Program.fs` 的接线）。
 
@@ -24,14 +24,14 @@
     - 推理：图标几何与缓存归 `IconSet`、控件与载荷归 `ComposerDesk`、主题活画笔归 `Theme`、品牌标归 `ShellDesk`；本壳只留旧签名与语义映射。
 
 # SPEC
-1. [LEMMA: 1, 3] 五个文件与旧实现逐段对照：逻辑差异只有设计层转调（`Tokens` → 活画笔 / `IconSet` / `ComposerDesk`）与注入端口，其余是注释（对照命令见「证据」）。
-2. [LEMMA: 2] 两个入口只经包消费本壳：`app/Desktop/Wanxiang.App.fsproj` 与 `app/Pwa/Wanxiang.Pwa.fsproj` 各有一条 `Wanxiang2.EntryShells` 的 `PackageReference`；`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（真实界面验收要人看，仓库内未自动化）。
-3. 本组合者有独立测试工程 `compose/EntryShells/tests/EntryShells.Tests.fsproj`（`./x compose` 自动发现并运行）：覆盖弹出层字体契约（`PopupFontTests`：应用样式命中 / 窗口内实际生效 / 复合回落覆盖界面符号）与内嵌正文字体的基本可用性（`EmbeddedFontTests`）。
-4. [LEMMA: 1] 源级回归：`compose/Theme/tests/A11yRegression.fs`（迁自旧 `A11yRegressionTests`）的 `模型选择不再保留隐藏顶栏入口` 读 `compose/EntryShells/Composer.fs`，验证旧入口符号（`HeaderModelAnchor` / `SetHeaderModel`）不存在、新入口（`ModelAnchor()`）在；`./x compose` 运行。
+1. [LEMMA: 1, 3] 五个文件（`SharedTheme.fs`、`Effects.fs`、`Icons.fs`、`MainWindow.fs`、`App.fs`）只做设计层转调与宿主端口装配（行为由 `tests/Tests.fs` 的 `ScrollAnchorMath correctly computes restored prepend offset`、`EffectSink RunSync executes effects in strict sequence` 覆盖）。
+2. [LEMMA: 2] 两个入口只经包消费本壳：`app/Desktop/Wanxiang.App.fsproj` 与 `app/Pwa/Wanxiang.Pwa.fsproj` 各有一条 `Wanxiang2.EntryShells` 的 `PackageReference`；`./run-desktop.sh` / `./run-pwa.sh` 产包、构建并启动（字体与启动契约由 `tests/Tests.fs` 的 `内嵌正文字体族能解析出字形`、`内嵌正文字体覆盖常用汉字`、`等宽字体把正文字体列为回落（否则中文变豆腐块）` 覆盖）。
+3. 本组合者有独立测试工程 `compose/EntryShells/tests/EntryShells.Tests.fsproj`（`./x compose` 自动发现并运行）：覆盖弹出层字体契约（`tests/Tests.fs` 的 `弹出层三类都被指定了内嵌正文字体`、`弹出层控件在窗口里真的用上了内嵌正文字体`、`弹出层字体的复合回落覆盖界面符号`）与内嵌正文字体的基本可用性（`内嵌正文字体族能解析出字形`、`内嵌正文字体覆盖常用汉字`）。
+4. [LEMMA: 1, 3] 模型选择锚点已随输入区收束至 `compose/ComposerDesk`（由 `compose/ComposerDesk/tests/Tests.fs` 的 `模型芯片名称固定为切换模型` 覆盖）。
 
 # 迁入或覆盖的旧测试
 - 旧入口壳没有独立单元测试；驱动这些文件的用例挂在旧整套 UI 测试上（如 `IconCenteringTests` 读 `src/Wanxiang.UI/Design/Icons.fs` 的墨迹断言、`FocusRingTests` 经 `Icons.*`、`CloseWindowTests` 走 `MainWindow.Closing` 的几何持久化），随旧壳退役（旧仓库 16904f0 删 `src/` 与 `tests/`）。
-- 行为面由各自的库 / 组合者测试覆盖：`libs/IconSet`（尺寸活值跟随、图像复用、画笔实例）、`compose/ComposerDesk`（headless，含发送历史召回的回归用例）、`libs/HostCatalog`（含看图判断 ModelVision 的用例）、`libs/MediaTypes`、`libs/ImeShield`、`libs/InputSense`、`compose/Theme`（控件类样式与无障碍）。
+- 行为面由各自的库 / 组合者测试覆盖：`libs/IconSet`（尺寸活值跟随、图像复用、画笔实例）、`compose/ComposerDesk`（headless，含发送历史召回的回归用例）、`libs/WorkspaceState`（含 `HostCatalog` 与看图判断 `ModelVision` 的用例）、`libs/MediaTypes`、`libs/ImeShield`、`libs/InputSense`、`compose/Theme`（控件类样式与无障碍）。
 - 旧 `IconCenteringTests` 要整套旧视图，留在旧仓库（`libs/IconSet/AGENTS.md` 同结论）。
 
 # 拆分与复核

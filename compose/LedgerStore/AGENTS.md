@@ -1,15 +1,15 @@
 # compose/LedgerStore
 
-组合者 C：用 `JsonSeqFile`、`Ledger`、`SnapshotFile`、`DirLock` 组成一个目录上的持久事件存储。只经 `./x pack` 产出的交付包使用这四个库，不引用它们的源码（根 SPEC 2）；本目录自己也打成包 `Wanxiang2.JsonSeqStore`，供旧仓库消费。根规则见项目根目录 AGENTS.md。
+组合者 C：用 `JsonSeqFile`、`Ledger`、`SnapshotFile`、`DirLock` 组成一个目录上的持久事件存储。只经 `./x pack` 产出的 `Wanxiang2.JsonSeq` 与 `Wanxiang2.DirLock` 交付包使用这些能力，不引用它们的源码（根 SPEC 2）；本目录自己也打成包 `Wanxiang2.LedgerStore`，供 `compose/EventStore`、`compose/StoreLaunch` 和仓库外消费验证使用。根规则见项目根目录 AGENTS.md。
 
 公开面：
-- 构造：`new LedgerStore<'S,'E,'Err>(dir, apply : 'S -> Commit<'E> -> Result<'S,'Err>, initial, codec, ?policy)`。
+- 构造：`new LedgerStore<'S,'E,'Err>(dir, apply : 'S -> Commit<'E> -> Result<'S,'Err>, initial, codec, ?policy, ?maxStamps)`。
   - `Codec<'S,'E> = { encodeEvent; decodeEvent; encodeState; decodeState }`：事件编解码用于每条提交，状态编解码只用于快照。
   - `SnapshotPolicy = { everyCommits : int option; onClose : bool }`，有 `Manual` 与 `Default`（每 1000 条加关闭时）。
 - 写：`Submit(events, at, ?stamp) : Submitted<'E,'Err>`，结果是 `Committed c | Duplicate 原提交 | Conflict id | Rejected 'Err | NotWritten | Unknown | ReadOnly` 之一。
-- 读：`CommitsAfter(cursor, limit) : Result<Commit<'E> list, string>`，`State : 'S`，`LastId`，`Stamps : Map<commandId, hash * id>`，`Checkpoint : Checkpoint<'S>`。
+- 读：`CommitsAfter(cursor, limit) : Result<Commit<'E> list, string>`，`State : 'S`，`LastId`，`Stamps : Map<commandId, hash * id>`，`MaxStamps : int option`，`Checkpoint : Checkpoint<'S>`。
 - 诊断：`Startup = { snapshot = Used throughId | Absent | Discarded reason; replayedCommits }`，`Health = Healthy | Damaged(offset, reason) | OutcomeUnknown reason`，`LastSnapshotError`。
-- 只读检查：`LedgerStore.Inspect(dir, codec, apply, initial) : Inspection`，返回 `{ health; startup; lastId; tailMayBeInFlight }`。不持锁、不写字节，宿主持锁、正在写时也能用（给外部 doctor 或支持包）。
+- 只读检查：`LedgerStore.Inspect(dir, codec, apply, initial, ?maxStamps) : Inspection`，返回 `{ health; startup; lastId; tailMayBeInFlight }`。不持锁、不写字节，宿主持锁、正在写时也能用（给外部 doctor 或支持包）。
 - 维护：`SaveSnapshot() : Result<unit,string>`，`Repair() : Result<int64,string>`，`Dispose()`。
 
 # LEMMA
@@ -49,9 +49,10 @@
 13. [LEMMA: 1] 100 个并发提交各恰好一次：`concurrent submits each commit exactly once`。
 14a. [LEMMA: 8] 不持锁检查：宿主持锁时能检查、文件字节不变、宿主仍可写：`inspect reads without the lock and writes nothing, also while the host holds it`；宿主并发写 400 条时反复检查，lastId 单调不减，只可能出现 `tailMayBeInFlight` 的损坏：`inspect while the host writes sees a consistent prefix`（连跑 5 次都通过）；损坏证据和半写尾标记：`inspect reports damage with evidence; torn tail is flagged as possibly in flight`。
 14b. [LEMMA: 9] 未知结果带 commitId，只读提示说明事实：`unknown outcome names the commit that may exist`（`/dev/full`）。
-14. [根 SPEC 2] 交付包可以在仓库外消费：`./x consume` 在 /tmp 下新建项目，只从 `artifacts/feed` 引用 `Wanxiang2.JsonSeqStore`，提交后重开得到 `Used 1UL`（消费者源码在 `tools/consume/`）。2026-10-13 手动跑过；2026-10-17 起自动化，通过。
+14. [根 SPEC 2] 交付包可以在仓库外消费：`./x consume` 在 /tmp 下新建项目，只从 `artifacts/feed` 引用 `Wanxiang2.LedgerStore`，提交后重开得到 `Used 1UL`（消费者源码在 `tools/consume/`）。2026-10-13 手动跑过；2026-10-17 起自动化，通过。
 15. [LEMMA: 2, 7] 写失败但截回成功 → `NotWritten`：日志逐字节不变、`Abandon` 撤销提议、id 复用、存储仍 `Healthy`，所以可以重试：`not written is known and retryable; the log stays byte-identical and the id is reused`（真实故障：测试临时收紧本进程 `RLIMIT_FSIZE` 上限并忽略 SIGXFSZ，超过上限的写按 EFBIG 失败、截回成功；仅 Linux）。
-16. [TODO] 进程被真正杀掉（而不是由测试写出截断文件）的测试没有；按 LEMMA 7，二者对磁盘的效果相同。
+16. [LEMMA: 3, 7] 真实子进程在持续写入途中被 `SIGKILL` 强杀后，下一进程重开（及必要 `Repair`）并继续提交：`a real killed writer process leaves a log the next process replays`（子进程先写 20 条就绪，再进入紧凑写入循环并推进至 `LastId >= 25` 时触发 `Kill`，父进程 `Kill true` 收尾进程树后重开，校验 `LastId >= 25`、ID 连续且继续提交 `lastId + 1` 成功；剩余边界：用户态杀进程不指定内核 `write(2)` 精确指令偏移，字节级中断由 SPEC 5 逐字节截断矩阵穷举覆盖）。
+17. [LEMMA: 1, 4, 8; Ledger LEMMA 6, 7] 幂等索引有界保留（`maxStamps`）：窗口内重复命令返回 `Duplicate`、超出上限淘汰最旧幂等戳、被淘汰命令重发作为新提交落盘，带同上限的无快照重放、带快照重放与 `Inspect`（含从快照自动继承 `maxStamps`）均一致 `Healthy`，窗口内篡改重复 `commandId` 仍检出 `Damaged`：`bounded stamp retention evicts old stamps and replays cleanly with and without snapshot`。
 
 ## 旧仓库测试的去留（供接入时参考）
 旧 `CrashMatrixTests` 的故障点对应如下：

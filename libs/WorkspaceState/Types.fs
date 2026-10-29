@@ -4,7 +4,6 @@ open System
 open System.Text.Json.Nodes
 open Wanxiang.Core
 open Wanxiang.Protocol
-open Wanxiang.Client
 open Wanxiang.UI
 
 type FocusTarget =
@@ -57,7 +56,6 @@ type Effect =
     | CloseWindow
     | PrefsSave of UiPrefs
     | PrefsLoad
-    | DraftWrite of DraftWrite
     | BrowserHook of hookId: string
 
 and Msg =
@@ -65,7 +63,7 @@ and Msg =
     | WireRecv of WireEvent
     | CommandRequested of ClientCommand
     | ConnectionUp of instanceId: string
-    | ConnectionDown of reason: ConnectionIssue option
+    | ConnectionDown of reason: string option
     /// 用户/宿主发起了到某个地址的连接：ServerUrl 的唯一来源（设置页设备分区与侧栏主机条都读它）。
     | ConnectionRequested of url: string
     | TimerFired of token: int

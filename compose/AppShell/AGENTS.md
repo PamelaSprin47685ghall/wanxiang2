@@ -42,14 +42,14 @@
 - 构建视图后，从宿主读取一次偏好并派发 `PrefsLoaded`；模型是偏好的唯一事实源，主题、减弱动效与代码折行须应用到宿主，加载不反写偏好。
 - 输入文本由状态树拥有；退出或页面隐藏时取消草稿延时并立即保存当前文本，不能让旧延时覆盖退出时的文本。关闭持久化时不写草稿；销毁时清理定时器。
 - 桌面关窗与浏览器隐藏调用同一个组合者 `FlushDrafts` 入口。浏览器写入仍是异步端口，不承诺强制终止页面时 IndexedDB 一定完成。
-- 验证：`tests/ComposerTests.fs` 四条「第五批」用例覆盖构建时偏好投影与宿主扇出、800 ms 窗口内退出保存最新文本、关闭持久化不写入、退出以当前模型而非旧待保存文本为准。修改前两条新增回归失败，修复后 AppShell 40/40 通过；`./x all`（109 库、67 组合者及仓库外消费）、`./x app`、桌面冒烟通过。尚未单独断言隐藏事件接线、重复刷新和计时器取消；浏览器强制终止时的异步存储完成不在保证范围内。
+- 验证：`tests/ComposerTests.fs` 五条「第五批」用例覆盖构建时偏好投影与宿主扇出、800 ms 窗口内退出保存最新文本、关闭持久化不写入、退出以当前模型而非旧待保存文本为准、以及隐藏事件接线取消在途草稿计时器并立即保存（重复刷新保持最新模型文本，`第五批：隐藏事件接线取消在途草稿计时器并立即保存，重复刷新保持最新模型文本`）。浏览器强制终止时的异步存储完成不在保证范围内。
 
 # 命令面板与主题接线契约
 
 - 面板选中条目后，由 `Build()` 订阅 `Palette.Run`，交给 `ShellCommands.RunPaletteItem` 执行并回写最近使用；不由入口壳补接。
 - 主题切换读取 `WorkspaceModel.Prefs.theme`，经 `PrefsChanged` 更新状态树，再由既有副作用保存与应用。连续切换必须按当前主题推进，不能始终从跟随系统开始。
 - 面板候选的对话、预设、归档偏好与主机能力来自当前模型，不以固定空值冒充事实。
-- 验证（2026-10-23，本机 macOS ARM64）：`tests/ComposerTests.fs` 新增「主题快捷键从当前偏好推进并回写模型」与「命令面板真实回车执行主题并登记最近使用」。修改前分别复现主题停留原值、设置分区为空抛异常及执行后最近使用仍为空；修复后本工程 43/43 通过。面板用例等待文本事件处理后，向真实搜索框发回车并断言最近使用与主题模型；尚未单独覆盖预设、对话与能力变化的候选投影。后续验证（2026-10-24）：macOS ARM64 干净发布 PWA 冒烟 28 条全过，命令执行、最近使用、设置偏好保存、Esc 回焦、主题与草稿往返均在列；中文截图识别在系统 Vision 与 Tesseract 两条路径分别通过，并拒绝缺字方框反例。`tests/ComposerTests.fs`「外观原生开关修改模型并保存偏好」验证真实开关事件进入模型及保存端口。Tesseract 的菜单验收只要求命中该菜单真有的标签（消息卡菜单「复制消息」等、文本浮层「剪切 / 复制 / 粘贴」各命中两项），不宣称逐字覆盖全部菜单；Linux 宿主真实冒烟仍待验证。
+- 验证（2026-10-23，本机 macOS ARM64；2026-10-27 补齐候选投影单测）：`tests/ComposerTests.fs` 新增「主题快捷键从当前偏好推进并回写模型」、「命令面板真实回车执行主题并登记最近使用」与「命令面板候选投影随预设、对话、归档偏好与主机能力变化」。面板候选投影用例验证预设、活动对话专属动作、归档对话随 `showArchived` 显隐、以及 `HostCapabilities` 变更后 `save-preset` 与导入动作的门控过滤。后续验证（2026-10-24）：macOS ARM64 干净发布 PWA 冒烟 28 条全过，命令执行、最近使用、设置偏好保存、Esc 回焦、主题与草稿往返均在列；中文截图识别在系统 Vision 与 Tesseract 两条路径分别通过，并拒绝缺字方框反例。`tests/ComposerTests.fs`「外观原生开关修改模型并保存偏好」验证真实开关事件进入模型及保存端口。Tesseract 的菜单验收只要求命中该菜单真有的标签（消息卡菜单「复制消息」等、文本浮层「剪切 / 复制 / 粘贴」各命中两项），不宣称逐字覆盖全部菜单；Linux 宿主真实冒烟仍待验证。
 - 冒烟判据修正（2026-10-24）：原「消息卡右键菜单」用例靠固定坐标盲扫，实际一直点到输入框的 Fluent 文本浮层，等于没验过消息卡菜单；收紧为按识别出的菜单文案区分两类菜单后暴露。现在先用截图文字包围盒定位侧栏对话标题并点开、用正文「你好」确认已打开，再用主内容区正文的包围盒右键，并要求识别到「复制消息／编辑并分叉／复制消息链接／删除这条消息」。同类修正：「侧栏对话可打开」原判据只看主内容区有像素变化，空态页面同样有变化，也会误判为通过。定位锚点的识别先把画布放大 2 倍再转文字：原始截图里侧栏字号太小，Tesseract 会把「新建对话」读成 `EHS`。
 
 # SPEC 7 拦截与旅程证据（2026-10-24）
@@ -60,11 +60,11 @@
 - 旅程 1（`ComposerTests.fs` 的 `旅程 1：首次配对到就绪`）补到「配对 → 首发」：在统一 `rig.Fake.RecordedEffects` 序列里断 `Effect.SendCommand CreateConversation` < `Effect.SendCommand SendUserMessage` < `Effect.SendWire(ObserveConversation)` 且三者同一个 `conversationId`、命令载荷含用户原文；再投递带同一原文的 `ConversationSnapshot`，断 `WorkspacePhase.Active` 的消息正文与聊天投影文本都等于该原文（不是只数一条消息）。报告 `docs/evidence/2026-10-23-handoff/journeys-report.md` 无需回退——选的是「补用例」而不是「改陈述」。
 
 # SPEC
-1. [LEMMA: 1] 组合者成员与旧实现的对照：每个公开成员都能在旧文件里找到同名或同义的来源（连接与认证 `old:586-637`、事件界面面 `old:1552-1719`、侧栏动作 `old:1723-1833`、聊天动作 `old:1845-1925`、附件 `old:1138-1317`、转移 `old:1338-1392`、设置与预设 `old:2006-2130`、主题与偏好 `old:418-536`、快捷键与命令面板 `old:1416-1504`）。
-2. [LEMMA: 3] 视图事件在 `Build()` 内接线，入口壳构造 Desk 时只调用动作记录工厂（`SidebarActions` / `CardActions` / `ChatActions` / `ComposerActions` / `SettingsHooks` / `OnboardingHooks` / `WorkspaceHooks`）。
-3. [LEMMA: 4] `ShellSurface` 里不再有空操作：`OverlayEscape` / `IsDialogOpen` / `IsPopupOpen` / `IsSettingsOpen` / `IsDrawerOpen` / `CloseDrawer` / `FocusSearch` / `OpenModelPicker` / `JumpExchange` / `ScrollToBeginning` / `ScrollToEnd` / `CopyLastReply` / `RegenerateLast` / `TryUndo` / `FocusToast` / `ShowShortcuts` / `ApplyPreset` / `SavePreset` / `Fork` / `CloseWindow` / `SaveTheme` 全部接真实实现。
-4. [LEMMA: 1] 文案不改：附件、保存、剪贴板、模型选择器、导入导出、重连与配对的用户可见字符串与旧实现逐字相同（来源：`Wanxiang2.ConfigFeedback`、`Wanxiang2.MediaTypes`、`Wanxiang2.ConnectIssueText`、`Wanxiang2.PairingHint`、`compose/TransferDesk`）。
-5. [LEMMA: 1] headless 测试覆盖宿主桥与装配规则：`compose/AppShell/tests/ComposerTests.fs` 用假端口（`tests/Rig.fs`）钉住——未连接时的导入导出提示、`RequireFeature` 拦截与旧主机放行、附件归属过期与上传事件序列（含缩略图端口）、空文件与超大文件校验、`SavePrefs` 扇出、系统深色只在跟随系统时重应用、侧栏搜索与消息链接分派、命令回执的提交与未发出两态、设置焦点归还、设置页打开期间禁用底层工作区并圈定 Tab 焦点、配置回执提示、侧栏折叠落盘、断开连接的清理与重连调度；`Tests.fs` 钉住 `KeyShortcut` 换算分派与 `UnansweredReply` 失败卡形状。
+1. [LEMMA: 1] 组合者成员与旧实现的对照：每个公开成员都能在旧文件里找到同名或同义的来源（连接与认证 `old:586-637`、事件界面面 `old:1552-1719`、侧栏动作 `old:1723-1833`、聊天动作 `old:1845-1925`、附件 `old:1138-1317`、转移 `old:1338-1392`、设置与预设 `old:2006-2130`、主题与偏好 `old:418-536`、快捷键与命令面板 `old:1416-1504`；由 `旅程 1：首次配对到就绪` 等端到端旅程覆盖）。
+2. [LEMMA: 3] 视图事件在 `Build()` 内接线，入口壳构造 Desk 时只调用动作记录工厂（`SidebarActions` / `CardActions` / `ChatActions` / `ComposerActions` / `SettingsHooks` / `OnboardingHooks` / `WorkspaceHooks`，由 `流程按钮：输入区与未确认消息都从真实控件生效`、`流程按钮：消息、工具、思考、错误卡与版本都从真实控件生效`、`流程按钮：壳层、确认框与抽屉遮罩都从真实控件生效` 覆盖）。
+3. [LEMMA: 4] `ShellSurface` 里不再有空操作：`OverlayEscape` / `IsDialogOpen` / `IsPopupOpen` / `IsSettingsOpen` / `IsDrawerOpen` / `CloseDrawer` / `FocusSearch` / `OpenModelPicker` / `JumpExchange` / `ScrollToBeginning` / `ScrollToEnd` / `CopyLastReply` / `RegenerateLast` / `TryUndo` / `FocusToast` / `ShowShortcuts` / `ApplyPreset` / `SavePreset` / `Fork` / `CloseWindow` / `SaveTheme` 全部接真实实现（由 `对话框打开时快捷键被拦，Escape 退栈后恢复可用`、`主题快捷键从当前偏好推进并回写模型` 等覆盖）。
+4. [LEMMA: 1] 文案不改：附件、保存、剪贴板、模型选择器、导入导出、重连与配对的用户可见字符串与旧实现逐字相同（来源：`Wanxiang2.ConfigFeedback`、`Wanxiang2.MediaTypes`、`Wanxiang2.ConnectIssueText`、`Wanxiang2.PairingHint`、`compose/TransferDesk`，由 `未回复失败卡是可重试的未知失败并带两段文案` 等覆盖）。
+5. [LEMMA: 1] headless 测试覆盖宿主桥与装配规则：`compose/AppShell/tests/ComposerTests.fs` 用假端口（`tests/Rig.fs`）钉住——未连接时的导入导出提示、`RequireFeature` 拦截与旧主机放行、附件归属过期与上传事件序列（含缩略图端口）、空文件与超大文件校验、`SavePrefs` 扇出、系统深色只在跟随系统时重应用、侧栏搜索防抖与命中接收（`搜索防抖接线：搜索框连续打字在 300ms 窗口内合并，到期经 MsgTick 发出唯一一次 SearchQuery 并接收命中`）、剪贴板复制（`剪贴板复制接线：CopyLastReply 快捷键复制最新回复正文，卡片 CopyText 写剪贴板`）、下载保存（`文件保存接线：附件下载完成经 ProtocolDispatch 触发 SaveDownload 端口写出文件名与字节`）、限流倒计时（`限流倒计时接线：ProviderRateLimitNotice 与 GenerationFinished 组装固定截止时刻并投影限流错误卡`）、命令回执的提交与未发出两态、设置焦点归还、设置页打开期间禁用底层工作区并圈定 Tab 焦点（`设置页打开期间禁用底层工作区并将 Tab 焦点圈定在设置页内，关闭后恢复底层工作区可用`）、配置回执提示、侧栏折叠落盘、断开连接的清理与重连调度；`Tests.fs` 钉住 `KeyShortcut 换算按键事件的四字段`、`KeyShortcut 分派 Escape、Ctrl+K 与无快捷键` 与 `未回复失败卡是可重试的未知失败并带两段文案` 失败卡形状。
 
 # 迁入或覆盖的旧测试
 - 旧 `AppShellTests` 的 `HandleEvent` / `HandleShortcut` 用例已按名迁入 `compose/ProtocolDispatch/tests` 与 `compose/ShellCommands/tests`（见各自 AGENTS.md）。

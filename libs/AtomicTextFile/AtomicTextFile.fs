@@ -2,8 +2,59 @@ namespace AtomicTextFile
 
 open System
 open System.IO
+open System.Runtime.InteropServices
 open System.Text
 open System.Threading
+
+/// libc 的目录句柄：改名后对所在目录 fsync（POSIX 上目录项不在文件页缓存里）。
+/// 仅非 Windows 平台尝试目录同步；Windows 目录项持久性未在此处验证。
+/// `open` 是 F# 关键字，用 EntryPoint 指到 libc 的真实名字。
+module AtomicTextFileInterop =
+
+    [<DllImport("libc", SetLastError = true, EntryPoint = "open")>]
+    extern int openPath(string path, int flags)
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern int fsync(int fd)
+
+    [<DllImport("libc", SetLastError = true)>]
+    extern int close(int fd)
+
+    /// POSIX 标准中 O_RDONLY 在所有 Unix/Linux/macOS 平台恒为 0。
+    [<Literal>]
+    let oRdonly = 0
+
+    /// 按平台与架构选择 POSIX O_DIRECTORY，使内核在 open 单一系统调用内拒绝非目录路径。
+    let oDirectoryFlag () =
+        if OperatingSystem.IsMacOS() then
+            0x100000
+        elif OperatingSystem.IsLinux() then
+            match RuntimeInformation.OSArchitecture with
+            | Architecture.Arm
+            | Architecture.Arm64 -> 0x4000
+            | _ -> 0x10000
+        else
+            0
+
+    let syncDir (directory: string) : bool =
+        if String.IsNullOrEmpty directory then
+            false
+        elif not (OperatingSystem.IsWindows()) then
+            let flags = oRdonly ||| oDirectoryFlag ()
+
+            if flags = oRdonly && not (Directory.Exists directory) then
+                false
+            else
+                let fd = openPath (directory, flags)
+
+                if fd < 0 then
+                    false
+                else
+                    let ok = fsync fd = 0
+                    close fd |> ignore
+                    ok
+        else
+            Directory.Exists directory
 
 /// 一个由人和程序共同编辑的文本文件。私有状态：路径、最后一次本对象读到或写出的原文、监视器与去抖计时器。
 /// - Write：临时文件 + flush(true) + 原子改名，权限仅当前用户可读写；
@@ -114,6 +165,10 @@ type AtomicTextFile(path: string, ?debounce: TimeSpan) =
                     failwith "file changed on disk since it was last read; not overwriting"
 
                 File.Move(tmp, full, true)
+                // 改名本身也要落盘：POSIX 上目录项不在文件页缓存里，不对目录 fsync，断电可能丢掉改名。
+                // 失败不抛出——写出的字节完好，最坏情况是断电后回到旧文件内容，按「外部改动」处理。
+                AtomicTextFileInterop.syncDir dir |> ignore
+
                 lastKnown <- Some text
                 Ok()
             with e ->

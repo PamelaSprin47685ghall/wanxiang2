@@ -15,9 +15,9 @@
 # SPEC
 （证明在 `tests/Tests.fs`，用真实的四个库，`./x compose` 运行，通过。）
 1. [LEMMA: 1, 2] 请求、用码、签发的令牌能通过哈希校验；码只能用一次：`request, attempt, issue a token whose hash verifies; code is single use`。
-2. [LEMMA: 1] 错码累计到阈值就冻结这个地址，冻结期间请求和用码都被拒，码不被消耗，别的地址不受影响：`wrong codes freeze the address; ...`。
+2. [LEMMA: 1] 错码累计到阈值就冻结这个地址，冻结期间请求和用码都被拒，码不被消耗，别的地址不受影响：`wrong codes freeze the address; frozen address cannot request or attempt; others unaffected`。
 3. [LEMMA: 2] `Paired` 清掉这个地址的失败记录：`paired clears failures for the address`。
-4. [LEMMA: 3] 只有本机桌面客户端能发邀请；有效邀请被沿用；扫码的设备不先请求也能直接用邀请码，且取不到保留名：`only the local desktop client can invite; ...`。
+4. [LEMMA: 3] 只有本机桌面客户端能发邀请；有效邀请被沿用；扫码的设备不先请求也能直接用邀请码，且取不到保留名：`only the local desktop client can invite; a pending invite is reused, never overwritten`。
 5. 没请求也没邀请时，提交的码被忽略：`attempt without request or invite is ignored`。
 6. `Reconfigure` 让新的限额生效：`reconfigure applies new limits`。
 9. [LEMMA: 1] 配置重载（宿主每次重载都调 `Reconfigure`）不清空已记的失败与冻结：`a config reload between wrong codes does not erase the failures already counted`、`a reload that changes limits keeps an existing freeze and the counted failures`。这是旧仓库 DevicesTests「five failures」偶发失败的根因。

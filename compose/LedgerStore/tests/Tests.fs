@@ -277,6 +277,137 @@ let ``crash at every byte of an append leaves the longest valid prefix`` () =
         | Error e -> failwith e
 
 [<Fact>]
+let ``a real killed writer process leaves a log the next process replays`` () =
+    // 与「在每个字节处截断」不同：这里真的杀掉一个正在持续写入的进程，让操作系统在写途中直接回收句柄。
+    // 崩溃对磁盘的影响只有一种（追加在某个字节处中断），所以断言的是崩溃矩阵已经证明的性质；
+    // 子进程在连续提交期间自杀；无法确定终止时是否正处于写系统调用中。
+    let d = tempDir ()
+    Directory.CreateDirectory d |> ignore
+
+    let script =
+        Path.Combine(Path.GetTempPath(), "wx-kill-writer-" + Guid.NewGuid().ToString("N") + ".fsx")
+
+    let asm = typeof<S>.Assembly.Location
+    let seqAsm = Path.Combine(Path.GetDirectoryName asm, "JsonSeq.dll")
+    let lockAsm = Path.Combine(Path.GetDirectoryName asm, "DirLock.dll")
+
+    try
+        File.WriteAllText(
+            script,
+            sprintf
+                """#r "%s"
+#r "%s"
+#r "%s"
+open System
+open System.Threading
+open System.Text.Json.Nodes
+open Ledger
+open LedgerStore
+let apply (s: int) (c: Commit<int>) = Ok(s + List.sum c.events)
+let codec: Codec<int, int> =
+    { encodeEvent = fun n -> JsonValue.Create n :> JsonNode
+      decodeEvent = fun j -> Ok(j.GetValue<int>())
+      encodeState = fun n -> JsonValue.Create n :> JsonNode
+      decodeState = fun j -> Ok(j.GetValue<int>()) }
+let s = new LedgerStore<int, int, string>("%s", apply, 0, codec, SnapshotPolicy.Manual)
+for _ in 1..20 do
+    s.Submit([ 1 ], DateTimeOffset.UnixEpoch) |> ignore
+Console.Out.WriteLine(s.LastId)
+Console.Out.WriteLine("ready")
+Console.Out.Flush()
+// 后台线程等主线程在 ready 之后至少再推进到 25 条提交时立即发 SIGKILL，确保强杀发生在紧凑写入循环途中。
+let killer = Thread(ThreadStart(fun () ->
+    while s.LastId < 25UL do
+        Thread.SpinWait 100
+    Diagnostics.Process.GetCurrentProcess().Kill()))
+killer.IsBackground <- true
+killer.Start()
+while true do
+    s.Submit([ 1 ], DateTimeOffset.UnixEpoch) |> ignore
+"""
+                asm
+                seqAsm
+                lockAsm
+                d
+        )
+
+        let psi = Diagnostics.ProcessStartInfo("dotnet", sprintf "fsi \"%s\"" script)
+        psi.RedirectStandardOutput <- true
+        psi.UseShellExecute <- false
+        use child = Diagnostics.Process.Start psi
+
+        try
+            let mutable line = ""
+            let mutable committedCount = 0
+
+            let readTask =
+                Threading.Tasks.Task.Run(fun () ->
+                    while line <> "ready" && not (isNull line) do
+                        line <- child.StandardOutput.ReadLine()
+
+                        match Int32.TryParse line with
+                        | true, n -> committedCount <- n
+                        | _ -> ())
+
+            Assert.True(readTask.Wait(TimeSpan.FromSeconds 20.0), "timed out waiting for child writer to become ready")
+            Assert.Equal("ready", line)
+            Assert.True(child.WaitForExit 15000, "timed out waiting for killed child writer to exit")
+            Assert.True(committedCount >= 20, sprintf "child committed only %d" committedCount)
+        finally
+            if not child.HasExited then
+                try
+                    child.Kill true
+                with _ ->
+                    ()
+
+        Assert.True(child.HasExited, "child process must have exited")
+
+        // 句柄在进程退出时由内核关闭；给系统一点时间回收，再重开。
+        let mutable reopened: S option = None
+
+        for _ in 1..100 do
+            if reopened.IsNone then
+                try
+                    reopened <- Some(openAt d)
+                with :? InvalidOperationException ->
+                    Threading.Thread.Sleep 20
+
+        use reopened = Option.get reopened
+
+        // 被杀时的写入可能落在记录边界（Healthy）或记录半途（Damaged，Repair 截掉半写尾后恢复 Healthy）。
+        match reopened.Health with
+        | Healthy -> ()
+        | Damaged _ ->
+            Assert.True((reopened.Repair()).IsOk, "repair after mid-write kill should succeed")
+            Assert.Equal(Healthy, reopened.Health)
+        | other -> failwithf "unexpected health after killed writer: %A" other
+
+        let lastId = reopened.LastId
+        Assert.True(lastId >= 25UL, sprintf "replayed %d commits (expected >= 25 after ready)" lastId)
+
+        match reopened.CommitsAfter(0UL, 10000) with
+        | Ok cs ->
+            Assert.Equal<uint64 list>([ 1UL .. lastId ], cs |> List.map _.id)
+            Assert.Equal(int lastId, cs |> List.sumBy (fun c -> List.length c.events))
+        | Error e -> failwith e
+
+        // 重开后还能继续提交，且 id 接在重放出来的末尾。
+        Assert.Equal(lastId + 1UL, (committed (reopened.Submit([ 1 ], t0))).id)
+        Assert.Equal(int lastId + 1, reopened.State)
+    finally
+        (try
+            if File.Exists script then
+                File.Delete script
+         with _ ->
+             ())
+
+        (try
+            if Directory.Exists d then
+                Directory.Delete(d, true)
+         with _ ->
+             ())
+
+[<Fact>]
 let ``torn tail makes the store read-only and opening changes no bytes`` () =
     let d = tempDir ()
 
@@ -606,3 +737,94 @@ let ``a record written by a newer version is read-only and never repaired`` () =
     | r -> failwithf "%A" r
 
     Assert.Equal(size, FileInfo(logOf d).Length)
+
+/// 幂等索引有界保留（maxStamps）：淘汰旧戳后重发同 commandId 作为新提交落盘，
+/// 带同上限的无快照重放、带快照重放与 Inspect 均一致 Healthy，窗口内篡改重复仍检出 RepeatedStamp。
+[<Fact>]
+let ``bounded stamp retention evicts old stamps and replays cleanly with and without snapshot`` () =
+    let d = tempDir ()
+
+    let stamp n =
+        {
+            commandId = sprintf "c%d" n
+            hash = "h"
+        }
+
+    do
+        use s = new S(d, apply, 0, codec, SnapshotPolicy.Manual, maxStamps = 2)
+        Assert.Equal(Some 2, s.MaxStamps)
+        Assert.Equal(1UL, (committed (s.Submit([ 10 ], t0, stamp 1))).id)
+        Assert.Equal(2UL, (committed (s.Submit([ 20 ], t0, stamp 2))).id)
+
+        // 窗口内重发 c1 命中幂等 Duplicate
+        match s.Submit([ 10 ], t0, stamp 1) with
+        | Duplicate orig -> Assert.Equal(1UL, orig.id)
+        | r -> failwithf "expected Duplicate, got %A" r
+
+        // 提交 c3 后，最老的 c1 被淘汰，窗口内保留 c2、c3
+        Assert.Equal(3UL, (committed (s.Submit([ 30 ], t0, stamp 3))).id)
+        Assert.Equal(2, Map.count s.Stamps)
+        Assert.False(Map.containsKey "c1" s.Stamps)
+
+        // 被淘汰的 c1 再次提交，作为新提交 id = 4 落盘
+        Assert.Equal(4UL, (committed (s.Submit([ 40 ], t0, stamp 1))).id)
+        Assert.Equal(100, s.State)
+
+    // 1) 无快照下 Inspect 与重开（带 maxStamps = 2）：重放过程中同步淘汰旧 c1，不会误判 RepeatedStamp
+    let i1 = S.Inspect(d, codec, apply, 0, maxStamps = 2)
+    Assert.Equal(Healthy, i1.health)
+    Assert.Equal(4UL, i1.lastId)
+
+    do
+        use s2 = new S(d, apply, 0, codec, SnapshotPolicy.Manual, maxStamps = 2)
+        Assert.Equal(Healthy, s2.Health)
+
+        Assert.Equal(
+            {
+                snapshot = Absent
+                replayedCommits = 4
+            },
+            s2.Startup
+        )
+
+        Assert.Equal(100, s2.State)
+        Assert.True((s2.SaveSnapshot()).IsOk)
+
+    // 2) 有快照下 Inspect（不传 maxStamps 也自动从快照继承 maxStamps = 2）与重开
+    let i2 = S.Inspect(d, codec, apply, 0)
+    Assert.Equal(Healthy, i2.health)
+
+    Assert.Equal(
+        {
+            snapshot = Used 4UL
+            replayedCommits = 0
+        },
+        i2.startup
+    )
+
+    do
+        use s3 = new S(d, apply, 0, codec, SnapshotPolicy.Manual)
+        Assert.Equal(Some 2, s3.MaxStamps)
+        Assert.Equal(Healthy, s3.Health)
+
+        Assert.Equal(
+            {
+                snapshot = Used 4UL
+                replayedCommits = 0
+            },
+            s3.Startup
+        )
+
+        Assert.Equal(100, s3.State)
+
+    // 3) 窗口内（c1 刚在 id = 4 提交过，仍在窗口内）若日志被篡改追加重复 c1，重开必检出 RepeatedStamp
+    File.AppendAllText(
+        logOf d,
+        "\u001e{\"v\":1,\"id\":\"5\",\"at\":\"2026-01-01T00:00:00Z\",\"stamp\":{\"id\":\"c1\",\"hash\":\"h\"},\"events\":[50]}\n"
+    )
+
+    use s4 = new S(d, apply, 0, codec, SnapshotPolicy.Manual, maxStamps = 2)
+
+    match s4.Health with
+    | Damaged(_, why) -> Assert.Contains("c1", why)
+    | h -> failwithf "expected Damaged for in-window repeated stamp, got %A" h

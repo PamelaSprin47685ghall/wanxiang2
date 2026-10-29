@@ -966,6 +966,43 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             check('界面正文有可测的中文（自校准基准）', !!bodyRef,
                 bodyRef ? `meanRuns=${bodyRef.meanRuns.toFixed(2)} distinctShapes=${bodyRef.distinctShapes} inkFrac=${bodyRef.inkFrac.toFixed(3)}` : '主内容区没有测到文字');
 
+            // 离线时提示条覆盖顶栏；用户关闭提示后，标题仍应可操作。
+            // 用 CDP 主动模拟离线（Network.emulateNetworkConditions），在线 CI 也必定执行；
+            // 结束恢复在线并等待提示条退场，不影响后续 ToolTip 断言。
+            const offlineCdp = await page.target().createCDPSession();
+            await offlineCdp.send('Network.enable');
+            await offlineCdp.send('Network.emulateNetworkConditions', {
+                offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
+            });
+            await sleep(200);
+            const notice = await page.$('#shell-status:not([hidden])');
+            check('离线提示可见', Boolean(notice), '浏览器离线时显示网络状态');
+            const dismiss = await page.$('#shell-status-dismiss');
+            check('离线提示可以关闭', Boolean(dismiss), '提示条提供关闭按钮');
+            // 路径一：点击关闭按钮 → 提示条立刻消失，焦点回到应用容器。
+            await dismiss.click();
+            const hiddenAfterClick = await page.evaluate(() => document.querySelector('#shell-status').hidden);
+            const clickRefocused = await page.evaluate(() =>
+                document.activeElement === document.getElementById('out'));
+            check('点击关闭后提示条消失且焦点归还', hiddenAfterClick && clickRefocused,
+                `hidden=${hiddenAfterClick} activeElement=${await page.evaluate(() => document.activeElement?.id || String(document.activeElement?.tagName))}`);
+            // 路径二：键盘聚焦关闭按钮后不点击，恢复在线等 3500ms 自动退场，焦点同样回到应用容器。
+            // 再显离线、把焦点放进关闭按钮、恢复在线，等提示条退场后断言。
+            await offlineCdp.send('Network.emulateNetworkConditions', {
+                offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
+            });
+            await sleep(200);
+            await dismiss.focus();
+            await offlineCdp.send('Network.emulateNetworkConditions', {
+                offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
+            });
+            // 网络恢复提示 3500ms 后自动退场；退场时焦点若停在关闭按钮上应回到应用容器。
+            await sleep(4200);
+            const refocused = await page.evaluate(() =>
+                document.activeElement === document.getElementById('out'));
+            check('提示退场后焦点回到应用容器', refocused, `activeElement=${await page.evaluate(() => document.activeElement?.id || String(document.activeElement?.tagName))}`);
+            await offlineCdp.detach();
+
             // (1) ToolTip：悬停顶栏的对话标题，提示是该标题的全文。
             //     原先悬停「新建对话」按钮：那个按钮在 react-ui 对齐后只剩图标「+」，
             //     静态截图里没有「新建对话」四个字，OCR 定位不到（读成「十」且置信度不稳）。

@@ -10,7 +10,7 @@
     - 推理：不加的话会和其他库的同名分支在消费端冲突。旧 UI 要改为 `ConnectionIssue.Rejected` 这类限定写法。
 
 # SPEC
-1. [LEMMA: 1, 2] 迁入的旧测试和补充测试通过。
+1. [LEMMA: 1, 2] 迁入的旧测试和补充测试通过：`tests/Tests.fs` 的 `exceptions are classified into typed issues`、`每种问题对应的重试动作`、`取消算超时，其他套接字错误算断线并保留最外层消息`、`套接字错误优先于外层的超时异常` 通过。
 
 # 迁入或覆盖的旧测试
 - 旧 DevicesUiTests：`exceptions are classified into typed issues`（只改为限定名）。

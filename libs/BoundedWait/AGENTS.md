@@ -15,7 +15,7 @@
 2. **上限与说明文字和旧代码逐字相同**（设备 8 秒，检查主机 30 秒）。
 
 ## SPEC
-1. [LEMMA: 1, 2] `tests/Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/BoundedWait.Tests.fs` 的 `device list read without a reply times out with the older host hint`、`回复先到，超时不再生效；重新请求重新计时`、`上限与旧代码相同`  通过。
 
 ## 迁入或覆盖的旧测试
 - DevicesUiTests：`device list read without a reply times out with the older host hint`（等待状态与说明；原用例的窗口渲染部分留旧仓库）
@@ -33,7 +33,7 @@
 1. **断线时进行中的检查转成说明，不留在「检查中」。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过。
+1. [LEMMA: 1] `tests/HostHealth.Tests.fs` 的 `checks parse leniently and labels map protocol names`、`host health owns doctor and config-issue state`  通过。
 
 ## 迁入或覆盖的旧测试
 - 无纯逻辑旧测试；ComposerReliabilityTests 里的 DoctorCheck 用例要 Avalonia，留在旧仓库。
@@ -68,7 +68,7 @@
 1. **每个预设的传输类型都被配置层接受。** [根 AXIOM: 1] 本库不引用 AppConfig，测试用同一固定集合核对；与真实配置层 `TomlCodec.supportedProviderKinds` 的核对在组合者 Catalog。
 
 ## SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过。
+1. [LEMMA: 1] `tests/ProviderPresets.Tests.fs` 的 `ProviderPresets all list`、`常用 4 家置顶，原生与兼容端点合并为一个条目`、`预设表里存在原生传输的选项`  通过。
 
 ## 迁入或覆盖的旧测试
 - UiPureLogicTests：`ProviderKind conversions and ProviderPresets all list`（只迁 ProviderPresets 部分，测试名改为 `ProviderPresets all list`）

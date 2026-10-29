@@ -7,7 +7,7 @@
 
 # SPEC
 1. [LEMMA: 1] `tests/Tests.fs` 通过：`recall then come back restores the half typed draft`、`duplicates and blanks are not recorded and capacity drops the oldest`、`single line recalls only from an empty box or with the caret at the start`、`multi line recalls only with the caret at the very start`、`a selection or an empty history leaves the keys alone`、`down only acts while recalling and with the caret at the end`、`up stops at the oldest entry`、`escape returns to the draft and leaves recall`、`only an immediate repeat is dropped`、`default capacity keeps the latest 100`、`record and reset both end recall and forget the draft`。
-2. 已知旧行为，原样保留：召回中显示的是多行文本且光标不在开头时，上键不再往前翻。
+2. 已知旧行为，原样保留：召回中显示的是多行文本且光标不在开头时，上键不再往前翻（`multi line recalls only with the caret at the very start`）。
 
 # 迁入或覆盖的旧测试
 旧 CraftsmanshipPolishTests 的 `Composer prompt history records submissions and recalls with Up/Down` 要在窗口里按键，**旧用例不删**（部分覆盖）。本库新增：召回后回到半截草稿、去重去空与容量、单行/多行召回的光标位置规则、上下键边界、Esc 退出召回、容量默认 100。

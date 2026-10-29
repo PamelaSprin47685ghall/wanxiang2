@@ -8,7 +8,7 @@
     - 推理：validId 只在本处用、和各配置项的校验是一体的，留在组合者。
 
 # SPEC
-1. [LEMMA: 1] `golden/config-mutation.txt` 由旧 ConfigMutation.fs（AppConfig 用已验证等价的包）生成：
+1. [LEMMA: 1] `golden/config-mutation.txt` 由旧 ConfigMutation.fs（AppConfig 用已验证等价的包）生成（`tests/GoldenTests.fs` 的 `ConfigMutation behaves byte for byte like the old implementation`）：
    provider/mcp/preset 的增改删、工具与生成参数、各类校验失败，每步给出 TOML 或错误。通过。
 
 # 迁入或覆盖的旧测试

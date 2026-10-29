@@ -37,6 +37,10 @@ module CheckpointJson =
 
         o["stamps"] <- st
 
+        (match cp.maxStamps with
+         | Some n -> o["maxStamps"] <- JsonValue.Create n
+         | None -> ())
+
         o["state"] <-
             (match cp.state with
              | null -> null
@@ -69,6 +73,11 @@ module CheckpointJson =
                                  UInt64.Parse(x["id"].GetValue<string>(), CultureInfo.InvariantCulture)))
                             |> Map.ofSeq
 
+                        let maxStamps =
+                            match o["maxStamps"] with
+                            | null -> None
+                            | n -> Some(n.GetValue<int>())
+
                         Ok
                             {
                                 state =
@@ -80,6 +89,7 @@ module CheckpointJson =
                                 stamps = stamps
                                 origin = origin
                                 ends = ends
+                                maxStamps = maxStamps
                             }
             | _ -> Error "checkpoint is not a JSON object"
         with e ->

@@ -33,7 +33,7 @@
 1. **同一串操作，呈现与跳转目标和旧实现相同。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/BreadcrumbAction.Tests.fs` 通过：`unavailable parent shows text but does not navigate`。
+1. [LEMMA: 1] `tests/BreadcrumbAction.BreadcrumbAction.Tests.fs` 通过：`unavailable parent shows text but does not navigate`。
 
 #### 迁入或覆盖的旧测试
 旧面包屑用例要起窗口，留在旧仓库。本库新增 1 条规则用例。
@@ -48,7 +48,7 @@
 1. **同一串操作，记账与旧实现相同。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/RevealFlash.Tests.fs` 通过：`a new highlight restores the previous one first`。
+1. [LEMMA: 1] `tests/BreadcrumbAction.RevealFlash.Tests.fs` 通过：`a new highlight restores the previous one first`。
 
 #### 迁入或覆盖的旧测试
 旧搜索命中高亮用例（第 211 节）要起窗口，留在旧仓库。本库新增 1 条规则用例。

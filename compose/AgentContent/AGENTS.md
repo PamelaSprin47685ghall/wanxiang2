@@ -8,7 +8,7 @@
 2. **解析附件内容不认识消息格式，抽成库 MediaContent。** [根 AXIOM: 3]
 
 # SPEC
-1. [LEMMA: 1] `golden/agentcontent.txt` 由旧 MessageSerde.fs、AttachmentContent.fs（旧版 Microsoft.Agents.AI 1.20.0）跑同一 Scenario 生成，覆盖序列化、宽松/严格解析、附件引用、三种传输下的各类附件，通过。
+1. [LEMMA: 1] `golden/agentcontent.txt` 由旧 MessageSerde.fs、AttachmentContent.fs（旧版 Microsoft.Agents.AI 1.20.0）跑同一 Scenario 生成（`tests/GoldenTests.fs` 的 `message serde and attachment content behave byte for byte like the old implementation`），覆盖序列化、宽松/严格解析、附件引用、三种传输下的各类附件，通过。
 
 # 迁入或覆盖的旧测试（旧仓库 d9651ed，可在旧仓库删除）
 - AgentCoverageTests.fs（MessageSerde、MediaSupport、AttachmentContent 各节）：

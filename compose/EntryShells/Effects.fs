@@ -52,7 +52,6 @@ type EffectSink =
         CloseWindow: unit -> unit
         PrefsSave: UiPrefs -> unit
         PrefsLoad: unit -> unit
-        DraftWrite: DraftWrite -> unit
         BrowserHook: string -> unit
     }
 
@@ -79,7 +78,6 @@ type EffectSink =
             | Effect.CloseWindow -> this.CloseWindow()
             | Effect.PrefsSave prefs -> this.PrefsSave prefs
             | Effect.PrefsLoad -> this.PrefsLoad()
-            | Effect.DraftWrite dw -> this.DraftWrite dw
             | Effect.BrowserHook hookId -> this.BrowserHook hookId
 
     /// 纯执行（在测试中不经 UI 调度器，直接顺序调用各委托）
@@ -102,7 +100,6 @@ type EffectSink =
             | Effect.CloseWindow -> this.CloseWindow()
             | Effect.PrefsSave prefs -> this.PrefsSave prefs
             | Effect.PrefsLoad -> this.PrefsLoad()
-            | Effect.DraftWrite dw -> this.DraftWrite dw
             | Effect.BrowserHook hookId -> this.BrowserHook hookId
 
 /// 控件名字典 / 引用查找接口，用于根据 FocusTarget 查找 IControl 并聚焦。

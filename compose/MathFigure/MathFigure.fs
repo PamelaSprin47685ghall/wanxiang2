@@ -101,6 +101,9 @@ type MathFigure(html: string option, displayMode: bool, fontSize: float, look: M
     override this.Render(context) =
         match picture with
         | Some laid ->
+            // 声明的尺寸就是这块公式的全部可见范围：字形抗锯齿可能比排版盒多出半个像素，
+            // 画到盒外会侵入相邻行或别的公式。裁回自己的盒，布局与基线不受影响。
+            use _ = context.PushClip(Rect(0.0, 0.0, this.Bounds.Width, this.Bounds.Height))
             use _ = context.PushTransform(Matrix.CreateTranslation(0.0, this.Baseline))
 
             for mark in laid.Marks do

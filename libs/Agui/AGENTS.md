@@ -13,4 +13,4 @@ AG-UI 协议的本端常量和宽容读取：协议版本 1.0、扩展命名空�
     - 推理：SDK 增加事件类型时，这里会自动跟上。
 
 # SPEC
-1. [LEMMA: 1, 2, 3] 迁自旧仓库 AguiTests、AguiMappingTests：`tests/`，29 项通过。
+1. [LEMMA: 1, 2, 3] 迁自旧仓库 AguiTests、AguiMappingTests：`tests/AguiTests.fs` 的 `Capabilities protocol version is 1.0`、`Capabilities namespace prefix is wanxiang.dev/` 与 `tests/AguiMappingTests.fs` 的 `a run started event is recognized`、`an unknown event type is tolerated rather than thrown on` 等 29 项通过。

@@ -108,8 +108,6 @@
 
 ## 成员 `SidebarSearch`
 
-## 成员 `SidebarSearch`
-
 ## SidebarSearch
 
 侧栏搜索框与「未找到」提示（迁自旧 `Views/Sidebar.fs` 的 searchShell、clearSearchButton、searchEmptyHint、searchDebounce 与搜索框 KeyDown）。`SearchSession` / `SearchRequery` / `RowFocus` 与列表重建归组合者。根规则见项目根目录 AGENTS.md。
@@ -142,28 +140,13 @@
 2. **删除意图只用一次**：重建后优先聚焦意图行；意图行不在了就作废，不落到别处。
 
 ### SPEC
-1. [LEMMA: 1, 2] `tests/Tests.fs` 通过。
+1. [LEMMA: 1, 2] `tests/RowFocus.RowFocus.Tests.fs` 的 `neighbor after delete matches the row focus falls to`、`no neighbor when the list becomes empty`、`删除后才问（id 已不在）：按上次行焦点钳制` 通过。
 
 ### 迁入或覆盖的旧测试
 - KeyConvergenceTests：`neighbor after delete matches the row focus falls to`、`no neighbor when the list becomes empty`（行序直接给出；原用例经真实侧栏排序）
 
 ### 与旧实现的差异
 无。意图行不在了时，旧 Rebuild 仍会还原重建前正聚焦且仍可见的行，本库相同（第四个用例末段）。
-
-## 成员 `SearchRequery`
-
-### SearchRequery（库）
-
-旧 `Views/Sidebar.fs` 搜索防抖到点时的判定迁入：词没变就不重发查询，否则迟到的 Tick 会清空刚到的命中（旧 LibraryTests 偶发失败的根因）。计时器仍归 Sidebar。不引用任何其他库。根规则见项目根目录 AGENTS.md。
-
-### LEMMA
-1. **同一组输入，判定与旧实现相同。** [根 AXIOM: 5]
-
-### SPEC
-1. [LEMMA: 1] `tests/SearchHit.Tests.fs` 覆盖：`search hit parsing clamps bad highlight ranges and drops rows without ids`、`消息命中片段去掉 Markdown 记号，命中词保持原样`、`truncated page says so`。
-
-### 迁入或覆盖的旧测试
-旧 LibraryTests 搜索用例要起窗口，留在旧仓库。本包新增 3 条规则用例。
 
 ## 成员 `SearchSegments`
 
@@ -175,8 +158,8 @@
 1. **分词和分段结果与旧实现相同。** [根 AXIOM: 5]
 
 ### SPEC
-1. [LEMMA: 1] `tests/SearchSegments.Tests.fs` 通过：`empty query yields one plain segment covering the whole text`、`whitespace-only query is treated as no query`、`single term highlights only the matched substring, keeping original casing`、`segments always reassemble the original text exactly`、`every term that matched the row is highlighted`、`adjacent matches cover the whole text without gaps`、`overlapping occurrences of one term are not double counted`、`overlapping hits of different terms do not duplicate characters`、`a hit contained in another is absorbed`、`separated hits stay separate`、`a term that does not occur leaves the text unstyled`、`terms helper splits on spaces and tabs and drops duplicates`、`null text is one empty plain segment`。
-2. 有意改动（只影响屏幕显示，不涉及磁盘和网络字节）：旧实现的合并 fold 写成 `(sorted, []) ||> List.fold`，状态和列表位置颠倒，从不合并，不同词的命中互相重叠时还会重复取字。现在命中区间排序后，重叠或紧邻的合并为一段命中；拼回的文本恒等于原文，每个字只出现一次。
+1. [LEMMA: 1] `tests/RowFocus.SearchSegments.Tests.fs` 通过：`empty query yields one plain segment covering the whole text`、`whitespace-only query is treated as no query`、`single term highlights only the matched substring, keeping original casing`、`segments always reassemble the original text exactly`、`every term that matched the row is highlighted`、`adjacent matches cover the whole text without gaps`、`overlapping occurrences of one term are not double counted`、`overlapping hits of different terms do not duplicate characters`、`a hit contained in another is absorbed`、`separated hits stay separate`、`a term that does not occur leaves the text unstyled`、`terms helper splits on spaces and tabs and drops duplicates`、`null text is one empty plain segment`。
+2. 有意改动（只影响屏幕显示，不涉及磁盘和网络字节）：旧实现的合并 fold 写成 `(sorted, []) ||> List.fold`，状态和列表位置颠倒，从不合并，不同词的命中互相重叠时还会重复取字。现在命中区间排序后，重叠或紧邻的合并为一段命中；拼回的文本恒等于原文，每个字只出现一次（由 `adjacent matches cover the whole text without gaps`、`overlapping hits of different terms do not duplicate characters`、`segments always reassemble the original text exactly` 验证）。
 
 ### 迁入或覆盖的旧测试
 旧 SearchHighlightTests 第 1 节（去掉 Headless 包装）：
@@ -206,26 +189,10 @@
 3. **状态行文字与旧 Rebuild 逐字相同。**
 
 ### SPEC
-1. [LEMMA: 1, 2, 3] `tests/Tests.fs` 通过。
+1. [LEMMA: 1, 2, 3] `tests/RowFocus.SearchSession.Tests.fs` 的 `sidebar shows hit snippets under message content and clicking opens the hit`、`显示更多追加，在途时不重复请求；失败可重试`、`不能发时不显示「搜索中」；词一变旧命中作废；断线不挂着`  通过。
 
 ### 迁入或覆盖的旧测试
 - LibraryTests：`sidebar shows hit snippets under message content and clicking opens the hit`（状态部分；片段着色、点击打开要起窗口，留旧仓库）
-
-## 成员 `SidebarEmpty`
-
-### SidebarEmpty（库）
-
-旧 `Views/Sidebar.fs` 的 Rebuild 末段迁入：搜索无结果提示、空态卡可见，以及三种空态（未连接、加载中、无对话，`SidebarEmptyKind` 加了 RequireQualifiedAccess）各自的按钮、骨架、标题与说明。卡的建法与种类翻转才重建仍归 Sidebar：调用方记住上次的 kind 自己比较。不引用任何其他库。根规则见项目根目录 AGENTS.md。
-
-### LEMMA
-1. **同一组状态，决定与旧分支相同。** [根 AXIOM: 5]
-
-### SPEC
-1. [LEMMA: 1] 旧 Sidebar 空态用例要起窗口，留在旧仓库；本包新增 4 条规则用例。
-2. 未连接优先于加载中，加载中优先于无对话；「连接主机」按钮只在窄屏出现。
-
-### 迁入或覆盖的旧测试
-旧 Sidebar 空态用例要起窗口，留在旧仓库。本包新增 4 条规则用例。
 
 ## 成员 `SidebarSelection`
 
@@ -242,7 +209,7 @@
 
 ### SPEC
 1. [LEMMA: 1] `tests/RowFocus.SidebarSelection.Tests.fs` 通过：`selected ids follow the visible rows only`、`selected ids keep the visible row order`、`nothing selected yields nothing`。
-2. 多选的状态机规则（进多选 / 切换 / 全选可见 / 退出；取消最后一项即退出；全选可见会换掉不可见的旧选择）现在在 `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 里，用例名以 `ToggleBatch` / `ToggleBatchAllVisible` / `ExitBatch` / `多选投影` 开头。
+2. 多选的状态机规则（进多选 / 切换 / 全选可见 / 退出；取消最后一项即退出；全选可见会换掉不可见的旧选择）现在在 `libs/WorkspaceState/tests/WorkspaceStateTests.fs` 里，如 `ToggleBatch 取消最后项时退出多选`、`ToggleBatchAllVisible 全选可见行；已全选则退出多选`、`ToggleBatchAllVisible 换一批可见行会清掉旧的不可见选择`。
 
 ### 迁入或覆盖的旧测试
 旧侧栏多选用例要起窗口，留在旧仓库。本包新增 3 条**派生读法**规则用例；多选状态机规则迁到 `libs/WorkspaceState`。

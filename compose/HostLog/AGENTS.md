@@ -9,5 +9,5 @@
     - 推理：旧调用点都直接调用模块函数。
 
 # SPEC
-1. [LEMMA: 1] 运行时截尾记录带齐决策 40 的字段，原始提交已脱敏：`tests/Tests.fs`，通过。
-2. [LEMMA: 1] 通用行格式由 `compose/Attachments` 的金样（与旧 Stderr.fs 对比）覆盖。
+1. [LEMMA: 1] 运行时截尾记录带齐决策 40 的字段，原始提交已脱敏：`tests/Tests.fs` 的 `runtime truncation record carries the decision-40 fields with the raw commit redacted` ，通过。
+2. [LEMMA: 1] 通用行格式由 `compose/Attachments` 的金样（`attachment store and stderr behave byte for byte like the old implementation`，与旧 Stderr.fs 对比）覆盖。

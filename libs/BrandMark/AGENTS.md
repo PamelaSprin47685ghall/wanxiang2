@@ -11,7 +11,7 @@
 品牌标：圆角方形，有图显示图（不垫底色、Uniform 不裁剪），无图退化成「万」字（迁自旧 `Views/Brand.fs` 的 `Brand` 模块）。根规则见项目根目录 AGENTS.md。
 
 - `BrandMark.tryLoad asset files`：先内嵌资源再本地文件，找不到 None。资源地址与候选路径由组合者给：旧值是 `avares://Wanxiang.UI/Assets/logo.png`，然后 `AppContext.BaseDirectory/logo.png`、`BaseDirectory/pwa/logo.png`、`$WANXIANG_HOME`（缺省 `~/.config/wanxiang`）`/logo.png`。
-- `BrandMark.tile look image size`：图由调用方传（加载一次，多处复用）。
+- `BrandMark.tile image size`：图由调用方传（加载一次，多处复用）。
 - 旧文件里的 `Export` 模块不属于控件，已由 TranscriptMarkdown / ExportFileName 承担。
 
 ### 外观
@@ -37,8 +37,8 @@
 - `ShellState { Compact; DrawerOpen; SidebarCollapsed }`：一帧布局状态，替代旧 NavigationSnapshot 中与布局有关的部分。
 - `ShellColumns.Apply state`：按状态投影侧栏列宽、分隔条、抽屉遮罩；窄屏抽屉打开时遮罩可见并可点；`NoteUserSidebarWidth` 记住用户拖出的宽度并夹在最小最大之间。侧栏最小宽写死 220.0，无独立的设宽接口。
 - 事件：`CompactApplied`、`ScrimPressed`（遮罩按下，组合者关抽屉）、`FocusHomeRequested`。
-- `WorkspaceStack(chat, composer, look)`：开始页与续聊共用同一个输入区；`RenderStarting(bool)` 投影起步态（幂等，每帧可调）；`StartModeChanged` 告知组合者。
-- Look 中尺寸变化时按上次状态重新投影。
+- `WorkspaceStack(chat, composer, ?startMinHeight)`：开始页与续聊共用同一个输入区；`RenderStarting(bool)` 投影起步态（幂等，每帧可调）；`StartModeChanged` 告知组合者。
+- 视口尺寸变化时按上次状态重新投影。
 
 ### 外观
 

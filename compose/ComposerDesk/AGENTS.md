@@ -18,7 +18,7 @@ ComposerBox + AttachmentTray + ModelChip + PendingPanel + ComposerSendState + Ho
 ## 发送门控
 每次文本、附件、看图、生成、启用、每帧渲染都经 `ComposerSendState.decide`（DU 代数：SendGate / HostAvailability / GenerationStatus / TextPresence / VisionCapability / SendKeyPreference / AttachmentStage）重算并 `ApplySend`。
 - `generationOf`：`Send.GeneratingStop -> Generating CanStop`，其余 `Idle`。VS 表达不出 WaitingHost（工作树现状：Stop 永远可点），待 WorkspaceState 把「停止在途」入帧后一并投影（下波登记）。
-- `visionOf`：`vs.Vision = VisionNo -> VisionForbidden (ModelVision.blockedMessage vs.VisionLabel)`，未知/支持放行。看图事实由 `libs/WorkspaceState` 的 Project.fs 从当前目录 + 所选模型经 `Catalog.visionOf`（已下沉 `libs/HostCatalog`）投影进 `ComposerVS.Vision/VisionLabel`——组合者不再持有看图的第二权威。
+- `visionOf`：`vs.Vision = VisionNo -> VisionForbidden (ModelVision.blockedMessage vs.VisionLabel)`，未知/支持放行。看图事实由 `libs/WorkspaceState` 的 Project.fs 从当前目录 + 所选模型经 `Catalog.visionOf`（`libs/WorkspaceState/HostCatalog.fs`）投影进 `ComposerVS.Vision/VisionLabel`——组合者不再持有看图的第二权威。
 - `hostOf`：`vs.Enabled -> HostAvailable`，否则 `HostDisabled(vs.DisabledReason)`。
 - `sendKey`：`vs.EnterSends -> EnterSends | CtrlEnterSends`。`EnterSends` 仍是 VS 里的碎布尔（ComposeModel 字段，改造归下一波），本组合者只做 DU 转换。
 - 提交先过 `ComposerSendState.canSubmit`，宿主返回 true 才清空。

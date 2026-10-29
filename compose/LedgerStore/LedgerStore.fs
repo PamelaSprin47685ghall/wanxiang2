@@ -114,23 +114,40 @@ module internal Opening =
         (apply: 'S -> Commit<'E> -> Result<'S, 'Err>)
         (initial: 'S)
         (codec: Codec<'S, 'E>)
+        (maxStamps: int option)
         (snap: Loaded)
         (length: int64)
         (read: int64 * int64 -> Record list)
         =
-        let fresh () = Ledger<'S, 'E, 'Err>(apply, initial)
+        let fresh (cap: int option) =
+            match cap with
+            | Some m -> Ledger<'S, 'E, 'Err>(apply, initial, maxStamps = m)
+            | None -> Ledger<'S, 'E, 'Err>(apply, initial)
 
         let l, used =
             match snap with
-            | Missing -> fresh (), Absent
-            | Corrupt why -> fresh (), Discarded why
+            | Missing -> fresh maxStamps, Absent
+            | Corrupt why -> fresh maxStamps, Discarded why
             | Loaded text ->
+                let parsedCp = CheckpointJson.read text
+
+                let effectiveCap =
+                    match maxStamps, parsedCp with
+                    | Some m, _ -> Some m
+                    | None, Ok cp -> cp.maxStamps
+                    | None, Error _ -> None
+
                 let checkedLedger =
-                    CheckpointJson.read text
+                    parsedCp
                     |> Result.bind (fun cp ->
                         match cp.state with
                         | null -> Error "snapshot has no state"
-                        | s -> codec.decodeState s |> Result.map (fun st -> Checkpoint.map (fun _ -> st) cp))
+                        | s ->
+                            codec.decodeState s
+                            |> Result.map (fun st ->
+                                { Checkpoint.map (fun _ -> st) cp with
+                                    maxStamps = effectiveCap
+                                }))
                     |> Result.bind (fun cp ->
                         try
                             Ok(Ledger<'S, 'E, 'Err>(apply, cp))
@@ -152,7 +169,7 @@ module internal Opening =
 
                 match checkedLedger with
                 | Ok l -> l, Used l.LastId
-                | Error why -> fresh (), Discarded why
+                | Error why -> fresh effectiveCap, Discarded why
 
         let mutable n = 0
         let mutable health = Healthy
@@ -215,8 +232,14 @@ type Inspection =
 /// 目录里有 log.jsonseq 与 snapshot。同步，加锁串行。
 /// 'S 与 'E 应是不可变值：State 与返回的提交直接交出，不复制。
 type LedgerStore<'S, 'E, 'Err>
-    (dir: string, apply: 'S -> Commit<'E> -> Result<'S, 'Err>, initial: 'S, codec: Codec<'S, 'E>, policy: SnapshotPolicy)
-    =
+    (
+        dir: string,
+        apply: 'S -> Commit<'E> -> Result<'S, 'Err>,
+        initial: 'S,
+        codec: Codec<'S, 'E>,
+        policy: SnapshotPolicy,
+        ?maxStamps: int
+    ) =
     let dirLock =
         match DirLock.DirLock.TryAcquire dir with
         | Ok l -> l
@@ -233,7 +256,7 @@ type LedgerStore<'S, 'E, 'Err>
 
     let ledger, startup =
         let l, st, h, _ =
-            Opening.load apply initial codec (snapshot.Load()) file.Length file.Read
+            Opening.load apply initial codec maxStamps (snapshot.Load()) file.Length file.Read
 
         health <- h
 
@@ -258,7 +281,7 @@ type LedgerStore<'S, 'E, 'Err>
 
     /// 不持锁、不写任何字节地检查 dir。宿主持锁、正在写时也可以调用。
     static member Inspect
-        (dir: string, codec: Codec<'S, 'E>, apply: 'S -> Commit<'E> -> Result<'S, 'Err>, initial: 'S)
+        (dir: string, codec: Codec<'S, 'E>, apply: 'S -> Commit<'E> -> Result<'S, 'Err>, initial: 'S, ?maxStamps: int)
         : Inspection =
         let path = Path.Combine(dir, "log.jsonseq")
         // 先读快照再读日志：日志只增长，于是快照不会比读到的日志新
@@ -279,7 +302,7 @@ type LedgerStore<'S, 'E, 'Err>
             Frame.split a (ReadOnlySpan(bytes, int a, int (b - a)))
 
         let l, startup, health, torn =
-            Opening.load apply initial codec snap bytes.LongLength read
+            Opening.load apply initial codec maxStamps snap bytes.LongLength read
 
         {
             health = health
@@ -293,6 +316,7 @@ type LedgerStore<'S, 'E, 'Err>
     member _.State: 'S = lock gate (fun () -> ledger.State)
     member _.LastId = lock gate (fun () -> ledger.LastId)
     member _.Stamps: Map<string, string * uint64> = lock gate (fun () -> ledger.Stamps)
+    member _.MaxStamps: int option = lock gate (fun () -> ledger.MaxStamps)
     member _.Checkpoint: Checkpoint<'S> = lock gate (fun () -> ledger.Checkpoint)
     /// 最近一次快照保存的错误（成功后清空）。快照失败不影响提交。
     member _.LastSnapshotError = lock gate (fun () -> lastSnapshotError)

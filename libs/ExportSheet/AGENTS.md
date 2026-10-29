@@ -93,8 +93,8 @@
 
 ### SPEC
 1. [LEMMA: 1] `tests/ExportFileName.ExportView.Tests.fs` 通过：`reading shows progress and the close key cancels`、`ready with output can save both formats; empty or saving cannot`、`only reading is throttled`。
-2. 只有读取中受节流（窗口由 MotionLedger.progressTextThrottle 给）；读完后两种格式都能再存；空对话或保存中不能存；减弱动效时没有不确定进度条。
-3. 已知旧行为，原样保留：读完但还没有输出时，重试键可见。
+2. 只有读取中受节流（窗口由 MotionLedger.progressTextThrottle 给，见 `only reading is throttled`）；读完后两种格式都能再存；空对话或保存中不能存（`ready with output can save both formats; empty or saving cannot`）；减弱动效时没有不确定进度条。
+3. 已知旧行为，原样保留：读完但还没有输出时，重试键可见（`ready with output can save both formats; empty or saving cannot`）。
 
 ### 迁入或覆盖的旧测试
 旧导出用例要起窗口，留在旧仓库。本库新增：3 条规则用例。
@@ -143,7 +143,7 @@
 
 ### SPEC
 1. [LEMMA: 1] `tests/ExportFileName.TranscriptMarkdown.Tests.fs` 通过：`Markdown keeps orphan tool results timestamps and embedded fences`、`messages without visible body or tool results are skipped`。样例记录先还原成旧 MessageView（附件大小 512、1536、2097152 字节，对应 `512 B`、`1.5 KiB`、`2.0 MiB`）。
-2. 换行用 `Environment.NewLine`，与旧实现一致。
+2. 换行用 `Environment.NewLine`，与旧实现一致（`Markdown keeps orphan tool results timestamps and embedded fences`）。
 
 ### 迁入或覆盖的旧测试
 旧 ConversationExportTests（去掉 Headless 包装，消息改用 TranscriptMessage）：

@@ -8,7 +8,7 @@
 
 # SPEC
 1. [LEMMA: 1, 2] `tests/Tests.fs` 通过：`empty input has no blocks; blank input falls back to its raw text`、`code blocks inside quotes are collected`、`long token threshold is 33 unbroken characters`、`common prefix stops at the first changed block`、`image placeholder names the host and keeps the full url in the notice`、`parse should parse headings, paragraphs, lists, and codes`、`parse math inlines and math blocks`、`parse empty string returns empty list`。`commonPrefix` 与 `imagePlaceholder` 是把旧成员内联代码摘成函数，逻辑逐行相同。
-2. 空串与 null 无块；只有空白的文本退化为原文段落（旧行为，测试钉住）。
+2. 空串与 null 无块；只有空白的文本退化为原文段落（旧行为，由 `empty input has no blocks; blank input falls back to its raw text`、`parse empty string returns empty list` 测试钉住）。
 
 # 迁入或覆盖的旧测试
 旧 UiPureLogicTests 第 3 节（原样）：

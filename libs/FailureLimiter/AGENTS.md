@@ -22,7 +22,7 @@
     - 推理：`RecordFailure` 由攻击者触发的错误码路径调用，抛异常等于主机被打崩。窗口大到减法越界时按「永不滑出」处理：宁可多记，不可崩、也不能把限流悄悄关掉。
 
 ## SPEC
-1. [LEMMA: 1] 达到阈值冻结、键之间隔离、到期解除、`Clear` 立即解除：`tests/Tests.fs` `freezes at the threshold per key, expires, clears`，通过。
+1. [LEMMA: 1] 达到阈值冻结、键之间隔离、到期解除、`Clear` 立即解除：`tests/FailureLimiter.Tests.fs` `freezes at the threshold per key, expires, clears`，通过。
 2. [LEMMA: 1] 窗口外的旧失败不累计：`old failures slide out of the window`，通过。
 3. [LEMMA: 2] 1000 个不同键、阈值 100 时，跟踪的键数不超过 161：`many distinct keys stay bounded`，通过。
 4. 非法参数拒绝构造：`max failures must be positive`，通过。
@@ -45,6 +45,6 @@
 3. **邀请码用过或过期后，仍让提交它的设备得到明确回执。** [根 AXIOM: 5]
 
 ## SPEC
-1. [LEMMA: 1] 完整生命周期：无会话、错码不消耗、新码顶替旧码、单次使用、过期后清除、null 码：`tests/Tests.fs` `full lifecycle`，通过。
+1. [LEMMA: 1] 完整生命周期：无会话、错码不消耗、新码顶替旧码、单次使用、过期后清除、null 码：`tests/PairingCode.Tests.fs` `full lifecycle`，通过。
 2. [LEMMA: 3] 邀请仍有效时可查；用过之后 `HasInviteSession` 仍为真；普通 `Start` 清掉邀请：`invite is visible while valid and reported after use`，通过。
 3. [LEMMA: 2] 文案与旧版一致：`errors describe themselves with the existing wording`，通过。

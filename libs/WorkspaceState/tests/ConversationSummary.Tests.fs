@@ -1,4 +1,4 @@
-module Tests
+module ConversationSummaryTests
 
 open System
 open System.Text.Json.Nodes

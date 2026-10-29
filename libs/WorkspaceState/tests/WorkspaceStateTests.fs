@@ -1531,6 +1531,7 @@ module WorkspaceStateTests =
         Assert.True(regenCmd.IsSome, "应当发出 RegenerateResponse 命令")
         Assert.Equal(convId, regenCmd.Value.conversationId)
         Assert.Equal(1, m2.Feedback.PendingCommands.Count)
+        Assert.True((Workspace.project m2).Chat.Error.IsSome, "命令还没被主机确认时，失败卡必须还在")
 
         let ackEv =
             WireEvent.CommandCommitted

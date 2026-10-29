@@ -3,7 +3,7 @@
 ModelSwitchPanel + ModelSwitcher + ModelPickerList + OverlayDesk + Theme + IconSet = 旧 `Views/ModelSwitcherView.fs`。根规则见项目根目录 AGENTS.md。
 
 - 宿主入口：`ModelSwitchDesk(theme: ThemeManager, overlay: OverlayDesk)`；`Show(anchor, alignRight, options: ModelOption list, title, pick: ModelOption -> unit)`（浮层宽 300）。`Build` 只建内容。
-- 协作：搜索走 `ModelSwitcher.filter`，分组走 `ModelPickerList.groups`；任何激活先关浮层，再按 `ModelPickerList.shouldPick` 决定是否调 `pick`（选中当前模型只关不切）。
+- 协作：搜索走 `ModelSwitcher.filter`，分组走 `ModelPickerList.groups`；任何激活先按服务与模型名找回原项并决定是否调 `pick`，再关浮层（选中当前模型只关不切）。关浮层会拆掉内容，选择必须在拆掉之前发出。
 - 废除 `ModelSwitchLook`，外观全走 Avalonia 样式类与主题资源；打勾图标取 IconSet；浮层宽 300。
 
 ## 证据与旧测试

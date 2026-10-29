@@ -10,6 +10,9 @@ type SettingsHooks =
         UpsertProvider: JsonObject -> (bool -> unit) -> unit
         DeleteProvider: string -> unit
         ProbeProvider: string -> unit
+        /// 尚未入库的模型服务：用地址、密钥和传输类型探活。只给保存前使用。
+        /// 回调必须回到 UI 线程。失败时 models 为空并带原因。
+        ProbeDraft: string -> string option -> string -> (bool * string list * string option -> unit) -> unit
         UpsertMcp: JsonObject -> (bool -> unit) -> unit
         DeleteMcp: string -> unit
         UpdateGeneration: JsonObject -> (bool -> unit) -> unit
@@ -25,6 +28,7 @@ module SettingsHooks =
             UpsertProvider = fun _ _ -> ()
             DeleteProvider = ignore
             ProbeProvider = ignore
+            ProbeDraft = fun _ _ _ _ -> ()
             UpsertMcp = fun _ _ -> ()
             DeleteMcp = ignore
             UpdateGeneration = fun _ _ -> ()

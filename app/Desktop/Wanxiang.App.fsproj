@@ -25,6 +25,8 @@
   <ItemGroup>
     <!-- 非界面入口逻辑（与宿主 src/Wanxiang.App/Wanxiang.App.fsproj 相同的 25 项消费面）。 -->
     <PackageReference Include="Wanxiang2.ServerApp" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.RichJint" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.LaunchPlan" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.CliArgs" VersionOverride="0.0.0-local" />

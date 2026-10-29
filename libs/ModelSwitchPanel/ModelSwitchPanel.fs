@@ -17,6 +17,7 @@ type ModelChoice =
         Model: string
         IsCurrent: bool
         IsDefault: bool
+        ProbeNote: string option
     }
 
 /// 插槽：筛选并分组（组合者填 ModelSwitcher.filter + ModelPickerList.groups；组头 None 不显示）与文案。
@@ -84,6 +85,10 @@ module ModelSwitchPanel =
                 Spacing = 4.0
             )
 
+        match option.ProbeNote with
+        | Some note when not (String.IsNullOrWhiteSpace note) -> marks.Children.Add(tag note)
+        | _ -> ()
+
         if option.IsDefault then
             marks.Children.Add(tag "默认")
 
@@ -133,8 +138,8 @@ module ModelSwitchPanel =
         AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.MenuItem)
         ToolTip.SetTip(host, sprintf "%s · %s" option.ProviderLabel option.Model)
 
-        host.PointerReleased.Add(fun e ->
-            if host.IsEnabled && e.InitialPressMouseButton = MouseButton.Left then
+        host.PointerPressed.Add(fun e ->
+            if host.IsEnabled && e.GetCurrentPoint(host).Properties.IsLeftButtonPressed then
                 e.Handled <- true
                 activate option)
 

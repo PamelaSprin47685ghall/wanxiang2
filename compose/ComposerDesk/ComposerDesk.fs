@@ -348,6 +348,7 @@ type ComposerDesk(actions: ComposerDeskActions) =
         // 芯片的无障碍名与提示固定为「切换本对话使用的模型」：标签渲染会覆盖，投影后统一钉回
         Avalonia.Automation.AutomationProperties.SetName(chip.Host, "切换本对话使用的模型")
         ToolTip.SetTip(chip.Host, "切换本对话使用的模型")
+
         chip.Host.IsEnabled <- vs.Enabled
         chip.Host.Focusable <- vs.Enabled
         chip.Host.IsHitTestVisible <- vs.Enabled

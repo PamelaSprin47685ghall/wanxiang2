@@ -49,6 +49,10 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
 
     let mutable primary: unit -> unit = ignore
     let mutable lastKey: (string * string * string option) option = None
+    /// 在位的内嵌内容：在位期间空态投影（ShowPrompt/ShowBrand）不得拆走它。
+    /// 挂谁由桌内分工决定，摘下只走显式 DismissEmbedded——
+    /// 否则宿主每 250ms 的空态重放会把内嵌卡摘下重挂，焦点被打断、输入框闪烁。
+    let mutable embedded: Control option = None
 
     /// 起手式芯片（标签、种子、回调）：没有宿主回调就没有可用的芯片
     let starterChips =
@@ -245,7 +249,10 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
 
         let key = (title, hint, onPrimary |> Option.map fst)
 
-        if lastKey <> Some key then
+        if embedded.IsSome then
+            // 内嵌内容在位：不拆不重建，只保证可见（空态投影的重放是幂等的）
+            panel.IsVisible <- true
+        elif lastKey <> Some key then
             lastKey <- Some key
             let action = onPrimary |> Option.map (fun (label, _) -> actionButton label)
             panel.Children.Clear()
@@ -265,7 +272,10 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
 
         let key = ("brand:" + title, hint, onPrimary |> Option.map fst)
 
-        if lastKey <> Some key then
+        if embedded.IsSome then
+            // 内嵌内容在位：不拆不重建，只保证可见（空态投影的重放是幂等的）
+            panel.IsVisible <- true
+        elif lastKey <> Some key then
             lastKey <- Some key
             let action = onPrimary |> Option.map (fun (label, _) -> actionButton label)
             panel.Children.Clear()
@@ -278,6 +288,7 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
     member _.ShowEmbedded(content: Control) =
         lastKey <- None
         primary <- ignore
+        embedded <- Some content
 
         let already =
             panel.Children.Count = 1 && obj.ReferenceEquals(panel.Children[0], content)
@@ -293,6 +304,21 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
         panel.HorizontalAlignment <- HorizontalAlignment.Stretch
         panel.IsVisible <- true
 
+    /// 摘下在位的内嵌内容（桌内显式动作，幂等；返回是否真的摘了）。
+    /// 摘下后空态投影的下一次重放才能重建自己的卡。
+    member _.DismissEmbedded() : bool =
+        match embedded with
+        | Some content ->
+            embedded <- None
+            lastKey <- None
+            primary <- ignore
+
+            if panel.Children.Count = 1 && obj.ReferenceEquals(panel.Children[0], content) then
+                panel.Children.Clear()
+
+            true
+        | None -> false
+
     /// 隐藏空态（旧 HideEmpty 的空态部分）
     member _.Hide() =
         lastKey <- None
@@ -302,6 +328,8 @@ type ChatEmpty(starters: (string * string) list, onStarter: (string -> unit) opt
     /// 单入口：根据 ChatPhase 幂等渲染空态内容（非 Empty 时自动隐藏）
     member this.Render(phase: ChatPhase, ?onPrimary: string * (unit -> unit)) =
         match phase with
+        // 内嵌内容在位：空态投影不接管面板（摘下只走 DismissEmbedded）
+        | ChatPhase.Empty _ when embedded.IsSome -> panel.IsVisible <- true
         | ChatPhase.Empty kind ->
             match kind with
             | IdleEmptyKind.NotConnected ->

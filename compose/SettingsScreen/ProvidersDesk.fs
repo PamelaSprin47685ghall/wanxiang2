@@ -90,7 +90,7 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
         let initialPreset =
             match existing with
             | Some p -> ProviderPresets.matchByBaseUrl p.baseUrl
-            | None -> ProviderPresets.tryFind "openai"
+            | None -> ProviderPresets.tryFind "custom"
 
         let mutable kind =
             match existing with
@@ -331,54 +331,108 @@ type ProvidersDesk(theme: ThemeManager, overlay: OverlayDesk, hooks: unit -> Set
                 | ProviderField.VisionYes -> editor.VisionYesBox
                 | ProviderField.VisionNo -> editor.VisionNoBox
 
-            let errors = r.errors |> List.map (fun (f, m) -> boxOf f, m)
+            let errors =
+                if existing.IsNone && List.isEmpty r.models then
+                    r.errors |> List.filter (fun (f, _) -> f <> ProviderField.Models)
+                else
+                    r.errors
+                |> List.map (fun (f, m) -> boxOf f, m)
 
-            if errors.IsEmpty then
+            if errors.IsEmpty && existing.IsNone && List.isEmpty r.models then
                 let key = text editor.KeyBox
 
-                let payload =
-                    ProviderPresets.payload
-                        r.id
-                        r.label
-                        kind
-                        r.url
-                        (if isNull editor.KeyBox.Text then None else Some(key.Trim()))
-                        r.models
-                        r.defaultModel
-                        editor.Enabled
-                        r.timeout
-                        r.retries
-
-                let overrides = JsonObject()
-
-                for m in r.visionYes do
-                    overrides[m] <- true
-
-                for m in r.visionNo do
-                    overrides[m] <- false
-
-                payload["visionOverrides"] <- overrides
-
-                let needsKey =
-                    match ProviderPresets.matchByBaseUrl r.url with
-                    | Some preset -> preset.needsApiKey
-                    | None -> not (ProviderForm.isLoopbackUrl r.url)
-
-                let hadKey =
-                    existing |> Option.map (fun p -> p.hasApiKey) |> Option.defaultValue false
-
-                if String.IsNullOrWhiteSpace key && needsKey && not hadKey then
-                    toast "尚未填写 API Key：已先保存，在模型服务列表点「编辑」补上后才能对话。" ToastTone.Info
+                let keyOpt =
+                    if String.IsNullOrWhiteSpace key then
+                        None
+                    else
+                        Some(key.Trim())
 
                 editor.ApplyPending true
+                probePending <- true
+                probeStatus <- ""
+                editor.ApplyProbeState(true, "")
 
-                (hooks ()).UpsertProvider payload (fun ok ->
+                (hooks ()).ProbeDraft r.url keyOpt kind (fun (ok, models, error) ->
                     editor.ApplyPending false
+                    probePending <- false
 
-                    if ok && active then
-                        overlay.CloseDialog()
-                    elif not ok then
-                        toast "保存失败，请重试。" ToastTone.Failure)
+                    if not active then
+                        ()
+                    elif ok && not models.IsEmpty then
+                        probeStatus <- sprintf "探测到 %d 个模型。勾选要保存的，再点保存所选模型。" (List.length models)
+                        editor.ApplyProbeState(false, probeStatus)
+                        editor.ShowProbeChoices models
+                        editor.ModelsBox.Text <- String.Join("\n", models)
+                        editor.DefaultModelBox.Text <- models |> List.tryHead |> Option.defaultValue ""
+                        toast probeStatus ToastTone.Info
+                    else
+                        let reason = error |> Option.defaultValue "没有读到模型"
+
+                        let message = if models.IsEmpty && ok then "没有读到模型，未保存。" else reason
+
+                        probeStatus <- message
+                        editor.ApplyProbeState(false, message)
+                        toast message ToastTone.Failure)
+            elif errors.IsEmpty then
+                let chosen =
+                    let picked = editor.SelectedProbeModels()
+                    if List.isEmpty picked then r.models else picked
+
+                if existing.IsNone && List.isEmpty chosen then
+                    toast "先勾选要保存的模型。" ToastTone.Warning
+                else
+                    let key = text editor.KeyBox
+                    let models = if List.isEmpty chosen then r.models else chosen
+
+                    let defaultModel =
+                        if List.contains r.defaultModel models then
+                            r.defaultModel
+                        else
+                            models |> List.tryHead |> Option.defaultValue ""
+
+                    let payload =
+                        ProviderPresets.payload
+                            r.id
+                            r.label
+                            kind
+                            r.url
+                            (if isNull editor.KeyBox.Text then None else Some(key.Trim()))
+                            models
+                            defaultModel
+                            editor.Enabled
+                            r.timeout
+                            r.retries
+
+                    let overrides = JsonObject()
+
+                    for m in r.visionYes do
+                        overrides[m] <- true
+
+                    for m in r.visionNo do
+                        overrides[m] <- false
+
+                    payload["visionOverrides"] <- overrides
+
+                    let needsKey =
+                        match ProviderPresets.matchByBaseUrl r.url with
+                        | Some preset -> preset.needsApiKey
+                        | None -> not (ProviderForm.isLoopbackUrl r.url)
+
+                    let hadKey =
+                        existing |> Option.map (fun p -> p.hasApiKey) |> Option.defaultValue false
+
+                    if String.IsNullOrWhiteSpace key && needsKey && not hadKey then
+                        toast "尚未填写 API Key：已先保存，在模型服务列表点「编辑」补上后才能对话。" ToastTone.Info
+
+                    editor.ApplyPending true
+
+                    (hooks ()).UpsertProvider payload (fun ok ->
+                        editor.ApplyPending false
+
+                        if ok && active then
+                            overlay.CloseDialog()
+                        elif not ok then
+                            toast "保存失败，请重试。" ToastTone.Failure)
             else
                 // 错误落在收起的高级区：先展开，便于看到并聚焦
                 if

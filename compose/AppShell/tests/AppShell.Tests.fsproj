@@ -15,6 +15,7 @@
     <Compile Include="LayoutAudit.Tests.fs" />
     <Compile Include="ButtonFlowTests.fs" />
     <Compile Include="QuietShellTests.fs" />
+    <Compile Include="ScenarioTests.fs" />
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
@@ -22,6 +23,8 @@
     <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <!-- 到期真删的判据要落在**服务端存储**上：同一条删除命令能否把对话从事件存储里删掉。 -->
+    <PackageReference Include="Wanxiang2.ProviderCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ChatDomain" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.EventStore" VersionOverride="0.0.0-local" />
     <ProjectReference Include="../AppShell.fsproj" />

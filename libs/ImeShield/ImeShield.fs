@@ -28,8 +28,11 @@ module ImeShield =
         k = Key.Enter || k = Key.Up || k = Key.Down || k = Key.Escape || k = Key.Tab
 
     /// 是否应吞掉这次按键。
-    let shouldSwallow (composing: bool) (k: Key) =
-        k = Key.ImeProcessed || (composing && isImeOwnedKey k)
+    /// 2026-10-28：`Key.ImeProcessed` 不再无条件吞。macOS 实测（桌面诊断日志）：英文输入的普通字符键
+    /// 也被平台标成 `Key.ImeProcessed`，旧判定把它们全部吞掉，输入框收不到任何字符（所有输入框无法录入的根因）。
+    /// 组合态（PreeditText 非空）仍按 `isImeOwnedKey` 吞回车/方向/Esc/Tab；非组合期的 `ImeProcessed`
+    /// 是平台对普通字符键的标记，放行给 TextBox 正常产生文本。
+    let shouldSwallow (composing: bool) (k: Key) = composing && isImeOwnedKey k
 
     let private gate = obj ()
     let mutable private installed = false

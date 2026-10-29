@@ -8,8 +8,10 @@ open Avalonia.Automation
 open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
 open Avalonia.Controls
+open Avalonia.Input
 open Avalonia.Media
 open Avalonia.Threading
+open Avalonia.VisualTree
 open Xunit
 open Wanxiang.Core
 open Wanxiang.UI
@@ -223,6 +225,43 @@ let ``渲染次序：已提交卡按身份复用，流式卡外形不变时原�
 
         Assert.Equal(5, s.Pane.Messages.Children.Count)
         Assert.Equal<ScreenKey option>(None, s.Mounted.[4])
+        r.Window.Close())
+
+[<Fact>]
+let ``回到对话开头把滚动区拉到顶`` () =
+    Headless.run (fun () ->
+        let r = rig ()
+        let s = r.Screen
+        s.Render(frame (exchange 8) None)
+        r.Window.UpdateLayout()
+        s.Pane.Scroller.ApplyOffset 240.0
+        Assert.True(s.Pane.Scroller.Offset > 100.0, "先离开顶部，否则测不到回顶")
+        s.ShowMenu()
+        Dispatcher.UIThread.RunJobs()
+
+        let item =
+            r.Window.GetVisualDescendants()
+            |> Seq.tryPick (function
+                | :? Control as c when AutomationProperties.GetName c = "回到对话开头" -> Some c
+                | _ -> None)
+
+        Assert.True(item.IsSome, "对话菜单应有回到对话开头")
+        let row = item.Value
+
+        row.RaiseEvent(
+            PointerPressedEventArgs(
+                row,
+                new Pointer(1, PointerType.Mouse, true),
+                r.Window,
+                Point(8.0, 8.0),
+                0UL,
+                PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonPressed),
+                KeyModifiers.None
+            )
+        )
+
+        Dispatcher.UIThread.RunJobs()
+        Assert.True(s.Pane.Scroller.Offset < 1.0, sprintf "回到对话开头后偏移仍是 %f" s.Pane.Scroller.Offset)
         r.Window.Close())
 
 [<Fact>]

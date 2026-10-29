@@ -1097,6 +1097,22 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
             Assert.Equal("写下一句", rig.Views.Composer.Box.Input.PlaceholderText)
             Assert.True(bottomGap () > 80.0, "选了模型仍是起步居中")
 
+            let modelEntries =
+                composer.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Button as b when
+                        b.IsVisible
+                        && (AutomationProperties.GetName b = "未选择模型"
+                            || AutomationProperties.GetName b = "切换本对话使用的模型"
+                            || AutomationProperties.GetName b = "对话上下文")
+                        ->
+                        Some b
+                    | _ -> None)
+                |> Seq.length
+
+            Assert.Equal(1, modelEntries)
+
             resize 1280.0 800.0
             assertPads "inset at 1280" 48.0
 

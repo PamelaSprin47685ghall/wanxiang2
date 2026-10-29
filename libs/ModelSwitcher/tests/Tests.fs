@@ -9,6 +9,7 @@ let private opt pid label model =
         providerLabel = label
         model = model
         isCurrent = false
+        probeNote = None
         isDefault = false
     }
 

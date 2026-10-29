@@ -310,7 +310,20 @@ module Project =
                 })
 
         let modelChip =
-            model.Composer.SelectedModel |> Option.map (fun (p, m) -> sprintf "%s / %s" p m)
+            let selected =
+                model.Composer.SelectedModel
+                |> Option.orElse (
+                    match currentWorkspace with
+                    | Some(WorkspacePhase.Active(conv, _)) when not (String.IsNullOrWhiteSpace conv.Config.model) ->
+                        Some(conv.Config.provider, conv.Config.model)
+                    | _ -> None
+                )
+
+            selected
+            |> Option.map (fun (providerId, modelId) ->
+                match currentCatalog with
+                | Some cat -> Catalog.describeModel providerId modelId cat
+                | None -> modelId)
 
         // 决策 320/330/331：看图能力按「当前所选模型」判定；未选时用目录默认（与空闲页芯片同一口径）。
         // 没有目录（未连接/加载中）时未知：门控放行，主机决定。

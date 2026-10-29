@@ -99,7 +99,10 @@ let ``技术细节开合并改文案`` () =
         fold.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent, fold))
         Assert.Equal("收起技术细节", AutomationProperties.GetName fold)
         Assert.Equal("收起错误技术细节", AutomationProperties.GetHelpText fold)
-        Assert.Equal<bool list>([ true ], List.ofSeq revealed))
+        Assert.Equal<bool list>([ true ], List.ofSeq revealed)
+        revealed.Clear()
+        p.Render { (vsOf []) with Detail = None }
+        Assert.Empty p.Actions.Children)
 
 [<Fact>]
 let ``只在挂上且要求时按间隔回调`` () =

@@ -160,12 +160,12 @@ module PopupMenu =
         ToolTip.SetTip(host, box entry.Label)
         AutomationProperties.SetControlTypeOverride(host, Nullable AutomationControlType.MenuItem)
         let fire () = activate entry
-
-        host.PointerReleased.Add(fun e ->
+        // 按下即执行。浮层有退场动画，松开时常已离开命中区，只听松开就会点了没反应。
+        host.PointerPressed.Add(fun e ->
             if
                 host.IsEnabled
                 && host.IsHitTestVisible
-                && e.InitialPressMouseButton = MouseButton.Left
+                && e.GetCurrentPoint(host).Properties.IsLeftButtonPressed
             then
                 e.Handled <- true
                 fire ())

@@ -89,6 +89,35 @@ let ``没有起手式回调时不画起手式行；品牌空态包在分组卡�
         Assert.False e.IsShown)
 
 [<Fact>]
+let ``内嵌在位时空态投影不拆走内嵌内容；摘下只走 DismissEmbedded`` () =
+    Headless.run (fun () ->
+        let e = ChatEmpty([], None)
+        let content = TextBox()
+        e.ShowEmbedded content
+        let w = Window(Width = 600.0, Height = 600.0, Content = e.Host)
+        w.Show()
+        content.Focus() |> ignore
+        Dispatcher.UIThread.RunJobs()
+        Assert.True(content.IsFocused)
+
+        // 宿主的空态投影（如 NoProvider 品牌卡）每 250ms 重放一次：
+        // 内嵌内容在位时不得把它摘下重挂（焦点被打断、输入框闪烁的根因）
+        e.Render(ChatPhase.Empty IdleEmptyKind.NoProvider, ("连接", ignore))
+        Dispatcher.UIThread.RunJobs()
+        Assert.Same(content, (e.Host :?> StackPanel).Children[0])
+        Assert.True(content.IsFocused)
+
+        // 摘下内嵌内容是桌内显式动作（幂等）；此后空态投影才能重建自己的卡
+        Assert.True(e.DismissEmbedded())
+        Assert.False(e.DismissEmbedded())
+        e.Render(ChatPhase.Empty IdleEmptyKind.NoProvider, ("连接", ignore))
+        Dispatcher.UIThread.RunJobs()
+        Assert.True(e.IsShown)
+        Assert.Equal(1, (e.Host :?> StackPanel).Children.Count)
+        Assert.NotSame(content, (e.Host :?> StackPanel).Children[0])
+        w.Close())
+
+[<Fact>]
 let ``内嵌内容原样挂上，再挂同一块不重建；贴底改对齐`` () =
     Headless.run (fun () ->
         let e = ChatEmpty([], None)

@@ -275,6 +275,17 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
         itemsControl.IsVisible <- false
         messages.IsVisible <- false
 
+    /// 摘下嵌入式空态（显式动作，幂等；返回是否真的摘了）
+    member _.DismissEmbedded() : bool =
+        let removed = empty.DismissEmbedded()
+
+        if removed then
+            scroller.Viewer.IsVisible <- true
+            itemsControl.IsVisible <- true
+            messages.IsVisible <- true
+
+        removed
+
     member this.HideEmpty() =
         empty.Hide()
         // 定位钉住时不复位（旧 HideEmpty）；换对话由宿主显式 Reset

@@ -23,6 +23,7 @@ type ModelSwitchDesk(checkIcon: (unit -> Control) option, overlay: OverlayDesk) 
             Model = o.model
             IsCurrent = o.isCurrent
             IsDefault = o.isDefault
+            ProbeNote = o.probeNote
         }
 
     new(theme: ThemeManager, overlay: OverlayDesk) =
@@ -33,8 +34,6 @@ type ModelSwitchDesk(checkIcon: (unit -> Control) option, overlay: OverlayDesk) 
 
     /// 只建浮层内容（不进浮层层）
     member _.Build(options: ModelOption list, title: string, pick: ModelOption -> unit) : Control =
-        let byChoice = options |> List.map (fun o -> toChoice o, o) |> dict
-
         let slots =
             {
                 Groups =
@@ -48,11 +47,15 @@ type ModelSwitchDesk(checkIcon: (unit -> Control) option, overlay: OverlayDesk) 
             }
 
         ModelSwitchPanel.build checkIcon slots (options |> List.map toChoice) title (fun choice ->
-            overlay.ClosePopup()
+            // 先选出再关。关浮层会拆掉内容，拆掉之后回调里的选择就发不出去。
+            // 按服务与模型名找回原项，不靠记录哈希。
+            let picked =
+                options
+                |> List.tryFind (fun o -> o.providerId = choice.ProviderId && o.model = choice.Model)
+                |> Option.filter (fun o -> ModelPickerList.shouldPick o.isCurrent)
 
-            match byChoice.TryGetValue choice with
-            | true, o when ModelPickerList.shouldPick o.isCurrent -> pick o
-            | _ -> ())
+            overlay.ClosePopup()
+            picked |> Option.iter pick)
 
     /// 在锚点旁打开（宽 300）
     member this.Show

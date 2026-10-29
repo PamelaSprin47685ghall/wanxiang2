@@ -65,3 +65,15 @@ let ``预设表里存在原生传输的选项`` () =
 let ``每个预设的传输类型都是配置层认得的`` () =
     for preset in ProviderPresets.all do
         Assert.True(supported.Contains preset.kind, $"预设 {preset.key} 的 kind={preset.kind} 不被配置层接受")
+
+[<Fact>]
+let ``presetPayload 对空模型清单不崩溃：custom 预设没有默认模型可猜`` () =
+    // custom 预设的 models = []（用户只填了地址与密钥，模型名等探测回来再定）。
+    // presetPayload 若对空清单 List.head，会把整个桌面进程带崩（ArgumentException: 输入列表为空）。
+    let custom = ProviderPresets.tryFind "custom" |> Option.get
+    Assert.Empty(custom.models)
+
+    // 引导卡走 custom 时传入空模型清单：应安全构造载荷，defaultModel 留空，不抛异常。
+    let payload = ProviderPresets.presetPayload custom "provider" (Some "sk-test") []
+    Assert.Equal("", payload["defaultModel"].ToString())
+    Assert.Equal("[]", payload["models"].ToJsonString())

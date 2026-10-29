@@ -140,6 +140,7 @@ module FakePorts =
                 UpsertProvider = fun _ onCompleted -> onCompleted true
                 DeleteProvider = fun _ -> calls.Toasted.Add "delete-provider"
                 ProbeProvider = fun id -> calls.Toasted.Add(sprintf "probe-provider:%s" id)
+                ProbeDraft = fun _ _ _ _ -> ()
                 UpsertMcp = fun _ onCompleted -> onCompleted true
                 DeleteMcp = fun _ -> calls.Toasted.Add "delete-mcp"
                 UpdateGeneration = fun _ onCompleted -> onCompleted true

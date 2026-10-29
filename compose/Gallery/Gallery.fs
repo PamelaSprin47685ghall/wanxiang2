@@ -969,6 +969,7 @@ module Gallery =
                                     Model = "gpt-5"
                                     IsCurrent = true
                                     IsDefault = true
+                                    ProbeNote = Some "已探测"
                                 }
                                 {
                                     ProviderId = "anthropic"
@@ -976,6 +977,7 @@ module Gallery =
                                     Model = "claude-opus-4"
                                     IsCurrent = false
                                     IsDefault = false
+                                    ProbeNote = Some "未探测"
                                 }
                             ]
 

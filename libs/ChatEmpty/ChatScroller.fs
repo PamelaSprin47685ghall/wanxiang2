@@ -10,6 +10,7 @@ open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+open Avalonia.Threading
 
 /// 动态资源绑定辅助
 module private Dyn =
@@ -69,7 +70,7 @@ type ChatScroller(ease: ScrollEase) =
     let viewer =
         ScrollViewer(
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible,
             HorizontalContentAlignment = HorizontalAlignment.Stretch
         )
 
@@ -238,15 +239,23 @@ type ChatScroller(ease: ScrollEase) =
 
     member _.StopSmooth() = ()
 
-    /// 滚动补间已改由直接直设目标 Offset 并触发 onArrived，保证行为正确性
+    /// 滚到目标。补间门槛没过（离目标不足一档或减弱动效）也直接写到目标，不把这次滚动丢掉。
+    /// 返回值表示「滚动已执行」（补间启动或直写都算），调用方据此决定是否还要自己兜底。
+    /// 布局还没给出可滚距离时，下一帧再写一次，避免点了没动。
     member this.SmoothTo(target: unit -> float, _onFrame: unit -> unit, onArrived: float -> unit) : bool =
-        if not (ease.Start DateTimeOffset.UtcNow viewer.Offset.Y (target ()) reduced) then
-            false
-        else
+        let dest = target ()
+        ignore (ease.Start DateTimeOffset.UtcNow viewer.Offset.Y dest reduced)
+        this.PinOffset dest
+        onArrived dest
+
+        Dispatcher.UIThread.Post(fun () ->
             let dest = target ()
-            this.ApplyOffset dest
-            onArrived dest
-            true
+
+            if abs (viewer.Offset.Y - dest) > 1.0 then
+                this.PinOffset dest
+                onArrived dest)
+
+        true
 
     /// 走一帧（无帧循环，直接无操作）
     member _.Step() = ()

@@ -211,6 +211,7 @@ module ModelSwitcher =
                         model = m
                         isCurrent = current = Some(p.id, m)
                         isDefault = defaultSel = Some(p.id, m)
+                        probeNote = None
                     }
         ]
 

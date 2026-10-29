@@ -105,11 +105,12 @@
     - `ApplyPresetCaption(label, hint, kind, transport)`：预设标题、预设说明（空则隐藏）、传输说明与传输切换键（`transport` 为 `None` 时隐藏）。
     - `ApplyVisionCurrent(text, inheritOverride, customOverride)`：看图能力的当前判断与手动指定的两框。
     - `ApplyProbeState(pending, status)`：获取模型列表往返（换「正在获取…」并禁用）与探活失败的常驻行（空则隐藏）。
+    - `ShowProbeChoices(models)`：把探到的模型列在表单里，每行一个勾选框，默认全选。`SelectedProbeModels()` 只返回当前勾中的。
     - `ApplyPending(value)`：保存往返（换「正在保存…」并禁用、取消也禁用、不再发 `SaveRequested`）。
     - `ApplyEnabledValue(v)`：「启用这个模型服务」开关的值。
     - `ApplyAdvanced(expanded)`：强制展开高级区（表单错误落在收起的高级区时，组合者先展开）。
   - 单行框回车、任意处 Ctrl/⌘+Enter 发 `SaveRequested`；多行框回车是换行。页脚左右方向键在两键间移动。
-  - 新建时「获取模型列表」禁用并就地说明要先保存。`InitialFocus` 是名称框。`LockId()` 让编辑时标识只读。`AdvancedBoxes` 是高级区里的框（出错时组合者先展开）。
+  - 新建时「获取模型列表」仍禁用：未保存的地址由保存动作先探活，不靠这个按钮。`InitialFocus` 是名称框。`LockId()` 让编辑时标识只读。`AdvancedBoxes` 是高级区里的框（出错时组合者先展开）。
 - 预设套用与分歧判定（ProviderPresets）、传输切换、探活（ProbeSlot、ProviderProbeText）、校验（ProviderForm + FieldCheck）、写回、菜单与对话框都由组合者接。
 - 自动化：`provider-probe-models`、`provider-vision-yes`、`provider-vision-no`、`provider-vision-current`，与旧实现相同。
 

@@ -66,9 +66,11 @@
 
 ## LEMMA
 1. **每个预设的传输类型都被配置层接受。** [根 AXIOM: 1] 本库不引用 AppConfig，测试用同一固定集合核对；与真实配置层 `TomlCodec.supportedProviderKinds` 的核对在组合者 Catalog。
+2. **预设载荷构造不猜不存在的模型名。** [根 AXIOM: 1, 5; 根 SPEC: 6] custom 预设没有预设模型清单（模型名要等探测回来再定）；`presetPayload` 对空模型清单把 `defaultModel` 留空，不 `List.head` 空列表把进程带崩（2026-10-29 实测崩溃：引导卡选「自定义地址」点「连接」，`ArgumentException: 输入列表为空` 未捕获整进程退出）。端到端回归（真实 OnboardingDesk + chip 点击 + 连接）在组合者 SettingsScreen。
 
 ## SPEC
 1. [LEMMA: 1] `tests/ProviderPresets.Tests.fs` 的 `ProviderPresets all list`、`常用 4 家置顶，原生与兼容端点合并为一个条目`、`预设表里存在原生传输的选项`  通过。
+2. [LEMMA: 2] `tests/ProviderPresets.Tests.fs` 的 `presetPayload 对空模型清单不崩溃：custom 预设没有默认模型可猜` 通过；端到端回归（真实 OnboardingDesk + chip 点击 + 连接）在组合者 SettingsScreen 的 `compose/SettingsScreen/tests/Tests.fs`。
 
 ## 迁入或覆盖的旧测试
 - UiPureLogicTests：`ProviderKind conversions and ProviderPresets all list`（只迁 ProviderPresets 部分，测试名改为 `ProviderPresets all list`）

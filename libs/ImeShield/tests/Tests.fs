@@ -15,7 +15,9 @@ let ``384 判定：组合中吞掉回车方向键Esc Tab，ImeProcessed 任何�
         Assert.True(ImeShield.shouldSwallow true k)
         Assert.False(ImeShield.shouldSwallow false k)
 
-    Assert.True(ImeShield.shouldSwallow false Key.ImeProcessed)
+    // 2026-10-28：macOS 把普通字符键也标成 Key.ImeProcessed，无条件吞会吃掉全部输入；
+    // 非组合期一律放行（含 ImeProcessed），组合中仍只吞归输入法的键。
+    Assert.False(ImeShield.shouldSwallow false Key.ImeProcessed)
     Assert.False(ImeShield.shouldSwallow true Key.A)
     Assert.False(ImeShield.shouldSwallow true Key.Back)
 

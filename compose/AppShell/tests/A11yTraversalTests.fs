@@ -238,6 +238,7 @@ let private modelOptions: ModelOption list =
             model = "test-model"
             isCurrent = true
             isDefault = true
+            probeNote = Some "未探测"
         }
     ]
 

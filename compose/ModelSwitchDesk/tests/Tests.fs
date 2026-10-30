@@ -24,6 +24,7 @@ let private options =
             model = "gpt-4o"
             isCurrent = true
             isDefault = false
+            probeNote = Some "已探测"
         }
         {
             providerId = "oa"
@@ -31,6 +32,7 @@ let private options =
             model = "o3"
             isCurrent = false
             isDefault = false
+            probeNote = None
         }
         {
             providerId = "ds"
@@ -38,6 +40,7 @@ let private options =
             model = "deepseek-chat"
             isCurrent = false
             isDefault = true
+            probeNote = Some "未探测"
         }
     ]
 

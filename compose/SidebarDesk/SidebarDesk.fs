@@ -56,7 +56,17 @@ type SidebarDeskActions =
 /// 旧 Views/Sidebar.fs 的协作：分组与筛选（ConversationSummary）、消息正文搜索（SearchSession + SearchRequery）、
 /// 行焦点（RowFocus）、多选（投影里的选中集合，见 SidebarSelection）、空态（SidebarEmpty）、行菜单，摆进
 /// SidebarBrand / SidebarSearch / ConversationRows / ListEmptyCard / BatchBar / HostSwitcher。
-type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDeskActions, brandLogo: float -> Control) =
+type SidebarDesk
+    (
+        theme: ThemeManager,
+        overlay: OverlayDesk,
+        actions: SidebarDeskActions,
+        brandLogo: float -> Control,
+        ?now: unit -> DateTimeOffset
+    ) =
+    /// 时钟端口：分组桶、行时间戳与同名消歧都用它。默认真实时刻；
+    /// 画廊与测试台注入固定时钟，渲染才可复现（否则基线随日历漂移，跨过时间桶边界 CI 必红）。
+    let now: unit -> DateTimeOffset = defaultArg now (fun () -> DateTimeOffset.Now)
     let brand = SidebarBrand()
     // 品牌标：入口壳给的是真 logo 工厂（SharedTheme.logo），按侧栏边长档接入一次。
     do brand.SlotLogo(brandLogo (theme.Metric(Metric.LogoSidebar).Value))
@@ -143,13 +153,14 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
 
     let disambiguate (s: ConversationSummary) =
         match sameTitle.TryGetValue(titleKey s.title) with
-        | true, group -> ConversationSummary.disambiguator group DateTimeOffset.Now s
+        | true, group -> ConversationSummary.disambiguator group (now ()) s
         | _ -> None
 
-    /// 第二行是「模型 · 时间」。分叉、归档只做前缀。正文片段仍走搜索命中行。
-    let previewFor (query: string) (s: ConversationSummary) =
+    /// 第二行：左侧「模型（· 归档/分叉）」+ 可选片段，时间拆给 MetaRight 右对齐。
+    /// 返回 (预览文本, 时间戳)。正文片段仍走搜索命中行。
+    let previewFor (query: string) (s: ConversationSummary) : string * string =
         let t = s.updatedAt.ToLocalTime()
-        let n = DateTimeOffset.Now.ToLocalTime()
+        let n = (now ()).ToLocalTime()
 
         let stamp =
             if t.Date = n.Date then t.ToString "HH:mm"
@@ -162,7 +173,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             else
                 s.model.Trim()
 
-        let core = (if s.archived then "归档 · " else "") + model + " · " + stamp
+        let core = (if s.archived then "归档 · " else "") + model
 
         let meta =
             if s.isFork || (currentLineage ()).ContainsKey s.id then
@@ -179,10 +190,13 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             else
                 raw
 
-        if not (String.IsNullOrWhiteSpace query) && not (String.IsNullOrWhiteSpace snippet) then
-            meta + "\n" + snippet
-        else
-            meta
+        let text =
+            if not (String.IsNullOrWhiteSpace query) && not (String.IsNullOrWhiteSpace snippet) then
+                meta + "\n" + snippet
+            else
+                meta
+
+        text, stamp
 
     let accessibleName (s: ConversationSummary) =
         match disambiguate s with
@@ -206,7 +220,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         sprintf "%s\n%d 条消息%s" s.title s.messageCount provenance
 
     let rowModel (query: string) (s: ConversationSummary) : RowModel =
-        let preview = previewFor query s
+        let preview, stamp = previewFor query s
 
         {
             Id = s.id
@@ -214,6 +228,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             TitleSpans = spansOf query s.title
             Preview = preview
             PreviewSpans = spansOf query preview
+            MetaRight = stamp
             AccessibleName = accessibleName s
             Tooltip = tooltipFor s
             Running = s.running
@@ -284,7 +299,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
 
         let items = ResizeArray<RowItem>()
 
-        for g in ConversationSummary.group DateTimeOffset.Now visible do
+        for g in ConversationSummary.group (now ()) visible do
             items.Add(RowItem.Header g.label)
 
             for s in g.items do

@@ -285,6 +285,8 @@ module ProviderPresets =
 
     /// 预设默认的保存载荷（首次运行卡片：用户只填了密钥）。
     /// `models` 为空时用预设自带的清单（探测前先落一份可用的）；超时与重试取编辑器同一默认值。
+    /// custom 预设没有预设清单：模型名要等探测回来再定，此时 defaultModel 留空（不猜一个不存在的名字）。
     let presetPayload (preset: ProviderPreset) (id: string) (apiKey: string option) (models: string list) =
         let models = if List.isEmpty models then preset.models else models
-        payload id preset.label preset.kind preset.baseUrl apiKey models (List.head models) true 120 2
+        let defaultModel = models |> List.tryHead |> Option.defaultValue ""
+        payload id preset.label preset.kind preset.baseUrl apiKey models defaultModel true 120 2

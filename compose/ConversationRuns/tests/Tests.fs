@@ -303,6 +303,8 @@ let ``生成结束：失败带详情就沿用主机的错误`` () =
     Assert.True(outcome.IsSome)
     Assert.Equal(ProviderRateLimited, outcome.Value.kind)
     Assert.Equal("限流了", outcome.Value.message)
+    // 限流倒计时按错误实例登记，不复制主机错误或伪造技术细节。
+    Assert.True(obj.ReferenceEquals(err, outcome.Value))
     Assert.Equal(None, outcome.Value.detail)
 
 [<Fact>]

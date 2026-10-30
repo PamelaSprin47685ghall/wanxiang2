@@ -212,10 +212,25 @@ let ``error card toggles technical detail and triggers retry action`` () =
     Headless.run (fun () ->
         let cards, _ = Fixture.cards ()
         let _, err, _ = Samples.errors |> List.find (fun (n, _, _) -> n = "error-retry")
-        let card = cards.ErrorCard(err, ignore, Fixture.actions, None)
-        let fold = named "技术细节" card
-        press fold
-        Assert.Equal("收起技术细节", AutomationProperties.GetName fold))
+        let mutable retried = false
+        let card = cards.ErrorCard(err, (fun () -> retried <- true), Fixture.actions, None)
+        let window = show card
+        let fold = named "技术细节" card :?> Button
+        fold.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, fold))
+        Assert.Equal("收起技术细节", AutomationProperties.GetName fold)
+
+        Assert.Contains(
+            all card,
+            fun c ->
+                match c with
+                | :? TextBlock as text -> text.IsVisible && text.Text = "System.TimeoutException: 120s"
+                | _ -> false
+        )
+
+        let retry = named "重试生成" card :?> Button
+        retry.RaiseEvent(Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent, retry))
+        Assert.True(retried, "点重试应发出重试")
+        window.Close())
 
 [<Fact>]
 let ``r8 右键消息正文弹消息菜单（含复制消息链接）`` () =

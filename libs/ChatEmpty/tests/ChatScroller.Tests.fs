@@ -90,6 +90,9 @@ let ``平滑滚动直设 Offset 到达；滚轮触发 wheeled`` () =
         Assert.Equal(200.0, arrived)
         Assert.Equal(200.0, s.Offset)
         Assert.False s.IsSmoothing
+        s.ApplyOffset 3.0
+        Assert.True(s.SmoothTo((fun () -> 0.0), ignore, ignore), "离顶部不足一档时仍应滚到顶")
+        Assert.Equal(0.0, s.Offset)
         let props = PointerPointProperties()
 
         let args =

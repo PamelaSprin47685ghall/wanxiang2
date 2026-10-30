@@ -608,7 +608,7 @@ type ComposerBox() =
             ToolTip.SetTip(send, vs.Send.Label)
             AutomationProperties.SetName(send, vs.Send.Label)
 
-        // 对话上下文
+        // 已选模型只留芯片。对话上下文是同一份模型的第二入口，选中后不再并列。
         match vs.Context with
-        | Some ctx -> this.ShowContext(ctx.Model, ctx.ContextSummary, true)
-        | None -> this.HideContext()
+        | Some ctx when vs.ModelChip.IsNone -> this.ShowContext(ctx.Model, ctx.ContextSummary, true)
+        | _ -> this.HideContext()

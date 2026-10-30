@@ -14,9 +14,11 @@ open Avalonia.Input.Platform
 open Avalonia.Media.Imaging
 open Avalonia.Platform.Storage
 open Avalonia.Threading
+open Wanxiang.Config
 open Wanxiang.Core
 open Wanxiang.Protocol
 open Wanxiang.Client
+open Wanxiang.Server
 open Wanxiang.UI
 
 /// wanxiang2 独立桌面入口（PLAN.md GAP1 的一半）。
@@ -481,38 +483,40 @@ module Program =
                             // 归属在打开选择窗口前取：用户在选择窗口里的期间换主机/重连，读完就不上传。
                             let owner = shell.UploadOwner()
 
-                            async {
-                                try
-                                    let! picked =
-                                        top.StorageProvider.OpenFilePickerAsync(
-                                            FilePickerOpenOptions(
-                                                AllowMultiple = true,
-                                                Title = "添加附件",
-                                                FileTypeFilter =
-                                                    [
-                                                        for (label, patterns, mimes) in MediaTypes.pickerFilters ->
-                                                            FilePickerFileType(
-                                                                label,
-                                                                Patterns = patterns,
-                                                                MimeTypes = mimes
-                                                            )
-                                                    ]
-                                            )
+                            FilePick.startOnCaller
+                                (fun () ->
+                                    top.StorageProvider.OpenFilePickerAsync(
+                                        FilePickerOpenOptions(
+                                            AllowMultiple = true,
+                                            Title = "添加附件",
+                                            FileTypeFilter =
+                                                [
+                                                    for (label, patterns, mimes) in MediaTypes.pickerFilters ->
+                                                        FilePickerFileType(
+                                                            label,
+                                                            Patterns = patterns,
+                                                            MimeTypes = mimes
+                                                        )
+                                                ]
                                         )
-                                        |> Async.AwaitTask
+                                    ))
+                                (fun started ->
+                                    async {
+                                        try
+                                            let! picked = started |> Async.AwaitTask
 
-                                    for file in picked do
-                                        let! bytes = readStorageFile file
-                                        let name = file.Name
-                                        post (fun () -> shell.AttachFiles owner [ (name, bytes) ])
+                                            for file in picked do
+                                                let! bytes = readStorageFile file
+                                                let name = file.Name
+                                                post (fun () -> shell.AttachFiles owner [ (name, bytes) ])
 
-                                    post (fun () -> composerDesk.Focus())
-                                with ex ->
-                                    post (fun () ->
-                                        toast (UploadFacts.readFailedText ex.Message) ShellToastTone.Failure
-                                        composerDesk.Focus())
-                            }
-                            |> Async.Start
+                                            post (fun () -> composerDesk.Focus())
+                                        with ex ->
+                                            post (fun () ->
+                                                toast (UploadFacts.readFailedText ex.Message) ShellToastTone.Failure
+                                                composerDesk.Focus())
+                                    }
+                                    |> Async.Start)
 
                     let dropFiles (items: IStorageItem list) =
                         match topLevel () with
@@ -1154,6 +1158,38 @@ module Program =
                             CloseWindow = closeWindow
                             ClientName = fun () -> Wanxiang.UI.CredentialStore.clientName
                             MakeThumbnail = makeThumbnail
+                            ProbeDraft =
+                                fun url key kind done' ->
+                                    // 保存前探活走主机同一条请求。密钥只进请求头，回调回到 UI 线程。
+                                    let provider =
+                                        {
+                                            id = "draft"
+                                            kind = kind
+                                            label = ""
+                                            baseUrl = url
+                                            apiKey = key
+                                            models = []
+                                            defaultModel = ""
+                                            timeoutSeconds = 30
+                                            maxRetries = 0
+                                            enabled = true
+                                            promptCaching = false
+                                            headers = Map.empty
+                                            extraJson = None
+                                            visionOverrides = Map.empty
+                                        }
+
+                                    task {
+                                        let! result = ProviderCatalog.probeModels provider CancellationToken.None
+
+                                        let ok, models, error =
+                                            match result with
+                                            | Ok ids -> true, ids, None
+                                            | Error message -> false, [], Some message
+
+                                        post (fun () -> done' (ok, models, error))
+                                    }
+                                    |> ignore
                             EffectSink = desktopEffectSink
                             BuildViews = buildViews
                         }

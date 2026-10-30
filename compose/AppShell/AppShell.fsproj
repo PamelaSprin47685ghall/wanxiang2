@@ -3,6 +3,7 @@
        对话操作、附件、导入导出、草稿策略、视图组装）。命名空间沿用 Wanxiang.UI（与 ShellCommands、ProtocolDispatch 同模式）。不持 DispatcherTimer、不做文件 IO、
        不做 Browser 调用——计时、IO、浏览器与视图端口全部由入口壳经 ShellPorts 注入。 -->
   <ItemGroup>
+    <Compile Include="FilePick.fs" />
     <Compile Include="UnansweredReply.fs" />
     <Compile Include="DraftSaveGate.fs" />
     <Compile Include="AppShell.fs" />

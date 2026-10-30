@@ -247,7 +247,8 @@ module Gallery =
                 FakePorts.chatActions ()
             )
 
-        let sidebar = SidebarDesk(theme, overlay, FakePorts.sidebarActions (), brandLogo)
+        let sidebar =
+            SidebarDesk(theme, overlay, FakePorts.sidebarActions (), brandLogo, now = fun () -> Scenes.fixedNow)
 
         let settings =
             SettingsScreen(
@@ -969,6 +970,7 @@ module Gallery =
                                     Model = "gpt-5"
                                     IsCurrent = true
                                     IsDefault = true
+                                    Probe = Wanxiang2.ModelSwitchPanel.ProbeState.Probed 2
                                 }
                                 {
                                     ProviderId = "anthropic"
@@ -976,6 +978,7 @@ module Gallery =
                                     Model = "claude-opus-4"
                                     IsCurrent = false
                                     IsDefault = false
+                                    Probe = Wanxiang2.ModelSwitchPanel.ProbeState.Unknown
                                 }
                             ]
 

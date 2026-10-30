@@ -1372,10 +1372,10 @@ module Workspace =
                 | ChatUserMsg.JumpEnd -> model, [ Effect.ScrollChat ScrollCommand.End ]
                 | ChatUserMsg.Regenerate ->
                     // 重新生成：主机删掉尾部整段回复链再重跑。
-                    // 错误卡随这次请求离开：用户已经要求重跑，界面不再留着上一张失败卡。
+                    // 命令发出后错误卡保留，等主机确认命令（CommandCommitted）并开始重新生成
+                    // （GenerationStarted）后才清除——命令没发出去时不能先把错误清掉。
                     match model.Conn with
-                    | ConnPhase.Authed(instId,
-                                       CatalogPhase.Ready(cat, WorkspacePhase.Active(activeConv, RunState.Idle _))) ->
+                    | ConnPhase.Authed(_, CatalogPhase.Ready(_, WorkspacePhase.Active(activeConv, RunState.Idle _))) ->
                         let invId = Guid.NewGuid()
 
                         let cmd =
@@ -1398,14 +1398,8 @@ module Workspace =
                                 PendingCommands = Map.add invId pending model.Feedback.PendingCommands
                             }
 
-                        let cleared =
-                            CatalogPhase.Ready(cat, WorkspacePhase.Active(activeConv, RunState.Idle None))
-
-                        { model with
-                            Conn = ConnPhase.Authed(instId, cleared)
-                            Feedback = nextFeedback
-                        },
-                        [ Effect.SendCommand cmd ]
+                        // 失败卡留到主机确认这次重试。命令没发出去时不能先把错误清掉。
+                        { model with Feedback = nextFeedback }, [ Effect.SendCommand cmd ]
                     | _ -> model, []
                 | ChatUserMsg.ContinueReply ->
                     // 继续生成（决策 230）：把中途失败留下的半截助手回复落盘，再从它接着生成。

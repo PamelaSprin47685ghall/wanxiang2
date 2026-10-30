@@ -644,6 +644,35 @@ let ``流程按钮：消息、工具、思考、错误卡与版本都从真实�
                 "重试生成没有发出 RegenerateResponse"
             )
 
+            // 主机确认命令并开始重新生成：错误卡随 GenerationStarted 离开（命令没确认前错误卡必须还在）。
+            let regen =
+                rig.Fake.Commands
+                |> List.tryPick (function
+                    | ClientCommand.RegenerateResponse d -> Some d
+                    | _ -> None)
+                |> Option.defaultWith (fun () -> failwith "没有 RegenerateResponse 命令")
+
+            rig.Fake.Deliver(
+                CommandCommitted
+                    {|
+                        invocationId = regen.invocationId
+                        commandId = "cmd-retry"
+                        commitId = 1UL
+                    |}
+            )
+
+            let regenGenId = Guid.NewGuid()
+
+            rig.Fake.Deliver(
+                GenerationStarted
+                    {|
+                        conversationId = Guid.Parse rootId
+                        generationId = regenGenId
+                        providerId = "p1"
+                        model = "m1"
+                    |}
+            )
+
             Pump.settle ()
             Assert.True(findName rig.Root "重试生成" |> Option.isNone, sprintf "重试后错误卡还在。树上：%s" (dump rig.Root))
             Assert.True(findName rig.Root "继续生成" |> Option.isNone, "重试后继续生成还在")

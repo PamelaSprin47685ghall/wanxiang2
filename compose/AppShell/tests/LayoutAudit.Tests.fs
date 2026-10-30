@@ -239,6 +239,9 @@ let private audit (stage: string) (root: Control) : string list =
                     findings.Add(sprintf "%s｜C 按钮交叠 %0.0fx%0.0f：%s ↔ %s" stage ix iy (tag a) (tag b))
 
     // D：NoWrap 无省略号的 TextBlock 被裁宽。
+    // DesiredSize 含自身 margin，Bounds 是父面板减去 margin 后排到的矩形
+    // （DockPanel 对停靠子元素正是按 desired − margin 排布）。比截断要用
+    // 去 margin 后的文本自然宽，否则右停靠带 margin 的时间戳全成假阳性。
     for c in all do
         match c with
         | :? TextBlock as tb when
@@ -248,14 +251,11 @@ let private audit (stage: string) (root: Control) : string list =
             && onScreen root c
             ->
 
-            if tb.DesiredSize.Width > tb.Bounds.Width + 1.0 then
+            let natural = tb.DesiredSize.Width - tb.Margin.Left - tb.Margin.Right
+
+            if natural > tb.Bounds.Width + 1.0 then
                 findings.Add(
-                    sprintf
-                        "%s｜D 截断文案「%s」desire=%0.0f actual=%0.0f"
-                        stage
-                        (preview tb.Text)
-                        tb.DesiredSize.Width
-                        tb.Bounds.Width
+                    sprintf "%s｜D 截断文案「%s」desire=%0.0f actual=%0.0f" stage (preview tb.Text) natural tb.Bounds.Width
                 )
         | _ -> ()
 
@@ -1096,6 +1096,22 @@ let ``布局审计：活树符合设计稿的尺寸、放置、浮层与两套�
             Pump.settle ()
             Assert.Equal("写下一句", rig.Views.Composer.Box.Input.PlaceholderText)
             Assert.True(bottomGap () > 80.0, "选了模型仍是起步居中")
+
+            let modelEntries =
+                composer.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Button as b when
+                        b.IsVisible
+                        && (AutomationProperties.GetName b = "未选择模型"
+                            || AutomationProperties.GetName b = "切换本对话使用的模型"
+                            || AutomationProperties.GetName b = "对话上下文")
+                        ->
+                        Some b
+                    | _ -> None)
+                |> Seq.length
+
+            Assert.Equal(1, modelEntries)
 
             resize 1280.0 800.0
             assertPads "inset at 1280" 48.0

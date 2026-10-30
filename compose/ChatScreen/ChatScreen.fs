@@ -568,8 +568,7 @@ type ChatScreen
         if
             not (pane.Scroller.SmoothTo((fun () -> 0.0), pane.RefreshLatestButton, fun _ -> pane.RefreshLatestButton()))
         then
-            if pane.Scroller.Reduced then
-                pane.Scroller.ScrollToHomeDeferred()
+            pane.Scroller.ScrollToHomeDeferred()
 
         pane.RefreshLatestButton()
 

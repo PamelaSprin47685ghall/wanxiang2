@@ -431,6 +431,7 @@ let ``SettingsProviders ApplyProbe updates draft models in open editor and cache
                             upserts.Add p
                             cb true)
                     ProbeProvider = probes.Add
+                    ProbeDraft = fun _ _ _ _ -> ()
                 }
 
         h.screen.Render
@@ -574,6 +575,7 @@ let ``密钥为空时不发起任何请求并就地说明`` () =
                             cb true)
                     DiscardProvider = discarded.Add
                     ProbeProvider = probes.Add
+                    ProbeDraft = fun _ _ _ _ -> ()
                     TakenIds = (fun () -> [])
                     DiscoverLocal = (fun () -> Threading.Tasks.Task.FromResult None)
                     OpenAdvanced = ignore
@@ -614,3 +616,81 @@ let ``点检查主机走宿主出口，且不重复发`` () =
         // 已经在检查中：按钮禁用，不再发第二次
         Assert.False (byId h.screen.General.AboutView "check-host").Value.IsEnabled
         h.window.Close())
+
+// 崩溃回归（2026-10-29 实测）：选「自定义地址」预设点「连接」，custom 预设没有默认模型清单，
+// presetPayload 若对空清单 List.head 会把整个桌面进程带崩（ArgumentException: 输入列表为空）。
+// 真实组合：真实 OnboardingDesk + 真实 chip 点击 + 真实「连接」按钮，载荷经 hooks 出口断言。
+[<Fact>]
+let ``自定义地址预设点连接不崩溃，载荷安全构造`` () =
+    Headless.run (fun () ->
+        let theme = new ThemeManager((fun () -> DateTimeOffset.UtcNow), false)
+        let root = Grid()
+        let overlay = OverlayDesk(root, Desk.look ())
+        let upserts = ResizeArray<JsonObject>()
+        let probes = ResizeArray<string>()
+
+        // 宿主回投：生产里 Report → 状态树 → Reproject → Onboarding.Render（AppShell.fs 同构）。
+        // 不回投的话 selected 停在默认预设（openai），chip 点击不会生效。
+        let cardRef: OnboardingDesk option ref = ref None
+
+        let report (msg: OnboardingUserMsg) =
+            match msg with
+            | OnboardingUserMsg.SelectPreset key ->
+                cardRef.Value.Value.Render(
+                    {
+                        SelectedPresetKey = Some key
+                        DiscoveredModels = None
+                        SwitchOffered = false
+                    }
+                )
+            | _ -> ()
+
+        let card =
+            OnboardingDesk(
+                theme,
+                overlay,
+                {
+                    UpsertProvider =
+                        (fun p cb ->
+                            upserts.Add p
+                            cb true)
+                    DiscardProvider = ignore
+                    ProbeProvider = probes.Add
+                    ProbeDraft = fun _ _ _ _ -> ()
+                    TakenIds = (fun () -> [])
+                    DiscoverLocal = (fun () -> Threading.Tasks.Task.FromResult None)
+                    OpenAdvanced = ignore
+                    Report = report
+                }
+            )
+
+        cardRef.Value <- Some card
+
+        root.Children.Insert(0, card.View)
+        let window = Desk.show root 900.0 700.0
+        Dispatcher.UIThread.RunJobs()
+
+        // 选「自定义地址」chip（真实按钮点击，走 ChipClicked → SelectPreset 路径）
+        let customChip = byName card.View "自定义地址"
+        Assert.True(customChip.IsSome, "应当有「自定义地址」chip")
+        invoke customChip.Value |> ignore
+        Dispatcher.UIThread.RunJobs()
+
+        // 填地址与密钥（custom 预设 needsApiKey = true）
+        card.Pane.CustomUrlBox.Text <- "https://my-llm.example.com/v1"
+        card.Pane.KeyBox.Text <- "sk-test"
+        Dispatcher.UIThread.RunJobs()
+
+        // 点「连接」：修复前这里 List.head [] 直接把进程带崩
+        invoke (byName card.View "连接").Value
+        Dispatcher.UIThread.RunJobs()
+
+        // 载荷安全构造并经 hooks 出口发出：models 为空数组、defaultModel 为空串（不猜名字）
+        Assert.Single upserts |> ignore
+        let payload = upserts[0]
+        Assert.Equal("[]", payload["models"].ToJsonString())
+        Assert.Equal("", payload["defaultModel"].ToString())
+        Assert.Equal("https://my-llm.example.com/v1", payload["baseUrl"].ToString())
+        // 探测请求也发出去了（探测回来再回填模型清单）
+        Assert.Single probes |> ignore
+        window.Close())

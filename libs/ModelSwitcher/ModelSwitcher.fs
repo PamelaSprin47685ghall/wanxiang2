@@ -12,6 +12,8 @@ type ModelOption =
         isCurrent: bool
         /// 新对话的默认模型（与 `Catalog.defaultSelection` 同一规则）
         isDefault: bool
+        /// 最近一次探活结果。None 表示还没探过，列表仍要写明这一点。
+        probeNote: string option
     }
 
 /// 快速切换模型的纯逻辑：搜索、排序、文案。从目录列出选项在组合者 Catalog。

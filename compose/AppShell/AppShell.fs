@@ -10,6 +10,7 @@ open Wanxiang.Protocol
 open Wanxiang.Client
 open Wanxiang2.WorkspaceState
 open Wanxiang2.MotionSwitch
+open Wanxiang2.ModelSwitchPanel
 
 [<RequireQualifiedAccess>]
 type ShellToastTone =
@@ -66,6 +67,9 @@ type ShellPorts =
         CloseWindow: unit -> bool
         ClientName: unit -> string
         MakeThumbnail: Guid -> byte[] -> unit
+        /// 尚未入库的模型服务探活。入口执行，组合者不自己发 HTTP。
+        /// 回调必须回到 UI 线程。失败时 models 为空并带原因。
+        ProbeDraft: string -> string option -> string -> (bool * string list * string option -> unit) -> unit
         EffectSink: Wanxiang.UI.EffectSink
         BuildViews: unit -> ShellViews
     }
@@ -114,6 +118,8 @@ type ShellComposer(ports: ShellPorts) =
     let downloads = DownloadBuffers()
     let search = SearchInFlight()
     let probes = PendingProbes()
+    /// 最近一次探活回执。模型列表每次打开都带上，不另存一份权威目录。
+    let probeNotes = System.Collections.Generic.Dictionary<string, ProbeState>()
     let runs = ConversationRuns()
     let commandFeedback = CommandFeedbackTracker()
     let configFeedback = ConfigFeedbackTracker()
@@ -390,36 +396,43 @@ type ShellComposer(ports: ShellPorts) =
 
             // 6.5 引导：目录就绪后有两种情形——卡片刚接上的服务取走（交接），或还没有可用服务（卡片留在聊天区）
             match model.Conn with
+            | ConnPhase.Authed(_, CatalogPhase.Ready(cat, _)) when not (Catalog.isReady cat) ->
+                // 引导卡：三项在途事实归模型，这里按单一入口投影回去
+                v.Onboarding.Render
+                    {
+                        SelectedPresetKey = model.Onboarding.SelectedPresetKey
+                        DiscoveredModels = model.Onboarding.DiscoveredModels
+                        SwitchOffered = model.Onboarding.SwitchOffered
+                    }
+
+                v.Chat.Pane.ShowEmbedded(v.Onboarding.View)
+                v.Onboarding.StartDiscovery()
             | ConnPhase.Authed(_, CatalogPhase.Ready(cat, _)) ->
-                if Catalog.isReady cat then
-                    // 交接：卡片刚接上的模型服务已在目录里可用（只取一次；旧 CompleteOnboarding）
-                    match v.Onboarding.TakeConnected cat with
-                    | Some(providerId, modelId) ->
-                        v.Onboarding.Reset()
+                // 目录就绪：交接（卡片刚接上的服务已在目录里可用，只取一次；旧 CompleteOnboarding）
+                match v.Onboarding.TakeConnected cat with
+                | Some(providerId, modelId) ->
+                    v.Onboarding.Reset()
 
-                        if String.IsNullOrWhiteSpace model.Composer.Text then
-                            // 空闲输入框：预填第一句话并聚焦（旧 CompleteOnboarding 的交接）
-                            this.Dispatch(User(Composer(ComposerUserMsg.TextChanged OnboardingRules.FirstPrompt)))
+                    if String.IsNullOrWhiteSpace model.Composer.Text then
+                        // 空闲输入框：预填第一句话并聚焦（旧 CompleteOnboarding 的交接）
+                        this.Dispatch(User(Composer(ComposerUserMsg.TextChanged OnboardingRules.FirstPrompt)))
 
-                        v.Composer.Focus()
+                    v.Composer.Focus()
 
-                        ports.EffectSink.ShowToast(
-                            sprintf "已连接 %s" (Catalog.describeModel providerId modelId cat),
-                            ToastTone.Info
-                        )
-                    | None -> ()
-                else
-                    // 引导卡：三项在途事实归模型，这里按单一入口投影回去
-                    v.Onboarding.Render
-                        {
-                            SelectedPresetKey = model.Onboarding.SelectedPresetKey
-                            DiscoveredModels = model.Onboarding.DiscoveredModels
-                            SwitchOffered = model.Onboarding.SwitchOffered
-                        }
+                    ports.EffectSink.ShowToast(
+                        sprintf "已连接 %s" (Catalog.describeModel providerId modelId cat),
+                        ToastTone.Info
+                    )
+                | None -> ()
 
-                    v.Chat.Pane.ShowEmbedded(v.Onboarding.View)
-                    v.Onboarding.StartDiscovery()
-            | _ -> ()
+                // 摘下引导卡是桌内显式动作：目录就绪后卡片不再属于聊天区，
+                // 摘后立刻补一次投影，不留一个 tick 的空窗（空态投影此时才能重建自己的卡）
+                if v.Chat.Pane.DismissEmbedded() then
+                    v.Chat.Pane.Render vs.Chat
+            | _ ->
+                // 离开引导态（断线、配对中等）：同样显式摘卡并补投影
+                if v.Chat.Pane.DismissEmbedded() then
+                    v.Chat.Pane.Render vs.Chat
 
             // 7. Run effects
             ports.EffectSink.Run effects
@@ -475,12 +488,21 @@ type ShellComposer(ports: ShellPorts) =
 
                                 match ev with
                                 | CatalogSnapshot _ ->
+                                    // 目录快照只改状态树，不在 Dispatch 的投影之后。
+                                    // 不补这一拍，输入区仍按旧目录禁用（空目录时模型芯片点不开）。
+                                    this.Reproject()
                                     // 引导交接在投影里做（目录可用即可取走），这里只留启动打点
                                     if StartupTrace.enabled then
                                         ports.Post(fun () -> StartupTrace.mark "catalogReady" |> ignore)
                                 | ProviderProbeResult d ->
                                     // 探活回执先到引导卡；它没在等，再由设置页接走
                                     let models = ProbeModels.ofJson d.models
+
+                                    probeNotes[d.providerId] <-
+                                        if d.ok then
+                                            ProbeState.Probed(List.length models)
+                                        else
+                                            ProbeState.Failed
 
                                     if not (v().Onboarding.ApplyProbe(d.providerId, d.ok, models, d.error)) then
                                         v().Settings.ApplyProbe(d.providerId, d.ok, models, d.error)
@@ -640,10 +662,17 @@ type ShellComposer(ports: ShellPorts) =
                         StopGeneration = fun () -> this.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
                         ToggleSidebar = fun () -> this.ToggleNavigation()
                         CloseWindow = fun () -> ports.CloseWindow()
-                        NewConversation = fun () -> this.Dispatch(User(Sidebar(SidebarUserMsg.NewConversation)))
+                        NewConversation =
+                            fun () ->
+                                this.Dispatch(User(Sidebar(SidebarUserMsg.NewConversation)))
+                                this.ClearPersistedDraft()
                         FocusSearch = fun _ -> this.Dispatch(User(Sidebar(SidebarUserMsg.SearchActivate)))
                         OpenSettings = fun s -> this.Dispatch(User(Settings(SettingsUserMsg.OpenSection s)))
-                        OpenModelPicker = fun () -> this.Dispatch(User(ModelSwitch(ModelSwitchUserMsg.Open)))
+                        OpenModelPicker =
+                            fun () ->
+                                match views with
+                                | Some v -> this.OpenModelPicker(v.Composer.ModelAnchor())
+                                | None -> ()
                         JumpExchange =
                             fun direction ->
                                 match views with
@@ -795,6 +824,17 @@ type ShellComposer(ports: ShellPorts) =
         this.Dispatch(User(Palette(PaletteUserMsg.SetRecent recent)))
 
     member this.PaletteRecent() : string list = model.PaletteRecent
+
+    /// 发出去或新开对话：输入区不再是草稿，取消延时并删掉落盘文本。
+    member private this.ClearPersistedDraft() =
+        if not (isNull draftSaveTimer) then
+            draftSaveTimer.Dispose()
+            draftSaveTimer <- null
+
+        draftGate.Saved(ports.Now())
+
+        if model.Prefs.persistDrafts then
+            ports.ApplyDraftWrite(DraftWrite.Delete)
 
     /// 退出或页面隐藏：取消延时，保存状态树中的最新文本。
     member _.FlushDrafts() =
@@ -1213,8 +1253,9 @@ type ShellComposer(ports: ShellPorts) =
             Submit =
                 fun _text ->
                     // 文本在**打字时**就已经进状态树了（`TextChanged` 那条路），这里不再重复派发——
-                    // 一条路，不两条。
+                    // 一条路，不两条。发出去之后输入区不再是草稿，落盘的旧文本也要清掉。
                     this.Dispatch(User(Composer(ComposerUserMsg.Send)))
+                    this.ClearPersistedDraft()
                     true
             // 打字：文本进状态树 + 草稿落盘的 800 ms 闸在这里起。
             TextChanged =
@@ -1227,7 +1268,7 @@ type ShellComposer(ports: ShellPorts) =
             StopGeneration = fun () -> this.Dispatch(User(Composer(ComposerUserMsg.StopGeneration)))
             PickAttachment = pickAttachment
             RemoveAttachment = fun id -> this.Dispatch(User(Composer(ComposerUserMsg.RemoveAttachment id)))
-            OpenModelPicker = fun _ -> this.Dispatch(User(ModelSwitch(ModelSwitchUserMsg.Open)))
+            OpenModelPicker = fun anchor -> this.OpenModelPicker anchor
             DropFiles = dropFiles
             PasteFromClipboard = pasteFromClipboard
             OpenSessionSettings = fun () -> this.Dispatch(User(Settings(SettingsUserMsg.OpenSection None)))
@@ -1292,7 +1333,10 @@ type ShellComposer(ports: ShellPorts) =
 
     member this.SidebarActions() : Wanxiang2.SidebarDesk.SidebarDeskActions =
         {
-            newConversation = fun () -> this.Dispatch(User(Sidebar(SidebarUserMsg.NewConversation)))
+            newConversation =
+                fun () ->
+                    this.Dispatch(User(Sidebar(SidebarUserMsg.NewConversation)))
+                    this.ClearPersistedDraft()
             openConversation = fun id -> this.Dispatch(User(Sidebar(SidebarUserMsg.SelectConv id)))
             renameConversation =
                 fun s ->
@@ -1406,10 +1450,19 @@ type ShellComposer(ports: ShellPorts) =
                         onCompleted
             DeleteProvider =
                 fun id ->
+                    let name =
+                        match model.Conn with
+                        | ConnPhase.Authed(_, CatalogPhase.Ready(cat, _)) ->
+                            cat.providers
+                            |> List.tryFind (fun p -> p.id = id)
+                            |> Option.map (fun p -> p.label)
+                            |> Option.defaultValue id
+                        | _ -> id
+
                     v()
                         .Dialogs.Confirm(
                             "删除模型服务",
-                            (sprintf "「%s」将从配置中移除，使用它的对话需要重新选择模型。" id),
+                            (sprintf "「%s」将从配置中移除，使用它的对话需要重新选择模型。" name),
                             "删除",
                             fun () ->
                                 sendConfig
@@ -1424,6 +1477,7 @@ type ShellComposer(ports: ShellPorts) =
                         )
                     |> ignore
             ProbeProvider = fun id -> this.ProbeProvider id
+            ProbeDraft = ports.ProbeDraft
             UpsertMcp =
                 fun payload onCompleted ->
                     sendConfig
@@ -1510,6 +1564,7 @@ type ShellComposer(ports: ShellPorts) =
                                 |})
                         ignore
             ProbeProvider = fun id -> this.ProbeProvider id
+            ProbeDraft = ports.ProbeDraft
             TakenIds =
                 fun () ->
                     match model.Conn with
@@ -1530,6 +1585,62 @@ type ShellComposer(ports: ShellPorts) =
                     | None -> ()
             Report = fun msg -> this.Dispatch(User(Onboarding(msg)))
         }
+
+    /// 点模型芯片：用当前目录列出可选项，选中后写入当前对话或空闲草稿。
+    member this.OpenModelPicker(anchor: Control) =
+        match views, model.Conn with
+        | Some v, ConnPhase.Authed(_, CatalogPhase.Ready(cat, workspace)) ->
+            let current =
+                match workspace with
+                | WorkspacePhase.Active(conv, _) when not (String.IsNullOrWhiteSpace conv.Config.model) ->
+                    Some(conv.Config.provider, conv.Config.model)
+                | _ -> model.Composer.SelectedModel |> Option.orElse (Catalog.defaultSelection cat)
+
+            let probeText (p: ProbeState) =
+                match p with
+                | ProbeState.Probed n -> sprintf "已探测 %d 个" n
+                | ProbeState.Failed -> "探测失败"
+                | ProbeState.Unknown -> "未探测"
+
+            let options =
+                ModelSwitcher.options cat current
+                |> List.map (fun o ->
+                    let probe =
+                        match probeNotes.TryGetValue o.providerId with
+                        | true, p -> p
+                        | _ -> ProbeState.Unknown
+
+                    { o with
+                        probeNote = Some(probeText probe)
+                    })
+
+            v.ModelSwitch.Show(
+                anchor,
+                true,
+                options,
+                "切换模型",
+                fun picked ->
+                    match workspace with
+                    | WorkspacePhase.Active(conv, _) ->
+                        let cfg =
+                            { conv.Config with
+                                provider = picked.providerId
+                                model = picked.model
+                            }
+
+                        this.Dispatch(
+                            Msg.CommandRequested(
+                                UpdateConversationConfig
+                                    {|
+                                        invocationId = Guid.NewGuid()
+                                        conversationId = conv.ConversationId
+                                        config = cfg
+                                    |}
+                            )
+                        )
+                    | _ -> this.Dispatch(User(Composer(ComposerUserMsg.ModelPick(picked.providerId, picked.model))))
+            )
+        | _ -> ports.EffectSink.ShowToast("连接主机后才能选择模型。", ToastTone.Warning)
 
     /// 探活：登记请求再发出；回执由 ProtocolDispatch 结算（超时走 ExpireHostRequests）。
     member this.ProbeProvider(providerId: string) =

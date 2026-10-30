@@ -216,6 +216,13 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
     let presetCaption = Ui.smallText ""
     let probeStatus = Ui.caption ""
     let probeNeedsSave = Ui.caption "新的模型服务要先保存，才能自动获取模型列表；现在可以手动填写模型名。"
+    let probeHeading = Ui.caption "探测结果"
+    let probeList = StackPanel(Orientation = Orientation.Vertical, Spacing = 4.0)
+    let saveSelected = Ui.button "primary" "保存所选模型" save.Trigger
+
+    let probeResult =
+        StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0, IsVisible = false)
+
     let enabledRow, readEnabled, writeEnabled = Ui.switchRow "启用这个模型服务" "" true ignore
     let idleText = if isNew then "添加" else "保存"
     let probeButton = Ui.button "secondary" "获取模型列表" probeClicked.Trigger
@@ -272,6 +279,12 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
 
         probeStatus.IsVisible <- false
         probeNeedsSave.IsVisible <- isNew
+        AutomationProperties.SetName(probeHeading, "探测结果")
+        AutomationProperties.SetName(saveSelected, "保存所选模型")
+        saveSelected.HorizontalAlignment <- HorizontalAlignment.Left
+        probeResult.Children.Add probeHeading
+        probeResult.Children.Add probeList
+        probeResult.Children.Add saveSelected
         AutomationProperties.SetAutomationId(probeButton, "provider-probe-models")
         probeButton.MinWidth <- 96.0
         saveButton.MinWidth <- 96.0
@@ -373,6 +386,7 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         form.Children.Add presetHint
         form.Children.Add summary
         form.Children.Add midFields
+        form.Children.Add probeResult
         form.Children.Add advancedToggle
         form.Children.Add advancedPanel
         form.Children.Add(Ui.hairline ())
@@ -457,6 +471,31 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         visionYesBox.Text <- inheritOverride
         visionNoBox.Text <- customOverride
 
+    /// 探活回来的模型。勾选后才进入保存。
+    member _.ShowProbeChoices(models: string list) =
+        probeList.Children.Clear()
+
+        for model in models do
+            let box = CheckBox(Content = model, IsChecked = true, Focusable = true)
+
+            AutomationProperties.SetName(box, model)
+            probeList.Children.Add box
+
+        probeResult.IsVisible <- not models.IsEmpty
+        setAdvanced true
+
+    /// 当前勾选的模型。探测清单没出来时为空。
+    member _.SelectedProbeModels() =
+        [
+            for child in probeList.Children do
+                match child with
+                | :? CheckBox as box when box.IsChecked = Nullable true ->
+                    match box.Content with
+                    | :? string as model -> model
+                    | _ -> ()
+                | _ -> ()
+        ]
+
     /// 获取模型列表：往返中换「正在获取…」并禁用；探活失败的常驻行（空则隐藏）
     member _.ApplyProbeState(pending: bool, status: string) =
         let text = if pending then "正在获取…" else "获取模型列表"
@@ -464,7 +503,7 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
         probeButton.ApplyEnabled(not pending && not isNew)
         AutomationProperties.SetHelpText(probeButton, (if pending then text else ""))
         probeStatus.Text <- status
-        probeStatus.IsVisible <- not (String.IsNullOrWhiteSpace text)
+        probeStatus.IsVisible <- not (String.IsNullOrWhiteSpace status)
 
     /// 保存往返中：保存键换「正在保存…」并禁用，取消也禁用；重复的 Ctrl+Enter 不再提交
     member _.ApplyPending(value: bool) =
@@ -493,5 +532,6 @@ type ProviderEditor(isNew: bool, validationFor: TextBox -> Control option, ?_gly
     member _.PresetClicked = presetClicked.Publish
     member _.TransportClicked = transportClicked.Publish
     member _.ProbeClicked = probeClicked.Publish
+    member _.ProbeStatusText = probeStatus.Text
     member _.SaveRequested = save.Publish
     member _.CancelRequested = cancel.Publish

@@ -66,7 +66,10 @@ const runOcr = (path, pageSegmentation = OCR_LAYOUT_PSM) => {
     if (process.platform === 'darwin' && process.env.WX_SMOKE_OCR !== 'tesseract') {
         raw = execFileSync('swift', [OCR_SCRIPT, path], { encoding: 'utf8', timeout: 60000 });
     } else {
-        raw = execFileSync('tesseract', [path, 'stdout', '-l', 'chi_sim+eng', '--psm', pageSegmentation, 'tsv'],
+        // 纯 chi_sim：+eng 会让 tesseract 把「中文冒烟」等纯汉字串当成拉丁字形误读
+        // （CI 实测读成 Xe/aXe，conf 跌到 34）；数字与 test-model 纯 ASCII 词
+        // 在纯 chi_sim 下同样能读出（实测 conf 80-93）。
+        raw = execFileSync('tesseract', [path, 'stdout', '-l', 'chi_sim', '--psm', pageSegmentation, 'tsv'],
             { encoding: 'utf8', timeout: 30000 });
     }
     const words = [];
@@ -942,7 +945,54 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             };
             await shotPath('smoke-before-popups');
             const sidebarWords = await ocrShot('smoke-sidebar');
-            const seedTitle = findPhrase(sidebarWords, SEED_TITLE);
+            // 整页版面切分（psm 4）在部分 traineddata/版式组合下会把会话标题行并入杂块
+            // （CI 实测读成两个低置信碎词），而同一行下方的元信息词（模型名、时间戳）能读出。
+            // 此时按会话行的结构事实救回：标题行紧贴在第一条元信息词上方、同一列表列内，
+            // 裁出该行小图放大后按单行模式（psm 7）重试——判定仍是「文字确实出现在界面上」，
+            // 坐标从识别事实推导，不写死。裁剪/重试的坐标换算与 ocrShot 同一套口径。
+            const rescueRowTitle = async (words) => {
+                // 元信息行锚点：种子会话卡的副行是「模型名 + 时间戳」（smoke_published.sh 写入的
+                // config.model 与会话创建时刻）。不能取「全部小字词的最小 top」：搜索框图标、
+                // 分组标题（如「过去 30 天」）同样是小字且更靠上，CI 实测（run 41046115842）
+                // 会把锚点拉到 top=80.5，裁出搜索框上方的空白，重试必然失败。
+                // 这里按副行的语义特征锚定，取最靠上的一条：模型名 test-model；退而求其次
+                // 时间戳——「月/日」字词旁紧跟数字词（水平间隙 ≤ 8px、纵向同排）。分组标题
+                // （今天/昨天/过去 30 天）不含月/日，相对时长（3天）不含月/日，都被排除。
+                const metaCandidates = words.filter((w) => w.left < 300 && w.left >= 0 && w.conf >= 60);
+                const byTop = (a, b) => a.top - b.top;
+                const anchor = metaCandidates.filter((w) => /test-model/i.test(w.text)).sort(byTop)[0]
+                    || metaCandidates.filter((w) => /[月日]/.test(w.text)
+                        && metaCandidates.some((v) => /\d/.test(v.text)
+                            && Math.abs(v.top - w.top) <= 4
+                            && Math.min(v.left + v.width, w.left + w.width)
+                                - Math.max(v.left, w.left) >= -8))
+                        .sort(byTop)[0];
+                if (!anchor) return null;
+                const metaTop = anchor.top;
+                // 同一行（上下中点差 ≤ 8px）的其余元信息词共同决定行的横向范围；
+                // 时间戳在行右侧，行的联合右缘即卡片文字右缘。
+                const metaRow = metaCandidates.filter((w) => Math.abs(w.top + w.height / 2 - (metaTop + 6)) <= 8);
+                const rowLeft = Math.min(...metaRow.map((w) => w.left));
+                const rowRight = Math.max(...metaRow.map((w) => w.left + w.width));
+                // 标题行在副行正上方：CI 实测标题字面占副行顶边上方约 6..30px。
+                // 裁剪框从副行顶边上方 32px 起、高 30px：完整罩住标题行，底边不到副行，
+                // 不把模型名/时间戳包进识别图（psm 7 会把它们当同一行）。
+                // 横向在行联合范围两侧各留 8px；右缘 clamp 在侧栏右界 300。
+                const region = {
+                    x: Math.max(0, rowLeft - 8),
+                    y: Math.max(0, metaTop - 32),
+                    w: Math.min(300 - Math.max(0, rowLeft - 8), rowRight - rowLeft + 16),
+                    h: 30,
+                };
+                const rowWords = await ocrShot('smoke-sidebar-title-row', '7', region);
+                const hit = findPhrase(rowWords, SEED_TITLE);
+                if (hit) return hit;
+                // psm 7 偶发整行读空时退一步用 psm 6 再试同一区域。
+                const retry = await ocrShot('smoke-sidebar-title-row6', '6', region);
+                return findPhrase(retry, SEED_TITLE);
+            };
+            const seedTitle = findPhrase(sidebarWords, SEED_TITLE)
+                || await rescueRowTitle(sidebarWords);
             let opened = false;
             let openedShot = `${OUT}/smoke-opened.png`;
             if (seedTitle) {

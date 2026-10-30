@@ -64,6 +64,10 @@ type FakePorts(prefs0: UiPrefs) =
     /// 但「添加附件」按键必须能走到宿主的真实上传入口（`ShellComposer.AttachFiles`），
     /// 于是这里给一个可替换的钩子。默认什么都不做（老行为）。
     let mutable pickAttachment: unit -> unit = fun () -> ()
+
+    let mutable probeDraft: string -> string option -> string -> (bool * string list * string option -> unit) -> unit =
+        fun _ _ _ _ -> ()
+
     let mutable editing = false
     let mutable dark = false
     let mutable hostHandler: (WireEvent -> unit) option = None
@@ -127,6 +131,10 @@ type FakePorts(prefs0: UiPrefs) =
     member _.OnPickAttachment
         with get () = pickAttachment
         and set value = pickAttachment <- value
+
+    member _.ProbeDraft
+        with get () = probeDraft
+        and set value = probeDraft <- value
 
     /// 当前假时钟时刻。
     member _.Now
@@ -280,7 +288,14 @@ type FakePorts(prefs0: UiPrefs) =
             CopyToClipboard = fun text -> copies.Add text
             OpenLink = fun url -> links.Add url
             SaveDownload = fun name bytes -> downloads.Add(name, bytes)
-            ApplyDraftWrite = fun write -> draftWrites.Add write
+            ApplyDraftWrite =
+                fun write ->
+                    draftWrites.Add write
+
+                    match write with
+                    | DraftWrite.Delete -> localDraft := None
+                    | DraftWrite.Write text -> localDraft := Some text
+                    | DraftWrite.Unchanged -> ()
             LoadLocalDraft = fun () -> async { return !localDraft }
             PrefsLoad = fun () -> prefs0
             PrefsSave = fun next -> savedPrefs.Add next
@@ -322,6 +337,7 @@ type FakePorts(prefs0: UiPrefs) =
             CloseWindow = fun () -> false
             ClientName = fun () -> "测试客户端"
             MakeThumbnail = fun id bytes -> thumbnails.Add(id, bytes)
+            ProbeDraft = fun url key kind done' -> probeDraft url key kind done'
             EffectSink = this.Sink
             BuildViews = buildViews
         }
@@ -414,7 +430,10 @@ module Rig =
         }
 
     /// 建一套完整测试台：BuildViews 交给组合者，Build() 由测试自己调（要断言的时点不同）。
-    let createWith (prefs0: UiPrefs) : Rig =
+    let createWithProbe
+        (prefs0: UiPrefs)
+        (probe: string -> string option -> string -> (bool * string list * string option -> unit) -> unit)
+        : Rig =
         let theme = new ThemeManager((fun () -> DateTimeOffset.UnixEpoch), false)
         let styles = new ThemeStyles(theme)
         // `PerAssembly` 下整个程序集共享一个 Application：每次先清掉上一个用例装进去的
@@ -431,6 +450,7 @@ module Rig =
         Application.Current.Resources.MergedDictionaries.Add themeDict
 
         let fake = FakePorts(prefs0)
+        fake.ProbeDraft <- probe
         let importDesks = ResizeArray<Wanxiang2.TransferDesk.ImportDesk>()
         let exportDesks = ResizeArray<Wanxiang2.TransferDesk.ExportDesk>()
         let mutable shell: ShellComposer = Unchecked.defaultof<_>
@@ -487,7 +507,16 @@ module Rig =
                     shell.ChatActions()
                 )
 
-            let sidebar = SidebarDesk(theme, overlay, shell.SidebarActions(), brandLogo)
+            // 侧栏时钟也钉死：布局审计跑在固定时刻，组头与时间戳不随日历漂移。
+            let sidebar =
+                SidebarDesk(
+                    theme,
+                    overlay,
+                    shell.SidebarActions(),
+                    brandLogo,
+                    now = fun () -> DateTimeOffset(2026, 10, 21, 8, 0, 0, TimeSpan.Zero)
+                )
+
             let settings = SettingsScreen(theme, overlay, shell.SettingsHooks(), prefs0)
             let onboarding = OnboardingDesk(theme, overlay, shell.OnboardingHooks())
 
@@ -572,6 +601,9 @@ module Rig =
             ExportDesks = exportDesks
             Root = rootGrid.Value
         }
+
+    let createWith (prefs0: UiPrefs) : Rig =
+        createWithProbe prefs0 (fun _ _ _ _ -> ())
 
     let create () : Rig = createWith UiPrefsFile.defaults
 

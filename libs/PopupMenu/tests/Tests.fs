@@ -180,6 +180,21 @@ let ``enter and space activate the entry and grouped menus skip empty groups`` (
         key ia Key.Enter |> ignore
         key ib Key.Space |> ignore
         Assert.Equal<string list>([ "甲"; "乙" ], List.ofSeq hits)
+
+        let press =
+            PointerPressedEventArgs(
+                ia,
+                new Pointer(1, PointerType.Mouse, true),
+                window,
+                Point(8.0, 8.0),
+                0UL,
+                PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonPressed),
+                KeyModifiers.None
+            )
+
+        ia.RaiseEvent press
+        Dispatcher.UIThread.RunJobs()
+        Assert.Equal<string list>([ "甲"; "乙"; "甲" ], List.ofSeq hits)
         window.Close())
 
 [<Fact>]

@@ -9,7 +9,8 @@ SettingsFrame + ProvidersPane + ToolsPane + GeneralPane + DevicesPane + Onboardi
 - `GeneralDesk`：单入口 `Render(SettingsGeneralVS)`；插槽注入 `WireImportHandler`、`WirePresetHandlers`；一次性命令 `SaveGeneration()`、`DiscardGenerationChanges()`。面板侧只走 `GeneralPane` 的单入口 `Render(GeneralSectionVS)` 与 `Apply*` 命令：`ApplyPresetCaption`、`ApplyVisionCurrent`、`ApplyProbeState`、`ApplyPending`、`ApplyEnabledValue`、`ApplyAdvanced`、`ApplyMaxHeight`、`ApplyCaptions`、`ApplyContent`（设备面板与框架无 `Set*` 公开方法）。主机状态归 `HostHealth`：面板点「检查主机」→ `health.BeginCheck()`（转 Running 并发 `CheckRequested`）→ 本组合者订阅 `CheckRequested` 并转成 `hooks.RequestDoctorCheck`（宿主发 `doctor.request`）；`HostConfigRejected` / `DoctorReport` 由宿主经 `Health.ApplyConfigIssue` / `Health.ApplyReport` 回填。
 - `ProvidersDesk`：单入口 `Render(SettingsProvidersVS)`；一次性命令 `ApplyOpenAddEditor()`、`ApplyOpenEditor(id)`、`ApplyProbe(id, ok, models, error)`。
 - `ToolsDesk`：单入口 `Render(SettingsToolsVS)`。
-- `OnboardingDesk(theme, overlay, hooks: OnboardingHooks)`：单入口 `Render(SettingsOnboardingVS)`；一次性命令 `ApplyProbe(...) : bool`、`ApplyDiscovered(result)`、`TakeConnected catalog`、`StartDiscovery()`、`Reset()`、`FocusInitial()`、`IsBusy`、`Step`、`Dispose()`。`OnboardingHooks`：`UpsertProvider`、`DiscardProvider`、`ProbeProvider`、`TakenIds`、`DiscoverLocal`、`OpenAdvanced`、`Report`（引导卡把所选预设 / 本机发现 / 兼容端点建议回报给宿主，事实进模型后投影回来）。
+- `OnboardingDesk(theme, overlay, hooks: OnboardingHooks)`：单入口 `Render(SettingsOnboardingVS)`；一次性命令 `ApplyProbe(...) : bool`、`ApplyDiscovered(result)`、`TakeConnected catalog`、`StartDiscovery()`、`Reset()`、`FocusInitial()`、`IsBusy`、`Step`、`Dispose()`。`OnboardingHooks`：`UpsertProvider`、`DiscardProvider`、`ProbeDraft`、`TakenIds`、`DiscoverLocal`、`OpenAdvanced`、`Report`（引导卡把所选预设 / 本机发现 / 兼容端点建议回报给宿主，事实进模型后投影回来）。
+- 自定义地址（设置页与引导卡共用）：保存前先用尚未入库的地址和密钥探活。探测结果就地列出，每个模型一行，写明能否调用；用户勾选后才写 `config.provider-upsert`，未勾选、失败或空清单都不落盘。已保存服务的「获取模型列表」仍走主机 `provider.probe`。不改线协议。完整路径在 `compose/AppShell/tests/ScenarioTests.fs`。
 - `SettingsPart`（旧 SettingsSection，改名避开旧宿主）：`groups`、`all`、`scope`、`label`、`glyph`、`key`、`ofKey`。
 
 ## 在途 UI 状态登记与归属理由
@@ -27,6 +28,7 @@ SettingsFrame + ProvidersPane + ToolsPane + GeneralPane + DevicesPane + Onboardi
 - SettingsViewTests：`SettingsView navigates sections, remembers scroll positions and invalidates cache`、`SettingsProviders saveCore with invalid advanced field automatically expands advanced layer and focuses error`、`SettingsProviders ApplyProbe updates draft models in open editor and caches without auto-upserting`、`SettingsGeneral SaveGenerationCore validates numeric ranges and generates payload`、`SettingsTools ShowEditor validates id, command/url, timeout and saves valid config`
 - OnboardingUiTests：`密钥为空时不发起任何请求并就地说明`
 - 新增：`changing a theme metric updates shown settings controls`；模态设置页层拦截 `Key.Tab` 并委托 `overlay.TrapTab(surface, e)` 在设置页卡片内循环。
+- 自定义地址不在连接当下保存空模型清单，也不在探到清单时自动保存。引导卡与设置页共用「先探活、列出每个模型的探测结果、勾选后再保存」；空清单或未勾选会让主机拒绝或没有可调用模型。完整路径、失败不落盘与勾选保存在 `compose/AppShell/tests/ScenarioTests.fs`。`presetPayload` 对空清单不崩溃仍由 `libs/BoundedWait` 证明。
 
 ## 与旧实现的差异
 - 提示条走 OverlayDesk，出口里不再有 toast；设备出口由函数记录改成事件；DevicesDesk 构造即建好界面（旧 Build 惰性）。

@@ -48,6 +48,8 @@
     <PackageReference Include="Wanxiang2.UiPrefsFile" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.UrlSchemeRegistrationIo" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.WsClient" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.ProviderCatalog" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Wanxiang2.AppConfig" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Wire" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.Theme" VersionOverride="0.0.0-local" />
     <PackageReference Include="Wanxiang2.ThemePalette" VersionOverride="0.0.0-local" />

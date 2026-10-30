@@ -402,16 +402,19 @@ type ErrorPanel(parts: ErrorPanelParts) =
 
                 actionRow.Children.Add b
 
-        // 技术细节：文本不变就沿用旧按钮（展开状态不丢）
+        // 技术细节：文本不变就沿用旧按钮（展开状态不丢）。
+        // 没有原文时不显示按钮，避免点了没内容。
         match vs.Detail with
-        | Some d when detailText = Some d -> detailButton |> Option.iter (fun b -> actionRow.Children.Add b)
-        | Some d ->
-            detailContainer.Children.Clear()
-            let b = buildDetail d
-            detailButton <- Some b
-            detailText <- Some d
-            actionRow.Children.Add b
-        | None ->
+        | Some d when not (String.IsNullOrWhiteSpace d) ->
+            match detailText with
+            | Some prev when prev = d -> detailButton |> Option.iter (fun b -> actionRow.Children.Add b)
+            | _ ->
+                detailContainer.Children.Clear()
+                let b = buildDetail d
+                detailButton <- Some b
+                detailText <- Some d
+                actionRow.Children.Add b
+        | _ ->
             detailContainer.Children.Clear()
             detailButton <- None
             detailText <- None

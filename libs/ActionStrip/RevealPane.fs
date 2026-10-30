@@ -30,7 +30,7 @@ type RevealPane(content: Control, maxHeight: float, initiallyVisible: bool) =
             MaxHeight = maxHeight,
             Margin = Thickness(0.0, 0.0, 8.0, 0.0),
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible,
             IsVisible = initiallyVisible
         )
 

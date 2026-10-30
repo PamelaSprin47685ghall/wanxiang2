@@ -20,6 +20,9 @@ type OnboardingHooks =
         /// 删除（不弹确认）：只用于撤销卡片自己刚创建、但探测失败的模型服务
         DiscardProvider: string -> unit
         ProbeProvider: string -> unit
+        /// 尚未入库的模型服务：用地址、密钥和传输类型探活。只给保存前使用。
+        /// 回调必须回到 UI 线程。失败时 models 为空并带原因。
+        ProbeDraft: string -> string option -> string -> (bool * string list * string option -> unit) -> unit
         TakenIds: unit -> string list
         /// 本机 Ollama 发现：Some 模型清单 = 在响应；None = 没有或不允许探测
         DiscoverLocal: unit -> Task<string list option>

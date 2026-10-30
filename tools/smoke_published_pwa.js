@@ -948,24 +948,38 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             // 裁出该行小图放大后按单行模式（psm 7）重试——判定仍是「文字确实出现在界面上」，
             // 坐标从识别事实推导，不写死。裁剪/重试的坐标换算与 ocrShot 同一套口径。
             const rescueRowTitle = async (words) => {
-                // 元信息行：主内容区(minLeft>=300)之外的、字号明显小于正文的词行。
-                // 会话行第一行是标题（约 17px 高），第二行是模型/时间（约 8-12px 高）。
-                const metaWords = words.filter((w) => w.left < 300 && w.left >= 0
-                    && w.height >= 7 && w.height <= 14
-                    && w.conf >= 60
-                    && /[\u4e00-\u9fff]|[0-9]|[a-z]/i.test(w.text));
-                if (!metaWords.length) return null;
-                // 取最靠上的一条元信息词行（第一张会话卡的副行）。
-                const metaTop = Math.min(...metaWords.map((w) => w.top));
-                const metaRow = metaWords.filter((w) => Math.abs(w.top + w.height / 2 - (metaTop + 6)) <= 8);
+                // 元信息行锚点：种子会话卡的副行是「模型名 + 时间戳」（smoke_published.sh 写入的
+                // config.model 与会话创建时刻）。不能取「全部小字词的最小 top」：搜索框图标、
+                // 分组标题（如「过去 30 天」）同样是小字且更靠上，CI 实测（run 41046115842）
+                // 会把锚点拉到 top=80.5，裁出搜索框上方的空白，重试必然失败。
+                // 这里按副行的语义特征锚定，取最靠上的一条：模型名 test-model；退而求其次
+                // 时间戳——「月/日」字词旁紧跟数字词（水平间隙 ≤ 8px、纵向同排）。分组标题
+                // （今天/昨天/过去 30 天）不含月/日，相对时长（3天）不含月/日，都被排除。
+                const metaCandidates = words.filter((w) => w.left < 300 && w.left >= 0 && w.conf >= 60);
+                const byTop = (a, b) => a.top - b.top;
+                const anchor = metaCandidates.filter((w) => /test-model/i.test(w.text)).sort(byTop)[0]
+                    || metaCandidates.filter((w) => /[月日]/.test(w.text)
+                        && metaCandidates.some((v) => /\d/.test(v.text)
+                            && Math.abs(v.top - w.top) <= 4
+                            && Math.min(v.left + v.width, w.left + w.width)
+                                - Math.max(v.left, w.left) >= -8))
+                        .sort(byTop)[0];
+                if (!anchor) return null;
+                const metaTop = anchor.top;
+                // 同一行（上下中点差 ≤ 8px）的其余元信息词共同决定行的横向范围；
+                // 时间戳在行右侧，行的联合右缘即卡片文字右缘。
+                const metaRow = metaCandidates.filter((w) => Math.abs(w.top + w.height / 2 - (metaTop + 6)) <= 8);
                 const rowLeft = Math.min(...metaRow.map((w) => w.left));
                 const rowRight = Math.max(...metaRow.map((w) => w.left + w.width));
-                // 标题行在副行正上方：高度取标题字号（约 17px），底边贴副行顶边留 4px 余量。
+                // 标题行在副行正上方：CI 实测标题字面占副行顶边上方约 6..30px。
+                // 裁剪框从副行顶边上方 32px 起、高 30px：完整罩住标题行，底边不到副行，
+                // 不把模型名/时间戳包进识别图（psm 7 会把它们当同一行）。
+                // 横向在行联合范围两侧各留 8px；右缘 clamp 在侧栏右界 300。
                 const region = {
                     x: Math.max(0, rowLeft - 8),
-                    y: Math.max(0, metaTop - 24),
-                    w: Math.min(300 - Math.max(0, rowLeft - 8), rowRight - rowLeft + 80),
-                    h: 22,
+                    y: Math.max(0, metaTop - 32),
+                    w: Math.min(300 - Math.max(0, rowLeft - 8), rowRight - rowLeft + 16),
+                    h: 30,
                 };
                 const rowWords = await ocrShot('smoke-sidebar-title-row', '7', region);
                 const hit = findPhrase(rowWords, SEED_TITLE);

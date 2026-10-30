@@ -66,7 +66,10 @@ const runOcr = (path, pageSegmentation = OCR_LAYOUT_PSM) => {
     if (process.platform === 'darwin' && process.env.WX_SMOKE_OCR !== 'tesseract') {
         raw = execFileSync('swift', [OCR_SCRIPT, path], { encoding: 'utf8', timeout: 60000 });
     } else {
-        raw = execFileSync('tesseract', [path, 'stdout', '-l', 'chi_sim+eng', '--psm', pageSegmentation, 'tsv'],
+        // 纯 chi_sim：+eng 会让 tesseract 把「中文冒烟」等纯汉字串当成拉丁字形误读
+        // （CI 实测读成 Xe/aXe，conf 跌到 34）；数字与 test-model 纯 ASCII 词
+        // 在纯 chi_sim 下同样能读出（实测 conf 80-93）。
+        raw = execFileSync('tesseract', [path, 'stdout', '-l', 'chi_sim', '--psm', pageSegmentation, 'tsv'],
             { encoding: 'utf8', timeout: 30000 });
     }
     const words = [];

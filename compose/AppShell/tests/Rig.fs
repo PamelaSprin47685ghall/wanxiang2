@@ -507,7 +507,16 @@ module Rig =
                     shell.ChatActions()
                 )
 
-            let sidebar = SidebarDesk(theme, overlay, shell.SidebarActions(), brandLogo)
+            // 侧栏时钟也钉死：布局审计跑在固定时刻，组头与时间戳不随日历漂移。
+            let sidebar =
+                SidebarDesk(
+                    theme,
+                    overlay,
+                    shell.SidebarActions(),
+                    brandLogo,
+                    now = fun () -> DateTimeOffset(2026, 10, 21, 8, 0, 0, TimeSpan.Zero)
+                )
+
             let settings = SettingsScreen(theme, overlay, shell.SettingsHooks(), prefs0)
             let onboarding = OnboardingDesk(theme, overlay, shell.OnboardingHooks())
 

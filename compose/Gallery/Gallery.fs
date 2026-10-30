@@ -247,7 +247,8 @@ module Gallery =
                 FakePorts.chatActions ()
             )
 
-        let sidebar = SidebarDesk(theme, overlay, FakePorts.sidebarActions (), brandLogo)
+        let sidebar =
+            SidebarDesk(theme, overlay, FakePorts.sidebarActions (), brandLogo, now = fun () -> Scenes.fixedNow)
 
         let settings =
             SettingsScreen(

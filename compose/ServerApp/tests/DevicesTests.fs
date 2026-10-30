@@ -737,8 +737,15 @@ let ``auth produces zero config writes`` () =
         Assert.Equal(mtimeBefore, File.GetLastWriteTimeUtc configPath)
         Assert.Empty(Directory.GetFiles(s.Dir, "*.tmp", SearchOption.AllDirectories))
         let sightingsPath = Path.Combine(s.Dir, "device-sightings.json")
-        Assert.True(File.Exists sightingsPath)
-        let root = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText sightingsPath)
-        Assert.Equal(2, root["lastSeen"].AsObject().Count)
+        // RecordSighting 在 auth.accepted 发出后才在接收循环里执行：轮询等两台设备的记账落盘，
+        // 最多 5 秒，等不到由下面的断言红。
+        let mutable lastSeenCount = 0
+
+        while lastSeenCount < 2 do
+            Threading.Thread.Sleep 100
+            let root = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText sightingsPath)
+            lastSeenCount <- root["lastSeen"].AsObject().Count
+
+        Assert.Equal(2, lastSeenCount)
     finally
         s.Dispose()

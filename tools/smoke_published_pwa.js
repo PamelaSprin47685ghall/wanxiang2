@@ -942,7 +942,40 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             };
             await shotPath('smoke-before-popups');
             const sidebarWords = await ocrShot('smoke-sidebar');
-            const seedTitle = findPhrase(sidebarWords, SEED_TITLE);
+            // 整页版面切分（psm 4）在部分 traineddata/版式组合下会把会话标题行并入杂块
+            // （CI 实测读成两个低置信碎词），而同一行下方的元信息词（模型名、时间戳）能读出。
+            // 此时按会话行的结构事实救回：标题行紧贴在第一条元信息词上方、同一列表列内，
+            // 裁出该行小图放大后按单行模式（psm 7）重试——判定仍是「文字确实出现在界面上」，
+            // 坐标从识别事实推导，不写死。裁剪/重试的坐标换算与 ocrShot 同一套口径。
+            const rescueRowTitle = async (words) => {
+                // 元信息行：主内容区(minLeft>=300)之外的、字号明显小于正文的词行。
+                // 会话行第一行是标题（约 17px 高），第二行是模型/时间（约 8-12px 高）。
+                const metaWords = words.filter((w) => w.left < 300 && w.left >= 0
+                    && w.height >= 7 && w.height <= 14
+                    && w.conf >= 60
+                    && /[\u4e00-\u9fff]|[0-9]|[a-z]/i.test(w.text));
+                if (!metaWords.length) return null;
+                // 取最靠上的一条元信息词行（第一张会话卡的副行）。
+                const metaTop = Math.min(...metaWords.map((w) => w.top));
+                const metaRow = metaWords.filter((w) => Math.abs(w.top + w.height / 2 - (metaTop + 6)) <= 8);
+                const rowLeft = Math.min(...metaRow.map((w) => w.left));
+                const rowRight = Math.max(...metaRow.map((w) => w.left + w.width));
+                // 标题行在副行正上方：高度取标题字号（约 17px），底边贴副行顶边留 4px 余量。
+                const region = {
+                    x: Math.max(0, rowLeft - 8),
+                    y: Math.max(0, metaTop - 24),
+                    w: Math.min(300 - Math.max(0, rowLeft - 8), rowRight - rowLeft + 80),
+                    h: 22,
+                };
+                const rowWords = await ocrShot('smoke-sidebar-title-row', '7', region);
+                const hit = findPhrase(rowWords, SEED_TITLE);
+                if (hit) return hit;
+                // psm 7 偶发整行读空时退一步用 psm 6 再试同一区域。
+                const retry = await ocrShot('smoke-sidebar-title-row6', '6', region);
+                return findPhrase(retry, SEED_TITLE);
+            };
+            const seedTitle = findPhrase(sidebarWords, SEED_TITLE)
+                || await rescueRowTitle(sidebarWords);
             let opened = false;
             let openedShot = `${OUT}/smoke-opened.png`;
             if (seedTitle) {

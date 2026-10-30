@@ -67,6 +67,9 @@ type ExchangeNav() =
                 IsVisible = false
             )
 
+        border.Bind(Layoutable.MaxWidthProperty, Dyn.res "Metric.ReadingWidth")
+        |> ignore
+
         border.Bind(Border.BackgroundProperty, Dyn.res "Palette.SurfaceRaised")
         |> ignore
 

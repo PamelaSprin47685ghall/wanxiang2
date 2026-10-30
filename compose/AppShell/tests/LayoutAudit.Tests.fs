@@ -156,6 +156,24 @@ let private onScreen (root: Control) (c: Control) =
             | :? ScrollViewer as sv -> (absRect sv).Intersects r
             | _ -> true)
 
+/// 命中审计用的矩形：绝对矩形再被每个祖先滚动区的视口逐层裁剪
+/// （裁掉的可见部分不接收命中；S5 消息条与浮钮按未裁矩形比较全是假阳性）。
+let private clipRect (c: Control) =
+    let mutable r = absRect c
+
+    for v in c.GetVisualAncestors() do
+        match v with
+        | :? ScrollViewer as sv ->
+            let vp = absRect sv
+            let left = max r.Left vp.Left
+            let top = max r.Top vp.Top
+            let right = min r.Right vp.Right
+            let bottom = min r.Bottom vp.Bottom
+            r <- Rect(left, top, max 0.0 (right - left), max 0.0 (bottom - top))
+        | _ -> ()
+
+    r
+
 let private audit (stage: string) (root: Control) : string list =
     let findings = ResizeArray<string>()
     let size = root.Bounds.Size
@@ -217,11 +235,11 @@ let private audit (stage: string) (root: Control) : string list =
             if r.Right > w + 0.5 || r.Left < -0.5 || r.Bottom > h + 0.5 then
                 findings.Add(sprintf "%s｜B 控件出窗（窗 %0.0fx%0.0f）：%s 链：%s" stage w h (tag c) (chainOf c))
 
-    // C：按钮交叠（命中偷抢）。
+    // C：按钮交叠（命中偷抢）；按裁剪后的命中矩形比较，滚走的可见部分不算。
     let buttons =
         all
         |> List.filter (fun c -> c :? Button && c.IsHitTestVisible && opacityOf c > 0.05 && onScreen root c)
-        |> List.map (fun c -> (c, absRect c))
+        |> List.map (fun c -> (c, clipRect c))
 
     let isAncestor (a: Control) (b: Control) =
         b.GetVisualAncestors() |> Seq.exists (fun v -> Object.ReferenceEquals(v, a))

@@ -146,8 +146,9 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         | true, group -> ConversationSummary.disambiguator group DateTimeOffset.Now s
         | _ -> None
 
-    /// 第二行是「模型 · 时间」。分叉、归档只做前缀。正文片段仍走搜索命中行。
-    let previewFor (query: string) (s: ConversationSummary) =
+    /// 第二行：左侧「模型（· 归档/分叉）」+ 可选片段，时间拆给 MetaRight 右对齐。
+    /// 返回 (预览文本, 时间戳)。正文片段仍走搜索命中行。
+    let previewFor (query: string) (s: ConversationSummary) : string * string =
         let t = s.updatedAt.ToLocalTime()
         let n = DateTimeOffset.Now.ToLocalTime()
 
@@ -162,7 +163,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             else
                 s.model.Trim()
 
-        let core = (if s.archived then "归档 · " else "") + model + " · " + stamp
+        let core = (if s.archived then "归档 · " else "") + model
 
         let meta =
             if s.isFork || (currentLineage ()).ContainsKey s.id then
@@ -179,10 +180,13 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             else
                 raw
 
-        if not (String.IsNullOrWhiteSpace query) && not (String.IsNullOrWhiteSpace snippet) then
-            meta + "\n" + snippet
-        else
-            meta
+        let text =
+            if not (String.IsNullOrWhiteSpace query) && not (String.IsNullOrWhiteSpace snippet) then
+                meta + "\n" + snippet
+            else
+                meta
+
+        text, stamp
 
     let accessibleName (s: ConversationSummary) =
         match disambiguate s with
@@ -206,7 +210,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
         sprintf "%s\n%d 条消息%s" s.title s.messageCount provenance
 
     let rowModel (query: string) (s: ConversationSummary) : RowModel =
-        let preview = previewFor query s
+        let preview, stamp = previewFor query s
 
         {
             Id = s.id
@@ -214,6 +218,7 @@ type SidebarDesk(theme: ThemeManager, overlay: OverlayDesk, actions: SidebarDesk
             TitleSpans = spansOf query s.title
             Preview = preview
             PreviewSpans = spansOf query preview
+            MetaRight = stamp
             AccessibleName = accessibleName s
             Tooltip = tooltipFor s
             Running = s.running

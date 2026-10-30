@@ -10,6 +10,7 @@ open Wanxiang.Protocol
 open Wanxiang.Client
 open Wanxiang2.WorkspaceState
 open Wanxiang2.MotionSwitch
+open Wanxiang2.ModelSwitchPanel
 
 [<RequireQualifiedAccess>]
 type ShellToastTone =
@@ -118,7 +119,7 @@ type ShellComposer(ports: ShellPorts) =
     let search = SearchInFlight()
     let probes = PendingProbes()
     /// 最近一次探活回执。模型列表每次打开都带上，不另存一份权威目录。
-    let probeNotes = System.Collections.Generic.Dictionary<string, string>()
+    let probeNotes = System.Collections.Generic.Dictionary<string, ProbeState>()
     let runs = ConversationRuns()
     let commandFeedback = CommandFeedbackTracker()
     let configFeedback = ConfigFeedbackTracker()
@@ -499,9 +500,9 @@ type ShellComposer(ports: ShellPorts) =
 
                                     probeNotes[d.providerId] <-
                                         if d.ok then
-                                            sprintf "已探测 %d 个" (List.length models)
+                                            ProbeState.Probed(List.length models)
                                         else
-                                            "探测失败"
+                                            ProbeState.Failed
 
                                     if not (v().Onboarding.ApplyProbe(d.providerId, d.ok, models, d.error)) then
                                         v().Settings.ApplyProbe(d.providerId, d.ok, models, d.error)
@@ -1595,15 +1596,23 @@ type ShellComposer(ports: ShellPorts) =
                     Some(conv.Config.provider, conv.Config.model)
                 | _ -> model.Composer.SelectedModel |> Option.orElse (Catalog.defaultSelection cat)
 
+            let probeText (p: ProbeState) =
+                match p with
+                | ProbeState.Probed n -> sprintf "已探测 %d 个" n
+                | ProbeState.Failed -> "探测失败"
+                | ProbeState.Unknown -> "未探测"
+
             let options =
                 ModelSwitcher.options cat current
                 |> List.map (fun o ->
-                    let note =
+                    let probe =
                         match probeNotes.TryGetValue o.providerId with
-                        | true, text -> Some text
-                        | _ -> Some "未探测"
+                        | true, p -> p
+                        | _ -> ProbeState.Unknown
 
-                    { o with probeNote = note })
+                    { o with
+                        probeNote = Some(probeText probe)
+                    })
 
             v.ModelSwitch.Show(
                 anchor,

@@ -24,6 +24,7 @@ let private row i (running: bool) (pinned: bool) =
             TitleSpans = [ { Text = t; IsMatch = false } ]
             Preview = "预览"
             PreviewSpans = [ { Text = "预览"; IsMatch = false } ]
+            MetaRight = ""
             AccessibleName = t
             Tooltip = t
             Running = running
@@ -123,6 +124,7 @@ let ``active or selected rows highlight and update screen reader item status`` (
                     TitleSpans = [ { Text = "对话 3"; IsMatch = false } ]
                     Preview = "预览"
                     PreviewSpans = [ { Text = "预览"; IsMatch = false } ]
+                    MetaRight = ""
                     AccessibleName = "对话 3"
                     Tooltip = "对话 3"
                     Running = false
@@ -243,3 +245,45 @@ let ``hit rows and status actions raise their keys`` () =
         click (named r.View "显示更多").Value
         Assert.Equal<string list>([ "h1" ], List.ofSeq hits)
         Assert.Equal<string list>([ "more" ], List.ofSeq acts))
+
+[<Fact>]
+let ``meta right renders the timestamp as a right-docked block`` () =
+    Headless.run (fun () ->
+        let r = ConversationRows()
+        let _ = host r.View
+
+        let withStamp (mr: string) : RowItem =
+            RowItem.Conversation
+                {
+                    Id = ids[0]
+                    Title = "对话"
+                    TitleSpans = [ { Text = "对话"; IsMatch = false } ]
+                    Preview = "gpt-5"
+                    PreviewSpans = [ { Text = "gpt-5"; IsMatch = false } ]
+                    MetaRight = mr
+                    AccessibleName = "对话"
+                    Tooltip = "对话"
+                    Running = false
+                    Pinned = false
+                    Archived = false
+                }
+
+        let stampBlocks () : Control list =
+            Probe.descendants r.View
+            |> Seq.choose (fun c ->
+                match c with
+                | :? TextBlock as t when t.Text = "10月21日" -> Some c
+                | _ -> None)
+            |> Seq.toList
+
+        // 空串：时间块不渲染（树里没有独立的「10月21日」TextBlock）
+        r.Render [ withStamp "" ]
+        Dispatcher.UIThread.RunJobs()
+        let emptyBlocks: Control list = stampBlocks ()
+        Assert.Equal(0, emptyBlocks.Length)
+
+        // 非空：时间戳以**独立** TextBlock 存在（不与预览共串）
+        r.Render [ withStamp "10月21日" ]
+        Dispatcher.UIThread.RunJobs()
+        let blocks: Control list = stampBlocks ()
+        Assert.Equal(1, blocks.Length))

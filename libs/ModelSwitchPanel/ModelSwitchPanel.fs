@@ -5,9 +5,30 @@ open Avalonia
 open Avalonia.Automation
 open Avalonia.Automation.Peers
 open Avalonia.Controls
+open Avalonia.Controls.Templates
 open Avalonia.Input
 open Avalonia.Layout
+open Avalonia.Markup.Xaml.MarkupExtensions
 open Avalonia.Media
+
+/// 探针三态的互斥表达。未知不画标记；已探明与失败在标记文字前各有色点。
+[<RequireQualifiedAccess>]
+type ProbeState =
+    | Probed of int
+    | Failed
+    | Unknown
+
+    /// 兼容旧 probeNote 字符串的归类（已知两种写法之外一律按未知，不猜）。
+    static member ofNote(note: string option) : ProbeState =
+        match note with
+        | Some n when n.StartsWith "已探测" ->
+            let digits = n.Replace("已探测", "").Replace("个", "").Trim()
+
+            match Int32.TryParse digits with
+            | true, count -> Probed count
+            | _ -> Unknown
+        | Some n when n = "探测失败" -> Failed
+        | _ -> Unknown
 
 /// 一个可选模型。
 type ModelChoice =
@@ -17,8 +38,10 @@ type ModelChoice =
         Model: string
         IsCurrent: bool
         IsDefault: bool
-        ProbeNote: string option
+        /// 探针三态：已探明（带可用模型数）、失败、未知（没探过）。
+        Probe: ProbeState
     }
+
 
 /// 插槽：筛选并分组（组合者填 ModelSwitcher.filter + ModelPickerList.groups；组头 None 不显示）与文案。
 type ModelSwitchSlots =
@@ -29,6 +52,18 @@ type ModelSwitchSlots =
         AppliesNote: string
     }
 
+/// 动态资源绑定辅助：主题管理者把活值写进 ResourceDictionary，控件绑定即随主题资源生效。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
+        ext.ProvideValue sp
+
 /// 快速切换模型浮层内容（迁自旧 Views/ModelSwitcherView.fs）。
 /// 激活（点击、行上 Enter/Space、搜索框 Enter 选第一条）调用 `activate`；组合者先关浮层，
 /// 当前项不切换（ModelPickerList.shouldPick），其余才真正切换。
@@ -38,7 +73,7 @@ module ModelSwitchPanel =
 
     let private tag (text: string) : Control =
         let t = TextBlock(Text = text)
-        t.Classes.Add "muted"
+        t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
 
         let b =
             Border(
@@ -50,6 +85,24 @@ module ModelSwitchPanel =
 
         b.Classes.Add "surface"
         b
+
+    /// 探针状态点：已探明 Success、失败 Danger、未知不显示。直径与「默认」tag 的字高对齐。
+    let private probeDot (state: ProbeState) : Control =
+        let key =
+            match state with
+            | ProbeState.Probed _ -> "Palette.Success"
+            | _ -> "Palette.Danger"
+
+        let b =
+            Border(
+                Width = 6.0,
+                Height = 6.0,
+                CornerRadius = CornerRadius 999.0,
+                VerticalAlignment = VerticalAlignment.Center
+            )
+
+        b.Bind(Border.BackgroundProperty, Dyn.res key) |> ignore
+        b :> Control
 
     let private row
         (checkIcon: (unit -> Control) option)
@@ -70,7 +123,8 @@ module ModelSwitchPanel =
         let provider =
             TextBlock(Text = option.ProviderLabel, TextTrimming = TextTrimming.CharacterEllipsis)
 
-        provider.Classes.Add "muted"
+        provider.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
 
         let text =
             StackPanel(Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center)
@@ -85,9 +139,14 @@ module ModelSwitchPanel =
                 Spacing = 4.0
             )
 
-        match option.ProbeNote with
-        | Some note when not (String.IsNullOrWhiteSpace note) -> marks.Children.Add(tag note)
-        | _ -> ()
+        match option.Probe with
+        | ProbeState.Probed n ->
+            marks.Children.Add(probeDot option.Probe)
+            marks.Children.Add(tag (sprintf "已探测 %d 个" n))
+        | ProbeState.Failed ->
+            marks.Children.Add(probeDot option.Probe)
+            marks.Children.Add(tag "探测失败")
+        | ProbeState.Unknown -> ()
 
         if option.IsDefault then
             marks.Children.Add(tag "默认")
@@ -117,8 +176,8 @@ module ModelSwitchPanel =
                 Focusable = true,
                 Child = grid,
                 Padding = Thickness(12.0, 6.0),
-                CornerRadius = CornerRadius 4.0,
-                MinHeight = 32.0
+                CornerRadius = CornerRadius 8.0,
+                MinHeight = 34.0
             )
 
         for c in [ rowClass; "menu-item"; "surface"; "hover-plain" ] do
@@ -263,7 +322,9 @@ module ModelSwitchPanel =
                 | None -> ())
 
         let heading = TextBlock(Text = title, Margin = Thickness 4.0)
-        heading.Classes.Add "muted"
+
+        heading.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
+        |> ignore
 
         let note =
             TextBlock(
@@ -273,7 +334,7 @@ module ModelSwitchPanel =
                 TextWrapping = TextWrapping.Wrap
             )
 
-        note.Classes.Add "faint"
+        note.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
         let inner = StackPanel(Orientation = Orientation.Vertical)
         inner.Children.Add list
         inner.Children.Add empty

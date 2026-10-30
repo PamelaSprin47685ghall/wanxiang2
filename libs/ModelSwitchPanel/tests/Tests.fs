@@ -56,7 +56,7 @@ let options =
             Model = "gpt-4o"
             IsCurrent = true
             IsDefault = false
-            ProbeNote = Some "已探测"
+            Probe = ProbeState.Probed 3
         }
         {
             ProviderId = "oa"
@@ -64,7 +64,7 @@ let options =
             Model = "o3"
             IsCurrent = false
             IsDefault = false
-            ProbeNote = None
+            Probe = ProbeState.Unknown
         }
         {
             ProviderId = "ds"
@@ -72,7 +72,7 @@ let options =
             Model = "deepseek-chat"
             IsCurrent = false
             IsDefault = true
-            ProbeNote = Some "未探测"
+            Probe = ProbeState.Failed
         }
     ]
 
@@ -112,8 +112,8 @@ let ``switcher shows provider, default and current, plus the next reply note`` (
 
         Assert.Contains(appliesNote, texts)
         Assert.Contains("默认", texts)
-        Assert.Contains("已探测", texts)
-        Assert.Contains("未探测", texts)
+        Assert.Contains("已探测 3 个", texts)
+        Assert.Contains("探测失败", texts)
         Assert.Contains("OpenAI", texts))
 
 [<Fact>]

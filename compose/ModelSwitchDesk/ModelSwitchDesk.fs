@@ -23,7 +23,8 @@ type ModelSwitchDesk(checkIcon: (unit -> Control) option, overlay: OverlayDesk) 
             Model = o.model
             IsCurrent = o.isCurrent
             IsDefault = o.isDefault
-            ProbeNote = o.probeNote
+            // 探针文案在这里归成三态：解析失败的写法按未知处理，不猜。
+            Probe = ProbeState.ofNote o.probeNote
         }
 
     new(theme: ThemeManager, overlay: OverlayDesk) =

@@ -969,7 +969,7 @@ module Gallery =
                                     Model = "gpt-5"
                                     IsCurrent = true
                                     IsDefault = true
-                                    ProbeNote = Some "已探测"
+                                    Probe = Wanxiang2.ModelSwitchPanel.ProbeState.Probed 2
                                 }
                                 {
                                     ProviderId = "anthropic"
@@ -977,7 +977,7 @@ module Gallery =
                                     Model = "claude-opus-4"
                                     IsCurrent = false
                                     IsDefault = false
-                                    ProbeNote = Some "未探测"
+                                    Probe = Wanxiang2.ModelSwitchPanel.ProbeState.Unknown
                                 }
                             ]
 

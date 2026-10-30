@@ -38,6 +38,8 @@ type RowModel =
         TitleSpans: RowSpan list
         Preview: string
         PreviewSpans: RowSpan list
+        /// 第二行右侧的弱化时间戳（如「14:05」「昨天」）。空串不显示。
+        MetaRight: string
         AccessibleName: string
         Tooltip: string
         Running: bool
@@ -281,8 +283,29 @@ type ConversationRows() =
         let column =
             StackPanel(Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, Spacing = 2.0)
 
+        // 第二行：左侧元信息（模型 · 归档/分叉 + 片段），右侧弱化时间。时间在 Dock.Right，与文字不共灰度。
+        let previewRow: Control =
+            if String.IsNullOrWhiteSpace m.MetaRight then
+                preview :> Control
+            else
+                let stamp =
+                    TextBlock(
+                        FontSize = 11.5,
+                        VerticalAlignment = VerticalAlignment.Bottom,
+                        Margin = Thickness(8.0, 0.0, 0.0, 0.0)
+                    )
+
+                stamp.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
+                stamp.Text <- m.MetaRight
+
+                let dock = DockPanel(LastChildFill = true)
+                DockPanel.SetDock(stamp, Dock.Right)
+                dock.Children.Add stamp
+                dock.Children.Add preview
+                dock :> Control
+
         column.Children.Add titleRow
-        column.Children.Add preview
+        column.Children.Add previewRow
 
         let host = Button(Content = column)
         host.Classes.Add "ghost"
@@ -580,6 +603,7 @@ type ConversationRows() =
                 TitleSpans = spans row.Title
                 Preview = row.Preview
                 PreviewSpans = spans row.Preview
+                MetaRight = ""
                 AccessibleName = row.Title
                 Tooltip = row.Title
                 Running = row.Running

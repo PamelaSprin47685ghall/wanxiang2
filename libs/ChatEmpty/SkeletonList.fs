@@ -22,6 +22,7 @@ module private Dyn =
 
 /// 历史加载骨架（助手 → 用户 → 助手三块占位）。
 /// 视觉呼吸采用 Theme 声明式动效类 anim-breathe，无独立定时器与 Look。
+/// 阅读列宽 / 消息间距 / 尾部留白走主题活键（Metric.ReadingWidth / MessageGap / Margin.MessageEnd）。
 type SkeletonList() =
     let panel =
         StackPanel(
@@ -32,6 +33,11 @@ type SkeletonList() =
             Margin = Thickness(0.0, 0.0, 0.0, 48.0),
             IsVisible = false
         )
+
+    do
+        panel.Bind(StackPanel.SpacingProperty, Dyn.res "Metric.MessageGap") |> ignore
+        panel.Bind(Layoutable.MaxWidthProperty, Dyn.res "Metric.ReadingWidth") |> ignore
+        panel.Bind(Layoutable.MarginProperty, Dyn.res "Margin.MessageEnd") |> ignore
 
     let textBar (height: float) (fraction: float) =
         let bar =

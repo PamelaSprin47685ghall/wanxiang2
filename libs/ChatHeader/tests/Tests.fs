@@ -187,6 +187,33 @@ let ``生成中状态点桌面保留槽位、窄屏收起；更多按钮随对�
 
         Assert.Equal("", h.CrumbText)
         Assert.Equal((1, 1), (more, crumb))
+
+        // 生成中且无面包屑：行只为生成指示而显，空面包屑键不许可见可命中
+        // （曾以零尺寸空键盖到首条消息的操作条上，布局审计 C 报交叠）
+        h.Render
+            { baseVS with
+                GeneratingStatus = Some ""
+                Crumb = None
+            }
+
+        Assert.False h.CrumbAction.IsVisible
+        Assert.False h.CrumbAction.Focusable
+        Assert.Equal(1.0, h.GeneratingChip.Opacity)
+
+        h.Render
+            { baseVS with
+                GeneratingStatus = Some ""
+                Crumb =
+                    Some
+                        {
+                            ParentId = Guid.NewGuid()
+                            ParentTitle = "分叉自 A"
+                            Clickable = true
+                        }
+            }
+
+        Assert.True h.CrumbAction.IsVisible
+        Assert.True h.CrumbAction.Focusable
         w.Close())
 
 [<Fact>]

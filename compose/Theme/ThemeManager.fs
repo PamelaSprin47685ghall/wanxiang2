@@ -265,6 +265,10 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             resources[box "Margin.Composer"] <-
                 box (Thickness(0.0, spaces[Space.Md].Value, 0.0, spaces[Space.X2l].Value))
 
+            // 阅读列尾部呼吸留白（react thread 的 padding-bottom 48）：只取底档，随 MessageEndBreathing 活值重算。
+            resources[box "Margin.MessageEnd"] <-
+                box (Thickness(0.0, 0.0, 0.0, metrics[Metric.MessageEndBreathing].Value))
+
             resources[box "Margin.ComposerCompact"] <-
                 box (Thickness(spaces[Space.Xl].Value, spaces[Space.Xl].Value, 0.0, spaces[Space.Md].Value))
             // 强调字距档（正文语言标签等）：静态常量，来自 SpacingRamp
@@ -283,6 +287,7 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
                 Metric.BlockPaddingX
                 Metric.BlockPaddingY
                 Metric.LogoAvatar
+                Metric.MessageEndBreathing
             ] do
             (metrics[m] :> IObservable<float>).Subscribe(fun _ -> refresh ()) |> ignore
 

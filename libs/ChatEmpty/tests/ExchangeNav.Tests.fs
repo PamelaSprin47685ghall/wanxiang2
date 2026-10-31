@@ -1,5 +1,6 @@
 module Wanxiang2.ExchangeNav.Tests.Tests
 
+open Avalonia
 open Avalonia.Automation
 open Avalonia.Automation.Peers
 open Avalonia.Automation.Provider
@@ -38,4 +39,24 @@ let ``更早一页失败横幅：读屏 Invoke 重试并隐藏`` () =
         Dispatcher.UIThread.RunJobs()
         Assert.True retried
         Assert.False n.OlderFailureVisible
+        w.Close())
+
+// 横幅阅读列宽是主题活键（Metric.ReadingWidth）：改键值，已挂的横幅跟随。
+// 动态资源绑定在控件挂上可视树后激活，故断言前先挂无头窗口。
+[<Fact>]
+let ``失败横幅阅读列跟随主题度量`` () =
+    Headless.run (fun () ->
+        let n = ExchangeNav()
+        n.ShowOlderFailure("加载超时", ignore)
+        let border = n.FailureBanner :?> Border
+
+        let w = Window(Content = border)
+        w.Show()
+        Dispatcher.UIThread.RunJobs()
+        Assert.Equal(748.0, border.MaxWidth)
+
+        Application.Current.Resources["Metric.ReadingWidth"] <- box 600.0
+        Dispatcher.UIThread.RunJobs()
+
+        Assert.Equal(600.0, border.MaxWidth)
         w.Close())

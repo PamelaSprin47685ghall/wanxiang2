@@ -31,13 +31,13 @@ let private rig () =
     let w = Window(Width = 800.0, Height = 600.0, Content = pane.Host)
     w.Show()
     Dispatcher.UIThread.RunJobs()
-    pane, w
+    theme, pane, w
 
 // 迁自 ChatViewTests：空态文案取 ChatEmptyText；品牌态带 logo。
 [<Fact>]
 let ``空态文案与品牌态`` () =
     Headless.run (fun () ->
-        let pane, w = rig ()
+        let _, pane, w = rig ()
         pane.ShowEmpty(ChatEmptyState.NotConnected, Some("连接主机", ignore))
         Assert.True pane.IsEmptyShown
         Assert.True pane.Empty.IsShown
@@ -54,7 +54,7 @@ let ``空态文案与品牌态`` () =
 [<Fact>]
 let ``贴底跟随与回到最新`` () =
     Headless.run (fun () ->
-        let pane, w = rig ()
+        let _, pane, w = rig ()
         pane.HideEmpty()
 
         for i in 1..20 do
@@ -83,7 +83,7 @@ let ``贴底跟随与回到最新`` () =
 [<Fact>]
 let ``骨架显示与隐藏`` () =
     Headless.run (fun () ->
-        let pane, w = rig ()
+        let _, pane, w = rig ()
         pane.ShowSkeleton()
         Assert.True pane.Skeleton.IsShown
         pane.HideSkeleton()
@@ -94,7 +94,7 @@ let ``骨架显示与隐藏`` () =
 [<Fact>]
 let ``问答跳转端点`` () =
     Headless.run (fun () ->
-        let pane, w = rig ()
+        let _, pane, w = rig ()
         let mounted = [| Some "u1"; Some "a1"; Some "u2"; Some "a2" |]
         let cards = ExchangeJump.Cards(mounted, fun k -> k.StartsWith "u")
         // 离开底部：贴底时没有「下一轮」
@@ -112,7 +112,7 @@ let ``问答跳转端点`` () =
 [<Fact>]
 let ``1000 条消息下 ItemsControl 使用 VirtualizingStackPanel 仅渲染视口行`` () =
     Headless.run (fun () ->
-        let pane, w = rig ()
+        let _, pane, w = rig ()
 
         let mkMsg i =
             {
@@ -156,7 +156,7 @@ let ``1000 条消息下 ItemsControl 使用 VirtualizingStackPanel 仅渲染视�
 [<Fact>]
 let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
     Headless.run (fun () ->
-        let pane, w = rig ()
+        let _, pane, w = rig ()
         // 空态
         pane.Render
             {
@@ -220,7 +220,7 @@ let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
 [<Fact>]
 let ``水平留白按传入的窗口视口分档`` () =
     Headless.run (fun () ->
-        let pane, w = rig ()
+        let _, pane, w = rig ()
         let viewer = pane.Scroller.Viewer
         Assert.True(viewer.Bounds.Width > 0.0 && viewer.Bounds.Width < 1024.0)
 
@@ -250,7 +250,7 @@ let ``水平留白按传入的窗口视口分档`` () =
 [<Fact>]
 let ``主体各典型状态结构与可见性状态断言`` () =
     Headless.run (fun () ->
-        let pane, w = rig ()
+        let _, pane, w = rig ()
         // 1. 消息态
         pane.HideEmpty()
         Assert.False pane.IsEmptyShown
@@ -289,4 +289,28 @@ let ``主体各典型状态结构与可见性状态断言`` () =
             Assert.True pane.IsEmptyShown
             Assert.False pane.Scroller.Viewer.IsVisible
 
+        w.Close())
+
+// 阅读列宽与消息间距是主题度量（Metric.ReadingWidth / Metric.MessageGap），不是组件私有常数：
+// 改度量，已经挂好的列表必须跟着变（MessageCardView LEMMA 3 的列表侧对应）。
+// 派生档 Margin.MessageEnd 由 MessageEndBreathing 经 ThemeManager 的派生刷新点重算。
+[<Fact>]
+let ``阅读列宽与消息间距跟随主题度量`` () =
+    Headless.run (fun () ->
+        let theme, pane, w = rig ()
+        pane.HideEmpty()
+        // 默认档：748 宽 / 24 间距 / 48 尾留白（与 ThemeMetrics.initial 一致）
+        Assert.Equal(748.0, pane.Messages.MaxWidth)
+        Assert.Equal(24.0, pane.Messages.Spacing)
+        Assert.Equal(48.0, pane.Messages.Margin.Bottom)
+
+        // 走主题管理者的活值入口：Set → 资源键更新 → 派生档重算 → 绑定更新
+        theme.ApplyMetric(Wanxiang2.ThemeMetrics.Metric.ReadingWidth, 600.0)
+        theme.ApplyMetric(Wanxiang2.ThemeMetrics.Metric.MessageGap, 32.0)
+        theme.ApplyMetric(Wanxiang2.ThemeMetrics.Metric.MessageEndBreathing, 64.0)
+        Dispatcher.UIThread.RunJobs()
+
+        Assert.Equal(600.0, pane.Messages.MaxWidth)
+        Assert.Equal(32.0, pane.Messages.Spacing)
+        Assert.Equal(64.0, pane.Messages.Margin.Bottom)
         w.Close())

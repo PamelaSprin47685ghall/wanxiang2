@@ -151,6 +151,10 @@ type ComposerBox() =
     let outer =
         StackPanel(Orientation = Orientation.Vertical, Spacing = 8.0, MaxWidth = 748.0)
 
+    do outer.Bind(Layoutable.MaxWidthProperty, Dyn.res "Metric.ReadingWidth") |> ignore
+
+    // 外层列 8.0 是输入壳内部纵向节奏，不是消息间距（Metric.MessageGap 24），不绑。
+
     let column = StackPanel(Orientation = Orientation.Vertical, Spacing = 6.0)
 
     let request =

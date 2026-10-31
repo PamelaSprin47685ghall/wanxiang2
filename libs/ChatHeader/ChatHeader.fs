@@ -426,12 +426,12 @@ type ChatHeader() =
         syncChip ()
 
         // 面包屑与生成指示同住标题下方一行：任一可见即整行可见（react crumb = streaming || fork）
+        // 可见性 / 可聚焦统一在行尾结算（crumbTextShown && crumbClickable），Some 分支只更新内容与状态。
         let crumbTextShown =
             match vs.Crumb with
             | Some c ->
                 crumbClickable <- c.Clickable
                 crumbText.Text <- c.ParentTitle
-                crumbAction.Focusable <- c.Clickable
 
                 crumbAction.Cursor <-
                     if c.Clickable then
@@ -446,6 +446,9 @@ type ChatHeader() =
                 crumbClickable <- false
                 false
 
+        // 行为「生成指示」而显时，空面包屑不许留一个可命中的空键（会盖到消息操作条）
+        crumbAction.IsVisible <- crumbTextShown
+        crumbAction.Focusable <- crumbTextShown && crumbClickable
         crumbBar.IsVisible <- crumbTextShown || (not isCompact && isGenerating)
 
     member _.BeginRename() = beginEdit ()

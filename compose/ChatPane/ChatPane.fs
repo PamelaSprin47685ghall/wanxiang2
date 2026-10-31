@@ -12,6 +12,19 @@ open Wanxiang2.ExchangeNav
 open Wanxiang2.ChatEmpty
 open Wanxiang2.SkeletonList
 open Wanxiang2.WorkspaceState
+open Avalonia.Markup.Xaml.MarkupExtensions
+
+/// 动态资源绑定辅助：主题管理者把活值写进 ResourceDictionary，控件绑定即随主题资源生效。
+module private Dyn =
+    let res (key: string) =
+        let ext = DynamicResourceExtension key
+
+        let sp =
+            { new IServiceProvider with
+                member _.GetService _ = null
+            }
+
+        ext.ProvideValue sp
 
 /// 组合者：对话区的滚动、空态、历史骨架与问答跳转（旧 Views/ChatView.fs 的对应部分）。
 /// 消息列表使用原生 ItemsControl + VirtualizingStackPanel 实现真虚拟化；
@@ -45,11 +58,19 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
     // 原生 ItemsControl + VirtualizingStackPanel 替代普通 StackPanel 消息容器
     let itemsControl = ItemsControl()
 
+    // 阅读列宽 / 消息间距 / 尾部呼吸留白是主题度量（ThemeMetrics.ReadingWidth / MessageGap /
+    // MessageEndBreathing），走 DynamicResource 活键：改度量，已挂的列表跟随，不在组件里抄常数。
     do
         itemsControl.ItemsPanel <- FuncTemplate<Panel>(fun () -> VirtualizingStackPanel() :> Panel)
         itemsControl.HorizontalAlignment <- HorizontalAlignment.Stretch
         itemsControl.MaxWidth <- 748.0
         itemsControl.Margin <- Thickness(0.0, 0.0, 0.0, 48.0)
+
+        itemsControl.Bind(Layoutable.MaxWidthProperty, Dyn.res "Metric.ReadingWidth")
+        |> ignore
+
+        itemsControl.Bind(Layoutable.MarginProperty, Dyn.res "Margin.MessageEnd")
+        |> ignore
 
     let messages =
         StackPanel(
@@ -58,6 +79,13 @@ type ChatPane<'K when 'K: equality>(brandLogo: float -> Control, onStarter: (str
             MaxWidth = 748.0,
             Spacing = 24.0
         )
+
+    do
+        messages.Bind(Layoutable.MaxWidthProperty, Dyn.res "Metric.ReadingWidth")
+        |> ignore
+
+        messages.Bind(StackPanel.SpacingProperty, Dyn.res "Metric.MessageGap") |> ignore
+        messages.Bind(Layoutable.MarginProperty, Dyn.res "Margin.MessageEnd") |> ignore
 
     let emptyScroller =
         ScrollViewer(

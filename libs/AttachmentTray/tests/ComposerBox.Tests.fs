@@ -207,3 +207,24 @@ let ``窄屏收起对话上下文按钮，回到宽屏恢复`` () =
 
         Assert.True b.ContextButton.IsVisible
         Assert.True(DragDrop.GetAllowDrop b.Host))
+
+// 输入壳外层列宽是主题活键（Metric.ReadingWidth）；8.0 行距是壳内部节奏，不绑。
+// 动态资源绑定在控件挂上可视树后激活，故断言前先挂无头窗口。
+[<Fact>]
+let ``输入壳外层列跟随主题度量`` () =
+    Headless.run (fun () ->
+        let b = ComposerBox()
+        b.Render vs
+        let outer = (b.Host :?> Border).Child :?> StackPanel
+        Assert.Equal(748.0, outer.MaxWidth)
+
+        let w = Window(Content = b.Host)
+        w.Show()
+        Dispatcher.UIThread.RunJobs()
+        Assert.Equal(748.0, outer.MaxWidth)
+
+        Application.Current.Resources["Metric.ReadingWidth"] <- box 600.0
+        Dispatcher.UIThread.RunJobs()
+
+        Assert.Equal(600.0, outer.MaxWidth)
+        w.Close())

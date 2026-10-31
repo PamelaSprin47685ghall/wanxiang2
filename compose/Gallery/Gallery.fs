@@ -51,8 +51,8 @@ type GalleryContext =
         Approval: ApprovalDesk
         /// 品牌标工厂（画廊用占位方块，与 AppShell 测试台同口径）
         BrandLogo: float -> Control
-        /// 阅读字号（pt）。生产取自 `model.Prefs.fontScale`（用户偏好，设置页可调）；
-        /// 画廊的 `build` 会用真实模型的值覆盖，所以条目里的卡片字号与真实界面同源。
+        /// 阅读字号（pt）。这里是**占位默认**：真正的值由 `Gallery.build` 用场景跑出的
+        /// `model.Prefs.fontScale` 覆盖（生产侧 AppShell 也从那里取）。不要在条目里读这个字段的初始值。
         FontScale: float
     }
 
@@ -277,6 +277,8 @@ module Gallery =
             Dialogs = dialogs
             Approval = approval
             BrandLogo = brandLogo
+            // 占位默认：Gallery.build 会用 model.Prefs.fontScale 覆盖。
+            // 取 UiPrefs.defaults 只是让未走 build 的调用方拿到合法值，不是同源的来源。
             FontScale = (UiPrefs.defaults prefLimits).fontScale
         }
 

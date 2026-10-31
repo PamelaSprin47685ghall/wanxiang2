@@ -65,7 +65,7 @@
 
 上面的第 1 条结论需要限定范围。复核发现画廊自己把卡片字号抄成了常数 `14.5`（`compose/Gallery/Gallery.fs` 的 `cardOf`），而生产从 `model.Prefs.fontScale` 取——**两处数值相同、来源不同**。也就是说，试验时即使改了字号偏好，画廊也画不出来，这本身就会让「改字号看不出变化」变成必然结果。
 
-已修：`GalleryContext` 增加 `FontScale` 字段，构造时取 `UiPrefs.defaults`（与生产同源），`Gallery.build` 用场景跑出的真实模型的 `Prefs.fontScale` 覆盖，`cardOf` 不再抄常数。红绿验证：旧实现下新用例红（改偏好后正文 13 → 13 不变），新实现下绿（14.5 → 17.5 跟随）。
+已修：`GalleryContext` 增加 `FontScale` 字段，`Gallery.build` 用场景跑出的真实模型的 `Prefs.fontScale` 覆盖，`cardOf` 不再抄常数（该字段在 context 里的初始值只是占位默认，`build` 必然覆盖）。红绿验证按**正文块**（`SelectableTextBlock`）口径：旧实现下新用例红，`Expected: [17.5]` / `Actual: [14.5]`；新实现下绿（正文 14.5 → 17.5 跟随）。
 
 因此第 1 条的准确表述是：**改 `ThemeMetrics` 字号档影响不到阅读正文**（这一点不受画廊缺陷影响，因为生产确实从 `UiPrefs.fontScale` 取）；而「画廊里改字号偏好有没有可见效果」此前无法验证，现在可以了（新用例 `对话卡字号跟随状态树的阅读字号偏好，不在条目里抄常数` 钉住）。
 

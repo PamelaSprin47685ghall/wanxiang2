@@ -112,13 +112,15 @@ bash tools/gallery-baseline.sh [基线目录]                                   
 
 ## SPEC
 
-1. [LEMMA: 1] `tests/Tests.fs`（18 条，全是**状态差异**断言，不是「没抛异常 / 不是空板 / 清单对得上」那类烟雾）。
-   **当前 18 条全过**（连同 `BaselineTests.fs` 6 条与 `A11yAuditTests.fs` 19 条，实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 43, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
+1. [LEMMA: 1] `tests/Tests.fs`（19 条，全是**状态差异**断言，不是「没抛异常 / 不是空板 / 清单对得上」那类烟雾）。
+   **当前 19 条全过**（连同 `BaselineTests.fs` 6 条与 `A11yAuditTests.fs` 19 条，实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 44, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
    - `输入区：空闲、输入中、带附件、生成中是四个不同的状态`（读投影：草稿文本、托盘、发送键状态、禁用位）；
    - `输入区：未连接时禁用并给出原因`（`DisabledReason` 与侧栏空态）；
    - `对话列：空态、有消息、流式是三个不同的状态`（流式那条走**真的** `generation.delta`，
      断言流式正文文字「正在逐段补齐的回复……」真的在投影里，不是「有个空的流式位」）；
    - `对话列：助手消息带思维链，工具调用卡带参数`（读 `MessageRowVS` 的 `Reasoning` 与 `ToolCalls`）；
+   - `对话卡字号跟随状态树的阅读字号偏好，不在条目里抄常数`（断言**正文块** `SelectableTextBlock` 的字号等于
+     `model.Prefs.fontScale`，改偏好后跟着变；把 `cardOf` 的 `FontSize` 改回常数即红——钉住「画廊字号与生产同源」）；
    - `对话列：错误是真实存在的错误，有 kind 与可重试标记`（渲染真的错误卡，断言卡片上有错误文案 + 「重试」+「继续生成」）；
    - `侧栏：空态、有行、搜索无命中是三个不同的状态`（读投影里的行数、置顶位、归档位、连接位、查询词）；
    - `侧栏：批量模式真的画出了批量条`（断言批量条的字：已选 / 全选 / 删除）；
@@ -197,7 +199,7 @@ bash tools/gallery-baseline.sh [基线目录]                                   
 早期「25/41 条目有基线，其余待补齐」是合并中间状态，已由本节取代。合并远端后从源码重新 `./x pack`，清理画廊旧包缓存，再实际生成全部 41 个条目的深浅主题基线，共 82 张；独立进程逐像素复核 82 项全部通过。这证明本机渲染可重复，不代表人工视觉审查或跨平台像素一致。
 
 - `bash tools/gallery.sh --list`：41 条，实际运行成功。
-- `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/gallery-cache"`：43 条通过、0 失败（含 `Tests.fs` 18 条、`BaselineTests.fs` 6 条、`A11yAuditTests.fs` 19 条）。
+- `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/gallery-cache"`：44 条通过、0 失败（含 `Tests.fs` 19 条、`BaselineTests.fs` 6 条、`A11yAuditTests.fs` 19 条）。
 - AppShell 原生 Tab/Esc/删除邻位交互用例：1 条通过、0 失败。
 - `./x check`：109 个库、71 个组合者、17 个控件库覆盖检查通过。
 - 实际渲染暴露并修正两个重复挂载：ChatHeader 条目改用独立真实控件；审批条目呈现所属 OverlayRoot，不再把已有父节点的审批视图重复挂入画布。

@@ -34,7 +34,9 @@
 
 ## 结论
 
-1. **改度量字号档影响不到主要阅读面。** 阅读列正文字号来自用户偏好 `UiPrefs.fontScale`（默认 14.5，范围 12–19），不是 `Metric.FontReading`——见 `libs/WorkspaceState/UiPrefs.fs` 与 `compose/AppShell/AppShell.fs`（`FontSize = model.Prefs.fontScale`）。这是 `MessageCardView` 与 `ChatEmpty` 两张图零变化的原因。A1 想解决的「正文与说明层级弱」在阅读区不能靠改度量档解决。
+1. **阅读列正文字号不取自度量档。** 阅读列正文字号来自用户偏好 `UiPrefs.fontScale`（默认 14.5，范围 12–19），不是 `Metric.FontReading`——依据是代码位置：`libs/WorkspaceState/UiPrefs.fs` 定义该偏好，`compose/AppShell/AppShell.fs` 以 `FontSize = model.Prefs.fontScale` 传入卡片组。所以 A1 想解决的「正文与说明层级弱」在阅读区不能靠改度量档解决。
+
+   注意范围限定：本次试验时画廊自身把卡片字号抄成常数 `14.5`（`compose/Gallery/Gallery.fs` 的 `cardOf`），所以「`MessageCardView.assistant` 逐字节相同」**无法**单独证明上述结论——那张图零变化可能只是画廊不跟状态树。上述结论的正确依据是代码位置，不是这张图。该缺陷已修（提交 `4bf65ca`），修复后同一场景改字号偏好会真实改变正文渲染。
 
 2. **`Metric.FontReading` 零消费者。** `grep -rn FontReading` 全仓只命中 `libs/ThemeMetrics/ThemeMetrics.fs` 自身的 `all` 与 `initial`。clean-break 重构（`ad22bf0`）把输入区字号从 `FontReading` 改成 `FontBody` 后，旧消费点删除而登记档留在公开 `all` 里。
 

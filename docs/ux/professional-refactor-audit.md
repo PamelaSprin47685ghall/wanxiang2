@@ -49,6 +49,18 @@
 | 第三批 | 设置页与浮层（命令面板、审批、弹窗）统一尺寸与对齐；评估 A4 | `compose/SettingsScreen`、`compose/OverlayDesk` 等 |
 | 第四批 | 全局字号/间距收敛（A1，需负责人确认数值后执行） | `libs/ThemeMetrics`、`compose/Theme` |
 
+### 第四批前置试验结论（2026-10-31，试验分支 `trial/a1-type-scale`，未合并）
+
+按 §5「必须独立分支 + 前后对比」执行了一次 1.25 比率试验，得出两条**与 A1 原假设不同**的事实：
+
+1. **A1 的影响面比文档预估小得多。** 把 `FontMicro`…`FontDisplay` 八档整体上调（10.5→11、11.5→12、12.5→13、13.5→14、14.5→15.5、16→17、19→20、25→26）后重打 feed 并重渲画廊，四条代表条目里只有两条像素变化：
+   - `SettingsScreen.providers` 变化（过滤字节差异 1.74%）、`SidebarDesk.rows` 变化（0.13%）；
+   - **`MessageCardView.assistant` 与 `ChatEmpty.empty` 逐字节完全相同**。
+   原因：阅读列正文字号不取自 `Metric.FontReading`，而取自用户偏好 `UiPrefs.fontScale`（默认 14.5，设置页可调 12–19，见 `libs/WorkspaceState/UiPrefs.fs` 与 `compose/AppShell/AppShell.fs` 的 `FontSize = model.Prefs.fontScale`）。所以「全局放大字号」改不到主要阅读面，A1 想解决的「正文与说明层级弱」在阅读区需另找手段（调 `fontScale` 默认值，或改卡片内部层级色），不能靠改度量档解决。
+2. **`Metric.FontReading` 是死档。** 全仓零消费者（`grep -rn FontReading` 只命中 `ThemeMetrics.fs` 自身的 `all` / `initial` 两处）。历史原因是 clean-break 重构（`ad22bf0`）把输入区字号从 `FontReading` 改为 `FontBody`，旧消费点删除后登记档没跟着删。它仍在公开 `ThemeMetrics.all` 里、仍参与主题推导，属于「保持着一项无人使用的公开承诺」。
+
+**处置**：A1 数值仍未拍板，本试验只产出上述事实，不改生产数值。`Metric.FontReading` 的删除或改用途属公开契约变更，需一并决定——若确认阅读列不打算回到度量档（现状由用户偏好直接驱动，是合理设计），则应删除该死档，避免下一个人误以为改它能改阅读正文。
+
 第一批先行理由：A2 风险最小（单控件库 + 画廊条目 + 基线重生成），能最快建立「前后对比 → 门禁 → 提交」的完整回路。
 
 ## 5. 风险与回归计划
@@ -70,6 +82,8 @@
 
 ## 7. 待负责人确认
 
-1. A1 字号方案是否立项（数值在方案分支出前后对比后定）。
+1. ~~A1 字号方案是否立项~~ → **已执行前置试验，结论见 §4《第四批前置试验结论》**：改度量档影响不到阅读正文（阅读字号走 `UiPrefs.fontScale`），且 `Metric.FontReading` 是零消费者死档。仍需拍板两件事：
+   - 阅读区层级是否要做（若做，手段是调 `fontScale` 默认值或改卡片内部层级，不是改度量档）；
+   - `Metric.FontReading` 删除，还是改作他用。
 2. A2 模型浮层按参考图改造（状态点 + 行高 + 圆角）是否按第一批判试点执行。
-3. A4（设置页宽度）是否保持观察、暂不动。
+3. A4（设置页宽度）是否保持观察、暂不动 —— 第三批已把宽度与圆角接回刻度（`Metric.SettingsSurfaceWidth` / `CornerRadius.RadiusXl`），数值未变，后续调整只需改一个登记值。

@@ -58,8 +58,16 @@ type ModelSwitchDesk(checkIcon: (unit -> Control) option, overlay: OverlayDesk) 
             overlay.ClosePopup()
             picked |> Option.iter pick)
 
-    /// 在锚点旁打开（宽 300）
+    /// 在锚点旁打开（宽 = Metric.ModelSwitcherWidth，用量时刻现读，主题改值即生效）。
     member this.Show
         (anchor: Control, alignRight: bool, options: ModelOption list, title: string, pick: ModelOption -> unit)
         =
-        overlay.Layer.ShowPopup(anchor, this.Build(options, title, pick), alignRight, 300.0)
+        let width =
+            match Avalonia.Application.Current with
+            | null -> ThemeMetrics.initial Metric.ModelSwitcherWidth
+            | app ->
+                match app.TryFindResource(box "Metric.ModelSwitcherWidth") with
+                | true, v -> unbox v
+                | _ -> ThemeMetrics.initial Metric.ModelSwitcherWidth
+
+        overlay.Layer.ShowPopup(anchor, this.Build(options, title, pick), alignRight, width)

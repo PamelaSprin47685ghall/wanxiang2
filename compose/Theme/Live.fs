@@ -85,6 +85,8 @@ type Space =
     | RadiusSm
     | RadiusMd
     | RadiusLg
+    /// 对话框 / Hero 卡片（Spacing.Radius.xl）
+    | RadiusXl
     | RadiusPill
     | StrokeThin
     | StrokeThick
@@ -117,6 +119,7 @@ module Space =
             Space.RadiusSm
             Space.RadiusMd
             Space.RadiusLg
+            Space.RadiusXl
             Space.RadiusPill
             Space.StrokeThin
             Space.StrokeThick
@@ -145,6 +148,7 @@ module Space =
         | Space.RadiusSm -> Spacing.Radius.sm
         | Space.RadiusMd -> Spacing.Radius.md
         | Space.RadiusLg -> Spacing.Radius.lg
+        | Space.RadiusXl -> Spacing.Radius.xl
         | Space.RadiusPill -> Spacing.Radius.pill
         | Space.StrokeThin -> Spacing.Stroke.thin
         | Space.StrokeThick -> Spacing.Stroke.thick

@@ -13,7 +13,7 @@ open Wanxiang2.OverlayDesk
 open Wanxiang2.PalettePanel
 
 /// 命令面板（决策 370–379）的接线：条目与最近使用每次输入都重新取并经 CommandPalette.rank 排序，
-/// 有查询时在末尾追加「在全部消息中搜索」交接行；放进对话层（宽 560，搜索框初始焦点）；
+/// 有查询时在末尾追加「在全部消息中搜索」交接行；放进对话层（宽 = Metric.PaletteDialogWidth，搜索框初始焦点）；
 /// 执行时先关面板，触发 `Run`。
 /// 中文输入法组合期间的回车 / 方向键归输入法：构造时装上全局 ImeShield（幂等）。
 type PaletteDesk(dialogWidth: float, overlay: OverlayDesk, prefersTouch: unit -> bool) =
@@ -31,8 +31,8 @@ type PaletteDesk(dialogWidth: float, overlay: OverlayDesk, prefersTouch: unit ->
             shortcut = Some "Ctrl / ⌘ + Shift + F"
         }
 
-    new(_theme: ThemeManager, overlay: OverlayDesk, prefersTouch: unit -> bool) =
-        PaletteDesk(560.0, overlay, prefersTouch)
+    new(theme: ThemeManager, overlay: OverlayDesk, prefersTouch: unit -> bool) =
+        PaletteDesk((theme.Metric Metric.PaletteDialogWidth).Value, overlay, prefersTouch)
 
     /// 只建内容（不进对话层）；`execute` 收到所选条目与当时的输入。返回 (内容, 搜索框)。
     member _.Build

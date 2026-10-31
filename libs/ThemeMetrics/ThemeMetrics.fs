@@ -165,6 +165,8 @@ type Metric =
     | SettingsDialogWidth
     /// 设置页小对话层宽（旧添加文件夹的 480）
     | SettingsSmallDialogWidth
+    /// 设置页蒙层 surface 宽（旧 SettingsScreen 的 720）
+    | SettingsSurfaceWidth
     /// 确认 / 单行提示对话框宽（旧 Dialogs confirm/prompt 的 420）
     | ConfirmDialogWidth
     /// 连接 / 快捷键对话框宽（旧 Dialogs connect/shortcuts 的 460）
@@ -315,6 +317,7 @@ module ThemeMetrics =
             Metric.SelectCaptionMaxWidth
             Metric.SettingsDialogWidth
             Metric.SettingsSmallDialogWidth
+            Metric.SettingsSurfaceWidth
             Metric.ConfirmDialogWidth
             Metric.ConnectDialogWidth
             Metric.SessionDialogWidth
@@ -460,6 +463,7 @@ module ThemeMetrics =
         | Metric.SelectCaptionMaxWidth -> 260.0
         | Metric.SettingsDialogWidth -> 520.0
         | Metric.SettingsSmallDialogWidth -> 480.0
+        | Metric.SettingsSurfaceWidth -> 720.0
         | Metric.ConfirmDialogWidth -> 420.0
         | Metric.ConnectDialogWidth -> 460.0
         | Metric.SessionDialogWidth -> 520.0

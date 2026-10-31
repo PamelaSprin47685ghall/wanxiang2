@@ -51,6 +51,9 @@ type GalleryContext =
         Approval: ApprovalDesk
         /// 品牌标工厂（画廊用占位方块，与 AppShell 测试台同口径）
         BrandLogo: float -> Control
+        /// 阅读字号（pt）。生产取自 `model.Prefs.fontScale`（用户偏好，设置页可调）；
+        /// 画廊的 `build` 会用真实模型的值覆盖，所以条目里的卡片字号与真实界面同源。
+        FontScale: float
     }
 
 
@@ -274,6 +277,7 @@ module Gallery =
             Dialogs = dialogs
             Approval = approval
             BrandLogo = brandLogo
+            FontScale = (UiPrefs.defaults prefLimits).fontScale
         }
 
     let createContext () : GalleryContext = createContextMode (currentMode ())
@@ -286,7 +290,7 @@ module Gallery =
             ctx.Cards.Render(
                 row,
                 {
-                    FontSize = 14.5
+                    FontSize = ctx.FontScale
                     AutoCollapseReasoning = false
                     Spin = false
                     Streaming = row.Streaming
@@ -1106,7 +1110,14 @@ module Gallery =
 
     /// 造一个条目的控件（把状态跑出来、投影出来、再喂给真实控件库）。
     let build (ctx: GalleryContext) (entry: Entry) : Control =
-        let _, vs = Scenes.run entry.Steps
+        let model, vs = Scenes.run entry.Steps
+        // 阅读字号与生产同源：生产从 model.Prefs.fontScale 取（AppShell），画廊用同一个模型的值，
+        // 不在条目里抄常数——否则改字号偏好的场景在画廊里看不出来（A1 试验即栽在这里）。
+        let ctx =
+            { ctx with
+                FontScale = model.Prefs.fontScale
+            }
+
         let control = entry.Build ctx vs
         // 画布尺寸固定：渲染才有确定的像素尺寸，条目之间也可比。
         Border(

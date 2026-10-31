@@ -261,6 +261,63 @@ module Tests =
             Assert.Contains(words, (fun (w: string) -> w = "归档")))
 
     [<Fact>]
+    let ``对话卡字号跟随状态树的阅读字号偏好，不在条目里抄常数`` () =
+        Headless.run (fun () ->
+            // 生产路径：AppShell 把 model.Prefs.fontScale 传给卡片组（FontSize = model.Prefs.fontScale）。
+            // 画廊必须同源：同一条场景，改掉状态树里的字号偏好，卡片上的正文字号就该跟着变。
+            // 若画廊自己抄一个常数（旧实现硬编码 14.5），这条会红——A1 试验正是因为这里不同源，
+            // 才把「改度量档影响不到阅读正文」当成结论。
+            let entry = Gallery.find "MessageCardView.assistant" |> Option.get
+            let ctx = Gallery.createContext ()
+
+            /// 把条目控件挂进窗口完成布局（Markdown 正文是懒渲染的，不挂窗口就不建控件），
+            /// 再取这一屏里所有非空文字的 TextBlock 字号。
+            let fontSizes (steps: Scenes.Step list) : float list =
+                let control = Gallery.build ctx { entry with Steps = steps }
+
+                let win =
+                    Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
+                win.Show()
+                win.UpdateLayout()
+
+                let sizes =
+                    Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(control :> Avalonia.Visual)
+                    |> Seq.choose (fun v ->
+                        match v with
+                        | :? TextBlock as t when not (isNull t.Text) && t.Text.Length > 0 -> Some t.FontSize
+                        | _ -> None)
+                    |> List.ofSeq
+
+                win.Close()
+                sizes
+
+            let baseline = fontSizes entry.Steps
+            Assert.NotEmpty baseline
+
+            let model, _ = Scenes.run entry.Steps
+
+            let enlargedPrefs =
+                { model.Prefs with
+                    fontScale = model.Prefs.fontScale + 3.0
+                }
+
+            let enlarged =
+                fontSizes (
+                    entry.Steps
+                    @ [
+                        Scenes.Msg(Msg.User(UserMsg.Settings(SettingsUserMsg.PrefsChanged enlargedPrefs)))
+                    ]
+                )
+
+            Assert.NotEmpty enlarged
+            // 同一屏的字号集合整体抬高：最大值（正文级）必须真的变大。
+            Assert.True(
+                List.max enlarged > List.max baseline,
+                sprintf "改字号偏好后卡片正文应变大：%g → %g" (List.max baseline) (List.max enlarged)
+            ))
+
+    [<Fact>]
     let ``确认框：标题与取消键真的画了出来`` () =
         Headless.run (fun () ->
             let confirm, _ = render "ConfirmPane.confirm"

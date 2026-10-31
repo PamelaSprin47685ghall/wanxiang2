@@ -200,13 +200,9 @@ module Gallery =
     let createContextMode (mode: Wanxiang2.ThemePalette.PaletteMode) : GalleryContext =
         setMode mode
 
-        let prefLimits: UiPrefLimits =
-            {
-                sidebarWidth = 284.0
-                sidebarMinWidth = 232.0
-                sidebarMaxWidth = 420.0
-                windowMinWidth = 700.0
-            }
+        // 设置页要的那份偏好边界不在这里抄第二份：直接取状态树的初始偏好
+        // （Workspace.init 内部已按宿主传入的 limits 算好），避免「改了 limits 却只改到一半」。
+        let initialPrefs = (Workspace.init ()).Prefs
 
         let theme, styles = themeSingleton.Value
 
@@ -258,7 +254,7 @@ module Gallery =
                 theme,
                 overlay,
                 FakePorts.settingsHooks (),
-                UiPrefs.defaults prefLimits,
+                initialPrefs,
                 environmentInfo = ("Desktop (.NET gallery)", "Gallery OS")
             )
 
@@ -278,8 +274,8 @@ module Gallery =
             Approval = approval
             BrandLogo = brandLogo
             // 占位默认：Gallery.build 会用 model.Prefs.fontScale 覆盖。
-            // 取 UiPrefs.defaults 只是让未走 build 的调用方拿到合法值，不是同源的来源。
-            FontScale = (UiPrefs.defaults prefLimits).fontScale
+            // 取状态树的初始偏好只是让未走 build 的调用方拿到合法值，不是同源的来源。
+            FontScale = initialPrefs.fontScale
         }
 
     let createContext () : GalleryContext = createContextMode (currentMode ())

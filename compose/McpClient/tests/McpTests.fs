@@ -257,14 +257,32 @@ module McpTests =
 
     type private MockHttpServer(handler: HttpListenerRequest -> (int * string * (string * string) list * string)) =
         let listener = new HttpListener()
-        let port = Random.Shared.Next(20000, 35000)
-        let prefix = sprintf "http://127.0.0.1:%d/" port
         let cts = new CancellationTokenSource()
 
-        do
-            listener.Prefixes.Add prefix
-            listener.Start()
+        // 随机端口可能与同机其他监听撞车（HttpListenerException 冲突注册）：换端口重试至多 8 次
+        let prefix =
+            let mutable attempt = 0
+            let mutable ok = false
+            let mutable p = ""
 
+            while not ok && attempt < 8 do
+                attempt <- attempt + 1
+                p <- sprintf "http://127.0.0.1:%d/" (Random.Shared.Next(20000, 35000))
+                listener.Prefixes.Clear()
+                listener.Prefixes.Add p
+
+                try
+                    listener.Start()
+                    ok <- true
+                with _ ->
+                    ()
+
+            if not ok then
+                failwith "MockHttpServer: 找不到可用端口"
+
+            p
+
+        do
             Task.Run(
                 Func<Task>(fun () ->
                     task {

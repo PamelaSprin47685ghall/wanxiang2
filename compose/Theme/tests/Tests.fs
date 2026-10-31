@@ -125,6 +125,29 @@ let ``live values push to bound controls`` () =
         Assert.Equal(32.0, b.Width))
 
 [<Fact>]
+let ``radiusXl scale lands on the dialog corner resource`` () =
+    // 第三批：设置页等对话框级卡片的 16 档圆角进刻度，活值跟随（与 ThemeStyles.corner 同一接法）
+    Headless.run (fun () ->
+        let m, _ = manual ()
+        let card = Border()
+
+        card.Bind(Border.CornerRadiusProperty, (Live.map CornerRadius (m.Space Space.RadiusXl :> IObservable<float>)))
+        |> ignore
+
+        Assert.Equal(CornerRadius 16.0, card.CornerRadius)
+        m.ApplySpace(Space.RadiusXl, 20.0)
+        Assert.Equal(CornerRadius 20.0, card.CornerRadius))
+
+[<Fact>]
+let ``settings surface width lives on the metric scale`` () =
+    // 第三批：设置页蒙层 surface 宽进刻度（旧硬编码 720）；应用后资源可取
+    Headless.run (fun () ->
+        let m, _ = manual ()
+        Assert.Equal(720.0, m.Resources[box "Metric.SettingsSurfaceWidth"] |> unbox<float>)
+        m.ApplyMetric(Metric.SettingsSurfaceWidth, 800.0)
+        Assert.Equal(800.0, m.Resources[box "Metric.SettingsSurfaceWidth"] |> unbox<float>))
+
+[<Fact>]
 let ``state transitions are zero under reduced motion`` () =
     Headless.run (fun () ->
         let m, _ = manual ()

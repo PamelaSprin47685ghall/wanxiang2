@@ -180,6 +180,7 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
             resources[box "CornerRadius.RadiusSm"] <- box (CornerRadius spaces[Space.RadiusSm].Value)
             resources[box "CornerRadius.RadiusMd"] <- box (CornerRadius spaces[Space.RadiusMd].Value)
             resources[box "CornerRadius.RadiusLg"] <- box (CornerRadius spaces[Space.RadiusLg].Value)
+            resources[box "CornerRadius.RadiusXl"] <- box (CornerRadius spaces[Space.RadiusXl].Value)
             resources[box "CornerRadius.RadiusPill"] <- box (CornerRadius spaces[Space.RadiusPill].Value)
             resources[box "Thickness.BorderThin"] <- box (Thickness metrics[Metric.BorderWidth].Value)
             resources[box "Thickness.None"] <- box (Thickness 0.0)
@@ -290,6 +291,7 @@ type ThemeManager(clock: unit -> DateTimeOffset, autoFrames: bool) =
                 Space.RadiusXs
                 Space.RadiusMd
                 Space.RadiusLg
+                Space.RadiusXl
                 Space.RadiusPill
                 Space.RadiusSm
                 Space.Md

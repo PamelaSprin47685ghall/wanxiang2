@@ -21,6 +21,7 @@ module private Dyn =
         ext.ProvideValue sp
 
 open Wanxiang2.Theme
+open Wanxiang2.ThemeMetrics
 open Wanxiang2.OverlayDesk
 open Wanxiang2.SettingsFrame
 open Wanxiang2.WorkspaceState
@@ -128,9 +129,7 @@ type SettingsScreen
             Child = frame,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            CornerRadius = CornerRadius 16.0,
-            ClipToBounds = true,
-            Width = 720.0
+            ClipToBounds = true
         )
 
     let scrim =
@@ -138,18 +137,45 @@ type SettingsScreen
 
     let layer = Grid()
 
+    /// 主题资源字典的浮点值现读（W7 外观退役：无 IObservable、无订阅）：用量时刻取值。
+    let resFloat (key: string) (fallback: float) =
+        match Application.Current with
+        | null -> fallback
+        | app ->
+            match app.TryFindResource(box key) with
+            | true, v -> unbox v
+            | _ -> fallback
+
+    /// 主题资源字典的 Thickness 现读：用量时刻取值。
+    let resThickness (key: string) (fallback: float) =
+        match Application.Current with
+        | null -> fallback
+        | app ->
+            match app.TryFindResource(box key) with
+            | true, (:? Thickness as t) -> t.Left
+            | _ -> fallback
+
     let fitSurface () =
         let width = layer.Bounds.Width
         let height = layer.Bounds.Height
+        // 钳位基准与 OverlayLayer 同语义：视口减两侧留白；留白与首选宽都读主题资源，不抄常数。
+        let inset = resThickness "Margin.OverlayInset" 12.0
+
+        let preferred =
+            resFloat "Metric.SettingsSurfaceWidth" (ThemeMetrics.initial Metric.SettingsSurfaceWidth)
 
         if width > 0.0 then
-            surface.Width <- min 720.0 (max 0.0 (width - 32.0))
+            surface.Width <- min preferred (max 0.0 (width - inset * 2.0))
 
         if height > 0.0 then
-            surface.MaxHeight <- max 0.0 (height - 32.0)
+            surface.MaxHeight <- max 0.0 (height - inset * 2.0)
 
     do
         scrim.Bind(Border.BackgroundProperty, Dyn.res "Palette.Scrim") |> ignore
+        // 设置页是对话框级卡片：圆角走对话框档（CornerRadius.RadiusXl），宽走度量键（fitSurface 钳位）。
+        surface.Bind(Border.CornerRadiusProperty, Dyn.res "CornerRadius.RadiusXl")
+        |> ignore
+
         layer.ZIndex <- 2
         layer.Children.Add scrim
         layer.Children.Add surface

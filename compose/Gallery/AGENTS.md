@@ -89,8 +89,9 @@ bash tools/gallery-baseline.sh [基线目录]                                   
   改一个控件库 → 只重建那个库 → 重开窗口就看到新样子，不需要连主机、不需要走旅程、不需要打整个 feed。
 - 都用**隔离的包缓存** `artifacts/gallery-cache`（`tools/gallery.sh` 里设 `RestorePackagesPath`）：
   `artifacts/packages` 是 `./x pack` / `./x compose` 的缓存，同一时刻只允许一个写者。
+  `tools/gallery.sh` 每次启动前清掉该缓存里的 `Wanxiang2.*`（包版本恒为 `0.0.0-local`，留着旧包就是静默跑旧代码）；直接 `dotnet run` / `dotnet test` 不带这一步，要自己清。
 
-### 跑本仓组合者测试时的两个陈旧缓存坑（都实测踩过）
+### 跑本仓组合者测试时的三个陈旧缓存坑（都实测踩过）
 
 1. **全局 NuGet 缓存会留下旧的本仓包。** `~/.nuget/packages/wanxiang2.*` 里存着**旧版本**的本仓包
    （实测 84 个 `wanxiang2.*` 目录）。跑本仓组合者测试若**不带**
@@ -100,6 +101,10 @@ bash tools/gallery-baseline.sh [基线目录]                                   
    输出目录里可能还留着合并前的独立 dll（例如合并 `ComposerSendState` 时输出目录里留着旧的
    `ComposerSendState.dll`），编译器就以为它还是独立程序集，于是报一堆「类型找不到」。
    合并后先清掉输出目录再构建。
+3. **`artifacts/gallery-cache` 里的同名本仓包会让画廊静默跑旧代码。** 包版本恒为 `0.0.0-local`，
+   NuGet 见到同名同版本就认为无需还原（实测 `Wanxiang2.WorkspaceState` 停在 10 月 31 日的旧包，
+   新写的行为用例因此假红）。`tools/gallery.sh` 每次启动前清 `artifacts/gallery-cache/wanxiang2.*`；
+   绕过脚本直接 `dotnet run` / `dotnet test` 时要自己清。
 
 ## LEMMA
 
@@ -112,8 +117,8 @@ bash tools/gallery-baseline.sh [基线目录]                                   
 
 ## SPEC
 
-1. [LEMMA: 1] `tests/Tests.fs`（19 条，全是**状态差异**断言，不是「没抛异常 / 不是空板 / 清单对得上」那类烟雾）。
-   **当前 19 条全过**（连同 `BaselineTests.fs` 6 条与 `A11yAuditTests.fs` 19 条，实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 44, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
+1. [LEMMA: 1] `tests/Tests.fs`（22 条，全是**状态差异**断言，不是「没抛异常 / 不是空板 / 清单对得上」那类烟雾）。
+   **当前 22 条全过**（连同 `BaselineTests.fs` 6 条与 `A11yAuditTests.fs` 15 条，实测 `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/packages"` → `total: 47, failed: 0`）。附件那条此前是红的（状态树给不出附件），状态树补上处理分支后已转绿（见《已知缺口与各自的归属》4）。
    - `输入区：空闲、输入中、带附件、生成中是四个不同的状态`（读投影：草稿文本、托盘、发送键状态、禁用位）；
    - `输入区：未连接时禁用并给出原因`（`DisabledReason` 与侧栏空态）；
    - `对话列：空态、有消息、流式是三个不同的状态`（流式那条走**真的** `generation.delta`，
@@ -121,6 +126,15 @@ bash tools/gallery-baseline.sh [基线目录]                                   
    - `对话列：助手消息带思维链，工具调用卡带参数`（读 `MessageRowVS` 的 `Reasoning` 与 `ToolCalls`）；
    - `对话卡字号跟随状态树的阅读字号偏好，不在条目里抄常数`（断言**正文块** `SelectableTextBlock` 的字号等于
      `model.Prefs.fontScale`，改偏好后跟着变；把 `cardOf` 的 `FontSize` 改回常数即红——钉住「画廊字号与生产同源」）；
+   - `对话卡思考块折叠跟随状态树的偏好，不在条目里抄常数`（断言思考块头 `FoldHeader` 的自动化 `ItemStatus`
+     在默认「收起」偏好下为「已折叠」、把 `autoCollapseReasoning` 拨到 `false` 后为「已展开」；
+     把 `cardOf` 的 `AutoCollapseReasoning` 改回常数即红。**不查控件树里的 `Expander` 实例**：卡片放的是
+     `FoldHeader.Header`（按钮），`Expander` 自身不进可视化树，其对外承诺的可读状态就是 `ItemStatus`）；
+   - `画廊的减弱动效写进主题资源，不只改卡片入参`（同一份 `reduceMotion` 有两个出口：卡片组入参 `Spin`
+     与主题资源 `Motion.Reduced`。本条读 `ctx.Theme.Motion.IsReduced` 的真实值，把 `Gallery.build` 里那句
+     `ApplyReduced` 去掉即红——钉住「减弱动效只有一个来源」）；
+   - `画廊的代码折行记忆跟随状态树的偏好`（读 `ctx.Wrap.Wrapped` 的真实值，把 `Gallery.build` 里那句赋值
+     改回固定初值即红。`CodeWrapMemory` 是对象而非 bool，所以钉的是实例上的值）；
    - `对话列：错误是真实存在的错误，有 kind 与可重试标记`（渲染真的错误卡，断言卡片上有错误文案 + 「重试」+「继续生成」）；
    - `侧栏：空态、有行、搜索无命中是三个不同的状态`（读投影里的行数、置顶位、归档位、连接位、查询词）；
    - `侧栏：批量模式真的画出了批量条`（断言批量条的字：已选 / 全选 / 删除）；
@@ -199,7 +213,7 @@ bash tools/gallery-baseline.sh [基线目录]                                   
 早期「25/41 条目有基线，其余待补齐」是合并中间状态，已由本节取代。合并远端后从源码重新 `./x pack`，清理画廊旧包缓存，再实际生成全部 41 个条目的深浅主题基线，共 82 张；独立进程逐像素复核 82 项全部通过。这证明本机渲染可重复，不代表人工视觉审查或跨平台像素一致。
 
 - `bash tools/gallery.sh --list`：41 条，实际运行成功。
-- `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/gallery-cache"`：44 条通过、0 失败（含 `Tests.fs` 19 条、`BaselineTests.fs` 6 条、`A11yAuditTests.fs` 19 条）。
+- `dotnet test --project compose/Gallery/tests/Gallery.Tests.fsproj -p:RestorePackagesPath="$PWD/artifacts/gallery-cache"`：47 条通过、0 失败。`MessageCardView.assistant` 深浅两张基线在 `MessageRowVS` 去掉逐行偏好副本后重新生成（默认收起使思考正文不再展开），由 Linux 容器 `wx2-linux-gallery-env:local` 生成并复核 82/82。**这条命令的前提是 `artifacts/gallery-cache` 里没有过期的 `Wanxiang2.*`**：包版本恒为 `0.0.0-local`，旧包会让 NuGet 认为无需还原，画廊静默跑旧代码（实测把新写的行为用例打成假红）。`tools/gallery.sh` 已在启动前清掉 `artifacts/gallery-cache/wanxiang2.*`；直接跑 `dotnet test` 时要自己清。
 - AppShell 原生 Tab/Esc/删除邻位交互用例：1 条通过、0 失败。
 - `./x check`：109 个库、71 个组合者、17 个控件库覆盖检查通过。
 - 实际渲染暴露并修正两个重复挂载：ChatHeader 条目改用独立真实控件；审批条目呈现所属 OverlayRoot，不再把已有父节点的审批视图重复挂入画布。

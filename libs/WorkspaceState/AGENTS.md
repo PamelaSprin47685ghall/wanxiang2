@@ -60,6 +60,8 @@
 2. [LEMMA: 1] 不变式 2——`ConnPhase <> Authed` 时投影不存在 `Active` 对话数据：`tests/WorkspaceStateTests.fs`：`Invariant 2: ConnPhase <> Authed has no Active conversation projected`。
 3. [LEMMA: 3] 不变式 3——任何 `Effect.After` / `Every` 都有配对的到达消息或显式停止；`ConnectionDown` 后在途计数归零：`tests/WorkspaceStateTests.fs`：`Invariant 3: ConnectionDown zeroes pending commands and clears active conversation`。
 4. [LEMMA: 2] 不变式 4——`update` 无 IO、无可变跨调用状态；同一 `(model, msg)` 两次调用结果严格相等：`tests/WorkspaceStateTests.fs`：`Invariant 4: Determinism: same (model, msg) twice produces equal results`。
+5. [LEMMA: 2] 全局偏好不进消息行——`MessageRowVS` 只装这一条消息自己的事实（角色、正文、思考、工具调用、附件、提交信息）；`UiPrefs` 里那些全局偏好（字号、思考块折叠、代码折行、减弱动效）不逐行复制，只由组合者投影时填进 `CardContext`：`tests/WorkspaceStateTests.fs`：`用户偏好不进消息行：改偏好不改变投影里的消息事实`。
+   此前 `MessageRowVS` 带过一个 `AutoCollapseReasoning` 字段，而卡片组 `Render(row, …)` 又用它覆盖组合者传进 ctx 的值——同一件事两个来源，组合者传什么都无效。字段已删除；折叠的红绿证据在 `compose/ChatScreen/tests/Tests.fs`。
 
 ## 证据
 - `tests/WorkspaceState.Tests.fsproj` 单元与旅程测试通过（含「对话列表快照同时带出分叉谱系」与

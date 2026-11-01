@@ -875,7 +875,10 @@ type MessageCards(looks: CardAppearance, host: CardHost) =
             { ctx with
                 Streaming = row.Streaming
                 IsLastAssistant = row.IsLastAssistant
-                AutoCollapseReasoning = row.AutoCollapseReasoning
+                // 思考块折叠是**用户偏好**（`UiPrefs.autoCollapseReasoning`），不是某条消息的事实。
+                // 这里曾用 `row.AutoCollapseReasoning` 覆盖 ctx，等于把全局偏好逐行复制一份，
+                // 于是同一件事有两个来源：组合者传什么都会被行值盖掉，改偏好时界面不动。
+                // 行记录已经把该字段删掉，折叠一律由组合者按偏好填入 ctx。
                 Usage =
                     (match row.Usage with
                      | Some u -> Some u

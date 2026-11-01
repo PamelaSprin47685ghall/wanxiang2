@@ -44,4 +44,4 @@
 
 - 未合并试验改动，未改生产数值；
 - 未重生成正式基线（试验未进入交付）；
-- 未决定 `Metric.FontReading` 的删除或改用途（属公开契约变更，需负责人拍板）。
+- ~~未决定 `Metric.FontReading` 的删除或改用途~~ → **已删除**（2026-10-31，负责人拍板；见 `docs/ux/professional-refactor-audit.md` §4 与 `libs/ThemeMetrics/tests/Tests.fs` 的回潮守卫）。

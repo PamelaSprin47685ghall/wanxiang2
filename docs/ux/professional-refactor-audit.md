@@ -65,11 +65,26 @@
 
 上面的第 1 条结论需要限定范围。复核发现画廊自己把卡片字号抄成了常数 `14.5`（`compose/Gallery/Gallery.fs` 的 `cardOf`），而生产从 `model.Prefs.fontScale` 取——**两处数值相同、来源不同**。也就是说，试验时即使改了字号偏好，画廊也画不出来，这本身就会让「改字号看不出变化」变成必然结果。
 
-已修：`GalleryContext` 增加 `FontScale` 字段，`Gallery.build` 用场景跑出的真实模型的 `Prefs.fontScale` 覆盖，`cardOf` 不再抄常数（该字段在 context 里的初始值只是占位默认，`build` 必然覆盖）。红绿验证按**正文块**（`SelectableTextBlock`）口径：旧实现下新用例红，`Expected: [17.5]` / `Actual: [14.5]`；新实现下绿（正文 14.5 → 17.5 跟随）。
+已修：`GalleryContext` 增加偏好字段，`Gallery.build` 用场景跑出的真实模型的 `Prefs` 整体覆盖（`FontScale` 只是当时那一步的形态；后续思考块折叠、减弱动效、代码折行也走同一字段，字段本身在 2026-11-01 由 `Prefs: UiPrefs` 取代，不再逐项展开），`cardOf` 不再抄常数（该字段在 context 里的初始值只是占位默认，`build` 必然覆盖）。红绿验证按**正文块**（`SelectableTextBlock`）口径：旧实现下新用例红，`Expected: [17.5]` / `Actual: [14.5]`；新实现下绿（正文 14.5 → 17.5 跟随）。
 
 因此第 1 条的准确表述是：**改 `ThemeMetrics` 字号档影响不到阅读正文**（这一点不受画廊缺陷影响，因为生产确实从 `UiPrefs.fontScale` 取）；而「画廊里改字号偏好有没有可见效果」此前无法验证，现在可以了（新用例 `对话卡字号跟随状态树的阅读字号偏好，不在条目里抄常数` 钉住）。
 
 第一批先行理由：A2 风险最小（单控件库 + 画廊条目 + 基线重生成），能最快建立「前后对比 → 门禁 → 提交」的完整回路。
+
+### 同源缺陷第二次：思考块折叠偏好走的是「逐行复制」
+
+修完字号常数后按同一口径复核其余偏好，发现 `UiPrefs.autoCollapseReasoning`（设置页「默认收起思考过程」，默认 `true`）在**画廊这条线**上不生效，根因是同一件事有两个来源：
+
+- `libs/WorkspaceState/Project.fs` 三个消息分支都把 `MessageRowVS.AutoCollapseReasoning` 写死 `false`；
+- `compose/MessageCardView/Card.fs` 的 `Render(row, …)` 又用 `row.AutoCollapseReasoning` 覆盖组合者传进来的 `CardContext.AutoCollapseReasoning`。
+
+生产的 `ChatScreen` 走的是 `Render(MessageView, ctx, …)` 重载，读的是 `ctx.AutoCollapseReasoning`，所以生产侧开关本来有效；失效与失真都发生在「行记录这一份副本」上。画廊 `cardOf` 同样抄了常数。
+
+处置不是补断言，而是删掉这条重复通道：`MessageRowVS` 不再带 `AutoCollapseReasoning` 字段，`Card.Render(row, …)` 不再覆盖 ctx，折叠只由组合者按 `model.Prefs` 填。`GalleryContext` 的 `FontScale: float` 换成 `Prefs: UiPrefs` + `Wrap: CodeWrapMemory`，`Gallery.build` 用场景模型的偏好整体覆盖，`cardOf` 连 `Spin`（减弱动效）也一并按 `Prefs.reduceMotion` 填。
+
+红绿证据：在 `ChatScreen` 里把 `AutoCollapseReasoning = f.AutoCollapseReasoning` 改成恒 `false`、并把画廊 `cardOf` 改回常数后，`思考块折叠由组合者按用户偏好填入，渲染层不再读别处的副本`（ChatScreen）与 `对话卡思考块折叠跟随状态树的偏好，不在条目里抄常数`（画廊）双双红；恢复后 8 + 45 全绿，状态层 99 条全绿。画廊基线只动 `MessageCardView.assistant` 深浅两张（默认收起后正文不再展开），由 Linux 容器 `wx2-linux-gallery-env:local` 重新生成并逐像素复核 82/82。
+
+同类缺陷已出现三次（`fontScale`、`autoCollapseReasoning`、`codeWrap`），共同形态是「**数值相同、来源不同**」：组合者或投影抄一份常数/副本，改偏好时界面不动，测试也看不见。现在的口径是偏好只从 `model.Prefs` 流向 `CardContext`，不落在任何逐行记录里。
 
 ## 5. 风险与回归计划
 

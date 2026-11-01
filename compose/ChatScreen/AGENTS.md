@@ -11,7 +11,8 @@ ChatHeader + ChatPane + MessageCardView（MessageCards、CardDeck）+ ComposerDe
 - 起手式芯片：ChatPane 构造期传入 `onStarter`，这里接 `composer.ApplyDraftText`（点选起手式把半句话回填进输入框）。ChatEmpty 的 `SetStarterPick` / `SetPresets` 写入成员已退役（预设芯片生产零消费，整条删除）。
 
 ## 证据与旧测试
-- 无头行为用例四条：渲染次序（复用、流式原位更新、换形重建、错误卡）、长对话定位高亮（宿主计时结束高亮）、顶栏改名 / 侧栏 / 面包屑、版本条。
+- 无头行为用例五条：渲染次序（复用、流式原位更新、换形重建、错误卡）、长对话定位高亮（宿主计时结束高亮）、顶栏改名 / 侧栏 / 面包屑、版本条、思考块折叠随 `ScreenFrame.AutoCollapseReasoning` 开合（见下条）。
+- 用户偏好只经 `ScreenFrame` 进来，卡片组不再从别处读副本：`AutoCollapseReasoning` 曾经在 `MessageRowVS` 上有一份逐行副本、并覆盖 `CardContext`，那份字段已删除。回归用例 `思考块折叠由组合者按用户偏好填入，渲染层不再读别处的副本`（`tests/Tests.fs`）：同一屏把偏好从收起翻成不收起，`FoldHeader` 的自动化 `ItemStatus` 必须从「已折叠」变「已展开」；把这里对 `ctxFor` 的赋值改成常数即红。
 - 覆盖旧 ChatViewTests 中 RenderMessages、RevealAndHighlight、ScrollToMessage、SetBreadcrumb / ActivateBreadcrumb、ConfigureMenu 的状态部分；顶栏控件的行为用例在 libs/ChatHeader，滚动 / 空态 / 骨架的在 ChatPane。
 - 性能：tests/PerfTests.fs 迁自旧 IncrementalRenderTests「长对话的流式刷新代价与消息条数无关」（200 条历史，流式每帧 < 20ms）；CardDeck 身份泛型化，直接用 ScreenKey 结构相等。
 

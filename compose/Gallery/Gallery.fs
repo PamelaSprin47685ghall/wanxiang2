@@ -51,9 +51,15 @@ type GalleryContext =
         Approval: ApprovalDesk
         /// 品牌标工厂（画廊用占位方块，与 AppShell 测试台同口径）
         BrandLogo: float -> Control
-        /// 阅读字号（pt）。这里是**占位默认**：真正的值由 `Gallery.build` 用场景跑出的
-        /// `model.Prefs.fontScale` 覆盖（生产侧 AppShell 也从那里取）。不要在条目里读这个字段的初始值。
-        FontScale: float
+        /// 用户偏好：**与生产同一份口径**，由 `Gallery.build` 用场景跑出的
+        /// `model.Prefs` 整体覆盖。条目里不要读这里的初始值，也不要在条目里抄常数——
+        /// 抄一次就会变成「两处数值相同、来源不同」，改偏好时画廊看不出来。
+        /// （同类缺陷已出现过三次：字号 `fontScale`、思考块 `autoCollapseReasoning`、
+        /// 代码折行 `codeWrap`。）
+        Prefs: UiPrefs
+        /// 代码折行的记忆实例（MarkdownHost 要的是对象而非 bool）。
+        /// 初值同样来自初始偏好，`Gallery.build` 按场景模型赋值。
+        Wrap: Wanxiang2.MarkdownView.CodeWrapMemory
     }
 
 
@@ -194,14 +200,13 @@ module Gallery =
     /// 造一套画廊上下文（真实控件库 + 假端口）。
     /// 主题是单例；各个 Desk 是**每次新建**的——Desk 持有桌内瞬态（上一帧投影、滚动位置、选中项），
     /// 复用会让上一个条目的状态漏进下一个条目。
-    /// 造一套画廊上下文（真实控件库 + 假端口）。
-    /// 主题是单例；各个 Desk 是**每次新建**的——Desk 持有桌内瞬态（上一帧投影、滚动位置、选中项），
-    /// 复用会让上一个条目的状态漏进下一个条目。
     let createContextMode (mode: Wanxiang2.ThemePalette.PaletteMode) : GalleryContext =
         setMode mode
 
-        // 设置页要的那份偏好边界不在这里抄第二份：直接取状态树的初始偏好
-        // （Workspace.init 内部已按宿主传入的 limits 算好），避免「改了 limits 却只改到一半」。
+        // 设置页要的那份偏好边界不在这里抄第三份：直接取状态树的初始偏好。
+        // 现状是两份同值副本——`libs/WorkspaceState/Update.fs` 的 `init ()` 里硬编码了一份
+        // limits（`Workspace.init` 不收参数），宿主那份在 `compose/UiPrefsFile`。
+        // 画廊不复制它们，改 limits 时这里自动跟随，但「两份副本」本身仍未收拢。
         let initialPrefs = (Workspace.init ()).Prefs
 
         let theme, styles = themeSingleton.Value
@@ -214,6 +219,10 @@ module Gallery =
         let composer = ComposerDesk(FakePorts.composerActions ())
         AutomationProperties.SetName(composer.Box.Input, "输入消息")
         let approval = ApprovalDesk(theme, overlay, ignore)
+
+        // 代码折行实例：初值取状态树初始偏好，Gallery.build 再按场景模型的偏好覆盖。
+        // 与生产的差别只在「谁改它」——生产是宿主端口的 SetCodeWrap，这里是 build。
+        let wrapMemory = Wanxiang2.MarkdownView.CodeWrapMemory initialPrefs.codeWrap
 
         let cards =
             MessageCards(
@@ -228,7 +237,9 @@ module Gallery =
                                 Synchronous = true
                             }
                     MathHtml = (fun _ -> None)
-                    Wrap = Wanxiang2.MarkdownView.CodeWrapMemory false
+                    // 代码折行同样与生产同源：实例由 context 持有，Gallery.build 按
+                    // model.Prefs.codeWrap 赋值（生产 app/Desktop 用 SetCodeWrap 端口做同一件事）。
+                    Wrap = wrapMemory
                     Clock = CaretClock()
                     Touch = CardTouch()
                     Now = fun () -> DateTimeOffset.UnixEpoch
@@ -273,9 +284,10 @@ module Gallery =
             Dialogs = dialogs
             Approval = approval
             BrandLogo = brandLogo
-            // 占位默认：Gallery.build 会用 model.Prefs.fontScale 覆盖。
+            // 占位默认：Gallery.build 会用场景跑出的 model.Prefs 整体覆盖。
             // 取状态树的初始偏好只是让未走 build 的调用方拿到合法值，不是同源的来源。
-            FontScale = initialPrefs.fontScale
+            Prefs = initialPrefs
+            Wrap = wrapMemory
         }
 
     let createContext () : GalleryContext = createContextMode (currentMode ())
@@ -288,9 +300,16 @@ module Gallery =
             ctx.Cards.Render(
                 row,
                 {
-                    FontSize = ctx.FontScale
-                    AutoCollapseReasoning = false
-                    Spin = false
+                    // 字号与思考块折叠都取用户偏好，与生产 AppShell 同一口径：
+                    // 生产是 `FontSize = model.Prefs.fontScale`、
+                    // `AutoCollapseReasoning = model.Prefs.autoCollapseReasoning`。
+                    FontSize = ctx.Prefs.fontScale
+                    AutoCollapseReasoning = ctx.Prefs.autoCollapseReasoning
+                    // 减弱动效同样是用户偏好：生产 ChatScreen 收 `ReducedMotion`（来自
+                    // `UiPrefs.reduceMotion` → 宿主的 SetReducedMotion），这里按同一来源换算。
+                    // 现有条目都停在空闲态（没有转圈图标），所以它今天还没有像素表现——
+                    // 但一旦加「执行中」条目，抄常数就会立刻变成第四个来源。
+                    Spin = not ctx.Prefs.reduceMotion
                     Streaming = row.Streaming
                     IsLastAssistant = row.IsLastAssistant
                     Usage = None
@@ -1109,12 +1128,17 @@ module Gallery =
     /// 造一个条目的控件（把状态跑出来、投影出来、再喂给真实控件库）。
     let build (ctx: GalleryContext) (entry: Entry) : Control =
         let model, vs = Scenes.run entry.Steps
-        // 阅读字号与生产同源：生产从 model.Prefs.fontScale 取（AppShell），画廊用同一个模型的值，
-        // 不在条目里抄常数——否则改字号偏好的场景在画廊里看不出来（A1 试验即栽在这里）。
-        let ctx =
-            { ctx with
-                FontScale = model.Prefs.fontScale
-            }
+        // 用户偏好与生产同源：生产从 model.Prefs 取（AppShell 的 fontScale /
+        // autoCollapseReasoning，宿主端口的 SetReducedMotion / SetCodeWrap 对应
+        // reduceMotion / codeWrap），画廊用同一个模型的值，不在条目里抄常数——
+        // 否则改偏好的场景在画廊里看不出来（A1 试验栽在字号上；思考块折叠与代码折行曾经同样栽过）。
+        //
+        // 减弱动效有两个出口，都要跟：`CardContext.Spin`（转圈是否转，由 cardOf 填）
+        // 与主题资源 `Motion.Reduced`（`CardUi.reduced` / MarkdownView 在动作时刻现读，
+        // 生产由入口的 SetReducedMotion 端口写进 SharedTheme.manager.Motion）。
+        ctx.Theme.Motion.ApplyReduced model.Prefs.reduceMotion
+        ctx.Wrap.Wrapped <- model.Prefs.codeWrap
+        let ctx = { ctx with Prefs = model.Prefs }
 
         let control = entry.Build ctx vs
         // 画布尺寸固定：渲染才有确定的像素尺寸，条目之间也可比。

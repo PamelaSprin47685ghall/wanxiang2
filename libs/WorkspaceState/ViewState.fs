@@ -127,7 +127,6 @@ type MessageRowVS =
         Usage: GenerationUsage option
         IsLastAssistant: bool
         Streaming: bool
-        AutoCollapseReasoning: bool
         MissingAttachments: Set<string>
         AwaitingApproval: Set<string>
         Index: int option

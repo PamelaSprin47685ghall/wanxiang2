@@ -86,13 +86,19 @@ module ModelSwitchPanel =
         b.Classes.Add "surface"
         b
 
+    /// 探针状态点的颜色键。只覆盖**会画点**的两个状态：调用方保证 `Unknown` 不进来，
+    /// 所以这里不设 `Unknown` 分支——给它一个色只会让「未知该画什么」重新变成可选项。
+    let private probeColorKey (state: ProbeState) : string =
+        match state with
+        | ProbeState.Probed _ -> "Palette.Success"
+        | ProbeState.Failed -> "Palette.Danger"
+        | ProbeState.Unknown -> invalidArg (nameof state) "未知探针态不画色点，不该走到取色键这一步"
+
+    /// 探针状态点的样式类。给色点一个身份，测试就不必靠「6x6 且无子节点」这种巧合认它。
+    let probeDotClass = "probe-dot"
+
     /// 探针状态点：已探明 Success、失败 Danger、未知不显示。直径与「默认」tag 的字高对齐。
     let private probeDot (state: ProbeState) : Control =
-        let key =
-            match state with
-            | ProbeState.Probed _ -> "Palette.Success"
-            | _ -> "Palette.Danger"
-
         let b =
             Border(
                 Width = 6.0,
@@ -101,7 +107,9 @@ module ModelSwitchPanel =
                 VerticalAlignment = VerticalAlignment.Center
             )
 
-        b.Bind(Border.BackgroundProperty, Dyn.res key) |> ignore
+        b.Classes.Add probeDotClass
+        b.Bind(Border.BackgroundProperty, Dyn.res (probeColorKey state)) |> ignore
+
         b :> Control
 
     let private row
@@ -176,9 +184,15 @@ module ModelSwitchPanel =
                 Focusable = true,
                 Child = grid,
                 Padding = Thickness(12.0, 6.0),
-                CornerRadius = CornerRadius 8.0,
-                MinHeight = 34.0
+                CornerRadius = CornerRadius 8.0
             )
+
+        // 行高读刻度，不写常数。这一行是菜单项（读屏角色 MenuItem），
+        // 所以用 `Metric.MenuItemMinHeight` 这一档：它本就是这个语义的登记值。
+        // 原先这里硬编码 34，而该档的值恰好也是 34——「两处数值相同、来源不同」，
+        // 改刻度时界面不会跟。与之前字号、思考块折叠、代码折行是同一种缺陷。
+        host.Bind(Border.MinHeightProperty, Dyn.res "Metric.MenuItemMinHeight")
+        |> ignore
 
         for c in [ rowClass; "menu-item"; "surface"; "hover-plain" ] do
             host.Classes.Add c

@@ -22,7 +22,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | R0 | P1（已修） | `app/Pwa/Program.fs` | 未提交改动中缺 `open System.Threading`，PWA 入口无法编译（FS0039） | 构建失败输出；补引用后 0 警告 0 错误 | 已补一行 open，无行为改动 | `run-pwa.sh` 构建通过；`./x check` 通过 |
 | A1 | A | `libs/ThemeMetrics/ThemeMetrics.fs`（FontCaption 11.5 / Small 12.5 / Body 13.5 / Reading 14.5） | 相邻字号级差仅 1px，正文与辅助文字、标签与正文的层级区分弱；长对话与设置表单里「哪里是正文、哪里是说明」要靠颜色猜 | `ThemeMetrics.fs:326-333`；画廊基准图可见 | 方案：在独立分支试 1.25 比率（如 Body 14、Reading 15.5、Caption 12），出前后对比截图后再定。**不直接全局放大**（任务约束） | 前后截图对比 + 画廊基线重生成 + `./x compose` 全绿；需负责人确认数值 |
-| A2 | A | `libs/ModelSwitchPanel/ModelSwitchPanel.fs`、`compose/AppShell/AppShell.fs` | 模型切换浮层：探活状态只有文字 tag（"已探测/未探测"），无颜色语义；行高 32、行圆角 4（低于控件默认 8 的规范档）；服务名与模型名同灰度同字号，层级平 | `ModelSwitchPanel.fs` 的 `tag`/`row`（MinHeight 32、CornerRadius 4、muted tag）；`ModelSwitchPanel_models.png` | 对照参考设计（列表 + 状态点 + 标签 + 备注）：探针状态加色点（成功 Success / 失败 Danger / 未探测 TextFaint），行高提到 36、圆角对齐 `Radius.md`，服务名作为弱化第二行。状态事实仍来自 `probeNote` 字符串归类，不新增状态源 | 画廊条目更新 + 像素基线重生成 + `ModelSwitchPanel` headless 测试补状态点断言；作为第一批判试点先出前后对比 |
+| A2 | A（已完成） | `libs/ModelSwitchPanel/ModelSwitchPanel.fs`、`compose/AppShell/AppShell.fs` | 模型切换浮层：探活状态只有文字 tag（"已探测/未探测"），无颜色语义；行高 32、行圆角 4（低于控件默认 8 的规范档）；服务名与模型名同灰度同字号，层级平 | `ModelSwitchPanel.fs` 的 `tag`/`row`（MinHeight 32、CornerRadius 4、muted tag）；`ModelSwitchPanel_models.png` | 对照参考设计（列表 + 状态点 + 标签 + 备注）：探针状态加色点（成功 Success / 失败 Danger / 未探测 TextFaint），行高提到 36、圆角对齐 `Radius.md`，服务名作为弱化第二行。状态事实仍来自 `probeNote` 字符串归类，不新增状态源 | 画廊条目更新 + 像素基线重生成 + `ModelSwitchPanel` headless 测试补状态点断言；作为第一批判试点先出前后对比。**已收口（2026-11-01）：色点/双行/圆角 8 已落地；行高保持 34 但改读 `Metric.MenuItemMinHeight`；未知态确定为不画点。逐项核对见 §6《A2 现状》** |
 | A3 | A | `compose/SidebarDesk/SidebarDesk.fs`（`previewFor`） | 会话行第二行把「归档/分叉前缀 + 模型 · 时间（+ 搜索片段）」拼成一条同灰度文本，扫读时时间与模型不可分 | `SidebarDesk.fs` 的 previewFor 实现；`SidebarDesk_rows.png` | 第二行拆层：时间右对齐弱化，模型名弱化居左，归档/分叉改小 tag；命中片段保持独立一行 | `SidebarDesk` headless 测试 + `SidebarDesk_rows` 基线重生成 + 窄屏（compact 断点 720 以下）不溢出 |
 | A4 | B | `compose/SettingsScreen/SettingsScreen.fs`（surface 固定 Width=720） | 大窗口下设置页居中 720，两侧留白偏大；信息密度偏低 | `SettingsScreen.fs` 的 surface 定义；`SettingsScreen_providers.png` | 观察项：先在第一批改造后重新评估，若仍显空再议（涉及 SettingsFrame 布局，不在第一批判动） | 暂无（观察项） |
 | A5 | 已核实（常驻为有意设计） | `compose/MessageCardView/Card.fs:615` | 消息操作条在画廊基准图中呈常驻。实读实现：`Actions` 显式选 `StripRest.Subtle`，注释写明「对齐 react：msg-actions 不随悬停淡出，闲置也全程可见」；`ActionStrip` 另有 `Hidden` 档（仍占位、可命中、可聚焦，只改不透明度），随时可切换 | `Card.fs` 的 `Actions`/`StripRest`；`libs/ActionStrip/ActionStrip.fs:25-29` | 不列入第二批改动：常驻对齐 react 参照，且 `Hidden` 档保留为可拆增强（无障碍上恒显比 hover 才现更稳）。若后续要改非常驻，属新契约决策，需负责人确认 | 已核实补记（2026-10-30） |
@@ -103,6 +103,32 @@
 - 画廊基准渲染：11 张 PNG 生成成功（8 浅 + 3 深），已归档 `docs/evidence/ui-refactor-baseline/`。
 - 未做：PWA 真机交互走查（R-b）；A5 的实现核实。
 
+### A2 现状（2026-11-01 复核，替代 §2 表格里那行的过期描述）
+
+§2 的 A2 一行写「探活状态只有文字 tag、行高 32、行圆角 4、服务名与模型名同灰度同字号」，**这与当前代码不符**——该行是 `312709f`（其提交信息写的是「第二批界面重构·第一波」，§4 批次表里归在第二批）之前的账，本节取代它。逐项核对 `libs/ModelSwitchPanel/ModelSwitchPanel.fs`：
+
+| 原方案要求 | 现状 | 证据 |
+| :--- | :--- | :--- |
+| 探活状态加色点（Success / Danger） | 已实现 | `row` 的 `Probed` / `Failed` 分支（`probeDot` 及其私有的取色表） |
+| **未探测画淡灰点（`TextFaint`）** | **偏离：现为不画点，三种状态只出两种标记** | `row` 的 `ProbeState.Unknown -> ()` |
+| 服务名作为弱化第二行 | 已实现：模型名在上，`ProviderLabel` 在下并绑 `Palette.TextMuted` | `row` 里的 `text` / `provider` |
+| 行圆角对齐 `Radius.md`（8） | 已是 8 | `row` 的 `CornerRadius = CornerRadius 8.0` |
+| 行高提到 36 | **偏离：保持 34，但改为读刻度 `Metric.MenuItemMinHeight`**（该档值就是 34） | `row` 的 `Bind(Border.MinHeightProperty, Dyn.res "Metric.MenuItemMinHeight")` |
+| 行高不再写常数 | 已落地：改刻度即跟着变 | `row height follows the menu item metric, not a constant`（44 / 52 两次实测） |
+| 状态事实仍来自 `probeNote` 归类 | 仍是，`ProbeState.ofNote` | `ModelSwitchPanel.fs` 的 `ProbeState.ofNote`；唯一生产出口在 `compose/ModelSwitchDesk` |
+| headless 测试补状态点断言 | 原缺，2026-11-01 已补两条 | 见 §7 第 2 条 |
+
+两处**已拍板**（2026-11-01，负责人决定）：
+
+1. **行高：保持 34，但改为读刻度。** 原方案的 36 没有任何令牌支撑；而全仓有 `Metric.MenuItemMinHeight = 34.0`，语义正好是「菜单项行高」，`ModelSwitchPanel` 的读屏角色也是 `MenuItem`。原先这里是硬编码 34，与该档同值——「两处数值相同、来源不同」，改刻度时界面不会跟，与字号/思考块折叠/代码折行是同一类缺陷。现在改为 `Bind(Border.MinHeightProperty, Dyn.res "Metric.MenuItemMinHeight")`。
+   顺带查明：该档此前**零消费者**（与刚删的 `Metric.FontReading` 同类），现在有了第一个。
+   红绿证据：`row height follows the menu item metric, not a constant` —— 把资源调成 44 / 52 两次读行宿主实际高度；改回硬编码 34 时精确转红（已实测）。
+2. **未知状态不画点。** 保持现状。理由：没信息就不占位；且若画淡灰点，「有信息」与「无信息」在视觉上只差一个灰度，读起来仍要靠文字。原方案的 `TextFaint` 淡灰点不再执行。`probeColorKey` 继续用 `invalidArg` 守住「未知不该来取色」这条前提。
+
+- PWA：修复 FS0039 后构建 0 警告 0 错误，静态服务 HTTP 200，真实浏览器渲染正常。
+- 画廊基准渲染：11 张 PNG 生成成功（8 浅 + 3 深），已归档 `docs/evidence/ui-refactor-baseline/`。
+- 未做：PWA 真机交互走查（R-b）；A5 的实现核实。
+
 ### 合并后主仓 `published-smoke` 失败归因（2026-10-31，run `41183296884`）
 
 PR #15 与 #16 各自 CI 全绿，但两者合并后的 `main`（`63f9b65`）上 `published-smoke` 失败 4 项。逐层核查结论：**不是产品回归，是冒烟脚本对字体度量的敏感**。
@@ -119,5 +145,9 @@ PR #15 与 #16 各自 CI 全绿，但两者合并后的 `main`（`63f9b65`）上
 1. ~~A1 字号方案是否立项~~ → **已执行前置试验，结论见 §4《第四批前置试验结论》**：改度量档影响不到阅读正文（阅读字号走 `UiPrefs.fontScale`），且 `Metric.FontReading` 是零消费者死档。
    - `Metric.FontReading` **已删除**（2026-10-31，负责人拍板）：阅读列正文字号由 `UiPrefs.fontScale` 驱动是已确认的合理设计，留着这个度量档只会让下一个人误以为改它能改阅读正文。删除后 `./x test ThemeMetrics` 与 `./x compose`（67 个工程）全通过，反证无消费者。
    - **仍未做**：阅读区层级。若要做，手段是调 `fontScale` 默认值或改卡片内部层级色，不是改度量档。
-2. A2 模型浮层按参考图改造（状态点 + 行高 + 圆角）是否按第一批判试点执行。
+2. **A2 模型浮层：已收口**（2026-11-01）。
+   - 行高：保持 34，改为读 `Metric.MenuItemMinHeight`（原方案的 36 无令牌支撑；该档值恰为 34 且此前零消费者）。守护用例 `row height follows the menu item metric, not a constant`：把资源调成 44 / 52 两次读实际高度，改回硬编码即红（已实测）。
+   - 未知态：确定不画点（原方案的 `TextFaint` 淡灰点不再执行）。理由见 §6《A2 现状》。
+   - 色点：由 `probe dot draws the semantic colour of each known state` 与 `unknown probe state draws no status marker at all` 分工守护（前者**逐行**绑定「已探明行 → Success 画笔、失败行 → Danger 画笔」，后者断未知态无标记）。
+     这两条修过两次假绿：初版一条只断纯函数「状态→键」、另一条只断「有没有 6x6 的点」，把 `probeDot` 改成不读入参、恒用 `Palette.Danger` 时**两条都绿**；第二版改成「两个画笔都出现过」，把两个键**对调**时仍然全绿（界面上已探明显示红点、失败显示绿点）。现在按行绑定，两种注入都已实测转红。
 3. A4（设置页宽度）是否保持观察、暂不动 —— 第三批已把宽度与圆角接回刻度（`Metric.SettingsSurfaceWidth` / `CornerRadius.RadiusXl`），数值未变，后续调整只需改一个登记值。

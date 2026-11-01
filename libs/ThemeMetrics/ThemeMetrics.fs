@@ -8,7 +8,6 @@ type Metric =
     | FontCaption
     | FontSmall
     | FontBody
-    | FontReading
     | FontTitle
     | FontHeading
     | FontDisplay
@@ -184,7 +183,6 @@ module ThemeMetrics =
             Metric.FontCaption
             Metric.FontSmall
             Metric.FontBody
-            Metric.FontReading
             Metric.FontTitle
             Metric.FontHeading
             Metric.FontDisplay
@@ -330,7 +328,6 @@ module ThemeMetrics =
         | Metric.FontCaption -> 11.5
         | Metric.FontSmall -> 12.5
         | Metric.FontBody -> 13.5
-        | Metric.FontReading -> 14.5
         | Metric.FontTitle -> 16.0
         | Metric.FontHeading -> 19.0
         | Metric.FontDisplay -> 25.0

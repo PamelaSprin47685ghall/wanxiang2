@@ -40,4 +40,10 @@ fi
 # 同一时刻只允许一个写者）。
 export RestorePackagesPath="$PWD/artifacts/gallery-cache"
 
+# Wanxiang2.* 一律现取：包版本恒为 0.0.0-local，缓存里一旦留着上一次打的同名包，
+# NuGet 就认为无需还原，画廊会**静默**跑旧代码——实测症状是新写的行为用例转红，
+# 而源码明明是对的（2026-11-01 本地审查在 WorkspaceState 包上撞到）。
+# 与 ./x compose 同一处置：清掉再还原；第三方包不必每次重下。
+rm -rf artifacts/gallery-cache/wanxiang2.*
+
 exec dotnet run --project compose/Gallery/Gallery.fsproj -- "$@"

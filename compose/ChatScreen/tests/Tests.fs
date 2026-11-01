@@ -480,3 +480,52 @@ let ``整屏各状态渲染与可见性断言：空态、对话、生成中、�
 
         Assert.Equal("加载中…", s.Header.Title)
         r.Window.Close())
+
+[<Fact>]
+let ``思考块折叠由组合者按用户偏好填入，渲染层不再读别处的副本`` () =
+    Headless.run (fun () ->
+        let r = rig ()
+        let s = r.Screen
+
+        let withReasoning =
+            { msg "assistant" "结论。" 11UL with
+                reasoning = "先看目录，再决定读哪个文件。"
+            }
+
+        /// FoldHeader 在头部按钮上写自动化 ItemStatus（「已展开」/「已折叠」）：
+        /// 这是该控件对外承诺的可读状态，拿它断言不依赖正文块是否已建控件。
+        let thinkingExpanded () =
+            r.Window.UpdateLayout()
+
+            let statuses =
+                r.Window.GetVisualDescendants()
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? Control as c ->
+                        match AutomationProperties.GetItemStatus c with
+                        | "已展开" -> Some true
+                        | "已折叠" -> Some false
+                        | _ -> None
+                    | _ -> None)
+                |> List.ofSeq
+
+            Assert.Single statuses |> ignore
+            List.head statuses
+
+        // 偏好「收起」：卡片组收到的 ctx 是收起，思考块就该收起。
+        s.Render
+            { frame [ withReasoning ] None with
+                AutoCollapseReasoning = true
+            }
+
+        Assert.False(thinkingExpanded (), "收起偏好下思考块不该展开")
+
+        // 同一屏把偏好翻成「不收起」：下一次渲染必须跟着展开。
+        s.Render
+            { frame [ withReasoning ] None with
+                AutoCollapseReasoning = false
+            }
+
+        Assert.True(thinkingExpanded (), "不收起偏好下思考块应当展开")
+
+        r.Window.Close())

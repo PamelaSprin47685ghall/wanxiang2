@@ -126,7 +126,6 @@ let ``1000 条消息下 ItemsControl 使用 VirtualizingStackPanel 仅渲染视�
                 Usage = None
                 IsLastAssistant = false
                 Streaming = false
-                AutoCollapseReasoning = false
                 MissingAttachments = Set.empty
                 AwaitingApproval = Set.empty
                 Index = Some i
@@ -195,7 +194,6 @@ let ``ChatVS 单入口幂等渲染：空态、骨架与消息切换`` () =
                     Usage = None
                     IsLastAssistant = false
                     Streaming = false
-                    AutoCollapseReasoning = false
                     MissingAttachments = Set.empty
                     AwaitingApproval = Set.empty
                     Index = Some 1

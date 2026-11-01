@@ -61,7 +61,30 @@
 
 **处置**：A1 数值仍未拍板，本试验只产出上述事实，不改生产数值。`Metric.FontReading` 的删除或改用途属公开契约变更，需一并决定——若确认阅读列不打算回到度量档（现状由用户偏好直接驱动，是合理设计），则应删除该死档，避免下一个人误以为改它能改阅读正文。
 
+### 补记：试验环境本身有缺陷，已修（2026-10-31，提交 `4bf65ca`）
+
+上面的第 1 条结论需要限定范围。复核发现画廊自己把卡片字号抄成了常数 `14.5`（`compose/Gallery/Gallery.fs` 的 `cardOf`），而生产从 `model.Prefs.fontScale` 取——**两处数值相同、来源不同**。也就是说，试验时即使改了字号偏好，画廊也画不出来，这本身就会让「改字号看不出变化」变成必然结果。
+
+已修：`GalleryContext` 增加偏好字段，`Gallery.build` 用场景跑出的真实模型的 `Prefs` 整体覆盖（`FontScale` 只是当时那一步的形态；后续思考块折叠、减弱动效、代码折行也走同一字段，字段本身在 2026-11-01 由 `Prefs: UiPrefs` 取代，不再逐项展开），`cardOf` 不再抄常数（该字段在 context 里的初始值只是占位默认，`build` 必然覆盖）。红绿验证按**正文块**（`SelectableTextBlock`）口径：旧实现下新用例红，`Expected: [17.5]` / `Actual: [14.5]`；新实现下绿（正文 14.5 → 17.5 跟随）。
+
+因此第 1 条的准确表述是：**改 `ThemeMetrics` 字号档影响不到阅读正文**（这一点不受画廊缺陷影响，因为生产确实从 `UiPrefs.fontScale` 取）；而「画廊里改字号偏好有没有可见效果」此前无法验证，现在可以了（新用例 `对话卡字号跟随状态树的阅读字号偏好，不在条目里抄常数` 钉住）。
+
 第一批先行理由：A2 风险最小（单控件库 + 画廊条目 + 基线重生成），能最快建立「前后对比 → 门禁 → 提交」的完整回路。
+
+### 同源缺陷第二次：思考块折叠偏好走的是「逐行复制」
+
+修完字号常数后按同一口径复核其余偏好，发现 `UiPrefs.autoCollapseReasoning`（设置页「默认收起思考过程」，默认 `true`）在**画廊这条线**上不生效，根因是同一件事有两个来源：
+
+- `libs/WorkspaceState/Project.fs` 三个消息分支都把 `MessageRowVS.AutoCollapseReasoning` 写死 `false`；
+- `compose/MessageCardView/Card.fs` 的 `Render(row, …)` 又用 `row.AutoCollapseReasoning` 覆盖组合者传进来的 `CardContext.AutoCollapseReasoning`。
+
+生产的 `ChatScreen` 走的是 `Render(MessageView, ctx, …)` 重载，读的是 `ctx.AutoCollapseReasoning`，所以生产侧开关本来有效；失效与失真都发生在「行记录这一份副本」上。画廊 `cardOf` 同样抄了常数。
+
+处置不是补断言，而是删掉这条重复通道：`MessageRowVS` 不再带 `AutoCollapseReasoning` 字段，`Card.Render(row, …)` 不再覆盖 ctx，折叠只由组合者按 `model.Prefs` 填。`GalleryContext` 的 `FontScale: float` 换成 `Prefs: UiPrefs` + `Wrap: CodeWrapMemory`，`Gallery.build` 用场景模型的偏好整体覆盖，`cardOf` 连 `Spin`（减弱动效）也一并按 `Prefs.reduceMotion` 填。
+
+红绿证据：在 `ChatScreen` 里把 `AutoCollapseReasoning = f.AutoCollapseReasoning` 改成恒 `false`、并把画廊 `cardOf` 改回常数后，`思考块折叠由组合者按用户偏好填入，渲染层不再读别处的副本`（ChatScreen）与 `对话卡思考块折叠跟随状态树的偏好，不在条目里抄常数`（画廊）双双红；恢复后 8 + 45 全绿，状态层 99 条全绿。画廊基线只动 `MessageCardView.assistant` 深浅两张（默认收起后正文不再展开），由 Linux 容器 `wx2-linux-gallery-env:local` 重新生成并逐像素复核 82/82。
+
+同类缺陷已出现三次（`fontScale`、`autoCollapseReasoning`、`codeWrap`），共同形态是「**数值相同、来源不同**」：组合者或投影抄一份常数/副本，改偏好时界面不动，测试也看不见。现在的口径是偏好只从 `model.Prefs` 流向 `CardContext`，不落在任何逐行记录里。
 
 ## 5. 风险与回归计划
 
@@ -80,10 +103,21 @@
 - 画廊基准渲染：11 张 PNG 生成成功（8 浅 + 3 深），已归档 `docs/evidence/ui-refactor-baseline/`。
 - 未做：PWA 真机交互走查（R-b）；A5 的实现核实。
 
+### 合并后主仓 `published-smoke` 失败归因（2026-10-31，run `41183296884`）
+
+PR #15 与 #16 各自 CI 全绿，但两者合并后的 `main`（`63f9b65`）上 `published-smoke` 失败 4 项。逐层核查结论：**不是产品回归，是冒烟脚本对字体度量的敏感**。
+
+- 唯一根因是「输入框右键菜单没弹出来」，另 3 项是它的连带（菜单没开 → 识别不到「粘贴」→ 剪贴板标记没入库 → 草稿与粘贴后不一致）。
+- 排除项：两 PR 各自 `published-smoke` 均通过；合并后 `gallery-baseline`、`compose`、`pack`、`app`、`desktop-smoke`、全部 104 个库测试都通过；`ThemeManager` 两边派生资源（`Margin.MessageEnd` 与 `CornerRadius.RadiusXl`）合并后都完整保留。
+- 排除「PR15 改了输入框布局导致点空」：把主仓 `main` 合进本地分支后重新 `publish` + 冒烟，**连续 4 次全过**（`coord=(393,519)`，菜单 `151×23` 正常弹出），且失败现场截图与本机截图画布布局差异仅 0.65%（纯字体渲染签名）。
+- 真实差异在坐标：同一 commit，CI 报 `coord=(393,465)`、本机报 `(393,519)`，**x 完全一致、y 差 54px**，而画布上输入壳的实际渲染区间两边都是 CSS `y=500..590`。也就是说 CI 上 `getBoundingClientRect()` 的 `top` 偏上 54px，右键因此落在输入壳之外。
+- 机制：Avalonia 的 `InputHelper.setBounds` 用 `textarea-caret-position` 建镜像 div，按 `fontFamily` / `fontSize` / `lineHeight` 反算 caret 偏移后再挪原生 `input`（`e.style.top = r - a`）。镜像 div 取浏览器可用字体，与画布里内嵌的 Sarasa 不是同一套度量；字体解析一旦不同，`a` 就不同，`input` 的 `top` 便整体偏移。
+- 处置：不改产品代码（产品行为在本机与 CI 的画布上都正确）。冒烟脚本保留原定位路径，但把失败输出补成「点击坐标 + 桥元素 rect + 画布尺寸」，让下一次能直接分辨「产品没弹菜单」与「脚本点错位置」。曾试过改用画布像素找输入壳外接矩形，但输入壳随草稿增高、且水平中心不是可右键区域，实测反而把原本通过的用例弄红（`(744,558)` 两帧无差异），已回退。
+
 ## 7. 待负责人确认
 
-1. ~~A1 字号方案是否立项~~ → **已执行前置试验，结论见 §4《第四批前置试验结论》**：改度量档影响不到阅读正文（阅读字号走 `UiPrefs.fontScale`），且 `Metric.FontReading` 是零消费者死档。仍需拍板两件事：
-   - 阅读区层级是否要做（若做，手段是调 `fontScale` 默认值或改卡片内部层级，不是改度量档）；
-   - `Metric.FontReading` 删除，还是改作他用。
+1. ~~A1 字号方案是否立项~~ → **已执行前置试验，结论见 §4《第四批前置试验结论》**：改度量档影响不到阅读正文（阅读字号走 `UiPrefs.fontScale`），且 `Metric.FontReading` 是零消费者死档。
+   - `Metric.FontReading` **已删除**（2026-10-31，负责人拍板）：阅读列正文字号由 `UiPrefs.fontScale` 驱动是已确认的合理设计，留着这个度量档只会让下一个人误以为改它能改阅读正文。删除后 `./x test ThemeMetrics` 与 `./x compose`（67 个工程）全通过，反证无消费者。
+   - **仍未做**：阅读区层级。若要做，手段是调 `fontScale` 默认值或改卡片内部层级色，不是改度量档。
 2. A2 模型浮层按参考图改造（状态点 + 行高 + 圆角）是否按第一批判试点执行。
 3. A4（设置页宽度）是否保持观察、暂不动 —— 第三批已把宽度与圆角接回刻度（`Metric.SettingsSurfaceWidth` / `CornerRadius.RadiusXl`），数值未变，后续调整只需改一个登记值。

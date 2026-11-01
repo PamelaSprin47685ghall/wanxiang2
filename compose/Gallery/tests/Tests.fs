@@ -9,6 +9,7 @@ open Xunit
 open Wanxiang2.Gallery
 open Wanxiang2.WorkspaceState
 open Wanxiang.Core
+open Wanxiang.UI
 
 /// 画廊的**行为**测试：钉住「不同状态真的不同」，而不是「渲染没抛异常」。
 ///
@@ -259,6 +260,198 @@ module Tests =
             let words = texts control
             Assert.Contains(words, (fun (w: string) -> w = "已选 2 项"))
             Assert.Contains(words, (fun (w: string) -> w = "归档")))
+
+    [<Fact>]
+    let ``对话卡字号跟随状态树的阅读字号偏好，不在条目里抄常数`` () =
+        Headless.run (fun () ->
+            // 生产路径：AppShell 把 model.Prefs.fontScale 传给卡片组（FontSize = model.Prefs.fontScale）。
+            // 画廊必须同源：同一条场景，改掉状态树里的字号偏好，卡片正文的字号就该跟着变。
+            // 若画廊自己抄一个常数（旧实现硬编码 14.5），这条会红——A1 试验正是因为这里不同源，
+            // 才把「改度量档影响不到阅读正文」当成结论。
+            let entry = Gallery.find "MessageCardView.assistant" |> Option.get
+
+            /// 把条目控件挂进窗口完成布局（Markdown 正文是懒渲染的，不挂窗口就不建控件），
+            /// 交给 f 读完再关窗。窗口必须在 finally 里关：中途断言失败留下未关窗口会污染后续用例。
+            /// 每次调用都新建 context 与控件——Desk 是每条目新建的，复用会让上一个条目的状态漏进来。
+            let measure (steps: Scenes.Step list) (read: Control -> 'a) : 'a =
+                let ctx = Gallery.createContext ()
+                let control = Gallery.build ctx { entry with Steps = steps }
+
+                let win =
+                    Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
+                try
+                    win.Show()
+                    win.UpdateLayout()
+                    read control
+                finally
+                    win.Close()
+
+            /// 正文块：Markdown 正文与用户气泡都是 SelectableTextBlock（可选中复制）。
+            /// 它的文字在 Inlines 里、Text 为 null，只按 Text 非空筛选会整条漏掉正文
+            /// （漏掉后剩下的最大值是思考块，用例就变成不可证伪）。
+            let bodyTexts (control: Control) : SelectableTextBlock list =
+                control
+                |> fun c -> Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(c :> Avalonia.Visual)
+                |> Seq.choose (fun v ->
+                    match v with
+                    | :? SelectableTextBlock as t when t.Inlines.Count > 0 -> Some t
+                    | _ -> None)
+                |> List.ofSeq
+
+            let bodySizes (steps: Scenes.Step list) =
+                measure steps (fun control ->
+                    let blocks = bodyTexts control
+                    Assert.NotEmpty blocks
+                    blocks |> List.map (fun b -> b.FontSize) |> List.distinct)
+
+            let baseline = bodySizes entry.Steps
+
+            let model, _ = Scenes.run entry.Steps
+
+            let enlargedPrefs =
+                { model.Prefs with
+                    fontScale = model.Prefs.fontScale + 3.0
+                }
+
+            let enlarged =
+                bodySizes (
+                    entry.Steps
+                    @ [
+                        Scenes.Msg(Msg.User(UserMsg.Settings(SettingsUserMsg.PrefsChanged enlargedPrefs)))
+                    ]
+                )
+
+            // 正文块的字号正是阅读字号：改偏好后它必须整体抬高，且抬高的幅度就是偏好增量。
+            Assert.Equal<float list>([ model.Prefs.fontScale ], baseline)
+            Assert.Equal<float list>([ enlargedPrefs.fontScale ], enlarged))
+
+    /// 思考块折叠与代码折行同属「用户偏好 → 卡片组入参」，与字号是同一类同源要求：
+    /// 画廊一旦自己抄一个常数，改偏好的场景在画廊里就看不出来，基线也就与生产脱钩。
+    /// 这三项各漏过一次（字号 `fontScale`、思考块 `AutoCollapseReasoning = false`、
+    /// 代码折行 `CodeWrapMemory false`），此用例钉住折叠这一项。
+    ///
+    /// 它断的是**画廊 → 卡片组**这一段：卡片组不再自己读别处的副本
+    /// （行记录里那个 `AutoCollapseReasoning` 字段已删除），所以把 `cardOf` 的入参改回常数，
+    /// 本条与基线都会红。组合者那一段（AppShell/ChatScreen 按 `model.Prefs` 填 ctx）
+    /// 由 `compose/ChatScreen/tests/Tests.fs` 的用例钉住。
+    [<Fact>]
+    let ``对话卡思考块折叠跟随状态树的偏好，不在条目里抄常数`` () =
+        Headless.run (fun () ->
+            let entry = Gallery.find "MessageCardView.assistant" |> Option.get
+
+            let measure (steps: Scenes.Step list) (read: Control -> 'a) : 'a =
+                let ctx = Gallery.createContext ()
+
+                let control = Gallery.build ctx { entry with Steps = steps }
+
+                let win =
+                    Window(Width = Gallery.canvasWidth, Height = Gallery.canvasHeight, Content = control)
+
+                try
+                    win.Show()
+                    win.UpdateLayout()
+                    read control
+                finally
+                    win.Close()
+
+            /// 思考块的折叠态由 FoldHeader（原生 Expander 封装）表达：它在头部按钮上
+            /// 写自动化属性 ItemStatus（「已展开」/「已折叠」），这是该控件对外承诺的
+            /// 可读状态（见 libs/ActionStrip/AGENTS.md 的 FoldHeader 一节）。
+            /// 用它断言，不依赖正文块是否已建控件——收起时 RevealPane 的内容本来就不在可视树里。
+            /// 注意：卡片里放的是 FoldHeader.Header（按钮），Expander 本身不进可视化树，
+            /// 所以不能去树里找 Expander 实例。
+            let thinkingExpanded (steps: Scenes.Step list) =
+                measure steps (fun control ->
+                    let statuses =
+                        control
+                        |> fun c -> VisualExtensions.GetVisualDescendants(c :> Avalonia.Visual)
+                        |> Seq.choose (fun v ->
+                            match v with
+                            | :? Control as c ->
+                                match Avalonia.Automation.AutomationProperties.GetItemStatus c with
+                                | "已展开" -> Some true
+                                | "已折叠" -> Some false
+                                | _ -> None
+                            | _ -> None)
+                        |> List.ofSeq
+
+                    Assert.Single statuses |> ignore
+                    List.head statuses)
+
+            let model, _ = Scenes.run entry.Steps
+
+            // 默认偏好 autoCollapseReasoning = true：完成后必须收起。
+            Assert.True(model.Prefs.autoCollapseReasoning, "默认偏好应当是收起思考块")
+            Assert.False(thinkingExpanded entry.Steps, "收起偏好下，画廊的思考块正文不该展开")
+
+            // 改成不收起：同一条场景必须跟着展开。
+            let expandPrefs =
+                { model.Prefs with
+                    autoCollapseReasoning = false
+                }
+
+            let expanded =
+                thinkingExpanded (
+                    entry.Steps
+                    @ [
+                        Scenes.Msg(Msg.User(UserMsg.Settings(SettingsUserMsg.PrefsChanged expandPrefs)))
+                    ]
+                )
+
+            Assert.True(expanded, "不收起偏好下，画廊的思考块正文必须展开"))
+
+    /// 减弱动效有两个出口：卡片组入参 `CardContext.Spin`（转圈是否转）与主题资源
+    /// `Motion.Reduced`（`CardUi.reduced` / MarkdownView 在动作时刻现读）。生产由入口的
+    /// `SetReducedMotion` 端口写进 `SharedTheme.manager.Motion`，画廊必须走同一条资源，
+    /// 否则同一份偏好有两个来源：转圈跟场景走，「减弱时隐藏什么」不跟。
+    /// 这里直接读主题资源上的真实值——改回固定 `false` 的 `ThemeManager` 构造，本条即红。
+    [<Fact>]
+    let ``画廊的减弱动效写进主题资源，不只改卡片入参`` () =
+        Headless.run (fun () ->
+            let entry = Gallery.find "MessageCardView.assistant" |> Option.get
+            let ctx = Gallery.createContext ()
+
+            let reducedAfter (prefsOf: UiPrefs -> UiPrefs) =
+                let steps =
+                    entry.Steps
+                    @ [
+                        Scenes.Msg(
+                            Msg.User(UserMsg.Settings(SettingsUserMsg.PrefsChanged(prefsOf (Workspace.init ()).Prefs)))
+                        )
+                    ]
+
+                Gallery.build ctx { entry with Steps = steps } |> ignore
+                ctx.Theme.Motion.IsReduced
+
+            Assert.False(reducedAfter id, "默认偏好不减弱动效，主题资源不该写着减弱")
+
+            Assert.True(reducedAfter (fun p -> { p with reduceMotion = true }), "场景把减弱动效打开后，画廊的主题资源必须跟着写 true"))
+
+    /// 代码折行是第三个「偏好 → 卡片组入参」同源点。它走的是对象而非 bool：
+    /// `MarkdownHost` 要的是 `CodeWrapMemory` 实例，`Gallery.build` 每次按场景模型写 `Wrapped`。
+    /// 这条读的是实例上的真实值——改回 `CodeWrapMemory false` 的固定初值，本条即红。
+    [<Fact>]
+    let ``画廊的代码折行记忆跟随状态树的偏好`` () =
+        Headless.run (fun () ->
+            let entry = Gallery.find "MessageCardView.assistant" |> Option.get
+            let ctx = Gallery.createContext ()
+
+            let wrappedAfter (prefsOf: UiPrefs -> UiPrefs) =
+                let steps =
+                    entry.Steps
+                    @ [
+                        Scenes.Msg(
+                            Msg.User(UserMsg.Settings(SettingsUserMsg.PrefsChanged(prefsOf (Workspace.init ()).Prefs)))
+                        )
+                    ]
+
+                Gallery.build ctx { entry with Steps = steps } |> ignore
+                ctx.Wrap.Wrapped
+
+            let initial = (Workspace.init ()).Prefs.codeWrap
+            Assert.Equal(initial, wrappedAfter id)
+            Assert.Equal(not initial, wrappedAfter (fun p -> { p with codeWrap = not p.codeWrap })))
 
     [<Fact>]
     let ``确认框：标题与取消键真的画了出来`` () =

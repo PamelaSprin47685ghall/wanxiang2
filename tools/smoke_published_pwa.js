@@ -263,6 +263,16 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             return !!e && document.activeElement === e && getComputedStyle(e).display !== 'none';
         })()`);
         // 先用公开快捷键聚焦，再从原生输入桥读取光标位置；不探点起手式。
+        //
+        // 关于 rect 的可信度：Avalonia 的 `InputHelper.setBounds` 会用
+        // `textarea-caret-position` 建一个**镜像 div**，按 fontFamily / fontSize /
+        // lineHeight 反算 caret 偏移，再把原生 input 挪过去（`avalonia.js`：
+        // `getCaretCoordinates(e,s)` → `e.style.top=(r-a)`）。镜像 div 用浏览器可用字体，
+        // 与画布里内嵌的 Sarasa 不是同一套度量，所以这个 rect 的**绝对值**在不同环境会漂。
+        // 实测同一 commit：CI 报 y=465、本地报 y=519，画布布局逐像素相同。
+        // 但它只是「原生输入元素的落点」，右键**命中与否最终由画布决定**；因此这里不把它
+        // 当成绝对真值使用，而在失败时把 rect 与画布尺寸一并打出来，供下一次区分
+        // 「产品没弹菜单」与「脚本点错了位置」。
         let composerCoord = { x: 732, y: 380 };
         const focusComposer = async () => {
             await page.keyboard.down('Control');
@@ -639,8 +649,21 @@ const checkSkip = (name, reason, detail) => { skipped++; console.log(`SKIP ${nam
             if (pastePoint) {
                 await page.mouse.click(pastePoint.x, pastePoint.y);
             } else {
+                // 失败时把「点了哪、桥元素在哪、画布上的输入壳在哪」一起打出来：
+                // 只报「两帧无差异」无法区分「产品没弹菜单」与「脚本点错了位置」。
+                const diag = await page.evaluate(() => {
+                    const e = document.querySelector('.avalonia-input-element');
+                    const r = e ? e.getBoundingClientRect() : null;
+                    const c = document.querySelector('canvas');
+                    return {
+                        bridgeRect: r ? { left: r.left, top: r.top, width: r.width, height: r.height } : null,
+                        canvas: c ? { w: c.width, h: c.height, cssW: c.clientWidth, cssH: c.clientHeight } : null,
+                    };
+                });
                 check('菜单定位：在弹出菜单里识别到「粘贴」并得到可点坐标', false,
-                    `菜单区=${pasteRegion ? JSON.stringify(pasteRegion.bb) : '两帧无差异'}`);
+                    `点=(${composerCoord.x.toFixed(0)},${composerCoord.y.toFixed(0)}) ` +
+                    `菜单区=${pasteRegion ? JSON.stringify(pasteRegion.bb) : '两帧无差异'} ` +
+                    `桥矩形=${JSON.stringify(diag.bridgeRect)} 画布=${JSON.stringify(diag.canvas)}`);
                 // 没有坐标准确点击；保持后续步骤对空结果的容错。
                 await page.keyboard.press('Escape');
             }

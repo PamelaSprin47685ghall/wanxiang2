@@ -1584,3 +1584,66 @@ module WorkspaceStateTests =
         let vs4 = Workspace.project m4
         Assert.Equal(None, vs4.Chat.Error)
         Assert.Equal(SendButtonState.Idle, vs4.Composer.Send.State)
+
+    // ---------------------------------------------------------------- 思考块折叠偏好（2026-10-31）
+    //
+    // 设置页有「默认收起思考过程」开关（UiPrefs.autoCollapseReasoning，默认 true）。
+    // 曾经有两处各自记一份：Project 逐行写死 false，`MessageCards.Render(row, …)` 又用行值
+    // 覆盖组合者传进 ctx 的值。结果是「同一件事两个来源」——组合者传什么都被行盖掉。
+    //
+    // 现在的归属：折叠是**用户偏好**，只由组合者按 `model.Prefs` 填进 `CardContext`；
+    // `MessageRowVS` 只装这一条消息自己的事实，不复制全局偏好。
+    // 组合者层的红绿证据在 `compose/ChatScreen/tests/Tests.fs` 的
+    // 「思考块折叠由组合者按用户偏好填入，渲染层不再读别处的副本」。
+
+    [<Fact>]
+    let ``用户偏好不进消息行：改偏好不改变投影里的消息事实`` () =
+        let convId = Guid.NewGuid()
+        let m0 = Workspace.init ()
+        let msg = JsonObject()
+        msg["commitId"] <- 1UL
+        msg["role"] <- "assistant"
+        msg["reasoning"] <- "先看目录，再决定读哪个文件。"
+        msg["text"] <- "我先确认一下目录结构。"
+
+        let snapshot =
+            WireEvent.ConversationSnapshot
+                {|
+                    conversationId = convId
+                    title = "对话"
+                    lastCommitId = 1UL
+                    runtimeState = "idle"
+                    generationId = None
+                    messages = JsonArray([| msg :> JsonNode |])
+                    snapshotEarliestCommitId = 0UL
+                    snapshotHasMore = false
+                    config = SessionConfig.empty
+                |}
+
+        let ready =
+            { m0 with
+                Conn = ConnPhase.Authed("inst-1", CatalogPhase.Ready(Catalog.empty, WorkspacePhase.IdleEmpty))
+            }
+
+        let m1, _ = Workspace.update now0 (Msg.WireRecv snapshot) ready
+        // 默认偏好是收起
+        Assert.True m1.Prefs.autoCollapseReasoning
+
+        let rows (m: WorkspaceModel) =
+            match (Workspace.project m).Chat.Phase with
+            | ChatPhase.Messages rs -> rs
+            | other -> failwithf "应当是消息态，实际: %A" other
+
+        Assert.NotEmpty(rows m1)
+
+        // 拨到「不收起」：偏好落进模型，消息行里的一条事实都不该跟着变。
+        let openPrefs =
+            { m1.Prefs with
+                autoCollapseReasoning = false
+            }
+
+        let m2, _ =
+            Workspace.update now0 (Msg.User(UserMsg.Settings(SettingsUserMsg.PrefsChanged openPrefs))) m1
+
+        Assert.False m2.Prefs.autoCollapseReasoning
+        Assert.Equal<MessageRowVS list>(rows m1, rows m2)

@@ -7,6 +7,7 @@ open Avalonia.Controls
 open Avalonia.Headless
 open Avalonia.Input
 open Avalonia.Media
+open Avalonia.Controls.Documents
 open Avalonia.Threading
 open Xunit
 open Wanxiang2.ConversationRows
@@ -24,6 +25,10 @@ let private row i (running: bool) (pinned: bool) =
             TitleSpans = [ { Text = t; IsMatch = false } ]
             Preview = "预览"
             PreviewSpans = [ { Text = "预览"; IsMatch = false } ]
+            Provenance = []
+            Meta = "gpt-5"
+            Snippet = ""
+            SnippetSpans = []
             MetaRight = ""
             AccessibleName = t
             Tooltip = t
@@ -124,6 +129,10 @@ let ``active or selected rows highlight and update screen reader item status`` (
                     TitleSpans = [ { Text = "对话 3"; IsMatch = false } ]
                     Preview = "预览"
                     PreviewSpans = [ { Text = "预览"; IsMatch = false } ]
+                    Provenance = [ "归档" ]
+                    Meta = "gpt-5"
+                    Snippet = ""
+                    SnippetSpans = []
                     MetaRight = ""
                     AccessibleName = "对话 3"
                     Tooltip = "对话 3"
@@ -260,6 +269,10 @@ let ``meta right renders the timestamp as a right-docked block`` () =
                     TitleSpans = [ { Text = "对话"; IsMatch = false } ]
                     Preview = "gpt-5"
                     PreviewSpans = [ { Text = "gpt-5"; IsMatch = false } ]
+                    Provenance = []
+                    Meta = "gpt-5"
+                    Snippet = ""
+                    SnippetSpans = []
                     MetaRight = mr
                     AccessibleName = "对话"
                     Tooltip = "对话"
@@ -287,3 +300,186 @@ let ``meta right renders the timestamp as a right-docked block`` () =
         Dispatcher.UIThread.RunJobs()
         let blocks: Control list = stampBlocks ()
         Assert.Equal(1, blocks.Length))
+
+/// 第二行拆三层：来源标记渲染成 tag（Border 包着的短文字），模型名是独立的弱化 TextBlock，
+/// 命中片段单独一个 TextBlock。三者不再挤成一个同灰度的字符串。
+///
+/// 旧实现把「归档 · 模型\n片段」拼进一个 `Preview` 字符串再交给单个 TextBlock，
+/// 扫读时时间、模型、来源分不开。这条用例钉住拆开后的结构：
+/// 来源必须是**容器**（tag）而不是文字前缀，模型与片段必须是**两个**独立 TextBlock。
+[<Fact>]
+let ``row renders provenance as a tag and keeps model and snippet as separate lines`` () =
+    Headless.run (fun () ->
+        let r, _w = make ()
+
+        let item =
+            RowItem.Conversation
+                {
+                    Id = ids[0]
+                    Title = "对话"
+                    TitleSpans = [ { Text = "对话"; IsMatch = false } ]
+                    Preview = "分叉 · 归档 · gpt-5\n上次说的那个方案"
+                    PreviewSpans =
+                        [
+                            {
+                                Text = "分叉 · 归档 · gpt-5\n上次说的那个方案"
+                                IsMatch = false
+                            }
+                        ]
+                    Provenance = [ "归档"; "分叉" ]
+                    Meta = "gpt-5"
+                    Snippet = "上次说的那个方案"
+                    SnippetSpans = [ { Text = "上次说的那个方案"; IsMatch = false } ]
+                    MetaRight = "10月21日"
+                    AccessibleName = "对话"
+                    Tooltip = "对话"
+                    Running = false
+                    Pinned = false
+                    Archived = true
+                }
+
+        r.Render [ item ]
+        Dispatcher.UIThread.RunJobs()
+
+        let all =
+            Probe.descendants r.View
+            |> Seq.choose (function
+                | null -> None
+                | c -> Some c)
+            |> Seq.toList
+
+        let texts =
+            all
+            |> List.choose (function
+                | :? TextBlock as t ->
+                    let inlineText =
+                        if isNull t.Inlines then
+                            ""
+                        else
+                            t.Inlines
+                            |> Seq.choose (function
+                                | :? Run as r -> Some r.Text
+                                | _ -> None)
+                            |> String.concat ""
+
+                    let s = if isNull t.Text then inlineText else t.Text
+
+                    if String.IsNullOrEmpty s then None else Some s
+                | _ -> None)
+
+        // 来源是**两个** tag：文字在 Border 里，且不带「· 」前缀。
+        let tagTexts =
+            all
+            |> List.choose (function
+                | :? Border as b when not (isNull b.Child) ->
+                    match b.Child with
+                    | :? TextBlock as t when not (isNull t.Text) -> Some t.Text
+                    | _ -> None
+                | _ -> None)
+
+        Assert.Contains("归档", tagTexts)
+        Assert.Contains("分叉", tagTexts)
+        // 前缀写法必须消失：否则还是「一条同灰度的串」
+        Assert.DoesNotContain(texts, fun t -> t.Contains "归档 · ")
+        Assert.DoesNotContain(texts, fun t -> t.Contains "分叉 · ")
+
+        // 模型与片段各是一个独立 TextBlock，不是同一串的两行。
+        Assert.Contains("gpt-5", texts)
+        Assert.Contains("上次说的那个方案", texts)
+        Assert.DoesNotContain(texts, fun t -> t.Contains "gpt-5\n"))
+
+/// 模型名再长也不能把行撑破：第二行必须收在行宽内。
+///
+/// 用 `Horizontal` 的 `StackPanel` 会让子元素按无限宽度测量，`TextTrimming`
+/// 因此失效，长模型名会把时间戳挤出可视区。这条用例钉住「收在行宽内」。
+[<Fact>]
+let ``long model name stays inside the row width`` () =
+    Headless.run (fun () ->
+        let r, w = make ()
+        let longModel = String.replicate 40 "very-long-model-name-"
+
+        let item =
+            RowItem.Conversation
+                {
+                    Id = ids[0]
+                    Title = "对话"
+                    TitleSpans = [ { Text = "对话"; IsMatch = false } ]
+                    Preview = longModel
+                    PreviewSpans = [ { Text = longModel; IsMatch = false } ]
+                    Provenance = [ "归档" ]
+                    Meta = longModel
+                    Snippet = "片段"
+                    SnippetSpans = [ { Text = "片段"; IsMatch = false } ]
+                    MetaRight = "10月21日"
+                    AccessibleName = "对话"
+                    Tooltip = "对话"
+                    Running = false
+                    Pinned = false
+                    Archived = true
+                }
+
+        r.Render [ item ]
+        Dispatcher.UIThread.RunJobs()
+        w.UpdateLayout()
+
+        let row = hostOf r 0
+
+        let metaText =
+            Probe.descendants row
+            |> Seq.choose (function
+                | :? TextBlock as t when t.Text = longModel -> Some t
+                | _ -> None)
+            |> Seq.tryHead
+
+        match metaText with
+        | None -> Assert.Fail "模型名 TextBlock 未渲染"
+        | Some t ->
+            let bounds = t.Bounds
+            // 行宽 900 的窗口里，单块文本不该超出宿主宽度；Horizontal StackPanel 下会远超。
+            Assert.True(
+                t.DesiredSize.Width <= row.Bounds.Width - 40.0,
+                sprintf "模型名宽 %.1f 超出可用行宽 %.1f" t.DesiredSize.Width row.Bounds.Width
+            )
+
+            Assert.True(bounds.Width <= row.Bounds.Width, "模型名实际布局宽度超出宿主"))
+
+/// 时间戳不能因为三层全空而被吞掉。
+///
+/// 旧实现只要 `MetaRight` 非空就渲染时间。拆三层后若把「三层全空」的回退
+/// 放在最前面，会遮住「三层全空但有时间」这条路径，时间戳静默消失。
+[<Fact>]
+let ``timestamp still shows when provenance model and snippet are all empty`` () =
+    Headless.run (fun () ->
+        let r, _w = make ()
+
+        let item =
+            RowItem.Conversation
+                {
+                    Id = ids[0]
+                    Title = "对话"
+                    TitleSpans = [ { Text = "对话"; IsMatch = false } ]
+                    Preview = ""
+                    PreviewSpans = []
+                    Provenance = []
+                    Meta = ""
+                    Snippet = ""
+                    SnippetSpans = []
+                    MetaRight = "10月21日"
+                    AccessibleName = "对话"
+                    Tooltip = "对话"
+                    Running = false
+                    Pinned = false
+                    Archived = false
+                }
+
+        r.Render [ item ]
+        Dispatcher.UIThread.RunJobs()
+
+        let stamps =
+            Probe.descendants r.View
+            |> Seq.choose (function
+                | :? TextBlock as t when t.Text = "10月21日" -> Some t
+                | _ -> None)
+            |> Seq.toList
+
+        Assert.Equal(1, stamps.Length))

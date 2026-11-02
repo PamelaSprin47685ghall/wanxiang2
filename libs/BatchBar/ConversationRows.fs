@@ -36,8 +36,18 @@ type RowModel =
         Id: Guid
         Title: string
         TitleSpans: RowSpan list
+        /// 第二行的整串预览（模型 + 来源 + 片段），供无障碍名与 tooltip 用。
+        /// 视觉上不再直接渲染这一段：它被拆成 `Provenance` / `Meta` / `Snippet` 三层。
         Preview: string
         PreviewSpans: RowSpan list
+        /// 来源标记（「归档」「分叉」），渲染成小 tag。空列表不占位。
+        Provenance: string list
+        /// 来源标记之后的弱化元信息：模型名。空串不显示。
+        Meta: string
+        /// 搜索命中片段，独立一行。空串不显示。
+        Snippet: string
+        /// 片段的命中高亮；与 `Snippet` 同源（都由同一个 `spansOf` 切出来）。
+        SnippetSpans: RowSpan list
         /// 第二行右侧的弱化时间戳（如「14:05」「昨天」）。空串不显示。
         MetaRight: string
         AccessibleName: string
@@ -283,26 +293,120 @@ type ConversationRows() =
         let column =
             StackPanel(Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center, Spacing = 2.0)
 
-        // 第二行：左侧元信息（模型 · 归档/分叉 + 片段），右侧弱化时间。时间在 Dock.Right，与文字不共灰度。
-        let previewRow: Control =
-            if String.IsNullOrWhiteSpace m.MetaRight then
-                preview :> Control
-            else
-                let stamp =
-                    TextBlock(
-                        FontSize = 11.5,
-                        VerticalAlignment = VerticalAlignment.Bottom,
-                        Margin = Thickness(8.0, 0.0, 0.0, 0.0)
+        // 第二行：左侧「来源 tag + 模型（弱化）」+ 可选片段，右侧弱化时间。
+        // 时间在 Dock.Right，与文字不共灰度；来源从文字前缀改成小 tag，扫读时不再和模型名混为一串。
+        let metaRow: Control =
+            // 用 Grid 分 Auto / * 两列：模型名在 `*` 列里才有宽度上限。
+            // `Horizontal` 的 StackPanel 会按无限宽度测量子元素，长模型名会撑破行宽、把时间戳挤出可视区。
+            let grid = Grid()
+
+            grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Auto))
+            grid.ColumnDefinitions.Add(ColumnDefinition(Width = GridLength.Star))
+
+            if not m.Provenance.IsEmpty then
+                let strip =
+                    StackPanel(
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 4.0,
+                        VerticalAlignment = VerticalAlignment.Center
                     )
 
-                stamp.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
-                stamp.Text <- m.MetaRight
+                for p in m.Provenance do
+                    let label = TextBlock(Text = p, FontSize = 11.5)
+                    label.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
 
+                    let tagBox =
+                        Border(
+                            Child = label,
+                            CornerRadius = CornerRadius 999.0,
+                            Padding = Thickness(6.0, 0.0),
+                            VerticalAlignment = VerticalAlignment.Center
+                        )
+
+                    tagBox.Classes.Add "surface"
+                    strip.Children.Add tagBox
+
+                grid.Children.Add strip
+
+            if not (String.IsNullOrWhiteSpace m.Meta) then
+                let meta =
+                    TextBlock(
+                        Text = m.Meta,
+                        FontSize = 11.5,
+                        TextTrimming = TextTrimming.CharacterEllipsis,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = Thickness((if m.Provenance.IsEmpty then 0.0 else 4.0), 0.0, 0.0, 0.0)
+                    )
+
+                meta.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
+                Grid.SetColumn(meta, 1)
+                grid.Children.Add meta
+
+            grid :> Control
+
+        let previewRow: Control =
+            // 片段独立一行：搜索命中时它不该和模型名挤在同一行。
+            let lines =
+                StackPanel(
+                    Orientation = Orientation.Vertical,
+                    Spacing = 2.0,
+                    VerticalAlignment = VerticalAlignment.Center
+                )
+
+            lines.Children.Add metaRow
+
+            if not (String.IsNullOrWhiteSpace m.Snippet) then
+                let snippet =
+                    TextBlock(
+                        FontSize = 11.5,
+                        TextTrimming = TextTrimming.CharacterEllipsis,
+                        TextWrapping = TextWrapping.NoWrap
+                    )
+
+                snippet.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint")
+                |> ignore
+
+                // 用 span 而不是 `Text`：搜索命中要在片段里高亮，设了 `Text` 就没法插 Run。
+                spans snippet m.SnippetSpans
+                lines.Children.Add snippet
+
+            let hasText =
+                not m.Provenance.IsEmpty
+                || not (String.IsNullOrWhiteSpace m.Meta)
+                || not (String.IsNullOrWhiteSpace m.Snippet)
+
+            let stamp =
+                if String.IsNullOrWhiteSpace m.MetaRight then
+                    None
+                else
+                    let t =
+                        TextBlock(
+                            Text = m.MetaRight,
+                            FontSize = 11.5,
+                            VerticalAlignment = VerticalAlignment.Bottom,
+                            Margin = Thickness(8.0, 0.0, 0.0, 0.0)
+                        )
+
+                    t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
+
+                    Some t
+
+            match hasText, stamp with
+            | true, Some t ->
                 let dock = DockPanel(LastChildFill = true)
-                DockPanel.SetDock(stamp, Dock.Right)
-                dock.Children.Add stamp
+                DockPanel.SetDock(t, Dock.Right)
+                dock.Children.Add t
+                dock.Children.Add lines
+                dock :> Control
+            | true, None -> lines :> Control
+            // 三层全空但有时间：旧实现会渲染时间，回退到预览串会把它吞掉。
+            | false, Some t ->
+                let dock = DockPanel(LastChildFill = true)
+                DockPanel.SetDock(t, Dock.Right)
+                dock.Children.Add t
                 dock.Children.Add preview
                 dock :> Control
+            | false, None -> preview :> Control
 
         column.Children.Add titleRow
         column.Children.Add previewRow
@@ -603,6 +707,17 @@ type ConversationRows() =
                 TitleSpans = spans row.Title
                 Preview = row.Preview
                 PreviewSpans = spans row.Preview
+                // 回退路径：直接用状态树里的事实字段，不从预览串里再解析一遍。
+                Provenance =
+                    [
+                        if row.Archived then
+                            "归档"
+                        if row.IsFork then
+                            "分叉"
+                    ]
+                Meta = row.Model
+                Snippet = ""
+                SnippetSpans = []
                 MetaRight = ""
                 AccessibleName = row.Title
                 Tooltip = row.Title

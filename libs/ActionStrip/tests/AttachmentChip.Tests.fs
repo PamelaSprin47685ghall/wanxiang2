@@ -92,3 +92,21 @@ let ``附件条有读屏 Invoke 且触发下载`` () =
         c.Invoked.Add(fun () -> hits <- hits + 1)
         invokeVia c.Host
         Assert.Equal(1, hits))
+
+[<Fact>]
+let ``附件文件名最大宽跟随主题度量`` () =
+    Headless.run (fun () ->
+        let res = Application.Current.Resources
+        res["Metric.AttachmentNameMaxWidth"] <- box 320.0
+
+        try
+            let c = AttachmentChip(data)
+            let w = Window(Content = c.Host)
+            w.Show()
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs()
+            let row = (c.Host :?> Button).Content :?> StackPanel
+            let name = row.Children[1] :?> TextBlock
+            Assert.Equal(320.0, name.MaxWidth)
+            w.Close()
+        finally
+            res.Remove "Metric.AttachmentNameMaxWidth" |> ignore)

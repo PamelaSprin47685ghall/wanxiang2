@@ -227,4 +227,34 @@ let ``输入壳外层列跟随主题度量`` () =
         Dispatcher.UIThread.RunJobs()
 
         Assert.Equal(600.0, outer.MaxWidth)
+        Application.Current.Resources.Remove "Metric.ReadingWidth" |> ignore
         w.Close())
+
+[<Fact>]
+let ``输入框与排队按钮尺寸跟随主题度量`` () =
+    Headless.run (fun () ->
+        let res = Application.Current.Resources
+        let b = ComposerBox()
+        b.Render vs
+        let w = Window(Content = b.Host)
+        w.Show()
+        Dispatcher.UIThread.RunJobs()
+
+        try
+            res["Metric.ComposerInputMinHeight"] <- box 42.0
+            res["Metric.ComposerInputMaxHeight"] <- box 310.0
+            res["Metric.FontSmall"] <- box 15.0
+            res["Metric.TextButtonMinHeight"] <- box 40.0
+            Dispatcher.UIThread.RunJobs()
+
+            Assert.Equal(42.0, b.Input.MinHeight)
+            Assert.Equal(310.0, b.Input.MaxHeight)
+            Assert.Equal(15.0, b.QueueButton.FontSize)
+            Assert.Equal(40.0, b.QueueButton.MinHeight)
+            Assert.Equal(40.0, b.QueueButton.Height)
+        finally
+            res.Remove "Metric.ComposerInputMinHeight" |> ignore
+            res.Remove "Metric.ComposerInputMaxHeight" |> ignore
+            res.Remove "Metric.FontSmall" |> ignore
+            res.Remove "Metric.TextButtonMinHeight" |> ignore
+            w.Close())

@@ -171,6 +171,12 @@ type AttachmentTray() =
                         Child = buildIcon item
                     )
 
+                slot.Bind(Layoutable.WidthProperty, Dyn.res "Metric.ComposerAttachmentIconSlot")
+                |> ignore
+
+                slot.Bind(Layoutable.HeightProperty, Dyn.res "Metric.ComposerAttachmentIconSlot")
+                |> ignore
+
                 slot :> Control
 
         let name =

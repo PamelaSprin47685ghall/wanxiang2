@@ -45,7 +45,7 @@
 | 批次 | 内容 | 涉及 |
 | --- | --- | --- |
 | 第一批（试点） | A2 模型切换浮层（含参考设计对齐）+ A3 侧栏行层级 | `libs/ModelSwitchPanel`、`compose/SidebarDesk`、画廊条目与基线 |
-| 第二批 | 对话阅读区与输入区：消息卡层级（含 A5 结论）、正文宽度与间距核对 | `compose/ChatScreen`、`compose/MessageCardView`、`compose/ComposerDesk` |
+| 第二批（已完成） | 对话阅读区与输入区：消息卡层级（含 A5 结论）、正文宽度与间距核对，以及输入区/消息附件硬编码尺寸接回 `Metric.*` 并清理偏离现行 UI 的零消费者死档 | `compose/ChatPane`、`libs/AttachmentTray`、`libs/ActionStrip`、`libs/ThemeMetrics` |
 | 第三批 | 设置页与浮层（命令面板、审批、弹窗）统一尺寸与对齐；评估 A4 | `compose/SettingsScreen`、`compose/OverlayDesk` 等 |
 | 第四批 | 全局字号/间距收敛（A1，需负责人确认数值后执行） | `libs/ThemeMetrics`、`compose/Theme` |
 
@@ -162,3 +162,10 @@ PR #15 与 #16 各自 CI 全绿，但两者合并后的 `main`（`63f9b65`）上
    - 分支完备性（补测发现）：初版把「三层全空」的回退放在最前，遮住了「三层全空但有时间」这条路径，时间戳被静默吞掉。改为按 `hasText × stamp` 四格穷举；`timestamp still shows when provenance model and snippet are all empty` 钉住（改前实测红）。
    - 高亮用例收紧：`title and preview both highlight while searching` 原断言只数「至少两处命中」，手搓 `rowVS` 覆盖真实投影（`Snippet` 恒空）也能绿。改为走 `load` 的真实投影，并断言片段**自己那一行**的 Run 里有被点亮的段。破坏式注入验证：把片段渲染改成 `snippet.Text <- ""`、丢弃 `SnippetSpans` 后该用例转红（片段 TextBlock 只剩空串），还原后绿。
    - 基线：只动 `SidebarDesk.rows` / `.batch` / `.search` 三条目深浅共 6 张（0.05%~0.06% 像素），其余 76 张逐字节不变。基线由 Linux 容器 `wx2-linux-gallery-env:local` 重新生成并同容器内 82/82 逐像素复核通过；macOS 本机不能作为基线来源（用仓库原版基线跑，本机 80/82 失配，纯平台字体差异）。
+5. **第二批（对话阅读区与输入区）：已收口**（2026-11-03）。
+   - 阅读区宽度与间距核实：`compose/ChatPane/ChatPane.fs` 已将 `ReadingWidth`（748）、`MessageGap`（24）、`Margin.MessageEnd`（48）全部绑上 `Dyn.res` 动态资源；A5（操作条常驻）与 4 项阅读偏好（`fontScale` / `autoCollapseReasoning` / `codeWrap` / `reduceMotion`）均已核实收口。
+   - 输入区与消息附件同值项接回 `Metric.*`（消除本地属性遮蔽，零像素变化）：
+     - `libs/AttachmentTray/ComposerBox.fs`：输入框 `MinHeight`/`MaxHeight` 绑定 `Metric.ComposerInputMinHeight`（30.0）/ `Metric.ComposerInputMaxHeight`（240.0）；「排队发送」按钮 `FontSize`/`MinHeight`/`Height` 绑定 `Metric.FontSmall`（12.5）/ `Metric.TextButtonMinHeight`（34.0）；由 `输入框与排队按钮尺寸跟随主题度量` 守护。
+     - `libs/AttachmentTray/AttachmentTray.fs`：附件图标槽宽高绑定 `Metric.ComposerAttachmentIconSlot`（16.0）；由 `附件图标槽尺寸跟随主题度量` 守护。
+     - `libs/ActionStrip/AttachmentChip.fs`：消息内附件名最大宽绑定 `Metric.AttachmentNameMaxWidth`（260.0）；由 `附件文件名最大宽跟随主题度量` 守护。
+   - 清理 `libs/ThemeMetrics/ThemeMetrics.fs` 中 8 个从未消费且已偏离现行 UI 的死档：`ComposerMaxHeight`、`ComposerShellPaddingX`、`ComposerShellPaddingY`、`ComposerAttachmentNameMaxWidth`、`ComposerAttachmentStateWidth`、`ComposerModelMaxWidth`、`ComposerModelCompactMaxWidth`、`AttachmentRowPaddingY`，由 `退场的阅读字号与输入区冗余死档不再回到刻度上` 防回潮。

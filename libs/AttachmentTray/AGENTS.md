@@ -12,7 +12,7 @@
 ## 接口（给宿主与组合者）
 
 ### AttachmentTray
-- `AttachmentTray()`：构造附件托盘。
+- `AttachmentTray()`：构造附件托盘；非缩略图附件的图标槽宽高绑定 `Metric.ComposerAttachmentIconSlot`（16.0，由 `附件图标槽尺寸跟随主题度量` 守护）。
 - `member Host: Control`：托盘根控件。
 - `member Count: int`：附件数量。
 - `member Render(items: TrayItem list, compact: bool): unit`：单入口投影，呈现事实（文件名 / 大小 / 状态 / 提示 / 失败 / 缩略图 / 缩小说明）与窄屏密度一次给全（AttachmentTray.fs:230）。
@@ -20,7 +20,7 @@
 - `member OnRemove(f: Guid -> unit): unit`：移除回调。
 
 ### ComposerBox
-- `ComposerBox()`：构造输入壳。
+- `ComposerBox()`：构造输入壳；外层列宽绑 `Metric.ReadingWidth`（748.0），输入框最小/最大高绑 `Metric.ComposerInputMinHeight`（30.0）/ `Metric.ComposerInputMaxHeight`（240.0），「排队发送」按钮字号与高绑 `Metric.FontSmall`（12.5）/ `Metric.TextButtonMinHeight`（34.0）（由 `输入壳外层列跟随主题度量`、`输入框与排队按钮尺寸跟随主题度量` 守护）。
 - `member Host: Control`：输入壳根控件。
 - `member Input: TextBox`：输入文本框。
 - `member SendButton: Button`：发送/停止按钮。

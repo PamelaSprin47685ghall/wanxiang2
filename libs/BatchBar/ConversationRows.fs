@@ -223,20 +223,22 @@ type ConversationRows() =
 
         let title =
             TextBlock(
-                FontSize = 13.5,
                 FontWeight = FontWeight.Medium,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center
             )
 
+        title.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontBody") |> ignore
+
         let preview =
             TextBlock(
-                FontSize = 11.5,
                 TextWrapping = TextWrapping.Wrap,
                 MaxLines = 2,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center
             )
+
+        preview.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
 
         preview.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint")
         |> ignore
@@ -312,7 +314,8 @@ type ConversationRows() =
                     )
 
                 for p in m.Provenance do
-                    let label = TextBlock(Text = p, FontSize = 11.5)
+                    let label = TextBlock(Text = p)
+                    label.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
                     label.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
 
                     let tagBox =
@@ -332,12 +335,12 @@ type ConversationRows() =
                 let meta =
                     TextBlock(
                         Text = m.Meta,
-                        FontSize = 11.5,
                         TextTrimming = TextTrimming.CharacterEllipsis,
                         VerticalAlignment = VerticalAlignment.Center,
                         Margin = Thickness((if m.Provenance.IsEmpty then 0.0 else 4.0), 0.0, 0.0, 0.0)
                     )
 
+                meta.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
                 meta.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
                 Grid.SetColumn(meta, 1)
                 grid.Children.Add meta
@@ -357,11 +360,9 @@ type ConversationRows() =
 
             if not (String.IsNullOrWhiteSpace m.Snippet) then
                 let snippet =
-                    TextBlock(
-                        FontSize = 11.5,
-                        TextTrimming = TextTrimming.CharacterEllipsis,
-                        TextWrapping = TextWrapping.NoWrap
-                    )
+                    TextBlock(TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap)
+
+                snippet.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
 
                 snippet.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint")
                 |> ignore
@@ -382,11 +383,11 @@ type ConversationRows() =
                     let t =
                         TextBlock(
                             Text = m.MetaRight,
-                            FontSize = 11.5,
                             VerticalAlignment = VerticalAlignment.Bottom,
                             Margin = Thickness(8.0, 0.0, 0.0, 0.0)
                         )
 
+                    t.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
                     t.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
 
                     Some t
@@ -576,7 +577,9 @@ type ConversationRows() =
                 sprintf "已归档对话（%d），点击展开" count
 
         let caption =
-            TextBlock(Text = labelText, FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center)
+            TextBlock(Text = labelText, VerticalAlignment = VerticalAlignment.Center)
+
+        caption.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontSmall") |> ignore
 
         caption.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextMuted")
         |> ignore
@@ -629,13 +632,9 @@ type ConversationRows() =
         match item with
         | RowItem.Header label ->
             let header =
-                TextBlock(
-                    Text = label,
-                    FontSize = 11.5,
-                    FontWeight = FontWeight.Medium,
-                    Margin = Thickness(8.0, 12.0, 8.0, 4.0)
-                )
+                TextBlock(Text = label, FontWeight = FontWeight.Medium, Margin = Thickness(8.0, 12.0, 8.0, 4.0))
 
+            header.Bind(TextBlock.FontSizeProperty, Dyn.res "Metric.FontCaption") |> ignore
             header.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
             header.Classes.Add "section-label"
             header :> Control

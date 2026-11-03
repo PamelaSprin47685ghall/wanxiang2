@@ -46,10 +46,11 @@
 ### 外观
 
 - 样式类：行与更多键 `surface` + `hover-plain`；状态钮 `button-ghost`。
+- 字号走主题资源键声明式绑定（消除硬编码常数）：会话标题 `Metric.FontBody`、归档开关 `Metric.FontSmall`、来源标签 / 模型名 / 搜索片段 / 右侧时间戳 / 回退预览 / 分组标题 `Metric.FontCaption`（由 `row typography follows the font metrics, not constants` 守护）。
 - CraftsmanshipPolishTests：`Sidebar conversation row activates on Enter and Space keys`、`Sidebar conversation row right click invokes context menu`、`Sidebar row more action stays reachable`
 - UiStabilityTests：`sidebar running pin and idle states keep the same title origin`
 - InteractabilityPolishTests：`row more button leaves the hit tree in selection mode`（本库呈现部分）
-- 新增：行键盘上下/Home/End、归档开关读屏与重建后焦点、命中行与状态动作、主题改行高
+- 新增：行键盘上下/Home/End、归档开关读屏与重建后焦点、命中行与状态动作、主题改行高、字号跟刻度（`row typography follows the font metrics, not constants`）
 
 ### 第二行拆三层（2026-11-02）
 

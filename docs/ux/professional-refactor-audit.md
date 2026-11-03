@@ -21,7 +21,7 @@
 | 编号 | 级别 | 位置 | 问题 | 证据 | 方案 | 验收 |
 | --- | --- | --- | --- | --- | --- | --- |
 | R0 | P1（已修） | `app/Pwa/Program.fs` | 未提交改动中缺 `open System.Threading`，PWA 入口无法编译（FS0039） | 构建失败输出；补引用后 0 警告 0 错误 | 已补一行 open，无行为改动 | `run-pwa.sh` 构建通过；`./x check` 通过 |
-| A1 | A | `libs/ThemeMetrics/ThemeMetrics.fs`（FontCaption 11.5 / Small 12.5 / Body 13.5 / Reading 14.5） | 相邻字号级差仅 1px，正文与辅助文字、标签与正文的层级区分弱；长对话与设置表单里「哪里是正文、哪里是说明」要靠颜色猜 | `ThemeMetrics.fs:326-333`；画廊基准图可见 | 方案：在独立分支试 1.25 比率（如 Body 14、Reading 15.5、Caption 12），出前后对比截图后再定。**不直接全局放大**（任务约束） | 前后截图对比 + 画廊基线重生成 + `./x compose` 全绿；需负责人确认数值 |
+| A1 | A（已完成） | `libs/ThemeMetrics/ThemeMetrics.fs`、`libs/BatchBar/ConversationRows.fs` | 相邻字号级差仅 1px，正文与辅助文字、标签与正文的层级区分弱；且侧栏行把字号写死成常数 `13.5` / `12.5` / `11.5`（「两处数值相同、来源不同」） | `ThemeMetrics.fs:326-333`；`ConversationRows.fs` | 方案：独立分支试验 1.25 比率后确认不全局放大度量档（阅读区正文字号由 `UiPrefs.fontScale` 驱动），删除零消费者死档 `Metric.FontReading`，并将侧栏会话行硬编码字号接回 `Metric.FontBody` / `Metric.FontSmall` / `Metric.FontCaption` 令牌 | **已收口（2026-11-03）：`Metric.FontReading` 死档已删；保持现有字号刻度数值不变；`ConversationRows` 全部硬编码字号（标题 13.5、归档开关 12.5、来源标签/模型名/片段/时间戳/分组头 11.5）均改为绑定 `Metric.FontBody` / `Metric.FontSmall` / `Metric.FontCaption`，由 `row typography follows the font metrics, not constants` 守护，82/82 画廊基线零漂移** |
 | A2 | A（已完成） | `libs/ModelSwitchPanel/ModelSwitchPanel.fs`、`compose/AppShell/AppShell.fs` | 模型切换浮层：探活状态只有文字 tag（"已探测/未探测"），无颜色语义；行高 32、行圆角 4（低于控件默认 8 的规范档）；服务名与模型名同灰度同字号，层级平 | `ModelSwitchPanel.fs` 的 `tag`/`row`（MinHeight 32、CornerRadius 4、muted tag）；`ModelSwitchPanel_models.png` | 对照参考设计（列表 + 状态点 + 标签 + 备注）：探针状态加色点（成功 Success / 失败 Danger / 未探测 TextFaint），行高提到 36、圆角对齐 `Radius.md`，服务名作为弱化第二行。状态事实仍来自 `probeNote` 字符串归类，不新增状态源 | 画廊条目更新 + 像素基线重生成 + `ModelSwitchPanel` headless 测试补状态点断言；作为第一批判试点先出前后对比。**已收口（2026-11-01）：色点/双行/圆角 8 已落地；行高保持 34 但改读 `Metric.MenuItemMinHeight`；未知态确定为不画点。逐项核对见 §6《A2 现状》** |
 | A3 | A（已完成） | `compose/SidebarDesk/SidebarDesk.fs`（`previewFor`） | 会话行第二行把「归档/分叉前缀 + 模型 · 时间（+ 搜索片段）」拼成一条同灰度文本，扫读时时间与模型不可分 | `SidebarDesk.fs` 的 previewFor 实现；`SidebarDesk_rows.png` | 第二行拆层：时间右对齐弱化，模型名弱化居左，归档/分叉改小 tag；命中片段保持独立一行 | `SidebarDesk` headless 测试 + `SidebarDesk_rows` 基线重生成 + 窄屏（compact 断点 720 以下）不溢出。**已收口（2026-11-02）：时间右对齐在 `312709f` 已做；本轮补齐来源改 tag、模型单独、片段独立一行。契约见 `RowModel.Provenance` / `Meta` / `Snippet`（`Preview` 保留给无障碍名与 tooltip）** |
 | A4 | B | `compose/SettingsScreen/SettingsScreen.fs`（surface 固定 Width=720） | 大窗口下设置页居中 720，两侧留白偏大；信息密度偏低 | `SettingsScreen.fs` 的 surface 定义；`SettingsScreen_providers.png` | 观察项：先在第一批改造后重新评估，若仍显空再议（涉及 SettingsFrame 布局，不在第一批判动） | 暂无（观察项） |
@@ -142,9 +142,10 @@ PR #15 与 #16 各自 CI 全绿，但两者合并后的 `main`（`63f9b65`）上
 
 ## 7. 待负责人确认
 
-1. ~~A1 字号方案是否立项~~ → **已执行前置试验，结论见 §4《第四批前置试验结论》**：改度量档影响不到阅读正文（阅读字号走 `UiPrefs.fontScale`），且 `Metric.FontReading` 是零消费者死档。
+1. **A1 字号与令牌收口：已收口**（2026-11-03）。
+   - 前置试验结论（见 §4《第四批前置试验结论》）：改度量档影响不到阅读正文（阅读字号走 `UiPrefs.fontScale`），保持现有字号刻度数值（`FontCaption = 11.5`、`FontSmall = 12.5`、`FontBody = 13.5`、默认 `fontScale = 14.5`）不变，不全局放大。
    - `Metric.FontReading` **已删除**（2026-10-31，负责人拍板）：阅读列正文字号由 `UiPrefs.fontScale` 驱动是已确认的合理设计，留着这个度量档只会让下一个人误以为改它能改阅读正文。删除后 `./x test ThemeMetrics` 与 `./x compose`（67 个工程）全通过，反证无消费者。
-   - **仍未做**：阅读区层级。若要做，手段是调 `fontScale` 默认值或改卡片内部层级色，不是改度量档。
+   - 侧栏会话行字号接回刻度（`libs/BatchBar/ConversationRows.fs`）：消除「数值相同、来源不同」的硬编码字号副本——会话标题改绑 `Metric.FontBody`（13.5），归档展开开关改绑 `Metric.FontSmall`（12.5），来源小标签、模型名、命中片段、右侧时间戳、回退预览与分组标题全部改绑 `Metric.FontCaption`（11.5）。由 `row typography follows the font metrics, not constants` 守护（动态改三档资源值为 21 / 19 / 17 并逐项断言实际 `FontSize`，硬编码下实测转红）。
 2. **A2 模型浮层：已收口**（2026-11-01）。
    - 行高：保持 34，改为读 `Metric.MenuItemMinHeight`（原方案的 36 无令牌支撑；该档值恰为 34 且此前零消费者）。守护用例 `row height follows the menu item metric, not a constant`：把资源调成 44 / 52 两次读实际高度，改回硬编码即红（已实测）。
    - 未知态：确定不画点（原方案的 `TextFaint` 淡灰点不再执行）。理由见 §6《A2 现状》。

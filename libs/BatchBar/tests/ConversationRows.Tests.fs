@@ -483,3 +483,95 @@ let ``timestamp still shows when provenance model and snippet are all empty`` ()
             |> Seq.toList
 
         Assert.Equal(1, stamps.Length))
+
+/// 字号跟随主题刻度 `Metric.FontBody` / `Metric.FontSmall` / `Metric.FontCaption`，不写死常数。
+///
+/// 旧实现把会话标题写死 13.5、归档开关写死 12.5、标签/模型/片段/时间/分组头写死 11.5，
+/// 属于「两处数值相同、来源不同」——改主题字号刻度时侧栏纹丝不动。
+[<Fact>]
+let ``row typography follows the font metrics, not constants`` () =
+    Headless.run (fun () ->
+        let res = Application.Current.Resources
+        res["Metric.FontBody"] <- box 21.0
+        res["Metric.FontSmall"] <- box 19.0
+        res["Metric.FontCaption"] <- box 17.0
+
+        try
+            let r, w = make ()
+
+            let item =
+                RowItem.Conversation
+                    {
+                        Id = ids[0]
+                        Title = "会话主标题"
+                        TitleSpans = [ { Text = "会话主标题"; IsMatch = false } ]
+                        Preview = "回退预览"
+                        PreviewSpans = [ { Text = "回退预览"; IsMatch = false } ]
+                        Provenance = [ "归档" ]
+                        Meta = "gpt-5"
+                        Snippet = "命中摘要行"
+                        SnippetSpans = [ { Text = "命中摘要行"; IsMatch = false } ]
+                        MetaRight = "14:05"
+                        AccessibleName = "会话主标题"
+                        Tooltip = "会话主标题"
+                        Running = false
+                        Pinned = false
+                        Archived = true
+                    }
+
+            let fallbackItem =
+                RowItem.Conversation
+                    {
+                        Id = ids[1]
+                        Title = "回退行标题"
+                        TitleSpans = [ { Text = "回退行标题"; IsMatch = false } ]
+                        Preview = "回退预览"
+                        PreviewSpans = [ { Text = "回退预览"; IsMatch = false } ]
+                        Provenance = []
+                        Meta = ""
+                        Snippet = ""
+                        SnippetSpans = []
+                        MetaRight = ""
+                        AccessibleName = "回退行标题"
+                        Tooltip = "回退行标题"
+                        Running = false
+                        Pinned = false
+                        Archived = false
+                    }
+
+            r.Render [ RowItem.Header "今天分组"; item; fallbackItem; RowItem.ArchivedToggle(false, 3) ]
+
+            Dispatcher.UIThread.RunJobs()
+            w.UpdateLayout()
+
+            let blocks =
+                Probe.descendants r.View
+                |> Seq.choose (function
+                    | :? TextBlock as t ->
+                        let inlineText =
+                            if isNull t.Inlines then
+                                ""
+                            else
+                                t.Inlines
+                                |> Seq.choose (function
+                                    | :? Run as run -> Some run.Text
+                                    | _ -> None)
+                                |> String.concat ""
+
+                        let s = if String.IsNullOrEmpty t.Text then inlineText else t.Text
+                        if String.IsNullOrEmpty s then None else Some(s, t.FontSize)
+                    | _ -> None)
+                |> Map.ofSeq
+
+            Assert.Equal(21.0, blocks["会话主标题"])
+            Assert.Equal(19.0, blocks["归档 3"])
+            Assert.Equal(17.0, blocks["今天分组"])
+            Assert.Equal(17.0, blocks["归档"])
+            Assert.Equal(17.0, blocks["gpt-5"])
+            Assert.Equal(17.0, blocks["命中摘要行"])
+            Assert.Equal(17.0, blocks["14:05"])
+            Assert.Equal(17.0, blocks["回退预览"])
+        finally
+            res.Remove "Metric.FontBody" |> ignore
+            res.Remove "Metric.FontSmall" |> ignore
+            res.Remove "Metric.FontCaption" |> ignore)

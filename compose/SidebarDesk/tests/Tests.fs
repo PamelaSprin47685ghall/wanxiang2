@@ -273,6 +273,33 @@ let private highlighted (root: Control) =
 
 // ---- CraftsmanshipPolishTests ----
 
+/// 侧栏行的第二行拆三层：来源（归档 / 分叉）route 到 tag，模型单独，命中片段单独一行。
+///
+/// 旧实现三者拼成一条同灰度字符串，扫读时模型与来源分不开。这条走真实链路
+/// （状态树 → 投影 → 渲染）核对**界面**上确实分层；结构细节由 `BatchBar` 的
+/// `row renders provenance as a tag and keeps model and snippet as separate lines` 守。
+[<Fact>]
+let ``fork row shows a tag instead of a text prefix`` () =
+    Headless.run (fun () ->
+        let r = setup ()
+
+        let s =
+            { conv "项目复盘" with
+                model = "gpt-5"
+                isFork = true
+                preview = "项目复盘：上次说的那个方案"
+            }
+
+        load r [ s ]
+        let text = allText (row r s)
+
+        // 分叉不再以「分叉 · 」前缀混在模型名前面。
+        Assert.DoesNotContain("分叉 · ", text)
+        // 但来源仍然可见（tag 里的文字）。
+        Assert.Contains("分叉", text)
+        // 模型仍可见。
+        Assert.Contains("gpt-5", text))
+
 [<Fact>]
 let ``Sidebar conversation row right click invokes context menu`` () =
     Headless.run (fun () ->
@@ -610,7 +637,9 @@ let ``sidebar marks fork rows and does not search when no handler is wired`` () 
         let r = setup ()
         let f = { conv "分支" with isFork = true }
         load r [ f ]
-        Assert.Contains("分叉 · ", allText r.desk.View)
+        // 分叉来源是 tag（在 Border 里），不再是「分叉 · 」文字前缀。
+        Assert.Contains("分叉", allText r.desk.View)
+        Assert.DoesNotContain("分叉 · ", allText r.desk.View)
         r.desk.Search.Text <- "zzz"
         pump ()
         r.desk.BeginMessageSearch()
@@ -734,14 +763,39 @@ let ``title and preview both highlight while searching`` () =
         r.desk.Search.Text <- "苹果"
         pump ()
 
-        r.desk.Render
-            { emptySidebarVS () with
-                Rows = [ rowVS a ]
-            }
+        // 走 `load` 的真实投影（`SidebarDesk.previewFor`），不用手搓 `rowVS` 覆盖：
+        // 手搓行不带 `Snippet`，片段高亮那条路径根本不会被走到。
+        let rowRoot = row r a
 
-        pump ()
-        let lit = highlighted (row r a) |> List.map (fun x -> x.Text)
-        Assert.True(lit.Length >= 2, sprintf "%A" lit))
+        let hitTexts =
+            highlighted rowRoot
+            |> List.filter (fun x -> not (String.IsNullOrWhiteSpace x.Text))
+            |> List.map (fun x -> x.Text)
+
+        // 标题里必须命中。
+        Assert.Contains("苹果", hitTexts)
+
+        // 片段必须**在它自己那一行**命中：找到承载「今天买了苹果」的 TextBlock，
+        // 断言它的 Run 里有被点亮的那一段。只数「至少两处命中」会把片段行丢掉也算绿。
+        let snippetBlock =
+            all rowRoot
+            |> List.choose (function
+                | :? TextBlock as t when not (isNull t.Inlines) && t.Inlines.Count > 0 ->
+                    let joined = runs t |> List.map (fun x -> x.Text) |> String.concat ""
+
+                    if joined.Contains "今天买了苹果" then Some t else None
+                | _ -> None)
+            |> List.tryHead
+
+        match snippetBlock with
+        | None -> Assert.Fail "片段行未渲染成分段文本"
+        | Some t ->
+            let litInSnippet =
+                runs t
+                |> List.filter (fun x -> x.IsSet TextElement.ForegroundProperty)
+                |> List.map (fun x -> x.Text)
+
+            Assert.Contains("苹果", litInSnippet))
 
 [<Fact>]
 let ``clearing the query removes every highlight`` () =

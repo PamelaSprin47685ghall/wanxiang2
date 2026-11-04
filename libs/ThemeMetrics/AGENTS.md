@@ -6,7 +6,7 @@
 1. **每项初始值与旧实现相同；旧别名仍与源同值。** [根 AXIOM: 5]
 
 # SPEC
-1. [LEMMA: 1] `tests/Tests.fs` 通过：`aliases keep the value of their source`。
+1. [LEMMA: 1] `tests/Tests.fs` 通过：`aliases keep the value of their source`、`settings surface width is registered on the scale`、`palette and switcher widths stay on their registered values`、`退场的阅读字号与输入区冗余死档不再回到刻度上`。
 
 # 迁入或覆盖的旧测试
 旧 `DesignConvergenceTests` 一组（如 ChipDensityHasSingleSourceUnderBothNames）断言的是同值关系，本库别名用例覆盖其数据部分；起窗口的部分留在旧仓库。

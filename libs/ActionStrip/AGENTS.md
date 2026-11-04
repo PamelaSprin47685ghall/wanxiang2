@@ -33,7 +33,7 @@
 
 ### 外观
 
-- 废除 `AttachmentChipLook`，底色、描边、圆角、内外边距与字号走主题 `DynamicResource`，可点态挂 `surface hover-raised` 样式类。
+- 废除 `AttachmentChipLook`，底色、描边、圆角、内外边距与字号走主题 `DynamicResource`，文件名最大宽绑定 `Metric.AttachmentNameMaxWidth`（260.0，由 `附件文件名最大宽跟随主题度量` 守护），可点态挂 `surface hover-raised` 样式类。
 - 数据 `ChipData`：文件名、已格式化的大小、是否图片、是否丢失（由使用方用 MessageView 的 AttachmentRef 规则算好）。
 
 ### 证据与旧测试

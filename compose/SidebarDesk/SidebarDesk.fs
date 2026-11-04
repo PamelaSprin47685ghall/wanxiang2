@@ -156,9 +156,11 @@ type SidebarDesk
         | true, group -> ConversationSummary.disambiguator group (now ()) s
         | _ -> None
 
-    /// 第二行：左侧「模型（· 归档/分叉）」+ 可选片段，时间拆给 MetaRight 右对齐。
-    /// 返回 (预览文本, 时间戳)。正文片段仍走搜索命中行。
-    let previewFor (query: string) (s: ConversationSummary) : string * string =
+    /// 第二行拆三层：来源标记（归档 / 分叉）交 `Provenance` 渲染成小 tag、
+    /// 模型名交 `Meta` 弱化居左、命中片段交 `Snippet` 独立一行。
+    /// `Text` 仍是供无障碍与 tooltip 用的整串（读屏应一次读完，不拆三段）。
+    /// 返回 (整串, 来源标记, 模型, 片段, 时间戳)。
+    let previewFor (query: string) (s: ConversationSummary) : string * string list * string * string * string =
         let t = s.updatedAt.ToLocalTime()
         let n = (now ()).ToLocalTime()
 
@@ -172,6 +174,14 @@ type SidebarDesk
                 "模型"
             else
                 s.model.Trim()
+
+        let provenance =
+            [
+                if s.archived then
+                    "归档"
+                if s.isFork || (currentLineage ()).ContainsKey s.id then
+                    "分叉"
+            ]
 
         let core = (if s.archived then "归档 · " else "") + model
 
@@ -190,13 +200,12 @@ type SidebarDesk
             else
                 raw
 
-        let text =
-            if not (String.IsNullOrWhiteSpace query) && not (String.IsNullOrWhiteSpace snippet) then
-                meta + "\n" + snippet
-            else
-                meta
+        let hasQuery =
+            not (String.IsNullOrWhiteSpace query) && not (String.IsNullOrWhiteSpace snippet)
 
-        text, stamp
+        let text = if hasQuery then meta + "\n" + snippet else meta
+
+        text, provenance, model, (if hasQuery then snippet else ""), stamp
 
     let accessibleName (s: ConversationSummary) =
         match disambiguate s with
@@ -220,7 +229,7 @@ type SidebarDesk
         sprintf "%s\n%d 条消息%s" s.title s.messageCount provenance
 
     let rowModel (query: string) (s: ConversationSummary) : RowModel =
-        let preview, stamp = previewFor query s
+        let preview, provenance, model, snippet, stamp = previewFor query s
 
         {
             Id = s.id
@@ -228,6 +237,10 @@ type SidebarDesk
             TitleSpans = spansOf query s.title
             Preview = preview
             PreviewSpans = spansOf query preview
+            Provenance = provenance
+            Meta = model
+            Snippet = snippet
+            SnippetSpans = spansOf query snippet
             MetaRight = stamp
             AccessibleName = accessibleName s
             Tooltip = tooltipFor s

@@ -66,21 +66,13 @@ type Metric =
     | BorderWidth
     | SidebarRowContentSpacing
     | ComposerInputMinHeight
-    | ComposerMaxHeight
     | ComposerInputMaxHeight
-    | ComposerShellPaddingX
-    | ComposerShellPaddingY
-    | ComposerAttachmentNameMaxWidth
-    | ComposerAttachmentStateWidth
     | ComposerAttachmentIconSlot
-    | ComposerModelMaxWidth
-    | ComposerModelCompactMaxWidth
     | ChipPaddingX
     | ChipPaddingY
     | CompactChipPaddingX
     | CompactChipPaddingY
     | TagPaddingX
-    | AttachmentRowPaddingY
     | AttachmentNameMaxWidth
     | MenuItemMinHeight
     | MenuItemPaddingY
@@ -239,21 +231,13 @@ module ThemeMetrics =
             Metric.BorderWidth
             Metric.SidebarRowContentSpacing
             Metric.ComposerInputMinHeight
-            Metric.ComposerMaxHeight
             Metric.ComposerInputMaxHeight
-            Metric.ComposerShellPaddingX
-            Metric.ComposerShellPaddingY
-            Metric.ComposerAttachmentNameMaxWidth
-            Metric.ComposerAttachmentStateWidth
             Metric.ComposerAttachmentIconSlot
-            Metric.ComposerModelMaxWidth
-            Metric.ComposerModelCompactMaxWidth
             Metric.ChipPaddingX
             Metric.ChipPaddingY
             Metric.CompactChipPaddingX
             Metric.CompactChipPaddingY
             Metric.TagPaddingX
-            Metric.AttachmentRowPaddingY
             Metric.AttachmentNameMaxWidth
             Metric.MenuItemMinHeight
             Metric.MenuItemPaddingY
@@ -384,21 +368,13 @@ module ThemeMetrics =
         | Metric.BorderWidth -> 1.0
         | Metric.SidebarRowContentSpacing -> 0.0
         | Metric.ComposerInputMinHeight -> 30.0
-        | Metric.ComposerMaxHeight -> 240.0
         | Metric.ComposerInputMaxHeight -> 240.0
-        | Metric.ComposerShellPaddingX -> 12.0
-        | Metric.ComposerShellPaddingY -> 8.0
-        | Metric.ComposerAttachmentNameMaxWidth -> 160.0
-        | Metric.ComposerAttachmentStateWidth -> 56.0
         | Metric.ComposerAttachmentIconSlot -> 16.0
-        | Metric.ComposerModelMaxWidth -> 240.0
-        | Metric.ComposerModelCompactMaxWidth -> 150.0
         | Metric.ChipPaddingX -> 8.0
         | Metric.ChipPaddingY -> 2.0
         | Metric.CompactChipPaddingX -> 8.0
         | Metric.CompactChipPaddingY -> 2.0
         | Metric.TagPaddingX -> 6.0
-        | Metric.AttachmentRowPaddingY -> 6.0
         | Metric.AttachmentNameMaxWidth -> 260.0
         | Metric.MenuItemMinHeight -> 34.0
         | Metric.MenuItemPaddingY -> 6.0

@@ -81,3 +81,27 @@ let ``失败态与缩小提示；清空后隐藏`` () =
         Assert.NotNull(named t.Host "附件：x.png（1 KB）")
         t.Render([], false)
         Assert.False t.IsShown)
+
+[<Fact>]
+let ``附件图标槽尺寸跟随主题度量`` () =
+    Headless.run (fun () ->
+        let res = Avalonia.Application.Current.Resources
+        res["Metric.ComposerAttachmentIconSlot"] <- box 22.0
+
+        try
+            let t = AttachmentTray()
+            t.Render([ item "doc.txt" ], false)
+            let w = Window(Width = 600.0, Height = 400.0, Content = t.Host)
+            w.Show()
+            Dispatcher.UIThread.RunJobs()
+
+            let slot =
+                all t.Host
+                |> List.tryPick (function
+                    | :? Border as b when b.Width = 22.0 && b.Height = 22.0 -> Some b
+                    | _ -> None)
+
+            Assert.True(slot.IsSome, "附件图标槽未跟随 Metric.ComposerAttachmentIconSlot")
+            w.Close()
+        finally
+            res.Remove "Metric.ComposerAttachmentIconSlot" |> ignore)

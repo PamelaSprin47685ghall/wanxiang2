@@ -46,10 +46,31 @@
 ### 外观
 
 - 样式类：行与更多键 `surface` + `hover-plain`；状态钮 `button-ghost`。
+- 字号走主题资源键声明式绑定（消除硬编码常数）：会话标题 `Metric.FontBody`、归档开关 `Metric.FontSmall`、来源标签 / 模型名 / 搜索片段 / 右侧时间戳 / 回退预览 / 分组标题 `Metric.FontCaption`（由 `row typography follows the font metrics, not constants` 守护）。
 - CraftsmanshipPolishTests：`Sidebar conversation row activates on Enter and Space keys`、`Sidebar conversation row right click invokes context menu`、`Sidebar row more action stays reachable`
 - UiStabilityTests：`sidebar running pin and idle states keep the same title origin`
 - InteractabilityPolishTests：`row more button leaves the hit tree in selection mode`（本库呈现部分）
-- 新增：行键盘上下/Home/End、归档开关读屏与重建后焦点、命中行与状态动作、主题改行高
+- 新增：行键盘上下/Home/End、归档开关读屏与重建后焦点、命中行与状态动作、主题改行高、字号跟刻度（`row typography follows the font metrics, not constants`）
+
+### 第二行拆三层（2026-11-02）
+
+`RowModel` 把第二行拆成三个**互相独立**的字段，而不是一条拼好的字符串：
+
+| 字段 | 用途 | 外观 |
+| :--- | :--- | :--- |
+| `Provenance: string list` | 来源（「归档」「分叉」） | 小 tag（`surface` 圆角 999 的 `Border` 包短文字） |
+| `Meta: string` | 模型名 | `Palette.TextMuted`，弱化居左 |
+| `Snippet: string` + `SnippetSpans` | 搜索命中片段 | `Palette.TextFaint`，独立一行，用 span 渲染以保留高亮 |
+
+`Preview` / `PreviewSpans` **保留**：读屏名与 tooltip 要一次读完，不能拆三段。视觉层不再渲染它。
+
+改编依据：旧实现三者拼成一条同灰度串（`"分叉 · 归档 · 模型\n片段"`），扫读时来源、模型、时间分不开。拆开后每一项能各自定位。
+
+`Snippet` 必须走 `spans`（`Run`）而不是 `TextBlock.Text`：设了 `Text` 就没法插 `Run`，搜索高亮会丢。这条踩过——改完第一版 `title and preview both highlight while searching` 立刻红了。
+
+`Meta` 必须放在有宽度上限的容器里。`Horizontal` 的 `StackPanel` 按**无限宽度**测量子元素，`TextTrimming` 因此失效：长模型名会撑破行宽，把时间戳挤出可视区。本库用 `Grid` 的 `Auto` / `*` 两列收住（tag 列 `Auto`，模型列 `*`）。实测未约束时 40 段前缀的模型名被测成 9660px，远超 900px 行宽；`long model name stays inside the row width` 钉住这条。
+
+第二行的四个分支必须**正交**，不能让「三层全空」的回退遮住时间戳。三条文字（`Provenance` / `Meta` / `Snippet`）与右侧时间（`MetaRight`）是两份独立事实：三层全空但时间存在时，旧实现仍然渲染时间，回退到预览串会把它静默吞掉。`timestamp still shows when provenance model and snippet are all empty` 钉住这条（改前实测红）。现在的写法按 `hasText × stamp option` 四格穷举，没有隐式优先级。
 
 ### 与旧实现的差异
 

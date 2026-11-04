@@ -52,13 +52,20 @@ type ComposerBox() =
             PlaceholderText = "写下一句",
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
-            MinHeight = 30.0,
-            MaxHeight = 240.0,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center
         )
 
     do input.Classes.Add "text-area"
+
+    do
+        input.Bind(Layoutable.MinHeightProperty, Dyn.res "Metric.ComposerInputMinHeight")
+        |> ignore
+
+    do
+        input.Bind(Layoutable.MaxHeightProperty, Dyn.res "Metric.ComposerInputMaxHeight")
+        |> ignore
+
     do input.BorderThickness <- Thickness 0.0
     do input.Background <- Brushes.Transparent
     do input.Padding <- Thickness(0.0, 8.0, 0.0, 8.0)
@@ -91,13 +98,10 @@ type ComposerBox() =
         let b =
             Button(
                 Content = "排队发送",
-                FontSize = 12.5,
                 Focusable = true,
                 Cursor = new Cursor(StandardCursorType.Hand),
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Height = 34.0,
-                MinHeight = 34.0,
                 Padding = Thickness(8.0, 0.0),
                 CornerRadius = CornerRadius 8.0,
                 BorderThickness = Thickness 0.0,
@@ -106,6 +110,14 @@ type ComposerBox() =
 
         b.Classes.Add "ghost"
         b.Classes.Add "button-ghost"
+        b.Bind(Button.FontSizeProperty, Dyn.res "Metric.FontSmall") |> ignore
+
+        b.Bind(Layoutable.HeightProperty, Dyn.res "Metric.TextButtonMinHeight")
+        |> ignore
+
+        b.Bind(Layoutable.MinHeightProperty, Dyn.res "Metric.TextButtonMinHeight")
+        |> ignore
+
         b.Bind(Button.ForegroundProperty, Dyn.res "Palette.TextMuted") |> ignore
         b
 

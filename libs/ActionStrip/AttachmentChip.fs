@@ -69,6 +69,9 @@ type AttachmentChip(data: ChipData) =
         )
 
     do
+        name.Bind(Layoutable.MaxWidthProperty, Dyn.res "Metric.AttachmentNameMaxWidth")
+        |> ignore
+
         if data.Missing then
             name.Bind(TextBlock.ForegroundProperty, Dyn.res "Palette.TextFaint") |> ignore
         else
